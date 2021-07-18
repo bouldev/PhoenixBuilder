@@ -1,0 +1,73 @@
+package packet
+
+import (
+	"bytes"
+	"encoding/binary"
+	"github.com/sandertv/gophertunnel/minecraft/protocol"
+)
+
+//noinspection SpellCheckingInspection
+const (
+	ResourcePackTypeAddon = iota + 1
+	ResourcePackTypeCached
+	ResourcePackTypeCopyProtected
+	ResourcePackTypeBehaviour
+	ResourcePackTypePersonaPiece
+	ResourcePackTypeResources
+	ResourcePackTypeSkins
+	ResourcePackTypeWorldTemplate
+)
+
+// ResourcePackDataInfo is sent by the server to the client to inform the client about the data contained in
+// one of the resource packs that are about to be sent.
+type ResourcePackDataInfo struct {
+	// UUID is the unique ID of the resource pack that the info concerns.
+	UUID string
+	// DataChunkSize is the maximum size in bytes of the chunks in which the total size of the resource pack
+	// to be sent will be divided. A size of 1MB (1024*1024) means that a resource pack of 15.5MB will be
+	// split into 16 data chunks.
+	DataChunkSize uint32
+	// ChunkCount is the total amount of data chunks that the sent resource pack will exist out of. It is the
+	// total size of the resource pack divided by the DataChunkSize field.
+	ChunkCount uint32
+	// Size is the total size in bytes that the resource pack occupies. This is the size of the compressed
+	// archive (zip) of the resource pack.
+	Size uint64
+	// Hash is a SHA256 hash of the content of the resource pack.
+	Hash []byte
+	// Premium specifies if the resource pack was a premium resource pack, meaning it was bought from the
+	// Minecraft store.
+	Premium bool
+	// PackType is the type of the resource pack. It is one of the resource pack types that may be found in
+	// the constants above.
+	PackType byte
+}
+
+// ID ...
+func (*ResourcePackDataInfo) ID() uint32 {
+	return IDResourcePackDataInfo
+}
+
+// Marshal ...
+func (pk *ResourcePackDataInfo) Marshal(buf *bytes.Buffer) {
+	_ = protocol.WriteString(buf, pk.UUID)
+	_ = binary.Write(buf, binary.LittleEndian, pk.DataChunkSize)
+	_ = binary.Write(buf, binary.LittleEndian, pk.ChunkCount)
+	_ = binary.Write(buf, binary.LittleEndian, pk.Size)
+	_ = protocol.WriteByteSlice(buf, pk.Hash)
+	_ = binary.Write(buf, binary.LittleEndian, pk.Premium)
+	_ = binary.Write(buf, binary.LittleEndian, pk.PackType)
+}
+
+// Unmarshal ...
+func (pk *ResourcePackDataInfo) Unmarshal(buf *bytes.Buffer) error {
+	return chainErr(
+		protocol.String(buf, &pk.UUID),
+		binary.Read(buf, binary.LittleEndian, &pk.DataChunkSize),
+		binary.Read(buf, binary.LittleEndian, &pk.ChunkCount),
+		binary.Read(buf, binary.LittleEndian, &pk.Size),
+		protocol.ByteSlice(buf, &pk.Hash),
+		binary.Read(buf, binary.LittleEndian, &pk.Premium),
+		binary.Read(buf, binary.LittleEndian, &pk.PackType),
+	)
+}
