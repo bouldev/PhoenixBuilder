@@ -3,8 +3,8 @@ package packet
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/sandertv/gophertunnel/minecraft/nbt"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	"gophertunnel/minecraft/nbt"
+	"gophertunnel/minecraft/protocol"
 )
 
 const (

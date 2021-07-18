@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	"gophertunnel/minecraft/protocol"
 )
 
 // DebugInfo is a packet sent by the server to the client. It does not seem to do anything when sent to the

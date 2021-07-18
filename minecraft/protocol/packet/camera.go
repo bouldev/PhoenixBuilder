@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	"gophertunnel/minecraft/protocol"
 )
 
 // Camera is sent by the server to use an Education Edition camera on a player. It produces an image

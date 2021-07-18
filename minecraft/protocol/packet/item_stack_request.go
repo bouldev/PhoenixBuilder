@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	"gophertunnel/minecraft/protocol"
 )
 
 // ItemStackRequest is sent by the client to change item stacks in an inventory. It is essentially a

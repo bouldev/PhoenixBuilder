@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	"gophertunnel/minecraft/protocol"
 )
 
 // PlayerArmourDamage is sent by the server to damage the armour of a player. It is a very efficient packet,

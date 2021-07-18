@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	"gophertunnel/minecraft/protocol"
 )
 
 // ChunkRadiusUpdated is sent by the server in response to a RequestChunkRadius packet. It defines the chunk

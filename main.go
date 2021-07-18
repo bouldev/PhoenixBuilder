@@ -1,16 +1,21 @@
 package main
 
 import (
-	"github.com/pelletier/go-toml"
-	"github.com/sandertv/gophertunnel/minecraft"
-	//"github.com/sandertv/gophertunnel/minecraft/auth"
-	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
-	"github.com/google/uuid"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/pelletier/go-toml"
+	"gophertunnel/minecraft"
+	"gophertunnel/minecraft/builder"
+	"gophertunnel/minecraft/command"
+	"gophertunnel/minecraft/mctype"
+	"gophertunnel/minecraft/parse"
+	"gophertunnel/minecraft/protocol"
+	"gophertunnel/minecraft/protocol/packet"
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 // The following program implements a proxy that forwards players from one local address to a remote address.
@@ -31,6 +36,41 @@ func main() {
 		panic(err)
 	}
 
+	mConfig := mctype.MainConfig {
+		Execute:   "",
+		Block:     mctype.Block{
+			Name: "iron_block",
+			Data: 0,
+		},
+		OldBlock:  mctype.Block{
+			Name: "air",
+			Data: 0,
+		},
+		Begin:     mctype.Position{
+			X: 0,
+			Y: 0,
+			Z: 0,
+		},
+		End:       mctype.Position{
+			X: 0,
+			Y: 0,
+			Z: 0,
+		},
+		Position:  mctype.Position{
+			X: 0,
+			Y: 0,
+			Z: 0,
+		},
+		Radius:    5,
+		Length:    0,
+		Width:     0,
+		Height:    1,
+		Method:    "",
+		OldMethod: "",
+		Facing:    "y",
+		Path:      "",
+		Shape:     "solid",
+	}
 	sendChat("欢迎使用 FastBuilder!",conn)
 	// You will then want to start a for loop that reads packets from the connection until it is closed.
 	for {
@@ -48,9 +88,39 @@ func main() {
 		case *packet.Text:
 			if p.TextType==packet.TextTypeChat {
 				//TODO: SourceName == FBAuthorizedUserName check
-				//Also: OP Check
-				fmt.Printf("<%s> %s\n",p.SourceName,p.Message);
+				//TODO: OP Check
+				if p.SourceName == "CAIMEO" {
+					chat := strings.Split(p.Message, " ")
+					if chat[0] == "set" {
+						X, _ := strconv.Atoi(chat[1])
+						Y, _ := strconv.Atoi(chat[2])
+						Z, _ := strconv.Atoi(chat[3])
+						mConfig.Position = mctype.Position{
+							X: X,
+							Y: Y,
+							Z: Z,
+						}
+					}
+					fmt.Printf("<%s> %s\n", p.SourceName, p.Message)
+					cfg := parse.Parse(p.Message, mConfig)
+					blocks, err := builder.Generate(cfg)
+					if err != nil {
+						fmt.Println(err)
+					}
+					fmt.Println(cfg, blocks)
+					for _, b := range blocks {
+						request := command.SetBlockRequest(b, cfg)
+						uuid1, _ := uuid.NewUUID()
+						err := sendCommand(request, uuid1.String(), conn)
+						if err != nil {
+							fmt.Println(err)
+						}
+					}
+
+				}
 			}
+
+
 		case *packet.CommandOutput:
 			//For example,check op:
 			//1: p.SuccessCount>0
@@ -66,21 +136,21 @@ func main() {
 	}
 }
 
-func sendCommand(command string,reqid string,conn *minecraft.Conn) {
-	zerouuid , _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
+func sendCommand(command string, requestId string,conn *minecraft.Conn) error {
+	unitUuid, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
 	origin := protocol.CommandOrigin {
-		Origin:protocol.CommandOriginPlayer,
-		UUID:zerouuid,
-		RequestID:reqid,
-		PlayerUniqueID:0,
+		Origin:         protocol.CommandOriginPlayer,
+		UUID:           unitUuid,
+		RequestID:      requestId,
+		PlayerUniqueID: 0,
 	};
-	cmdpkt:=&packet.CommandRequest {
+	commandRequest :=&packet.CommandRequest {
 		CommandLine:command,
 		CommandOrigin:origin,
 		Internal:false,
 		UnLimited:false,
 	}
-	conn.WritePacket(cmdpkt)
+	return conn.WritePacket(commandRequest)
 }
 
 func sendChat(text string, conn *minecraft.Conn) {
@@ -90,7 +160,10 @@ func sendChat(text string, conn *minecraft.Conn) {
 		NeedsTranslation:false,
 		Message:text,
 	}
-	conn.WritePacket(textpacket)
+	err := conn.WritePacket(textpacket)
+	if err != nil {
+		return
+	}
 }
 
 type config struct {

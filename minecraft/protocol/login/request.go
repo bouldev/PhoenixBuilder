@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/sandertv/gophertunnel/minecraft/protocol/login/jwt"
+	"gophertunnel/minecraft/protocol/login/jwt"
 	"time"
 )
 

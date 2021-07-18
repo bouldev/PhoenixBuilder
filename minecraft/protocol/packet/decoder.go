@@ -5,7 +5,7 @@ import (
 	"crypto/aes"
 	"fmt"
 	"github.com/klauspost/compress/flate"
-	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	"gophertunnel/minecraft/protocol"
 	"io"
 	"io/ioutil"
 )
