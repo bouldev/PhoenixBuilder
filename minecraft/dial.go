@@ -5,12 +5,13 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/x509"
+	fbauth "cv4-auth-client/auth"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
-	"gophertunnel/minecraft/auth"
 	"gophertunnel/minecraft/protocol"
 	"gophertunnel/minecraft/protocol/login"
 	"gophertunnel/minecraft/protocol/packet"
@@ -19,6 +20,8 @@ import (
 	rand2 "math/rand"
 	"net"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -28,6 +31,12 @@ type Dialer struct {
 	// ErrorLog is a log.Logger that errors that occur during packet handling of servers are written to. By
 	// default, ErrorLog is set to one equal to the global logger.
 	ErrorLog *log.Logger
+	// Phoenix Hash Version
+	Version string
+	// Phoenix Token
+	Token string
+	// Phoenix Auth Client
+	Client *fbauth.Client
 
 	// ClientData is the client data used to login to the server with. It includes fields such as the skin,
 	// locale and UUIDs unique to the client. If empty, a default is sent produced using defaultClientData().
@@ -78,14 +87,26 @@ func Dial(network string, address string) (conn *Conn, err error) {
 // to XBOX Live and custom client data.
 func (dialer Dialer) Dial(network string, address string) (conn *Conn, err error) {
 	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-
-	var chainData, newAddress string
+	var chainData string
 	if dialer.ServerCode != "" {
-		chainData, newAddress, err = authChain(dialer.ServerCode, key)
+		data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
+		pubKeyData := base64.StdEncoding.EncodeToString(data)
+		chainAddr, err := dialer.Client.Auth(dialer.ServerCode, dialer.Password, pubKeyData, dialer.Token, dialer.Version)
+		chainAndAddr := strings.Split(chainAddr,"|")
 		if err != nil {
+			if err.Error() == "Invalid TOKEN" {
+				ex, err := os.Executable()
+				if err != nil {
+					panic(err)
+				}
+				currPath := filepath.Dir(ex)
+				token := filepath.Join(currPath, "fbtoken")
+				os.Remove(token)
+			}
 			return nil, err
 		}
-		address=newAddress
+		chainData = chainAndAddr[0]
+		address = chainAndAddr[1]
 	}
 	if dialer.ErrorLog == nil {
 		dialer.ErrorLog = log.New(os.Stderr, "", log.LstdFlags)
@@ -202,13 +223,13 @@ func listenConn(conn *Conn, logger *log.Logger, c chan struct{}) {
 
 // authChain requests the Minecraft auth JWT chain using the credentials passed. If successful, an encoded
 // chain ready to be put in a login request is returned.
-func authChain(serverCode string, key *ecdsa.PrivateKey) (string,string, error) {
-	chain,na, err := auth.RequestMinecraftChain(serverCode, key)
-	if err != nil {
-		return "","", fmt.Errorf("error obtaining Minecraft auth chain: %v", err)
-	}
-	return chain,na, nil
-}
+//func authChain(serverCode, password, token ,version string, key *ecdsa.PrivateKey) (string,string, error) {
+//	chain, na, err := auth.RequestMinecraftChain(serverCode, password, token, version, key)
+//	if err != nil {
+//		return "","", fmt.Errorf("error obtaining Minecraft auth chain: %v", err)
+//	}
+//	return chain,na, nil
+//}
 
 // defaultClientData returns a valid, mostly filled out ClientData struct using the connection address
 // passed, which is sent by default, if no other client data is set.

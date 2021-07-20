@@ -4,7 +4,6 @@ import (
 	"flag"
 	"gophertunnel/minecraft/builder"
 	"gophertunnel/minecraft/mctype"
-	"strconv"
 	"strings"
 )
 
@@ -60,16 +59,16 @@ func Parse(Message string, defaultConfig mctype.MainConfig) mctype.MainConfig {
 			Config.Execute = k
 		}
 	}
-	for index, v := range SLC {
-		if v == "-p" || v == "--position" {
-			x, xe := strconv.Atoi(SLC[index + 1])
-			y, ye := strconv.Atoi(SLC[index + 2])
-			z, ze := strconv.Atoi(SLC[index + 3])
-			if xe == nil && ye == nil && ze == nil {
-				Config.Position = mctype.Position{X: x, Y: y, Z: z}
-			}
-		}
-	}
+	//for index, v := range SLC {
+	//	if v == "-p" || v == "--position" {
+	//		x, xe := strconv.Atoi(SLC[index + 1])
+	//		y, ye := strconv.Atoi(SLC[index + 2])
+	//		z, ze := strconv.Atoi(SLC[index + 3])
+	//		if xe == nil && ye == nil && ze == nil {
+	//			Config.Position = mctype.Position{X: x, Y: y, Z: z}
+	//		}
+	//	}
+	//}
 	return Config
 }
 
