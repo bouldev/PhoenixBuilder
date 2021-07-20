@@ -7,7 +7,7 @@ config.toml
 *.dll
 *.so
 *.dylib
-
+*.schematic
 # Test binary, build with `go test -c`
 *.test
 
