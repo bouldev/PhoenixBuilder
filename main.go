@@ -28,6 +28,17 @@ import (
 
 
 func main() {
+	fmt.Println("FastBuilder Phoenix Alpha 0.0.1")
+	fmt.Println("===============================")
+	fmt.Println("Copyright notice:")
+	fmt.Println("FastBuilder Phoenix used codes")
+	fmt.Println("from Sandertv's gophertunnel that")
+	fmt.Println("licensed under MIT license,at:")
+	fmt.Println("https://github.com/Sandertv/gophertunnel")
+	fmt.Println("===============================")
+	fmt.Println("ファスト　ビルダー！")
+	fmt.Println("F A S T  B U I L D E R")
+	fmt.Println("= = = =  = = = = = = =")
 	defer func() {
 		fmt.Println("Oh no! FastBuilder Phoenix crashed!\nAnd I dont know what happened:( ")
 		os.Exit(rand.Int())
