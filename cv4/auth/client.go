@@ -189,7 +189,7 @@ type FTokenRequest struct {
 	Password string `json:"password"`
 }
 
-func (client *Client) GetToken(username string,password string) string, {
+func (client *Client) GetToken(username string,password string) string {
 	rspreq:=&FTokenRequest {
 		Action:"phoenix::get-token",
 		Username:username,
