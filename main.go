@@ -144,7 +144,13 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Println("Incorrect username or password")
 			return
 		}
-		if fi, err := os.Create(token) ; err != nil {
+		ex, err := os.Executable()
+		if err != nil {
+			panic(err)
+		}
+		currPath := filepath.Dir(ex)
+		tokenPath := filepath.Join(currPath, "fbtoken")
+		if fi, err := os.Create(tokenPath) ; err != nil {
 			fmt.Println("Error creating token file: ", err)
 			fmt.Println("Error ignored.")
 		} else {
