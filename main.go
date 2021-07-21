@@ -1,6 +1,7 @@
 package main
 
 import (
+	"C"
 	"bufio"
 	"crypto/sha256"
 	fbauth "phoenixbuilder/cv4/auth"
@@ -24,9 +25,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"runtime/debug"
 )
-
 
 func main() {
 	fmt.Println("FastBuilder Phoenix Alpha 0.0.1")
@@ -45,8 +44,7 @@ func main() {
 	fmt.Println("Copyright (c) FastBuilder DevGroup,")
 	fmt.Println("Bouldev 2021")
 	defer func() {
-		fmt.Println("Oh no! FastBuilder Phoenix crashed!\nAnd I dont know what happened:( ")
-		debug.PrintStack()
+		fmt.Println("Oh no! FastBuilder Phoenix crashed! ")
 		os.Exit(rand.Int())
 	}()
 	ex, err := os.Executable()
@@ -61,11 +59,13 @@ func main() {
 		return
 	}
 	if _, err := os.Stat(token) ; os.IsNotExist(err) {
+		fmt.Println("fbtoken not found, please put fbtoken file in the same directory of PhoenixBuilder.")
+		os.Exit(2)
 		if fi, err := os.Create(token) ; err != nil {
 			fmt.Println(err)
 			return
 		} else {
-			fmt.Println("PLease enter the Token (Without echoing) :")
+			fmt.Printf("Please enter the Token (Without echoing) : ")
 			byteToken, err := term.ReadPassword(int(syscall.Stdin))
 			if err != nil {
 				fmt.Println("Error reading token: ", err)
@@ -77,7 +77,8 @@ func main() {
 				return 
 			}
 			defer fi.Close()
-			runClient(string(byteToken), version)
+			fmt.Printf("\n")
+			runShellClient(string(byteToken), version)
 		}
 	} else {
 		token, err := readToken(token)
@@ -85,17 +86,29 @@ func main() {
 			fmt.Println(err)
 			return
 		}
-		runClient(token, version)
+		runShellClient(token, version)
 	}
 }
 
-func runClient(token string, version string) {
-	client := fbauth.CreateClient()
+//export iOSAppStart
+func iOSAppStart(token string,version string,serverCode string, serverPasswd string, onError func()) {
+	defer func() {
+		onError()
+	}()
+	runClient(token, version,serverCode,serverPasswd)
+}
+
+func runShellClient(token string, version string) {
 	code, serverPasswd, err := getRentalServerCode()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	runClient(token,version,code,serverPasswd)
+}
+
+func runClient(token string, version string, code string, serverPasswd string) {
+	client := fbauth.CreateClient()
 	serverCode := fmt.Sprintf("%s",strings.TrimSuffix(code, "\n"))
 	fmt.Printf("Server: %s \n", serverCode)
 	dialer := minecraft.Dialer{
@@ -109,6 +122,7 @@ func runClient(token string, version string) {
 
 	if err != nil {
 		fmt.Println(err)
+		panic(err)
 		return
 	}
 	defer conn.Close()
@@ -251,13 +265,14 @@ func runClient(token string, version string) {
 
 func getRentalServerCode() (string, string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("Please enter the rental server number: ")
+	fmt.Printf("Please enter the rental server number: ")
 	code, err := reader.ReadString('\n')
 	if err != nil {
 		return "", "", err
 	}
-	fmt.Println("Enter Password (Press [Enter] if not set, input won't be echoed): ")
+	fmt.Printf("Enter Password (Press [Enter] if not set, input won't be echoed): ")
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+	fmt.Printf("\n")
 	return code, string(bytePassword), err
 }
 

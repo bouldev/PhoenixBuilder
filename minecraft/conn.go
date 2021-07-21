@@ -486,7 +486,7 @@ func (conn *Conn) parsePacket(data []byte, callPacketFunc bool) (packet.Packet, 
 		violationErr = fmt.Sprintf("error decoding packet %T from %v: %v", pk, conn.RemoteAddr(), err)
 		// We don't return this as an error as it's not in the hand of the user to control this. Instead,
 		// we return to reading a new packet.
-		fmt.Printf("%s\n",violationErr)
+		//fmt.Printf("%s\n",violationErr)
 		if false{
 			return nil,errors.New(violationErr)
 		}

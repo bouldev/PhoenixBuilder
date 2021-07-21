@@ -68,7 +68,5 @@ fabric.properties
 
 # Editor-based Rest Client
 .idea/httpRequests
-
-gophertunnel
-phoenixbuilder
-fbtoken
+build/
+*.schematic
