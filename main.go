@@ -144,6 +144,18 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Println("Incorrect username or password")
 			return
 		}
+		if fi, err := os.Create(token) ; err != nil {
+			fmt.Println("Error creating token file: ", err)
+			fmt.Println("Error ignored.")
+		} else {
+			_, err = fi.WriteString(string(token))
+			if err != nil {
+				fmt.Println("Error saving token: ", err)
+				fmt.Println("Error ignored.")
+			}
+			fi.Close()
+			fi=nil
+		}
 	}
 	serverCode := fmt.Sprintf("%s",strings.TrimSuffix(code, "\n"))
 	fmt.Printf("Server: %s \n", serverCode)
