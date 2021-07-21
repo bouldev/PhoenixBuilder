@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // CreativeContent is a packet sent by the server to set the creative inventory's content for a player.

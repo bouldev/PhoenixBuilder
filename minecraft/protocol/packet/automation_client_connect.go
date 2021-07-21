@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // AutomationClientConnect, previously called WSConnect, is used to make the client connect to a websocket

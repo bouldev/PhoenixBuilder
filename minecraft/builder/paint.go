@@ -1,6 +1,6 @@
 package builder
 
-import "gophertunnel/minecraft/mctype"
+import "phoenixbuilder/minecraft/mctype"
 import "github.com/disintegration/imaging"
 
 

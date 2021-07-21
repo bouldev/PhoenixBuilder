@@ -3,7 +3,7 @@ package packet
 import (
 	"bytes"
 	"encoding/binary"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // ResourcePackStack is sent by the server to send the order in which resource packs and behaviour packs

@@ -3,7 +3,7 @@ package packet
 import (
 	"bytes"
 	"encoding/binary"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // ResourcePackChunkRequest is sent by the client to request a chunk of data from a particular resource pack,

@@ -2,7 +2,7 @@ package command
 
 import (
 	"fmt"
-	"gophertunnel/minecraft/mctype"
+	"phoenixbuilder/minecraft/mctype"
 )
 
 

@@ -3,7 +3,7 @@ package packet
 import (
 	"bytes"
 	"encoding/binary"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // EducationSettings is a packet sent by the server to update Minecraft: Education Edition related settings.

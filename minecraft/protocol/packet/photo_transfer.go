@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // PhotoTransfer is sent by the server to transfer a photo (image) file to the client. It is typically used

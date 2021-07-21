@@ -1,4 +1,4 @@
-module gophertunnel
+module phoenixbuilder
 
 go 1.13
 

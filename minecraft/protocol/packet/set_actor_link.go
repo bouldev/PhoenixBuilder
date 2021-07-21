@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // SetActorLink is sent by the server to initiate an entity link client-side, meaning one entity will start

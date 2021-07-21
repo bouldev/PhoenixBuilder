@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"gophertunnel/minecraft/nbt"
+	"phoenixbuilder/minecraft/nbt"
 )
 
 // ItemInstance represents a unique instance of an item stack. These instances carry a specific network ID

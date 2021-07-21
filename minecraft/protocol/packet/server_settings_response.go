@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // ServerSettingsResponse is optionally sent by the server in response to a ServerSettingsRequest from the

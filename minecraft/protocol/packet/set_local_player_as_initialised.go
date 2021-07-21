@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // SetLocalPlayerAsInitialised is sent by the client in response to a PlayStatus packet with the status set

@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/term"
-	"gophertunnel/minecraft"
-	"gophertunnel/minecraft/builder"
-	"gophertunnel/minecraft/command"
-	"gophertunnel/minecraft/mctype"
-	"gophertunnel/minecraft/parse"
-	"gophertunnel/minecraft/protocol"
-	"gophertunnel/minecraft/protocol/packet"
+	"phoenixbuilder/minecraft"
+	"phoenixbuilder/minecraft/builder"
+	"phoenixbuilder/minecraft/command"
+	"phoenixbuilder/minecraft/mctype"
+	"phoenixbuilder/minecraft/parse"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -31,6 +31,7 @@ func main() {
 	fmt.Println("FastBuilder Phoenix Alpha 0.0.1")
 	fmt.Println("===============================")
 	fmt.Println("Copyright notice:")
+	fmt.Println("Contributors: CAIMEO, LNSSPsd")
 	fmt.Println("FastBuilder Phoenix used codes")
 	fmt.Println("from Sandertv's gophertunnel that")
 	fmt.Println("licensed under MIT license,at:")
@@ -39,6 +40,7 @@ func main() {
 	fmt.Println("ファスト　ビルダー！")
 	fmt.Println("F A S T  B U I L D E R")
 	fmt.Println("= = = =  = = = = = = =")
+
 	defer func() {
 		fmt.Println("Oh no! FastBuilder Phoenix crashed!\nAnd I dont know what happened:( ")
 		os.Exit(rand.Int())

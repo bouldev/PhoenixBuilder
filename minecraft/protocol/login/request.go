@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"gophertunnel/minecraft/protocol/login/jwt"
+	"phoenixbuilder/minecraft/protocol/login/jwt"
 	"time"
 )
 

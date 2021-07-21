@@ -3,8 +3,8 @@ package packet
 import (
 	"bytes"
 	"encoding/binary"
-	"gophertunnel/minecraft/nbt"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/nbt"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 const (

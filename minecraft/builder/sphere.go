@@ -1,6 +1,6 @@
 package builder
 
-import "gophertunnel/minecraft/mctype"
+import "phoenixbuilder/minecraft/mctype"
 
 func Sphere(config mctype.MainConfig)([]mctype.Module, error) {
 	Radius := config.Radius

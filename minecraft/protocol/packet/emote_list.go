@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/google/uuid"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // EmoteList is sent by the client every time it joins the server and when it equips new emotes. It may be

@@ -3,7 +3,7 @@ package packet
 import (
 	"bytes"
 	"github.com/go-gl/mathgl/mgl32"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // SpawnExperienceOrb is sent by the server to spawn an experience orb entity client-side. Much like the
