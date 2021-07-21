@@ -1,3 +1,14 @@
+ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
+IOS_STRIP=/usr/bin/strip
+LDID=/usr/bin/ldid
+else ifeq ($(shell uname -m | grep -E "x86_64|arm64" > /dev/null ; echo $${?}),0)
+IOS_STRIP=$(shell xcrun --sdk iphoneos strip)
+LDID=ldid2
+else
+IOS_STRIP=$${THEOS}/toolchain/linux/iphone/bin/strip
+LDID=$${THEOS}/toolchain/linux/iphone/bin/ldid
+endif
+
 all: build current ios-executable ios-lib android-executable-v7 android-executable-64 windows-executable
 build:
 	mkdir build
@@ -9,11 +20,17 @@ ios-executable:
 	rm -f build/phoenixbuilder-ios-executable
 	CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-executable
 	#node symbolkiller.js build/phoenixbuilder-ios-executable
-	${THEOS}/toolchain/linux/iphone/bin/ldid -S build/phoenixbuilder-ios-executable
+	$(IOS_STRIP) build/phoenixbuilder-ios-executable
+	$(LDID) -S build/phoenixbuilder-ios-executable
 ios-lib:
 	rm -f build/phoenixbuilder-ios-lib.a
 	CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -buildmode=c-archive -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-static.a
 	#node symbolkiller.js build/phoenixbuilder-ios-static.a
+macos: 
+	rm -f build/phoenixbuilder-macos*
+	CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-x86_64
+	CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-arm64
+	lipo -create build/phoenixbuilder-macos-x86_64 build/phoenixbuilder-macos-arm64 -output build/phoenixbuilder-macos
 android-executable-v7:
 	rm -f build/phoenixbuilder-android-executable-armv7
 	CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang GOOS=android GOARCH=arm CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-executable-armv7
