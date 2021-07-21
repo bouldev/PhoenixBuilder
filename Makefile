@@ -20,8 +20,8 @@ ios-executable:
 	rm -f build/phoenixbuilder-ios-executable
 	CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-executable
 	#node symbolkiller.js build/phoenixbuilder-ios-executable
-	$(IOS_STRIP) build/phoenixbuilder-ios-executable
-	$(LDID) -S build/phoenixbuilder-ios-executable
+	${IOS_STRIP} build/phoenixbuilder-ios-executable
+	${LDID} -S build/phoenixbuilder-ios-executable
 ios-lib:
 	rm -f build/phoenixbuilder-ios-lib.a
 	CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -buildmode=c-archive -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-static.a
