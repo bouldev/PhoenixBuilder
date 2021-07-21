@@ -182,3 +182,29 @@ func (client *Client) ShouldRespondUser(username string) bool {
 	shouldRespond,_:=resp["shouldRespond"].(bool)
 	return shouldRespond
 }
+
+type FTokenRequest struct {
+	Action string `json:"action"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+func (client *Client) GetToken(username string,password string) string, {
+	rspreq:=&FTokenRequest {
+		Action:"phoenix::get-token",
+		Username:username,
+		Password:password,
+	}
+	msg,err:=json.Marshal(rspreq)
+	if err!=nil {
+		panic("Failed to encode json")
+	}
+	client.SendMessage(msg)
+	resp,_:=<-client.serverResponse
+	code,_:=resp["code"].(float64)
+	if code != 0 {
+		return ""
+	}
+	usertoken,_:=resp["token"].(string)
+	return usertoken
+}
