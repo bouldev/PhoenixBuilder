@@ -1,11 +1,13 @@
+ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
 ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
 IOS_STRIP=/usr/bin/strip
 LDID=/usr/bin/ldid
-else ifeq ($(shell uname -m | grep -E "x86_64|arm64" > /dev/null ; echo $${?}),0)
+else
 IOS_STRIP=$(shell xcrun --sdk iphoneos strip)
 LDID=ldid2
+endif
 else
-IOS_STRIP=$${THEOS}/toolchain/linux/iphone/bin/strip
+IOS_STRIP=false
 LDID=$${THEOS}/toolchain/linux/iphone/bin/ldid
 endif
 
