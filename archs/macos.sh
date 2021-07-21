@@ -1,6 +1,6 @@
 #!/bin/bash
 export MACOSX_DEPLOYMENT_TARGET=10.12
-if [ $(uname) == "Darwin" ] && [ $(uname -m) == "arm64" ] || [ $(uname -m) == "x86_64" ]
+if [ $(uname) == "Darwin" ] && [ $(uname -m | grep -E "x86_64|arm64" > /dev/null ; echo ${?}) -eq 0 ]
 then
   exec "$(xcrun --sdk macosx -f clang)" -target x86_64-apple-darwin -target arm64-apple-darwin -isysroot "$(xcrun --sdk macosx --show-sdk-path)" $@
 elif [ $(uname) == "Darwin" ] && [ $(uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo ${?}) -eq 0 ]

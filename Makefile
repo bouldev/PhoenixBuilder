@@ -9,7 +9,7 @@ IOS_STRIP=$${THEOS}/toolchain/linux/iphone/bin/strip
 LDID=$${THEOS}/toolchain/linux/iphone/bin/ldid
 endif
 
-all: build current ios-executable ios-lib android-executable-v7 android-executable-64 windows-executable
+all: build current ios-executable ios-lib macos android-executable-v7 android-executable-64 windows-executable
 build:
 	mkdir build
 current:
