@@ -25,13 +25,19 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"encoding/json"
 )
+
+type FBPlainToken struct {
+	EncryptToken bool `json:"encrypt_token"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
 func main() {
 	fmt.Println("FastBuilder Phoenix Alpha 0.0.1")
 	fmt.Println("===============================")
 	fmt.Println("Copyright notice:")
-	fmt.Println("Contributors: CAIMEO, LNSSPsd")
 	fmt.Println("FastBuilder Phoenix used codes")
 	fmt.Println("from Sandertv's gophertunnel that")
 	fmt.Println("licensed under MIT license,at:")
@@ -59,7 +65,30 @@ func main() {
 		return
 	}
 	if _, err := os.Stat(token) ; os.IsNotExist(err) {
-		fmt.Println("fbtoken not found, please put fbtoken file in the same directory of PhoenixBuilder.")
+		fmt.Printf("Enter your FastBuilder User Center username: ")
+		fbusername, err := getInputUserName()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fbuntrim := fmt.Sprintf("%s",strings.TrimSuffix(fbusername, "\n"))
+		fbun := strings.TrimRight(fbuntrim, "\r\n")
+		fmt.Printf("Enter your FastBuilder User Center password: ")
+		fbpassword, err := term.ReadPassword(int(syscall.Stdin))
+		fmt.Printf("\n")
+		tokenstruct:=&FBPlainToken {
+			EncryptToken: true,
+			Username:fbun,
+			Password:string(fbpassword),
+		}
+		token,err := json.Marshal(tokenstruct)
+		if err != nil {
+			fmt.Println("Failed to generate temp token")
+			fmt.Println(err)
+			return
+		}
+		runShellClient(string(token),version)
+		/*fmt.Println("fbtoken not found, please put fbtoken file in the same directory of PhoenixBuilder.")
 		os.Exit(2)
 		if fi, err := os.Create(token) ; err != nil {
 			fmt.Println(err)
@@ -79,7 +108,7 @@ func main() {
 			defer fi.Close()
 			fmt.Printf("\n")
 			runShellClient(string(byteToken), version)
-		}
+		}*/
 	} else {
 		token, err := readToken(token)
 		if err != nil {
@@ -109,6 +138,13 @@ func runShellClient(token string, version string) {
 
 func runClient(token string, version string, code string, serverPasswd string) {
 	client := fbauth.CreateClient()
+	if token[0] == '{' {
+		token = client.GetToken("",token)
+		if token == "" {
+			fmt.Println("Incorrect username or password")
+			return
+		}
+	}
 	serverCode := fmt.Sprintf("%s",strings.TrimSuffix(code, "\n"))
 	fmt.Printf("Server: %s \n", serverCode)
 	dialer := minecraft.Dialer{
@@ -261,6 +297,13 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		}
 
 	}
+}
+
+func getInputUserName() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("Enter your FastBuilder User Center username: ")
+	fbusername, err := reader.ReadString('\n')
+	return fbusername, err
 }
 
 func getRentalServerCode() (string, string, error) {
