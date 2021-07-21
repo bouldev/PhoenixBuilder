@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gophertunnel/minecraft/builder"
-	"gophertunnel/minecraft/mctype"
+	"phoenixbuilder/minecraft/builder"
+	"phoenixbuilder/minecraft/mctype"
 	"testing"
 )
 

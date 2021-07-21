@@ -32,6 +32,7 @@ func main() {
 	fmt.Println("FastBuilder Phoenix Alpha 0.0.1")
 	fmt.Println("===============================")
 	fmt.Println("Copyright notice:")
+	fmt.Println("Contributors: CAIMEO, LNSSPsd")
 	fmt.Println("FastBuilder Phoenix used codes")
 	fmt.Println("from Sandertv's gophertunnel that")
 	fmt.Println("licensed under MIT license,at:")

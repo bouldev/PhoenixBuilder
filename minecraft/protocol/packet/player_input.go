@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"github.com/go-gl/mathgl/mgl32"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // PlayerInput is sent by the client to the server when the player is moving but the server does not allow it

@@ -3,8 +3,8 @@ package minecraft
 import (
 	"bytes"
 	"fmt"
-	"gophertunnel/minecraft/protocol/packet"
-	"gophertunnel/minecraft/resource"
+	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/minecraft/resource"
 )
 
 // resourcePackQueue is used to aid in the handling of resource pack queueing and downloading. Only one

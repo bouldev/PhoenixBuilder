@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // MapCreateLockedCopy is sent by the server to create a locked copy of one map into another map. In vanilla,
