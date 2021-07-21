@@ -2,8 +2,8 @@ package parse
 
 import (
 	"flag"
-	"gophertunnel/minecraft/builder"
-	"gophertunnel/minecraft/mctype"
+	"phoenixbuilder/minecraft/builder"
+	"phoenixbuilder/minecraft/mctype"
 	"strings"
 )
 

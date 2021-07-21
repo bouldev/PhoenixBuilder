@@ -1,13 +1,13 @@
-module gophertunnel
+module phoenixbuilder
 
-go 1.13
+go 1.16
 
 require (
 	github.com/Tnze/go-mc v1.17.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/uuid v1.1.2
-	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/gorilla/websocket v1.4.2
 	github.com/klauspost/compress v1.11.1
 	github.com/sandertv/go-raknet v1.7.6
 	go.uber.org/atomic v1.7.0

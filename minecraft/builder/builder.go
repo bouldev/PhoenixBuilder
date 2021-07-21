@@ -2,7 +2,7 @@ package builder
 
 import (
 	"errors"
-	"gophertunnel/minecraft/mctype"
+	"phoenixbuilder/minecraft/mctype"
 )
 
 

@@ -3,9 +3,9 @@ package minecraft
 import (
 	"fmt"
 	"github.com/sandertv/go-raknet"
-	"gophertunnel/minecraft/protocol"
-	"gophertunnel/minecraft/protocol/packet"
-	"gophertunnel/minecraft/resource"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/minecraft/resource"
 	"go.uber.org/atomic"
 	"io/ioutil"
 	"log"

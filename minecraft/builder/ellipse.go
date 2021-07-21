@@ -1,6 +1,6 @@
 package builder
 
-import "gophertunnel/minecraft/mctype"
+import "phoenixbuilder/minecraft/mctype"
 
 func Ellipse(config mctype.MainConfig) ([]mctype.Module, error) {
 	Length := config.Length

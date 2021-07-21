@@ -2,7 +2,7 @@ package packet
 
 import (
 	"bytes"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // AddBehaviourTree is sent by the server to the client. Its usage remains unknown, as behaviour packs are

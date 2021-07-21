@@ -14,11 +14,11 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
-	"gophertunnel/minecraft/protocol"
-	"gophertunnel/minecraft/protocol/login"
-	"gophertunnel/minecraft/protocol/login/jwt"
-	"gophertunnel/minecraft/protocol/packet"
-	"gophertunnel/minecraft/resource"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/login"
+	"phoenixbuilder/minecraft/protocol/login/jwt"
+	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/minecraft/resource"
 	"go.uber.org/atomic"
 	"io"
 	"log"
@@ -498,7 +498,7 @@ func (conn *Conn) parsePacket(data []byte, callPacketFunc bool) (packet.Packet, 
 	}
 	if violation, ok := pk.(*packet.PacketViolationWarning); ok && conn.sendPacketViolations {
 		errPacket, _ := conn.pool[uint32(violation.PacketID)]
-		return nil, fmt.Errorf("gophertunnel packet violation (type = %v for packet %T): %v (severity = %v)", violation.Type, errPacket, violation.ViolationContext, violation.Severity)
+		return nil, fmt.Errorf("phoenixbuilder packet violation (type = %v for packet %T): %v (severity = %v)", violation.Type, errPacket, violation.ViolationContext, violation.Severity)
 	}
 	return pk, nil
 }

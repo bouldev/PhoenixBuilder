@@ -2,8 +2,8 @@ package packet
 
 import (
 	"bytes"
-	"gophertunnel/minecraft/nbt"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/nbt"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // BlockActorData is sent by the server to update data of a block entity client-side, for example the data of

@@ -2,7 +2,7 @@ package minecraft
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // GameData is a loose wrapper around a part of the data found in the StartGame packet. It holds data sent

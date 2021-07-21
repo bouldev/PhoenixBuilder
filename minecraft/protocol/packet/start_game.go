@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/go-gl/mathgl/mgl32"
-	"gophertunnel/minecraft/nbt"
-	"gophertunnel/minecraft/protocol"
+	"phoenixbuilder/minecraft/nbt"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 const (

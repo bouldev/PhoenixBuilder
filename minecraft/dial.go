@@ -6,15 +6,15 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
-	fbauth "cv4-auth-client/auth"
+	fbauth "phoenixbuilder/cv4/auth"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
-	"gophertunnel/minecraft/protocol"
-	"gophertunnel/minecraft/protocol/login"
-	"gophertunnel/minecraft/protocol/packet"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/login"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"io/ioutil"
 	"log"
 	rand2 "math/rand"
@@ -91,10 +91,10 @@ func (dialer Dialer) Dial(network string, address string) (conn *Conn, err error
 	if dialer.ServerCode != "" {
 		data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 		pubKeyData := base64.StdEncoding.EncodeToString(data)
-		chainAddr, err := dialer.Client.Auth(dialer.ServerCode, dialer.Password, pubKeyData, dialer.Token, dialer.Version)
+		chainAddr, code, err := dialer.Client.Auth(dialer.ServerCode, dialer.Password, pubKeyData, dialer.Token, dialer.Version)
 		chainAndAddr := strings.Split(chainAddr,"|")
 		if err != nil {
-			if err.Error() == "Invalid TOKEN" {
+			if code == -3 {
 				ex, err := os.Executable()
 				if err != nil {
 					panic(err)

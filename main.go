@@ -3,18 +3,18 @@ package main
 import (
 	"bufio"
 	"crypto/sha256"
-	fbauth "cv4-auth-client/auth"
+	fbauth "phoenixbuilder/cv4/auth"
 	"encoding/hex"
 	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/term"
-	"gophertunnel/minecraft"
-	"gophertunnel/minecraft/builder"
-	"gophertunnel/minecraft/command"
-	"gophertunnel/minecraft/mctype"
-	"gophertunnel/minecraft/parse"
-	"gophertunnel/minecraft/protocol"
-	"gophertunnel/minecraft/protocol/packet"
+	"phoenixbuilder/minecraft"
+	"phoenixbuilder/minecraft/builder"
+	"phoenixbuilder/minecraft/command"
+	"phoenixbuilder/minecraft/mctype"
+	"phoenixbuilder/minecraft/parse"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -24,6 +24,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"runtime/debug"
 )
 
 
@@ -39,8 +40,12 @@ func main() {
 	fmt.Println("ファスト　ビルダー！")
 	fmt.Println("F A S T  B U I L D E R")
 	fmt.Println("= = = =  = = = = = = =")
+	fmt.Println("Authors: Ruphane, CAIMEO")
+	fmt.Println("Copyright (c) FastBuilder DevGroup,")
+	fmt.Println("Bouldev 2021")
 	defer func() {
 		fmt.Println("Oh no! FastBuilder Phoenix crashed!\nAnd I dont know what happened:( ")
+		debug.PrintStack()
 		os.Exit(rand.Int())
 	}()
 	ex, err := os.Executable()
@@ -250,7 +255,7 @@ func getRentalServerCode() (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	fmt.Println("Enter Password (Enter if not | without echoing): ")
+	fmt.Println("Enter Password (Press [Enter] if not set, input won't be echoed): ")
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	return code, string(bytePassword), err
 }

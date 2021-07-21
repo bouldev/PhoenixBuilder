@@ -3,7 +3,7 @@ package builder
 import (
 	"compress/gzip"
 	"github.com/Tnze/go-mc/nbt"
-	"gophertunnel/minecraft/mctype"
+	"phoenixbuilder/minecraft/mctype"
 	"io/ioutil"
 	"os"
 )
