@@ -25,7 +25,6 @@ import (
 	"syscall"
 	"time"
 	"runtime"
-	"rand"
 )
 
 type FBPlainToken struct {
@@ -55,7 +54,8 @@ func main() {
 			pterm.Error.Println("Press ENTER to exit.")
 			_, _=bufio.NewReader(os.Stdin).ReadString('\n')
 		}
-		os.Exit(rand.Int())
+		os.Exit(1)
+		//os.Exit(rand.Int())
 	}()
 	ex, err := os.Executable()
 	if err != nil {
