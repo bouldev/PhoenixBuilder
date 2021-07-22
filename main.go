@@ -24,6 +24,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"runtime"
+	"rand"
 )
 
 type FBPlainToken struct {
