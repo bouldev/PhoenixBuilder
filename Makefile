@@ -5,9 +5,9 @@ ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
 IOS_STRIP=/usr/bin/strip
 LDID=/usr/bin/ldid
 else
-IOS_STRIP=$(shell xcrun --sdk iphoneos strip)
+IOS_STRIP=$(shell xcrun --sdk iphoneos -f strip)
 LDID=ldid2
-TARGETS=${TARGETS} macos
+TARGETS:=${TARGETS} macos
 endif
 else
 IOS_STRIP=true
