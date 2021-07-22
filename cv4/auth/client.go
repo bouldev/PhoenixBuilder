@@ -178,7 +178,9 @@ func (client *Client) ShouldRespondUser() string {
 	msg,err:=json.Marshal(rspreq)
 	if err!=nil {
 		panic("Failed to encode json")
-		return true
+		//return true
+		//Torrekie 22/07/21 13.12: Don't understand why this, but LNSSPsd let me made this edit
+		return ""
 	}
 	client.SendMessage(msg)
 	resp,_:=<-client.serverResponse
@@ -187,7 +189,9 @@ func (client *Client) ShouldRespondUser() string {
 		//This should never happen
 		fmt.Println("UNK_1")
 		panic("??????")
-		return true
+		//return true
+		//Torrekie 22/07/21 13.12: and this
+		return ""
 	}
 	shouldRespond,_:=resp["username"].(string)
 	return shouldRespond
