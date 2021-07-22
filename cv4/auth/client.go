@@ -31,6 +31,8 @@ type Client struct {
 	
 	encryptor *encryptionSession
 	serverResponse chan map[string]interface{}
+	
+	closed bool
 }
 
 func CreateClient() *Client {
@@ -43,6 +45,7 @@ func CreateClient() *Client {
 		privateKey:privateKey,
 		salt:salt,
 		serverResponse:make(chan map[string]interface{}),
+		closed:false,
 	}
 	cl,_,err:=websocket.DefaultDialer.Dial(authServer,nil)
 	if err != nil {
@@ -51,7 +54,10 @@ func CreateClient() *Client {
 	authclient.client=cl
 	encrypted := make(chan struct{})
 	go func() {
-		defer panic("Core feature works incorrectly")
+		defer func() {
+			authclient.closed=true
+		}()
+		//defer panic("Core feature works incorrectly")
 		for {
 			_, msg, err:=cl.ReadMessage()
 			if err != nil {
@@ -115,6 +121,10 @@ func (client *Client) CanSendMessage() bool {
 func (client *Client) SendMessage(data[] byte){
 	if client.encryptor==nil {
 		panic("早すぎる")
+	}
+	if client.closed {
+		fmt.Println("Error: SendMessage: Connection closed")
+		panic("Message after auth close")
 	}
 	client.encryptor.encrypt(data)
 	var inbuf bytes.Buffer
