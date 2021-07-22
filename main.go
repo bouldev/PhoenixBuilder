@@ -49,7 +49,11 @@ func main() {
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
 	defer func() {
 		pterm.Error.Println("Oh no! FastBuilder Phoenix crashed! ")
-		//os.Exit(rand.Int())
+		if runtime.GOOS == "windows" {
+			pterm.Error.Println("Press ENTER to exit.")
+			_, _=bufio.NewReader(os.Stdin).ReadString('\n')
+		}
+		os.Exit(rand.Int())
 	}()
 	ex, err := os.Executable()
 	if err != nil {
@@ -233,7 +237,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 							tellraw(conn, fmt.Sprintf("Setting delay error: ", err))
 						} else {
 							delay = ms
-							tellraw(conn, fmt.Sprintf("Delay set: %f", delay))
+							tellraw(conn, fmt.Sprintf("Delay set: %d", delay))
 						}
 					} else if chat[0] == "get" {
 						_ = sendCommand("gamerule sendcommandfeedback true", uuid.New(), conn)
