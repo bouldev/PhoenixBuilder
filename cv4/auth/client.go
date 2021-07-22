@@ -159,13 +159,11 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 
 type RespondRequest struct {
 	Action string `json:"action"`
-	Username string `json:"username"`
 }
 
-func (client *Client) ShouldRespondUser(username string) bool {
+func (client *Client) ShouldRespondUser() string {
 	rspreq:=&RespondRequest {
-		Action:"phoenix::user",
-		Username:username,
+		Action:"phoenix::get-user",
 	}
 	msg,err:=json.Marshal(rspreq)
 	if err!=nil {
@@ -176,10 +174,12 @@ func (client *Client) ShouldRespondUser(username string) bool {
 	resp,_:=<-client.serverResponse
 	code,_:=resp["code"].(float64)
 	if code != 0 {
+		//This should never happen
+		fmt.Println("UNK_1")
 		panic("??????")
 		return true
 	}
-	shouldRespond,_:=resp["shouldRespond"].(bool)
+	shouldRespond,_:=resp["username"].(string)
 	return shouldRespond
 }
 

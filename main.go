@@ -180,6 +180,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		return
 	}
 	defer conn.Close()
+	appUserName := client.ShouldRespondUser()
 
 	// Make the client spawn in the world: This is a blocking operation that will return an error if the
 	// client times out while spawning.
@@ -246,7 +247,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			if p.TextType==packet.TextTypeChat {
 				//TODO: SourceName == FBAuthorizedUserName check
 				//TODO: OP Check
-				if client.ShouldRespondUser(p.SourceName) {
+				if appUserName == p.SourceName {
 					user = p.SourceName
 					chat := strings.Split(p.Message, " ")
 					fmt.Printf("<%s> %s\n", p.SourceName, p.Message)
@@ -269,6 +270,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 						blocks, err := builder.Generate(cfg)
 						if err != nil {
 							fmt.Println(err)
+							tellraw(conn, fmt.Sprintf("Error: %v",err))
 						} else {
 							t1 := time.Now()
 							for _, b := range blocks {
