@@ -5,26 +5,24 @@ import (
 	"phoenixbuilder/minecraft/mctype"
 )
 
-
 var Builder = map[string]func(config mctype.MainConfig) ([]mctype.Module, error){
 	"round":     Round,
 	"circle":    Circle,
 	"sphere":    Sphere,
 	"ellipse":   Ellipse,
 	"ellipsoid": Ellipsoid,
-	"paint":     Paint,
-	"schem": Schematic,
+	"plot":     Paint,
+	"schem":     Schematic,
 }
 
-func Generate(config mctype.MainConfig) ([]mctype.Module, error){
+func Generate(config mctype.MainConfig) ([]mctype.Module, error) {
 	if config.Execute == "" {
-		return []mctype.Module{}, errors.New("Not a Command.")
-	}else{
+		return []mctype.Module{}, errors.New("Command Not Found.")
+	} else {
 		return Builder[config.Execute](config)
-
 	}
 }
 
-func PipeGenerate(configs []mctype.Config) []mctype.Module{
+func PipeGenerate(configs []mctype.Config) []mctype.Module {
 	return []mctype.Module{}
 }

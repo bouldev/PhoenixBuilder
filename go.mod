@@ -9,6 +9,8 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2
 	github.com/klauspost/compress v1.11.1
+	github.com/lucasb-eyer/go-colorful v1.2.0
+	github.com/pterm/pterm v0.12.29
 	github.com/sandertv/go-raknet v1.7.6
 	go.uber.org/atomic v1.7.0
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b

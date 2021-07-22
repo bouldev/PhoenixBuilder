@@ -13,5 +13,5 @@ func TestFile(t *testing.T) {
 		panic(err)
 	}
 	exPath := filepath.Dir(ex)
-	fmt.Println(ex,exPath)
+	fmt.Println(ex, exPath)
 }

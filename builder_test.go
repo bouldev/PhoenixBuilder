@@ -6,20 +6,18 @@ import (
 	"testing"
 )
 
-
-
-func TestBuilder(t *testing.T){
+func TestBuilder(t *testing.T) {
 	mcfg := mctype.MainConfig{
-		Execute:   "schematic",
-		Block:     mctype.Block{
+		Execute: "plot",
+		Block: mctype.Block{
 			Name: "",
 			Data: 0,
 		},
-		OldBlock:  mctype.Block{
+		OldBlock: mctype.Block{
 			Name: "",
 			Data: 0,
 		},
-		Begin:     mctype.Position{
+		Begin: mctype.Position{
 			X: 0,
 			Y: 0,
 			Z: 0,
@@ -32,8 +30,8 @@ func TestBuilder(t *testing.T){
 		Height:    0,
 		Method:    "",
 		OldMethod: "",
-		Facing:    "",
-		Path:      "C:\\Users\\lenovo\\Downloads\\218.schematic",
+		Facing:    "y",
+		Path:      "test.png",
 		Shape:     "",
 	}
 	b, err := builder.Generate(mcfg)
