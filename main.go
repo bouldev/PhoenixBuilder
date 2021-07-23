@@ -156,6 +156,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	conn, err := dialer.Dial("raknet", "")
 
 	if err != nil {
+		pterm.Error.Println(err)
 		panic(err)
 	}
 	defer conn.Close()
