@@ -70,3 +70,5 @@ fabric.properties
 .idea/httpRequests
 build/
 *.schematic
+*.mcacblock
+

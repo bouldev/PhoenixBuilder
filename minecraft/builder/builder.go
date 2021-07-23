@@ -11,8 +11,9 @@ var Builder = map[string]func(config mctype.MainConfig) ([]mctype.Module, error)
 	"sphere":    Sphere,
 	"ellipse":   Ellipse,
 	"ellipsoid": Ellipsoid,
-	"plot":     Paint,
+	"plot":      Paint,
 	"schem":     Schematic,
+	"acme":      Acme,
 }
 
 func Generate(config mctype.MainConfig) ([]mctype.Module, error) {

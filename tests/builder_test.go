@@ -8,7 +8,7 @@ import (
 
 func TestBuilder(t *testing.T) {
 	mcfg := mctype.MainConfig{
-		Execute: "plot",
+		Execute: "acme",
 		Block: mctype.Block{
 			Name: "",
 			Data: 0,
@@ -31,7 +31,7 @@ func TestBuilder(t *testing.T) {
 		Method:    "",
 		OldMethod: "",
 		Facing:    "y",
-		Path:      "test.png",
+		Path:      "../210606_115440_79x87x115.mcacblock",
 		Shape:     "",
 	}
 	b, err := builder.Generate(mcfg)

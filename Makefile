@@ -56,4 +56,4 @@ build/phoenixbuilder-windows-executable.exe: build /usr/bin/i686-w64-mingw32-gcc
 build/hashes.json: build genhash.js
 	node genhash.js
 clean:
-	rm -rf build
+	rm -f build/phoenixbuilder*

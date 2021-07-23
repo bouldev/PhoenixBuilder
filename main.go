@@ -206,9 +206,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	}
 
 	zeroId, _ := uuid.NewUUID()
-	_ = tellraw(conn, "Welcome to FastBuilder!")
-	_ = tellraw(conn, fmt.Sprintf("Operator: %s", user))
-	_ = sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
+	tellraw(conn, "Welcome to FastBuilder!")
+	tellraw(conn, fmt.Sprintf("Operator: %s", user))
+	sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
 	// A loop that reads packets from the connection until it is closed.
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
@@ -224,7 +224,12 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				if user == p.SourceName {
 					chat := strings.Split(p.Message, " ")
 					pterm.Println(pterm.Yellow(fmt.Sprintf("<%s>", user)), pterm.LightCyan(p.Message))
-					if chat[0] == "set" {
+					if chat[0] == "fbexit" {
+						tellraw(conn, "Quit correctly")
+						fmt.Printf("Quit correctly\n")
+						conn.Close()
+						os.Exit(0)
+					} else if chat[0] == "set" {
 						X, _ := strconv.Atoi(chat[1])
 						Y, _ := strconv.Atoi(chat[2])
 						Z, _ := strconv.Atoi(chat[3])
@@ -249,7 +254,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 					} else {
 						cfg := parse.Parse(p.Message, mConfig)
 						blocks, err := builder.Generate(cfg)
-						if err != nil && cfg.Execute != "" {
+						if cfg.Execute == "" {
+							break
+						}
+						if err != nil /*&& cfg.Execute != ""*/ {
 							tellraw(conn, fmt.Sprintf("Error: %v", err))
 						} else {
 							t1 := time.Now()
@@ -297,7 +305,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 
 func getInputUserName() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	pterm.Println("Enter your FastBuilder User Center username: ")
+	pterm.Printf("Enter your FastBuilder User Center username: ")
 	fbusername, err := reader.ReadString('\n')
 	return fbusername, err
 }
