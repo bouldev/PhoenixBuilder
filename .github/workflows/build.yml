@@ -31,7 +31,7 @@ jobs:
         chmod 0600 ~/fbkey
     - name: Upload binaries
       run: |
-        echo "put fb-mac-binaries.tar.gz">~/a
+        echo "put fb-macos-binaries.tar.gz">~/a
         sftp -i ~/fbkey -b ~/a root@fastbuilder.pro
         ssh -i ~/fbkey root@fastbuilder.pro "mkdir -p fbbinaries;mv fb-macos-binaries.tar.gz fbbinaries/"
   linux-build:

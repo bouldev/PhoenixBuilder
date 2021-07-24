@@ -7,7 +7,7 @@ LDID=/usr/bin/ldid
 else
 IOS_STRIP=$(shell xcrun --sdk iphoneos -f strip)
 LDID=ldid2
-TARGETS:=${TARGETS} macos
+TARGETS:=${TARGETS} macos ios-executable ios-lib
 endif
 else
 IOS_STRIP=true
