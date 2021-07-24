@@ -16,6 +16,7 @@ jobs:
         go-version: 1.16
     - name: Set up NDK
       uses: nttld/setup-ndk@v1
+      id: setup-ndk
       with:
         ndk-version: r20b
         add-to-path: false
