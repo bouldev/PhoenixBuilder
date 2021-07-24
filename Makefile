@@ -1,5 +1,5 @@
 .PHONY: all clean current ios-executable ios-lib macos android-executable-v7 android-executable-64 windows-executable
-TARGETS:=build current
+TARGETS:=build/ current
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
 ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
 IOS_STRIP=/usr/bin/strip
