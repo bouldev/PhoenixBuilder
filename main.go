@@ -38,7 +38,7 @@ func main() {
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.0.2"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.1.0"))
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
 		"FastBuilder Phoenix used codes\n" +
 		"from Sandertv's Gophertunnel that\n" +
