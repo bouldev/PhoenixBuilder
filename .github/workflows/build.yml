@@ -25,6 +25,7 @@ jobs:
     - name: Pack binaries
       run: |
         mv build/hashes.json build/hashes-1.json
+        rm build/phoenixbuilder
         tar -czf fb-macos-binaries.tar.gz build/*
     - name: Load Key
       env:
@@ -38,7 +39,7 @@ jobs:
       run: |
         echo "put fb-macos-binaries.tar.gz">~/a
         sftp -i ~/fbkey -b ~/a root@fastbuilder.pro
-        ssh -i ~/fbkey root@fastbuilder.pro "mkdir -p fbbinaries;mv fb-macos-binaries.tar.gz fbbinaries/"
+        ssh -i ~/fbkey root@fastbuilder.pro "mkdir -p fbbinaries;mkdir -p fbbinaries/mac;cd fbbinaries/mac;mv ~/fb-macos-binaries.tar.gz ./;tar -xzf fb-macos-binaries.tar.gz;rm fb-macos-binaries.tar.gz;mv build/* ../;cd ../;rm -rf mac"
   linux-build:
     runs-on: ubuntu-latest
     steps:
@@ -75,7 +76,7 @@ jobs:
       run: |
         echo "put fb-linux-binaries.tar.gz">~/a
         sftp -i ~/fbkey -b ~/a root@fastbuilder.pro
-        ssh -i ~/fbkey root@fastbuilder.pro "mkdir -p fbbinaries;mv fb-linux-binaries.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz"
+        ssh -i ~/fbkey root@fastbuilder.pro "mkdir -p fbbinaries;mv fb-linux-binaries.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rm -rf build"
 
 
 
