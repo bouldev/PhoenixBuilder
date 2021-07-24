@@ -37,7 +37,7 @@ windows-executable: build/phoenixbuilder-windows-executable.exe
 
 build/:
 	mkdir build
-build/phoenixbuilder: build ${SRCS_GO}
+build/phoenixbuilder: build/ ${SRCS_GO}
 	CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder
 build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}
 	CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-executable
