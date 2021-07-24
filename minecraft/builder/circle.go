@@ -2,11 +2,11 @@ package builder
 
 import "phoenixbuilder/minecraft/mctype"
 
-func Circle(config mctype.MainConfig)([]mctype.Module, error) {
+func Circle(config *mctype.MainConfig)([]*mctype.Module, error) {
 	Radius := config.Radius
 	Facing := config.Facing
 	point := config.Position
-	var BlockSet []mctype.Module
+	var BlockSet []*mctype.Module
 	switch Facing {
 	case "x":
 		for i := -Radius; i <= Radius; i++ {
@@ -14,8 +14,8 @@ func Circle(config mctype.MainConfig)([]mctype.Module, error) {
 				if i*i+j*j < Radius*Radius && i*i+j*j >= (Radius-1)*(Radius-1) {
 					var b mctype.Module
 					b.Point = mctype.Position{point.X, point.Y + i, point.Z + j}
-					b.Block = config.Block
-					BlockSet = append(BlockSet, b)
+					//b.Block = config.Block
+					BlockSet = append(BlockSet,&b)
 				}
 			}
 		}
@@ -25,8 +25,8 @@ func Circle(config mctype.MainConfig)([]mctype.Module, error) {
 				if i*i+j*j < Radius*Radius && i*i+j*j >= (Radius-1)*(Radius-1) {
 					var b mctype.Module
 					b.Point = mctype.Position{point.X + i, point.Y, point.Z + j}
-					b.Block = config.Block
-					BlockSet = append(BlockSet, b)
+					//b.Block = config.Block
+					BlockSet = append(BlockSet, &b)
 				}
 			}
 		}
@@ -36,8 +36,8 @@ func Circle(config mctype.MainConfig)([]mctype.Module, error) {
 				if i*i+j*j < Radius*Radius && i*i+j*j >= (Radius-1)*(Radius-1) {
 					var b mctype.Module
 					b.Point = mctype.Position{point.X + i, point.Y + j, point.Z}
-					b.Block = config.Block
-					BlockSet = append(BlockSet, b)
+					//b.Block = config.Block
+					BlockSet = append(BlockSet, &b)
 				}
 			}
 		}

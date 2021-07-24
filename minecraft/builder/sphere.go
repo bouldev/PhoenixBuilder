@@ -2,11 +2,11 @@ package builder
 
 import "phoenixbuilder/minecraft/mctype"
 
-func Sphere(config mctype.MainConfig)([]mctype.Module, error) {
+func Sphere(config *mctype.MainConfig)([]*mctype.Module, error) {
 	Radius := config.Radius
 	Shape := config.Shape
 	point := config.Position
-	var BlockSet []mctype.Module
+	var BlockSet []*mctype.Module
 	switch Shape {
 	default:
 	case "hollow":
@@ -16,8 +16,8 @@ func Sphere(config mctype.MainConfig)([]mctype.Module, error) {
 					if i*i+j*j+k*k <= Radius*Radius && i*i+j*j+k*k >= (Radius-1)*(Radius-1) {
 						var b mctype.Module
 						b.Point = mctype.Position{point.X + i, point.Y + j, point.Z + k}
-						b.Block = config.Block
-						BlockSet = append(BlockSet, b)
+						//b.Block = config.Block
+						BlockSet = append(BlockSet, &b)
 					}
 				}
 			}
@@ -29,8 +29,8 @@ func Sphere(config mctype.MainConfig)([]mctype.Module, error) {
 					if i*i+j*j+k*k <= Radius*Radius {
 						var b mctype.Module
 						b.Point = mctype.Position{point.X + i, point.Y + j, point.Z + k}
-						b.Block = config.Block
-						BlockSet = append(BlockSet, b)
+						//b.Block = config.Block
+						BlockSet = append(BlockSet, &b)
 					}
 				}
 			}

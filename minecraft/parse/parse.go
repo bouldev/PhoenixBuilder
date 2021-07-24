@@ -7,12 +7,12 @@ import (
 	"strings"
 )
 
-func Parse(Message string, defaultConfig mctype.MainConfig) mctype.MainConfig {
+func Parse(Message string, defaultConfig *mctype.MainConfig) *mctype.MainConfig {
 	SLC := strings.Split(Message," ")
-	Config := mctype.MainConfig{
+	Config := &mctype.MainConfig{
 		Execute:   "",
-		Block:     mctype.Block{},
-		OldBlock:  mctype.Block{},
+		Block:     &mctype.ConstBlock{},
+		OldBlock:  &mctype.ConstBlock{},
 		Begin:     mctype.Position{},
 		End:       mctype.Position{},
 		Position:  defaultConfig.Position,
@@ -25,6 +25,8 @@ func Parse(Message string, defaultConfig mctype.MainConfig) mctype.MainConfig {
 	}
 
 	FlagSet := flag.NewFlagSet("Parser", 0)
+	var tempBlockData int
+	var tempOldBlockData int
 	//Length,  Width and Height
 	FlagSet.IntVar(&Config.Length,"length",defaultConfig.Length,"The length")
 	FlagSet.IntVar(&Config.Length,"l",defaultConfig.Length,"The length")
@@ -45,13 +47,13 @@ func Parse(Message string, defaultConfig mctype.MainConfig) mctype.MainConfig {
 	//Block
 	FlagSet.StringVar(&Config.Block.Name,"block",defaultConfig.Block.Name,"Blocks that make up the building")
 	FlagSet.StringVar(&Config.Block.Name,"b",defaultConfig.Block.Name,"Blocks that make up the building")
-	FlagSet.IntVar(&Config.Block.Data,"data",defaultConfig.Block.Data,"The data of Block")
-	FlagSet.IntVar(&Config.Block.Data,"d",defaultConfig.Block.Data,"The data of Block")
+	FlagSet.IntVar(&tempBlockData,"data",int(defaultConfig.Block.Data),"The data of Block")
+	FlagSet.IntVar(&tempBlockData,"d",int(defaultConfig.Block.Data),"The data of Block")
 	//OldBlock
 	FlagSet.StringVar(&Config.OldBlock.Name,"old_block",defaultConfig.OldBlock.Name,"Blocks that make up the building")
 	FlagSet.StringVar(&Config.OldBlock.Name,"ob",defaultConfig.OldBlock.Name,"Blocks that make up the building")
-	FlagSet.IntVar(&Config.OldBlock.Data,"old_data",defaultConfig.OldBlock.Data,"The data of Block")
-	FlagSet.IntVar(&Config.OldBlock.Data,"od",defaultConfig.OldBlock.Data,"The data of Block")
+	FlagSet.IntVar(&tempOldBlockData,"old_data",int(defaultConfig.OldBlock.Data),"The data of Block")
+	FlagSet.IntVar(&tempOldBlockData,"od",int(defaultConfig.OldBlock.Data),"The data of Block")
 
 	FlagSet.Parse(SLC[1:])
 	for k, _ := range builder.Builder {
@@ -69,12 +71,14 @@ func Parse(Message string, defaultConfig mctype.MainConfig) mctype.MainConfig {
 	//		}
 	//	}
 	//}
+	Config.Block.Data=int16(tempBlockData)
+	Config.OldBlock.Data=int16(tempOldBlockData)
 	return Config
 }
 
-func PipeParse(Message string, config mctype.MainConfig) []mctype.MainConfig{
+func PipeParse(Message string, config *mctype.MainConfig) []*mctype.MainConfig{
 	ChatSlice := strings.Split(Message,"|")
-	var Configs []mctype.MainConfig
+	var Configs []*mctype.MainConfig
 	for _, v := range ChatSlice {
 		Configs = append(Configs,Parse(v,config))
 	}

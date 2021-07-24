@@ -42,13 +42,14 @@ func main() {
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
 		"FastBuilder Phoenix used codes\n" +
 		"from Sandertv's Gophertunnel that\n" +
-		"licensed under MIT license,at:\n" +
+		"licensed under MIT license, at:\n" +
 		"https://github.com/Sandertv/gophertunnel"))
 	pterm.Println(pterm.Yellow("ファスト　ビルダー！"))
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
-	defer func() {
+	if runtime.GOOS == "windows" {}
+	/*defer func() {
 		pterm.Error.Println("Oh no! FastBuilder Phoenix crashed! ")
 		if runtime.GOOS == "windows" {
 			pterm.Error.Println("Press ENTER to exit.")
@@ -56,7 +57,7 @@ func main() {
 		}
 		os.Exit(1)
 		//os.Exit(rand.Int())
-	}()
+	}()*/
 	ex, err := os.Executable()
 	if err != nil {
 		panic(err)
@@ -165,20 +166,22 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	delay := 1000 //BP MMS
 	// Make the client spawn in the world: This is a blocking operation that will return an error if the
 	// client times out while spawning.
+	
+	conn.WritePacket(&packet.PlayerAction {
+		EntityRuntimeID: conn.GameData().EntityRuntimeID,
+		ActionType: packet.PlayerActionRespawn,
+	})
+	
 	if err := conn.DoSpawn(); err != nil {
+		pterm.Error.Println("Failed to spawn")
 		panic(err)
 	}
+	pterm.Println(pterm.Yellow("Player spawned successfully."))
 
 	mConfig := mctype.MainConfig{
 		Execute: "",
-		Block: mctype.Block{
-			Name: "iron_block",
-			Data: 0,
-		},
-		OldBlock: mctype.Block{
-			Name: "air",
-			Data: 0,
-		},
+		Block: builder.IronBlock,
+		OldBlock: builder.AirBlock,
 		Begin: mctype.Position{
 			X: 0,
 			Y: 0,
@@ -224,7 +227,27 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				if user == p.SourceName {
 					chat := strings.Split(p.Message, " ")
 					pterm.Println(pterm.Yellow(fmt.Sprintf("<%s>", user)), pterm.LightCyan(p.Message))
-					if chat[0] == "fbexit" {
+					if chat[0] == "test" {
+						go func(){
+							turn := true
+							for {
+								if turn {
+									conn.WritePacket(&packet.PlayerAction{
+										EntityRuntimeID: conn.GameData().EntityRuntimeID,
+										ActionType: packet.PlayerActionStartSneak,
+									})
+									turn=false
+								}else{
+									conn.WritePacket(&packet.PlayerAction{
+										EntityRuntimeID: conn.GameData().EntityRuntimeID,
+										ActionType: packet.PlayerActionStopSneak,
+									})
+									turn=true
+								}
+								time.Sleep(time.Second)
+							}
+						}()
+					} else if chat[0] == "fbexit" {
 						tellraw(conn, "Quit correctly")
 						fmt.Printf("Quit correctly\n")
 						conn.Close()
@@ -248,20 +271,24 @@ func runClient(token string, version string, code string, serverPasswd string) {
 							tellraw(conn, fmt.Sprintf("Delay set: %d", delay))
 						}
 					} else if chat[0] == "get" {
-						_ = sendCommand("gamerule sendcommandfeedback true", uuid.New(), conn)
+						sendCommand("gamerule sendcommandfeedback true", uuid.New(), conn)
 						cmd := fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", user)
 						sendCommand(cmd, zeroId, conn)
 					} else {
-						cfg := parse.Parse(p.Message, mConfig)
+						cfg := parse.Parse(p.Message, &mConfig)
 						blocks, err := builder.Generate(cfg)
 						if cfg.Execute == "" {
 							break
 						}
 						if err != nil /*&& cfg.Execute != ""*/ {
 							tellraw(conn, fmt.Sprintf("Error: %v", err))
+						} else if (blocks == nil) {
+							tellraw(conn, "Nothing generated.")
 						} else {
 							t1 := time.Now()
 							go func() {
+								sendCommand("gamerule sendcommandfeedback false", uuid.New(), conn)
+								sleepTime:=time.Duration(delay) * time.Microsecond
 								for _, b := range blocks {
 									request := command.SetBlockRequest(b, cfg)
 									uuid1, _ := uuid.NewUUID()
@@ -269,12 +296,14 @@ func runClient(token string, version string, code string, serverPasswd string) {
 									if err != nil {
 										panic(err)
 									}
-									time.Sleep(time.Duration(delay) * time.Microsecond)
+									time.Sleep(sleepTime)
 								}
 								timeUsed := time.Now().Sub(t1)
 								tellraw(conn, fmt.Sprintf("%v block(s) have been changed.", len(blocks)))
 								tellraw(conn, fmt.Sprintf("Time used: %v second(s)", timeUsed.Seconds()))
 								tellraw(conn, fmt.Sprintf("Average speed: %v blocks/second", float64(len(blocks))/timeUsed.Seconds()))
+								runtime.GC()
+								sendCommand("gamerule sendcommandfeedback true", uuid.New(), conn)
 							}()
 						}
 
