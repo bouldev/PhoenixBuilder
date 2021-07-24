@@ -1,0 +1,28 @@
+name: Build android, linux x86_64, windows binaries
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+    - name: Set up NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r20b
+        add-to-path: false
+    - name: Move NDK
+      run: mv ${{ steps.setup-ndk.outputs.ndk-path }} ${HOME}/android-ndk-r20b
+    - name: Install mingw compiler
+      run: sudo apt install gcc-mingw-w64-i686 gcc -y
+    - name: Build
+      run: make
