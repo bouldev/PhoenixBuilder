@@ -23,6 +23,6 @@ jobs:
     - name: Move NDK
       run: mv ${{ steps.setup-ndk.outputs.ndk-path }} ${HOME}/android-ndk-r20b
     - name: Install mingw compiler
-      run: apt install gcc-mingw-w64-i686 gcc -y
+      run: sudo apt install gcc-mingw-w64-i686 gcc -y
     - name: Build
       run: make
