@@ -5,7 +5,7 @@ import (
 	"phoenixbuilder/minecraft/mctype"
 )
 
-var Builder = map[string]func(config *mctype.MainConfig) ([]*mctype.Module, error){
+var Builder = map[string]func(config *mctype.MainConfig, blc chan *mctype.Module) error{
 	"round":     Round,
 	"circle":    Circle,
 	"sphere":    Sphere,
@@ -16,11 +16,11 @@ var Builder = map[string]func(config *mctype.MainConfig) ([]*mctype.Module, erro
 	"acme":      Acme,
 }
 
-func Generate(config *mctype.MainConfig) ([]*mctype.Module, error) {
+func Generate(config *mctype.MainConfig, blc chan *mctype.Module) error {
 	if config.Execute == "" {
-		return nil, errors.New("Command Not Found.")
+		return errors.New("Command Not Found.")
 	} else {
-		return Builder[config.Execute](config)
+		return Builder[config.Execute](config, blc)
 	}
 }
 

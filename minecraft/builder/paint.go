@@ -12,7 +12,7 @@ type ColorBlock struct {
 	Block *mctype.ConstBlock
 }
 
-func Paint(config *mctype.MainConfig) ([]*mctype.Module, error) {
+func Paint(config *mctype.MainConfig, blc chan *mctype.Module) error {
 	path := config.Path
 	width := config.Width
 	height := config.Height
@@ -20,14 +20,14 @@ func Paint(config *mctype.MainConfig) ([]*mctype.Module, error) {
 	pos := config.Position
 	img, err := imaging.Open(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if width != 0 && height != 0 {
 		img = imaging.Resize(img, width, height, imaging.Lanczos)
 	}
 	Max := img.Bounds().Max
 	X, Y := Max.X, Max.Y
-	BlockSet := make([]*mctype.Module, X*Y)
+	//BlockSet := make([]*mctype.Module, X*Y)
 	index := 0
 	for x := 0; x < X; x++ {
 		for y := 0; y < Y; y++ {
@@ -39,9 +39,9 @@ func Paint(config *mctype.MainConfig) ([]*mctype.Module, error) {
 			}
 			switch facing {
 			default:
-				return nil, errors.New("Facing (-f) not defined")
+				return errors.New("Facing (-f) not defined")
 			case "x":
-				BlockSet[index] = &mctype.Module{
+				blc <- &mctype.Module{
 					Point: mctype.Position{
 						X: pos.X,
 						Y: x + pos.Y,
@@ -50,7 +50,7 @@ func Paint(config *mctype.MainConfig) ([]*mctype.Module, error) {
 					Block: getBlock(c),
 				}
 			case "y":
-				BlockSet[index] = &mctype.Module{
+				blc <- &mctype.Module{
 					Point: mctype.Position{
 						X: x + pos.X,
 						Y: pos.Y,
@@ -60,7 +60,7 @@ func Paint(config *mctype.MainConfig) ([]*mctype.Module, error) {
 					Block: getBlock(c),
 				}
 			case "z":
-				BlockSet[index] = &mctype.Module{
+				blc <- &mctype.Module{
 					Point: mctype.Position{
 						X: x + pos.X,
 						Y: y + pos.Y,
@@ -73,7 +73,7 @@ func Paint(config *mctype.MainConfig) ([]*mctype.Module, error) {
 			index++
 		}
 	}
-	return BlockSet, nil
+	return nil
 }
 
 func getBlock(c colorful.Color) *mctype.Block {

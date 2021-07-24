@@ -8,15 +8,15 @@ import (
 	"os"
 )
 
-func Schematic(config *mctype.MainConfig) ([]*mctype.Module, error) {
+func Schematic(config *mctype.MainConfig, blc chan *mctype.Module) error {
 	file, err := os.Open(config.Path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
 	gzip, err := gzip.NewReader(file)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer gzip.Close()
 	buffer, err := ioutil.ReadAll(gzip)
@@ -33,9 +33,8 @@ func Schematic(config *mctype.MainConfig) ([]*mctype.Module, error) {
 	}
 
 	if err := nbt.Unmarshal(buffer, &SchematicModule); err != nil {
-		return nil, err
+		return err
 	}
-	var BlockSet []*mctype.Module
 	Size := [3]int{SchematicModule.Width, SchematicModule.Height, SchematicModule.Length}
 	Offset := [3]int{SchematicModule.WEOffsetX, SchematicModule.WEOffsetY, SchematicModule.WEOffsetZ}
 	X, Y, Z := 0, 1, 2
@@ -59,11 +58,11 @@ func Schematic(config *mctype.MainConfig) ([]*mctype.Module, error) {
 					b.Name = &PodzolName
 				}
 				if *b.Name != "air" {
-					BlockSet = append(BlockSet, &mctype.Module{Point: p, Block: &b})
+					blc <- &mctype.Module{Point: p, Block: &b}
 				}
 				BlockIndex++
 			}
 		}
 	}
-	return BlockSet, nil
+	return nil
 }

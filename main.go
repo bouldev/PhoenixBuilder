@@ -16,10 +16,10 @@ import (
 	"phoenixbuilder/minecraft/builder"
 	"phoenixbuilder/minecraft/command"
 	"phoenixbuilder/minecraft/mctype"
-	"phoenixbuilder/minecraft/parse"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/utils"
+	"phoenixbuilder/minecraft/fbtask"
 	"strconv"
 	"strings"
 	"syscall"
@@ -163,7 +163,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	defer conn.Close()
 	pterm.Println(pterm.Yellow("Successfully created minecraft dialer."))
 	user := client.ShouldRespondUser()
-	delay := 1000 //BP MMS
+	//delay := 1000 //BP MMS
 	// Make the client spawn in the world: This is a blocking operation that will return an error if the
 	// client times out while spawning.
 	
@@ -206,6 +206,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		Facing:    "y",
 		Path:      "",
 		Shape:     "solid",
+		Delay:     decideDelay(mctype.DelayModeContinuous),
+		DelayMode: mctype.DelayModeContinuous,
+		DelayThreshold:decideDelayThreshold(),
 	}
 
 	zeroId, _ := uuid.NewUUID()
@@ -263,50 +266,221 @@ func runClient(token string, version string, code string, serverPasswd string) {
 						}
 						tellraw(conn, fmt.Sprintf("Positon set: (%v, %v, %v)", X, Y, Z))
 					} else if chat[0] == "delay" {
-						ms, err := strconv.Atoi(chat[1])
-						if err != nil {
-							tellraw(conn, fmt.Sprintf("Setting delay error: ", err))
-						} else {
-							delay = ms
-							tellraw(conn, fmt.Sprintf("Delay set: %d", delay))
+						if len(chat) < 3 {
+							tellraw(conn, "Invalid suboperand\ndelay mode discrete/continuous/none\ndelay set <delay:s/us>")
+							break
+						}
+						if chat[1] == "set" {
+							if mConfig.DelayMode==mctype.DelayModeNone {
+								tellraw(conn, "[delay set] is unavailable with delay mode: none")
+								break
+							}
+							ms, err := strconv.Atoi(chat[2])
+							if err != nil {
+								tellraw(conn, fmt.Sprintf("Setting delay error: ", err))
+							} else {
+								mConfig.Delay = int64(ms)
+								tellraw(conn, fmt.Sprintf("Delay set: %d", ms))
+							}
+						}else if chat[1]=="mode" {
+							delaymode:=mctype.ParseDelayMode(chat[2])
+							if delaymode==mctype.DelayModeInvalid {
+								tellraw(conn, "Invalid delay mode, possible values are: continuous, discrete, none.")
+								break
+							}
+							mConfig.DelayMode=delaymode
+							tellraw(conn, fmt.Sprintf("Delay mode set: %s",chat[2]))
+							if delaymode!=mctype.DelayModeNone {
+								mConfig.Delay=decideDelay(delaymode)
+								tellraw(conn, fmt.Sprintf("Delay automatically set to: %d",mConfig.Delay))
+							}
+							if delaymode==mctype.DelayModeDiscrete {
+								mConfig.DelayThreshold=decideDelayThreshold()
+								tellraw(conn, fmt.Sprintf("Delay threshold automatically set to: %d",mConfig.DelayThreshold))
+							}
+						}else if chat[1]=="threshold" {
+							if mConfig.DelayMode!=mctype.DelayModeDiscrete {
+								tellraw(conn, "Delay threshold is only available with delay mode: discrete")
+								break
+							}
+							ts, err := strconv.Atoi(chat[2])
+							if err != nil {
+								tellraw(conn, fmt.Sprintf("Setting delay threshold error: ", err))
+								break
+							}
+							mConfig.DelayThreshold=ts
+							tellraw(conn, fmt.Sprintf("Delay threshold set to: %d",ts))
+						}else{
+							tellraw(conn, "Invalid suboperand\ndelay mode discrete/continuous/none\ndelay set <delay:us>")
+							break
 						}
 					} else if chat[0] == "get" {
 						sendCommand("gamerule sendcommandfeedback true", uuid.New(), conn)
 						cmd := fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", user)
 						sendCommand(cmd, zeroId, conn)
-					} else {
-						cfg := parse.Parse(p.Message, &mConfig)
-						blocks, err := builder.Generate(cfg)
-						if cfg.Execute == "" {
+					} else if chat[0] == "task" {
+						taskid := int64(-1)
+						if len(chat) >= 3 {
+							taskido, _ := strconv.Atoi(chat[2])
+							taskid=int64(taskido)
+						}
+						if len(chat) == 1 {
+							tellraw(conn, "Invalid suboperand")
+							tellraw(conn, "task list\ntask <pause/resume/break> <taskid>")
 							break
 						}
-						if err != nil /*&& cfg.Execute != ""*/ {
-							tellraw(conn, fmt.Sprintf("Error: %v", err))
-						} else if (blocks == nil) {
-							tellraw(conn, "Nothing generated.")
-						} else {
-							t1 := time.Now()
-							go func() {
-								sendCommand("gamerule sendcommandfeedback false", uuid.New(), conn)
-								sleepTime:=time.Duration(delay) * time.Microsecond
-								for _, b := range blocks {
-									request := command.SetBlockRequest(b, cfg)
-									uuid1, _ := uuid.NewUUID()
-									err := sendCommand(request, uuid1, conn)
-									if err != nil {
-										panic(err)
-									}
-									time.Sleep(sleepTime)
+						if chat[1] == "list" {
+							total := 0
+							tellraw(conn, "Current tasks:")
+							fbtask.TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
+								tid,_:=_tid.(int64)
+								v,_:=_v.(*fbtask.Task)
+								dt:=-1
+								dv:=int64(-1)
+								if v.Config.DelayMode==mctype.DelayModeDiscrete {
+									dt=v.Config.DelayThreshold
 								}
-								timeUsed := time.Now().Sub(t1)
-								tellraw(conn, fmt.Sprintf("%v block(s) have been changed.", len(blocks)))
-								tellraw(conn, fmt.Sprintf("Time used: %v second(s)", timeUsed.Seconds()))
-								tellraw(conn, fmt.Sprintf("Average speed: %v blocks/second", float64(len(blocks))/timeUsed.Seconds()))
-								runtime.GC()
-								sendCommand("gamerule sendcommandfeedback true", uuid.New(), conn)
-							}()
+								if v.Config.DelayMode!=mctype.DelayModeNone {
+									dv=v.Config.Delay
+								}
+								tellraw(conn, fmt.Sprintf("ID %d - CommandLine:\"%s\", State: %s, Delay: %d, DelayMode: %s, DelayThreshold: %d",tid,v.CommandLine,fbtask.GetStateDesc(v.State),dv,mctype.StrDelayMode(v.Config.DelayMode),dt))
+								total++
+								return true
+							})
+							tellraw(conn, fmt.Sprintf("Total: %d",total))
+							break
+						}else if chat[1] == "pause" {
+							if taskid == -1 {
+								tellraw(conn, "Invalid taskid.")
+								break
+							}
+							task := fbtask.FindTask(taskid)
+							if task == nil {
+								tellraw(conn, "Couldn't find a valid task by provided task id.")
+								break
+							}
+							task.Pause()
+							tellraw(conn, fmt.Sprintf("[Task %d] - Paused",task.TaskId))
+							break
+						}else if chat[1] == "resume" {
+							if taskid == -1 {
+								tellraw(conn, "Invalid taskid.")
+								break
+							}
+							task := fbtask.FindTask(taskid)
+							if task == nil {
+								tellraw(conn, "Couldn't find a valid task by provided task id.")
+								break
+							}
+							task.Resume()
+							tellraw(conn, fmt.Sprintf("[Task %d] - Resumed",task.TaskId))
+							break
+						}else if chat[1] == "break" {
+							if taskid == -1 {
+								tellraw(conn, "Invalid taskid.")
+								break
+							}
+							task := fbtask.FindTask(taskid)
+							if task == nil {
+								tellraw(conn, "Couldn't find a valid task by provided task id.")
+								break
+							}
+							task.Break()
+							tellraw(conn, fmt.Sprintf("[Task %d] - Stopped",task.TaskId))
+							break
+						}else if chat[1] == "setdelay" {
+							if len(chat)<4 {
+								tellraw(conn, "Arguments count mismatch")
+								break
+							}
+							if taskid == -1 {
+								tellraw(conn, "Invalid taskid.")
+								break
+							}
+							idelay, err := strconv.Atoi(chat[3])
+							if err != nil {
+								tellraw(conn, "Failed to parse delay")
+								break
+							}
+							task := fbtask.FindTask(taskid)
+							if task == nil {
+								tellraw(conn, "Couldn't find a valid task by provided task id.")
+								break
+							}
+							if task.Config.DelayMode==mctype.DelayModeNone {
+								tellraw(conn, "[setdelay] is unavailable with delay mode: none")
+								break
+							}
+							tellraw(conn, fmt.Sprintf("[Task %d] - Delay set: %d",task.TaskId,idelay))
+							task.Config.Delay=int64(idelay)
+							break
+						}else if chat[1] == "setdelaymode" {
+							if len(chat)<4 {
+								tellraw(conn, "Arguments count mismatch")
+								break
+							}
+							if taskid == -1 {
+								tellraw(conn, "Invalid taskid.")
+								break
+							}
+							delaymode := mctype.ParseDelayMode(chat[3])
+							if delaymode == mctype.DelayModeInvalid {
+								tellraw(conn, "Invalid delay mode, possible values are: continuous, discrete, none.")
+								break
+							}
+							task := fbtask.FindTask(taskid)
+							if task == nil {
+								tellraw(conn, "Couldn't find a valid task by provided task id.")
+								break
+							}
+							task.Pause()
+							task.Config.DelayMode=delaymode
+							tellraw(conn, fmt.Sprintf("[Task %d] - Delay mode set: %s",task.TaskId,chat[3]))
+							if delaymode!=mctype.DelayModeNone {
+								task.Config.Delay=decideDelay(delaymode)
+								tellraw(conn, fmt.Sprintf("[Task %d] Delay automatically set to: %d",task.TaskId,task.Config.Delay))
+							}
+							if delaymode==mctype.DelayModeDiscrete {
+								task.Config.DelayThreshold=decideDelayThreshold()
+								tellraw(conn, fmt.Sprintf("[Task %d] Delay threshold automatically set to: %d",task.TaskId,task.Config.DelayThreshold))
+							}
+							break
+						}else if chat[1] == "setdelaythreshold" {
+							if len(chat)<4 {
+								tellraw(conn, "Arguments count mismatch")
+								break
+							}
+							if taskid == -1 {
+								tellraw(conn, "Invalid taskid.")
+								break
+							}
+							idelay, err := strconv.Atoi(chat[3])
+							if err != nil {
+								tellraw(conn, "Failed to parse delay threshold")
+								break
+							}
+							task := fbtask.FindTask(taskid)
+							if task == nil {
+								tellraw(conn, "Couldn't find a valid task by provided task id.")
+								break
+							}
+							if task.Config.DelayMode==mctype.DelayModeContinuous {
+								tellraw(conn, "Delay threshold is unavailable with delay mode: continuous")
+								break
+							}
+							tellraw(conn, fmt.Sprintf("[Task %d] - Delay threshold set: %d",task.TaskId,idelay))
+							task.Config.DelayThreshold=idelay
+							break
+						}else{
+							tellraw(conn, "Invalid suboperand")
+							tellraw(conn, "task:\ntask list\ntask pause/resume/break <taskid>\ntask setdelay <taskid> <delay>\ntask setdelaymode <taskid> <delaymode:continuous/discrete/none>")
 						}
-
+					} else {
+						task := fbtask.CreateTask(p.Message, &mConfig, conn)
+						if task==nil {
+							break
+						}
+						tellraw(conn, fmt.Sprintf("Task Created, ID=%d.",task.TaskId))
 					}
 				}
 			}
@@ -380,4 +554,20 @@ func sendCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
 func tellraw(conn *minecraft.Conn, lines ...string) error {
 	uuid1, _ := uuid.NewUUID()
 	return sendCommand(command.TellRawRequest(mctype.AllPlayers, lines...), uuid1, conn)
+}
+
+func decideDelay(delaytype byte) int64 {
+	// Will add system check later,so don't merge into other functions.
+	if delaytype==mctype.DelayModeContinuous {
+		return 1000
+	}else if delaytype==mctype.DelayModeDiscrete {
+		return 15
+	}else{
+		return 0
+	}
+}
+
+func decideDelayThreshold() int {
+	// Will add system check later,so don't merge into other functions.
+	return 20000
 }

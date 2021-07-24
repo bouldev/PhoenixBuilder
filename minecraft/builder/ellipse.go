@@ -2,12 +2,11 @@ package builder
 
 import "phoenixbuilder/minecraft/mctype"
 
-func Ellipse(config *mctype.MainConfig) ([]*mctype.Module, error) {
+func Ellipse(config *mctype.MainConfig, blc chan *mctype.Module) error {
 	Length := config.Length
 	Width := config.Width
 	Facing := config.Facing
 	point := config.Position
-	var BlockSet []*mctype.Module
 	switch Facing {
 	case "x":
 		for i := -Length; i <= Length; i++ {
@@ -15,8 +14,7 @@ func Ellipse(config *mctype.MainConfig) ([]*mctype.Module, error) {
 				if (i*i)/(Length*Length)+(j*j)/(Width*Width) < 1 {
 					var b mctype.Module
 					b.Point = mctype.Position{point.X, point.Y + i, point.Z + j}
-					//b.Block = config.Block
-					BlockSet = append(BlockSet, &b)
+					blc <- &b
 				}
 			}
 		}
@@ -26,8 +24,7 @@ func Ellipse(config *mctype.MainConfig) ([]*mctype.Module, error) {
 				if (i*i)/(Length*Length)+(j*j)/(Width*Width) < 1 {
 					var b mctype.Module
 					b.Point = mctype.Position{point.X + i, point.Y, point.Z + j}
-					//b.Block = config.Block
-					BlockSet = append(BlockSet, &b)
+					blc <- &b
 				}
 			}
 		}
@@ -37,11 +34,10 @@ func Ellipse(config *mctype.MainConfig) ([]*mctype.Module, error) {
 				if (i*i)/(Length*Length)+(j*j)/(Width*Width) < 1 {
 					var b mctype.Module
 					b.Point = mctype.Position{point.X + i, point.Y + j, point.Z}
-					//b.Block = config.Block
-					BlockSet = append(BlockSet, &b)
+					blc <- &b
 				}
 			}
 		}
 	}
-	return BlockSet, nil
+	return nil
 }
