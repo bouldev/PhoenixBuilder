@@ -20,6 +20,12 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.16
+    - name: Pre-Build & configure go-raknet
+      run: |
+        make current
+        make clean
+        chmod 777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
+        sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go>~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
     - name: Build
       run: make
     - name: Pack binaries
@@ -58,6 +64,12 @@ jobs:
       run: mv ${{ steps.setup-ndk.outputs.ndk-path }} ${HOME}/android-ndk-r20b
     - name: Install mingw compiler
       run: sudo apt install gcc-mingw-w64-i686 gcc -y
+    - name: Pre-Build & configure go-raknet
+      run: |
+        make current
+        make clean
+        chmod 777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
+        sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go>~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
     - name: Build
       run: make
     - name: Pack binaries
