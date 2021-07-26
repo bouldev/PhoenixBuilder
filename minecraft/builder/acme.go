@@ -77,8 +77,9 @@ func Acme(config *mctype.MainConfig, blc chan *mctype.Module) error {
 			var blocksJSON map[string]interface{}
 			json.Unmarshal(jsonContent,&blocksJSON)
 			for item := range blocksJSON {
-				blName,_:=blocksJSON[item].(string)
-				blDataF,_:=blocksJSON[item].(float64)
+				blArr,_:=blocksJSON[item].([]interface{})
+				blName,_:=blArr[0].(string)
+				blDataF,_:=blArr[1].(float64)
 				curBlkSpl:=strings.Split(blName,":")
 				blocksTable[item]=&mctype.Block {
 					Name: &(curBlkSpl[1]),

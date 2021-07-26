@@ -4,6 +4,7 @@ import (
 	"phoenixbuilder/minecraft/parse"
 	"phoenixbuilder/minecraft/builder"
 	"phoenixbuilder/minecraft/command"
+	"phoenixbuilder/minecraft/configuration"
 	"phoenixbuilder/minecraft"
 	"go.uber.org/atomic"
 	"sync"
@@ -26,7 +27,7 @@ type Task struct {
 	OutputChannel chan *mctype.Module
 	ContinueLock sync.Mutex
 	State byte
-	Config *mctype.MainConfig
+	Config *configuration.FullConfig
 }
 
 var TaskIdCounter *atomic.Int64 = atomic.NewInt64(0)
@@ -96,11 +97,10 @@ func FindTask(taskId int64) *Task {
 	return ta
 }
 
-func CreateTask(commandLine string, config *mctype.MainConfig, conn *minecraft.Conn) *Task {
-	cfg := parse.Parse(commandLine, config)
-	cfg.Delay = config.Delay
-	cfg.DelayMode = config.DelayMode
-	cfg.DelayThreshold=config.DelayThreshold
+func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
+	cfg := parse.Parse(commandLine, configuration.GlobalFullConfig().Main())
+	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
+	dcfg := fcfg.Delay()
 	if cfg.Execute == "" {
 		return nil
 	}
@@ -110,7 +110,7 @@ func CreateTask(commandLine string, config *mctype.MainConfig, conn *minecraft.C
 		CommandLine: commandLine,
 		OutputChannel: blockschannel,
 		State: TaskStateRunning,
-		Config: cfg,
+		Config: fcfg,
 	}
 	taskid := task.TaskId
 	TaskMap.Store(taskid, task)
@@ -144,13 +144,13 @@ func CreateTask(commandLine string, config *mctype.MainConfig, conn *minecraft.C
 			if err != nil {
 				panic(err)
 			}
-			if cfg.DelayMode==mctype.DelayModeContinuous {
-				time.Sleep(time.Duration(cfg.Delay) * time.Microsecond)
-			}else if cfg.DelayMode==mctype.DelayModeDiscrete {
+			if dcfg.DelayMode==mctype.DelayModeContinuous {
+				time.Sleep(time.Duration(dcfg.Delay) * time.Microsecond)
+			}else if dcfg.DelayMode==mctype.DelayModeDiscrete {
 				tothresholdcounter++
-				if tothresholdcounter>=cfg.DelayThreshold {
+				if tothresholdcounter>=dcfg.DelayThreshold {
 					tothresholdcounter=0
-					time.Sleep(time.Duration(cfg.Delay) * time.Second)
+					time.Sleep(time.Duration(dcfg.Delay) * time.Second)
 				}
 			}
 		}

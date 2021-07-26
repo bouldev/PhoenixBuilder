@@ -15,6 +15,9 @@ type MainConfig struct {
 	Length, Width, Height int
 	Method, OldMethod     string
 	Facing, Path, Shape   string
+}
+
+type DelayConfig struct {
 	Delay                 int64
 	DelayMode             byte
 	DelayThreshold        int

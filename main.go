@@ -13,17 +13,19 @@ import (
 	"path/filepath"
 	fbauth "phoenixbuilder/cv4/auth"
 	"phoenixbuilder/minecraft"
-	"phoenixbuilder/minecraft/builder"
+	//"phoenixbuilder/minecraft/builder"
 	"phoenixbuilder/minecraft/command"
 	"phoenixbuilder/minecraft/mctype"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/utils"
-	"phoenixbuilder/minecraft/fbtask"
-	"strconv"
+	//"phoenixbuilder/minecraft/fbtask"
+	"phoenixbuilder/minecraft/function"
+	"phoenixbuilder/minecraft/configuration"
+	//"strconv"
 	"strings"
 	"syscall"
-	"time"
+	//"time"
 	"runtime"
 )
 
@@ -163,6 +165,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	defer conn.Close()
 	pterm.Println(pterm.Yellow("Successfully created minecraft dialer."))
 	user := client.ShouldRespondUser()
+	configuration.RespondUser=user
 	//delay := 1000 //BP MMS
 	// Make the client spawn in the world: This is a blocking operation that will return an error if the
 	// client times out while spawning.
@@ -178,7 +181,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	}
 	pterm.Println(pterm.Yellow("Player spawned successfully."))
 
-	mConfig := mctype.MainConfig{
+	/*mConfig := mctype.MainConfig{
 		Execute: "",
 		Block: builder.IronBlock,
 		OldBlock: builder.AirBlock,
@@ -209,9 +212,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		Delay:     decideDelay(mctype.DelayModeContinuous),
 		DelayMode: mctype.DelayModeContinuous,
 		DelayThreshold:decideDelayThreshold(),
-	}
+	}*/
+	function.InitInternalFunctions()
 
 	zeroId, _ := uuid.NewUUID()
+	configuration.ZeroId=zeroId
 	tellraw(conn, "Welcome to FastBuilder!")
 	tellraw(conn, fmt.Sprintf("Operator: %s", user))
 	sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
@@ -225,12 +230,26 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		}
 
 		switch p := pk.(type) {
+		/*case *packet.InventoryContent:
+			for _, item := range p.Content {
+				fmt.Printf("InventorySlot %+v\n",item.Stack)
+			}
+			break*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
 				if user == p.SourceName {
-					chat := strings.Split(p.Message, " ")
+					pterm.Println(pterm.Yellow(fmt.Sprintf("<%s>", user)), pterm.LightCyan(p.Message))
+					function.Process(conn, p.Message)
+					break
+					/*chat := strings.Split(p.Message, " ")
 					pterm.Println(pterm.Yellow(fmt.Sprintf("<%s>", user)), pterm.LightCyan(p.Message))
 					if chat[0] == "test" {
+						conn.WritePacket(&packet.BlockPickRequest{
+							Position: protocol.BlockPos {1862,158,1785},
+							AddBlockNBT: true,
+							HotBarSlot: 0,
+						})
+						break
 						go func(){
 							turn := true
 							for {
@@ -444,6 +463,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 								task.Config.DelayThreshold=decideDelayThreshold()
 								tellraw(conn, fmt.Sprintf("[Task %d] Delay threshold automatically set to: %d",task.TaskId,task.Config.DelayThreshold))
 							}
+							task.Resume()
 							break
 						}else if chat[1] == "setdelaythreshold" {
 							if len(chat)<4 {
@@ -481,7 +501,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 							break
 						}
 						tellraw(conn, fmt.Sprintf("Task Created, ID=%d.",task.TaskId))
-					}
+					}*/
 				}
 			}
 
@@ -491,9 +511,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 
 		case *packet.CommandOutput:
-			if p.SuccessCount > 0 && p.CommandOrigin.UUID.String() == zeroId.String() {
+			if p.SuccessCount > 0 && p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
 				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-				mConfig.Position = mctype.Position{
+				configuration.GlobalFullConfig().Main().Position = mctype.Position{
 					X: pos[0],
 					Y: pos[1],
 					Z: pos[2],
