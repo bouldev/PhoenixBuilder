@@ -34,5 +34,5 @@ func TellRawRequest(target mctype.Target, lines ...string) string {
 
 func Tellraw(conn *minecraft.Conn, lines ...string) error {
 	uuid1, _ := uuid.NewUUID()
-	return SendCommand(TellRawRequest(mctype.AllPlayers, lines...), uuid1, conn)
+	return SendSizukanaCommand(TellRawRequest(mctype.AllPlayers, lines...), uuid1, conn)
 }

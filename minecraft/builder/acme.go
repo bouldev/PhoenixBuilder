@@ -16,7 +16,22 @@ func seekBuf(buf *bufio.Reader,seekn int) error {
 	seeker := make([]byte, seekn)
 	c, err := buf.Read(seeker)
 	if c!=seekn {
+		if err == nil {
+			return seekBuf(buf,seekn-c)
+		}
+		fmt.Printf("%v\n",err)
 		return fmt.Errorf("Early EOF [SEEK]")
+	}
+	return err
+}
+
+func readBig(buf *bufio.Reader,out []byte) error {
+	c, err := buf.Read(out)
+	if c!=len(out) {
+		if err != nil {
+			return err
+		}
+		return readBig(buf,out[c:])
 	}
 	return err
 }
@@ -70,9 +85,9 @@ func Acme(config *mctype.MainConfig, blc chan *mctype.Module) error {
 			}
 			jsonSize := binary.BigEndian.Uint64(jsonSizeBuffer)
 			jsonContent := make([]byte, jsonSize)
-			c, err=buf.Read(jsonContent)
-			if err != nil || c != int(jsonSize) {
-				return fmt.Errorf("err?[2]")
+			err=readBig(buf,jsonContent)
+			if err != nil {
+				return fmt.Errorf("err?[2]err22")
 			}
 			var blocksJSON map[string]interface{}
 			json.Unmarshal(jsonContent,&blocksJSON)
@@ -132,7 +147,7 @@ func Acme(config *mctype.MainConfig, blc chan *mctype.Module) error {
 			break
 		}else{
 			fmt.Printf("Unknown ACME command!! %s\n",commandStr)
-			return fmt.Errorf("Unknown ACME command: %s",commandStr)
+			return fmt.Errorf("Unknown ACME command")
 		}
 	}
 	return nil

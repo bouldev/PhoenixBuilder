@@ -12,13 +12,15 @@ import (
 	"time"
 	"runtime"
 	"github.com/google/uuid"
+	"strings"
 )
 
 const (
-	TaskStateUnknown = 0
-	TaskStateRunning = 1
-	TaskStatePaused  = 2
-	TaskStateDied    = 3
+	TaskStateUnknown     = 0
+	TaskStateRunning     = 1
+	TaskStatePaused      = 2
+	TaskStateDied        = 3
+	TaskStateCalculating = 4
 )
 
 type Task struct {
@@ -27,7 +29,15 @@ type Task struct {
 	OutputChannel chan *mctype.Module
 	ContinueLock sync.Mutex
 	State byte
+	Type byte
+	AsyncInfo
 	Config *configuration.FullConfig
+}
+
+type AsyncInfo struct {
+	Built int
+	Total int
+	BeginTime time.Time
 }
 
 var TaskIdCounter *atomic.Int64 = atomic.NewInt64(0)
@@ -42,6 +52,8 @@ func GetStateDesc(st byte) string {
 		return "Paused"
 	}else if st==3 {
 		return "Died"
+	}else if st==4 {
+		return "Calculating"
 	}
 	return "???????"
 }
@@ -67,6 +79,10 @@ func (task *Task) Resume() {
 	if task.State != TaskStatePaused {
 		return
 	}
+	if task.Type==mctype.TaskTypeAsync {
+		task.AsyncInfo.Total-=task.AsyncInfo.Built
+		task.AsyncInfo.Built=0
+	}
 	task.State = TaskStateRunning
 	task.ContinueLock.Unlock()
 }
@@ -87,6 +103,15 @@ func (task *Task) Break() {
 		if false {
 			fmt.Printf("%v\n",blk)
 		}
+	}
+	if task.Type==mctype.TaskTypeAsync {
+		// Avoid progress displaying
+		if task.State != TaskStatePaused {
+			return
+		}
+		task.State = TaskStateCalculating
+		task.ContinueLock.Unlock()
+		return
 	}
 	task.Resume()
 }
@@ -109,11 +134,43 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		TaskId: TaskIdCounter.Add(1),
 		CommandLine: commandLine,
 		OutputChannel: blockschannel,
-		State: TaskStateRunning,
+		State: TaskStateCalculating,
+		Type: configuration.GlobalFullConfig().Global().TaskCreationType,
 		Config: fcfg,
 	}
 	taskid := task.TaskId
 	TaskMap.Store(taskid, task)
+	var asyncblockschannel chan *mctype.Module
+	if task.Type==mctype.TaskTypeAsync {
+		asyncblockschannel=blockschannel
+		blockschannel=make(chan *mctype.Module)
+		task.OutputChannel=blockschannel
+		go func() {
+			var blocks []*mctype.Module
+			for {
+				curblock, ok := <-asyncblockschannel
+				if !ok {
+					break
+				}
+				blocks=append(blocks,curblock)
+			}
+			task.State=TaskStateRunning
+			t1 := time.Now()
+			total := len(blocks)
+			task.AsyncInfo=AsyncInfo {
+				Built: 0,
+				Total: total,
+				BeginTime: t1,
+			}
+			for _, blk := range blocks {
+				blockschannel <- blk
+				task.AsyncInfo.Built++
+			}
+			close(blockschannel)
+		} ()
+	}else{
+		task.State=TaskStateRunning
+	}
 	go func() {
 		t1 := time.Now()
 		blkscounter := 0
@@ -140,7 +197,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 			blkscounter++
 			request := command.SetBlockRequest(curblock, cfg)
 			uuid1, _ := uuid.NewUUID()
-			err := command.SendCommand(request, uuid1, conn)
+			err := command.SendSizukanaCommand(request, uuid1, conn)
 			if err != nil {
 				panic(err)
 			}
@@ -156,6 +213,14 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		}
 	} ()
 	go func() {
+		if task.Type==mctype.TaskTypeAsync {
+			err := builder.Generate(cfg, asyncblockschannel)
+			close(asyncblockschannel)
+			if err != nil {
+				command.Tellraw(conn, fmt.Sprintf("[Task %d] Error: %v", taskid, err))
+			}
+			return
+		}
 		err := builder.Generate(cfg, blockschannel)
 		close(blockschannel)
 		if err != nil {
@@ -163,4 +228,32 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		}
 	} ()
 	return task
+}
+
+
+func InitTaskStatusDisplay(conn *minecraft.Conn) {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	go func() {
+		for {
+			<- ticker.C
+			if configuration.GlobalFullConfig().Global().TaskDisplayMode == mctype.TaskDisplayNo {
+				continue
+			}
+			var displayStrs []string
+			TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
+				tid, _:=_tid.(int64)
+				v, _:=_v.(*Task)
+				addstr:=fmt.Sprintf("Task ID %d - %s - %s [%s]",tid,v.Config.Main().Execute,GetStateDesc(v.State),mctype.MakeTaskType(v.Type))
+				if v.Type==mctype.TaskTypeAsync && v.State == TaskStateRunning {
+					addstr=fmt.Sprintf("%s\nProgress: %s",addstr,ProgressThemes[0](v.AsyncInfo))
+				}
+				displayStrs=append(displayStrs,addstr)
+				return true
+			})
+			if len(displayStrs) == 0 {
+				continue
+			}
+			command.Title(conn,strings.Join(displayStrs,"\n"))
+		}
+	} ()
 }

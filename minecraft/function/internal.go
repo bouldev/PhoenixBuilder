@@ -14,9 +14,6 @@ import (
 
 
 
-
-
-
 func InitInternalFunctions() {
 	delayEnumId:=RegisterEnum("continuous, discrete, none",mctype.ParseDelayMode,mctype.DelayModeInvalid)
 	RegisterFunction(&Function {
@@ -257,6 +254,34 @@ func InitInternalFunctions() {
 			},
 		},
 	})
+	taskTypeEnumId:=RegisterEnum("async, sync",mctype.ParseTaskType,mctype.TaskTypeInvalid)
+	RegisterFunction(&Function {
+		Name: "set task type",
+		OwnedKeywords: []string{"tasktype"},
+		FunctionType: FunctionTypeSimple,
+		SFMinSliceLen: 2,
+		SFArgumentTypes: []byte{byte(taskTypeEnumId)},
+		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+			ev, _:=args[0].(byte)
+			configuration.GlobalFullConfig().Global().TaskCreationType=ev
+			command.Tellraw(conn, fmt.Sprintf("Task creation type set to: %s.",mctype.MakeTaskType(ev)))
+		},
+	})
+	taskDMEnumId:=RegisterEnum("true, false",mctype.ParseTaskDisplayMode,mctype.TaskDisplayInvalid)
+	RegisterFunction(&Function {
+		Name: "set progress title display type",
+		OwnedKeywords: []string{"progress"},
+		FunctionType: FunctionTypeSimple,
+		SFMinSliceLen: 2,
+		SFArgumentTypes: []byte{byte(taskDMEnumId)},
+		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+			ev, _:=args[0].(byte)
+			configuration.GlobalFullConfig().Global().TaskDisplayMode=ev
+			command.Tellraw(conn, fmt.Sprintf("Task status display mode set to: %s.",mctype.MakeTaskDisplayMode(ev)))
+		},
+	})
+	
+	// ippan
 	var builderMethods []string
 	for met,_ := range builder.Builder {
 		builderMethods=append(builderMethods,met)

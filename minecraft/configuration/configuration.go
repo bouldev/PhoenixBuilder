@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	ConfigTypeMain  = 0
-	ConfigTypeDelay = 1
+	ConfigTypeMain   = 0
+	ConfigTypeDelay  = 1
+	ConfigTypeGlobal = 2
 )
 
 type FullConfig map[byte]interface{}
@@ -57,9 +58,14 @@ func CreateFullConfig() *FullConfig {
 		DelayMode: mctype.DelayModeContinuous,
 		DelayThreshold:decideDelayThreshold(),
 	}
+	gConf := mctype.GlobalConfig {
+		TaskCreationType: mctype.TaskTypeAsync,
+		TaskDisplayMode:  mctype.TaskDisplayYes,
+	}
 	fc := make(FullConfig)
 	fc[ConfigTypeMain]=&mConfig
 	fc[ConfigTypeDelay]=&dConf
+	fc[ConfigTypeGlobal]=&gConf
 	return &fc
 }
 
@@ -83,6 +89,11 @@ func (conf *FullConfig) Main() *mctype.MainConfig {
 func (conf *FullConfig) Delay() *mctype.DelayConfig {
 	dConf, _ :=(*conf)[ConfigTypeDelay].(*mctype.DelayConfig)
 	return dConf
+}
+
+func (conf *FullConfig) Global() *mctype.GlobalConfig {
+	gConf, _ :=(*conf)[ConfigTypeGlobal].(*mctype.GlobalConfig)
+	return gConf
 }
 
 func decideDelay(delaytype byte) int64 {

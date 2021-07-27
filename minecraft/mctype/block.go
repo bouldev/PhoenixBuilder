@@ -26,6 +26,13 @@ type DoubleModule struct {
 
 var takenBlocks map[*ConstBlock]*Block = make(map[*ConstBlock]*Block)
 
+func CreateBlock(name string,data int16) *Block {
+	return &Block {
+		Name:&name,
+		Data:data,
+	}
+}
+
 func (req *ConstBlock) Take() *Block {
 	block, ok := takenBlocks[req]
 	if ok {

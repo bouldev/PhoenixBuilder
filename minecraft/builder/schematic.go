@@ -6,6 +6,7 @@ import (
 	"phoenixbuilder/minecraft/mctype"
 	"io/ioutil"
 	"os"
+	"fmt"
 )
 
 func Schematic(config *mctype.MainConfig, blc chan *mctype.Module) error {
@@ -33,7 +34,7 @@ func Schematic(config *mctype.MainConfig, blc chan *mctype.Module) error {
 	}
 
 	if err := nbt.Unmarshal(buffer, &SchematicModule); err != nil {
-		return err
+		return fmt.Errorf("Failed to resolve file")//err
 	}
 	Size := [3]int{SchematicModule.Width, SchematicModule.Height, SchematicModule.Length}
 	Offset := [3]int{SchematicModule.WEOffsetX, SchematicModule.WEOffsetY, SchematicModule.WEOffsetZ}

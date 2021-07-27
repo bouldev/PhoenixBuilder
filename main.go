@@ -15,7 +15,7 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/command"
 	"phoenixbuilder/minecraft/mctype"
-	"phoenixbuilder/minecraft/protocol"
+	//"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/utils"
 	"phoenixbuilder/minecraft/function"
@@ -23,6 +23,7 @@ import (
 	"strings"
 	"syscall"
 	"runtime"
+	"phoenixbuilder/minecraft/fbtask"
 )
 
 type FBPlainToken struct {
@@ -178,6 +179,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	pterm.Println(pterm.Yellow("Player spawned successfully."))
 
 	function.InitInternalFunctions()
+	fbtask.InitTaskStatusDisplay(conn)
 
 	zeroId, _ := uuid.NewUUID()
 	configuration.ZeroId=zeroId
@@ -257,8 +259,8 @@ func readToken(path string) (string, error) {
 	return string(content), nil
 }
 
-func sendCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
-	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
+func sendCommand(commands string, UUID uuid.UUID, conn *minecraft.Conn) error {
+	/*requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
 	origin := protocol.CommandOrigin{
 		Origin:         protocol.CommandOriginPlayer,
 		UUID:           UUID,
@@ -271,7 +273,8 @@ func sendCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
 		Internal:      false,
 		UnLimited:     false,
 	}
-	return conn.WritePacket(commandRequest)
+	return conn.WritePacket(commandRequest)*/
+	return command.SendCommand(commands,UUID,conn)
 }
 
 func tellraw(conn *minecraft.Conn, lines ...string) error {

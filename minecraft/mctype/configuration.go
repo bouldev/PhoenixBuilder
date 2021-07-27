@@ -7,6 +7,18 @@ const (
 	DelayModeInvalid    = 100
 )
 
+const (
+	TaskTypeSync        = 0
+	TaskTypeAsync       = 1
+	TaskTypeInvalid     = 100
+)
+
+const (
+	TaskDisplayYes     = 1
+	TaskDisplayNo      = 0
+	TaskDisplayInvalid = 30
+)
+
 type MainConfig struct {
 	Execute               string
 	Block, OldBlock       *ConstBlock
@@ -21,6 +33,11 @@ type DelayConfig struct {
 	Delay                 int64
 	DelayMode             byte
 	DelayThreshold        int
+}
+
+type GlobalConfig struct {
+	TaskCreationType      byte
+	TaskDisplayMode       byte
 }
 
 func ParseDelayMode(mode string) byte {
@@ -44,4 +61,40 @@ func StrDelayMode(mode byte) string {
 	}else{
 		return "invalid"
 	}
+}
+
+func ParseTaskType(mode string) byte {
+	if mode=="sync" {
+		return TaskTypeSync
+	}else if mode=="async" {
+		return TaskTypeAsync
+	}
+	return TaskTypeInvalid
+}
+
+func MakeTaskType(mode byte) string {
+	if mode==TaskTypeSync {
+		return "sync"
+	}else if mode==TaskTypeAsync {
+		return "async"
+	}
+	return "invalid"
+}
+
+func ParseTaskDisplayMode(mode string) byte {
+	if mode=="true" {
+		return TaskDisplayYes
+	}else if mode=="false" {
+		return TaskDisplayNo
+	}
+	return TaskDisplayInvalid
+}
+
+func MakeTaskDisplayMode(mode byte) string {
+	if mode==TaskDisplayYes {
+		return "true"
+	}else if mode==TaskDisplayNo {
+		return "false"
+	}
+	return "?"
 }
