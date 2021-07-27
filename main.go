@@ -23,6 +23,7 @@ import (
 	"strings"
 	"syscall"
 	"runtime"
+	"runtime/debug"
 	"phoenixbuilder/minecraft/fbtask"
 )
 
@@ -37,7 +38,7 @@ func main() {
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.1.0 - Hotfix 1"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.0"))
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
 		"FastBuilder Phoenix used codes\n" +
 		"from Sandertv's Gophertunnel that\n" +
@@ -48,15 +49,21 @@ func main() {
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
 	if runtime.GOOS == "windows" {}
-	/*defer func() {
-		pterm.Error.Println("Oh no! FastBuilder Phoenix crashed! ")
-		if runtime.GOOS == "windows" {
-			pterm.Error.Println("Press ENTER to exit.")
-			_, _=bufio.NewReader(os.Stdin).ReadString('\n')
+	defer func() {
+		if err:=recover(); err!=nil {
+			debug.PrintStack()
+			if runtime.GOOS == "windows" {
+				pterm.Error.Println("Press ENTER to exit.")
+				_, _=bufio.NewReader(os.Stdin).ReadString('\n')
+			}
+			pterm.Error.Println("Oh no! FastBuilder Phoenix crashed! ")
+			pterm.Error.Println("Stack dump was shown above, error:")
+			pterm.Error.Println(err)
+			os.Exit(1)
 		}
-		os.Exit(1)
+		os.Exit(0)
 		//os.Exit(rand.Int())
-	}()*/
+	}()
 	ex, err := os.Executable()
 	if err != nil {
 		panic(err)
