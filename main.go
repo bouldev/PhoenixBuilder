@@ -39,7 +39,7 @@ func main() {
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.9"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.9 Hotfix 1"))
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
 		"FastBuilder Phoenix used codes\n" +
 		"from Sandertv's Gophertunnel that\n" +
@@ -240,6 +240,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			//if p.SuccessCount > 0 {
 				if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
 					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+					if len(pos) == 0 {
+						tellraw(conn, "Invalid position")
+						break
+					}
 					configuration.GlobalFullConfig().Main().Position = mctype.Position{
 						X: pos[0],
 						Y: pos[1],
@@ -249,6 +253,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 					break
 				}else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
 					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+					if len(pos) == 0 {
+						tellraw(conn, "Invalid position")
+						break
+					}
 					configuration.GlobalFullConfig().Main().End = mctype.Position{
 						X: pos[0],
 						Y: pos[1],
