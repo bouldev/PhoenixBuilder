@@ -23,6 +23,8 @@ ifneq ($(wildcard /usr/bin/i686-w64-mingw32-gcc),)
 	TARGETS:=${TARGETS} windows-executable
 endif
 
+VERSION=$(shell cat upload-to-server)
+
 SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go))
 
 all: ${TARGETS} build/hashes.json
@@ -34,6 +36,9 @@ macos: build/phoenixbuilder-macos
 android-executable-v7: build/phoenixbuilder-android-executable-armv7
 android-executable-64: build/phoenixbuilder-android-executable-arm64
 windows-executable: build/phoenixbuilder-windows-executable.exe
+
+package: package/ios package/android
+	mkdir -p release
 
 build/:
 	mkdir build
@@ -59,5 +64,48 @@ build/phoenixbuilder-windows-executable.exe: build/ /usr/bin/i686-w64-mingw32-gc
 	CC=/usr/bin/i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable.exe
 build/hashes.json: build genhash.js ${TARGETS}
 	node genhash.js
+
+package/ios: 
+	mkdir -p release/phoenixbuilder-iphoneos/usr/local/bin release/phoenixbuilder-iphoneos/DEBIAN
+	cp build/phoenixbuilder-ios-executable release/phoenixbuilder-iphoneos/usr/local/bin/fastbuilder
+	printf "Package: pro.fastbuilder.phoenix\n\
+	Name: FastBuilder Phoenix (Alpha)\n\
+	Version: $(VERSION)\n\
+	Architecture: iphoneos-arm\n\
+	Maintainer: Ruphane\n\
+	Author: Bouldev <admin@boul.dev>\n\
+	Section: Games\n\
+	Priority: optional\n\
+	Enhances: mterminal | openssh | ws.hbang.newterm2\n\
+	Homepage: https://fastbuilder.pro\n\
+	Depiction: https://apt.boul.dev/info/fastbuilder\n\
+	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-iphoneos/DEBIAN/control
+	dpkg -b release/phoenixbuilder-iphoneos release/
+package/android:
+	mkdir -p release/phoenixbuilder-android-armv7/data/data/com.termux/files/usr/bin release/phoenixbuilder-android-armv7/DEBIAN release/phoenixbuilder-android-arm64/data/data/com.termux/files/usr/bin release/phoenixbuilder-android-arm64/DEBIAN
+	cp build/phoenixbuilder-android-executable-armv7 release/phoenixbuilder-android-armv7/data/data/com.termux/files/usr/bin/fastbuilder
+	cp build/phoenixbuilder-android-executable-arm64 release/phoenixbuilder-android-arm64/data/data/com.termux/files/usr/bin/fastbuilder
+	printf "Package: pro.fastbuilder.phoenix-android\n\
+	Name: FastBuilder Phoenix (Alpha)\n\
+	Version: $(VERSION)\n\
+	Architecture: arm\n\
+	Maintainer: Ruphane\n\
+	Author: Bouldev <admin@boul.dev>\n\
+	Section: Games\n\
+	Priority: optional\n\
+	Homepage: https://fastbuilder.pro\n\
+	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-android-armv7/DEBIAN/control
+	printf "Package: pro.fastbuilder.phoenix-android\n\
+	Name: FastBuilder Phoenix (Alpha)\n\
+	Version: $(VERSION)\n\
+	Architecture: aarch64\n\
+	Maintainer: Ruphane\n\
+	Author: Bouldev <admin@boul.dev>\n\
+	Section: Games\n\
+	Priority: optional\n\
+	Homepage: https://fastbuilder.pro\n\
+	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-android-arm64/DEBIAN/control
+	dpkg -b release/phoenixbuilder-android-armv7 release/
+	dpkg -b release/phoenixbuilder-android-arm64 release/
 clean:
 	rm -f build/phoenixbuilder*
