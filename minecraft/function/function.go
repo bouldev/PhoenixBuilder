@@ -89,6 +89,16 @@ func Process(conn *minecraft.Conn,msg string) {
 	}
 	for {
 		if cc.FunctionType == FunctionTypeContinue {
+			if len(slc)<=ic {
+				rf, _:=cc.Content.(map[string]*FunctionChainItem)
+				itm, got := rf[""]
+				if !got {
+					command.Tellraw(conn, "Parser: Too few arguments")
+					return
+				}
+				cc=itm
+				continue
+			}
 			rfc, _:=cc.Content.(map[string]*FunctionChainItem)
 			chainitem, got := rfc[slc[ic]]
 			if !got {
@@ -100,6 +110,7 @@ func Process(conn *minecraft.Conn,msg string) {
 			continue
 		}
 		if len(cc.ArgumentTypes) > len(slc)-ic {
+			fmt.Printf("toofew desu: %d, %d",len(cc.ArgumentTypes),len(slc)-ic)
 			command.Tellraw(conn, "Parser: Too few arguments")
 			return
 		}

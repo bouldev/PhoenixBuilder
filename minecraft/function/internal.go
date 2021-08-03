@@ -111,11 +111,31 @@ func InitInternalFunctions() {
 	RegisterFunction(&Function {
 		Name: "get-pos",
 		OwnedKeywords: []string {"get"},
-		FunctionType:FunctionTypeSimple,
+		FunctionType:FunctionTypeContinue,
 		SFMinSliceLen:1,
-		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
-			command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
-			command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId,conn)
+		FunctionContent: map[string]*FunctionChainItem {
+			"": &FunctionChainItem {
+				FunctionType: FunctionTypeSimple,
+				ArgumentTypes: []byte{},
+				Content: func(conn *minecraft.Conn,_ []interface{}) {
+					command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
+					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId,conn)
+				},
+			},
+			"begin": &FunctionChainItem {
+				FunctionType: FunctionTypeSimple,
+				Content: func(conn *minecraft.Conn,_ []interface{}) {
+					command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
+					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId,conn)
+				},
+			},
+			"end": &FunctionChainItem {
+				FunctionType: FunctionTypeSimple,
+				Content: func(conn *minecraft.Conn,_ []interface{}) {
+					command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
+					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.OneId,conn)
+				},
+			},
 		},
 	})
 	RegisterFunction(&Function {
@@ -292,6 +312,20 @@ func InitInternalFunctions() {
 		FunctionType:FunctionTypeRegular,
 		FunctionContent: func(conn *minecraft.Conn,msg string){
 			task := fbtask.CreateTask(msg, conn)
+			if task==nil {
+				return
+			}
+			command.Tellraw(conn, fmt.Sprintf("Task Created, ID=%d.",task.TaskId))
+		},
+	})
+	RegisterFunction(&Function {
+		Name: "export",
+		OwnedKeywords: []string{"export"},
+		FunctionType: FunctionTypeRegular,
+		FunctionContent: func(conn *minecraft.Conn,msg string){
+			command.Tellraw(conn, "Unpublished function")
+			return
+			task := fbtask.CreateExportTask(msg, conn)
 			if task==nil {
 				return
 			}

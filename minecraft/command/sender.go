@@ -5,7 +5,14 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"github.com/google/uuid"
+	"sync"
 )
+
+var UUIDMap sync.Map//= make(map[string]func(*minecraft.Conn,*[]protocol.CommandOutputMessage))
+
+func ClearUUIDMap() {
+	UUIDMap=sync.Map{}
+}
 
 func SendCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
 	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
@@ -24,7 +31,7 @@ func SendCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
 	return conn.WritePacket(commandRequest)
 }
 
-func SendSizukanaCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
+func SendWSCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
 	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
 	origin := protocol.CommandOrigin{
 		Origin:         protocol.CommandOriginAutomationPlayer,
@@ -39,4 +46,11 @@ func SendSizukanaCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) e
 		UnLimited:     false,
 	}
 	return conn.WritePacket(commandRequest)
+}
+
+func SendSizukanaCommand(command string, conn *minecraft.Conn) error {
+	return conn.WritePacket(&packet.SettingsCommand{
+		CommandLine: command,
+		SuppressOutput: true,
+	})
 }

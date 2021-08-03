@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"time"
 	"runtime"
-	"github.com/google/uuid"
 	"strings"
+	"github.com/google/uuid"
 )
 
 const (
@@ -21,6 +21,7 @@ const (
 	TaskStatePaused      = 2
 	TaskStateDied        = 3
 	TaskStateCalculating = 4
+	TaskStateSpecialBrk  = 5
 )
 
 type Task struct {
@@ -54,6 +55,8 @@ func GetStateDesc(st byte) string {
 		return "Died"
 	}else if st==4 {
 		return "Calculating"
+	}else if st==5 {
+		return "SpecialTask:Breaking"
 	}
 	return "???????"
 }
@@ -88,6 +91,10 @@ func (task *Task) Resume() {
 }
 
 func (task *Task) Break() {
+	if task.OutputChannel==nil {
+		task.State=TaskStateSpecialBrk
+		return
+	}
 	if task.State != TaskStatePaused {
 		task.Pause()
 	}
@@ -129,6 +136,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 	if cfg.Execute == "" {
 		return nil
 	}
+	command.SendSizukanaCommand("gamemode c", conn)
 	blockschannel := make(chan *mctype.Module, 10240)
 	task := &Task {
 		TaskId: TaskIdCounter.Add(1),
@@ -194,10 +202,13 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				task.Finalize()
 				return
 			}
+			if blkscounter%20 == 0 {
+				u_d, _ := uuid.NewUUID()
+				command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y,curblock.Point.Z),u_d, conn)
+			}
 			blkscounter++
 			request := command.SetBlockRequest(curblock, cfg)
-			uuid1, _ := uuid.NewUUID()
-			err := command.SendSizukanaCommand(request, uuid1, conn)
+			err := command.SendSizukanaCommand(request, conn)
 			if err != nil {
 				panic(err)
 			}
@@ -245,7 +256,7 @@ func InitTaskStatusDisplay(conn *minecraft.Conn) {
 				v, _:=_v.(*Task)
 				addstr:=fmt.Sprintf("Task ID %d - %s - %s [%s]",tid,v.Config.Main().Execute,GetStateDesc(v.State),mctype.MakeTaskType(v.Type))
 				if v.Type==mctype.TaskTypeAsync && v.State == TaskStateRunning {
-					addstr=fmt.Sprintf("%s\nProgress: %s",addstr,ProgressThemes[0](v.AsyncInfo))
+					addstr=fmt.Sprintf("%s\nProgress: %s",addstr,ProgressThemes[0](&v.AsyncInfo))
 				}
 				displayStrs=append(displayStrs,addstr)
 				return true

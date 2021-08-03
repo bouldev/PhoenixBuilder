@@ -13,7 +13,7 @@ func Parse(Message string, defaultConfig *mctype.MainConfig) *mctype.MainConfig 
 		Execute:   "",
 		Block:     &mctype.ConstBlock{},
 		OldBlock:  &mctype.ConstBlock{},
-		Begin:     mctype.Position{},
+		//Begin:     mctype.Position{},
 		End:       mctype.Position{},
 		Position:  defaultConfig.Position,
 		Radius:    0,

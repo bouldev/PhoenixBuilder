@@ -28,11 +28,11 @@ func CreateFullConfig() *FullConfig {
 		Execute: "",
 		Block: builder.IronBlock,
 		OldBlock: builder.AirBlock,
-		Begin: mctype.Position{
+		/*Begin: mctype.Position{
 			X: 0,
 			Y: 0,
 			Z: 0,
-		},
+		},*/
 		End: mctype.Position{
 			X: 0,
 			Y: 0,
@@ -71,6 +71,7 @@ func CreateFullConfig() *FullConfig {
 
 var RespondUser string
 var ZeroId uuid.UUID
+var OneId uuid.UUID
 
 var globalFullConfig *FullConfig
 

@@ -15,11 +15,12 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/command"
 	"phoenixbuilder/minecraft/mctype"
-	//"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/utils"
 	"phoenixbuilder/minecraft/function"
 	"phoenixbuilder/minecraft/configuration"
+	//"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/hotbarmanager"
 	"strings"
 	"syscall"
 	"runtime"
@@ -38,7 +39,7 @@ func main() {
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.0"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.9"))
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
 		"FastBuilder Phoenix used codes\n" +
 		"from Sandertv's Gophertunnel that\n" +
@@ -178,18 +179,24 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		EntityRuntimeID: conn.GameData().EntityRuntimeID,
 		ActionType: packet.PlayerActionRespawn,
 	})
+	conn.WritePacket(&packet.RequestChunkRadius {
+		ChunkRadius: 10,
+	})
 	
-	if err := conn.DoSpawn(); err != nil {
+	/*if err := conn.DoSpawn(); err != nil {
 		pterm.Error.Println("Failed to spawn")
 		panic(err)
-	}
-	pterm.Println(pterm.Yellow("Player spawned successfully."))
+	}*/
+	//pterm.Println(pterm.Yellow("Player spawned successfully."))
 
 	function.InitInternalFunctions()
 	fbtask.InitTaskStatusDisplay(conn)
+	hotbarmanager.Init()
 
 	zeroId, _ := uuid.NewUUID()
+	oneId, _ := uuid.NewUUID()
 	configuration.ZeroId=zeroId
+	configuration.OneId=oneId
 	tellraw(conn, "Welcome to FastBuilder!")
 	tellraw(conn, fmt.Sprintf("Operator: %s", user))
 	sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
@@ -207,32 +214,55 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			for _, item := range p.Content {
 				fmt.Printf("InventorySlot %+v\n",item.Stack)
 			}
-			break*/
+			break
+		case *packet.InventorySlot:
+			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
 				if user == p.SourceName {
 					pterm.Println(pterm.Yellow(fmt.Sprintf("<%s>", user)), pterm.LightCyan(p.Message))
+					if p.Message[0] == '>' {
+						//umsg:=p.Message[1:]
+						//
+					}
 					function.Process(conn, p.Message)
 					break
 				}
 			}
-
+		case *packet.ChunkRadiusUpdated:
+			fmt.Printf("ChunkRadius is %d\n",p.ChunkRadius)
 		case *packet.AddPlayer:
 			if p.Username == user {
 				pterm.Println(pterm.Yellow(fmt.Sprintf("[%s] Operator joined Game", user)))
 			}
 
 		case *packet.CommandOutput:
-			if p.SuccessCount > 0 && p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
-				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-				configuration.GlobalFullConfig().Main().Position = mctype.Position{
-					X: pos[0],
-					Y: pos[1],
-					Z: pos[2],
+			//if p.SuccessCount > 0 {
+				if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
+					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+					configuration.GlobalFullConfig().Main().Position = mctype.Position{
+						X: pos[0],
+						Y: pos[1],
+						Z: pos[2],
+					}
+					tellraw(conn, fmt.Sprintf("Position got: %v", pos))
+					break
+				}else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
+					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+					configuration.GlobalFullConfig().Main().End = mctype.Position{
+						X: pos[0],
+						Y: pos[1],
+						Z: pos[2],
+					}
+					tellraw(conn, fmt.Sprintf("End Position got: %v", pos))
+					break
 				}
-				tellraw(conn, fmt.Sprintf("Position got: %v", pos))
+			//}
+			pr, ok := command.UUIDMap.LoadAndDelete(p.CommandOrigin.UUID.String())
+			if ok {
+				pu:=pr.(chan *packet.CommandOutput)
+				pu<-p
 			}
-
 		}
 
 	}

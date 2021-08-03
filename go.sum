@@ -2,6 +2,8 @@ github.com/MarvinJWendt/testza v0.1.0 h1:4m+JkB/4e0nUlXdIa10Mg0poUz9CanQKjB3L+xe
 github.com/MarvinJWendt/testza v0.1.0/go.mod h1:7AxNvlfeHP7Z/hDQ5JtE3OKYT3XFUeLCDE2DQninSqs=
 github.com/Tnze/go-mc v1.17.0 h1:eux33waaSNAUJmnRjYjUmR3NgoHgQStFxHSBYg9I1WM=
 github.com/Tnze/go-mc v1.17.0/go.mod h1:t0AI38F1BEmmy8/uLhr9RCOUeDbBj3oUNQH9akjzMc0=
+github.com/andybalholm/brotli v1.0.3 h1:fpcw+r1N1h0Poc1F/pHbW40cUm/lMEQslZtCkBQ0UnM=
+github.com/andybalholm/brotli v1.0.3/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
 github.com/atomicgo/cursor v0.0.1 h1:xdogsqa6YYlLfM+GyClC/Lchf7aiMerFiZQn7soTOoU=
 github.com/atomicgo/cursor v0.0.1/go.mod h1:cBON2QmmrysudxNBFthvMtN32r3jxVRIvzkUiF/RuIk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

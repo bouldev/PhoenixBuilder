@@ -71,4 +71,4 @@ fabric.properties
 build/
 *.schematic
 *.mcacblock
-
+rust/

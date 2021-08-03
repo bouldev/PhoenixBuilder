@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"phoenixbuilder/minecraft/mctype"
 	"phoenixbuilder/minecraft"
-	"github.com/google/uuid"
+	//"github.com/google/uuid"
 	"encoding/json"
 )
 
@@ -22,6 +22,5 @@ func TitleRequest(target mctype.Target, lines ...string) string {
 }
 
 func Title(conn *minecraft.Conn, lines ...string) error {
-	uuid1, _ := uuid.NewUUID()
-	return SendSizukanaCommand(TitleRequest(mctype.AllPlayers, lines...), uuid1, conn)
+	return SendSizukanaCommand(TitleRequest(mctype.AllPlayers, lines...), conn)
 }

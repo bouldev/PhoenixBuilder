@@ -5,7 +5,7 @@ import (
 	"phoenixbuilder/minecraft/mctype"
 	"phoenixbuilder/minecraft"
 	"time"
-	"github.com/google/uuid"
+	//"github.com/google/uuid"
 	"encoding/json"
 )
 
@@ -33,6 +33,6 @@ func TellRawRequest(target mctype.Target, lines ...string) string {
 }
 
 func Tellraw(conn *minecraft.Conn, lines ...string) error {
-	uuid1, _ := uuid.NewUUID()
-	return SendSizukanaCommand(TellRawRequest(mctype.AllPlayers, lines...), uuid1, conn)
+	//uuid1, _ := uuid.NewUUID()
+	return SendSizukanaCommand(TellRawRequest(mctype.AllPlayers, lines...), conn)
 }

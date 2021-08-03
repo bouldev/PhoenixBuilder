@@ -22,7 +22,7 @@ const (
 type MainConfig struct {
 	Execute               string
 	Block, OldBlock       *ConstBlock
-	Begin, End, Position  Position
+	End, Position         Position //Position=Begin
 	Radius                int
 	Length, Width, Height int
 	Method, OldMethod     string
