@@ -8,6 +8,10 @@
 
 ​	本次Fast Builder 采用了全新的技术，不再受限于 Websocket，因此在速度，性能和稳定性等方面有了巨大提升，并且拥有极大的可扩展性。当前Fast Builder的核心基于Sandertv的[Gophertunnel](https://github.com/Sandertv/gophertunnel/) （Gophertunnel是开源的，MIT协议）。
 
+### 源代码开放
+
+​	FastBuilder Phoenix 部分代码已开源（不包括验证系统和部分核心算法），源代码点击 [此处](https://fastbuilder.pro/source.tar.gz) 可见（GPL v3协议）。
+
 ### 注意事项（购买须知）
 
 - 购买即代表您同意并且会遵守Fast Builder [**用户协议**](LICENSE.html)
@@ -145,6 +149,7 @@ round --radius 5 --facing y --height 1
 ​	task命令用于管理当前的【**任务**】（每个**建筑进程**都被抽象为一个任务）。每个task都有自己的runtime，你可以用一些功能命令设定任务的内部参数。task命令具有如下几个基本子命令（#后面为注释，解释了子命令的作用）：
 
 ````shell
+tasktype <type:async|sync> # Task类型，async不支持进度显示，一边计算一边发送数据，sync则是完成计算后发送，支持速度显示
 task list # 列出所有任务的ID，内容以及状态
 task pause <taskID> # 暂停某个任务
 task resume <taskID> # 恢复某个被暂停的任务
@@ -182,6 +187,12 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
   delay mode <delayMode:continuous|discrete|none> # 设定默认的发包方案
   delay threshold <threshold:int> # 设定默认阈值（最大方块集合），仅在 discrete 方案下有效
   delay set <Delay> # 设定默认的发包延迟。在continuous模式下单位为微秒； 在discrete模式下单位为秒
+  ```
+
+- 设置是否显示进度条（显示建筑的进度百分比，方块总数，瞬时速度等信息。默认为true）
+
+  ```shell
+  progress <bool:true|false>
   ```
 
 ##### 几何命令
