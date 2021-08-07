@@ -16,6 +16,8 @@ jobs:
       uses: Homebrew/actions/setup-homebrew@master
     - name: Set up ldid
       run: brew install ldid
+    - name: Set up dpkg
+      run: brew install dpkg
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
@@ -29,10 +31,13 @@ jobs:
         cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
     - name: Build
       run: make
+    - name: Package for specific platforms
+      run: make package
     - name: Pack binaries
       run: |
         mv build/hashes.json build/hashes-1.json
         rm build/phoenixbuilder
+        mv release/*.deb build/
         tar -czf fb-macos-binaries.tar.gz build/*
     - name: Load Key
       env:
@@ -74,9 +79,12 @@ jobs:
         cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
     - name: Build
       run: make
+    - name: Package for specific platforms
+      run: make package
     - name: Pack binaries
       run: |
         mv build/hashes.json build/hashes-2.json
+        mv release/*.deb build/
         tar -czf fb-linux-binaries.tar.gz build/*
     - name: Load Key
       env:

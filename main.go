@@ -39,7 +39,7 @@ func main() {
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.9 Hotfix 1"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.91"))
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
 		"FastBuilder Phoenix used codes\n" +
 		"from Sandertv's Gophertunnel that\n" +
@@ -69,8 +69,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	currPath := filepath.Dir(ex)
-	token := filepath.Join(currPath, "fbtoken")
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
+		homedir="."
+	}
+	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
+	os.MkdirAll(fbconfigdir, 0755)
+	token := filepath.Join(fbconfigdir,"fbtoken")
 	version, err := utils.GetHash(ex)
 	if err != nil {
 		panic(err)
