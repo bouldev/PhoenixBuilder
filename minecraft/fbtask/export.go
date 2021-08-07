@@ -109,10 +109,17 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 						task.AsyncInfo.Built+=bbt
 						BuiltNumMutex.Unlock()
 					}
-					threadNum.Add(-1)
 					for y:=beginPos.Y;y<=top;y++ {
-					
+						command.UUIDMap.Store(cud.String(),cmdreceiverchan)
+						command.SendWSCommand(fmt.Sprintf("testforblock %d %d %d air",x,y,z),cud,conn)
+						cmdcontent:=<-cmdreceiverchan
+						if(cmdcontent.SuccessCount!=0){
+							// is air
+							continue
+						}
+						
 					}
+					threadNum.Add(-1)
 					select {
 					case threadDieChan<-true:
 						return

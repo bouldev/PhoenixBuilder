@@ -7,6 +7,7 @@ import (
 	"time"
 	//"github.com/google/uuid"
 	"encoding/json"
+	"strings"
 )
 
 type TellrawItem struct {
@@ -21,7 +22,7 @@ func TellRawRequest(target mctype.Target, lines ...string) string {
 	now := time.Now().Format("§6[15:04:05]§b")
 	var items []TellrawItem
 	for _, text := range lines {
-		msg := fmt.Sprintf("%v %v", now, text)
+		msg := fmt.Sprintf("%v %v", now, strings.Replace(text, "schematic", "sc***atic", -1))
 		items=append(items,TellrawItem{Text:msg})
 	}
 	final := &TellrawStruct {

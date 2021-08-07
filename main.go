@@ -171,7 +171,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	pterm.Println(pterm.Yellow("Successfully created minecraft dialer."))
 	user := client.ShouldRespondUser()
 	configuration.RespondUser=user
-	//delay := 1000 //BP MMS
+	// delay := 1000 //BP MMS
 	// Make the client spawn in the world: This is a blocking operation that will return an error if the
 	// client times out while spawning.
 	
@@ -215,6 +215,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				fmt.Printf("InventorySlot %+v\n",item.Stack)
 			}
 			break
+		//case *packet.AddActor:
+		//	fmt.Printf("%+v\n%+v\n\n==\n\n",p.Attributes,p.EntityMetadata)
 		case *packet.InventorySlot:
 			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
@@ -231,11 +233,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 		case *packet.ChunkRadiusUpdated:
 			fmt.Printf("ChunkRadius is %d\n",p.ChunkRadius)
-		case *packet.AddPlayer:
-			if p.Username == user {
-				pterm.Println(pterm.Yellow(fmt.Sprintf("[%s] Operator joined Game", user)))
-			}
-
+		//case *packet.AddPlayer:
+			//if p.Username == user {
+			//	pterm.Println(pterm.Yellow(fmt.Sprintf("[%s] Operator joined Game", user)))
+			//}
+			//fmt.Printf("%+v\n",p.EntityMetadata)
 		case *packet.CommandOutput:
 			//if p.SuccessCount > 0 {
 				if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
