@@ -130,12 +130,18 @@ func FindTask(taskId int64) *Task {
 }
 
 func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
-	cfg := parse.Parse(commandLine, configuration.GlobalFullConfig().Main())
-	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
-	dcfg := fcfg.Delay()
-	if cfg.Execute == "" {
+	cfg, err := parse.Parse(commandLine, configuration.GlobalFullConfig().Main())
+	if err!=nil {
+		command.Tellraw(conn, fmt.Sprintf("Failed to parse command: %v",err))
 		return nil
 	}
+	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
+	dcfg := fcfg.Delay()
+	/*if cfg.Execute == "" {
+		return nil
+	}
+	Needless since it will be checked in function module.
+	*/
 	command.SendSizukanaCommand("gamemode c", conn)
 	blockschannel := make(chan *mctype.Module, 10240)
 	task := &Task {

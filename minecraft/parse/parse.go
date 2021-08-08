@@ -2,13 +2,49 @@ package parse
 
 import (
 	"flag"
-	"phoenixbuilder/minecraft/builder"
 	"phoenixbuilder/minecraft/mctype"
 	"strings"
+	"fmt"
 )
 
-func Parse(Message string, defaultConfig *mctype.MainConfig) *mctype.MainConfig {
-	SLC := strings.Split(Message," ")
+func Parse(Message string, defaultConfig *mctype.MainConfig) (*mctype.MainConfig, error) {
+	//SLC := strings.Split(Message," ")
+	isTransIMI:=false
+	isInQuote:=false
+	var SLC []string
+	curmsg:=""
+	for _,c:=range Message {
+		if isTransIMI {
+			isTransIMI=false
+			curmsg+=string(c)
+			continue
+		}
+		if(c=='\\') {
+			isTransIMI=true
+			continue
+		}
+		if(c=='"'){
+			isInQuote=(!isInQuote)
+			continue
+		}
+		if(c==' '&&!isInQuote){
+			SLC=append(SLC,curmsg)
+			curmsg=""
+		}
+		if(c=='#'){
+			break
+		}
+		curmsg+=string(c)
+	}
+	if(len(curmsg)>0){
+		SLC=append(SLC,curmsg)
+		curmsg=""
+	}
+	if(isInQuote) {
+		return nil, fmt.Errorf("Unterminated quoted string")
+	}else if(isTransIMI) {
+		return nil, fmt.Errorf("Unterminated escape")
+	}
 	Config := &mctype.MainConfig{
 		Execute:   "",
 		Block:     &mctype.ConstBlock{},
@@ -56,11 +92,14 @@ func Parse(Message string, defaultConfig *mctype.MainConfig) *mctype.MainConfig 
 	FlagSet.IntVar(&tempOldBlockData,"od",int(defaultConfig.OldBlock.Data),"The data of Block")
 
 	FlagSet.Parse(SLC[1:])
-	for k, _ := range builder.Builder {
+	/*for k, _ := range builder.Builder {
 		if k == SLC[0] {
 			Config.Execute = k
 		}
-	}
+	}*/
+	Config.Execute = SLC[0]
+	// Since the function system exists ^^
+	
 	//for index, v := range SLC {
 	//	if v == "-p" || v == "--position" {
 	//		x, xe := strconv.Atoi(SLC[index + 1])
@@ -73,14 +112,18 @@ func Parse(Message string, defaultConfig *mctype.MainConfig) *mctype.MainConfig 
 	//}
 	Config.Block.Data=int16(tempBlockData)
 	Config.OldBlock.Data=int16(tempOldBlockData)
-	return Config
+	return Config, nil
 }
 
-func PipeParse(Message string, config *mctype.MainConfig) []*mctype.MainConfig{
+func PipeParse(Message string, config *mctype.MainConfig) ([]*mctype.MainConfig, error) {
 	ChatSlice := strings.Split(Message,"|")
 	var Configs []*mctype.MainConfig
 	for _, v := range ChatSlice {
-		Configs = append(Configs,Parse(v,config))
+		pv, err:=Parse(v,config)
+		if err!=nil {
+			return nil, err
+		}
+		Configs = append(Configs,pv)
 	}
-	return Configs
+	return Configs, nil
 }

@@ -39,7 +39,7 @@ func main() {
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.91"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.92"))
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
 		"FastBuilder Phoenix used codes\n" +
 		"from Sandertv's Gophertunnel that\n" +
@@ -49,7 +49,7 @@ func main() {
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
-	if runtime.GOOS == "windows" {}
+	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err:=recover(); err!=nil {
 			debug.PrintStack()
@@ -69,14 +69,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
-		homedir="."
-	}
-	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
-	os.MkdirAll(fbconfigdir, 0755)
-	token := filepath.Join(fbconfigdir,"fbtoken")
+	token := loadTokenPath()
 	version, err := utils.GetHash(ex)
 	if err != nil {
 		panic(err)
@@ -139,12 +132,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Println("Incorrect username or password")
 			return
 		}
-		ex, err := os.Executable()
-		if err != nil {
-			panic(err)
-		}
-		currPath := filepath.Dir(ex)
-		tokenPath := filepath.Join(currPath, "fbtoken")
+		tokenPath := loadTokenPath()
 		if fi, err := os.Create(tokenPath); err != nil {
 			fmt.Println("Error creating token file: ", err)
 			fmt.Println("Error ignored.")
@@ -349,4 +337,16 @@ func decideDelay(delaytype byte) int64 {
 func decideDelayThreshold() int {
 	// Will add system check later,so don't merge into other functions.
 	return 20000
+}
+
+func loadTokenPath() string {
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
+		homedir="."
+	}
+	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
+	os.MkdirAll(fbconfigdir, 0755)
+	token := filepath.Join(fbconfigdir,"fbtoken")
+	return token
 }

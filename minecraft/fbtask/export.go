@@ -31,8 +31,12 @@ type SolidRet struct {
 
 
 func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
-	cfg := parse.Parse(commandLine, configuration.GlobalFullConfig().Main())
-	cfg.Execute = "export"
+	cfg, err := parse.Parse(commandLine, configuration.GlobalFullConfig().Main())
+	//cfg.Execute = "export"
+	if err!=nil {
+		command.Tellraw(conn, fmt.Sprintf("Failed to parse command: %v",err))
+		return nil
+	}
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
 	//dcfg := fcfg.Delay()
 	beginPos := cfg.Position

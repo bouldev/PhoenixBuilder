@@ -1,86 +1,93 @@
-# Fast Builder Phoenix 
+# FastBuilder Phoenix 
 
-## 简介
+## Description
 
-> Fast Builder 是一个为Minecraft bedrock设计的建筑辅助程序，可以在多个平台使用。Phoenix版本专门为中国版租赁服设计。目前支持的功能有欧几里得几何和Schematic（方块NBT数据丢弃）建筑生成，以及图像绘制。
+> FastBuilder is a structure generating tool for Minecraft Bedrock Edition that supporting various platforms. The Phoenix ver. was designed for the rental server of the Minecraft China Edition. Currently supports generating Euclid geometry and ACME(mcacblock) · schematic file(NBT data of blocks would be disposed)'s structures, and images painting.
 
-### 原理
+**NOTE: FastBuilder Phoenix is a commercial software!**
 
-​	本次Fast Builder 采用了全新的技术，不再受限于 Websocket，因此在速度，性能和稳定性等方面有了巨大提升，并且拥有极大的可扩展性。当前Fast Builder的核心基于Sandertv的[Gophertunnel](https://github.com/Sandertv/gophertunnel/) （Gophertunnel是开源的，MIT协议）。
+### Principle
 
-### 源代码开放
+FastBuilder currently using an all-new technology, and no longer limited by the WebSocket. Thanks to it, the all-new FastBuilder's speed, performance and stability got a significant improvement, and it became highly extendable. The core of the current version of FastBuilder is based on Sandertv's [Gophertunnel](https://github.com/Sandertv/gophertunnel/) project that licensed under the MIT License.
 
-​	FastBuilder Phoenix 部分代码已开源（不包括验证系统和部分核心算法），源代码点击 [此处](https://fastbuilder.pro/source.tar.gz) 可见（GPL v3协议）。
+### Open Source
 
-### 注意事项（购买须知）
+FastBuilder Phoenix is currently **partially** opened source (the user center's authentication system and some of the core algorithms are not included), source code available [here](https://fastbuilder.pro/source.tar.gz).
 
-- 购买即代表您同意并且会遵守Fast Builder [**用户协议**](LICENSE.html)
-- 任何技术都是有**时效性**的，Fast Builder可能随时会失效。
-- 您购买的Fast Builder（Phoenix，发布于**2021 - 07 - 21**； 当前能够正常使用）功能仅仅包括欧几里得几何和Schematic/ACME(mcacblock)建筑生成，以及图片绘制，未来可能会更新其他功能，但我们无法保证。
-- Fast Builder 部分安装，使用步骤需要一定的**计算机和数学知识**，并且安装教程默认您已经**具备**了这些知识。
-- Fast Builder 个人账号只能绑定到2个租赁服，一个月可以进行一次更改，无法在**联机房间**或者**国际版**使用。
-- 请勿使用Fast Builder Pro来导入**未经授权的著作**，每一个建筑作者都靠自己的体力及脑力劳动在社区生存，如果您使用其他人的建筑作品并加以盈利，会对整个游戏环境带来破坏。同时，如果建筑的著作权人追究责任，您应当且必须履行，并且我们不应为此承担任何责任。
-- 开发者不是客服，他们没有义务**解决**你在使用软件过程中遇到的各种小问题，更不会**亲自**指导你安装。如果你在使用软件的过程中遇到了Bug并且**你非常确定**，可以向代理**提交Bug报告**。
-- 当前版本(Phoenix Alpha)为测试版，可能出现各种bug，购买则表明**自愿承担风险**!
-- **尽管程序设计成了全英文提示语，但不代表我们不是中国人**。
-- 每个功能都尽量设计**完美**，但依然是存在**缺陷**的。
+(The source code is licensed under GPL v3.)
 
-### 基本概念
+### Acknowledgements (Read before purchasing)
 
-​	Fast Builder与其他程序的不同点在于，存在“客户端”与“服务端”概念。玩家运行游戏的手机，或者说玩家正在运行的游戏，就是客户端；Fast Builder就是服务端。
+* Purchasing it represents you agree and would comply with the [FastBuilder User License](LICENSE.html).
 
-​	因此，服务端可以与客户端不在同一台设备上，甚至没有客户端都能使用Fast Builder。
+- The technology that it uses may expire any time, so FastBuilder life-time support is not guaranteed.
+- The version of FastBuilder you bought contains the features explained above, we may add other features in the future but we can't guarantee to that.
+- Some steps of the installation and the use of FastBuilder needs a certain degree of **IT and Math knowledges**, and the instruction for installation would consider that you **have** these required knowledges by default.
+- FastBuilder personal account can only be binded to at most two rental servers, and it allows to be changed once per month. FastBuilder Phoenix can't be used in multi-player mode of NEMC or in the international version of Minecraft.
+- Please **do not** import any files **without the author's permission**, every single content creator survives in the community with their own energy and wisdom. Using others' IP (stands for Intellectual Property) commercially would cause destructions to the whole environment of the game. Moreover, if the copyright owner of contents you have used ascertains the liability, you should and must take your responsibility, and we shouldn't bear any liability for it.
+- Developers aren't customer service reps, they don't have the obligation to **resolve** the various problems you met when using the software, moreover they would not guide you to install the software **by themselves**. If you found bugs when using the software and **you are very sure of it**, you can **submit bug reports** to a seller.
+- The current version (Phoenix Alpha) is under testing, various bugs might be triggered, purchasing means you **volunteer to bear the risks**.
+- **The nearly full-English prompts in the program doesn't mean that we are not Chinese.**
+- We designed every feature **as perfect as possible**, but it still contains **defects**.
 
-​	由于使用命令行操作，需要用户具备如下基础：
+### World View
 
-- 文件操作能力，能够理解路径和文件层级
-- 英语能力，能够认出‘Error’、‘Permission denied’、‘not found’等字眼并明白其含义
-- 能够区分全角符号与半角符号
-- (最好会)在命令行界面输入并执行命令的能力
+The differences between FastBuilder and other programs is that it contains the concept of "server" and "client". The game that players running is a client, FastBuilder is also a client, and the rental server the player enters is a server.
 
-请确保您具备以上能力，如果您不具备这样的条件还执意要购买Fast Builder导致无法使用，开发组不承担任何责任，更不会提供帮助。
+Therefore, clients can run on different devices, and FastBuilder can be executed to join your server w/o your game running.
 
-### 安装指导
+The abilities explained below are required since FastBuilder needs the operations of command lines.
 
-#### 必要条件
+* The ability of operating files: Able to understand the level of paths and files.
 
-- 拥有Fast Builder账号并且已经购买了Fast Builder
+- The ability of reading English: Able to identity words like "Error", "Permission denied" or "Not found" and know what they stands for.
+- The ability to differ the full-width and the half-width characters.
+- It's better to have the ability to enter and execute commands in the command line interface.
 
-- 因设备而异：
+Please ensure that you have the abilities mentioned above, if you encountered problems when using FastBuilder because you are not satisfying the mentioned conditions, development group would not bear any liabilities, moreover it will not provide any help.
 
-  - 电脑端（Windows/Linux/macOS）：电脑需具备正常的网卡
+### Installation Instruction
 
-  - 安卓Android:  拥有Termux,安装步骤见下文
+#### Requirements
 
-- 勤劳的双手和善于思考的**大脑**
+- Holds a FastBuilder User Center account, aka a FastBuilder account (bought FastBuilder).
+- Depends on your device:
+  * PC (Windows/Linux/macOS): Your computer should have a fully functional network adapter installed.
+  * Android: Have *Termux* installed, see below for instruction.
+  * iOS: Jailbroken, and you know how to use the terminal.
+- Hard-working hands and thoughtful brain
 
-1. 登录Fast Builder[用户中心](uc.fastbuilder.pro) 
-2. 进入Profile，设置游戏名（中国版用户名）
-3. 设定您要使用Fast Builder的**租赁服**的号码（注意：该租赁服必须允许**任意等级**的玩家加入）
-4. 设置辅助用户名称，并点击【生成】来创建**辅助用户**
+1. Login to [FastBuilder User Center](https://uc.fastbuilder.pro) 
+2. Click the *Profile* tab, and set the *<ruby>Minecraft China Edition Username<rp>(</rp><rt style="font-size:80%;">中国版用户名</rt><rp>)</rp></ruby>*.
+3. Enter the number of the <ruby>rental server<rp>(</rp><rt style="font-size:80%;">租赁服</rt><rp>)</rp></ruby> that you want to use FastBuilder on.(note: The rental server should accept the entrance of **any <ruby><rp>(</rp>level<rt style="font-size:80%;">等级</rt><rp>)</rp></ruby>**'s player, satisfy it by turning off "<ruby>player entrance level requirement<rp>(</rp><rt style="font-size:80%;">玩家等级准入要求</rt><rp>)</rp></ruby>" toggle in the server settings interface)
+4. Set a nickname of the <ruby>helper user<rp>(</rp><rt style="font-size:80%;">辅助用户</rt><rp>)</rp></ruby>, then click **[<ruby>Create<rp>(</rp><rt style="font-size:80%;">生成</rt><rp>)</rp></ruby>]** to create one.
 
-以上是必要信息填写，接下来进入安装步骤，不同平台方案不同，请找到自己的平台：
+That's all for the completion of necessary informations, and the following content is the steps of installation, different platforms have different solutions, please find your own platform:
 
-#### 安装步骤
+#### Steps for Installation
 
-- windows: 直接在用户中心的【Download】下载
+- Windows: Download directly in the [Download] tab of the user center.
 
-- linux(推荐): 
+- iOS: Install the package from our APT package source.
+
+- Linux x86_64 (recommended platform): 
 
   ```shell
   wget -O fastbuilder https://fastbuilder.pro/downloads/phoenix/phoenixbuilder
   chmod +x fastbuilder
   ```
 
-- android: 
+- Android: 
 
-  - a.点击[链接](https://f-droid.org/repo/com.termux_117.apk)安装Termux （**0.117**）; 
+  - a. Click [here](https://f-droid.org/repo/com.termux_117.apk) to install Termux (**0.117**); (Or download it from a trustable source by yourself.)  
 
-  - b.安装完成后，前往系统设置，给予**存储空间权限**且允许**无限制后台运行**。
+  - b. After the installation of Termux, navigate to your system configuration, and give it **the permission of accessing the storage space (aka sdcard)**, and allow it to **run in the background without limitations**.
 
-  - c.打开Termux，复制并执行如下命令，第一步，先使用如下命令替换将官方源替换为TUNA镜像源（可选，此步骤可以让后续步骤更快完成）
+  - c. Open the Termux application, copy and execute following commands.
 
-    > **警告：三个命令要按序依次执行，不可以一次性直接复制粘贴； 该镜像仅适用于 Android 7.0 (API 24) 及以上版本，旧版本系统使用本镜像可能导致程序错误。如果您是旧版，请不要使用该镜像**
+    First, use the commands below to replace the official source to the TUNA mirror source (optional, recommended for users in China since it will boost the follow-up steps, users in other countries shouldn't perform this step.)
+
+    > **WARNING: These 3 commands should be executed in order. The mentioned mirror is only suitable for Android version 7.0 (API 24) and above, the use of this mirror in older versions of system may cause program exceptions. Please do not use this mirror in case of you are using older versions of system.**
 
     ```shell
     sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/termux-packages-24 stable main@' $PREFIX/etc/apt/sources.list
@@ -88,7 +95,7 @@
     sed -i 's@^\(deb.*science stable\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/science-packages-24 science stable@' $PREFIX/etc/apt/sources.list.d/science.list
     ```
 
-    接下来执行更新源和软件包的命令（**必须**）：
+  - c. Update sources and packages (**REQUIRED**) :
 
     ```shell
     apt update -y
@@ -96,152 +103,171 @@
     apt install wget -y
     ```
 
-   - d.待上述命令执行完成后，再下载Fast Builder (如果您是armv7架构，则将命令中的arm64改成armv7)
+   - d. After successfully executed commands mentioned above, download the FastBuilder binary.(Replace the `arm64` part to `armv7` if you surely know that your device is an armv7 device. Note that nowadays armv7 device is seldom. x86 or x86_64 android device are not supported.)
 
-     > **注意：此步骤(d)也为更新步骤，之后更新Fast Builder可以直接通过执行本步骤完成。**
+     > **Note: This step (d) is also the way of upgrading FastBuilder Phoenix, execute this step directly to upgrade FastBuilder afterwards.**
 
      ```shell
      wget -O fastbuilder https://fastbuilder.pro/downloads/phoenix/phoenixbuilder-android-executable-arm64
      chmod +x fastbuilder
      ```
-### 使用指导
+### Usage
 
-​	Fast Builder Phoenix是纯命令行程序，没有复杂的GUI，这使得程序本身非常易于使用。
+FastBuilder Phoenix is a pure command line program without complicated GUI, which made the program very easy to use.
 
-#### 启动步骤
+#### Launching
 
-- windows: 双击Fast Builder可执行文件
+- Windows: Double-click FastBuilder executable(**.exe**) file to execute.
 
-- linux: 无需解释
+- Linux: No need to explain.
 
-- android: 打开termux， 执行以下命令:
+- iOS: Open the terminal and execute the following command:
+
+  ```shell
+  fastbuilder
+  ```
+
+- Android: Open the Termux app and execute the following command:
 
   ```shell
   ./fastbuilder
   ```
 
-#### 初始化程序
+#### Initialization
 
-​	如果不出意外，在您完成了上述步骤，并且看到了Fast Builder成功启动的字样。第一次启动会要求用户输入Fast Builder账号密码，照做即可。完成后，Fast Builder会要求用户输入租赁服号码(Rental Server Number)和租赁服密码（没有可忽略）。如果没有报错退出，那么Fast Builder就成功启动了（第二次启动不会要求用户输入账号密码）。接下来，将FB挂在后台，进入网易租赁服，若看到辅助用户在线，那么Fast Builder就成功运行了。这个时候，请**给予辅助用户OP权限**。辅助用户只听从**（您）操作员**的命令，**操作员**的名称必须和用户中心所设置的**中国版用户名**一致，请勿使用带有**称号**的皮肤，否则辅助用户将**不会**听从您的命令！
+If no exceptions happened, after finishing these steps, you will see the FastBuilder's copyright notice and other things. It will ask you to enter your <ruby>FBUC<rp>(</rp><rt style="font-size:80%;">FastBuilder User Center</rt><rp>)</rp></ruby> username and password (**Password won't be echoed**), and you won't need to do that it twice.
 
-#### Fast Builder命令解析
+Then, FastBuilder will ask you to enter the rental server number and its password(Press *Enter* directly if none, **won't be echoed**). If it haven't crashed, presumably it has been launched.
 
-​	Fast Builder采用类似Linux Shell的命令系统（并非原版Minecraft的命令），无需使用【/】，直接在聊天窗口输入即可。如果您是Linux爱好者,那您将会很快掌握FB的命令。我们这次有机会做GUI，但是这显然没有CUI好用。
+After that, leave it in the background, and enter the rental server. Seeing the helper user is online(in the user list in `/list` command or in pause interface) means that FastBuilder works properly. Please **give the helper user <ruby>OP<rp>(</rp><rt style="font-size:80%;">operator</rt><rp>)</rp></ruby> permission**. The helper user will only listen to **<ruby>operator's<rp>(</rp><rt style="font-size:80%;">your</rt><rp>)</rp></ruby>** commands, so the the *Minecraft China Edition Username* should be set to the same to **you nickname in *Minecraft China Edition***. Please do not use skin packs with the **<ruby>title<rp>(</rp><rt style="font-size:80%;">称号</rt><rp>)</rp></ruby>** since the helper user won't be able to process your commands.
+
+#### FastBuilder Command Resolving
+
+FastBuilder uses a system similar to Linux Shell (it isn't the same command system of Minecraft). The "/" is needless and you can execute it by simply send it as a chat message.
+
+Note that you can't use "#" to give a comment in FastBuilder's commands.
 
 ```shell
-# 例子：生成半径为5,方向朝y轴的圆,以下两条命令是等价的
+# Example: Generate a round with radius 5, faces the y-axis.
+# These 2 commands below do the same thing.
 round -r 5 -f y -h 1
 round --radius 5 --facing y --height 1
 ```
 
-##### 生成器设置
+##### Generator Settings
 
-​	成功初始化FB之后，我们将辅助用户（以下简称Bot）所在的维度称为一个【空间】，所有的操作都是在该空间中进行的。因此，如果您想在不同的【空间】中使用FB，您必须让Bot和您同处一个空间。
+After initializing FastBuilder, we call the dimension that the <ruby>helper user<rp>(</rp><rt style="font-size:80%;">bot</rt><rp>)</rp></ruby> in as a *space*, every operations would be executed in this space. So if you want to use FastBuilder in a different space, you should teleport the bot to the target space.
 
-​	想要使用FB，必须设置【**空间**】的【**原点**】（**结构会在原点构造**），默认的原点在Bot进入游戏时所处的位置。
+To use FastBuilder, you should set the **origin** of the **space**(**structures will be built around the origin**), and the default origin is the position where bot entered the game.
 
-​	使用 `get` 命令可以修改原点设置为用户当前所处的位置，下面是相关功能命令的详解。
+Use `get` command to modify the origin to the current position of **you**.
 
-​	Fast Builder Phoenix使用了**协程**，这意味这您可以一次执行多个任务，您可以使用task命令管理任务。
+The usage of commands of corresponding features are shown below.
 
-##### Task命令
+FastBuilder Phoenix used the **multi-task system**, which means that you can have more than one tasks to be executed at the same time, and you can use the `task` command to manage tasks.
 
-​	task命令用于管理当前的【**任务**】（每个**建筑进程**都被抽象为一个任务）。每个task都有自己的runtime，你可以用一些功能命令设定任务的内部参数。task命令具有如下几个基本子命令（#后面为注释，解释了子命令的作用）：
+##### Task Command
+
+`task` command was designed for managing the current **tasks**(**building process**). Every task has its own runtime, and you can use some functional commands to set the internal arguments for tasks. `task` command has the following basic child commands(Texts after `#` are comments, which are used to explain what the child command for):
 
 ````shell
-tasktype <type:async|sync> # Task类型，async不支持进度显示，一边计算一边发送数据，sync则是完成计算后发送，支持速度显示
-task list # 列出所有任务的ID，内容以及状态
-task pause <taskID> # 暂停某个任务
-task resume <taskID> # 恢复某个被暂停的任务
-task break <taskID> # 销毁某个任务（不可恢复，它将在列表中消失）
+tasktype <type:async|sync> # **Global command**, set the task type for newly-created tasks. Sync mode doesn't support the progress displaying but builds at the same time of calculating, and async mode supports displaying the progress since it builds after calculation.
+task list # Lists the ID of each tasks, and its content · status.
+task pause <taskID> # Pauses a specific task
+task resume <taskID> # Resumes a specific task
+task break <taskID> # Destroys a specific task (Unrecoverable, the task will be gone from the task list)
 ````
 
-​	task命令还可以设定任务执行延迟(Delay)以及发包方案(Delay Mode):
+`task` command can also be used to set the delay of a task or its delay mode:
 
 ```shell
-task setdelay <taskID> <delay> # 设定某个任务的发包延迟。在continuous模式下单位为微秒； 在discrete模式下单位为秒
-task setdelaymode <taskID> <delayMode:continuous|discrete|none> # 设定某个任务的发包方案，有3个可选参数
-task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（最大方块集合），仅在 discrete 方案下有效
+task setdelay <taskID> <delay> # Sets the delay for the specified task. The unit in continuous mode is microsecond and it's second in discrete mode.
+task setdelaymode <taskID> <delayMode:continuous|discrete|none> # Sets the delay mode for the specified task, there are 3 modes available.
+task setdelaythreshold <taskID> <threshold:int> # Sets the threshold for a specific task, only available in discrete mode.
 ```
 
-- continuous（连续）：以一定速度发包，不会突变，比较稳定。
-- discrete（离散）：每经过一段固定时间发送大量数据包（最大数量不大于阈值），突变，不稳定，有概率造成服务器崩溃。
-- none（无延迟）：持续发送大量数据包，不会突变，非常不稳定，很大可能造成服务器崩溃。
+- continuous: Send packets with a specific speed.
 
-三种方法各有优缺点（请斟酌使用）：
-- 速度: continuous <= discrete < none (部分配置也可能导致continuous > discrete)
-- 稳定性: continuous > discrete > none
-- 平滑：continuous > none >= discrete 
+- discrete: Send packets without delay after wait the time of `delay`'s value (the max count of packets per delay won't be greater than the threshold).
 
-##### 功能命令
+- none: Send packets continuously without delay.
 
-- 设置空间原点：
+Each mode has its own advantages and disadvantages, please handle is as you think fit:
+
+* Speed: continuous <= discrete < none (For some special configurations, continuous mode's speed may faster than discrete mode's speed)
+* Stability: continuous > discrete > none
+* Smoothness: continuous > none >= discrete
+
+##### Functional Commands
+
+- Set the origin for the space:
 
   ```shell
   get
   ```
 
-- 设置全局指令执行延迟和执行方案：
+- Set the global command execution delay solution:
 
   ```shell
-  delay mode <delayMode:continuous|discrete|none> # 设定默认的发包方案
-  delay threshold <threshold:int> # 设定默认阈值（最大方块集合），仅在 discrete 方案下有效
-  delay set <Delay> # 设定默认的发包延迟。在continuous模式下单位为微秒； 在discrete模式下单位为秒
+  delay mode <delayMode:continuous|discrete|none> # Sets the default packet sending solution
+  delay threshold <threshold:int> # Sets the default threshold, only available in discrete mode.
+  delay set <Delay:int> # Sets the default packet sending delay. The unit in continuous mode is microsecond and it's second in discrete mode.
   ```
 
-- 设置是否显示进度条（显示建筑的进度百分比，方块总数，瞬时速度等信息。默认为true）
+- Set whether to show the progress (show informations like the percentage of construction, total block count, and the instantaneous velocity. default:`true`)
 
   ```shell
-  progress <bool:true|false>
+  progress <value:bool>
   ```
 
-##### 几何命令
+##### Geometry Commands
 
-​	Fast Builder具备在空间中构造简单几何体的功能（如圆,圈,球,线,椭圆等）
-- 圆面/圈 : 
+FastBuilder has the ability of constructing simple geometry structures in the space. (like round, circle, sphere, line, ellipsoid, etc.)
+
+- Round/Circle:
   ```shell
   round/circle -r <radius> -f <facing> -h <height> -b <tileName> -d <data>
-  -r --radius 圆或圈的半径
-  -f --facing 朝向,可选值有x,y,z
-  -b --block 方块名称
-  -d --data 方块特殊值
+  -r --radius The radius of the round or circle.
+  -f --facing Facing, available values: x,y,z
+  -b --block Block to be used to construct the structure
+  -d --data The data (aka damage value) of the block to be used to construct the structure
   ```
 
-- 球:
+- Sphere:
   ```shell
   sphere -r <radius> -s <shape>
-  -s --shape hollow(空心) |solid(实心)
+  -s --shape hollow|solid
   ```
 
-- 椭圆: 
+- Ellipse:
 
   ```shell
   ellipse -l <length> -w <width> -f <facing>
-  -l --length 长度
-  -w --width 宽度
+  -l --length Length
+  -w --width Width
   ```
 
-- 椭球: 
+- Ellipsoid:
 
   ```shell
   ellipsoid -l <length> -w <width> -h <height>
   ```
 
-##### 建筑生成命令
+##### Building Construction Commands
 
-​	从schematic或mcacblock（ACME导出文件）文件加载建筑：
+Load and construct buildings from `schematic` or `mcacblock`(structure file exported by the `ACME` building tool) files:
 
-- -p --path 文件路径
+```shell
+schem -p <filePath>
+acme -p <filePath>
+-p --path The path of the file, use "" to assign a path with blankspace(s).
+```
+
+##### Painting Slice Construction
+
+- Load image to the space:
 
   ```shell
-  schem -p <filePath>
-  acme -p <filePath>
+  plot -p <imageFilePath:string> -f <facing:x|y|z>
   ```
 
-##### 像素画生成
-
-- 将图片加载到空间：
-
-  ```shell
-  plot -p <imageFilePath> -f <facing>
-  ```
