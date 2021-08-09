@@ -30,6 +30,7 @@ func Parse(Message string, defaultConfig *mctype.MainConfig) (*mctype.MainConfig
 		if(c==' '&&!isInQuote){
 			SLC=append(SLC,curmsg)
 			curmsg=""
+			continue
 		}
 		if(c=='#'){
 			break
@@ -40,6 +41,7 @@ func Parse(Message string, defaultConfig *mctype.MainConfig) (*mctype.MainConfig
 		SLC=append(SLC,curmsg)
 		curmsg=""
 	}
+	fmt.Printf("%v\n",SLC)
 	if(isInQuote) {
 		return nil, fmt.Errorf("Unterminated quoted string")
 	}else if(isTransIMI) {
