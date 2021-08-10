@@ -191,6 +191,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	oneId, _ := uuid.NewUUID()
 	configuration.ZeroId=zeroId
 	configuration.OneId=oneId
+	mctype.ForwardedBrokSender=fbtask.BrokSender
 	tellraw(conn, "Welcome to FastBuilder!")
 	tellraw(conn, fmt.Sprintf("Operator: %s", user))
 	sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
@@ -204,14 +205,18 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		}
 
 		switch p := pk.(type) {
+		case *packet.StructureTemplateDataResponse:
+			//fmt.Printf("RESPONSE %+v\n",p.StructureTemplate)
+			fbtask.ExportWaiter<-p.StructureTemplate
+			break
 		/*case *packet.InventoryContent:
 			for _, item := range p.Content {
-				fmt.Printf("InventorySlot %+v\n",item.Stack)
+				fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
 			}
-			break
+			break*/
 		//case *packet.AddActor:
 		//	fmt.Printf("%+v\n%+v\n\n==\n\n",p.Attributes,p.EntityMetadata)
-		case *packet.InventorySlot:
+		/*case *packet.InventorySlot:
 			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {

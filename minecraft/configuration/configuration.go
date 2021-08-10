@@ -13,6 +13,7 @@ const (
 )
 
 type FullConfig map[byte]interface{}
+var ForwardedBrokSender chan string
 
 func ConcatFullConfig(mc *mctype.MainConfig, dc *mctype.DelayConfig) *FullConfig {
 	mco:=*mc

@@ -62,7 +62,26 @@ if(i.cmd=="addToBlockPalette"){
 jumpX 10
 jumpY 11
 jumpZ 12
+
+end 88
 */
+
+func (bdump *BDump) writeHeader(w *brotli.Writer) error {
+	_, err:=w.Write([]byte("BDX"))
+	if err!=nil {
+		return err
+	}
+	_, err=w.Write([]byte{0})
+	if err!=nil {
+		return err
+	}
+	_, err=w.Write([]byte(bdump.Author))
+	if err!=nil {
+		return err
+	}
+	_, err=w.Write([]byte{0})
+	return err
+}
 
 func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 	bdump.formatBlocks()
@@ -206,8 +225,9 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 		_, err1 := w.Write(writeA)
 		writeB:=make([]byte,2)
 		binary.BigEndian.PutUint16(writeB,uint16(mdl.Block.Data))
-		if(err!=nil||err1!=nil){
-			return fmt.Errorf("Failed to write333")
+		_, err2 := w.Write(writeB)
+		if(err!=nil||err1!=nil||err2!=nil){
+			return fmt.Errorf("Failed to write line230")
 		}
 	}
 	w.Write([]byte("XE"))
@@ -216,12 +236,20 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 
 func (bdump *BDump) WriteToFile(path string) error {
 	file, err:=os.OpenFile(path, os.O_RDWR|os.O_TRUNC|os.O_CREATE,0666)
+	if err!=nil {
+		return fmt.Errorf("Failed to open file: %v", err)
+	}
 	defer file.Close()
 	_, err=file.Write([]byte("BD@"))
 	if err!=nil {
 		return fmt.Errorf("Failed to write BRBDP file header")
 	}
 	brw := brotli.NewWriter(file)
+	defer brw.Close()
+	err=bdump.writeHeader(brw)
+	if err!=nil {
+		return err
+	}
 	err=bdump.writeBlocks(brw)
 	return err
 }

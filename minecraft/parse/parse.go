@@ -41,7 +41,7 @@ func Parse(Message string, defaultConfig *mctype.MainConfig) (*mctype.MainConfig
 		SLC=append(SLC,curmsg)
 		curmsg=""
 	}
-	fmt.Printf("%v\n",SLC)
+	//fmt.Printf("%v\n",SLC)
 	if(isInQuote) {
 		return nil, fmt.Errorf("Unterminated quoted string")
 	}else if(isTransIMI) {
@@ -52,7 +52,7 @@ func Parse(Message string, defaultConfig *mctype.MainConfig) (*mctype.MainConfig
 		Block:     &mctype.ConstBlock{},
 		OldBlock:  &mctype.ConstBlock{},
 		//Begin:     mctype.Position{},
-		End:       mctype.Position{},
+		End:       defaultConfig.End,
 		Position:  defaultConfig.Position,
 		Radius:    0,
 		Length:    0,

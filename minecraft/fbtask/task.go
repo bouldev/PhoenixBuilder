@@ -43,6 +43,7 @@ type AsyncInfo struct {
 
 var TaskIdCounter *atomic.Int64 = atomic.NewInt64(0)
 var TaskMap sync.Map
+var BrokSender chan string = make(chan string)
 
 func GetStateDesc(st byte) string {
 	if st == 0 {
@@ -142,7 +143,8 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 	}
 	Needless since it will be checked in function module.
 	*/
-	command.SendSizukanaCommand("gamemode c", conn)
+	und, _ := uuid.NewUUID()
+	command.SendWSCommand("gamemode c", und, conn)
 	blockschannel := make(chan *mctype.Module, 10240)
 	task := &Task {
 		TaskId: TaskIdCounter.Add(1),
@@ -249,6 +251,12 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 
 
 func InitTaskStatusDisplay(conn *minecraft.Conn) {
+	go func() {
+		for {
+			str:=<-BrokSender
+			command.Tellraw(conn,str)
+		}
+	} ()
 	ticker := time.NewTicker(500 * time.Millisecond)
 	go func() {
 		for {

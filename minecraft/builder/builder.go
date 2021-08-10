@@ -14,6 +14,7 @@ var Builder = map[string]func(config *mctype.MainConfig, blc chan *mctype.Module
 	"plot":      Paint,
 	"schem":     Schematic,
 	"acme":      Acme,
+	"bdump":     BDump,
 }
 
 func Generate(config *mctype.MainConfig, blc chan *mctype.Module) error {

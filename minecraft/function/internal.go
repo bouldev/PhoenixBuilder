@@ -323,8 +323,8 @@ func InitInternalFunctions() {
 		OwnedKeywords: []string{"export"},
 		FunctionType: FunctionTypeRegular,
 		FunctionContent: func(conn *minecraft.Conn,msg string){
-			command.Tellraw(conn, "Unpublished function")
-			return
+			//command.Tellraw(conn, "Unpublished function")
+			//return
 			task := fbtask.CreateExportTask(msg, conn)
 			if task==nil {
 				return
