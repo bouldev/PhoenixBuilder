@@ -94,19 +94,19 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 		endPos.X=beginPos.X
 		beginPos.X=temp
 	}
-	msizex=endPos.X-beginPos.X
+	msizex=endPos.X-beginPos.X+1
 	if(endPos.Y-beginPos.Y<0) {
 		temp:=endPos.Y
 		endPos.Y=beginPos.Y
 		beginPos.Y=temp
 	}
-	msizey=endPos.Y-beginPos.Y
+	msizey=endPos.Y-beginPos.Y+1
 	if(endPos.Z-beginPos.Z<0) {
 		temp:=endPos.Z
 		endPos.Z=beginPos.Z
 		beginPos.Z=temp
 	}
-	msizez=endPos.Z-beginPos.Z
+	msizez=endPos.Z-beginPos.Z+1
 	//gsizex:=msizex
 	gsizez:=msizez
 	//fmt.Printf("%v,%v\n%v,%v,%v\n%v,%v,%v\n",beginPos,endPos,offsetx,offsety,offsetz,sizex,sizey,sizez)
@@ -130,7 +130,11 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 			posx:=beginPos.X+originx*64
 			posz:=beginPos.Z+originz*64
 			u_d2, _ := uuid.NewUUID()
+			wchan:=make(chan *packet.CommandOutput)
+			command.UUIDMap.Store(u_d2.String(),wchan)
 			command.SendWSCommand(fmt.Sprintf("tp %d %d %d",posx,beginPos.Y+1,posz), u_d2, conn)
+			<-wchan
+			close(wchan)
 			ExportWaiter=make(chan map[string]interface{})
 			conn.WritePacket(&packet.StructureTemplateDataRequest {
 				StructureName: "mystructure:a",
