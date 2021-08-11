@@ -218,6 +218,14 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 			}
 			blkscounter++
 			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
+				if curblock.Block != nil {
+					request:=command.SetBlockRequest(curblock, cfg)
+					tuid, _ := uuid.NewUUID()
+					wchan:=make(chan *packet.CommandOutput)
+					command.UUIDMap.Store(tuid.String(),wchan)
+					command.SendWSCommand(request,tuid, conn)
+					<-wchan
+				}
 				cbdata:=curblock.CommandBlockData
 				if(cfg.InvalidateCommands){
 					cbdata.Command="|"+cbdata.Command
@@ -240,8 +248,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 					TickDelay: cbdata.TickDelay,
 					ExecuteOnFirstTick: cbdata.ExecuteOnFirstTick,
 				})
-			}
-			if curblock.Block != nil {
+			}else if curblock.Block != nil {
 				request := command.SetBlockRequest(curblock, cfg)
 				err := command.SendSizukanaCommand(request, conn)
 				if err != nil {

@@ -84,6 +84,7 @@ reserved 13
 *addBigZ 25
 * : あたらしいのいみ
 assignCommandBlockData 26
+placeCommandBlockWithData 27
 
 end 88
 */
@@ -255,20 +256,20 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 			}
 			break
 		}
-		_, err:=w.Write([]byte{7})
-		writeA:=make([]byte,2)
-		wac, _ := blocksPalette[*mdl.Block.Name]
-		binary.BigEndian.PutUint16(writeA,uint16(wac))
-		_, err1 := w.Write(writeA)
-		writeB:=make([]byte,2)
-		binary.BigEndian.PutUint16(writeB,uint16(mdl.Block.Data))
-		_, err2 := w.Write(writeB)
-		if(err!=nil||err1!=nil||err2!=nil){
-			return fmt.Errorf("Failed to write line230")
-		}
 		if mdl.CommandBlockData != nil {
+			_, err:=w.Write([]byte{27})
+			writeA:=make([]byte,2)
+			wac, _ := blocksPalette[*mdl.Block.Name]
+			binary.BigEndian.PutUint16(writeA,uint16(wac))
+			_, err1 := w.Write(writeA)
+			writeB:=make([]byte,2)
+			binary.BigEndian.PutUint16(writeB,uint16(mdl.Block.Data))
+			_, err2 := w.Write(writeB)
+			if(err!=nil||err1!=nil||err2!=nil){
+				return fmt.Errorf("Failed to write line230")
+			}
 			dt:=mdl.CommandBlockData
-			_, err=w.Write([]byte{26})
+			//_, err=w.Write([]byte{27})
 			wMode:=make([]byte,4)
 			binary.BigEndian.PutUint32(wMode,dt.Mode)
 			_, err1=w.Write(wMode)
@@ -306,6 +307,18 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 			if(err!=nil||err1!=nil||err2!=nil||err3!=nil||err4!=nil||err5!=nil||err6!=nil||err7!=nil||err8!=nil||err9!=nil){
 				return fmt.Errorf("Failed to write cbcmd")
 			}
+			continue
+		}
+		_, err:=w.Write([]byte{7})
+		writeA:=make([]byte,2)
+		wac, _ := blocksPalette[*mdl.Block.Name]
+		binary.BigEndian.PutUint16(writeA,uint16(wac))
+		_, err1 := w.Write(writeA)
+		writeB:=make([]byte,2)
+		binary.BigEndian.PutUint16(writeB,uint16(mdl.Block.Data))
+		_, err2 := w.Write(writeB)
+		if(err!=nil||err1!=nil||err2!=nil){
+			return fmt.Errorf("Failed to write line230")
 		}
 	}
 	w.Write([]byte("XE"))

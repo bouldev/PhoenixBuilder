@@ -294,6 +294,87 @@ func BDump(config *mctype.MainConfig, blc chan *mctype.Module) error {
 					Z: brushPosition[2]+config.Position.Z,
 				},
 			}
+		}else if(cmd==27){
+			rdst:=make([]byte,2)
+			_, err:=br.Read(rdst)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos4], file may be corrupted")
+			}
+			blockId:=binary.BigEndian.Uint16(rdst)
+			_, err=br.Read(rdst)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos5], file may be corrupted")
+			}
+			if(int(blockId)>=len(blocksStrPool)){
+				fmt.Printf("WARNING: Invalid command")
+				continue
+			}
+			blockData:=binary.BigEndian.Uint16(rdst)
+			blockName:=&blocksStrPool[int(blockId)]
+			cmdl:=&mctype.Module {
+				Block: &mctype.Block {
+					Name: blockName,
+					Data: int16(blockData),
+				},
+				Point: mctype.Position {
+					X: brushPosition[0]+config.Position.X,
+					Y: brushPosition[1]+config.Position.Y,
+					Z: brushPosition[2]+config.Position.Z,
+				},
+			}
+			fbuf:=make([]byte,4)
+			_, err=br.Read(fbuf)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos15], file may be corrupted")
+			}
+			cbmode:=binary.BigEndian.Uint32(fbuf)
+			command, err:=ReadBrString(br)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos16], file may be corrupted")
+			}
+			cusname, err:=ReadBrString(br)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos17], file may be corrupted")
+			}
+			lasout, err:=ReadBrString(br)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos18], file may be corrupted")
+			}
+			_, err=br.Read(fbuf)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos19], file may be corrupted")
+			}
+			tickdelay:=int32(binary.BigEndian.Uint32(fbuf))
+			_, err=br.Read(fbuf)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos20], file may be corrupted")
+			}
+			fbools:=[]bool{false,false,false,false}
+			if fbuf[0]==1 {
+				fbools[0]=true
+			}
+			if fbuf[1]==1 {
+				fbools[1]=true
+			}
+			if fbuf[2]==1 {
+				fbools[2]=true
+			}
+			if fbuf[3]==1 {
+				fbools[3]=true
+			}
+			cbdata:=&mctype.CommandBlockData {
+				Mode: cbmode,
+				Command: command,
+				CustomName: cusname,
+				LastOutput: lasout,
+				TickDelay: tickdelay,
+				ExecuteOnFirstTick: fbools[0],
+				TrackOutput: fbools[1],
+				Conditional: fbools[2],
+				NeedRedstone: fbools[3],
+			}
+			cmdl.CommandBlockData=cbdata
+			blc<-cmdl
 		}else{
 			fmt.Printf("WARNING: BDump/Import: Unimplemented method found : %d\n",cmd)
 			fmt.Printf("WARNING: BDump/Import: Previous command is: %d\n",prevCmd)
