@@ -40,7 +40,7 @@ jobs:
         echo "export THEOS=~/theos" >> ~/.profile
         curl -LO https://github.com/sbingner/llvm-project/releases/latest/download/linux-ios-arm64e-clang-toolchain.tar.lzma
         TMP=$(mktemp -d)
-        tar -xvf linux-ios-arm64e-clang-toolchain.tar.lzma -C $TMP
+        tar -xf linux-ios-arm64e-clang-toolchain.tar.lzma -C $TMP
         mkdir -p $THEOS/toolchain/linux/iphone
         mv $TMP/ios-arm64e-clang-toolchain/* $THEOS/toolchain/linux/iphone/
         rm -r linux-ios-arm64e-clang-toolchain.tar.lzma $TMP
@@ -57,12 +57,16 @@ jobs:
         sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go>~/conn.go
         cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
     - name: Build
-      run: make
+      run: |
+        export THEOS=~/theos
+        make
     - name: Package for specific platforms
-      run: make package
+      run: |
+        export THEOS=~/theos
+        make package
     - name: Pack binaries
       run: |
-        mv build/hashes.json build/hashes-2.json
+        #mv build/hashes.json build/hashes-2.json
         mv release/*.deb build/
         tar -czf fb-linux-binaries.tar.gz build/*
     - name: Load Key
