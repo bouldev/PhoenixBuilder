@@ -36,7 +36,7 @@ jobs:
     - name: Setup theos
       run: |
         mv $GITHUB_WORKSPACE/theos ~/theos
-        export THEOS ~/theos
+        export THEOS=~/theos
         echo "export THEOS=~/theos" >> ~/.profile
         curl -LO https://github.com/sbingner/llvm-project/releases/latest/download/linux-ios-arm64e-clang-toolchain.tar.lzma
         TMP=$(mktemp -d)

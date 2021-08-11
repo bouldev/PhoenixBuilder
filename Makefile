@@ -68,6 +68,7 @@ build/phoenixbuilder-windows-executable.exe: build/ /usr/bin/i686-w64-mingw32-gc
 	CC=/usr/bin/i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable.exe
 build/hashes.json: build genhash.js ${TARGETS}
 	node genhash.js
+	cp upload-to-server build/version
 
 package/ios: build/phoenixbuilder-ios-executable release/
 	mkdir -p release/phoenixbuilder-iphoneos/usr/local/bin release/phoenixbuilder-iphoneos/DEBIAN
