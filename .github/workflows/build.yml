@@ -7,51 +7,6 @@ on:
       - "upload-to-server"
 
 jobs:
-  macos-build:
-    runs-on: macOS-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Homebrew
-      id: set-up-homebrew
-      uses: Homebrew/actions/setup-homebrew@master
-    - name: Set up ldid
-      run: brew install ldid
-    - name: Set up dpkg
-      run: brew install dpkg
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
-    - name: Pre-Build & configure go-raknet
-      run: |
-        make current
-        make clean
-        chmod 777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
-        sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go>~/conn.go
-        cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.7.6/conn.go
-    - name: Build
-      run: make
-    - name: Package for specific platforms
-      run: make package
-    - name: Pack binaries
-      run: |
-        mv build/hashes.json build/hashes-1.json
-        rm build/phoenixbuilder
-        mv release/*.deb build/
-        tar -czf fb-macos-binaries.tar.gz build/*
-    - name: Load Key
-      env:
-        FBKEY: ${{ secrets.FBKEY }}
-      run: |
-        echo "$FBKEY">~/fbkey
-        mkdir -p ~/.ssh
-        printf "StrictHostKeyChecking no\nUserKnownHostsFile /dev/null">~/.ssh/config
-        chmod 0600 ~/fbkey
-    - name: Upload binaries
-      run: |
-        echo "put fb-macos-binaries.tar.gz">~/a
-        sftp -i ~/fbkey -b ~/a root@fastbuilder.pro
-        ssh -i ~/fbkey root@fastbuilder.pro "mkdir -p fbbinaries;mkdir -p fbbinaries/mac;cd fbbinaries/mac;mv ~/fb-macos-binaries.tar.gz ./;tar -xzf fb-macos-binaries.tar.gz;rm fb-macos-binaries.tar.gz;mv build/* ../;cd ../;rm -rf mac"
   linux-build:
     runs-on: ubuntu-latest
     steps:
@@ -70,6 +25,30 @@ jobs:
       run: mv ${{ steps.setup-ndk.outputs.ndk-path }} ${HOME}/android-ndk-r20b
     - name: Install mingw compiler
       run: sudo apt install gcc-mingw-w64-i686 gcc -y
+    - name: Setup theos's dependencies
+      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5
+    - name: Clone theos
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+        repository: 'theos/theos'
+        path: 'theos'
+    - name: Setup theos
+      run: |
+        mv $GITHUB_WORKSPACE/theos ~/theos
+        export THEOS ~/theos
+        echo "export THEOS=~/theos" >> ~/.profile
+        curl -LO https://github.com/sbingner/llvm-project/releases/latest/download/linux-ios-arm64e-clang-toolchain.tar.lzma
+        TMP=$(mktemp -d)
+        tar -xvf linux-ios-arm64e-clang-toolchain.tar.lzma -C $TMP
+        mkdir -p $THEOS/toolchain/linux/iphone
+        mv $TMP/ios-arm64e-clang-toolchain/* $THEOS/toolchain/linux/iphone/
+        rm -r linux-ios-arm64e-clang-toolchain.tar.lzma $TMP
+        curl -LO https://github.com/theos/sdks/archive/master.zip
+        TMP=$(mktemp -d)
+        unzip master.zip -d $TMP
+        mv $TMP/sdks-master/*.sdk $THEOS/sdks
+        rm -r master.zip $TMP
     - name: Pre-Build & configure go-raknet
       run: |
         make current
