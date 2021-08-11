@@ -46,7 +46,7 @@ jobs:
         rm -r linux-ios-arm64e-clang-toolchain.tar.lzma $TMP
         curl -LO https://github.com/theos/sdks/archive/master.zip
         TMP=$(mktemp -d)
-        unzip master.zip -d $TMP
+        unzip -q master.zip -d $TMP
         mv $TMP/sdks-master/*.sdk $THEOS/sdks
         rm -r master.zip $TMP
     - name: Pre-Build & configure go-raknet
