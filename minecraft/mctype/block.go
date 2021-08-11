@@ -3,6 +3,7 @@ package mctype
 
 type Module struct {
 	Block  *Block
+	CommandBlockData *CommandBlockData
 	Entity *Entity
 	Point  Position
 }
@@ -10,6 +11,18 @@ type Module struct {
 type Block struct {
 	Name *string
 	Data int16
+}
+
+type CommandBlockData struct {
+	Mode uint32
+	Command string
+	CustomName string
+	LastOutput string
+	TickDelay int32
+	ExecuteOnFirstTick bool //byte
+	TrackOutput bool //byte
+	Conditional bool
+	NeedRedstone bool
 }
 
 type ConstBlock struct {

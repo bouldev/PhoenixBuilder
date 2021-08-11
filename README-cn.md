@@ -243,14 +243,17 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
 
 ##### 建筑生成命令
 
-​	从schematic或mcacblock（ACME导出文件）文件加载建筑：
+​	从`schematic` · <ruby><rb><code>bdx</code></rb><rp>(</rp><rt style="font-size:80%">bdump</rt><rp>)</rp></ruby>或`mcacblock`（ACME导出的建筑文件）文件中加载建筑：
 
 - -p --path 文件路径
 
   ```shell
   schem -p <filePath>
   acme -p <filePath>
+  bdump -p <filePath>
   -p --path 文件路径，暂时不支持存在空格的文件名。
+  # 可选Flag: --excludecommands : 不导入命令方块中的命令。
+  # 		   --invalidatecommands : 无效化处理导入的命令方块中的命令，如命令"say 123"会被处理为"|say 123"
   ```
 
 ##### 像素画生成
@@ -260,3 +263,37 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
   ```shell
   plot -p <imageFilePath> -f <facing>
   ```
+
+##### 实验性功能：建筑导出
+
+**注意：本功能并不稳定，使用期间可能出现各种预期外情况（如程序崩溃）。另外，建筑导出后生成的文件可能无效，所以请在导出后检查。**
+
+* 设置导出的第一点（起点）
+
+  ```shell
+  get
+  ```
+
+  或
+
+  ```shell
+  get begin
+  ```
+
+  * 二者等效
+
+* 设置导出第二点（终点）
+
+  ```shell
+  get end
+  ```
+
+* 导出指定区域的建筑到文件
+
+  ```shell
+  export -p <filePath>
+  # 可选Flag： --excludecommands : 不导出命令方块中的命令。
+  ```
+
+* 用`bdump`命令导入之
+

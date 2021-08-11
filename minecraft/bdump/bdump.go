@@ -8,13 +8,19 @@ import (
 	"encoding/binary"
 )
 
+type BDumpOrigin struct {
+	Origin mctype.Position
+	Blocks []*mctype.Module
+}
+
 type BDump struct {
 	Author string
 	Blocks []*mctype.Module
 }
 
 func (bdump *BDump) formatBlocks() {
-	min:=[]int{2147483647,2147483647,2147483647}
+	/*min:=[]int{2147483647,2147483647,2147483647}
+	
 	for _, mdl := range bdump.Blocks {
 		if mdl.Point.X<min[0] {
 			min[0]=mdl.Point.X
@@ -30,7 +36,7 @@ func (bdump *BDump) formatBlocks() {
 		mdl.Point.X-=min[0]
 		mdl.Point.Y-=min[1]
 		mdl.Point.Z-=min[2]
-	}
+	}*/
 }
 
 /*
@@ -62,6 +68,22 @@ if(i.cmd=="addToBlockPalette"){
 jumpX 10
 jumpY 11
 jumpZ 12
+reserved 13
+
+*X++  14
+*X--  15
+*Y++  16
+*Y--  17
+*Z++  18
+*Z--  19
+*addX 20
+*addBigX 21
+*addY 22
+*addBigY 23
+*addZ 24
+*addBigZ 25
+* : あたらしいのいみ
+assignCommandBlockData 26
 
 end 88
 */
@@ -113,30 +135,35 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 		for {
 			if(mdl.Point.X!=brushPosition[0]) {
 				if(mdl.Point.X-brushPosition[0]==1){
-					_, err:=w.Write([]byte{3})
+					_, err:=w.Write([]byte{14})
+					if err != nil {
+						return fmt.Errorf("Failed to write command")
+					}
+				}else if(mdl.Point.X-brushPosition[0]==-1){
+					_, err:=w.Write([]byte{15})
 					if err != nil {
 						return fmt.Errorf("Failed to write command")
 					}
 				}else{
 					wrap:=mdl.Point.X-brushPosition[0]
-					if wrap > 65535 {
-						_, err:=w.Write([]byte{10})
+					if (wrap < -32767||wrap > 32767) {
+						_, err:=w.Write([]byte{21})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
 						writeO:=make([]byte,4)
-						binary.BigEndian.PutUint32(writeO,uint32(wrap))
+						binary.BigEndian.PutUint32(writeO,uint32(int32(wrap)))
 						_, err=w.Write(writeO)
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
 					}else{
-						_, err:=w.Write([]byte{2})
+						_, err:=w.Write([]byte{20})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
 						writeO:=make([]byte,2)
-						binary.BigEndian.PutUint16(writeO,uint16(wrap))
+						binary.BigEndian.PutUint16(writeO,uint16(int16(wrap)))
 						_, err=w.Write(writeO)
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -144,35 +171,40 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 					}
 				}
 				brushPosition[0]=mdl.Point.X
-				brushPosition[1]=0
-				brushPosition[2]=0
+				//brushPosition[1]=0
+				//brushPosition[2]=0
 				continue
 			}else if(mdl.Point.Y!=brushPosition[1]) {
 				if(mdl.Point.Y-brushPosition[1]==1){
-					_, err:=w.Write([]byte{5})
+					_, err:=w.Write([]byte{16})
+					if err != nil {
+						return fmt.Errorf("Failed to write command")
+					}
+				}else if(mdl.Point.Y-brushPosition[1]==-1){
+					_, err:=w.Write([]byte{17})
 					if err != nil {
 						return fmt.Errorf("Failed to write command")
 					}
 				}else{
 					wrap:=mdl.Point.Y-brushPosition[1]
-					if wrap > 65535 {
-						_, err:=w.Write([]byte{11})
+					if (wrap > 32767||wrap<32767) {
+						_, err:=w.Write([]byte{23})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
 						writeO:=make([]byte,4)
-						binary.BigEndian.PutUint32(writeO,uint32(wrap))
+						binary.BigEndian.PutUint32(writeO,uint32(int32(wrap)))
 						_, err=w.Write(writeO)
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
 					}else{
-						_, err:=w.Write([]byte{4})
+						_, err:=w.Write([]byte{22})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
 						writeO:=make([]byte,2)
-						binary.BigEndian.PutUint16(writeO,uint16(wrap))
+						binary.BigEndian.PutUint16(writeO,uint16(int16(wrap)))
 						_, err=w.Write(writeO)
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -180,34 +212,39 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 					}
 				}
 				brushPosition[1]=mdl.Point.Y
-				brushPosition[2]=0
+				//brushPosition[2]=0
 				continue
 			}else if(mdl.Point.Z!=brushPosition[2]) {
 				if(mdl.Point.Z-brushPosition[2]==1){
-					_, err:=w.Write([]byte{8})
+					_, err:=w.Write([]byte{18})
+					if err != nil {
+						return fmt.Errorf("Failed to write command")
+					}
+				}else if(mdl.Point.Z-brushPosition[2]==1){
+					_, err:=w.Write([]byte{19})
 					if err != nil {
 						return fmt.Errorf("Failed to write command")
 					}
 				}else{
 					wrap:=mdl.Point.Z-brushPosition[2]
-					if wrap > 65535 {
-						_, err:=w.Write([]byte{12})
+					if (wrap > 32767||wrap < -32767) {
+						_, err:=w.Write([]byte{25})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
 						writeO:=make([]byte,4)
-						binary.BigEndian.PutUint32(writeO,uint32(wrap))
+						binary.BigEndian.PutUint32(writeO,uint32(int32(wrap)))
 						_, err=w.Write(writeO)
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
 					}else{
-						_, err:=w.Write([]byte{6})
+						_, err:=w.Write([]byte{24})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
 						writeO:=make([]byte,2)
-						binary.BigEndian.PutUint16(writeO,uint16(wrap))
+						binary.BigEndian.PutUint16(writeO,uint16(int16(wrap)))
 						_, err=w.Write(writeO)
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -229,6 +266,47 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 		if(err!=nil||err1!=nil||err2!=nil){
 			return fmt.Errorf("Failed to write line230")
 		}
+		if mdl.CommandBlockData != nil {
+			dt:=mdl.CommandBlockData
+			_, err=w.Write([]byte{26})
+			wMode:=make([]byte,4)
+			binary.BigEndian.PutUint32(wMode,dt.Mode)
+			_, err1=w.Write(wMode)
+			_, err2=w.Write([]byte(dt.Command))
+			_, err3:=w.Write([]byte{0})
+			_, err4:=w.Write([]byte(dt.CustomName))
+			_, err5:=w.Write([]byte{0})
+			_, err6:=w.Write([]byte(dt.LastOutput))
+			_, err7:=w.Write([]byte{0})
+			wTickDelay:=make([]byte,4)
+			binary.BigEndian.PutUint32(wTickDelay,uint32(int32(dt.TickDelay)))
+			_, err8:=w.Write(wTickDelay)
+			fBools:=make([]byte,4)
+			if dt.ExecuteOnFirstTick {
+				fBools[0]=1
+			}else{
+				fBools[0]=0
+			}
+			if dt.TrackOutput {
+				fBools[1]=1
+			}else{
+				fBools[1]=0
+			}
+			if dt.Conditional {
+				fBools[2]=1
+			}else{
+				fBools[2]=0
+			}
+			if dt.NeedRedstone {
+				fBools[3]=1
+			}else{
+				fBools[3]=0
+			}
+			_, err9:=w.Write(fBools)
+			if(err!=nil||err1!=nil||err2!=nil||err3!=nil||err4!=nil||err5!=nil||err6!=nil||err7!=nil||err8!=nil||err9!=nil){
+				return fmt.Errorf("Failed to write cbcmd")
+			}
+		}
 	}
 	w.Write([]byte("XE"))
 	return nil
@@ -245,11 +323,14 @@ func (bdump *BDump) WriteToFile(path string) error {
 		return fmt.Errorf("Failed to write BRBDP file header")
 	}
 	brw := brotli.NewWriter(file)
-	defer brw.Close()
 	err=bdump.writeHeader(brw)
 	if err!=nil {
 		return err
 	}
 	err=bdump.writeBlocks(brw)
+	if err!=nil {
+		return err
+	}
+	err=brw.Close()
 	return err
 }

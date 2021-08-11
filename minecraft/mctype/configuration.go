@@ -27,6 +27,8 @@ type MainConfig struct {
 	Length, Width, Height int
 	Method, OldMethod     string
 	Facing, Path, Shape   string
+	ExcludeCommands       bool
+	InvalidateCommands    bool
 }
 
 type DelayConfig struct {

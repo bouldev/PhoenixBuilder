@@ -11,11 +11,12 @@ import (
 	"github.com/google/uuid"
 	"phoenixbuilder/minecraft/parse"
 	"phoenixbuilder/minecraft/protocol"
-	"encoding/json"
-	"go.uber.org/atomic"
-	"sync"
+	//"encoding/json"
+	//"go.uber.org/atomic"
+	//"sync"
 	"strings"
 	"phoenixbuilder/minecraft/bdump"
+	"strconv"
 )
 
 
@@ -40,7 +41,7 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 		command.Tellraw(conn, fmt.Sprintf("Failed to parse command: %v",err))
 		return nil
 	}
-	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
+	//fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
 	//dcfg := fcfg.Delay()
 	beginPos := cfg.Position
 	endPos   := cfg.End
@@ -64,13 +65,13 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 		endPos.Z=beginPos.Z
 		beginPos.Z=f
 	}*/
-	offsetx:=0
+	/*offsetx:=0
 	offsety:=0
-	offsetz:=0
-	sizex:=0
-	sizey:=0
-	sizez:=0
-	if(endPos.X-beginPos.X>=0) {
+	offsetz:=0*/
+	msizex:=0
+	msizey:=0
+	msizez:=0
+	/*if(endPos.X-beginPos.X>=0) {
 		sizex=endPos.X-beginPos.X
 	}else{
 		offsetx=endPos.X-beginPos.X
@@ -87,90 +88,193 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 	}else{
 		offsetz=endPos.Z-beginPos.Z
 		sizez=beginPos.Z-endPos.Z
+	}*/
+	if(endPos.X-beginPos.X<0) {
+		temp:=endPos.X
+		endPos.X=beginPos.X
+		beginPos.X=temp
 	}
+	msizex=endPos.X-beginPos.X
+	if(endPos.Y-beginPos.Y<0) {
+		temp:=endPos.Y
+		endPos.Y=beginPos.Y
+		beginPos.Y=temp
+	}
+	msizey=endPos.Y-beginPos.Y
+	if(endPos.Z-beginPos.Z<0) {
+		temp:=endPos.Z
+		endPos.Z=beginPos.Z
+		beginPos.Z=temp
+	}
+	msizez=endPos.Z-beginPos.Z
+	//gsizex:=msizex
+	gsizez:=msizez
 	//fmt.Printf("%v,%v\n%v,%v,%v\n%v,%v,%v\n",beginPos,endPos,offsetx,offsety,offsetz,sizex,sizey,sizez)
 	//return nil
 	go func() {
 		u_d, _ := uuid.NewUUID()
-		u_d2, _ := uuid.NewUUID()
 		command.SendWSCommand("gamemode c", u_d, conn)
-		command.SendWSCommand(fmt.Sprintf("tp %d %d %d",beginPos.X,beginPos.Y+1,beginPos.Z), u_d2, conn)
-		command.Tellraw(conn, "EXPORT >> Fetching data")
-		ExportWaiter=make(chan map[string]interface{})
-		conn.WritePacket(&packet.StructureTemplateDataRequest {
-			StructureName: "mystructure:a",
-			Position: protocol.BlockPos {int32(beginPos.X),int32(beginPos.Y),int32(beginPos.Z)},
-			Settings: protocol.StructureSettings {
-				PaletteName: "default",
-				IgnoreEntities: true,
-				IgnoreBlocks: false,
-				Size: protocol.BlockPos {int32(sizex),int32(sizey),int32(sizez)},
-				Offset: protocol.BlockPos {int32(offsetx),int32(offsety),int32(offsetz)},
-				LastEditingPlayerUniqueID: conn.GameData().EntityUniqueID,
-				Rotation: 0,
-				Mirror: 0,
-				Integrity: 1,
-				Seed: 0,
-			},
-			RequestType: packet.StructureTemplateRequestExportFromSave,
-		})
-		exportData:=<-ExportWaiter
-		close(ExportWaiter)
-		//fmt.Printf("%v",exportData["size"])
-		command.Tellraw(conn, "EXPORT >> Data received, processing.")
-		command.Tellraw(conn, "EXPORT >> Extracting blocks")
-		sizeoo, _:=exportData["size"].([]interface{})
-		sizex,_:=sizeoo[0].(int32)
-		sizey,_:=sizeoo[1].(int32)
-		sizez,_:=sizeoo[2].(int32)
-		size:=[]int{int(sizex),int(sizey),int(sizez)}
-		structure, _:=exportData["structure"].(map[string]interface{})
-		indicesP, _:=structure["block_indices"].([]interface{})
-		indices,_:=indicesP[0].([]interface{})
-		blockpalettepar,_:=structure["palette"].(map[string]interface{})
-		blockpalettepar2,_:=blockpalettepar["default"].(map[string]interface{})
-		blockpalette,_:=blockpalettepar2["block_palette"].([]/*map[string]*/interface{})
+		originx:=0
+		originz:=0
 		var blocks []*mctype.Module
-		airind:=int32(-1)
-		i:=0
-		for x:=0;x<size[0];x++ {
-			for y:=0;y<size[1];y++ {
-				for z:=0;z<size[2];z++ {
-					ind,_:=indices[i].(int32)
-					if ind==airind {
+		for {
+			command.Tellraw(conn, "EXPORT >> Fetching data")
+			cursizex:=msizex
+			cursizez:=msizez
+			if msizex>64 {
+				cursizex=64
+			}
+			if msizez>64 {
+				cursizez=64
+			}
+			posx:=beginPos.X+originx*64
+			posz:=beginPos.Z+originz*64
+			u_d2, _ := uuid.NewUUID()
+			command.SendWSCommand(fmt.Sprintf("tp %d %d %d",posx,beginPos.Y+1,posz), u_d2, conn)
+			ExportWaiter=make(chan map[string]interface{})
+			conn.WritePacket(&packet.StructureTemplateDataRequest {
+				StructureName: "mystructure:a",
+				Position: protocol.BlockPos {int32(posx),int32(beginPos.Y),int32(posz)},
+				Settings: protocol.StructureSettings {
+					PaletteName: "default",
+					IgnoreEntities: true,
+					IgnoreBlocks: false,
+					Size: protocol.BlockPos {int32(cursizex),int32(msizey),int32(cursizez)},
+					Offset: protocol.BlockPos {0,0,0},
+					LastEditingPlayerUniqueID: conn.GameData().EntityUniqueID,
+					Rotation: 0,
+					Mirror: 0,
+					Integrity: 1,
+					Seed: 0,
+				},
+				RequestType: packet.StructureTemplateRequestExportFromSave,
+			})
+			exportData:=<-ExportWaiter
+			close(ExportWaiter)
+			//fmt.Printf("%v",exportData["size"])
+			command.Tellraw(conn, "EXPORT >> Data received, processing.")
+			command.Tellraw(conn, "EXPORT >> Extracting blocks")
+			sizeoo, _:=exportData["size"].([]interface{})
+			sizea,_:=sizeoo[0].(int32)
+			sizeb,_:=sizeoo[1].(int32)
+			sizec,_:=sizeoo[2].(int32)
+			size:=[]int{int(sizea),int(sizeb),int(sizec)}
+			structure, _:=exportData["structure"].(map[string]interface{})
+			indicesP, _:=structure["block_indices"].([]interface{})
+			indices,_:=indicesP[0].([]interface{})
+			blockpalettepar,_:=structure["palette"].(map[string]interface{})
+			blockpalettepar2,_:=blockpalettepar["default"].(map[string]interface{})
+			blockpalette,_:=blockpalettepar2["block_palette"].([]/*map[string]*/interface{})
+			blockposdata,_:=blockpalettepar2["block_position_data"].(map[string]interface{})
+			airind:=int32(-1)
+			i:=0
+			for x:=0;x<size[0];x++ {
+				for y:=0;y<size[1];y++ {
+					for z:=0;z<size[2];z++ {
+						ind,_:=indices[i].(int32)
+						if ind==airind {
+							i++
+							continue
+						}
+						curblock,_:=blockpalette[ind].(map[string]interface{})
+						curblocknameunsplitted,_:=curblock["name"].(string)
+						curblocknamesplitted:=strings.Split(curblocknameunsplitted,":")
+						curblockname:=curblocknamesplitted[1]
+						var cbdata *mctype.CommandBlockData=nil
+						if curblockname=="air" {
+							i++
+							airind=ind
+							continue
+						}else if(!cfg.ExcludeCommands&&strings.Contains(curblockname,"command_block")) {
+							itemp,_:=blockposdata[strconv.Itoa(i)].(map[string]interface{})
+							item,_:=itemp["block_entity_data"].(map[string]interface{})
+							var mode uint32
+							if(curblockname=="command_block"){
+								mode=packet.CommandBlockImpulse
+							}else if(curblockname=="repeating_command_block"){
+								mode=packet.CommandBlockRepeat
+							}else if(curblockname=="chain_command_block"){
+								mode=packet.CommandBlockChain
+							}
+							cmd,_:=item["Command"].(string)
+							cusname,_:=item["CustomName"].(string)
+							exeft,_:=item["ExecuteOnFirstTick"].(uint8)
+							tickdelay,_:=item["TickDelay"].(int32)//*/
+							aut,_:=item["auto"].(uint8)//!needrestone
+							trackoutput,_:=item["TrackOutput"].(uint8)//
+							lo,_:=item["LastOutput"].(string)
+							conditionalmode:=item["conditionalMode"].(uint8)
+							var exeftb bool
+							if exeft==0 {
+								exeftb=false
+							}else{
+								exeftb=true
+							}
+							var tob bool
+							if trackoutput==1 {
+								tob=true
+							}else{
+								tob=false
+							}
+							var nrb bool
+							if aut==1 {
+								nrb=false
+								//REVERSED!!
+							}else{
+								nrb=true
+							}
+							var conb bool
+							if conditionalmode==1 {
+								conb=true
+							}else{
+								conb=false
+							}
+							cbdata=&mctype.CommandBlockData {
+								Mode: mode,
+								Command: cmd,
+								CustomName: cusname,
+								ExecuteOnFirstTick: exeftb,
+								LastOutput: lo,
+								TickDelay: tickdelay,
+								TrackOutput: tob,
+								Conditional: conb,
+								NeedRedstone: nrb,
+							}
+						}
+						curblockdata,_:=curblock["val"].(int16)
+						blocks=append(blocks,&mctype.Module{
+							Block: &mctype.Block {
+								Name:&curblockname,
+								Data:curblockdata,
+							},
+							CommandBlockData: cbdata,
+							Point: mctype.Position {
+								X: originx*64+x,
+								Y: y,
+								Z: originz*64+z,
+							},
+						})
 						i++
-						continue
 					}
-					curblock,_:=blockpalette[ind].(map[string]interface{})
-					curblocknameunsplitted,_:=curblock["name"].(string)
-					curblocknamesplitted:=strings.Split(curblocknameunsplitted,":")
-					curblockname:=curblocknamesplitted[1]
-					if curblockname=="air" {
-						i++
-						airind=ind
-						continue
-					}
-					curblockdata,_:=curblock["val"].(int16)
-					blocks=append(blocks,&mctype.Module{
-						Block: &mctype.Block {
-							Name:&curblockname,
-							Data:curblockdata,
-						},
-						Point: mctype.Position {
-							X: x,
-							Y: y,
-							Z: z,
-						},
-					})
-					i++
 				}
+			}
+			originz++
+			msizez-=cursizez
+			if(msizez<=0){
+				msizez=gsizez
+				originz=0
+				originx++
+				msizex-=cursizex
+			}
+			if(msizex<=0) {
+				break
 			}
 		}
 		out:=bdump.BDump {
 			Author: configuration.RespondUser,
 			Blocks: blocks,
 		}
-		if(strings.LastIndex(cfg.Path,".bdx")!=len(cfg.Path)-4) {
+		if(strings.LastIndex(cfg.Path,".bdx")!=len(cfg.Path)-4||len(cfg.Path)<4) {
 			cfg.Path+=".bdx"
 		}
 		command.Tellraw(conn,"EXPORT >> Writing output file")

@@ -58,9 +58,9 @@ Please ensure that you have the abilities mentioned above, if you encountered pr
 - Hard-working hands and thoughtful brain
 
 1. Login to [FastBuilder User Center](https://uc.fastbuilder.pro) 
-2. Click the *Profile* tab, and set the *<ruby>Minecraft China Edition Username<rp>(</rp><rt style="font-size:80%;">中国版用户名</rt><rp>)</rp></ruby>*.
-3. Enter the number of the <ruby>rental server<rp>(</rp><rt style="font-size:80%;">租赁服</rt><rp>)</rp></ruby> that you want to use FastBuilder on.(note: The rental server should accept the entrance of **any <ruby><rp>(</rp>level<rt style="font-size:80%;">等级</rt><rp>)</rp></ruby>**'s player, satisfy it by turning off "<ruby>player entrance level requirement<rp>(</rp><rt style="font-size:80%;">玩家等级准入要求</rt><rp>)</rp></ruby>" toggle in the server settings interface)
-4. Set a nickname of the <ruby>helper user<rp>(</rp><rt style="font-size:80%;">辅助用户</rt><rp>)</rp></ruby>, then click **[<ruby>Create<rp>(</rp><rt style="font-size:80%;">生成</rt><rp>)</rp></ruby>]** to create one.
+2. Click the *Profile* tab, and set the *<ruby><rb>Minecraft China Edition Username</rb><rp>(</rp><rt style="font-size:80%;">中国版用户名</rt><rp>)</rp></ruby>*.
+3. Enter the number of the <ruby><rb>rental server</rb><rp>(</rp><rt style="font-size:80%;">租赁服</rt><rp>)</rp></ruby> that you want to use FastBuilder on.(note: The rental server should accept the entrance of **any <ruby><rb>level</rb><rp>(</rp><rt style="font-size:80%;">等级</rt><rp>)</rp></ruby>**'s player, satisfy it by turning off "<ruby><rb>player entrance level requirement</rb><rp>(</rp><rt style="font-size:80%;">玩家等级准入要求</rt><rp>)</rp></ruby>" toggle in the server settings interface)
+4. Set a nickname of the <ruby><rb>helper user</rb><rp>(</rp><rt style="font-size:80%;">辅助用户</rt><rp>)</rp></ruby>, then click **[<ruby><rb>Create</rb><rp>(</rp><rt style="font-size:80%;">生成</rt><rp>)</rp></ruby>]** to create one.
 
 That's all for the completion of necessary informations, and the following content is the steps of installation, different platforms have different solutions, please find your own platform:
 
@@ -135,11 +135,11 @@ FastBuilder Phoenix is a pure command line program without complicated GUI, whic
 
 #### Initialization
 
-If no exceptions happened, after finishing these steps, you will see the FastBuilder's copyright notice and other things. It will ask you to enter your <ruby>FBUC<rp>(</rp><rt style="font-size:80%;">FastBuilder User Center</rt><rp>)</rp></ruby> username and password (**Password won't be echoed**), and you won't need to do that it twice.
+If no exceptions happened, after finishing these steps, you will see the FastBuilder's copyright notice and other things. It will ask you to enter your <ruby><rb>FBUC</rb><rp>(</rp><rt style="font-size:80%;">FastBuilder User Center</rt><rp>)</rp></ruby> username and password (**Password won't be echoed**), and you won't need to do that it twice.
 
 Then, FastBuilder will ask you to enter the rental server number and its password(Press *Enter* directly if none, **won't be echoed**). If it haven't crashed, presumably it has been launched.
 
-After that, leave it in the background, and enter the rental server. Seeing the helper user is online(in the user list in `/list` command or in pause interface) means that FastBuilder works properly. Please **give the helper user <ruby>OP<rp>(</rp><rt style="font-size:80%;">operator</rt><rp>)</rp></ruby> permission**. The helper user will only listen to **<ruby>operator's<rp>(</rp><rt style="font-size:80%;">your</rt><rp>)</rp></ruby>** commands, so the the *Minecraft China Edition Username* should be set to the same to **you nickname in *Minecraft China Edition***. Please do not use skin packs with the **<ruby>title<rp>(</rp><rt style="font-size:80%;">称号</rt><rp>)</rp></ruby>** since the helper user won't be able to process your commands.
+After that, leave it in the background, and enter the rental server. Seeing the helper user is online(in the user list in `/list` command or in pause interface) means that FastBuilder works properly. Please **give the helper user <ruby><rb>OP</rb><rp>(</rp><rt style="font-size:80%;">operator</rt><rp>)</rp></ruby> permission**. The helper user will only listen to **<ruby><rb>operator's</rb><rp>(</rp><rt style="font-size:80%;">your</rt><rp>)</rp></ruby>** commands, so the the *Minecraft China Edition Username* should be set to the same to **you nickname in *Minecraft China Edition***. Please do not use skin packs with the **<ruby><rb>title</rb><rp>(</rp><rt style="font-size:80%;">称号</rt><rp>)</rp></ruby>** since the helper user won't be able to process your commands.
 
 #### FastBuilder Command Resolving
 
@@ -253,14 +253,17 @@ FastBuilder has the ability of constructing simple geometry structures in the sp
   ellipsoid -l <length> -w <width> -h <height>
   ```
 
-##### Building Construction Commands
+##### Structure Construction Commands
 
-Load and construct buildings from `schematic` or `mcacblock`(structure file exported by the `ACME` building tool) files:
+Load and construct structures from `schematic`, <ruby><rb><code>bdx</code></rb><rp>(</rp><rt style="font-size:80%">bdump</rt><rp>)</rp></ruby> or `mcacblock`(structure file exported by the `ACME` building tool) files:
 
 ```shell
 schem -p <filePath>
 acme -p <filePath>
+bdump -p <filePath>
 -p --path The path of the file, use "" to assign a path with blankspace(s).
+# optional flags: --excludecommands : Exclude commands in command blocks
+# 				  --invalidatecommands: Invalidate commands in command blocks by adding characters to the start of the command content, for example, the invalid form of "say 123" is "|say 123".
 ```
 
 ##### Painting Slice Construction
@@ -271,3 +274,35 @@ acme -p <filePath>
   plot -p <imageFilePath:string> -f <facing:x|y|z>
   ```
 
+##### Experimental: Structure Export
+
+**WARNING: This feature is unstable, unexpected things might happen during the use of this feature. Please check whether the exported file is valid since sometimes it might be exported to an invalid format.**
+
+* Set the start point of export
+
+  ```shell
+  get
+  ```
+
+  or
+
+  ```shell
+  get begin
+  ```
+
+  - These are two different forms of a same command.
+
+* Set the end point of export
+
+  ```shell
+  get end
+  ```
+
+* Export the structure in assigned area to a file
+
+  ```shell
+  export -p <filePath>
+  # optional flag: --excludecommands : Exclude commands in command blocks
+  ```
+
+* Import the exported file with the command `bdump` mentioned above.

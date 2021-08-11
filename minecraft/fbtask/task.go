@@ -4,7 +4,9 @@ import (
 	"phoenixbuilder/minecraft/parse"
 	"phoenixbuilder/minecraft/builder"
 	"phoenixbuilder/minecraft/command"
+	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/configuration"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft"
 	"go.uber.org/atomic"
 	"sync"
@@ -104,12 +106,12 @@ func (task *Task) Break() {
 	}
 	chann := task.OutputChannel
 	for {
-		blk, ok := <- chann
+		_, ok := <- chann
 		if !ok {
 			break
 		}
 		if false {
-			fmt.Printf("%v\n",blk)
+			//fmt.Printf("%v\n",blk)
 		}
 	}
 	if task.Type==mctype.TaskTypeAsync {
@@ -215,10 +217,30 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y,curblock.Point.Z),u_d, conn)
 			}
 			blkscounter++
-			request := command.SetBlockRequest(curblock, cfg)
-			err := command.SendSizukanaCommand(request, conn)
-			if err != nil {
-				panic(err)
+			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
+				cbdata:=curblock.CommandBlockData
+				if(cfg.InvalidateCommands){
+					cbdata.Command="|"+cbdata.Command
+				}
+				conn.WritePacket(&packet.CommandBlockUpdate {
+					Block: true,
+					Position: protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)},
+					Mode: cbdata.Mode,
+					NeedsRedstone: cbdata.NeedRedstone,
+					Conditional: cbdata.Conditional,
+					Command: cbdata.Command,
+					LastOutput: cbdata.LastOutput,
+					Name: cbdata.CustomName,
+					TickDelay: cbdata.TickDelay,
+					ExecuteOnFirstTick: cbdata.ExecuteOnFirstTick,
+				})
+			}
+			if curblock.Block != nil {
+				request := command.SetBlockRequest(curblock, cfg)
+				err := command.SendSizukanaCommand(request, conn)
+				if err != nil {
+					panic(err)
+				}
 			}
 			if dcfg.DelayMode==mctype.DelayModeContinuous {
 				time.Sleep(time.Duration(dcfg.Delay) * time.Microsecond)

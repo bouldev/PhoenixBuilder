@@ -110,7 +110,6 @@ func Process(conn *minecraft.Conn,msg string) {
 			continue
 		}
 		if len(cc.ArgumentTypes) > len(slc)-ic {
-			fmt.Printf("toofew desu: %d, %d",len(cc.ArgumentTypes),len(slc)-ic)
 			command.Tellraw(conn, "Parser: Too few arguments")
 			return
 		}

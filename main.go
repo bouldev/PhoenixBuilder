@@ -39,27 +39,27 @@ func main() {
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.2.92~hotfix1"))
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
 		"FastBuilder Phoenix used codes\n" +
 		"from Sandertv's Gophertunnel that\n" +
 		"licensed under MIT license, at:\n" +
 		"https://github.com/Sandertv/gophertunnel"))
-	pterm.Println(pterm.Yellow("ファスト　ビルダー！"))
+	pterm.Println(pterm.Yellow("ファスト　ビルダー"))
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.0"))
 	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err:=recover(); err!=nil {
 			debug.PrintStack()
+			pterm.Error.Println("Oh no! FastBuilder Phoenix crashed! ")
+			pterm.Error.Println("Stack dump was shown above, error:")
+			pterm.Error.Println(err)
 			if runtime.GOOS == "windows" {
 				pterm.Error.Println("Press ENTER to exit.")
 				_, _=bufio.NewReader(os.Stdin).ReadString('\n')
 			}
-			pterm.Error.Println("Oh no! FastBuilder Phoenix crashed! ")
-			pterm.Error.Println("Stack dump was shown above, error:")
-			pterm.Error.Println(err)
 			os.Exit(1)
 		}
 		os.Exit(0)
@@ -173,9 +173,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		EntityRuntimeID: conn.GameData().EntityRuntimeID,
 		ActionType: packet.PlayerActionRespawn,
 	})
-	conn.WritePacket(&packet.RequestChunkRadius {
-		ChunkRadius: 10,
-	})
 	
 	/*if err := conn.DoSpawn(); err != nil {
 		pterm.Error.Println("Failed to spawn")
@@ -230,8 +227,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 					break
 				}
 			}
-		case *packet.ChunkRadiusUpdated:
-			fmt.Printf("ChunkRadius is %d\n",p.ChunkRadius)
 		//case *packet.AddPlayer:
 			//if p.Username == user {
 			//	pterm.Println(pterm.Yellow(fmt.Sprintf("[%s] Operator joined Game", user)))

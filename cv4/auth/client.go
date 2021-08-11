@@ -115,7 +115,7 @@ func CreateClient() *Client {
 }
 
 func (client *Client) CanSendMessage() bool {
-	return client.encryptor!=nil
+	return client.encryptor!=nil&&!client.closed
 }
 
 func (client *Client) SendMessage(data[] byte){
