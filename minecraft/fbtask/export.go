@@ -166,6 +166,19 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 			structure, _:=exportData["structure"].(map[string]interface{})
 			indicesP, _:=structure["block_indices"].([]interface{})
 			indices,_:=indicesP[0].([]interface{})
+			if len(indicesP)!=2 {
+				panic(fmt.Errorf("Unexcepted indices data: %v\n",indices))
+			}
+			{
+				ind,_:=indices[0].(int32)
+				if ind==-1 {
+					indices,_=indicesP[1].([]interface{})
+				}
+				ind,_=indices[0].(int32)
+				if ind==-1 {
+					panic(fmt.Errorf("Exchanged but still -1: %v\n",indices))
+				}
+			}
 			blockpalettepar,_:=structure["palette"].(map[string]interface{})
 			blockpalettepar2,_:=blockpalettepar["default"].(map[string]interface{})
 			blockpalette,_:=blockpalettepar2["block_palette"].([]/*map[string]*/interface{})

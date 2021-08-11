@@ -193,6 +193,10 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		t1 := time.Now()
 		blkscounter := 0
 		tothresholdcounter := 0
+		isFastMode := false
+		if dcfg.DelayMode==mctype.DelayModeDiscrete||dcfg.DelayMode==mctype.DelayModeNone {
+			isFastMode=true
+		}
 		for {
 			task.ContinueLock.Lock()
 			task.ContinueLock.Unlock()
@@ -221,21 +225,27 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				if curblock.Block != nil {
 					request:=command.SetBlockRequest(curblock, cfg)
 					tuid, _ := uuid.NewUUID()
-					wchan:=make(chan *packet.CommandOutput)
-					command.UUIDMap.Store(tuid.String(),wchan)
-					command.SendWSCommand(request,tuid, conn)
-					<-wchan
+					if !isFastMode {
+						wchan:=make(chan *packet.CommandOutput)
+						command.UUIDMap.Store(tuid.String(),wchan)
+						command.SendWSCommand(request,tuid, conn)
+						<-wchan
+					}else{
+						command.SendWSCommand(request,tuid, conn)
+					}
 				}
 				cbdata:=curblock.CommandBlockData
 				if(cfg.InvalidateCommands){
 					cbdata.Command="|"+cbdata.Command
 				}
 				u_d, _ := uuid.NewUUID()
-				wchan:=make(chan *packet.CommandOutput)
-				command.UUIDMap.Store(u_d.String(),wchan)
-				command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z),u_d, conn)
-				<-wchan
-				close(wchan)
+				if !isFastMode {
+					wchan:=make(chan *packet.CommandOutput)
+					command.UUIDMap.Store(u_d.String(),wchan)
+					command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z),u_d, conn)
+					<-wchan
+					close(wchan)
+				}
 				conn.WritePacket(&packet.CommandBlockUpdate {
 					Block: true,
 					Position: protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)},
