@@ -114,7 +114,7 @@ for i in "ginstall" "install"; do
 done
 if [ ${INSTALL} == "" ]; then
   printf "\033[33mThis script prefers to install files by using \033[0m"
-  printf "GNU/BSD coreutils but you do not have it. Skipping."
+  printf "\033[33mGNU/BSD coreutils but you do not have it. Skipping.\033[0m"
   INSTALL="cp -f"
 fi
 
