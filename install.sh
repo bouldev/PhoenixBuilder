@@ -14,11 +14,11 @@
 
 # I forgot macOS, my bad
 # Temp disable macOS for now, I will add it later
-#if [ $(uname) == "Darwin" ]; then
-#  echo "macOS not supported by installer at that time!"
-#  echo "Please wait for updates or install FastBuilder manually."
-#  exit 1
-#fi
+if [ $(uname) == "Darwin" ]; then
+  echo "macOS not supported by installer at that time!"
+  echo "Please wait for updates or install FastBuilder manually."
+  exit 1
+fi
 # Define a function to properly exit
 # This were designed to delete temp files after script ends
 function quit_installer() {
@@ -130,7 +130,7 @@ FB_VER=""
 FILE_TYPE=""
 FILE_ARCH=""
 if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) == "Android" ]]; then
-  if [ $(dpkg -L pro.fastbuilder.phoenix-android | echo $?) -eq 0 ]; then
+  if [[ ${MACHINE} != "arm" ]] && [[ ${MACHINE} != "i386" ]] && [[ $(dpkg -L pro.fastbuilder.phoenix-android | echo $?) -eq 0 ]]; then
     #printf "\033[31mYou have already installed FastBuilder through APT!\nPlease uninstall \"pro.fastbuilder.phoenix-android\" before running this script.\033[0m\n"
     #printf "\033[32mOr, download latest FastBuilder's deb package from the user center.\033[0m\n"
     printf "\033[32mFound previous installed FastBuilder\033[0m\n"
@@ -149,6 +149,7 @@ if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) == "Android" ]]; then
     exit 1
   fi
 elif [ $(echo ${MACHINE} | grep -E "iPhone|iPad|iPod" | echo $?) == "0" ]; then
+  echo ${MACHINE}
   if [ $(dpkg -L pro.fastbuilder.phoenix | echo $?) == "0" ]; then
     #printf "\033[31mYou have already installed FastBuilder through APT!\nPlease uninstall \"pro.fastbuilder.phoenix\" before running this script.\033[0m\n"
     #printf "\033[32mOr, download latest FastBuilder's deb package from your package manager (Cydia, Sileo, etc.).\033[0m\n"
@@ -157,13 +158,12 @@ elif [ $(echo ${MACHINE} | grep -E "iPhone|iPad|iPod" | echo $?) == "0" ]; then
   elif [ ${ARCH} != "arm64" ]; then
     printf "\033[31mFastBuilder no longer support ${ARCH} iOS! Stopping.\033[0m\n"
     exit 1
-  else
+  fi
     echo "Downloading FastBuilder Phoenix for iOS..."
     FB_SUFFIX="pro.fastbuilder.phoenix"
     FILE_TYPE=".deb"
     # iOS does not seperate architectures, iphoneos-arm for all
     FILE_ARCH="iphoneos-arm"
-  fi
 else
   echo fuck
 fi
