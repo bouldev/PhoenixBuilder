@@ -21,6 +21,7 @@ import (
 	"phoenixbuilder/minecraft/configuration"
 	//"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/hotbarmanager"
+	"phoenixbuilder/minecraft/enchant"
 	"strings"
 	"syscall"
 	"runtime"
@@ -211,8 +212,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
 			}
 			break*/
-		//case *packet.AddActor:
-		//	fmt.Printf("%+v\n%+v\n\n==\n\n",p.Attributes,p.EntityMetadata)
 		/*case *packet.InventorySlot:
 			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
@@ -227,10 +226,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 					break
 				}
 			}
-		//case *packet.AddPlayer:
-			//if p.Username == user {
-			//	pterm.Println(pterm.Yellow(fmt.Sprintf("[%s] Operator joined Game", user)))
-			//}
+		case *packet.AddPlayer:
+			if (p.Username == user && enchant.AddPlayerItemChannel != nil) {
+				enchant.AddPlayerItemChannel<-&p.HeldItem
+				//pterm.Println(pterm.Yellow(fmt.Sprintf("[%s] Operator joined Game", user)))
+			}
 			//fmt.Printf("%+v\n",p.EntityMetadata)
 		case *packet.CommandOutput:
 			//if p.SuccessCount > 0 {

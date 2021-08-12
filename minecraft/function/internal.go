@@ -8,6 +8,7 @@ import (
 	"phoenixbuilder/minecraft/configuration"
 	"phoenixbuilder/minecraft/fbtask"
 	"phoenixbuilder/minecraft/builder"
+	"phoenixbuilder/minecraft/enchant"
 	"phoenixbuilder/minecraft"
 	"github.com/google/uuid"
 )
@@ -300,7 +301,15 @@ func InitInternalFunctions() {
 			command.Tellraw(conn, fmt.Sprintf("Task status display mode set to: %s.",mctype.MakeTaskDisplayMode(ev)))
 		},
 	})
-	
+	RegisterFunction(&Function {
+		Name: "enchant",
+		OwnedKeywords: []string {"enchant"},
+		FunctionType: FunctionTypeSimple,
+		SFMinSliceLen: 1,
+		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+			enchant.Run(conn)
+		},
+	})
 	// ippan
 	var builderMethods []string
 	for met,_ := range builder.Builder {

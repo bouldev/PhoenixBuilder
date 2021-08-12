@@ -18,6 +18,7 @@ LDID=$${THEOS}/toolchain/linux/iphone/bin/ldid
 endif
 ifneq (${THEOS},)
 	TARGETS:=${TARGETS} ios-executable ios-lib
+	PACKAGETARGETS:=${PACKAGETARGETS} package/ios
 endif
 ifneq ($(wildcard ${HOME}/android-ndk-r20b),)
 	TARGETS:=${TARGETS} android-executable-v7 android-executable-64

@@ -121,14 +121,14 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 			command.Tellraw(conn, "EXPORT >> Fetching data")
 			cursizex:=msizex
 			cursizez:=msizez
-			if msizex>64 {
-				cursizex=64
+			if msizex>100 {
+				cursizex=100
 			}
-			if msizez>64 {
-				cursizez=64
+			if msizez>100 {
+				cursizez=100
 			}
-			posx:=beginPos.X+originx*64
-			posz:=beginPos.Z+originz*64
+			posx:=beginPos.X+originx*100
+			posz:=beginPos.Z+originz*100
 			u_d2, _ := uuid.NewUUID()
 			wchan:=make(chan *packet.CommandOutput)
 			command.UUIDMap.Store(u_d2.String(),wchan)
@@ -189,6 +189,10 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 				for y:=0;y<size[1];y++ {
 					for z:=0;z<size[2];z++ {
 						ind,_:=indices[i].(int32)
+						if ind==-1 {
+							i++
+							continue
+						}
 						if ind==airind {
 							i++
 							continue
@@ -266,9 +270,9 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 							},
 							CommandBlockData: cbdata,
 							Point: mctype.Position {
-								X: originx*64+x,
+								X: originx*100+x,
 								Y: y,
-								Z: originz*64+z,
+								Z: originz*100+z,
 							},
 						})
 						i++
