@@ -180,11 +180,11 @@ if [ ${FILE_ARCH} == "iphoneos-arm" ]; then
   fi
 fi
 
-mkdir -p fastbuilder-temp ${HOME}/./fastbuilder
+mkdir -p ${PREFIX}/./fastbuilder-temp ${PREFIX}/./fastbuilder
 if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) != "Android" ]]; then
   # We have not provide Linux distribution packages currently, so binaries only
   printf "Downloading FastBuilder binary..."
-  ${DL_TOOL} -o fastbuilder-temp/fastbuilder ${FB_LINK}
+  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/fastbuilder ${FB_LINK}
   if [ $? -eq 0 ]; then
     printf "\033[32mSuccessfully downloaded FastBuilder (x86_64)\033[0m\n"
   else
@@ -192,13 +192,13 @@ if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) != "Android" ]]; then
     quit_installer 1
   fi
   if [ ${ROOT_REQUIRED} == "1" ]; then
-    ${INSTALL} fastbuilder-temp/fastbuilder ${BINDIR}
+    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${BINDIR}
   else
-    ${INSTALL} fastbuilder-temp/fastbuilder ${PREFIX}/
+    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${PREFIX}/
   fi
 elif [[ ${SYSTEM_NAME} == "Darwin" ]] && [[ ${FILE_ARCH} != "iphoneos-arm" ]]; then
   printf "Downloading FastBuilder binary..."
-  ${DL_TOOL} -o fastbuilder-temp/fastbuilder ${FB_LINK}-macos
+  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/fastbuilder ${FB_LINK}-macos
   if [ $? -eq 0 ]; then
     printf "\033[32mSuccessfully downloaded FastBuilder (Universal)\033[0m\n"
   else
@@ -206,14 +206,14 @@ elif [[ ${SYSTEM_NAME} == "Darwin" ]] && [[ ${FILE_ARCH} != "iphoneos-arm" ]]; t
     quit_installer 1
   fi
   if [ ${ROOT_REQUIRED} == "1" ]; then
-    ${INSTALL} fastbuilder-temp/fastbuilder ${BINDIR}
+    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${BINDIR}
   else
-    ${INSTALL} fastbuilder-temp/fastbuilder ${PREFIX}/
+    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${PREFIX}/
   fi
 else
   # Download a file contains the latest version num for FastBuilder distros
   printf "Getting latest version of FastBuilder..."
-  ${DL_TOOL} -o fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}version
+  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}version
   if [ $? -eq 0 ]; then
     FB_VER=$(cat fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
   else
@@ -221,7 +221,7 @@ else
     quit_installer 1
   fi
   printf "Downloading FastBuilder package...\n"
-  ${DL_TOOL} -o fastbuilder-temp/fastbuilder.deb ${FB_LINK}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}
+  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/fastbuilder.deb ${FB_LINK}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}
   if [ $? -eq 0 ]; then
     printf "\033[32mSuccessfully downloaded FastBuilder\033[0m\n"
   else
@@ -232,7 +232,7 @@ else
   # If not, it will unpack it and export the FastBuilder executable to PATH
   if [ ${ROOT_REQUIRED} == "1" ]; then
     printf "Installing deb package...\n"
-    dpkg -i fastbuilder-temp/fastbuilder.deb
+    dpkg -i ${PREFIX}/./fastbuilder-temp/fastbuilder.deb
     if [ $? != "0" ]; then
       printf "\033[31mSome errors occured when calling Debian Packager.\nYou may want to run \"dpkg --configure -a\" to fix some problems.\033[0m\n"
       quit_installer 1
@@ -240,7 +240,7 @@ else
   else
     printf "Installing FastBuilder to specified path: ${PREFIX}\n"
     mkdir -p ${PREFIX}
-    dpkg -x fastbuilder-temp/fastbuilder.deb fastbuilder/
+    dpkg -x ${PREFIX}/./fastbuilder-temp/fastbuilder.deb ${PREFIX}/./fastbuilder/
     if [ $(uname -o | grep "Android" | echo $?) -eq 0 ]; then
       mv ${PREFIX}/data/data/com.termux/files/usr/bin/fastbuilder ${PREFIX}/
       # Remember to add a dot in front of the target directory
