@@ -12,9 +12,9 @@
 
 #=============================================================#
 
-# I forgot macOS, my bad
-# Temp disable macOS for now, I will add it later
-if [ $(uname) == "Darwin" ]; then
+# I keep meeting bugs when testing this fucked-up script
+# Temp disable macOS for now, I will try to fix it later
+if [[ $(uname) == "Darwin" ]] && [[ $(uname -m) == "arm64" ]] || [[ $(uname -m) == "x86_64" ]]; then
   echo "macOS not supported by installer at that time!"
   echo "Please wait for updates or install FastBuilder manually."
   exit 1
@@ -110,12 +110,13 @@ for i in "ginstall" "install"; do
     printf "\033[32m$(which ${i})\033[0m\n"
     INSTALL="${i} -m 755"
     break
-  else
-    printf "\033[33mThis script prefers to install files by using \033[0m"
-    printf "GNU/BSD coreutils but you do not have it. Skipping."
-    INSTALL="cp -f"
   fi
 done
+if [ ${INSTALL} == "" ]; then
+  printf "\033[33mThis script prefers to install files by using \033[0m"
+  printf "GNU/BSD coreutils but you do not have it. Skipping."
+  INSTALL="cp -f"
+fi
 
 printf "\033[32mAll basic checks complete! Proceeding to install...\033[0m"
 # FastBuilder Presets
