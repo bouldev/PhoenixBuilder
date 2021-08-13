@@ -148,7 +148,7 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 					LastEditingPlayerUniqueID: conn.GameData().EntityUniqueID,
 					Rotation: 0,
 					Mirror: 0,
-					Integrity: 1,
+					Integrity: 100,
 					Seed: 0,
 				},
 				RequestType: packet.StructureTemplateRequestExportFromSave,
@@ -159,6 +159,20 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 			command.Tellraw(conn, "EXPORT >> Data received, processing.")
 			command.Tellraw(conn, "EXPORT >> Extracting blocks")
 			sizeoo, _:=exportData["size"].([]interface{})
+			if len(sizeoo)==0 {
+				originz++
+				msizez-=cursizez
+				if(msizez<=0){
+					msizez=gsizez
+					originz=0
+					originx++
+					msizex-=cursizex
+				}
+				if(msizex<=0) {
+					break
+				}
+				continue
+			}
 			sizea,_:=sizeoo[0].(int32)
 			sizeb,_:=sizeoo[1].(int32)
 			sizec,_:=sizeoo[2].(int32)

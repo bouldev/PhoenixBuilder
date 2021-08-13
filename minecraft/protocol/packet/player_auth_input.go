@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+	"encoding/binary"
 )
 
 const (
@@ -80,6 +81,7 @@ type PlayerAuthInput struct {
 	// GazeDirection is the direction in which the player is gazing, when the PlayMode is PlayModeReality: In
 	// other words, when the player is playing in virtual reality.
 	GazeDirection mgl32.Vec3
+	Tick uint64
 }
 
 // ID ...
@@ -100,6 +102,13 @@ func (pk *PlayerAuthInput) Marshal(buf *bytes.Buffer) {
 	if pk.PlayMode == PlayModeReality {
 		_ = protocol.WriteVec3(buf, pk.GazeDirection)
 	}
+	_ = protocol.WriteVaruint64(buf, pk.Tick)
+	_ = protocol.WriteVec3(buf, pk.Position)
+	a:=byte(1)
+	_ = binary.Read(buf, binary.LittleEndian, &a)
+	_ = binary.Read(buf, binary.LittleEndian, &a)
+	_ = protocol.WriteFloat32(buf, 0)
+	_ = protocol.WriteFloat32(buf, 0)
 }
 
 // Unmarshal ...

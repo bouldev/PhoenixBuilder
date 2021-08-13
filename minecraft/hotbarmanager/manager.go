@@ -7,6 +7,8 @@ import (
 	"sync"
 )
 
+// DEPRECATED
+
 var waitingMap sync.Map
 var processedAlarm chan bool
 

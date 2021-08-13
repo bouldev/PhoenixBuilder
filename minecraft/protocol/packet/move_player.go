@@ -53,12 +53,15 @@ type MovePlayer struct {
 	TeleportCause int32
 	// TeleportSourceEntityType is the entity type that caused the teleportation, for example an ender pearl.
 	TeleportSourceEntityType int32
+	Counter uint64
 }
 
 // ID ...
 func (*MovePlayer) ID() uint32 {
 	return IDMovePlayer
 }
+
+var globalCounter uint64
 
 // Marshal ...
 func (pk *MovePlayer) Marshal(buf *bytes.Buffer) {
@@ -74,6 +77,7 @@ func (pk *MovePlayer) Marshal(buf *bytes.Buffer) {
 		_ = binary.Write(buf, binary.LittleEndian, pk.TeleportCause)
 		_ = binary.Write(buf, binary.LittleEndian, pk.TeleportSourceEntityType)
 	}
+	_ = protocol.WriteVaruint64(buf, pk.Counter)
 }
 
 // Unmarshal ...
@@ -96,5 +100,6 @@ func (pk *MovePlayer) Unmarshal(buf *bytes.Buffer) error {
 			binary.Read(buf, binary.LittleEndian, &pk.TeleportSourceEntityType),
 		)
 	}
+	protocol.Varuint64(buf, &pk.Counter)
 	return nil
 }
