@@ -85,6 +85,9 @@ reserved 13
 * : あたらしいのいみ
 assignCommandBlockData 26
 placeCommandBlockWithData 27
+addSmallX 28
+addSmallY 29
+addSmallZ 30
 
 end 88
 */
@@ -158,7 +161,7 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
-					}else{
+					}else if(wrap < -127||wrap > 127){
 						_, err:=w.Write([]byte{20})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -166,6 +169,15 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 						writeO:=make([]byte,2)
 						binary.BigEndian.PutUint16(writeO,uint16(int16(wrap)))
 						_, err=w.Write(writeO)
+						if err != nil {
+							return fmt.Errorf("Failed to write command")
+						}
+					}else{
+						_, err:=w.Write([]byte{28})
+						if err != nil {
+							return fmt.Errorf("Failed to write command")
+						}
+						_, err=w.Write([]byte{uint8(int8(wrap))})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
@@ -199,7 +211,7 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
-					}else{
+					}else if(wrap > 127||wrap < -127){
 						_, err:=w.Write([]byte{22})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -207,6 +219,15 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 						writeO:=make([]byte,2)
 						binary.BigEndian.PutUint16(writeO,uint16(int16(wrap)))
 						_, err=w.Write(writeO)
+						if err != nil {
+							return fmt.Errorf("Failed to write command")
+						}
+					}else{
+						_, err:=w.Write([]byte{29})
+						if err != nil {
+							return fmt.Errorf("Failed to write command")
+						}
+						_, err=w.Write([]byte{uint8(int8(wrap))})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
@@ -239,7 +260,7 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
-					}else{
+					}else if(wrap > 127||wrap < -127){
 						_, err:=w.Write([]byte{24})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -247,6 +268,15 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 						writeO:=make([]byte,2)
 						binary.BigEndian.PutUint16(writeO,uint16(int16(wrap)))
 						_, err=w.Write(writeO)
+						if err != nil {
+							return fmt.Errorf("Failed to write command")
+						}
+					}else{
+						_, err:=w.Write([]byte{30})
+						if err != nil {
+							return fmt.Errorf("Failed to write command")
+						}
+						_, err=w.Write([]byte{uint8(int8(wrap))})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}

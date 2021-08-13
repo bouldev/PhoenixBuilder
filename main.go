@@ -50,7 +50,7 @@ func main() {
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.4"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.41"))
 	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err:=recover(); err!=nil {

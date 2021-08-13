@@ -375,6 +375,27 @@ func BDump(config *mctype.MainConfig, blc chan *mctype.Module) error {
 			}
 			cmdl.CommandBlockData=cbdata
 			blc<-cmdl
+		}else if(cmd==28){
+			rdst:=make([]byte,1)
+			_, err:=br.Read(rdst)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos21], file may be corrupted")
+			}
+			brushPosition[0]+=int(int8(rdst[0]))
+		}else if(cmd==29){
+			rdst:=make([]byte,1)
+			_, err:=br.Read(rdst)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos22], file may be corrupted")
+			}
+			brushPosition[1]+=int(int8(rdst[0]))
+		}else if(cmd==30){
+			rdst:=make([]byte,1)
+			_, err:=br.Read(rdst)
+			if(err!=nil) {
+				return fmt.Errorf("Failed to get argument for cmd[pos23], file may be corrupted")
+			}
+			brushPosition[2]+=int(int8(rdst[0]))
 		}else{
 			fmt.Printf("WARNING: BDump/Import: Unimplemented method found : %d\n",cmd)
 			fmt.Printf("WARNING: BDump/Import: Previous command is: %d\n",prevCmd)
