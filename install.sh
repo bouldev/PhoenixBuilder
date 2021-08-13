@@ -12,10 +12,9 @@
 
 #=============================================================#
 
-# I forgot macOS, my bad
-# Temp disable macOS for now, I will add it later
-if [ $(uname) == "Darwin" ]
-then
+# I keep meeting bugs when testing this fucked-up script
+# Temp disable macOS for now, I will try to fix it later
+if [[ $(uname) == "Darwin" ]] && [[ $(uname -m) == "arm64" ]] || [[ $(uname -m) == "x86_64" ]]; then
   echo "macOS not supported by installer at that time!"
   echo "Please wait for updates or install FastBuilder manually."
   exit 1
@@ -111,12 +110,13 @@ for i in "ginstall" "install"; do
     printf "\033[32m$(which ${i})\033[0m\n"
     INSTALL="${i} -m 755"
     break
-  else
-    printf "\033[33mThis script prefers to install files by using \033[0m"
-    printf "GNU/BSD coreutils but you do not have it. Skipping."
-    INSTALL="cp -f"
   fi
 done
+if [ ${INSTALL} == "" ]; then
+  printf "\033[33mThis script prefers to install files by using \033[0m"
+  printf "\033[33mGNU/BSD coreutils but you do not have it. Skipping.\033[0m"
+  INSTALL="cp -f"
+fi
 
 printf "\033[32mAll basic checks complete! Proceeding to install...\033[0m"
 # FastBuilder Presets
@@ -131,7 +131,7 @@ FB_VER=""
 FILE_TYPE=""
 FILE_ARCH=""
 if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) == "Android" ]]; then
-  if [ $(dpkg -L pro.fastbuilder.phoenix-android | echo $?) -eq 0 ]; then
+  if [[ ${MACHINE} != "arm" ]] && [[ ${MACHINE} != "i386" ]] && [[ $(dpkg -L pro.fastbuilder.phoenix-android | echo $?) -eq 0 ]]; then
     #printf "\033[31mYou have already installed FastBuilder through APT!\nPlease uninstall \"pro.fastbuilder.phoenix-android\" before running this script.\033[0m\n"
     #printf "\033[32mOr, download latest FastBuilder's deb package from the user center.\033[0m\n"
     printf "\033[32mFound previous installed FastBuilder\033[0m\n"
@@ -149,8 +149,9 @@ if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) == "Android" ]]; then
     printf "\033[31mFastBuilder no longer support ${ARCH} Android! Stopping.\033[0m\n"
     exit 1
   fi
-elif [ $(echo ${MACHINE} | grep -E "iPhone|iPad|iPod" | echo $?) -eq 0 ]; then
-  if [ $(dpkg -L pro.fastbuilder.phoenix | echo $?) -eq 0 ]; then
+elif [ $(echo ${MACHINE} | grep -E "iPhone|iPad|iPod" | echo $?) == "0" ]; then
+  echo ${MACHINE}
+  if [ $(dpkg -L pro.fastbuilder.phoenix | echo $?) == "0" ]; then
     #printf "\033[31mYou have already installed FastBuilder through APT!\nPlease uninstall \"pro.fastbuilder.phoenix\" before running this script.\033[0m\n"
     #printf "\033[32mOr, download latest FastBuilder's deb package from your package manager (Cydia, Sileo, etc.).\033[0m\n"
     printf "\033[32mFound previous installed FastBuilder\033[0m\n"
@@ -158,85 +159,100 @@ elif [ $(echo ${MACHINE} | grep -E "iPhone|iPad|iPod" | echo $?) -eq 0 ]; then
   elif [ ${ARCH} != "arm64" ]; then
     printf "\033[31mFastBuilder no longer support ${ARCH} iOS! Stopping.\033[0m\n"
     exit 1
-  else
+  fi
     echo "Downloading FastBuilder Phoenix for iOS..."
     FB_SUFFIX="pro.fastbuilder.phoenix"
     FILE_TYPE=".deb"
     # iOS does not seperate architectures, iphoneos-arm for all
     FILE_ARCH="iphoneos-arm"
-  fi
+else
+  echo fuck
+fi
 
-  # Download now
-  if [ ${FILE_ARCH} == "iphoneos-arm" ]; then
-    # Install APT source for iOS. This would allow users to upgrade FastBuilder from Cydia
-    if [[ $(grep "apt.boul.dev" -rl /etc/apt/sources.list.d | echo $?) -eq 1 ]] && [[ ${ROOT_REQUIRED} == "1" ]]; then
-      printf "\033[32mAdding apt.boul.dev to your repo list...\033[0m\n"
-      echo "deb https://apt.boul.dev/ ./" >/etc/apt/sources.list.d/apt.boul.dev.list
-    else
-      printf "\033[32mUser already added apt.boul.dev to repo list.\033[0m\n"
-    fi
+# Download now
+if [ ${FILE_ARCH} == "iphoneos-arm" ]; then
+  # Install APT source for iOS. This would allow users to upgrade FastBuilder from Cydia
+  if [[ $(grep "apt.boul.dev" -rl /etc/apt/sources.list.d | echo $?) -eq 1 ]] && [[ ${ROOT_REQUIRED} == "1" ]]; then
+    printf "\033[32mAdding apt.boul.dev to your repo list...\033[0m\n"
+    echo "deb https://apt.boul.dev/ ./" >/etc/apt/sources.list.d/apt.boul.dev.list
+  else
+    printf "\033[32mUser already added apt.boul.dev to repo list.\033[0m\n"
   fi
+fi
 
-  mkdir -p fastbuilder-temp
-  if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) != "Android" ]]; then
-    # We have not provide Linux distribution packages currently, so binaries only
-    printf "Downloading FastBuilder binary..."
-    ${DL_TOOL} -o fastbuilder-temp/fastbuilder ${FB_LINK}
-    if [ $? -eq 0 ]; then
-      printf "\033[32mSuccessfully downloaded FastBuilder (x86_64)\033[0m\n"
-    else
-      printf "\033[0mDownload failure! Please check your connections.\nStopping.\033[0m\n"
+mkdir -p ${PREFIX}/./fastbuilder-temp ${PREFIX}/./fastbuilder
+if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) != "Android" ]]; then
+  # We have not provide Linux distribution packages currently, so binaries only
+  printf "Downloading FastBuilder binary..."
+  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/fastbuilder ${FB_LINK}
+  if [ $? -eq 0 ]; then
+    printf "\033[32mSuccessfully downloaded FastBuilder (x86_64)\033[0m\n"
+  else
+    printf "\033[31mDownload failure! Please check your connections.\nStopping.\033[0m\n"
+    quit_installer 1
+  fi
+  if [ ${ROOT_REQUIRED} == "1" ]; then
+    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${BINDIR}
+  else
+    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${PREFIX}/
+  fi
+elif [[ ${SYSTEM_NAME} == "Darwin" ]] && [[ ${FILE_ARCH} != "iphoneos-arm" ]]; then
+  printf "Downloading FastBuilder binary..."
+  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/fastbuilder ${FB_LINK}-macos
+  if [ $? -eq 0 ]; then
+    printf "\033[32mSuccessfully downloaded FastBuilder (Universal)\033[0m\n"
+  else
+    printf "\033[31mDownload failure! Please check your connections.\nStopping.\033[0m\n"
+    quit_installer 1
+  fi
+  if [ ${ROOT_REQUIRED} == "1" ]; then
+    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${BINDIR}
+  else
+    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${PREFIX}/
+  fi
+else
+  # Download a file contains the latest version num for FastBuilder distros
+  printf "Getting latest version of FastBuilder..."
+  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}version
+  if [ $? -eq 0 ]; then
+    FB_VER=$(cat fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
+  else
+    printf "\033[31mDownload failure! Please check your connections.\nStopping.\033[0m\n"
+    quit_installer 1
+  fi
+  printf "Downloading FastBuilder package...\n"
+  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/fastbuilder.deb ${FB_LINK}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}
+  if [ $? -eq 0 ]; then
+    printf "\033[32mSuccessfully downloaded FastBuilder\033[0m\n"
+  else
+    printf "\033[031Download failure! Please check your connections.\nStopping.\033[0m\n"
+    quit_installer 1
+  fi
+  # When installer.sh have root priviledges, it will install packages directly through dpkg
+  # If not, it will unpack it and export the FastBuilder executable to PATH
+  if [ ${ROOT_REQUIRED} == "1" ]; then
+    printf "Installing deb package...\n"
+    dpkg -i ${PREFIX}/./fastbuilder-temp/fastbuilder.deb
+    if [ $? != "0" ]; then
+      printf "\033[31mSome errors occured when calling Debian Packager.\nYou may want to run \"dpkg --configure -a\" to fix some problems.\033[0m\n"
       quit_installer 1
-    fi
-    if [ ${ROOT_REQUIRED} == "1" ]; then
-      ${INSTALL} fastbuilder-temp/fastbuilder ${BINDIR}
-    else
-      ${INSTALL} fastbuilder-temp/fastbuilder ${PREFIX}/
     fi
   else
-    # Download a file contains the latest version num for FastBuilder distros
-    printf "Getting latest version of FastBuilder..."
-    ${DL_TOOL} -o fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}version
-    if [ $? -eq 0 ]; then
-      FB_VER=$(cat fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
+    printf "Installing FastBuilder to specified path: ${PREFIX}\n"
+    mkdir -p ${PREFIX}
+    dpkg -x ${PREFIX}/./fastbuilder-temp/fastbuilder.deb ${PREFIX}/./fastbuilder/
+    if [ $(uname -o | grep "Android" | echo $?) -eq 0 ]; then
+      mv ${PREFIX}/data/data/com.termux/files/usr/bin/fastbuilder ${PREFIX}/
+      # Remember to add a dot in front of the target directory
+      # to prevent some unexpected behavior
+      rm -r ${PREFIX}/./data
     else
-      printf "\033[0mDownload failure! Please check your connections.\nStopping.\033[0m\n"
-      quit_installer 1
+      mv ${PREFIX}/usr/local/bin/fastbuilder ${PREFIX}/
+      rm -r ${PREFIX}/./usr
     fi
-    printf "Downloading FastBuilder package...\n"
-    ${DL_TOOL} -o fastbuilder-temp/fastbuilder.deb ${FB_LINK}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}
-    if [ $? -eq 0 ]; then
-      printf "\033[32mSuccessfully downloaded FastBuilder\033[0m\n"
-    else
-      printf "\033[0mDownload failure! Please check your connections.\nStopping.\033[0m\n"
-      quit_installer 1
-    fi
-    # When installer.sh have root priviledges, it will install packages directly through dpkg
-    # If not, it will unpack it and export the FastBuilder executable to PATH
-    if [ ${ROOT_REQUIRED} == "1" ]; then
-      printf "Installing deb package...\n"
-      dpkg -i fastbuilder-temp/fastbuilder.deb
-      if [ $? != "0" ]; then
-        printf "\033[31mSome errors occured when calling Debian Packager.\nYou may want to run \"dpkg --configure -a\" to fix some problems.\033[0m\n"
-        quit_installer 1
-      fi
-    else
-      printf "Installing FastBuilder to specified path: ${PREFIX}\n"
-      mkdir -p ${PREFIX}
-      dpkg -x fastbuilder-temp/fastbuilder.deb fastbuilder/
-      if [ $(uname -o | grep "Android" | echo $?) -eq 0 ]; then
-        mv ${PREFIX}/data/data/com.termux/files/usr/bin/fastbuilder ${PREFIX}/
-        # Remember to add a dot in front of the target directory
-        # to prevent some unexpected behavior
-        rm -r ${PREFIX}/./data
-      else
-        mv ${PREFIX}/usr/local/bin/fastbuilder ${PREFIX}/
-        rm -r ${PREFIX}/./usr
-      fi
-      if [ $(cat ${HOME}/.profile | grep "export \${HOME}/fastbuilder:\$PATH" | echo $?) -eq 1 ]; then
-        echo "Adding ${HOME}/fastbuilder to your \$PATH"
-        echo "export \${HOME}/fastbuilder:\$PATH" >${HOME}/.profile
-      fi
+    if [ $(cat ${HOME}/.profile | grep "export \${HOME}/fastbuilder:\$PATH" | echo $?) -eq 1 ]; then
+      echo "Adding ${HOME}/fastbuilder to your \$PATH"
+      echo "export \${HOME}/fastbuilder:\$PATH" >${HOME}/.profile
     fi
   fi
 fi
