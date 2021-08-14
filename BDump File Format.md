@@ -6,13 +6,13 @@ By writing the ids that represent each blocks in a specific order is a workable 
 
 ## Basic File Structure
 
-BDump v3 file's extension is `.bdx`, and the general header of it is `BD@`, which stands for that the file is compressed with brotli compression algorithm. Note that there's also a header `BDZ` that stands for the file is compressed with gzip compression algorithm, which is no longer supported by FastBuilder Phoenix today since it has been deprecated for a long time and it's hard to find this type's file again. We define this kind of header as "compression header"  and the content after it is compressed with the compression algorithm it indicates.
+BDump v3 file's extension is `.bdx`, and the general header of it is `BD@`, which stands for that the file was compressed with brotli compression algorithm. Note that there's also a header `BDZ` that stands for the file was compressed with gzip compression algorithm, which is no longer supported by FastBuilder Phoenix today since it has been deprecated for a long time and it's hard to find this type's file again. We define such kind of header as "compression header"  and the content after it is compressed with the compression algorithm it indicates.
 
 > Tip: BDump v2's extension is `.bdp` and the header is `BDMPS\0\x02\0`.
 
 The header of the compressed content is `BDX\0`, and the author's player name that terminated with `\0` is followed right after it. Then the content after it is the command with arguments that written one-by-one tightly. Each command id would take 1 byte of space, like what an `unsigned char` do.
 
-All the operations depend a `Vec3` value represents the current position of the "brush".
+All the operations depend a `Vec3` value that represents the current position of the "brush".
 
 Let's see the list of commands first.
 
@@ -39,8 +39,8 @@ Type definition:
 
 | ID                | Internal name               | Description                                                  | Arguments                                                    |
 | ----------------- | --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| 1                 | `addToBlockPalette`         | Add a specific block name to the palette, and the id of the block is the times of using this command, e.g. the id of the first time calling the command is `0`, and the id of the second time is `1`. The maximum number of types of blocks is `65536`. | `char *blockName`                                            |
-| 2                 | `addX`                      | **(DEPRECATED)** Add `x` to the brush position's `X`, and reset the value of `Y` and `Z` to `0`. This method is deprecated since the difference between the real function of the command and what it's name say it should do. Though it's deprecated, you still need to implement it's read since there's still bdx files contain this command. | `unsigned short x`                                           |
+| 1                 | `addToBlockPalette`         | Add a specific block name to the palette, and the id of the block is sorted in the term of the command called, e.g. the id of the first time calling the command is `0`, and the id of the second time is `1`. The maximum number of types of blocks is `65536`. | `char *blockName`                                            |
+| 2                 | `addX`                      | **(DEPRECATED)** Add `x` to the brush position's `X`, and reset the value of `Y` and `Z` to `0`. This method is deprecated since the difference between the real function of the command and what it's name say it should do. Though it's deprecated, you still need to implement it's parsing since there's still `bdx` files containing this command. | `unsigned short x`                                           |
 | 3                 | `X++`                       | **(DEPRECATED) **Add `1` to the brush position's `X`, and reset the value of `Y` and `Z` to `0`. | -                                                            |
 | 4                 | `addY`                      | **(DEPRECATED)** Add `y` to the brush position's `Y`, and reset the value of `Z` to `0`. | `unsigned short y`                                           |
 | 5                 | `Y++`                       | **(DEPRECATED) **Add `1` to the brush position's `Y`, and reset the value of `Z` to `0`. | -                                                            |
