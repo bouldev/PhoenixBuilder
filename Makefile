@@ -37,7 +37,7 @@ ifneq ($(wildcard /usr/bin/aarch64-linux-gnu-gcc),)
 	TARGETS:=${TARGETS} current-arm64-executable
 endif
 
-VERSION=$(shell cat release)
+VERSION=$(shell cat version)
 
 SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go))
 
@@ -91,7 +91,7 @@ build/phoenixbuilder-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-m
 	CC=/usr/bin/x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86_64.exe
 build/hashes.json: build genhash.js ${TARGETS}
 	node genhash.js
-	cp release build/version
+	cp version build/version
 
 package/ios: build/phoenixbuilder-ios-executable release/
 	mkdir -p release/phoenixbuilder-iphoneos/usr/local/bin release/phoenixbuilder-iphoneos/DEBIAN

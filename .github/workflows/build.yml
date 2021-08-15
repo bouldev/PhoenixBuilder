@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "release"
+      - "version"
 
 jobs:
   linux-build:
