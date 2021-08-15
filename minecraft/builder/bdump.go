@@ -45,6 +45,9 @@ func BDump(config *mctype.MainConfig, blc chan *mctype.Module) error {
 	bro := brotli.NewReader(file)
 	br := &bytes.Buffer{}
 	filelen, _:=br.ReadFrom(bro)
+	if(filelen==0) {
+		return fmt.Errorf("Invalid file")
+	}
 	{
 		bts:=br.Bytes()
 		if(bts[filelen-1]==90) {
