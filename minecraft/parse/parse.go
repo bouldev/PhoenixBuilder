@@ -70,6 +70,8 @@ func Parse(Message string, defaultConfig *mctype.MainConfig) (*mctype.MainConfig
 	//Length,  Width and Height
 	FlagSet.BoolVar(&Config.ExcludeCommands,"excludecommands",defaultConfig.ExcludeCommands,"Exclude commands in command blocks")
 	FlagSet.BoolVar(&Config.InvalidateCommands,"invalidatecommands",defaultConfig.InvalidateCommands,"Invalidate commands in command blocks")
+	FlagSet.BoolVar(&Config.Strict,"strict",defaultConfig.Strict,"Break if the file isn't signed")
+	FlagSet.BoolVar(&Config.Strict,"S",defaultConfig.Strict,"Break if the file isn't signed")
 	
 	FlagSet.IntVar(&Config.Length,"length",defaultConfig.Length,"The length")
 	FlagSet.IntVar(&Config.Length,"l",defaultConfig.Length,"The length")

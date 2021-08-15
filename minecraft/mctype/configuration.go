@@ -29,6 +29,7 @@ type MainConfig struct {
 	Facing, Path, Shape   string
 	ExcludeCommands       bool
 	InvalidateCommands    bool
+	Strict                bool
 }
 
 type DelayConfig struct {

@@ -264,6 +264,7 @@ bdump -p <filePath>
 -p --path The path of the file, use "" to assign a path with blankspace(s).
 # optional flags: --excludecommands : Exclude commands in command blocks
 # 				  --invalidatecommands: Invalidate commands in command blocks by adding characters to the start of the command content, for example, the invalid form of "say 123" is "|say 123".
+#                -S --strict       : Break if the file is unsigned or failed to verify its signature.
 ```
 
 ##### Painting Slice Construction

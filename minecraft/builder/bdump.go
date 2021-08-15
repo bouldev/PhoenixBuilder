@@ -3,12 +3,14 @@ package builder
 import (
 	"github.com/andybalholm/brotli"
 	"phoenixbuilder/minecraft/mctype"
+	"phoenixbuilder/minecraft/bdump"
 	"fmt"
 	"os"
 	"encoding/binary"
+	"bytes"
 )
 
-func ReadBrString(br *brotli.Reader) (string, error) {
+func ReadBrString(br *bytes.Buffer) (string, error) {
 	str:=""
 	c:=make([]byte,1)
 	for {
@@ -40,7 +42,35 @@ func BDump(config *mctype.MainConfig, blc chan *mctype.Module) error {
 			return fmt.Errorf("Not a bdx file (Invalid file header)")
 		}
 	}
-	br := brotli.NewReader(file)
+	bro := brotli.NewReader(file)
+	br := &bytes.Buffer{}
+	filelen, _:=br.ReadFrom(bro)
+	{
+		bts:=br.Bytes()
+		if(bts[filelen-1]==90) {
+			mctype.ForwardedBrokSender<-fmt.Sprintf("File is signed, verifying...")
+			lent:=int64(bts[filelen-2])
+			sign:=bts[filelen-lent-2:filelen-2]
+			cor,un,err:=bdump.VerifyBDX(bts[:filelen-lent-3],sign)
+			if(cor) {
+				return fmt.Errorf("File is corrupted")
+			}
+			if(err!=nil) {
+				e:=fmt.Errorf("Failed to verify the file's signature due to: %v", err)
+				if(config.Strict) {
+					return e
+				}else{
+					mctype.ForwardedBrokSender<-fmt.Sprintf("ERROR(ignored): %v",e)
+				}
+			}else{
+				mctype.ForwardedBrokSender<-fmt.Sprintf("File is signed, signer: %s",un)
+			}
+		}else if(config.Strict) {
+			return fmt.Errorf("File is not signed.")
+		}else{
+			mctype.ForwardedBrokSender<-fmt.Sprintf("File is not signed!")
+		}
+	}
 	{
 		tempbuf:=make([]byte,4)
 		_, err:=br.Read(tempbuf)

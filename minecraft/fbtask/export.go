@@ -313,10 +313,14 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 			cfg.Path+=".bdx"
 		}
 		command.Tellraw(conn,"EXPORT >> Writing output file")
-		err:=out.WriteToFile(cfg.Path)
-		if err!=nil {
+		err, signerr:=out.WriteToFile(cfg.Path)
+		if(err!=nil){
 			command.Tellraw(conn,fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v",err))
 			return
+		}else if(signerr!=nil) {
+			command.Tellraw(conn,fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v",signerr))
+		}else{
+			command.Tellraw(conn,fmt.Sprintf("EXPORT >> File signed successfully"))
 		}
 		command.Tellraw(conn, fmt.Sprintf("EXPORT >> Successfully exported your structure to %v",cfg.Path))
 	} ()

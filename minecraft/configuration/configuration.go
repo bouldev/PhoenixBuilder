@@ -2,7 +2,7 @@ package configuration
 
 import (
 	"phoenixbuilder/minecraft/mctype"
-	"phoenixbuilder/minecraft/builder"
+	//"phoenixbuilder/minecraft/builder"
 	"github.com/google/uuid"
 )
 
@@ -11,6 +11,9 @@ const (
 	ConfigTypeDelay  = 1
 	ConfigTypeGlobal = 2
 )
+
+var AirBlock = &mctype.ConstBlock{Name: "air", Data: 0}
+var IronBlock = &mctype.ConstBlock{Name: "iron_block", Data: 0}
 
 type FullConfig map[byte]interface{}
 var ForwardedBrokSender chan string
@@ -27,8 +30,8 @@ func ConcatFullConfig(mc *mctype.MainConfig, dc *mctype.DelayConfig) *FullConfig
 func CreateFullConfig() *FullConfig {
 	mConfig := mctype.MainConfig{
 		Execute: "",
-		Block: builder.IronBlock,
-		OldBlock: builder.AirBlock,
+		Block: IronBlock,
+		OldBlock: AirBlock,
 		/*Begin: mctype.Position{
 			X: 0,
 			Y: 0,
@@ -73,6 +76,8 @@ func CreateFullConfig() *FullConfig {
 var RespondUser string
 var ZeroId uuid.UUID
 var OneId uuid.UUID
+
+var UserToken string
 
 var globalFullConfig *FullConfig
 

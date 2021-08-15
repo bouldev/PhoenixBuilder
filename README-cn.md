@@ -252,8 +252,9 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
   acme -p <filePath>
   bdump -p <filePath>
   -p --path 文件路径，暂时不支持存在空格的文件名。
-  # 可选Flag: --excludecommands : 不导入命令方块中的命令。
-  # 		   --invalidatecommands : 无效化处理导入的命令方块中的命令，如命令"say 123"会被处理为"|say 123"
+  # 可选Flags: --excludecommands : 不导入命令方块中的命令。
+  # 		    --invalidatecommands : 无效化处理导入的命令方块中的命令，如命令"say 123"会被处理为"|say 123"
+  #           -S --strict        : 如果文件未签名或未能验证签名则不进行建筑。
   ```
 
 ##### 像素画生成
@@ -295,5 +296,5 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
   # 可选Flag： --excludecommands : 不导出命令方块中的命令。
   ```
 
-* 用`bdump`命令导入之
+* 用`bdump`命令对其进行导入操作。
 

@@ -3,6 +3,7 @@ package bdump
 import (
 	"github.com/andybalholm/brotli"
 	"phoenixbuilder/minecraft/mctype"
+	"bytes"
 	"fmt"
 	"os"
 	"encoding/binary"
@@ -90,9 +91,10 @@ addSmallY 29
 addSmallZ 30
 
 end 88
+isSigned    90
 */
 
-func (bdump *BDump) writeHeader(w *brotli.Writer) error {
+func (bdump *BDump) writeHeader(w *bytes.Buffer) error {
 	_, err:=w.Write([]byte("BDX"))
 	if err!=nil {
 		return err
@@ -109,7 +111,7 @@ func (bdump *BDump) writeHeader(w *brotli.Writer) error {
 	return err
 }
 
-func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
+func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 	bdump.formatBlocks()
 	brushPosition:=[]int{0,0,0}
 	blocksPalette:=make(map[string]int)
@@ -351,29 +353,43 @@ func (bdump *BDump) writeBlocks(w *brotli.Writer) error {
 			return fmt.Errorf("Failed to write line230")
 		}
 	}
-	w.Write([]byte("XE"))
+	//w.Write([]byte("XE"))
 	return nil
 }
 
-func (bdump *BDump) WriteToFile(path string) error {
+func (bdump *BDump) WriteToFile(path string) (error, error) {
 	file, err:=os.OpenFile(path, os.O_RDWR|os.O_TRUNC|os.O_CREATE,0666)
 	if err!=nil {
-		return fmt.Errorf("Failed to open file: %v", err)
+		return fmt.Errorf("Failed to open file: %v", err), nil
 	}
 	defer file.Close()
 	_, err=file.Write([]byte("BD@"))
 	if err!=nil {
-		return fmt.Errorf("Failed to write BRBDP file header")
+		return fmt.Errorf("Failed to write BRBDP file header"), nil
 	}
+	buffer:=&bytes.Buffer{}
 	brw := brotli.NewWriter(file)
-	err=bdump.writeHeader(brw)
+	err=bdump.writeHeader(buffer)
 	if err!=nil {
-		return err
+		return err, nil
 	}
-	err=bdump.writeBlocks(brw)
+	err=bdump.writeBlocks(buffer)
 	if err!=nil {
-		return err
+		return err, nil
+	}
+	bts:=buffer.Bytes()
+	_, err=brw.Write(bts)
+	if(err!=nil) {
+		return err, nil
+	}
+	sign, signerr:=SignBDX(bts)
+	if(signerr!=nil) {
+		brw.Write([]byte("XE"))
+	}else{
+		brw.Write(append([]byte{88}, sign...))
+		brw.Write([]byte{uint8(len(sign))})
+		brw.Write([]byte{90})
 	}
 	err=brw.Close()
-	return err
+	return err, signerr
 }

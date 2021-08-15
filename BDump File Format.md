@@ -70,8 +70,9 @@ Type definition:
 | 29, `0x1E`        | `addSmallY`                 | Add `y` to the brush position's `Y`.                         | `char y //int8_t y`                                          |
 | 30, `0x1F`        | `addSmallZ`                 | Add `z` to the brush position's `Z`.                         | `char z //int8_t z`                                          |
 | 88, `'X'`, `0x58` | `end`                       | Stop reading. Note that though the general end is "XE" (2 bytes long), but a 'X' (1 byte long) character is enough. | -                                                            |
+| 90, `0x5A`        | `isSigned`                  | A command that functions a little different with other commands, its argument is the previous byte of it, would only appear in the end of the file. Please do not use it unless you know how to use since an invalid signature would prevent PhoenixBuilder from constructing your structure. See paragraph `Signing` for details. | `unsigned char signatureSize`                                |
 
-The list above is all the commands of the bdump v3 till 2021-8-14.
+The list above is all the commands of the bdump v3 till 2021-8-15.
 
 Let's see how to make a `bdx` file using these commands.
 
@@ -103,3 +104,58 @@ end
 db 'E'
 ```
 
+## Signing
+
+*FastBuilder Phoenix* 0.3.5 implemented a bdump file signing system in order to identify the file's **real** publisher. Though using the PGP to sign is a good and secure way, we've chosen a signing method that highly depends on our authentication server since it's meaningless to implement the PGP signing just for an online program that can connect to the server anytime.
+
+Note that a signature isn't required for a `bdx` file unless the user sets a `-S`(strict) flag. If you implemented the signing process, you should make sure that it works correctly since a `bdx` file with an incorrect signature won't be able to be processed by *FastBuilder Phoenix*.
+
+### API
+
+First let's learn the APIs of `bdx` file signing. We've implemented two apis to finish the signing process.
+
+The host of these APIs is `uc.fastbuilder.pro` and HTTPS is required.
+
+#### Signing
+
+* Request:
+
+    ```http
+    POST /signbdx.web HTTP/1.1
+    Host: uc.fastbuilder.pro
+    User-Agent: MyApplication/0.1
+    
+    {"hash": "<The hash of your uncompressed bdx content without the end command 'X'.>","token": "<Your FastBuilder Token>"}
+    ```
+
+* Response:
+
+  ```http
+  HTTP/1.1 200 OK
+  Content-Type: application/json
+  
+  {"success":true,"sign":"<Base64 of signature>",message:""}
+  ```
+
+#### Verifying
+
+* Request:
+
+    ```http
+    POST /verifybdx.web HTTP/1.1
+    Host: uc.fastbuilder.pro
+    User-Agent: MyApplication/0.1
+    
+    {"hash": "<The hash of your uncompressed bdx content without the end command 'X'.>","sign": "<The signature's base64 value>"}
+    ```
+
+* Response:
+
+  ```http
+  HTTP/1.1 200 OK
+  Content-Type: application/json
+  
+  {"success":true,"corrupted":false,"username":"The person who signed the file",message:""}
+  ```
+
+After requesting the signing api, the base64 value of the signature should be decompressed and written to the compressed part of file, then the signature length and `isSigned` flag.
