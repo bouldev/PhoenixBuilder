@@ -199,6 +199,12 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	tellraw(conn, "Welcome to FastBuilder!")
 	tellraw(conn, fmt.Sprintf("Operator: %s", user))
 	sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
+	go func() {
+		for {
+			cmd, _:=getInput()
+			function.Process(conn, cmd)
+		}
+	} ()
 	// A loop that reads packets from the connection until it is closed.
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
@@ -222,6 +228,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
+				break
 				if user == p.SourceName {
 					pterm.Println(pterm.Yellow(fmt.Sprintf("<%s>", user)), pterm.LightCyan(p.Message))
 					if p.Message[0] == '>' {
@@ -278,6 +285,13 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	}
 }
 
+func getInput() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	inp, err := reader.ReadString('\n')
+	inpl:=strings.TrimRight(inp, "\r\n")
+	return inpl, err
+}
+
 func getInputUserName() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	pterm.Printf("Enter your FastBuilder User Center username: ")
@@ -325,8 +339,10 @@ func sendCommand(commands string, UUID uuid.UUID, conn *minecraft.Conn) error {
 }
 
 func tellraw(conn *minecraft.Conn, lines ...string) error {
-	uuid1, _ := uuid.NewUUID()
-	return sendCommand(command.TellRawRequest(mctype.AllPlayers, lines...), uuid1, conn)
+	fmt.Printf("%s\n",lines[0])
+	return nil
+	//uuid1, _ := uuid.NewUUID()
+	//return sendCommand(command.TellRawRequest(mctype.AllPlayers, lines...), uuid1, conn)
 }
 
 func decideDelay(delaytype byte) int64 {

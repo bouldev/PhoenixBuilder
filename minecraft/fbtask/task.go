@@ -258,7 +258,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 					TickDelay: cbdata.TickDelay,
 					ExecuteOnFirstTick: cbdata.ExecuteOnFirstTick,
 				})
-			}else if curblock.Block != nil {
+			}else if curblock.Block != nil || curblock.CommandBlockData == nil {
 				request := command.SetBlockRequest(curblock, cfg)
 				err := command.SendSizukanaCommand(request, conn)
 				if err != nil {
