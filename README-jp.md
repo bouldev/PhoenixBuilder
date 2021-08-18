@@ -2,7 +2,7 @@
 
 ## 紹介
 
-> ファストビルダーはMinecraft Bedrock Editionの建物を生成するのために作ったツール。このバージョン（フェニックス）はMinecraft China Editionのレンタルサーバーに対する特別バージョンです。今はユークリッドジオメトリーとACME(mcacblock)・schematic形式ファイル　の建造物の生成と写真のゲーム中絵をサポートしている。
+> ファストビルダーはMinecraft Bedrock Editionの建物を生成するのために作ったツール。このバージョン（フェニックス）はMinecraft Netease Editionのレンタルサーバーに対する特別バージョンです。今はユークリッドジオメトリーとACME(mcacblock)・schematic形式ファイル　の建造物の生成と写真のゲーム中絵をサポートしている。
 
 **注意：ファストビルダー フェニックスは商業的なソフトです。**
 

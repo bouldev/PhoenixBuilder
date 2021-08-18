@@ -2,7 +2,7 @@
 
 ## Description
 
-> FastBuilder is a structure generating tool for Minecraft Bedrock Edition that supporting various platforms. The Phoenix ver. was designed for the rental server of the Minecraft China Edition. Currently supports generating Euclid geometry and ACME(mcacblock) · schematic file(NBT data of blocks would be disposed)'s structures, and images painting.
+> FastBuilder is a structure generating tool for Minecraft Bedrock Edition that supporting various platforms. The Phoenix ver. was designed for the rental server of the Minecraft Netease Edition. Currently supports generating Euclid geometry and ACME(mcacblock) · schematic file(NBT data of blocks would be disposed)'s structures, and images painting.
 
 **NOTE: FastBuilder Phoenix is a commercial software!**
 
@@ -58,7 +58,7 @@ Please ensure that you have the abilities mentioned above, if you encountered pr
 - Hard-working hands and thoughtful brain
 
 1. Login to [FastBuilder User Center](https://uc.fastbuilder.pro) 
-2. Click the *Profile* tab, and set the *<ruby><rb>Minecraft China Edition Username</rb><rp>(</rp><rt style="font-size:80%;">中国版用户名</rt><rp>)</rp></ruby>*.
+2. Click the *Profile* tab, and set the *<ruby><rb>Minecraft Netease Edition Username</rb><rp>(</rp><rt style="font-size:80%;">网易版用户名</rt><rp>)</rp></ruby>*.
 3. Enter the number of the <ruby><rb>rental server</rb><rp>(</rp><rt style="font-size:80%;">租赁服</rt><rp>)</rp></ruby> that you want to use FastBuilder on.(note: The rental server should accept the entrance of **any <ruby><rb>level</rb><rp>(</rp><rt style="font-size:80%;">等级</rt><rp>)</rp></ruby>**'s player, satisfy it by turning off "<ruby><rb>player entrance level requirement</rb><rp>(</rp><rt style="font-size:80%;">玩家等级准入要求</rt><rp>)</rp></ruby>" toggle in the server settings interface)
 4. Set a nickname of the <ruby><rb>helper user</rb><rp>(</rp><rt style="font-size:80%;">辅助用户</rt><rp>)</rp></ruby>, then click **[<ruby><rb>Create</rb><rp>(</rp><rt style="font-size:80%;">生成</rt><rp>)</rp></ruby>]** to create one.
 
@@ -139,7 +139,7 @@ If no exceptions happened, after finishing these steps, you will see the FastBui
 
 Then, FastBuilder will ask you to enter the rental server number and its password(Press *Enter* directly if none, **won't be echoed**). If it haven't crashed, presumably it has been launched.
 
-After that, leave it in the background, and enter the rental server. Seeing the helper user is online(in the user list in `/list` command or in pause interface) means that FastBuilder works properly. Please **give the helper user <ruby><rb>OP</rb><rp>(</rp><rt style="font-size:80%;">operator</rt><rp>)</rp></ruby> permission**. The helper user will only listen to **<ruby><rb>operator's</rb><rp>(</rp><rt style="font-size:80%;">your</rt><rp>)</rp></ruby>** commands, so the the *Minecraft China Edition Username* should be set to the same to **you nickname in *Minecraft China Edition***. Please do not use skin packs with the **<ruby><rb>title</rb><rp>(</rp><rt style="font-size:80%;">称号</rt><rp>)</rp></ruby>** since the helper user won't be able to process your commands.
+After that, leave it in the background, and enter the rental server. Seeing the helper user is online(in the user list in `/list` command or in pause interface) means that FastBuilder works properly. Please **give the helper user <ruby><rb>OP</rb><rp>(</rp><rt style="font-size:80%;">operator</rt><rp>)</rp></ruby> permission**. The helper user will only listen to **<ruby><rb>operator's</rb><rp>(</rp><rt style="font-size:80%;">your</rt><rp>)</rp></ruby>** commands, so the the *Minecraft Netease Edition Username* should be set to the same to **you nickname in *Minecraft Netease Edition***. Please do not use skin packs with the **<ruby><rb>title</rb><rp>(</rp><rt style="font-size:80%;">称号</rt><rp>)</rp></ruby>** since the helper user won't be able to process your commands.
 
 #### FastBuilder Command Resolving
 

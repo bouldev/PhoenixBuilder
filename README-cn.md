@@ -2,7 +2,7 @@
 
 ## 简介
 
-> FastBuilder 是一个为Minecraft Bedrock Edition设计的建筑辅助程序，可以在多个平台使用。Phoenix版本专门为中国版租赁服设计。目前支持的功能有欧几里得几何 · ACME文件之 · schematic（方块NBT数据丢弃）文件之 建筑生成，以及图像绘制。
+> FastBuilder 是一个为Minecraft Bedrock Edition设计的建筑辅助程序，可以在多个平台使用。Phoenix版本专门为网易版租赁服设计。目前支持的功能有欧几里得几何 · ACME文件之 · schematic（方块NBT数据丢弃）文件之 建筑生成，以及图像绘制。
 
 提示：FastBuilder Phoenix 是<ruby>商业化<rp>（</rp><rt style="font-size:80%;">付费</rt><rp>）</rp></ruby>软件。
 
@@ -59,7 +59,7 @@
 - 勤劳的双手和善于思考的**大脑**
 
 1. 登录 [FastBuilder 用户中心](https://uc.fastbuilder.pro) 
-2. 进入 Profile 部分，设置<ruby>中国版用户名<rp>（</rp><rt style="font-size:80%;">游戏名</rt><rp>）</rp></ruby>
+2. 进入 Profile 部分，设置<ruby>网易版用户名<rp>（</rp><rt style="font-size:80%;">游戏名</rt><rp>）</rp></ruby>
 3. 设定您要使用Fast Builder的**租赁服**的号码（注意：该租赁服必须允许**任意等级**的玩家加入）
 4. 设置辅助用户名称，并点击【生成】来创建**辅助用户**
 
@@ -134,7 +134,7 @@
 
 #### 初始化程序
 
-​	如果不出意外，在您完成了上述步骤，并且看到了Fast Builder成功启动的字样。第一次启动会要求用户输入Fast Builder账号密码（密码不回显），照做即可。完成后，Fast Builder会要求用户输入<ruby>租赁服号码<rp>(</rp><rt style="font-size:80%;">Rental Server Number</rt><rp>)</rp></ruby>和租赁服密码（没有可忽略，不会回显）。如果没有报错退出，那么FastBuilder大概就成功启动了（第二次启动不会要求用户输入账号密码）。接下来，将其挂在后台，进入网易租赁服，若看到辅助用户在线，那么FastBuilder就成功运行了。这个时候，请**给予辅助用户OP权限**。辅助用户只听从**<ruby>操作员<rp>（</rp><rt style="font-size:80%;">您</rt><rp>）</rp></ruby>**的命令，**操作员**的名称必须和用户中心所设置的**中国版用户名**一致，请勿使用带有**称号**的皮肤，否则辅助用户将**不会**听从您的命令！
+​	如果不出意外，在您完成了上述步骤，并且看到了Fast Builder成功启动的字样。第一次启动会要求用户输入Fast Builder账号密码（密码不回显），照做即可。完成后，Fast Builder会要求用户输入<ruby>租赁服号码<rp>(</rp><rt style="font-size:80%;">Rental Server Number</rt><rp>)</rp></ruby>和租赁服密码（没有可忽略，不会回显）。如果没有报错退出，那么FastBuilder大概就成功启动了（第二次启动不会要求用户输入账号密码）。接下来，将其挂在后台，进入网易租赁服，若看到辅助用户在线，那么FastBuilder就成功运行了。这个时候，请**给予辅助用户OP权限**。辅助用户只听从**<ruby>操作员<rp>（</rp><rt style="font-size:80%;">您</rt><rp>）</rp></ruby>**的命令，**操作员**的名称必须和用户中心所设置的**网易版用户名**一致，请勿使用带有**称号**的皮肤，否则辅助用户将**不会**听从您的命令！
 
 #### FastBuilder命令解析
 
