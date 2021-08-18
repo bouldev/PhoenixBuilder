@@ -50,7 +50,7 @@ func main() {
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.56~withwarning"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.6"))
 	pterm.Println(pterm.Red("注意：请不要运行网易MC！"))
 	pterm.Println(pterm.Red("注意：请不要运行网易MC！"))
 	pterm.Println(pterm.Red("注意：请确保您的设备上没有网易MC运行"))
@@ -208,6 +208,22 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	go func() {
 		for {
 			cmd, _:=getInput()
+			if cmd[0] == '.' {
+				ud,_:=uuid.NewUUID()
+				chann:=make(chan *packet.CommandOutput)
+				command.UUIDMap.Store(ud.String(), chann)
+				command.SendCommand(cmd[1:], ud, conn)
+				resp:=<-chann
+				fmt.Printf("%+v\n", resp)
+			}else if cmd[0] == '!' {
+				ud,_:=uuid.NewUUID()
+				chann:=make(chan *packet.CommandOutput)
+				command.UUIDMap.Store(ud.String(), chann)
+				command.SendWSCommand(cmd[1:], ud, conn)
+				resp:=<-chann
+				fmt.Printf("%+v\n", resp)
+			}
+			
 			function.Process(conn, cmd)
 		}
 	} ()
