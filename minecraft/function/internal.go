@@ -44,6 +44,25 @@ func InitInternalFunctions() {
 				Y: Y,
 				Z: Z,
 			}
+			command.Tellraw(conn, fmt.Sprintf("Position set: %d, %d, %d.",X,Y,Z))
+		},
+	})
+	RegisterFunction(&Function {
+		Name: "setend",
+		OwnedKeywords: []string {"setend"},
+		FunctionType:FunctionTypeSimple,
+		SFMinSliceLen:4,
+		SFArgumentTypes: []byte {SimpleFunctionArgumentInt,SimpleFunctionArgumentInt,SimpleFunctionArgumentInt},
+		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+			X, _ := args[0].(int)
+			Y, _ := args[1].(int)
+			Z, _ := args[2].(int)
+			configuration.GlobalFullConfig().Main().Position=mctype.Position {
+				X: X,
+				Y: Y,
+				Z: Z,
+			}
+			command.Tellraw(conn, fmt.Sprintf("End position set: %d, %d, %d.",X,Y,Z))
 		},
 	})
 	RegisterFunction(&Function {

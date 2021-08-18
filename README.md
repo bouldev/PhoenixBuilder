@@ -283,6 +283,7 @@ bdump -p <filePath>
 
   ```shell
   get
+  set x y z
   ```
 
   or
@@ -297,6 +298,7 @@ bdump -p <filePath>
 
   ```shell
   get end
+  setend x y z
   ```
 
 * Export the structure in assigned area to a file

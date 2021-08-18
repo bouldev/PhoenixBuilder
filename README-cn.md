@@ -273,6 +273,7 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
 
   ```shell
   get
+  set x y z
   ```
 
   或
@@ -287,6 +288,7 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
 
   ```shell
   get end
+  setend x y z
   ```
 
 * 导出指定区域的建筑到文件
