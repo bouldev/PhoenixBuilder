@@ -50,7 +50,13 @@ func main() {
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.56"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.56~withwarning"))
+	pterm.Println(pterm.Red("注意：请不要运行网易MC！"))
+	pterm.Println(pterm.Red("注意：请不要运行网易MC！"))
+	pterm.Println(pterm.Red("注意：请确保您的设备上没有网易MC运行"))
+	pterm.Println(pterm.Red("注意：请确保您的设备上没有网易MC运行"))
+	pterm.Println(pterm.Red("注意：否则可能被网易封号"))
+	pterm.Println(pterm.Red("注意：否则可能被网易封号"))
 	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err:=recover(); err!=nil {
