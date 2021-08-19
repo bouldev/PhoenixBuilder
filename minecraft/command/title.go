@@ -6,12 +6,13 @@ import (
 	"phoenixbuilder/minecraft"
 	//"github.com/google/uuid"
 	"encoding/json"
+	"strings"
 )
 
 func TitleRequest(target mctype.Target, lines ...string) string {
 	var items []TellrawItem
 	for _, text := range lines {
-		items=append(items,TellrawItem{Text:text})
+		items=append(items,TellrawItem{Text:strings.Replace(text, "schematic", "sc***atic", -1)})
 	}
 	final := &TellrawStruct {
 		RawText: items,

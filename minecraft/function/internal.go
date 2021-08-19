@@ -57,7 +57,7 @@ func InitInternalFunctions() {
 			X, _ := args[0].(int)
 			Y, _ := args[1].(int)
 			Z, _ := args[2].(int)
-			configuration.GlobalFullConfig().Main().Position=mctype.Position {
+			configuration.GlobalFullConfig().Main().End=mctype.Position {
 				X: X,
 				Y: Y,
 				Z: Z,

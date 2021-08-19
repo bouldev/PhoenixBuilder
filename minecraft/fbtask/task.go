@@ -46,6 +46,7 @@ type AsyncInfo struct {
 var TaskIdCounter *atomic.Int64 = atomic.NewInt64(0)
 var TaskMap sync.Map
 var BrokSender chan string = make(chan string)
+var ExtraDisplayStrings []string = []string{}
 
 func GetStateDesc(st byte) string {
 	if st == 0 {
@@ -294,6 +295,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 	return task
 }
 
+var ActivateTaskStatus chan bool=make(chan bool)
 
 func InitTaskStatusDisplay(conn *minecraft.Conn) {
 	go func() {
@@ -305,7 +307,14 @@ func InitTaskStatusDisplay(conn *minecraft.Conn) {
 	ticker := time.NewTicker(500 * time.Millisecond)
 	go func() {
 		for {
-			<- ticker.C
+			<-ticker.C
+			ActivateTaskStatus<-true
+		}
+	} ()
+	go func() {
+		for {
+			<-ActivateTaskStatus
+			//<- ticker.C
 			if configuration.GlobalFullConfig().Global().TaskDisplayMode == mctype.TaskDisplayNo {
 				continue
 			}
@@ -320,6 +329,7 @@ func InitTaskStatusDisplay(conn *minecraft.Conn) {
 				displayStrs=append(displayStrs,addstr)
 				return true
 			})
+			displayStrs=append(displayStrs, ExtraDisplayStrings...)
 			if len(displayStrs) == 0 {
 				continue
 			}

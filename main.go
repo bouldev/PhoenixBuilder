@@ -21,13 +21,14 @@ import (
 	"phoenixbuilder/minecraft/configuration"
 	//"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/hotbarmanager"
-	"phoenixbuilder/minecraft/enchant"
+	//"phoenixbuilder/minecraft/enchant"
 	"strings"
 	"syscall"
 	"runtime"
 	"runtime/debug"
 	"phoenixbuilder/minecraft/fbtask"
 	"phoenixbuilder/minecraft/plugin"
+	"phoenixbuilder/minecraft/move"
 )
 
 type FBPlainToken struct {
@@ -50,13 +51,7 @@ func main() {
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.6"))
-	pterm.Println(pterm.Red("注意：请不要运行网易MC！"))
-	pterm.Println(pterm.Red("注意：请不要运行网易MC！"))
-	pterm.Println(pterm.Red("注意：请确保您的设备上没有网易MC运行"))
-	pterm.Println(pterm.Red("注意：请确保您的设备上没有网易MC运行"))
-	pterm.Println(pterm.Red("注意：否则可能被网易封号"))
-	pterm.Println(pterm.Red("注意：否则可能被网易封号"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.7"))
 	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err:=recover(); err!=nil {
@@ -208,6 +203,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	go func() {
 		for {
 			cmd, _:=getInput()
+			if len(cmd) == 0 {
+				continue
+			}
 			if cmd[0] == '.' {
 				ud,_:=uuid.NewUUID()
 				chann:=make(chan *packet.CommandOutput)
@@ -223,7 +221,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				resp:=<-chann
 				fmt.Printf("%+v\n", resp)
 			}
-			
+			if cmd=="menu" {
+				move.OpenMenu(conn)
+				fmt.Printf("OK\n")
+				continue
+			}
 			function.Process(conn, cmd)
 		}
 	} ()
@@ -241,6 +243,28 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			//fmt.Printf("RESPONSE %+v\n",p.StructureTemplate)
 			fbtask.ExportWaiter<-p.StructureTemplate
 			break
+		case *packet.MovePlayer:
+			if(p.EntityRuntimeID==move.OPRuntimeId) {
+				move.LastOPPitch=p.Pitch
+			}
+		case *packet.PlayerAction:
+			if(p.EntityRuntimeID==move.OPRuntimeId) {
+				if(p.ActionType==packet.PlayerActionStartSneak) {
+					move.LastOPSneak=true
+				}else if(p.ActionType==packet.PlayerActionStopSneak) {
+					move.LastOPSneak=false
+				}
+			}
+		case *packet.SetActorData:
+			if(p.EntityRuntimeID==move.OPRuntimeId) {
+				if len(p.EntityMetadata)!=1 {
+					break
+				}
+				_,isSneak:=p.EntityMetadata[91]
+				if isSneak {
+					move.LastOPSneak=true
+				}
+			}
 		/*case *packet.InventoryContent:
 			for _, item := range p.Content {
 				fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
@@ -250,8 +274,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
-				break
 				if user == p.SourceName {
+					if (strings.Contains(p.Message,"a")||strings.Contains(p.Message,"A")||strings.Contains(p.Message,"An")||strings.Contains(p.Message,"an")) {
+						move.OpenMenu(conn)
+					}
+					break
 					pterm.Println(pterm.Yellow(fmt.Sprintf("<%s>", user)), pterm.LightCyan(p.Message))
 					if p.Message[0] == '>' {
 						//umsg:=p.Message[1:]
@@ -262,10 +289,16 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				}
 			}
 		case *packet.AddPlayer:
-			if (p.Username == user && enchant.AddPlayerItemChannel != nil) {
-				enchant.AddPlayerItemChannel<-&p.HeldItem
-				//pterm.Println(pterm.Yellow(fmt.Sprintf("[%s] Operator joined Game", user)))
+			if (p.Username == user) {
+				move.OPRuntimeId=p.EntityRuntimeID;
+				if(move.OPRuntimeIdReceivedChannel!=nil) {
+					move.OPRuntimeIdReceivedChannel<-true
+				}
 			}
+			//if (p.Username == user && enchant.AddPlayerItemChannel != nil) {
+			//	enchant.AddPlayerItemChannel<-&p.HeldItem
+			//	pterm.Println(pterm.Yellow(fmt.Sprintf("[%s] Operator joined Game", user)))
+			//}
 			//fmt.Printf("%+v\n",p.EntityMetadata)
 		case *packet.CommandOutput:
 			//if p.SuccessCount > 0 {
@@ -361,10 +394,10 @@ func sendCommand(commands string, UUID uuid.UUID, conn *minecraft.Conn) error {
 }
 
 func tellraw(conn *minecraft.Conn, lines ...string) error {
-	fmt.Printf("%s\n",lines[0])
-	return nil
-	//uuid1, _ := uuid.NewUUID()
-	//return sendCommand(command.TellRawRequest(mctype.AllPlayers, lines...), uuid1, conn)
+	//fmt.Printf("%s\n",lines[0])
+	//return nil
+	uuid1, _ := uuid.NewUUID()
+	return sendCommand(command.TellRawRequest(mctype.AllPlayers, lines...), uuid1, conn)
 }
 
 func decideDelay(delaytype byte) int64 {
