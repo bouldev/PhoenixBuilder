@@ -35,7 +35,7 @@ type Client struct {
 	closed bool
 }
 
-func CreateClient() *Client {
+func CreateClient(world_chat_channel chan []string) *Client {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
 		panic(err)
@@ -91,8 +91,22 @@ func CreateClient() *Client {
 				authclient.encryptor.init()
 				close(encrypted)
 				continue
+			}else if msgaction=="world_chat" {
+				chat_msg,_:=message["msg"].(string)
+				chat_sender,_:=message["username"].(string)
+				select {
+				case world_chat_channel<-[]string{chat_sender,chat_msg}:
+					continue
+				default:
+					continue
+				}
 			}
-			authclient.serverResponse<-message
+			select{
+			case authclient.serverResponse<-message:
+				continue
+			default:
+				continue
+			}
 		}
 	}()
 	pubb,err:=x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
@@ -221,4 +235,24 @@ func (client *Client) GetToken(username string,password string) string {
 	}
 	usertoken,_:=resp["token"].(string)
 	return usertoken
+}
+
+type WorldChatRequest struct {
+	Category string `json:"category"`
+	Action string `json:"action"`
+	Message string `json:"message"`
+}
+
+func (client *Client) WorldChat(message string) {
+	req:=&WorldChatRequest {
+		Category: "gaming",
+		Action:   "world_chat",
+		Message:  message,
+	}
+	msg, err:=json.Marshal(req)
+	if(err!=nil) {
+		panic("Failed to encode json 240")
+	}
+	client.SendMessage(msg)
+	return
 }

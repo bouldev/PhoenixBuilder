@@ -51,7 +51,7 @@ func main() {
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.7"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.8"))
 	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err:=recover(); err!=nil {
@@ -128,7 +128,8 @@ func runShellClient(token string, version string) {
 }
 
 func runClient(token string, version string, code string, serverPasswd string) {
-	client := fbauth.CreateClient()
+	worldchatchannel:=make(chan []string)
+	client := fbauth.CreateClient(worldchatchannel)
 	if token[0] == '{' {
 		token = client.GetToken("", token)
 		if token == "" {
@@ -179,6 +180,12 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		EntityRuntimeID: conn.GameData().EntityRuntimeID,
 		ActionType: packet.PlayerActionRespawn,
 	})
+	go func() {
+		for {
+			csmsg:=<-worldchatchannel
+			command.WorldChatTellraw(conn, csmsg[0], csmsg[1])
+		}
+	} ()
 	
 	plugin.StartPluginSystem(conn)
 	
@@ -226,6 +233,14 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				fmt.Printf("OK\n")
 				continue
 			}
+			if cmd[0] == '>'&&len(cmd)>1 {
+				umsg:=cmd[1:]
+				if(!client.CanSendMessage()) {
+					command.WorldChatTellraw(conn, "FasｔBuildeｒ", "Lose connection to the authentication server.")
+					break
+				}
+				client.WorldChat(umsg)
+			}
 			function.Process(conn, cmd)
 		}
 	} ()
@@ -247,14 +262,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			if(p.EntityRuntimeID==move.OPRuntimeId) {
 				move.LastOPPitch=p.Pitch
 			}
-		case *packet.PlayerAction:
-			if(p.EntityRuntimeID==move.OPRuntimeId) {
-				if(p.ActionType==packet.PlayerActionStartSneak) {
-					move.LastOPSneak=true
-				}else if(p.ActionType==packet.PlayerActionStopSneak) {
-					move.LastOPSneak=false
-				}
-			}
 		case *packet.SetActorData:
 			if(p.EntityRuntimeID==move.OPRuntimeId) {
 				if len(p.EntityMetadata)!=1 {
@@ -262,7 +269,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				}
 				_,isSneak:=p.EntityMetadata[91]
 				if isSneak {
-					move.LastOPSneak=true
+					move.LastOPSneak=!move.LastOPSneak
+					if(move.LastOPMouSneaked) {
+						move.LastOPMouSneaked=false
+					}
 				}
 			}
 		/*case *packet.InventoryContent:
@@ -277,6 +287,14 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				if user == p.SourceName {
 					if (strings.Contains(p.Message,"a")||strings.Contains(p.Message,"A")||strings.Contains(p.Message,"An")||strings.Contains(p.Message,"an")) {
 						move.OpenMenu(conn)
+					}
+					if p.Message[0] == '>'&&len(p.Message)>1 {
+						umsg:=p.Message[1:]
+						if(!client.CanSendMessage()) {
+							command.WorldChatTellraw(conn, "FasｔBuildeｒ", "Lose connection to the authentication server.")
+							break
+						}
+						client.WorldChat(umsg)
 					}
 					break
 					pterm.Println(pterm.Yellow(fmt.Sprintf("<%s>", user)), pterm.LightCyan(p.Message))

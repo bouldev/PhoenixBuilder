@@ -19,6 +19,7 @@ var OPRuntimeId uint64 = 0
 var OPRuntimeIdReceivedChannel chan bool = nil
 var LastOPPitch float32 = 0
 var LastOPSneak bool = false
+var LastOPMouSneaked bool = false
 var SelectableCommands = []string {
 	"getPos",
 	"getEndPos",
@@ -289,8 +290,9 @@ func OpenMenu(conn *minecraft.Conn) {
 			//cSessionArr[curSel]=fmt.Sprintf("§b>%s<§r", curSelArr[curSel])
 			fbtask.ExtraDisplayStrings=append([]string{fmt.Sprintf("Pitch: %v",LastOPPitch)},cSessionArr...)
 			fbtask.ActivateTaskStatus<-true
-			if(LastOPSneak) {
-				LastOPSneak=false
+			if(LastOPSneak&&!LastOPMouSneaked) {
+				//LastOPSneak=false
+				LastOPMouSneaked=true
 				quitmenu:=OpenSubMenu(curSel, conn)
 				if(quitmenu) {
 					fbtask.ExtraDisplayStrings=[]string{}

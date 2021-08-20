@@ -39,3 +39,21 @@ func Tellraw(conn *minecraft.Conn, lines ...string) error {
 	//return nil
 	return SendSizukanaCommand(TellRawRequest(mctype.AllPlayers, lines...), conn)
 }
+
+func RawTellRawRequest(target mctype.Target, line string) string {
+	var items []TellrawItem
+	msg := strings.Replace(line, "schematic", "sc***atic", -1)
+	items=append(items,TellrawItem{Text:msg})
+	final := &TellrawStruct {
+		RawText: items,
+	}
+	content, _ := json.Marshal(final)
+	cmd := fmt.Sprintf("tellraw %v %s", target, content)
+	return cmd
+}
+
+func WorldChatTellraw(conn *minecraft.Conn, sender string, content string) error {
+	fmt.Printf("W <%s> %s\n", sender, content)
+	str:=fmt.Sprintf("§eW §r<%s> %s",sender,content)
+	return SendSizukanaCommand(RawTellRawRequest(mctype.AllPlayers, str), conn)
+}
