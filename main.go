@@ -42,6 +42,11 @@ func main() {
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
+	//Version num should seperate from fellow strings
+	//for implenting print version feature later
+	const FBVersion = "0.3.8"
+	const FBCodeName = "Phoenix"
+
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
 		"FastBuilder Phoenix used codes\n" +
 		"from Sandertv's Gophertunnel that\n" +
@@ -51,7 +56,7 @@ func main() {
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha 0.3.8"))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix Alpha " + FBVersion))
 	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err:=recover(); err!=nil {
@@ -236,7 +241,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			if cmd[0] == '>'&&len(cmd)>1 {
 				umsg:=cmd[1:]
 				if(!client.CanSendMessage()) {
-					command.WorldChatTellraw(conn, "FasｔBuildeｒ", "Lose connection to the authentication server.")
+					command.WorldChatTellraw(conn, "FastBuildeｒ", "Lost connection to the authentication server.")
 					break
 				}
 				client.WorldChat(umsg)
