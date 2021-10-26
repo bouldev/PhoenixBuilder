@@ -30,6 +30,8 @@ type IdentityData struct {
 	Version int64 `json:"version"`
 	Env string `json:"env"`
 	Platform string `json:"platform"`
+	EngineVersion string `json:"engineVersion"`
+	PatchVersion string `json:"patchVersion"`
 	// TitleID is a numerical ID present only if the user is logged into XBL. It holds the title ID (XBL
 	// related) of the version that the player is on. Some of these IDs may be found below.
 	// Win10: 896928775

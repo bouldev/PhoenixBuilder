@@ -95,12 +95,20 @@ func (dialer Dialer) Dial(network string, address string) (conn *Conn, err error
 		chainAndAddr := strings.Split(chainAddr,"|")
 		if err != nil {
 			if code == -3 {
-				ex, err := os.Executable()
+				homedir, err := os.UserHomeDir()
+				if err != nil {
+					fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
+					homedir="."
+				}
+				fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
+				os.MkdirAll(fbconfigdir, 0755)
+				token := filepath.Join(fbconfigdir,"fbtoken")
+				/*ex, err := os.Executable()
 				if err != nil {
 					panic(err)
 				}
 				currPath := filepath.Dir(ex)
-				token := filepath.Join(currPath, "fbtoken")
+				token := filepath.Join(currPath, "fbtoken")*/
 				os.Remove(token)
 			}
 			return nil, err
