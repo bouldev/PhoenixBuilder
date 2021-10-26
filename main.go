@@ -44,7 +44,7 @@ func main() {
 	}
 	//Version num should seperate from fellow strings
 	//for implenting print version feature later
-	const FBVersion = "0.3.8"
+	const FBVersion = "0.3.9"
 	const FBCodeName = "Phoenix"
 
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
