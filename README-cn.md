@@ -336,4 +336,3 @@ FastBuilder具备在空间中构造简单几何体的功能（如圆,圈,球,线
 ```shell
 !querytarget @s
 ```
-
