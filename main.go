@@ -290,9 +290,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
 				if user == p.SourceName {
-					if (strings.Contains(p.Message,"a")||strings.Contains(p.Message,"A")||strings.Contains(p.Message,"An")||strings.Contains(p.Message,"an")) {
-						move.OpenMenu(conn)
-					}
+					//if (strings.Contains(p.Message,"a")||strings.Contains(p.Message,"A")||strings.Contains(p.Message,"An")||strings.Contains(p.Message,"an")) {
+					//	move.OpenMenu(conn)
+					//}
 					if p.Message[0] == '>'&&len(p.Message)>1 {
 						umsg:=p.Message[1:]
 						if(!client.CanSendMessage()) {

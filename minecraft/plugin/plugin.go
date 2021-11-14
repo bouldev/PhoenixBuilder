@@ -5,8 +5,10 @@ import (
 	"path/filepath"
 	"os"
 	"io/ioutil"
-	"github.com/robertkrimen/otto"
+	//"github.com/robertkrimen/otto"
 	"phoenixbuilder/minecraft"
+	//"phoenixbuilder/minecraft/function"
+	"plugin"
 	//"phoenixbuilder/minecraft/command"
 )
 
@@ -15,7 +17,7 @@ func StartPluginSystem(conn *minecraft.Conn) {
 	files, _ := ioutil.ReadDir(plugins)
 	for _, file := range files {
 		path:=fmt.Sprintf("%s/%s",plugins,file.Name())
-		if filepath.Ext(path)!=".js" {
+		if filepath.Ext(path)!=".so" {
 			continue
 		}
 		go func() {
@@ -24,34 +26,19 @@ func StartPluginSystem(conn *minecraft.Conn) {
 	}
 }
 
-func DefineGlobalObjects(conn *minecraft.Conn, vm *otto.Otto) {
-	functionObject:=otto.Object{}
-	functionObject.Set("RegularFunction",60)
-	functionObject.Set("SimpleFunction",61)
-	functionObject.Set("registerFunction",func (call otto.FunctionCall) otto.Value {
-		if !call.Argument(0).IsNumber() {
-			return call.Otto.MakeTypeError("func.registerFunction: Argument 0 must be func.RegularFunction or func.SimpleFunction")
-		}
-		val,_:=call.Argument(0).ToInteger()
-		if val!=60 && val!=61 {
-			return call.Otto.MakeTypeError("Invalid function type")
-		}
-		return otto.Value{}
-	})
-}
-
 func RunPlugin(conn *minecraft.Conn,path string) {
-	vm:=otto.New()
-	script_content, err := ioutil.ReadFile(path)
+	plugin, err := plugin.Open(path)
 	if err != nil {
-		fmt.Printf("Failed to read script %s :\n%v\n",path,err)
+		fmt.Printf("Failed to load plugin: %s\n%v\n",path,err)
 		return
 	}
-	_, err=vm.Compile(path,script_content)
+	mainfunc, err := plugin.Lookup("plugin_main")
 	if err != nil {
-		fmt.Printf("Failed to compile script %s: \n%v\n",path,err)
+		fmt.Printf("Failed to find entry point for plugin %s.",path)
 		return
 	}
+	name:=mainfunc.(func()string)()
+	fmt.Printf("Plugin %s(%s) loaded!",name,path)
 }
 
 func loadConfigPath() string {
