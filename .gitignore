@@ -73,4 +73,7 @@ build/
 *.mcacblock
 rust/
 *.bdx
+*.zip
+*.pyc
+*.pyo
 

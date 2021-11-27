@@ -1,0 +1,28 @@
+          0 LOAD_FAST           0 (0)
+          3 STORE_FAST          1 (1)
+          6 LOAD_FAST           1 (1)
+          9 LOAD_CONST          1 (1)
+         12 BINARY_LSHIFT
+         13 STORE_FAST          2 (2)
+         16 LOAD_FAST           1 (1)
+         19 LOAD_CONST          1 (1)
+         22 BINARY_RSHIFT
+         23 STORE_FAST          3 (3)
+         26 LOAD_FAST           2 (2)
+         29 LOAD_FAST           3 (3)
+         32 BINARY_OR
+         33 STORE_FAST          4 (4)
+         36 LOAD_FAST           4 (4)
+         39 LOAD_CONST          1 (1)
+         42 BINARY_AND
+         43 STORE_FAST          1 (1)
+         46 LOAD_FAST           1 (1)
+         49 LOAD_CONST          2 (2)
+         52 BINARY_XOR
+         53 STORE_FAST          5 (5)
+         56 LOAD_FAST           5 (5)
+         59 LOAD_CONST          3 (3)
+         62 BINARY_FLOOR_DIVIDE
+         63 STORE_FAST          1 (1)
+         66 LOAD_FAST           1 (1)
+         69 RETURN_VALUE

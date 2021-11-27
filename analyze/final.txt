@@ -1,0 +1,81 @@
+    >>    0 FOR_ITER            1 (to 4)
+          3 FOR_ITER            0 (to 6)
+    >>    6 <148>               0
+          9 BUILD_TUPLE         1
+         12 FOR_ITER            1 (to 16)
+         15 FOR_ITER            0 (to 18)
+    >>   18 <148>               1
+         21 BUILD_TUPLE         2
+         24 FOR_ITER            1 (to 28)
+         27 FOR_ITER            2 (to 32)
+         30 <148>               2
+         33 <139>               3
+         36 BUILD_TUPLE         3
+         39 YIELD_VALUE
+         40 <226>               2
+         43 LOAD_CLOSURE        4
+         46 CONTINUE_LOOP       0
+         49 BUILD_TUPLE         4
+         52 <226>               4
+         55 <160>              70
+         58 <150>               5
+         61 <226>               4
+         64 CONTINUE_LOOP       1
+         67 <199>               3
+         70 FOR_ITER            3 (to 76)
+         73 BUILD_TUPLE         4
+    >>   76 <226>               4
+         79 FOR_ITER            4 (to 86)
+         82 <69>
+         83 <226>               4
+    >>   86 FOR_ITER            5 (to 94)
+         89 <69>
+         90 FOR_ITER            6 (to 99)
+         93 <46>
+    >>   94 <48>
+         95 BUILD_TUPLE         5
+         98 <150>               5
+        101 <226>               1
+        104 LOAD_CLOSURE        0
+        107 CONTINUE_LOOP       0
+        110 CONTINUE_LOOP       1
+        113 BUILD_TUPLE         6
+        116 <226>               6
+        119 FOR_ITER            7 (to 129)
+        122 <69>
+        123 <226>               5
+        126 FOR_ITER            8 (to 137)
+    >>  129 <69>
+        130 FOR_ITER            9 (to 142)
+        133 INPLACE_LSHIFT
+        134 <48>
+        135 <226>               6
+        138 FOR_ITER           10 (to 151)
+        141 <69>
+    >>  142 FOR_ITER            7 (to 152)
+        145 INPLACE_LSHIFT
+        146 <48>
+        147 <226>               5
+        150 FOR_ITER           11 (to 164)
+        153 <69>
+        154 FOR_ITER            6 (to 163)
+        157 INPLACE_LSHIFT
+        158 <48>
+        159 BUILD_TUPLE         5
+        162 <150>               6
+        165 LOAD_CLOSURE        7
+        168 FOR_ITER           12 (to 183)
+        171 <226>               4
+        174 <226>               6
+        177 <226>               5
+        180 CONTINUE_LOOP       4
+    >>  183 YIELD_VALUE
+        184 <226>               3
+        187 LOAD_CLOSURE        8
+        190 CONTINUE_LOOP       0
+        193 LOAD_CLOSURE        9
+        196 <226>               5
+        199 CONTINUE_LOOP       1
+        202 YIELD_VALUE
+        203 FOR_ITER            0 (to 206)
+    >>  206 INPLACE_MODULO

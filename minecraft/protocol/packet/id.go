@@ -157,4 +157,6 @@ const (
 	IDPositionTrackingDBClientRequest
 	IDDebugInfo
 	IDPacketViolationWarning
+	IDNeteaseJson = 0xCB
+	IDPyRpc = 0xC8
 )

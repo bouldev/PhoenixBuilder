@@ -176,6 +176,8 @@ func NewPool() Pool {
 		IDPositionTrackingDBClientRequest:   &PositionTrackingDBClientRequest{},
 		IDDebugInfo:                         &DebugInfo{},
 		IDPacketViolationWarning:            &PacketViolationWarning{},
+		IDNeteaseJson:			     &NeteaseJson{},
+		IDPyRpc:			     &PyRpc{},
 	}
 	for id, pk := range registeredPackets {
 		p[id] = pk()

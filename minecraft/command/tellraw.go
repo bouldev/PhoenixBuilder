@@ -19,7 +19,7 @@ type TellrawStruct struct {
 }
 
 func TellRawRequest(target mctype.Target, lines ...string) string {
-	now := time.Now().Format("§6[15:04:05]§b")
+	now := time.Now().Format("§6{15:04:05}§b")
 	var items []TellrawItem
 	for _, text := range lines {
 		msg := fmt.Sprintf("%v %v", now, strings.Replace(text, "schematic", "sc***atic", -1))
@@ -35,9 +35,9 @@ func TellRawRequest(target mctype.Target, lines ...string) string {
 
 func Tellraw(conn *minecraft.Conn, lines ...string) error {
 	//uuid1, _ := uuid.NewUUID()
-	fmt.Printf("%s\n", lines[0])
-	return nil
-	//return SendSizukanaCommand(TellRawRequest(mctype.AllPlayers, lines...), conn)
+	//fmt.Printf("%s\n", lines[0])
+	//return nil
+	return SendSizukanaCommand(TellRawRequest(mctype.AllPlayers, lines...), conn)
 }
 
 func RawTellRawRequest(target mctype.Target, line string) string {

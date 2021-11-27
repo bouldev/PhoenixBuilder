@@ -1,0 +1,28 @@
+          0 LOAD_FAST           0 (0)
+          3 LOAD_CONST          1 (1)
+          6 BINARY_MULTIPLY
+          7 STORE_FAST          1 (1)
+         10 LOAD_FAST           1 (1)
+         13 LOAD_GLOBAL         0 (0)
+         16 BINARY_SUBTRACT
+         17 LOAD_CONST          1 (1)
+         20 BINARY_DIVIDE
+         21 STORE_FAST          1 (1)
+         24 LOAD_FAST           1 (1)
+         27 LOAD_CONST          2 (2)
+         30 BINARY_POWER
+         31 STORE_FAST          1 (1)
+         34 LOAD_FAST           1 (1)
+         37 LOAD_CONST          2 (2)
+         40 BINARY_MODULO
+         41 STORE_FAST          1 (1)
+         44 LOAD_FAST           1 (1)
+         47 STORE_FAST          2 (2)
+         50 LOAD_CONST          3 (3)
+         53 PRINT_ITEM
+         54 PRINT_NEWLINE
+         55 LOAD_FAST           1 (1)
+         58 PRINT_ITEM
+         59 PRINT_NEWLINE
+         60 LOAD_FAST           1 (1)
+         63 RETURN_VALUE

@@ -30,6 +30,15 @@ func InitInternalFunctions() {
 		},
 	})
 	RegisterFunction(&Function {
+		Name: "ingameping",
+		OwnedKeywords: []string {"ingameping"},
+		FunctionType:FunctionTypeSimple,
+		SFMinSliceLen: 1,
+		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
+			command.SendSizukanaCommand("say Ingame pong",conn)
+		},
+	})
+	RegisterFunction(&Function {
 		Name: "set",
 		OwnedKeywords: []string {"set"},
 		FunctionType:FunctionTypeSimple,
