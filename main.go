@@ -47,7 +47,7 @@ func main() {
 	}
 	//Version num should seperate from fellow strings
 	//for implenting print version feature later
-	const FBVersion = "0.4.0"
+	const FBVersion = "0.4.1"
 	const FBCodeName = "Phoenix"
 
 	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
@@ -238,9 +238,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	configuration.ZeroId=zeroId
 	configuration.OneId=oneId
 	mctype.ForwardedBrokSender=fbtask.BrokSender
-	tellraw(conn, "Welcome to FastBuilder!")
-	tellraw(conn, fmt.Sprintf("Operator: %s", user))
-	sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
 	go func() {
 		for {
 			cmd, _:=getInput()
@@ -306,6 +303,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				
 				// See analyze/nemcfix/final.py for its python version
 				// and see analyze/ for how I did it.
+				tellraw(conn, "Welcome to FastBuilder!")
+				tellraw(conn, fmt.Sprintf("Operator: %s", user))
+				sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
 			}else if(strings.Contains(string(p.Content),"check_server_contain_pet")) {
 				//fmt.Printf("Checkpet!!\n")
 				
