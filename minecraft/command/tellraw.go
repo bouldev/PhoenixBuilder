@@ -37,7 +37,9 @@ func Tellraw(conn *minecraft.Conn, lines ...string) error {
 	//uuid1, _ := uuid.NewUUID()
 	fmt.Printf("%s\n", lines[0])
 	//return nil
-	return SendSizukanaCommand(TellRawRequest(mctype.AllPlayers, lines...), conn)
+	msg := strings.Replace(lines[0], "schematic", "sc***atic", -1)
+	return SendChat(fmt.Sprintf("§b%s",msg), conn)
+	//return SendSizukanaCommand(TellRawRequest(mctype.AllPlayers, lines...), conn)
 }
 
 func RawTellRawRequest(target mctype.Target, line string) string {

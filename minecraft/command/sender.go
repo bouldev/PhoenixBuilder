@@ -54,3 +54,14 @@ func SendSizukanaCommand(command string, conn *minecraft.Conn) error {
 		SuppressOutput: true,
 	})
 }
+
+func SendChat(content string, conn *minecraft.Conn) error {
+	idd:=conn.IdentityData()
+	return conn.WritePacket(&packet.Text {
+		TextType: packet.TextTypeChat,
+		NeedsTranslation: false,
+		SourceName: idd.DisplayName,
+		Message: content,
+		XUID: idd.XUID,
+	})
+}
