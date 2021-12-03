@@ -11,27 +11,26 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	fbauth "phoenixbuilder/cv4/auth"
+	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/minecraft"
-	"phoenixbuilder/minecraft/command"
-	"phoenixbuilder/minecraft/mctype"
+	"phoenixbuilder/fastbuilder/command"
+	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/utils"
-	"phoenixbuilder/minecraft/function"
-	"phoenixbuilder/minecraft/configuration"
-	//"phoenixbuilder/minecraft/protocol"
-	//"phoenixbuilder/minecraft/enchant"
+	"phoenixbuilder/fastbuilder/function"
+	"phoenixbuilder/fastbuilder/configuration"
 	"strings"
 	"syscall"
 	"runtime"
 	"runtime/debug"
-	"phoenixbuilder/minecraft/fbtask"
-	"phoenixbuilder/minecraft/plugin"
-	"phoenixbuilder/minecraft/move"
+	fbtask "phoenixbuilder/fastbuilder/task"
+	"phoenixbuilder/fastbuilder/plugin"
+	"phoenixbuilder/fastbuilder/menu"
 	"bytes"
 	"time"
 	"encoding/binary"
-	"phoenixbuilder/minecraft/signalhandler"
+	"phoenixbuilder/fastbuilder/signalhandler"
+	"phoenixbuilder/fastbuilder/i18n"
 )
 
 type FBPlainToken struct {
@@ -49,26 +48,33 @@ func main() {
 	//for implenting print version feature later
 	const FBVersion = "0.4.2"
 	const FBCodeName = "Phoenix"
+	
+	I18n.Init()
 
-	pterm.DefaultBox.Println(pterm.LightCyan("Copyright notice: \n" +
-		"FastBuilder Phoenix used codes\n" +
-		"from Sandertv's Gophertunnel that\n" +
-		"licensed under MIT license, at:\n" +
+	pterm.DefaultBox.Println(pterm.LightCyan(I18n.T(I18n.Copyright_Notice_Headline) +
+		I18n.T(I18n.Copyright_Notice_Line_1) +
+		I18n.T(I18n.Copyright_Notice_Line_2) +
+		I18n.T(I18n.Copyright_Notice_Line_3) +
 		"https://github.com/Sandertv/gophertunnel"))
 	pterm.Println(pterm.Yellow("ファスト　ビルダー"))
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
 	pterm.Println(pterm.Yellow("FastBuilder Phoenix " + FBVersion))
+	
+	if(I18n.ShouldDisplaySpecial()) {
+		fmt.Printf("%s", I18n.T(I18n.Special_Startup))
+	}
+	
 	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err:=recover(); err!=nil {
 			debug.PrintStack()
-			pterm.Error.Println("Oh no! FastBuilder Phoenix crashed! ")
-			pterm.Error.Println("Stack dump was shown above, error:")
+			pterm.Error.Println(I18n.T(I18n.Crashed_Tip))
+			pterm.Error.Println(I18n.T(I18n.Crashed_StackDump_And_Error))
 			pterm.Error.Println(err)
 			if runtime.GOOS == "windows" {
-				pterm.Error.Println("Press ENTER to exit.")
+				pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
 				_, _=bufio.NewReader(os.Stdin).ReadString('\n')
 			}
 			os.Exit(1)
@@ -76,6 +82,10 @@ func main() {
 		os.Exit(0)
 		//os.Exit(rand.Int())
 	}()
+	if os.Args[1]=="--debug" {
+		runDebugClient()
+		return
+	}
 	ex, err := os.Executable()
 	if err != nil {
 		panic(err)
@@ -92,7 +102,7 @@ func main() {
 		}
 		fbuntrim := fmt.Sprintf("%s", strings.TrimSuffix(fbusername, "\n"))
 		fbun := strings.TrimRight(fbuntrim, "\r\n")
-		fmt.Printf("Enter your FastBuilder User Center password: ")
+		fmt.Printf(I18n.T(I18n.EnterPasswordForFBUC))
 		fbpassword, err := term.ReadPassword(int(syscall.Stdin))
 		fmt.Printf("\n")
 		tokenstruct := &FBPlainToken{
@@ -141,7 +151,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	if token[0] == '{' {
 		token = client.GetToken("", token)
 		if token == "" {
-			fmt.Println("Incorrect username or password")
+			fmt.Println(I18n.T(I18n.FBUC_LoginFailed))
 			return
 		}
 		tokenPath := loadTokenPath()
@@ -162,7 +172,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		configuration.UserToken=token
 	}
 	serverCode := fmt.Sprintf("%s", strings.TrimSuffix(code, "\n"))
-	pterm.Println(pterm.Yellow(fmt.Sprintf("Server: %s", serverCode)))
+	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), serverCode)))
 	dialer := minecraft.Dialer{
 		ServerCode: strings.TrimRight(serverCode, "\r\n"),
 		Password:   serverPasswd,
@@ -177,12 +187,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		panic(err)
 	}
 	defer conn.Close()
-	pterm.Println(pterm.Yellow("Successfully created minecraft dialer."))
+	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 	user := client.ShouldRespondUser()
 	configuration.RespondUser=user
-	// delay := 1000 //BP MMS
-	// Make the client spawn in the world: This is a blocking operation that will return an error if the
-	// client times out while spawning.
+	
 	runtimeid:=fmt.Sprintf("%d",conn.GameData().EntityUniqueID)
 	conn.WritePacket(&packet.PyRpc {
 		Content: []byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0xc,0x53,0x79,0x6e,0x63,0x55,0x73,0x69,0x6e,0x67,0x4d,0x6f,0x64,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x91,0x90,0xc0},
@@ -203,10 +211,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	conn.WritePacket(&packet.PyRpc {
 		Content: []byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0x19,0x61,0x72,0x65,0x6e,0x61,0x47,0x61,0x6d,0x65,0x50,0x6c,0x61,0x79,0x65,0x72,0x46,0x69,0x6e,0x69,0x73,0x68,0x4c,0x6f,0x61,0x64,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x90,0xc0},
 	})
-	/*conn.WritePacket(&packet.PlayerAction {
-		EntityRuntimeID: conn.GameData().EntityRuntimeID,
-		ActionType: packet.PlayerActionRespawn,
-	})*/
 	conn.WritePacket(&packet.PyRpc {
 		Content: bytes.Join([][]byte{[]byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0xb,0x4d,0x6f,0x64,0x45,0x76,0x65,0x6e,0x74,0x43,0x32,0x53,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x94,0xc4,0x9,0x4d,0x69,0x6e,0x65,0x63,0x72,0x61,0x66,0x74,0xc4,0xe,0x76,0x69,0x70,0x45,0x76,0x65,0x6e,0x74,0x53,0x79,0x73,0x74,0x65,0x6d,0xc4,0xc,0x50,0x6c,0x61,0x79,0x65,0x72,0x55,0x69,0x49,0x6e,0x69,0x74,0xc4},
 				[]byte{byte(len(runtimeid))},
@@ -232,7 +236,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	oneId, _ := uuid.NewUUID()
 	configuration.ZeroId=zeroId
 	configuration.OneId=oneId
-	mctype.ForwardedBrokSender=fbtask.BrokSender
+	types.ForwardedBrokSender=fbtask.BrokSender
 	go func() {
 		for {
 			cmd, _:=getInput()
@@ -255,7 +259,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				fmt.Printf("%+v\n", resp)
 			}
 			if cmd=="menu" {
-				move.OpenMenu(conn)
+				menu.OpenMenu(conn)
 				fmt.Printf("OK\n")
 				continue
 			}
@@ -337,23 +341,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			//fmt.Printf("RESPONSE %+v\n",p.StructureTemplate)
 			fbtask.ExportWaiter<-p.StructureTemplate
 			break
-		case *packet.MovePlayer:
-			if(p.EntityRuntimeID==move.OPRuntimeId) {
-				move.LastOPPitch=p.Pitch
-			}
-		case *packet.SetActorData:
-			if(p.EntityRuntimeID==move.OPRuntimeId) {
-				if len(p.EntityMetadata)!=1 {
-					break
-				}
-				_,isSneak:=p.EntityMetadata[91]
-				if isSneak {
-					move.LastOPSneak=!move.LastOPSneak
-					if(move.LastOPMouSneaked) {
-						move.LastOPMouSneaked=false
-					}
-				}
-			}
 		/*case *packet.InventoryContent:
 			for _, item := range p.Content {
 				fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
@@ -364,9 +351,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
 				if user == p.SourceName {
-					//if (strings.Contains(p.Message,"a")||strings.Contains(p.Message,"A")||strings.Contains(p.Message,"An")||strings.Contains(p.Message,"an")) {
-					//	move.OpenMenu(conn)
-					//}
 					if p.Message[0] == '>'&&len(p.Message)>1 {
 						umsg:=p.Message[1:]
 						if(!client.CanSendMessage()) {
@@ -385,45 +369,33 @@ func runClient(token string, version string, code string, serverPasswd string) {
 					break
 				}
 			}
-		case *packet.AddPlayer:
-			if (p.Username == user) {
-				move.OPRuntimeId=p.EntityRuntimeID;
-				if(move.OPRuntimeIdReceivedChannel!=nil) {
-					move.OPRuntimeIdReceivedChannel<-true
-				}
-			}
-			//if (p.Username == user && enchant.AddPlayerItemChannel != nil) {
-			//	enchant.AddPlayerItemChannel<-&p.HeldItem
-			//	pterm.Println(pterm.Yellow(fmt.Sprintf("[%s] Operator joined Game", user)))
-			//}
-			//fmt.Printf("%+v\n",p.EntityMetadata)
 		case *packet.CommandOutput:
 			//if p.SuccessCount > 0 {
 				if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
 					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
 					if len(pos) == 0 {
-						tellraw(conn, "Invalid position")
+						tellraw(conn, I18n.T(I18n.InvalidPosition))
 						break
 					}
-					configuration.GlobalFullConfig().Main().Position = mctype.Position{
+					configuration.GlobalFullConfig().Main().Position = types.Position{
 						X: pos[0],
 						Y: pos[1],
 						Z: pos[2],
 					}
-					tellraw(conn, fmt.Sprintf("Position got: %v", pos))
+					tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
 					break
 				}else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
 					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
 					if len(pos) == 0 {
-						tellraw(conn, "Invalid position")
+						tellraw(conn, I18n.T(I18n.InvalidPosition))
 						break
 					}
-					configuration.GlobalFullConfig().Main().End = mctype.Position{
+					configuration.GlobalFullConfig().Main().End = types.Position{
 						X: pos[0],
 						Y: pos[1],
 						Z: pos[2],
 					}
-					tellraw(conn, fmt.Sprintf("End Position got: %v", pos))
+					tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
 					break
 				}
 			//}
@@ -437,6 +409,72 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	}
 }
 
+func runDebugClient() {
+	serverCode := fmt.Sprintf("%s", strings.TrimSuffix("[DEBUG, NO SERVER]", "\n"))
+	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), serverCode)))
+	
+	conn := &minecraft.Conn {
+		DebugMode: true,
+	}
+	defer conn.Close()
+	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
+	user := "DEBUG USER"
+	configuration.RespondUser=user
+	conn.WritePacket(&packet.PyRpc {
+		Content: []byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0xc,0x53,0x79,0x6e,0x63,0x55,0x73,0x69,0x6e,0x67,0x4d,0x6f,0x64,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x91,0x90,0xc0},
+	})
+	conn.WritePacket(&packet.PyRpc {
+		Content: []byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0xf,0x53,0x79,0x6e,0x63,0x56,0x69,0x70,0x53,0x6b,0x69,0x6e,0x55,0x75,0x69,0x64,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x91,0xc0,0xc0},
+	})
+	conn.WritePacket(&packet.PyRpc {
+		Content: []byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0x1f,0x43,0x6c,0x69,0x65,0x6e,0x74,0x4c,0x6f,0x61,0x64,0x41,0x64,0x64,0x6f,0x6e,0x73,0x46,0x69,0x6e,0x69,0x73,0x68,0x65,0x64,0x46,0x72,0x6f,0x6d,0x47,0x61,0x63,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x90,0xc0},
+	})
+	conn.WritePacket(&packet.PyRpc {
+		Content: []byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0x19,0x61,0x72,0x65,0x6e,0x61,0x47,0x61,0x6d,0x65,0x50,0x6c,0x61,0x79,0x65,0x72,0x46,0x69,0x6e,0x69,0x73,0x68,0x4c,0x6f,0x61,0x64,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x90,0xc0},
+	})
+	
+	plugin.StartPluginSystem(conn)
+
+	function.InitInternalFunctions()
+	fbtask.InitTaskStatusDisplay(conn)
+
+	signalhandler.Init(conn)
+
+	zeroId, _ := uuid.NewUUID()
+	oneId, _ := uuid.NewUUID()
+	configuration.ZeroId=zeroId
+	configuration.OneId=oneId
+	types.ForwardedBrokSender=fbtask.BrokSender
+	for {
+		cmd, _:=getInput()
+		if len(cmd) == 0 {
+			continue
+		}
+		if cmd[0] == '.' {
+			ud,_:=uuid.NewUUID()
+			chann:=make(chan *packet.CommandOutput)
+			command.UUIDMap.Store(ud.String(), chann)
+			command.SendCommand(cmd[1:], ud, conn)
+			resp:=<-chann
+			fmt.Printf("%+v\n", resp)
+		}else if cmd[0] == '!' {
+			ud,_:=uuid.NewUUID()
+			chann:=make(chan *packet.CommandOutput)
+			command.UUIDMap.Store(ud.String(), chann)
+			command.SendWSCommand(cmd[1:], ud, conn)
+			resp:=<-chann
+			fmt.Printf("%+v\n", resp)
+		}
+		if cmd=="menu" {
+			menu.OpenMenu(conn)
+			fmt.Printf("OK\n")
+			continue
+		}
+		function.Process(conn, cmd)
+	}
+	
+}
+
 func getInput() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	inp, err := reader.ReadString('\n')
@@ -446,19 +484,19 @@ func getInput() (string, error) {
 
 func getInputUserName() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	pterm.Printf("Enter your FastBuilder User Center username: ")
+	pterm.Printf(I18n.T(I18n.Enter_FBUC_Username))
 	fbusername, err := reader.ReadString('\n')
 	return fbusername, err
 }
 
 func getRentalServerCode() (string, string, error) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf("Please enter the rental server number: ")
+	fmt.Printf(I18n.T(I18n.Enter_Rental_Server_Code))
 	code, err := reader.ReadString('\n')
 	if err != nil {
 		return "", "", err
 	}
-	fmt.Printf("Enter Password (Press [Enter] if not set, input won't be echoed): ")
+	fmt.Printf(I18n.T(I18n.Enter_Rental_Server_Password))
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Printf("\n")
 	return code, string(bytePassword), err
@@ -495,14 +533,14 @@ func tellraw(conn *minecraft.Conn, lines ...string) error {
 	//fmt.Printf("%s\n",lines[0])
 	//return nil
 	//uuid1, _ := uuid.NewUUID()
-	//return sendCommand(command.TellRawRequest(mctype.AllPlayers, lines...), uuid1, conn)
+	//return sendCommand(command.TellRawRequest(types.AllPlayers, lines...), uuid1, conn)
 }
 
 func decideDelay(delaytype byte) int64 {
 	// Will add system check later,so don't merge into other functions.
-	if delaytype==mctype.DelayModeContinuous {
+	if delaytype==types.DelayModeContinuous {
 		return 1000
-	}else if delaytype==mctype.DelayModeDiscrete {
+	}else if delaytype==types.DelayModeDiscrete {
 		return 15
 	}else{
 		return 0

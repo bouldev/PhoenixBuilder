@@ -125,6 +125,8 @@ type Conn struct {
 	disconnectMessage atomic.String
 
 	sendPacketViolations bool
+	
+	DebugMode bool
 }
 
 // newConn creates a new Minecraft connection for the net.Conn passed, reading and writing compressed
@@ -246,6 +248,9 @@ func (conn *Conn) DoSpawn() error {
 // WritePacket encodes the packet passed and writes it to the Conn. The encoded data is buffered until the
 // next 20th of a second, after which the data is flushed and sent over the connection.
 func (conn *Conn) WritePacket(pk packet.Packet) error {
+	if (conn.DebugMode) {
+		return nil
+	}
 	conn.sendMutex.Lock()
 	defer conn.sendMutex.Unlock()
 
@@ -379,6 +384,9 @@ func (conn *Conn) Flush() error {
 // Close closes the Conn and its underlying connection. Before closing, it also calls Flush() so that any
 // packets currently pending are sent out.
 func (conn *Conn) Close() error {
+	if(conn.DebugMode) {
+		return nil
+	}
 	conn.close()
 	_ = conn.Flush()
 	return conn.conn.Close()

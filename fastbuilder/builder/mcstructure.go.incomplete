@@ -1,0 +1,76 @@
+package builder
+
+import (
+	"compress/gzip"
+	"github.com/Tnze/go-mc/nbt"
+	"phoenixbuilder/minecraft/mctype"
+	"io/ioutil"
+	"os"
+	//"fmt"
+)
+
+func MCStructure(config *mctype.MainConfig, blc chan *mctype.Module) error {
+	file, err := os.Open(config.Path)
+	if (err != nil) {
+		return err
+	}
+	defer file.Close()
+	gzfile, err := gzip.NewReader(file)
+	if (err!=nil) {
+		return err
+	}
+	defer gzfile.Close()
+	buffer, err := ioutil.ReadAll(gzfile)
+	var content map[string]interface{}
+	err=nbt.Unmarshal(buffer, &content)
+	if(err!=nil) {
+		return fmt.Errorf("Failed to resolve mcstructure file (nbt)")
+	}
+	sizeP, _:=content["size"].([]interface{})
+	if(len(sizeP)<3) {
+		return fmt.Errorf("Invalid size for structure")
+	}
+	sizeaa,_:=sizeP[0].(int32)
+	sizeab,_:=sizeP[1].(int32)
+	sizeac,_:=sizeP[2].(int32)
+	size:=[]int{int(sizeaa),int(sizeab),int(sizeac)}
+	structure, _ := content["structure"].(map[string]interface{})
+	indicesP, _ := structure["block_indices"].([]interface{})
+	if(len(indicesP)!=2) {
+		return fmt.Errorf("Unexpected indices data.")
+	}
+	indices, _ =  indicesP[0].([]interface{})
+	{
+		ind,_:=indices[0].(int32)
+		if(ind==-1) {
+			indices,_=indicesP[1].([]interface{})
+		}
+		ind,_=indices[0].(int32)
+		if(ind==-1) {
+			return fmt.Errorf("Exchanged but still -1")
+		}
+	}
+	blockpalettepar,_ := structure["palette"].(map[string]interface{})
+	blockpalettepar2,_ := blockpalettepar2["default"].(map[string]interface{})
+	blockpalette,_:=blockpalettepar2["block_palette"].([]interface{})
+	blockposdata,_:=blockpalettepar2["block_position_data"].(map[string]interface{})
+	airind:=int32(-1)
+	i:=0
+	for x:=0;x<size[0];x++ {
+		for y:=0;y<size[1];y++ {
+			for z:=0;z<size[2];z++ {
+				ind,_:=indices[i].(int32)
+				if(ind==-1) {
+					i++
+					continue
+				}
+				if(ind==airind) {
+					i++
+					continue
+				}
+				curblock,_:=blockpalette[ind].(map[string]interface{})
+				curblocknameunsplitted,_:=curblock["name"].(string)
+				curblocknamesplitted:=strings.Split(curblocknameunsplitted,":")
+				curblockname:=curblocknamesplitted[1]
+	return nil
+}

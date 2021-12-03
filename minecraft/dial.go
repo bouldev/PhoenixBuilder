@@ -6,7 +6,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
-	fbauth "phoenixbuilder/cv4/auth"
+	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
