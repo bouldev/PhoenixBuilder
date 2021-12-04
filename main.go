@@ -555,7 +555,7 @@ func decideDelayThreshold() int {
 func loadTokenPath() string {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
+		fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
 		homedir="."
 	}
 	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")

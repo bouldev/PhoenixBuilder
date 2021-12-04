@@ -108,15 +108,15 @@ func InitInternalFunctions() {
 						Content: func(conn *minecraft.Conn, args []interface{}){
 							delaymode,_:=args[0].(byte)
 							configuration.GlobalFullConfig().Delay().DelayMode=delaymode
-							command.Tellraw(conn,fmt.Sprintf("Delay mode set: %s",types.StrDelayMode(delaymode)))
+							command.Tellraw(conn,fmt.Sprintf("%s: %s",I18n.T(I18n.DelayModeSet),types.StrDelayMode(delaymode)))
 							if delaymode != types.DelayModeNone {
 								dl:=decideDelay(delaymode)
 								configuration.GlobalFullConfig().Delay().Delay=dl
-								command.Tellraw(conn,fmt.Sprintf("Delay automatically set to: %d",dl))
+								command.Tellraw(conn,fmt.Sprintf(I18n.T(I18n.DelayModeSet_DelayAuto),dl))
 							}
 							if delaymode==types.DelayModeDiscrete {
 								configuration.GlobalFullConfig().Delay().DelayThreshold=decideDelayThreshold()
-								command.Tellraw(conn,fmt.Sprintf("Delay threshold automatically set to: %d",configuration.GlobalFullConfig().Delay().DelayThreshold))
+								command.Tellraw(conn,fmt.Sprintf(I18n.T(I18n.DelayModeSet_ThresholdAuto),configuration.GlobalFullConfig().Delay().DelayThreshold))
 							}
 						},
 					},
@@ -127,12 +127,12 @@ func InitInternalFunctions() {
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
 				Content: func(conn *minecraft.Conn, args []interface{}){
 					if configuration.GlobalFullConfig().Delay().DelayMode != types.DelayModeDiscrete {
-						command.Tellraw(conn, "Delay threshold is only available with delay mode: discrete")
+						command.Tellraw(conn, I18n.T(I18n.DelayThreshold_OnlyDiscrete))
 						return
 					}
 					thr, _ := args[0].(int)
 					configuration.GlobalFullConfig().Delay().DelayThreshold=thr
-					command.Tellraw(conn, fmt.Sprintf("Delay threshold set to: %d", thr))
+					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.DelayThreshold_Set), thr))
 				},
 			},
 		},
@@ -147,6 +147,9 @@ func InitInternalFunctions() {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte{},
 				Content: func(conn *minecraft.Conn,_ []interface{}) {
+					if(I18n.HasTranslationFor(I18n.Get_Warning)) {
+						command.Tellraw(conn, I18n.T(I18n.Get_Warning))
+					}
 					command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
 					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId,conn)
 				},
@@ -154,6 +157,9 @@ func InitInternalFunctions() {
 			"begin": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				Content: func(conn *minecraft.Conn,_ []interface{}) {
+					if(I18n.HasTranslationFor(I18n.Get_Warning)) {
+						command.Tellraw(conn, I18n.T(I18n.Get_Warning))
+					}
 					command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
 					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId,conn)
 				},
@@ -161,6 +167,9 @@ func InitInternalFunctions() {
 			"end": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				Content: func(conn *minecraft.Conn,_ []interface{}) {
+					if(I18n.HasTranslationFor(I18n.Get_Warning)) {
+						command.Tellraw(conn, I18n.T(I18n.Get_Warning))
+					}
 					command.SendCommand("gamerule sendcommandfeedback true",uuid.New(),conn)
 					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.OneId,conn)
 				},
@@ -177,7 +186,7 @@ func InitInternalFunctions() {
 				FunctionType: FunctionTypeSimple,
 				Content: func(conn *minecraft.Conn, _ []interface{}){
 					total:=0
-					command.Tellraw(conn,"Current tasks:")
+					command.Tellraw(conn,I18n.T(I18n.CurrentTasks))
 					fbtask.TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
 						tid,_:=_tid.(int64)
 						v,_:=_v.(*fbtask.Task)
@@ -189,11 +198,11 @@ func InitInternalFunctions() {
 						if v.Config.Delay().DelayMode!=types.DelayModeNone {
 							dv=v.Config.Delay().Delay
 						}
-						command.Tellraw(conn, fmt.Sprintf("ID %d - CommandLine:\"%s\", State: %s, Delay: %d, DelayMode: %s, DelayThreshold: %d",tid,v.CommandLine,fbtask.GetStateDesc(v.State),dv,types.StrDelayMode(v.Config.Delay().DelayMode),dt))
+						command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskStateLine),tid,v.CommandLine,fbtask.GetStateDesc(v.State),dv,types.StrDelayMode(v.Config.Delay().DelayMode),dt))
 						total++
 						return true
 					})
-					command.Tellraw(conn, fmt.Sprintf("Total: %d",total))
+					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskTotalCount),total))
 				},
 			},
 			"pause": &FunctionChainItem {
@@ -203,11 +212,11 @@ func InitInternalFunctions() {
 					tid, _ := args[0].(int)
 					task:=fbtask.FindTask(int64(tid))
 					if task==nil {
-						command.Tellraw(conn, "Couldn't find a valid task by provided task id.")
+						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Pause()
-					command.Tellraw(conn, fmt.Sprintf("[Task %d] - Paused",task.TaskId))
+					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskPausedNotice),task.TaskId))
 				},
 			},
 			"resume": &FunctionChainItem {
@@ -217,11 +226,11 @@ func InitInternalFunctions() {
 					tid, _ := args[0].(int)
 					task:=fbtask.FindTask(int64(tid))
 					if task==nil {
-						command.Tellraw(conn, "Couldn't find a valid task by provided task id.")
+						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Resume()
-					command.Tellraw(conn, fmt.Sprintf("[Task %d] - Resumed",task.TaskId))
+					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskResumedNotice),task.TaskId))
 				},
 			},
 			"break": &FunctionChainItem {
@@ -231,11 +240,11 @@ func InitInternalFunctions() {
 					tid, _ := args[0].(int)
 					task:=fbtask.FindTask(int64(tid))
 					if task==nil {
-						command.Tellraw(conn, "Couldn't find a valid task by provided task id.")
+						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Break()
-					command.Tellraw(conn, fmt.Sprintf("[Task %d] - Stopped",task.TaskId))
+					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskStoppedNotice),task.TaskId))
 				},
 			},
 			"setdelay": &FunctionChainItem {
@@ -246,14 +255,14 @@ func InitInternalFunctions() {
 					del, _ := args[1].(int)
 					task:=fbtask.FindTask(int64(tid))
 					if task==nil {
-						command.Tellraw(conn, "Couldn't find a valid task by provided task id.")
+						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					if(task.Config.Delay().DelayMode==types.DelayModeNone) {
-						command.Tellraw(conn, "[setdelay] is unavailable with delay mode: none")
+						command.Tellraw(conn, I18n.T(I18n.Task_SetDelay_Unavailable))
 						return
 					}
-					command.Tellraw(conn, fmt.Sprintf("[Task %d] - Delay set: %d",task.TaskId,del))
+					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.Task_DelaySet),task.TaskId,del))
 					task.Config.Delay().Delay=int64(del)
 				},
 			},
@@ -265,19 +274,19 @@ func InitInternalFunctions() {
 					delaymode, _ := args[1].(byte)
 					task:=fbtask.FindTask(int64(tid))
 					if task==nil {
-						command.Tellraw(conn, "Couldn't find a valid task by provided task id.")
+						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Pause()
 					task.Config.Delay().DelayMode=delaymode
-					command.Tellraw(conn, fmt.Sprintf("[Task %d] - Delay mode set: %s",tid,types.StrDelayMode(delaymode)))
+					command.Tellraw(conn, fmt.Sprintf("[%s %d] - %s: %s",I18n.T(I18n.TaskTTeIuKoto),tid,I18n.T(I18n.DelayModeSet),types.StrDelayMode(delaymode)))
 					if delaymode!=types.DelayModeNone {
 						task.Config.Delay().Delay=decideDelay(delaymode)
-						command.Tellraw(conn, fmt.Sprintf("[Task %d] Delay automatically set to: %d",task.TaskId,task.Config.Delay().Delay))
+						command.Tellraw(conn, fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_DelayAuto),I18n.T(I18n.TaskTTeIuKoto),task.TaskId,task.Config.Delay().Delay))
 					}
 					if delaymode==types.DelayModeDiscrete {
 						task.Config.Delay().DelayThreshold=decideDelayThreshold()
-						command.Tellraw(conn, fmt.Sprintf("[Task %d] Delay threshold automatically set to: %d",task.TaskId,task.Config.Delay().DelayThreshold))
+						command.Tellraw(conn, fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_ThresholdAuto),I18n.T(I18n.TaskTTeIuKoto),task.TaskId,task.Config.Delay().DelayThreshold))
 					}
 					task.Resume()
 				},
@@ -290,14 +299,14 @@ func InitInternalFunctions() {
 					delayt, _ := args[1].(int)
 					task:=fbtask.FindTask(int64(tid))
 					if task==nil {
-						command.Tellraw(conn, "Couldn't find a valid task by provided task id.")
+						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					if task.Config.Delay().DelayMode!=types.DelayModeDiscrete {
-						command.Tellraw(conn, "Delay threshold is only available with delay mode: discrete.")
+						command.Tellraw(conn, I18n.T(I18n.DelayThreshold_OnlyDiscrete))
 						return
 					}
-					command.Tellraw(conn, fmt.Sprintf("[Task %d] - Delay threshold set: %d",tid,delayt))
+					command.Tellraw(conn, fmt.Sprintf("[%s %d] - "+I18n.T(I18n.DelayThreshold_Set),I18n.T(I18n.TaskTTeIuKoto),tid,delayt))
 					task.Config.Delay().DelayThreshold=delayt
 				},
 			},
@@ -313,7 +322,7 @@ func InitInternalFunctions() {
 		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
 			ev, _:=args[0].(byte)
 			configuration.GlobalFullConfig().Global().TaskCreationType=ev
-			command.Tellraw(conn, fmt.Sprintf("Task creation type set to: %s.",types.MakeTaskType(ev)))
+			command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskTypeSwitchedTo),types.MakeTaskType(ev)))
 		},
 	})
 	taskDMEnumId:=RegisterEnum("true, false",types.ParseTaskDisplayMode,types.TaskDisplayInvalid)
@@ -326,7 +335,7 @@ func InitInternalFunctions() {
 		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
 			ev, _:=args[0].(byte)
 			configuration.GlobalFullConfig().Global().TaskDisplayMode=ev
-			command.Tellraw(conn, fmt.Sprintf("Task status display mode set to: %s.",types.MakeTaskDisplayMode(ev)))
+			command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskDisplayModeSet),types.MakeTaskDisplayMode(ev)))
 		},
 	})
 	// ippan
@@ -343,7 +352,7 @@ func InitInternalFunctions() {
 			if task==nil {
 				return
 			}
-			command.Tellraw(conn, fmt.Sprintf("Task Created, ID=%d.",task.TaskId))
+			command.Tellraw(conn, fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
 		},
 	})
 	RegisterFunction(&Function {
@@ -351,13 +360,11 @@ func InitInternalFunctions() {
 		OwnedKeywords: []string{"export"},
 		FunctionType: FunctionTypeRegular,
 		FunctionContent: func(conn *minecraft.Conn,msg string){
-			//command.Tellraw(conn, "Unpublished function")
-			//return
 			task := fbtask.CreateExportTask(msg, conn)
 			if task==nil {
 				return
 			}
-			command.Tellraw(conn, fmt.Sprintf("Task Created, ID=%d.",task.TaskId))
+			command.Tellraw(conn, fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
 		},
 	})
 }

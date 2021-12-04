@@ -1,5 +1,11 @@
 package I18n
 
+import (
+	"path/filepath"
+	"os"
+	"fmt"
+)
+
 const (
 	LanguageEnglish = iota
 	LanguageSimplifiedChinese
@@ -66,6 +72,36 @@ const (
 	DelaySetUnavailableUnderNoneMode
 	CurrentDefaultDelayMode
 	DelaySet
+	DelayModeSet
+	DelayModeSet_DelayAuto
+	DelayModeSet_ThresholdAuto
+	DelayThreshold_OnlyDiscrete
+	DelayThreshold_Set
+	CurrentTasks
+	TaskStateLine
+	TaskTotalCount
+	TaskNotFoundMessage
+	TaskPausedNotice
+	TaskResumedNotice
+	TaskStoppedNotice
+	Task_SetDelay_Unavailable
+	Task_DelaySet
+	TaskTTeIuKoto
+	TaskTypeSwitchedTo
+	TaskDisplayModeSet
+	TaskCreated
+	Menu_GetPos
+	Menu_GetEndPos
+	Menu_Quit
+	Menu_Cancel
+	Menu_ExcludeCommandsOption
+	Menu_InvalidateCommandsOption
+	Menu_StrictModeOption
+	Menu_BackButton
+	Menu_CurrentPath
+	Parsing_UnterminatedQuotedString
+	Parsing_UnterminatedEscape
+	Get_Warning
 )
 
 var I18nDict map[uint16]string
@@ -99,4 +135,16 @@ func T(code uint16) string {
 		}
 	}
 	return r
+}
+
+func loadConfigPath() string {
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println("[PLUGIN] WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
+		homedir="."
+	}
+	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
+	os.MkdirAll(fbconfigdir, 0755)
+	file:=filepath.Join(fbconfigdir,"language")
+	return file
 }

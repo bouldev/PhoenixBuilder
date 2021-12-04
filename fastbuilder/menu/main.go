@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"runtime"
+	"phoenixbuilder/fastbuilder/i18n"
 )
 
 var OPRuntimeId uint64 = 0
@@ -21,15 +22,15 @@ var LastOPPitch float32 = 0
 var LastOPSneak bool = false
 var LastOPMouSneaked bool = false
 var SelectableCommands = []string {
-	"getPos",
-	"getEndPos",
+	I18n.T(I18n.Menu_GetPos),
+	I18n.T(I18n.Menu_GetEndPos),
 	"ACME",
 	"bdump",
 	"SCH-",
 	"PL0T",
 	"EXPORT",
-	"Quit Program",
-	"Cancel",
+	I18n.T(I18n.Menu_Quit),
+	I18n.T(I18n.Menu_Cancel),
 }
 var curSelArr []string = SelectableCommands
 var levelArr []string
@@ -124,7 +125,7 @@ func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
 			function.Process(conn,strings.Join(levelArr, " "))
 			return true
 		}
-		curSelArr=[]string{"< Back",fmt.Sprintf("Exclude Commands = %v",excludeCommands),fmt.Sprintf("Invalidate Commands = %v",invalidateCommands),fmt.Sprintf("Strict Mode = %v",strictMode),"OK >"}
+		curSelArr=[]string{"< Back",fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_ExcludeCommandsOption),excludeCommands),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_InvalidateCommandsOption),invalidateCommands),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_StrictModeOption),strictMode),"OK >"}
 		return false
 	}else if(isInSelectionType==2){
 		if(sel==0) {
@@ -141,7 +142,7 @@ func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
 			function.Process(conn,strings.Join(levelArr, " "))
 			return true
 		}
-		curSelArr=[]string{"< Back",fmt.Sprintf("Exclude Commands = %v",excludeCommands),"OK >"}
+		curSelArr=[]string{I18n.T(I18n.Menu_BackButton),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_ExcludeCommandsOption),excludeCommands),"OK >"}
 		return false
 	}
 	if(len(curpath)!=0) {
@@ -155,10 +156,10 @@ func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
 			}
 			if(levelArr[0]=="bdump") {
 				isInSelectionType=1
-				curSelArr=[]string{"< Back",fmt.Sprintf("Exclude Commands = %v",excludeCommands),fmt.Sprintf("Invalidate Commands = %v",invalidateCommands),fmt.Sprintf("Strict Mode = %v",strictMode),"OK >"}
+				curSelArr=[]string{I18n.T(I18n.Menu_BackButton),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_ExcludeCommandsOption),excludeCommands),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_InvalidateCommandsOption),invalidateCommands),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_StrictModeOption),strictMode),"OK >"}
 			}else if(levelArr[0]=="export") {
 				isInSelectionType=2
-				curSelArr=[]string{"< Back",fmt.Sprintf("Exclude Commands = %v",excludeCommands),"OK >"}
+				curSelArr=[]string{I18n.T(I18n.Menu_BackButton),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_ExcludeCommandsOption),excludeCommands),"OK >"}
 			}
 			return false
 		}
@@ -268,7 +269,7 @@ func OpenMenu(conn *minecraft.Conn) {
 			}
 			var cSessionArr []string
 			if len(curpath)!=0 {
-				cSessionArr=append(cSessionArr,fmt.Sprintf("Current path: %s",strings.Join(curpath,"")))
+				cSessionArr=append(cSessionArr,fmt.Sprintf("%s: %s",I18n.T(I18n.Menu_CurrentPath),strings.Join(curpath,"")))
 			}
 			for i:=curSel-3;i<len(curSelArr);i++ {
 				if i<0 {

@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"phoenixbuilder/minecraft"
+	"phoenixbuilder/fastbuilder/i18n"
 	"syscall"
 )
 
@@ -16,7 +17,7 @@ func Init(conn *minecraft.Conn) {
 		signal.Notify(signalchannel, syscall.SIGQUIT) // ^\
 		<-signalchannel
 		conn.Close()
-		fmt.Printf("Quit correctly.\n")
+		fmt.Printf("%s.\n",I18n.T(I18n.QuitCorrectly))
 		os.Exit(0)
 	} ()
 }

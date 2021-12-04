@@ -3,6 +3,7 @@ package parsing
 import (
 	"flag"
 	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/fastbuilder/i18n"
 	"strings"
 	"fmt"
 )
@@ -43,9 +44,9 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 	}
 	//fmt.Printf("%v\n",SLC)
 	if(isInQuote) {
-		return nil, fmt.Errorf("Unterminated quoted string")
+		return nil, fmt.Errorf(I18n.T(I18n.Parsing_UnterminatedQuotedString))
 	}else if(isTransIMI) {
-		return nil, fmt.Errorf("Unterminated escape")
+		return nil, fmt.Errorf(I18n.T(I18n.Parsing_UnterminatedEscape))
 	}
 	Config := &types.MainConfig{
 		Execute:   "",

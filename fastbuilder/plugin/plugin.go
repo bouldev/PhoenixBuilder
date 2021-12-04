@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"os"
 	"io/ioutil"
-	"phoenixbuilder/minecraft"
 	"plugin"
+	"phoenixbuilder/minecraft"
 )
 
 func StartPluginSystem(conn *minecraft.Conn) {
@@ -29,19 +29,19 @@ func RunPlugin(conn *minecraft.Conn,path string) {
 		fmt.Printf("Failed to load plugin: %s\n%v\n",path,err)
 		return
 	}
-	mainfunc, err := plugin.Lookup("plugin_main")
+	mainfunc, err := plugin.Lookup("Plugin_main")
 	if err != nil {
-		fmt.Printf("Failed to find entry point for plugin %s.",path)
+		fmt.Printf("Failed to find entry point for plugin %s.\n",path)
 		return
 	}
 	name:=mainfunc.(func()string)()
-	fmt.Printf("Plugin %s(%s) loaded!",name,path)
+	fmt.Printf("Plugin %s(%s) loaded!\n",name,path)
 }
 
 func loadConfigPath() string {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("[PLUGIN] WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
+		fmt.Println("[PLUGIN] WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
 		homedir="."
 	}
 	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder/plugins")
