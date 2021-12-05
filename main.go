@@ -46,7 +46,7 @@ func main() {
 	}
 	//Version num should seperate from fellow strings
 	//for implenting print version feature later
-	const FBVersion = "0.5.0"
+	const FBVersion = "0.5.1"
 	const FBCodeName = "Phoenix"
 	
 	I18n.Init()
@@ -184,6 +184,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 
 	if err != nil {
 		pterm.Error.Println(err)
+		if runtime.GOOS == "windows" {
+			pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
+			_, _=bufio.NewReader(os.Stdin).ReadString('\n')
+		}
 		os.Exit(6)
 		//panic(err)
 	}
