@@ -3,6 +3,7 @@ package function
 import (
 	"os"
 	"fmt"
+	"path/filepath"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/configuration"
@@ -27,6 +28,43 @@ func InitInternalFunctions() {
 			fmt.Printf("%s\n",I18n.T(I18n.QuitCorrectly))
 			conn.Close()
 			os.Exit(0)
+		},
+	})
+	RegisterFunction(&Function {
+		Name: "logout",
+		OwnedKeywords: []string { "logout" },
+		FunctionType: FunctionTypeSimple,
+		SFMinSliceLen: 1,
+		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
+			homedir, err := os.UserHomeDir()
+			if err != nil {
+				fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
+				homedir="."
+			}
+			fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
+			os.MkdirAll(fbconfigdir, 0755)
+			token := filepath.Join(fbconfigdir,"fbtoken")
+			err = os.Remove(token)
+			if(err!=nil) {
+				command.Tellraw(conn,fmt.Sprintf(I18n.T(I18n.FailedToRemoveToken),err))
+				return
+			}
+			command.Tellraw(conn,I18n.T(I18n.Logout_Done))
+			command.Tellraw(conn,I18n.T(I18n.QuitCorrectly))
+			fmt.Printf("%s\n",I18n.T(I18n.QuitCorrectly))
+			conn.Close()
+			os.Exit(0)
+		},
+	})
+	RegisterFunction(&Function {
+		Name: "reselect language",
+		OwnedKeywords: []string { "lang" },
+		FunctionType: FunctionTypeSimple,
+		SFMinSliceLen: 1,
+		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
+			command.Tellraw(conn, I18n.T(I18n.SelectLanguageOnConsole))
+			I18n.SelectLanguage()
+			I18n.UpdateLanguage()
 		},
 	})
 	RegisterFunction(&Function {

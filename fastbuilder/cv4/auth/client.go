@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"io"
 	"fmt"
+	"phoenixbuilder/fastbuilder/i18n"
 )
 
 const authServer="ws://47.95.250.36:3642/"
@@ -175,6 +176,10 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 	code,_:=resp["code"].(float64)
 	if code!=0 {
 		err,_:=resp["message"].(string)
+		trans,hasTrans:=resp["translation"].(float64)
+		if(hasTrans) {
+			err=I18n.T(uint16(trans))
+		}
 		return "",int(code),fmt.Errorf("%s",err)
 	}
 	str,_:=resp["chainInfo"].(string)

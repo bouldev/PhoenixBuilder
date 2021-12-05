@@ -4,14 +4,18 @@ import (
 	"path/filepath"
 	"os"
 	"fmt"
+	"bufio"
+	"strings"
+	"strconv"
+	"io/ioutil"
 )
 
 const (
-	LanguageEnglish = iota
-	LanguageSimplifiedChinese
+	LanguageEnglish = "en_US"
+	LanguageSimplifiedChinese = "zh_CN"
 )
 
-var SelectedLanguage = LanguageSimplifiedChinese
+var SelectedLanguage = LanguageEnglish
 
 const (
 	Special_Startup = iota
@@ -102,7 +106,38 @@ const (
 	Parsing_UnterminatedQuotedString
 	Parsing_UnterminatedEscape
 	Get_Warning
+	LanguageName
+	TaskTypeUnknown
+	TaskTypeRunning
+	TaskTypePaused
+	TaskTypeDied
+	TaskTypeCalculating
+	TaskTypeSpecialTaskBreaking
+	TaskFailedToParseCommand
+	Task_D_NothingGenerated
+	Task_Summary_1
+	Task_Summary_2
+	Task_Summary_3
+	Logout_Done
+	FailedToRemoveToken
+	SelectLanguageOnConsole
+	LanguageUpdated
+	Auth_ServerNotFound // 104
+	Auth_FailedToRequestEntry // 105
+	Auth_InvalidHelperUsername // 106
+	Auth_BackendError //107
+	Auth_UnauthorizedRentalServerNumber //108
+	Auth_HelperNotCreated //109
+	Auth_InvalidUser //110
+	Auth_InvalidToken //111
+	Auth_UserCombined //112
+	Auth_InvalidFBVersion //113
 )
+
+var LangDict map[string]map[uint16]string = map[string]map[uint16]string {
+	LanguageEnglish: I18nDict_en,
+	LanguageSimplifiedChinese: I18nDict_cn,
+}
 
 var I18nDict map[uint16]string
 
@@ -116,14 +151,79 @@ func HasTranslationFor(transtype uint16) bool {
 	return has
 }
 
-func Init() {
-	if(SelectedLanguage==LanguageEnglish) {
-		I18nDict=I18nDict_en
-	}else if(SelectedLanguage==LanguageSimplifiedChinese) {
-		I18nDict=I18nDict_cn
-	}else{
-		panic("Invalid language setting")
+func SelectLanguage() {
+	config:=loadConfigPath()
+	curLangDict:=make(map[uint16]string)
+	{
+		i:=1
+		for lang:=range LangDict {
+			curLangDict[uint16(i)]=lang
+			fmt.Printf("[%d] %s\n",i,LangDict[lang][LanguageName])
+			i++
+		}
 	}
+	reader:=bufio.NewReader(os.Stdin)
+	for {
+		fmt.Printf("(ID): ") // No \n
+		inp, _ := reader.ReadString('\n')
+		inpl:=strings.TrimRight(inp,"\r\n")
+		parsedInt, err := strconv.Atoi(inpl)
+		if(err!=nil) {
+			continue
+		}
+		if(parsedInt<=0||parsedInt>len(curLangDict)) {
+			continue
+		}
+		SelectedLanguage=curLangDict[uint16(parsedInt)]
+		break
+	}
+	if file,err:=os.Create(config);err!=nil {
+		fmt.Println("Error creating language config file: %v",err)
+		fmt.Println("Error ignored.")
+	}else{
+		_, err = file.WriteString(SelectedLanguage)
+		if(err!=nil) {
+			fmt.Println("Error saving language config: %v",err)
+			fmt.Println("Error ignored.")
+		}
+		file.Close()
+	}
+}
+
+func UpdateLanguage() {
+	langdict, aru := LangDict[SelectedLanguage]
+	if(!aru) {
+		panic("Updating to a language that doesn't exist")
+		return
+	}
+	I18nDict=langdict
+	fmt.Printf("%s\n",T(LanguageUpdated))
+}
+
+func Init() {
+	config:=loadConfigPath()
+	if _, err:=os.Stat(config); os.IsNotExist(err) {
+		SelectLanguage()
+	}else{
+		content, err:=ioutil.ReadFile(config)
+		if (err != nil) {
+			panic("Language config file isn't accessible")
+			return
+		}
+		langCode:=string(content)
+		SelectedLanguage=langCode
+	}
+	langdict, aru := LangDict[SelectedLanguage]
+	if(!aru) {
+		fmt.Printf("Ordered language doesn't exist.\nPlease reselect one:\n")
+		SelectLanguage()
+		langdict, aru=LangDict[SelectedLanguage]
+		if !aru {
+			panic("Language still unexists after reselection")
+			return
+		}
+	}
+	I18nDict=langdict
 }
 
 func T(code uint16) string {

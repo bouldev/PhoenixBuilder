@@ -94,7 +94,7 @@ func (dialer Dialer) Dial(network string, address string) (conn *Conn, err error
 		chainAddr, code, err := dialer.Client.Auth(dialer.ServerCode, dialer.Password, pubKeyData, dialer.Token, dialer.Version)
 		chainAndAddr := strings.Split(chainAddr,"|")
 		if err != nil {
-			if code == -3 {
+			if (code == -3) {
 				homedir, err := os.UserHomeDir()
 				if err != nil {
 					fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")

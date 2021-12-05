@@ -144,7 +144,7 @@ FastBuilder Phoenix是纯命令行程序，没有复杂的GUI，这使得程序�
 
 #### 初始化程序
 
-如果不出意外，在您完成了上述步骤，并且看到了Fast Builder成功启动的字样。第一次启动会要求用户输入Fast Builder账号密码（密码不回显），照做即可。完成后，Fast Builder会要求用户输入<ruby>租赁服号码<rp>(</rp><rt style="font-size:80%;">Rental Server Number</rt><rp>)</rp></ruby>和租赁服密码（没有可忽略，不会回显）。如果没有报错退出，那么FastBuilder大概就成功启动了（第二次启动不会要求用户输入账号密码）。接下来，将其挂在后台，进入网易租赁服，若看到辅助用户在线，那么FastBuilder就成功运行了。这个时候，请**给予辅助用户OP权限**。
+如果不出意外，在您完成了上述步骤，并且看到了Fast Builder成功启动的字样。第一次启动会要求用户输入Fast Builder账号密码（密码不回显），照做即可。完成后，Fast Builder会要求用户输入<ruby>租赁服号码<rp>(</rp><rt style="font-size:80%;">Rental Server Number</rt><rp>)</rp></ruby>和租赁服密码（没有可忽略，不会回显）。如果没有报错退出，那么FastBuilder大概就成功启动了（第二次启动不会要求用户输入账号密码）。接下来，将其挂在后台，进入网易租赁服，若看到辅助用户在线，那么FastBuilder就成功运行了。这个时候，请**给予辅助用户OP权限**。 请在控制台输入FastBuilder命令，而非在游戏中，另外，我们也不推荐使用`get`命令，因为它将所有者的信息传入服务器后端，并可能导致封禁。
 
 #### FastBuilder命令解析
 
@@ -219,6 +219,26 @@ task setdelaythreshold <taskID> <threshold:int> # 设定某个任务的阈值（
   ```shell
   progress <value:bool>
   ```
+
+* 从FastBuilder用户中心退出登录
+
+  ```
+  logout
+  ```
+
+* 重新选择语言偏好
+
+  ```
+  lang
+  ```
+
+* 打开FastBuilder控制菜单
+
+  ```
+  menu
+  ```
+
+  
 
 ##### 几何命令
 

@@ -139,7 +139,7 @@ If no exceptions happened, after finishing these steps, you will see the FastBui
 
 Then, FastBuilder will ask you to enter the rental server number and its password(Press *Enter* directly if none, **won't be echoed**). If it haven't crashed, presumably it has been launched.
 
-After that, leave it in the background, and enter the rental server. Seeing the helper user is online(in the user list in `/list` command or in pause interface) means that FastBuilder works properly. Please **give the helper user <ruby><rb>OP</rb><rp>(</rp><rt style="font-size:80%;">operator</rt><rp>)</rp></ruby> permission**. The helper user will only listen to **<ruby><rb>operator's</rb><rp>(</rp><rt style="font-size:80%;">your</rt><rp>)</rp></ruby>** commands, so the the *Minecraft Netease Edition Username* should be set to the same to **you nickname in *Minecraft Netease Edition***. Please do not use skin packs with the **<ruby><rb>title</rb><rp>(</rp><rt style="font-size:80%;">称号</rt><rp>)</rp></ruby>** since the helper user won't be able to process your commands.
+After that, leave it in the background, and enter the rental server. Seeing the helper user is online(in the user list in `/list` command or in pause interface) means that FastBuilder works properly. Please **give the helper user <ruby><rb>OP</rb><rp>(</rp><rt style="font-size:80%;">operator</rt><rp>)</rp></ruby> permission**. ~~The helper user will only listen to **<ruby><rb>operator's</rb><rp>(</rp><rt style="font-size:80%;">your</rt><rp>)</rp></ruby>** commands, so the the *Minecraft Netease Edition Username* should be set to the same to **you nickname in *Minecraft Netease Edition***. Please do not use skin packs with the **<ruby><rb>title</rb><rp>(</rp><rt style="font-size:80%;">称号</rt><rp>)</rp></ruby>** since the helper user won't be able to process your commands.~~ Please enter commands in the console since netease will ban accounts that entered fastbuilder commands in the chat scene. For that reason, it's also unrecommended to use the `get` command of FastBuilder as it gives the name of the controller to the backend, which may cause an auto ban.
 
 #### FastBuilder Command Resolving
 
@@ -204,6 +204,7 @@ Each mode has its own advantages and disadvantages, please handle is as you thin
 
   ```shell
   get
+  set x y z
   ```
 
 - Set the global command execution delay solution:
@@ -220,7 +221,27 @@ Each mode has its own advantages and disadvantages, please handle is as you thin
   progress <value:bool>
   ```
 
-##### Geometry Commands
+* Logout from FastBuilder User Center
+
+  ```shell
+  logout
+  ```
+
+* Reselect the preferred language
+
+  ```
+  lang
+  ```
+
+* Open the FastBuilder controlling menu
+
+  ```
+  menu
+  ```
+
+  
+
+##### Geometric Commands
 
 FastBuilder has the ability of constructing simple geometry structures in the space. (like round, circle, sphere, line, ellipsoid, etc.)
 

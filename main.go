@@ -46,7 +46,7 @@ func main() {
 	}
 	//Version num should seperate from fellow strings
 	//for implenting print version feature later
-	const FBVersion = "0.4.2"
+	const FBVersion = "0.5.0"
 	const FBCodeName = "Phoenix"
 	
 	I18n.Init()
@@ -82,7 +82,7 @@ func main() {
 		os.Exit(0)
 		//os.Exit(rand.Int())
 	}()
-	if os.Args[1]=="--debug" {
+	if(len(os.Args)>1&&os.Args[1]=="--debug") {
 		runDebugClient()
 		return
 	}
@@ -184,7 +184,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 
 	if err != nil {
 		pterm.Error.Println(err)
-		panic(err)
+		os.Exit(6)
+		//panic(err)
 	}
 	defer conn.Close()
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
@@ -238,8 +239,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	configuration.OneId=oneId
 	types.ForwardedBrokSender=fbtask.BrokSender
 	go func() {
+		reader:=bufio.NewReader(os.Stdin)
 		for {
-			cmd, _:=getInput()
+			//cmd, _:=getInput()
+			inp, _ := reader.ReadString('\n')
+			cmd:=strings.TrimRight(inp,"\r\n")
 			if len(cmd) == 0 {
 				continue
 			}
@@ -445,8 +449,11 @@ func runDebugClient() {
 	configuration.ZeroId=zeroId
 	configuration.OneId=oneId
 	types.ForwardedBrokSender=fbtask.BrokSender
+	reader := bufio.NewReader(os.Stdin)
 	for {
-		cmd, _:=getInput()
+		inp, _ := reader.ReadString('\n')
+		cmd:=strings.TrimRight(inp, "\r\n")
+		//cmd, _:=getInput()
 		if len(cmd) == 0 {
 			continue
 		}

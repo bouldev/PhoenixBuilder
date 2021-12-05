@@ -8,6 +8,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft"
+	"phoenixbuilder/fastbuilder/i18n"
 	"go.uber.org/atomic"
 	"sync"
 	"fmt"
@@ -50,17 +51,17 @@ var ExtraDisplayStrings []string = []string{}
 
 func GetStateDesc(st byte) string {
 	if st == 0 {
-		return "Unknown"
+		return I18n.T(I18n.TaskTypeUnknown)
 	}else if st==1 {
-		return "Running"
+		return I18n.T(I18n.TaskTypeRunning)
 	}else if st==2 {
-		return "Paused"
+		return I18n.T(I18n.TaskTypePaused)
 	}else if st==3 {
-		return "Died"
+		return I18n.T(I18n.TaskTypeDied)
 	}else if st==4 {
-		return "Calculating"
+		return I18n.T(I18n.TaskTypeCalculating)
 	}else if st==5 {
-		return "SpecialTask:Breaking"
+		return I18n.T(I18n.TaskTypeSpecialTaskBreaking)
 	}
 	return "???????"
 }
@@ -136,7 +137,7 @@ func FindTask(taskId int64) *Task {
 func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig().Main())
 	if err!=nil {
-		command.Tellraw(conn, fmt.Sprintf("Failed to parse command: %v",err))
+		command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand),err))
 		return nil
 	}
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
@@ -204,15 +205,15 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 			curblock, ok := <-blockschannel
 			if !ok {
 				if blkscounter == 0 {
-					command.Tellraw(conn, fmt.Sprintf("[Task %d] Nothing generated.",taskid))
+					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.Task_D_NothingGenerated),taskid))
 					runtime.GC()
 					task.Finalize()
 					return
 				}
 				timeUsed := time.Now().Sub(t1)
-				command.Tellraw(conn, fmt.Sprintf("[Task %d] %v block(s) have been changed.", taskid, blkscounter))
-				command.Tellraw(conn, fmt.Sprintf("[Task %d] Time used: %v second(s)", taskid, timeUsed.Seconds()))
-				command.Tellraw(conn, fmt.Sprintf("[Task %d] Average speed: %v blocks/second", taskid, float64(blkscounter)/timeUsed.Seconds()))
+				command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.Task_Summary_1), taskid, blkscounter))
+				command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.Task_Summary_2), taskid, timeUsed.Seconds()))
+				command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.Task_Summary_3), taskid, float64(blkscounter)/timeUsed.Seconds()))
 				runtime.GC()
 				task.Finalize()
 				return
@@ -282,14 +283,14 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 			err := builder.Generate(cfg, asyncblockschannel)
 			close(asyncblockschannel)
 			if err != nil {
-				command.Tellraw(conn, fmt.Sprintf("[Task %d] Error: %v", taskid, err))
+				command.Tellraw(conn, fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
 			}
 			return
 		}
 		err := builder.Generate(cfg, blockschannel)
 		close(blockschannel)
 		if err != nil {
-			command.Tellraw(conn, fmt.Sprintf("[Task %d] Error: %v", taskid, err))
+			command.Tellraw(conn, fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
 		}
 	} ()
 	return task
