@@ -142,6 +142,11 @@ func Process(conn *minecraft.Conn,msg string) {
 			ic++
 		}
 		cont, _:=cc.Content.(func(*minecraft.Conn,[]interface{}))
+		if cont==nil {
+			cont,_:=cc.Content.(func(interface{},[]interface{}))
+			cont(conn, arguments)
+			return
+		}
 		cont(conn, arguments)
 		return
 	}

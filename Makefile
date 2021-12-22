@@ -62,7 +62,7 @@ release/:
 build/:
 	mkdir build
 build/phoenixbuilder: build/ ${SRCS_GO}
-	CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder
+	CGO_ENABLED=1  go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder
 build/phoenixbuilder-aarch64: build/ ${SRCS_GO}
 	CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
 build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}

@@ -260,12 +260,18 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 					TickDelay: cbdata.TickDelay,
 					ExecuteOnFirstTick: cbdata.ExecuteOnFirstTick,
 				})
-			}else if curblock.Block != nil || curblock.CommandBlockData == nil {
+			}else if curblock.Block != nil || (curblock.CommandBlockData == nil&&curblock.Block != nil) {
 				request := command.SetBlockRequest(curblock, cfg)
 				err := command.SendSizukanaCommand(request, conn)
 				if err != nil {
 					panic(err)
 				}
+			}else if curblock.Entity != nil {
+				//request := command.SummonRequest(curblock, cfg)
+				//err := command.SendSizukanaCommand(request, conn)
+				//if err != nil {
+				//	panic(err)
+				//}
 			}
 			if dcfg.DelayMode==types.DelayModeContinuous {
 				time.Sleep(time.Duration(dcfg.Delay) * time.Microsecond)

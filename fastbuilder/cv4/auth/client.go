@@ -242,6 +242,32 @@ func (client *Client) GetToken(username string,password string) string {
 	return usertoken
 }
 
+type FEncRequest struct {
+	Action string `json:"action"`
+	Content string `json:"content"`
+	Uid string `json:"uid"`
+}
+
+func (client *Client) TransferData(content string, uid string) string {
+	rspreq:=&FEncRequest {
+		Action:"phoenix::transfer-data",
+		Content: content,
+		Uid: uid,
+	}
+	msg,err:=json.Marshal(rspreq)
+	if err!=nil {
+		panic("Failed to encode json")
+	}
+	client.SendMessage(msg)
+	resp,_:=<-client.serverResponse
+	code,_:=resp["code"].(float64)
+	if code != 0 {
+		panic("Failed to transfer start type")
+	}
+	data,_:=resp["data"].(string)
+	return data
+}
+
 type WorldChatRequest struct {
 	Category string `json:"category"`
 	Action string `json:"action"`

@@ -6,4 +6,4 @@ require (
 	phoenixbuilder v0.3.9
 )
 
-replace phoenixbuilder v0.3.9 => ../
+replace phoenixbuilder v0.3.9 => ../../

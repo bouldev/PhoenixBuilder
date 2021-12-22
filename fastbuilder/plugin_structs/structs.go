@@ -1,5 +1,29 @@
 package plugin_structs
 
+type PluginBridge interface {
+	ConvertFunctionChainItemList(list map[string]FunctionChainItem) interface{}
+	RegisterBuilder(name string, function func(config MainConfig, blc chan *Module) error) bool
+	// --> function.RegisterFunction
+	RegisterFunction(function Function)
+	// --> function.RegisterEnum
+	RegisterEnum(desc string, parser func(string)byte, inv byte) int
+	// --> command.Tellraw -> command.SendChat
+	Tellraw(message string) error
+	// --> command.SendChat
+	SendChat(content string) error
+	// --> command.SendSizukanaCommand
+	SendCommand(command string) error
+	// "CB" stands for callback.
+	SendCommandCB(command string, cb func([]CommandOutputMessage,string))
+	SendWSCommandCB(command string, cb func([]CommandOutputMessage,string))
+}
+
+type CommandOutputMessage struct {
+	Success bool
+	Message string
+	Parameters []string
+}
+
 type Function struct {
 	Name string
 	OwnedKeywords []string
@@ -30,25 +54,3 @@ const (
 	//SimpleFunctionArgumentEnum  = ---->
 )
 
-var FunctionMap = make(map[string]*Function)
-
-func RegisterFunction(function *Function) {
-	for _, nm := range function.OwnedKeywords {
-		if _, ok := FunctionMap[nm]; !ok {
-			FunctionMap[nm]=function
-		}
-	}
-}
-
-type EnumInfo struct {
-	WantedValuesDescription string // "discrete, continuous, none"
-	Parser func(string)byte
-	InvalidValue byte
-}
-
-var SimpleFunctionEnums []*EnumInfo
-
-func RegisterEnum(desc string,parser func(string)byte,inv byte) int {
-	SimpleFunctionEnums=append(SimpleFunctionEnums,&EnumInfo{WantedValuesDescription:desc,InvalidValue:inv,Parser:parser})
-	return len(SimpleFunctionEnums)-1+3
-}
