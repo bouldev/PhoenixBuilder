@@ -202,7 +202,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 					}
 				}else{
 					wrap:=mdl.Point.Y-brushPosition[1]
-					if (wrap > 32767||wrap<32767) {
+					if (wrap > 32767||wrap<-32767) {
 						_, err:=w.Write([]byte{23})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
