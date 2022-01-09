@@ -46,7 +46,7 @@ func main() {
 	}
 	//Version num should seperate from fellow strings
 	//for implenting print version feature later
-	const FBVersion = "1.0.0~1"
+	const FBVersion = "1.0.0~2"
 	const FBCodeName = "Phoenix"
 	
 	I18n.Init()
@@ -59,7 +59,7 @@ func main() {
 	pterm.Println(pterm.Yellow("ファスト　ビルダー"))
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
-	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2021"))
+	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
 	pterm.Println(pterm.Yellow("FastBuilder Phoenix " + FBVersion))
 	
 	if(I18n.ShouldDisplaySpecial()) {

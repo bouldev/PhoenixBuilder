@@ -59,6 +59,13 @@ jobs:
       run: |
         mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
         rm -rf $GITHUB_WORKSPACE/macOS-sdks
+    - name: Pre-Build & configure go-raknet
+      run: |
+        make current
+        make clean
+        chmod 777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
+        sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go>~/conn.go
+        cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
     - name: Build
       run: |
         export THEOS=~/theos
