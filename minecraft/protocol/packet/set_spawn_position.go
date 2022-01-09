@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -35,19 +34,17 @@ func (*SetSpawnPosition) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetSpawnPosition) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.SpawnType)
-	_ = protocol.WriteUBlockPosition(buf, pk.Position)
-	_ = protocol.WriteVarint32(buf, pk.Dimension)
-	_ = protocol.WriteUBlockPosition(buf, pk.SpawnPosition)
+func (pk *SetSpawnPosition) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.SpawnType)
+	w.UBlockPos(&pk.Position)
+	w.Varint32(&pk.Dimension)
+	w.UBlockPos(&pk.SpawnPosition)
 }
 
 // Unmarshal ...
-func (pk *SetSpawnPosition) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varint32(buf, &pk.SpawnType),
-		protocol.UBlockPosition(buf, &pk.Position),
-		protocol.Varint32(buf, &pk.Dimension),
-		protocol.UBlockPosition(buf, &pk.SpawnPosition),
-	)
+func (pk *SetSpawnPosition) Unmarshal(r *protocol.Reader) {
+	r.Varint32(&pk.SpawnType)
+	r.UBlockPos(&pk.Position)
+	r.Varint32(&pk.Dimension)
+	r.UBlockPos(&pk.SpawnPosition)
 }

@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -16,8 +14,9 @@ type UpdateEquip struct {
 	// WindowType is the type of the window that was opened. Generally, this is the type of a horse inventory,
 	// as the packet is specifically made for that.
 	WindowType byte
-	// UnknownInt32 ...
-	UnknownInt32 int32
+	// Size is the size of the horse inventory that should be opened. A bigger size does, in fact, change the
+	// amount of slots displayed.
+	Size int32
 	// EntityUniqueID is the unique ID of the entity whose equipment was 'updated' to the player. It is
 	// typically the horse entity that had its inventory opened.
 	EntityUniqueID int64
@@ -33,25 +32,19 @@ func (*UpdateEquip) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *UpdateEquip) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.WindowID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.WindowType)
-	_ = protocol.WriteVarint32(buf, pk.UnknownInt32)
-	_ = protocol.WriteVarint64(buf, pk.EntityUniqueID)
-	_, _ = buf.Write(pk.SerialisedInventoryData)
+func (pk *UpdateEquip) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.WindowID)
+	w.Uint8(&pk.WindowType)
+	w.Varint32(&pk.Size)
+	w.Varint64(&pk.EntityUniqueID)
+	w.Bytes(&pk.SerialisedInventoryData)
 }
 
 // Unmarshal ...
-func (pk *UpdateEquip) Unmarshal(buf *bytes.Buffer) error {
-	if err := chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.WindowID),
-		binary.Read(buf, binary.LittleEndian, &pk.WindowType),
-		protocol.Varint32(buf, &pk.UnknownInt32),
-		protocol.Varint64(buf, &pk.EntityUniqueID),
-	); err != nil {
-		return err
-	}
-	pk.SerialisedInventoryData = make([]byte, buf.Len())
-	copy(pk.SerialisedInventoryData, buf.Bytes())
-	return nil
+func (pk *UpdateEquip) Unmarshal(r *protocol.Reader) {
+	r.Uint8(&pk.WindowID)
+	r.Uint8(&pk.WindowType)
+	r.Varint32(&pk.Size)
+	r.Varint64(&pk.EntityUniqueID)
+	r.Bytes(&pk.SerialisedInventoryData)
 }

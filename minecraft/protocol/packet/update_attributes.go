@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -15,6 +14,8 @@ type UpdateAttributes struct {
 	// health, movement speed, etc. Note that only changed attributes have to be sent in this packet. It is
 	// not required to send attributes that did not have their values changed.
 	Attributes []protocol.Attribute
+	// Tick is the server tick at which the packet was sent. It is used in relation to CorrectPlayerMovePrediction.
+	Tick uint64
 }
 
 // ID ...
@@ -23,15 +24,15 @@ func (*UpdateAttributes) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *UpdateAttributes) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteAttributes(buf, pk.Attributes)
+func (pk *UpdateAttributes) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
+	protocol.WriteAttributes(w, &pk.Attributes)
+	w.Varuint64(&pk.Tick)
 }
 
 // Unmarshal ...
-func (pk *UpdateAttributes) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.Attributes(buf, &pk.Attributes),
-	)
+func (pk *UpdateAttributes) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
+	protocol.Attributes(r, &pk.Attributes)
+	r.Varuint64(&pk.Tick)
 }

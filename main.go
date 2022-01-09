@@ -46,7 +46,7 @@ func main() {
 	}
 	//Version num should seperate from fellow strings
 	//for implenting print version feature later
-	const FBVersion = "0.6.0"
+	const FBVersion = "1.0.0~1"
 	const FBCodeName = "Phoenix"
 	
 	I18n.Init()

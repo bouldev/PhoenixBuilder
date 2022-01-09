@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -23,15 +22,13 @@ func (*SetActorMotion) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetActorMotion) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteVec3(buf, pk.Velocity)
+func (pk *SetActorMotion) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.Vec3(&pk.Velocity)
 }
 
 // Unmarshal ...
-func (pk *SetActorMotion) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.Vec3(buf, &pk.Velocity),
-	)
+func (pk *SetActorMotion) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.Vec3(&pk.Velocity)
 }

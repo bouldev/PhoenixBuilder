@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -22,15 +21,13 @@ func (*TakeItemActor) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *TakeItemActor) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.ItemEntityRuntimeID)
-	_ = protocol.WriteVaruint64(buf, pk.TakerEntityRuntimeID)
+func (pk *TakeItemActor) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.ItemEntityRuntimeID)
+	w.Varuint64(&pk.TakerEntityRuntimeID)
 }
 
 // Unmarshal ...
-func (pk *TakeItemActor) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint64(buf, &pk.ItemEntityRuntimeID),
-		protocol.Varuint64(buf, &pk.TakerEntityRuntimeID),
-	)
+func (pk *TakeItemActor) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.ItemEntityRuntimeID)
+	r.Varuint64(&pk.TakerEntityRuntimeID)
 }

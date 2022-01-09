@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"math"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // BiomeDefinitionList is sent by the server to let the client know all biomes that are available and
@@ -20,12 +19,11 @@ func (*BiomeDefinitionList) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *BiomeDefinitionList) Marshal(buf *bytes.Buffer) {
-	_, _ = buf.Write(pk.SerialisedBiomeDefinitions)
+func (pk *BiomeDefinitionList) Marshal(w *protocol.Writer) {
+	w.Bytes(&pk.SerialisedBiomeDefinitions)
 }
 
 // Unmarshal ...
-func (pk *BiomeDefinitionList) Unmarshal(buf *bytes.Buffer) error {
-	pk.SerialisedBiomeDefinitions = buf.Next(math.MaxInt32)
-	return nil
+func (pk *BiomeDefinitionList) Unmarshal(r *protocol.Reader) {
+	r.Bytes(&pk.SerialisedBiomeDefinitions)
 }

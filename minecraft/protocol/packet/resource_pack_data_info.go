@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -29,6 +27,8 @@ type ResourcePackDataInfo struct {
 	DataChunkSize uint32
 	// ChunkCount is the total amount of data chunks that the sent resource pack will exist out of. It is the
 	// total size of the resource pack divided by the DataChunkSize field.
+	// The client doesn't actually seem to use this field. Rather, it divides the size by the chunk size to
+	// calculate it itself.
 	ChunkCount uint32
 	// Size is the total size in bytes that the resource pack occupies. This is the size of the compressed
 	// archive (zip) of the resource pack.
@@ -49,25 +49,23 @@ func (*ResourcePackDataInfo) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ResourcePackDataInfo) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.UUID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.DataChunkSize)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ChunkCount)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Size)
-	_ = protocol.WriteByteSlice(buf, pk.Hash)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Premium)
-	_ = binary.Write(buf, binary.LittleEndian, pk.PackType)
+func (pk *ResourcePackDataInfo) Marshal(w *protocol.Writer) {
+	w.String(&pk.UUID)
+	w.Uint32(&pk.DataChunkSize)
+	w.Uint32(&pk.ChunkCount)
+	w.Uint64(&pk.Size)
+	w.ByteSlice(&pk.Hash)
+	w.Bool(&pk.Premium)
+	w.Uint8(&pk.PackType)
 }
 
 // Unmarshal ...
-func (pk *ResourcePackDataInfo) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.String(buf, &pk.UUID),
-		binary.Read(buf, binary.LittleEndian, &pk.DataChunkSize),
-		binary.Read(buf, binary.LittleEndian, &pk.ChunkCount),
-		binary.Read(buf, binary.LittleEndian, &pk.Size),
-		protocol.ByteSlice(buf, &pk.Hash),
-		binary.Read(buf, binary.LittleEndian, &pk.Premium),
-		binary.Read(buf, binary.LittleEndian, &pk.PackType),
-	)
+func (pk *ResourcePackDataInfo) Unmarshal(r *protocol.Reader) {
+	r.String(&pk.UUID)
+	r.Uint32(&pk.DataChunkSize)
+	r.Uint32(&pk.ChunkCount)
+	r.Uint64(&pk.Size)
+	r.ByteSlice(&pk.Hash)
+	r.Bool(&pk.Premium)
+	r.Uint8(&pk.PackType)
 }

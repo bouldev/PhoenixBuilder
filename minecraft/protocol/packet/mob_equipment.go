@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -15,7 +13,7 @@ type MobEquipment struct {
 	EntityRuntimeID uint64
 	// NewItem is the new item held after sending the MobEquipment packet. The entity will be shown holding
 	// that item to the player it was sent to.
-	NewItem protocol.ItemStack
+	NewItem protocol.ItemInstance
 	// InventorySlot is the slot in the inventory that was held. This is the same as HotBarSlot, and only
 	// remains for backwards compatibility.
 	InventorySlot byte
@@ -33,21 +31,19 @@ func (*MobEquipment) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *MobEquipment) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteItem(buf, pk.NewItem)
-	_ = binary.Write(buf, binary.LittleEndian, pk.InventorySlot)
-	_ = binary.Write(buf, binary.LittleEndian, pk.HotBarSlot)
-	_ = binary.Write(buf, binary.LittleEndian, pk.WindowID)
+func (pk *MobEquipment) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.ItemInstance(&pk.NewItem)
+	w.Uint8(&pk.InventorySlot)
+	w.Uint8(&pk.HotBarSlot)
+	w.Uint8(&pk.WindowID)
 }
 
 // Unmarshal ...
-func (pk *MobEquipment) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.Item(buf, &pk.NewItem),
-		binary.Read(buf, binary.LittleEndian, &pk.InventorySlot),
-		binary.Read(buf, binary.LittleEndian, &pk.HotBarSlot),
-		binary.Read(buf, binary.LittleEndian, &pk.WindowID),
-	)
+func (pk *MobEquipment) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.ItemInstance(&pk.NewItem)
+	r.Uint8(&pk.InventorySlot)
+	r.Uint8(&pk.HotBarSlot)
+	r.Uint8(&pk.WindowID)
 }

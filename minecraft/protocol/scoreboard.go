@@ -1,11 +1,5 @@
 package protocol
 
-import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
-)
-
 const (
 	ScoreboardIdentityPlayer = iota + 1
 	ScoreboardIdentityEntity
@@ -51,55 +45,22 @@ type ScoreboardIdentityEntry struct {
 	EntityUniqueID int64
 }
 
-// WriteScoreEntry writes a ScoreboardEntry x to Buffer dst. If modify is set to true, the display information
-// of the entry is written. If not, it is ignored, as expected when the SetScore packet is sent to modify
-// entries.
-func WriteScoreEntry(dst *bytes.Buffer, x ScoreboardEntry, modify bool) error {
-	if err := chainErr(
-		WriteVarint64(dst, x.EntryID),
-		WriteString(dst, x.ObjectiveName),
-		binary.Write(dst, binary.LittleEndian, x.Score),
-	); err != nil {
-		return err
-	}
-	if modify {
-		if err := binary.Write(dst, binary.LittleEndian, x.IdentityType); err != nil {
-			return err
-		}
-		switch x.IdentityType {
-		case ScoreboardIdentityEntity, ScoreboardIdentityPlayer:
-			return WriteVarint64(dst, x.EntityUniqueID)
-		case ScoreboardIdentityFakePlayer:
-			return WriteString(dst, x.DisplayName)
-		default:
-			panic(fmt.Sprintf("invalid scoreboardy entry identity type %v", x.IdentityType))
-		}
-	}
-	return nil
-}
-
-// ScoreEntry reads a ScoreboardEntry x from Buffer src. It reads the display information if modify is true,
+// ScoreEntry reads/writes a ScoreboardEntry x using IO r. It reads the display information if modify is true,
 // as expected when the SetScore packet is sent to modify entries.
-func ScoreEntry(src *bytes.Buffer, x *ScoreboardEntry, modify bool) error {
-	if err := chainErr(
-		Varint64(src, &x.EntryID),
-		String(src, &x.ObjectiveName),
-		binary.Read(src, binary.LittleEndian, &x.Score),
-	); err != nil {
-		return err
-	}
+func ScoreEntry(r IO, x *ScoreboardEntry, modify bool) {
+	r.Varint64(&x.EntryID)
+	r.String(&x.ObjectiveName)
+	r.Int32(&x.Score)
+
 	if modify {
-		if err := binary.Read(src, binary.LittleEndian, &x.IdentityType); err != nil {
-			return err
-		}
+		r.Uint8(&x.IdentityType)
 		switch x.IdentityType {
 		case ScoreboardIdentityEntity, ScoreboardIdentityPlayer:
-			return Varint64(src, &x.EntityUniqueID)
+			r.Varint64(&x.EntityUniqueID)
 		case ScoreboardIdentityFakePlayer:
-			return String(src, &x.DisplayName)
+			r.String(&x.DisplayName)
 		default:
-			return fmt.Errorf("unknown scoreboard identity type %v", x.IdentityType)
+			r.UnknownEnumOption(x.IdentityType, "scoreboard entry identity type")
 		}
 	}
-	return nil
 }

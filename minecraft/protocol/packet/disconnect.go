@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -23,20 +21,17 @@ func (*Disconnect) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *Disconnect) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.HideDisconnectionScreen)
+func (pk *Disconnect) Marshal(w *protocol.Writer) {
+	w.Bool(&pk.HideDisconnectionScreen)
 	if !pk.HideDisconnectionScreen {
-		_ = protocol.WriteString(buf, pk.Message)
+		w.String(&pk.Message)
 	}
 }
 
 // Unmarshal ...
-func (pk *Disconnect) Unmarshal(buf *bytes.Buffer) error {
-	if err := binary.Read(buf, binary.LittleEndian, &pk.HideDisconnectionScreen); err != nil {
-		return err
-	}
+func (pk *Disconnect) Unmarshal(r *protocol.Reader) {
+	r.Bool(&pk.HideDisconnectionScreen)
 	if !pk.HideDisconnectionScreen {
-		return protocol.String(buf, &pk.Message)
+		r.String(&pk.Message)
 	}
-	return nil
 }

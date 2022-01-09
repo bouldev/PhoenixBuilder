@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -64,49 +62,39 @@ func (*CommandBlockUpdate) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *CommandBlockUpdate) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.Block)
+func (pk *CommandBlockUpdate) Marshal(w *protocol.Writer) {
+	w.Bool(&pk.Block)
 	if pk.Block {
-		_ = protocol.WriteUBlockPosition(buf, pk.Position)
-		_ = protocol.WriteVaruint32(buf, pk.Mode)
-		_ = binary.Write(buf, binary.LittleEndian, pk.NeedsRedstone)
-		_ = binary.Write(buf, binary.LittleEndian, pk.Conditional)
+		w.UBlockPos(&pk.Position)
+		w.Varuint32(&pk.Mode)
+		w.Bool(&pk.NeedsRedstone)
+		w.Bool(&pk.Conditional)
 	} else {
-		_ = protocol.WriteVaruint64(buf, pk.MinecartEntityRuntimeID)
+		w.Varuint64(&pk.MinecartEntityRuntimeID)
 	}
-	_ = protocol.WriteString(buf, pk.Command)
-	_ = protocol.WriteString(buf, pk.LastOutput)
-	_ = protocol.WriteString(buf, pk.Name)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ShouldTrackOutput)
-	_ = binary.Write(buf, binary.LittleEndian, pk.TickDelay)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ExecuteOnFirstTick)
+	w.String(&pk.Command)
+	w.String(&pk.LastOutput)
+	w.String(&pk.Name)
+	w.Bool(&pk.ShouldTrackOutput)
+	w.Int32(&pk.TickDelay)
+	w.Bool(&pk.ExecuteOnFirstTick)
 }
 
 // Unmarshal ...
-func (pk *CommandBlockUpdate) Unmarshal(buf *bytes.Buffer) error {
-	if err := binary.Read(buf, binary.LittleEndian, &pk.Block); err != nil {
-		return err
-	}
+func (pk *CommandBlockUpdate) Unmarshal(r *protocol.Reader) {
+	r.Bool(&pk.Block)
 	if pk.Block {
-		if err := chainErr(
-			protocol.UBlockPosition(buf, &pk.Position),
-			protocol.Varuint32(buf, &pk.Mode),
-			binary.Read(buf, binary.LittleEndian, &pk.NeedsRedstone),
-			binary.Read(buf, binary.LittleEndian, &pk.Conditional),
-		); err != nil {
-			return err
-		}
+		r.UBlockPos(&pk.Position)
+		r.Varuint32(&pk.Mode)
+		r.Bool(&pk.NeedsRedstone)
+		r.Bool(&pk.Conditional)
 	} else {
-		if err := protocol.Varuint64(buf, &pk.MinecartEntityRuntimeID); err != nil {
-			return err
-		}
+		r.Varuint64(&pk.MinecartEntityRuntimeID)
 	}
-	return chainErr(
-		protocol.String(buf, &pk.Command),
-		protocol.String(buf, &pk.LastOutput),
-		protocol.String(buf, &pk.Name),
-		binary.Read(buf, binary.LittleEndian, &pk.ShouldTrackOutput),
-		binary.Read(buf, binary.LittleEndian, &pk.TickDelay),
-		binary.Read(buf, binary.LittleEndian, &pk.ExecuteOnFirstTick),
-	)
+	r.String(&pk.Command)
+	r.String(&pk.LastOutput)
+	r.String(&pk.Name)
+	r.Bool(&pk.ShouldTrackOutput)
+	r.Int32(&pk.TickDelay)
+	r.Bool(&pk.ExecuteOnFirstTick)
 }

@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -23,15 +21,13 @@ func (*CodeBuilder) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *CodeBuilder) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.URL)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ShouldOpenCodeBuilder)
+func (pk *CodeBuilder) Marshal(w *protocol.Writer) {
+	w.String(&pk.URL)
+	w.Bool(&pk.ShouldOpenCodeBuilder)
 }
 
 // Unmarshal ...
-func (pk *CodeBuilder) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.String(buf, &pk.URL),
-		binary.Read(buf, binary.LittleEndian, &pk.ShouldOpenCodeBuilder),
-	)
+func (pk *CodeBuilder) Unmarshal(r *protocol.Reader) {
+	r.String(&pk.URL)
+	r.Bool(&pk.ShouldOpenCodeBuilder)
 }

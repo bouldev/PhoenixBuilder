@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 const (
@@ -23,11 +22,11 @@ func (*SimpleEvent) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SimpleEvent) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.EventType)
+func (pk *SimpleEvent) Marshal(w *protocol.Writer) {
+	w.Int16(&pk.EventType)
 }
 
 // Unmarshal ...
-func (pk *SimpleEvent) Unmarshal(buf *bytes.Buffer) error {
-	return binary.Read(buf, binary.LittleEndian, &pk.EventType)
+func (pk *SimpleEvent) Unmarshal(r *protocol.Reader) {
+	r.Int16(&pk.EventType)
 }

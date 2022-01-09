@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -23,15 +22,13 @@ func (*UpdatePlayerGameType) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *UpdatePlayerGameType) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.GameType)
-	_ = protocol.WriteVarint64(buf, pk.PlayerUniqueID)
+func (pk *UpdatePlayerGameType) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.GameType)
+	w.Varint64(&pk.PlayerUniqueID)
 }
 
 // Unmarshal ...
-func (pk *UpdatePlayerGameType) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varint32(buf, &pk.GameType),
-		protocol.Varint64(buf, &pk.PlayerUniqueID),
-	)
+func (pk *UpdatePlayerGameType) Unmarshal(r *protocol.Reader) {
+	r.Varint32(&pk.GameType)
+	r.Varint64(&pk.PlayerUniqueID)
 }

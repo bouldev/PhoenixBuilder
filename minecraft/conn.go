@@ -4,22 +4,21 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
+	"phoenixbuilder/minecraft/internal"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/login"
-	"phoenixbuilder/minecraft/protocol/login/jwt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/resource"
+	"phoenixbuilder/minecraft/text"
 	"go.uber.org/atomic"
+	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 	"io"
 	"log"
 	"net"
@@ -49,24 +48,28 @@ var exemptedPacks = []exemptedResourcePack{
 }
 
 // Conn represents a Minecraft (Bedrock Edition) connection over a specific net.Conn transport layer. Its
-// methods (Read, Write etc.) are safe to be called from multiple goroutines simultaneously, except for the
-// ReadPacket function. (See its documentation.)
+// methods (Read, Write etc.) are safe to be called from multiple goroutines simultaneously, but ReadPacket
+// must not be called on multiple goroutines simultaneously.
 type Conn struct {
+	// once is used to ensure the Conn is closed only a single time. It protects the channel below from being
+	// closed multiple times.
+	once  sync.Once
+	close chan struct{}
+
 	conn        net.Conn
 	log         *log.Logger
 	authEnabled bool
 
-	pool    packet.Pool
-	encoder *packet.Encoder
-	decoder *packet.Decoder
+	pool packet.Pool
+	enc  *packet.Encoder
+	dec  *packet.Decoder
 
 	identityData login.IdentityData
 	clientData   login.ClientData
-	// authenticated represents if player's login data
-	// was verified to be signed with Mojang's key.
-	authenticated bool
-	gameData      GameData
-	chunkRadius   int
+
+	gameData         GameData
+	gameDataReceived atomic.Bool
+	chunkRadius      int
 
 	// privateKey is the private key of this end of the connection. Each connection, regardless of which side
 	// the connection is on, server or client, has a unique private key generated.
@@ -77,35 +80,34 @@ type Conn struct {
 
 	// packets is a channel of byte slices containing serialised packets that are coming in from the other
 	// side of the connection.
-	packets chan []byte
+	packets chan *packetData
 
-	pushedBackPacketsLock sync.Mutex
-	// pushedBackPackets is a list of packets that were pushed back during the login sequence because they
+	deferredPacketMu sync.Mutex
+	// deferredPackets is a list of packets that were pushed back during the login sequence because they
 	// were not used by the connection yet. These packets are read the first when calling to Read or
 	// ReadPacket after being connected.
-	pushedBackPackets [][]byte
-	readDeadline      <-chan time.Time
+	deferredPackets []*packetData
+	readDeadline    <-chan time.Time
 
-	sendMutex sync.Mutex
+	sendMu sync.Mutex
 	// bufferedSend is a slice of byte slices containing packets that are 'written'. They are buffered until
 	// they are sent each 20th of a second.
 	bufferedSend [][]byte
-	// writeBuf is used to write packets to, without having to re-allocate for each extra byte written.
-	writeBuf *bytes.Buffer
+	hdr          *packet.Header
 
 	// loggedIn is a bool indicating if the connection was logged in. It is set to true after the entire login
 	// sequence is completed.
 	loggedIn bool
 	// spawn is a bool channel indicating if the connection is currently waiting for its spawning in
 	// the world: It is completing a sequence that will result in the spawning.
-	spawn           chan bool
+	spawn           chan struct{}
 	waitingForSpawn atomic.Bool
 
 	// expectedIDs is a slice of packet identifiers that are next expected to arrive, until the connection is
 	// logged in.
 	expectedIDs atomic.Value
 
-	packMutex sync.Mutex
+	packMu sync.Mutex
 	// resourcePacks is a slice of resource packs that the listener may hold. Each client will be asked to
 	// download these resource packs upon joining.
 	resourcePacks []*resource.Pack
@@ -120,12 +122,9 @@ type Conn struct {
 	// to this connection will call this function.
 	packetFunc func(header packet.Header, payload []byte, src, dst net.Addr)
 
-	closeCtx          context.Context
-	close             context.CancelFunc
 	disconnectMessage atomic.String
 
-	sendPacketViolations bool
-	
+	shieldID atomic.Int32
 	DebugMode bool
 }
 
@@ -134,25 +133,19 @@ type Conn struct {
 // newConn accepts a private key which will be used to identify the connection. If a nil key is passed, the
 // key is generated.
 func newConn(netConn net.Conn, key *ecdsa.PrivateKey, log *log.Logger) *Conn {
-	if key == nil {
-		// If no key is passed, we generate one in this function and use it instead.
-		key, _ = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-	}
-	closeCtx, cancel := context.WithCancel(context.Background())
 	conn := &Conn{
-		conn:        netConn,
-		encoder:     packet.NewEncoder(netConn),
-		decoder:     packet.NewDecoder(netConn),
+		enc:         packet.NewEncoder(netConn),
+		dec:         packet.NewDecoder(netConn),
 		pool:        packet.NewPool(),
-		packets:     make(chan []byte, 256),
-		writeBuf:    bytes.NewBuffer(make([]byte, 0, 1024)),
-		close:       cancel,
-		closeCtx:    closeCtx,
-		spawn:       make(chan bool),
-		privateKey:  key,
 		salt:        make([]byte, 16),
+		packets:     make(chan *packetData, 8),
+		close:       make(chan struct{}),
+		spawn:       make(chan struct{}),
+		conn:        netConn,
+		privateKey:  key,
 		log:         log,
 		chunkRadius: 16,
+		hdr:         &packet.Header{},
 	}
 	conn.expectedIDs.Store([]uint32{packet.IDLogin})
 	_, _ = rand.Read(conn.salt)
@@ -160,13 +153,9 @@ func newConn(netConn net.Conn, key *ecdsa.PrivateKey, log *log.Logger) *Conn {
 	go func() {
 		ticker := time.NewTicker(time.Second / 20)
 		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				if err := conn.Flush(); err != nil {
-					_ = conn.Close()
-				}
-			case <-conn.closeCtx.Done():
+		for range ticker.C {
+			if err := conn.Flush(); err != nil {
+				_ = conn.Close()
 				return
 			}
 		}
@@ -187,10 +176,9 @@ func (conn *Conn) ClientData() login.ClientData {
 	return conn.clientData
 }
 
-// Authenticated returns the value representing if player's login data
-// was verified to be signed with Mojang's key.
+// Authenticated returns true if the connection was authenticated through XBOX Live services.
 func (conn *Conn) Authenticated() bool {
-	return conn.authenticated
+	return conn.IdentityData().XUID != ""
 }
 
 // GameData returns specific game data set to the connection for the player to be initialised with. If the
@@ -204,22 +192,52 @@ func (conn *Conn) GameData() GameData {
 // obtained using a minecraft.Listener. The game data passed will be used to spawn the player in the world of
 // the server. To spawn a Conn obtained from a call to minecraft.Dial(), use Conn.DoSpawn().
 func (conn *Conn) StartGame(data GameData) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+	return conn.StartGameContext(ctx, data)
+}
+
+// StartGameTimeout starts the game for a client that connected to the server, returning an error if the
+// connection is not yet fully connected while the timeout expires.
+// StartGameTimeout should be called for a Conn obtained using a minecraft.Listener. The game data passed will
+// be used to spawn the player in the world of the server. To spawn a Conn obtained from a call to
+// minecraft.Dial(), use Conn.DoSpawn().
+func (conn *Conn) StartGameTimeout(data GameData, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	return conn.StartGameContext(ctx, data)
+}
+
+// StartGameContext starts the game for a client that connected to the server, returning an error if the
+// context is closed while spawning the client.
+// StartGameContext should be called for a Conn obtained using a minecraft.Listener. The game data passed will
+// be used to spawn the player in the world of the server. To spawn a Conn obtained from a call to
+// minecraft.Dial(), use Conn.DoSpawn().
+func (conn *Conn) StartGameContext(ctx context.Context, data GameData) error {
+	if conn.gameDataReceived.Load() {
+		panic("(*Conn).StartGame must only be called on Listener connections")
+	}
 	if data.WorldName == "" {
 		data.WorldName = conn.gameData.WorldName
 	}
+
 	conn.gameData = data
+	for _, item := range data.Items {
+		if item.Name == "minecraft:shield" {
+			conn.shieldID.Store(int32(item.RuntimeID))
+		}
+	}
 	conn.waitingForSpawn.Store(true)
 	conn.startGame()
 
-	timeout := time.After(time.Second * 30)
 	select {
+	case <-conn.close:
+		return conn.closeErr("start game")
+	case <-ctx.Done():
+		return conn.wrap(ctx.Err(), "start game")
 	case <-conn.spawn:
 		// Conn was spawned successfully.
 		return nil
-	case <-timeout:
-		return fmt.Errorf("start game spawning timeout")
-	case <-conn.closeCtx.Done():
-		return fmt.Errorf("connection closed")
 	}
 }
 
@@ -227,21 +245,44 @@ func (conn *Conn) StartGame(data GameData) error {
 // minecraft.Dial(). Use Conn.StartGame to spawn a Conn obtained using a minecraft.Listener.
 // DoSpawn will start the spawning sequence using the game data found in conn.GameData(), which was sent
 // earlier by the server.
+// DoSpawn has a default timeout of 30 seconds. DoSpawnContext or DoSpawnTimeout may be used for cancellation
+// at any other times.
 func (conn *Conn) DoSpawn() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+	return conn.DoSpawnContext(ctx)
+}
+
+// DoSpawnTimeout starts the game for the client in the server with a timeout after which an error is
+// returned if the client has not yet spawned by that time. DoSpawnTimeout should be called for a Conn
+// obtained using minecraft.Dial(). Use Conn.StartGame to spawn a Conn obtained using a minecraft.Listener.
+// DoSpawnTimeout will start the spawning sequence using the game data found in conn.GameData(), which was
+// sent earlier by the server.
+func (conn *Conn) DoSpawnTimeout(timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	return conn.DoSpawnContext(ctx)
+}
+
+// DoSpawnContext starts the game for the client in the server, using a specific context for cancellation.
+// DoSpawnContext should be called for a Conn obtained using minecraft.Dial(). Use Conn.StartGame to spawn a
+// Conn obtained using a minecraft.Listener.
+// DoSpawnContext will start the spawning sequence using the game data found in conn.GameData(), which was
+// sent earlier by the server.
+func (conn *Conn) DoSpawnContext(ctx context.Context) error {
+	if !conn.gameDataReceived.Load() {
+		panic("(*Conn).DoSpawn must only be called on Dialer connections")
+	}
 	conn.waitingForSpawn.Store(true)
 
-	timeout := time.After(time.Second * 30)
 	select {
+	case <-conn.close:
+		return conn.closeErr("do spawn")
+	case <-ctx.Done():
+		return conn.wrap(ctx.Err(), "do spawn")
 	case <-conn.spawn:
 		// Conn was spawned successfully.
 		return nil
-	case <-timeout:
-		return fmt.Errorf("start game spawning timeout")
-	case <-conn.closeCtx.Done():
-		if conn.disconnectMessage.Load() != "" {
-			return fmt.Errorf("disconnected while spawning: %v", conn.disconnectMessage.Load())
-		}
-		return fmt.Errorf("connection closed")
 	}
 }
 
@@ -251,36 +292,43 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	if (conn.DebugMode) {
 		return nil
 	}
-	conn.sendMutex.Lock()
-	defer conn.sendMutex.Unlock()
-
-	header := &packet.Header{PacketID: pk.ID()}
-	_ = header.Write(conn.writeBuf)
-	// Record the length of the header so we can filter it out for the packet func.
-	headerLen := conn.writeBuf.Len()
-
-	pk.Marshal(conn.writeBuf)
-	if conn.packetFunc != nil {
-		// The packet func was set, so we call it.
-		conn.packetFunc(*header, conn.writeBuf.Bytes()[headerLen:], conn.LocalAddr(), conn.RemoteAddr())
+	select {
+	case <-conn.close:
+		return conn.closeErr("write packet")
+	default:
 	}
-	conn.bufferedSend = append(conn.bufferedSend, append([]byte(nil), conn.writeBuf.Bytes()...))
+	conn.sendMu.Lock()
+	defer conn.sendMu.Unlock()
 
-	conn.writeBuf.Reset()
+	buf := internal.BufferPool.Get().(*bytes.Buffer)
+	defer func() {
+		// Reset the buffer so we can return it to the buffer pool safely.
+		buf.Reset()
+		internal.BufferPool.Put(buf)
+	}()
+
+	conn.hdr.PacketID = pk.ID()
+	_ = conn.hdr.Write(buf)
+	l := buf.Len()
+
+	pk.Marshal(protocol.NewWriter(buf, conn.shieldID.Load()))
+	if conn.packetFunc != nil {
+		conn.packetFunc(*conn.hdr, buf.Bytes()[l:], conn.LocalAddr(), conn.RemoteAddr())
+	}
+
+	conn.bufferedSend = append(conn.bufferedSend, append([]byte(nil), buf.Bytes()...))
 	return nil
 }
 
 // ReadPacket reads a packet from the Conn, depending on the packet ID that is found in front of the packet
 // data. If a read deadline is set, an error is returned if the deadline is reached before any packet is
-// received.
-// The packet received must not be held until the next packet is read using ReadPacket(). If the same type of
-// packet is read, the previous one will be invalidated.
+// received. ReadPacket must not be called on multiple goroutines simultaneously.
 //
 // If the packet read was not implemented, a *packet.Unknown is returned, containing the raw payload of the
 // packet read.
 func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
-	if data, ok := conn.takePushedBackPacket(); ok {
-		pk, err := conn.parsePacket(data, false)
+	if data, ok := conn.takeDeferredPacket(); ok {
+		pk, err := data.decode(conn)
 		if err != nil {
 			conn.log.Println(err)
 			return conn.ReadPacket()
@@ -289,39 +337,17 @@ func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
 	}
 
 	select {
+	case <-conn.close:
+		return nil, conn.closeErr("read packet")
+	case <-conn.readDeadline:
+		return nil, conn.wrap(context.DeadlineExceeded, "read packet")
 	case data := <-conn.packets:
-		pk, err := conn.parsePacket(data, true)
+		pk, err := data.decode(conn)
 		if err != nil {
 			conn.log.Println(err)
 			return conn.ReadPacket()
 		}
 		return pk, nil
-	case <-conn.readDeadline:
-		return nil, fmt.Errorf("error reading packet: read timeout")
-	case <-conn.closeCtx.Done():
-		return nil, fmt.Errorf("error reading packet: connection closed")
-	}
-}
-
-// readPacket reads a new packet from the Conn, depending on the packet ID that is found in front of the
-// packet data. If a read deadline is set, an error is returned if the deadline is reached before any packet
-// is received.
-//
-// If the packet read was not implemented, a *packet.Unknown is returned, containing the raw payload of the
-// packet read.
-func (conn *Conn) readPacket() (pk packet.Packet, rawData []byte, readNext bool, err error) {
-	select {
-	case data := <-conn.packets:
-		pk, err := conn.parsePacket(data, true)
-		if err != nil {
-			conn.log.Println(err)
-			return nil, nil, true, nil
-		}
-		return pk, data, false, nil
-	case <-conn.readDeadline:
-		return nil, nil, false, fmt.Errorf("error reading packet: read timeout")
-	case <-conn.closeCtx.Done():
-		return nil, nil, false, fmt.Errorf("error reading packet: connection closed")
 	}
 }
 
@@ -335,8 +361,8 @@ func (conn *Conn) ResourcePacks() []*resource.Pack {
 // Write writes a slice of serialised packet data to the Conn. The data is buffered until the next 20th of a
 // tick, after which it is flushed to the connection. Write returns the amount of bytes written n.
 func (conn *Conn) Write(b []byte) (n int, err error) {
-	conn.sendMutex.Lock()
-	defer conn.sendMutex.Unlock()
+	conn.sendMu.Lock()
+	defer conn.sendMu.Unlock()
 
 	conn.bufferedSend = append(conn.bufferedSend, b)
 	return len(b), nil
@@ -346,36 +372,48 @@ func (conn *Conn) Write(b []byte) (n int, err error) {
 // to carry the full packet.
 // It is recommended to use ReadPacket() rather than Read() in cases where reading is done directly.
 func (conn *Conn) Read(b []byte) (n int, err error) {
-	if data, ok := conn.takePushedBackPacket(); ok {
-		if len(b) < len(data) {
-			return 0, fmt.Errorf("error reading data: A message sent on a Minecraft socket was larger than the buffer used to receive the message into")
+	if data, ok := conn.takeDeferredPacket(); ok {
+		if len(b) < len(data.full) {
+			return 0, conn.wrap(errBufferTooSmall, "read")
 		}
-		return copy(b, data), nil
+		return copy(b, data.full), nil
 	}
 	select {
-	case data := <-conn.packets:
-		if len(b) < len(data) {
-			return 0, fmt.Errorf("error reading data: A message sent on a Minecraft socket was larger than the buffer used to receive the message into")
-		}
-		return copy(b, data), nil
+	case <-conn.close:
+		return 0, conn.closeErr("read")
 	case <-conn.readDeadline:
-		return 0, fmt.Errorf("error reading packet: read timeout")
-	case <-conn.closeCtx.Done():
-		return 0, fmt.Errorf("error reading packet: connection closed")
+		return 0, conn.wrap(context.DeadlineExceeded, "read")
+	case data := <-conn.packets:
+		if len(b) < len(data.full) {
+			return 0, conn.wrap(errBufferTooSmall, "read")
+		}
+		return copy(b, data.full), nil
 	}
 }
 
 // Flush flushes the packets currently buffered by the connections to the underlying net.Conn, so that they
 // are directly sent.
 func (conn *Conn) Flush() error {
-	conn.sendMutex.Lock()
-	defer conn.sendMutex.Unlock()
+	select {
+	case <-conn.close:
+		return conn.closeErr("flush")
+	default:
+	}
+	conn.sendMu.Lock()
+	defer conn.sendMu.Unlock()
 
 	if len(conn.bufferedSend) > 0 {
-		if err := conn.encoder.Encode(conn.bufferedSend); err != nil {
-			return fmt.Errorf("error encoding packet batch: %v", err)
+		if err := conn.enc.Encode(conn.bufferedSend); err != nil && !raknet.ErrConnectionClosed(err) {
+			// Should never happen.
+			panic(fmt.Errorf("error encoding packet batch: %v", err))
 		}
-		// Reset the send slice so that we don't accidentally send the same packets.
+		// First manually clear out conn.bufferedSend so that re-using the slice after resetting its length to
+		// 0 doesn't result in an 'invisible' memory leak.
+		for i := range conn.bufferedSend {
+			conn.bufferedSend[i] = nil
+		}
+		// Slice the conn.bufferedSend to a length of 0 so we don't have to re-allocate space in this slice
+		// every time.
 		conn.bufferedSend = conn.bufferedSend[:0]
 	}
 	return nil
@@ -384,12 +422,16 @@ func (conn *Conn) Flush() error {
 // Close closes the Conn and its underlying connection. Before closing, it also calls Flush() so that any
 // packets currently pending are sent out.
 func (conn *Conn) Close() error {
-	if(conn.DebugMode) {
+	if (conn.DebugMode) {
 		return nil
 	}
-	conn.close()
-	_ = conn.Flush()
-	return conn.conn.Close()
+	var err error
+	conn.once.Do(func() {
+		close(conn.close)
+		_ = conn.Flush()
+		err = conn.conn.Close()
+	})
+	return err
 }
 
 // LocalAddr returns the local address of the underlying connection.
@@ -412,13 +454,11 @@ func (conn *Conn) SetDeadline(t time.Time) error {
 // Passing an empty time.Time to the method (time.Time{}) results in the read deadline being cleared.
 func (conn *Conn) SetReadDeadline(t time.Time) error {
 	if t.Before(time.Now()) {
-		return fmt.Errorf("error setting read deadline: time passed is before time.Now()")
+		panic(fmt.Errorf("error setting read deadline: time passed is before time.Now()"))
 	}
 	empty := time.Time{}
 	if t == empty {
-		// Empty time, so we just set the time to some crazy high value to ensure the read deadline is never
-		// actually reached.
-		conn.readDeadline = time.After(time.Hour * 1000000)
+		conn.readDeadline = make(chan time.Time)
 	} else {
 		conn.readDeadline = time.After(time.Until(t))
 	}
@@ -433,10 +473,12 @@ func (conn *Conn) SetWriteDeadline(time.Time) error {
 // Latency returns a rolling average of latency between the sending and the receiving end of the connection.
 // The latency returned is updated continuously and is half the round trip time (RTT).
 func (conn *Conn) Latency() time.Duration {
-	if c, ok := conn.conn.(*raknet.Conn); ok {
+	if c, ok := conn.conn.(interface {
+		Latency() time.Duration
+	}); ok {
 		return c.Latency()
 	}
-	panic(fmt.Sprintf("unexpected connection type %T", conn.conn))
+	panic(fmt.Sprintf("connection type %T has no Latency() time.Duration method", conn.conn))
 }
 
 // ClientCacheEnabled checks if the connection has the client blob cache enabled. If true, the server may send
@@ -453,121 +495,88 @@ func (conn *Conn) ChunkRadius() int {
 	return conn.chunkRadius
 }
 
-// parsePacket parses a packet from the data passed and returns it, if successful. If the packet could not be
-// parsed successfully, nil and an error is returned.
-func (conn *Conn) parsePacket(data []byte, callPacketFunc bool) (packet.Packet, error) {
-	buf := bytes.NewBuffer(data)
-	header := &packet.Header{}
-	if err := header.Read(buf); err != nil {
-		// We don't return this as an error as it's not in the hand of the user to control this. Instead,
-		// we return to reading a new packet.
-		return nil, fmt.Errorf("error reading packet header: %v", err)
-	}
-	if callPacketFunc {
-		if conn.packetFunc != nil {
-			// The packet func was set, so we call it.
-			conn.packetFunc(*header, buf.Bytes(), conn.RemoteAddr(), conn.LocalAddr())
-		}
-	}
-	// Attempt to fetch the packet with the right packet ID from the pool.
-	pk, ok := conn.pool[header.PacketID]
-	if !ok {
-		// We haven't implemented this packet ID, so we return an unknown packet which could be used by
-		// the reader.
-		pk = &packet.Unknown{PacketID: header.PacketID}
-	}
-	var violationErr string
-	defer func() {
-		if violationErr != "" && conn.sendPacketViolations {
-			// The server sent an invalid packet. We reply with a PacketViolationWarning holding any
-			// potentially useful information.
-			_ = conn.WritePacket(&packet.PacketViolationWarning{
-				Type:             packet.ViolationTypeMalformed,
-				Severity:         packet.ViolationSeverityWarning,
-				PacketID:         int32(header.PacketID),
-				ViolationContext: violationErr,
-			})
-		}
-	}()
+// takeDeferredPacket locks the deferred packets lock and takes the next packet from the list of deferred
+// packets. If none was found, it returns false, and if one was found, the data and true is returned.
+func (conn *Conn) takeDeferredPacket() (*packetData, bool) {
+	conn.deferredPacketMu.Lock()
+	defer conn.deferredPacketMu.Unlock()
 
-	if err := pk.Unmarshal(buf); err != nil {
-		violationErr = fmt.Sprintf("error decoding packet %T from %v: %v", pk, conn.RemoteAddr(), err)
-		// We don't return this as an error as it's not in the hand of the user to control this. Instead,
-		// we return to reading a new packet.
-		//fmt.Printf("%s\n",violationErr)
-		if false{
-			return nil,errors.New(violationErr)
-		}
-		return pk,nil//nil, errors.New(violationErr)
-	}
-	if buf.Len() != 0 {
-		violationErr = fmt.Sprintf("%v unread bytes left in packet %T%v from %v: 0x%x (full payload: 0x%x)\n", buf.Len(), pk, fmt.Sprintf("%+v", pk)[1:], conn.RemoteAddr(), buf.Bytes(), data)
-		return pk, nil//errors.New(violationErr)
-	}
-	if violation, ok := pk.(*packet.PacketViolationWarning); ok && conn.sendPacketViolations {
-		errPacket, _ := conn.pool[uint32(violation.PacketID)]
-		return nil, fmt.Errorf("phoenixbuilder packet violation (type = %v for packet %T): %v (severity = %v)", violation.Type, errPacket, violation.ViolationContext, violation.Severity)
-	}
-	return pk, nil
-}
-
-// takePushedBackPacketLocked locks the pushed back packets lock and takes the next packet from the list of
-// pushed back packets. If none was found, it returns false, and if one was found, the data and true is
-// returned.
-func (conn *Conn) takePushedBackPacket() ([]byte, bool) {
-	conn.pushedBackPacketsLock.Lock()
-	defer conn.pushedBackPacketsLock.Unlock()
-
-	if len(conn.pushedBackPackets) == 0 {
+	if len(conn.deferredPackets) == 0 {
 		return nil, false
 	}
-	data := conn.pushedBackPackets[0]
-	conn.pushedBackPackets = conn.pushedBackPackets[1:]
+	data := conn.deferredPackets[0]
+	// Explicitly clear out the packet at offset 0. When we slice it to remove the first element, that element
+	// will not be garbage collectable, because the array it's in is still referenced by the slice. Doing this
+	// makes sure garbage collecting the packet is possible.
+	conn.deferredPackets[0] = nil
+	conn.deferredPackets = conn.deferredPackets[1:]
 	return data, true
 }
 
-// handleIncoming handles an incoming serialised packet from the underlying connection. If the connection is
-// not yet logged in, the packet is immediately read and processed.
-func (conn *Conn) handleIncoming(data []byte) error {
-	select {
-	case conn.packets <- data:
-	case <-conn.closeCtx.Done():
+// deferPacket defers a packet so that it is obtained in the next ReadPacket call
+func (conn *Conn) deferPacket(pk *packetData) {
+	conn.deferredPacketMu.Lock()
+	conn.deferredPackets = append(conn.deferredPackets, pk)
+	conn.deferredPacketMu.Unlock()
+}
+
+// receive receives an incoming serialised packet from the underlying connection. If the connection is not yet
+// logged in, the packet is immediately handled.
+func (conn *Conn) receive(data []byte) error {
+	pkData, err := parseData(data, conn)
+	if err != nil {
+		return err
+	}
+	if pkData.h.PacketID == packet.IDDisconnect {
+		// We always handle disconnect packets and close the connection if one comes in.
+		pk, _ := pkData.decode(conn)
+
+		conn.disconnectMessage.Store(pk.(*packet.Disconnect).Message)
+		_ = conn.Close()
 		return nil
 	}
-
-	if !conn.loggedIn || conn.waitingForSpawn.Load() {
-		pk, rawPk, tryNext, err := conn.readPacket()
-		if tryNext {
-			// Some non-critical error occurred that was already logged to the logger. We simply stop handling
-			// this packet.
-			return nil
+	if conn.loggedIn && !conn.waitingForSpawn.Load() {
+		select {
+		case <-conn.close:
+		case previous := <-conn.packets:
+			// There was already a packet in this channel, so take it out and defer it so that it is read
+			// next.
+			conn.deferPacket(previous)
+		default:
 		}
-		if err != nil {
-			return err
+		select {
+		case <-conn.close:
+		case conn.packets <- pkData:
 		}
-		found := false
-		for _, id := range conn.expectedIDs.Load().([]uint32) {
-			if id == pk.ID() || pk.ID() == packet.IDDisconnect {
-				// If the packet was expected, we set found to true and handle it. If not, we skip it and
-				// ignore it eventually.
-				found = true
-				break
-			}
-		}
-		if !found {
-			// This is not the packet we expected next in the login sequence. We push it back so that it may
-			// be handled by the user.
-			conn.pushedBackPackets = append(conn.pushedBackPackets, rawPk)
-			return nil
-		}
-		return conn.handlePacket(pk)
+		return nil
 	}
+	return conn.handle(pkData)
+}
+
+// handle tries to handle the incoming packetData.
+func (conn *Conn) handle(pkData *packetData) error {
+	for _, id := range conn.expectedIDs.Load().([]uint32) {
+		if id == pkData.h.PacketID {
+			// If the packet was expected, so we handle it right now.
+			pk, err := pkData.decode(conn)
+			if err != nil {
+				return err
+			}
+			return conn.handlePacket(pk)
+		}
+	}
+	// This is not the packet we expected next in the login sequence. We push it back so that it may
+	// be handled by the user.
+	conn.deferPacket(pkData)
 	return nil
 }
 
 // handlePacket handles an incoming packet. It returns an error if any of the data found in the packet was not
 // valid or if handling failed for any other reason.
 func (conn *Conn) handlePacket(pk packet.Packet) error {
+	defer func() {
+		_ = conn.Flush()
+	}()
 	switch pk := pk.(type) {
 	// Internal packets destined for the server.
 	case *packet.Login:
@@ -602,9 +611,6 @@ func (conn *Conn) handlePacket(pk packet.Packet) error {
 		return conn.handleStartGame(pk)
 	case *packet.ChunkRadiusUpdated:
 		return conn.handleChunkRadiusUpdated(pk)
-	case *packet.Disconnect:
-		conn.disconnectMessage.Store(pk.Message)
-		_ = conn.Close()
 	}
 	return nil
 }
@@ -614,7 +620,21 @@ func (conn *Conn) handlePacket(pk packet.Packet) error {
 func (conn *Conn) handleLogin(pk *packet.Login) error {
 	// The next expected packet is a response from the client to the handshake.
 	conn.expect(packet.IDClientToServerHandshake)
+	var (
+		err        error
+		authResult login.AuthResult
+	)
+	conn.identityData, conn.clientData, authResult, err = login.Parse(pk.ConnectionRequest)
+	if err != nil {
+		return fmt.Errorf("parse login request: %w", err)
+	}
 
+	// Make sure the player is logged in with XBOX Live when necessary.
+	if !authResult.XBOXLiveAuthenticated && conn.authEnabled {
+		_ = conn.WritePacket(&packet.Disconnect{Message: text.Colourf("<red>You must be logged in with XBOX Live to join.</red>")})
+		return fmt.Errorf("connection %v was not authenticated to XBOX Live", conn.RemoteAddr())
+	}
+	// Make sure protocol numbers match.
 	if pk.ClientProtocol != protocol.CurrentProtocol {
 		// By default we assume the client is outdated.
 		status := packet.PlayStatusLoginFailedClient
@@ -623,32 +643,9 @@ func (conn *Conn) handleLogin(pk *packet.Login) error {
 			status = packet.PlayStatusLoginFailedServer
 		}
 		_ = conn.WritePacket(&packet.PlayStatus{Status: status})
-		_ = conn.Close()
 		return fmt.Errorf("%v connected with an incompatible protocol: expected protocol = %v, client protocol = %v", conn.identityData.DisplayName, protocol.CurrentProtocol, pk.ClientProtocol)
 	}
-
-	publicKey, authenticated, err := login.Verify(pk.ConnectionRequest)
-	if err != nil {
-		return fmt.Errorf("error verifying login request: %v", err)
-	}
-	if !authenticated && conn.authEnabled {
-		return fmt.Errorf("connection %v was not authenticated to XBOX Live", conn.RemoteAddr())
-	}
-	conn.authenticated = authenticated
-
-	conn.identityData, conn.clientData, err = login.Decode(pk.ConnectionRequest)
-	if err != nil {
-		return fmt.Errorf("error decoding login request: %v", err)
-	}
-	// First validate the identity data and the client data to ensure we're working with valid data. Mojang
-	// might change this data, or some custom client might fiddle with the data, so we can never be too sure.
-	if err := conn.identityData.Validate(); err != nil {
-		return fmt.Errorf("invalid identity data: %v", err)
-	}
-	if err := conn.clientData.Validate(); err != nil {
-		return fmt.Errorf("invalid client data: %v", err)
-	}
-	if err := conn.enableEncryption(publicKey); err != nil {
+	if err := conn.enableEncryption(authResult.PublicKey); err != nil {
 		return fmt.Errorf("error enabling encryption: %v", err)
 	}
 	return nil
@@ -666,19 +663,20 @@ func (conn *Conn) handleClientToServerHandshake() error {
 	}
 	pk := &packet.ResourcePacksInfo{TexturePackRequired: conn.texturePacksRequired}
 	for _, pack := range conn.resourcePacks {
-		resourcePack := protocol.ResourcePackInfo{UUID: pack.UUID(), Version: pack.Version(), Size: uint64(pack.Len())}
-		if pack.HasScripts() {
-			// One of the resource packs has scripts, so we set HasScripts in the packet to true.
-			pk.HasScripts = true
-			resourcePack.HasScripts = true
-		}
 		// If it has behaviours, add it to the behaviour pack list. If not, we add it to the texture packs
 		// list.
 		if pack.HasBehaviours() {
-			pk.BehaviourPacks = append(pk.BehaviourPacks, resourcePack)
+			behaviourPack := protocol.BehaviourPackInfo{UUID: pack.UUID(), Version: pack.Version(), Size: uint64(pack.Len())}
+			if pack.HasScripts() {
+				// One of the resource packs has scripts, so we set HasScripts in the packet to true.
+				pk.HasScripts = true
+				behaviourPack.HasScripts = true
+			}
+			pk.BehaviourPacks = append(pk.BehaviourPacks, behaviourPack)
 			continue
 		}
-		pk.TexturePacks = append(pk.TexturePacks, resourcePack)
+		texturePack := protocol.TexturePackInfo{UUID: pack.UUID(), Version: pack.Version(), Size: uint64(pack.Len())}
+		pk.TexturePacks = append(pk.TexturePacks, texturePack)
 	}
 	// Finally we send the packet after the play status.
 	if err := conn.WritePacket(pk); err != nil {
@@ -687,57 +685,51 @@ func (conn *Conn) handleClientToServerHandshake() error {
 	return nil
 }
 
+// saltClaims holds the claims for the salt sent by the server in the ServerToClientHandshake packet.
+type saltClaims struct {
+	Salt string `json:"salt"`
+}
+
 // handleServerToClientHandshake handles an incoming ServerToClientHandshake packet. It initialises encryption
 // on the client side of the connection, using the hash and the public key from the server exposed in the
 // packet.
 func (conn *Conn) handleServerToClientHandshake(pk *packet.ServerToClientHandshake) error {
-	headerData, err := jwt.HeaderFrom(pk.JWT)
+	tok, err := jwt.ParseSigned(string(pk.JWT))
 	if err != nil {
-		return fmt.Errorf("error reading ServerToClientHandshake JWT header: %v", err)
+		return fmt.Errorf("parse server token: %w", err)
 	}
-	header := &jwt.Header{}
-	if err := json.Unmarshal(headerData, header); err != nil {
-		return fmt.Errorf("error parsing ServerToClientHandshake JWT header JSON: %v", err)
+	//lint:ignore S1005 Double assignment is done explicitly to prevent panics.
+	raw, _ := tok.Headers[0].ExtraHeaders["x5u"]
+	kStr, _ := raw.(string)
+
+	pub := new(ecdsa.PublicKey)
+	if err := login.ParsePublicKey(kStr, pub); err != nil {
+		return fmt.Errorf("parse server public key: %w", err)
 	}
-	if !jwt.AllowedAlg(header.Algorithm) {
-		return fmt.Errorf("ServerToClientHandshake JWT header had unexpected alg: expected %v, got %v", "ES384", header.Algorithm)
+
+	var c saltClaims
+	if err := tok.Claims(pub, &c); err != nil {
+		return fmt.Errorf("verify claims: %w", err)
 	}
-	// First parse the public pubKey, so that we can use it to verify the entire JWT afterwards. The JWT is self-
-	// signed by the server.
-	pubKey := &ecdsa.PublicKey{}
-	if err := jwt.ParsePublicKey(header.X5U, pubKey); err != nil {
-		return fmt.Errorf("error parsing ServerToClientHandshake header x5u public pubKey: %v", err)
-	}
-	if _, err := jwt.Verify(pk.JWT, pubKey, false); err != nil {
-		return fmt.Errorf("error verifying ServerToClientHandshake JWT: %v", err)
-	}
-	// We already know the JWT is valid as we verified it, so no need to error check.
-	body, _ := jwt.Payload(pk.JWT)
-	m := make(map[string]string)
-	if err := json.Unmarshal(body, &m); err != nil {
-		return fmt.Errorf("error parsing ServerToClientHandshake JWT payload JSON: %v", err)
-	}
-	b64Salt, ok := m["salt"]
-	if !ok {
-		return fmt.Errorf("ServerToClientHandshake JWT payload contained no 'salt'")
-	}
-	// Some (faulty) JWT implementations use padded base64, whereas it should be raw. We trim this off.
-	b64Salt = strings.TrimRight(b64Salt, "=")
-	salt, err := base64.RawStdEncoding.DecodeString(b64Salt)
+	c.Salt = strings.TrimRight(c.Salt, "=")
+	salt, err := base64.RawStdEncoding.DecodeString(c.Salt)
 	if err != nil {
 		return fmt.Errorf("error base64 decoding ServerToClientHandshake salt: %v", err)
 	}
 
-	x, _ := pubKey.Curve.ScalarMult(pubKey.X, pubKey.Y, conn.privateKey.D.Bytes())
-	sharedSecret := x.Bytes()
+	x, _ := pub.Curve.ScalarMult(pub.X, pub.Y, conn.privateKey.D.Bytes())
+	// Make sure to pad the shared secret up to 96 bytes.
+	sharedSecret := append(bytes.Repeat([]byte{0}, 48-len(x.Bytes())), x.Bytes()...)
+
 	keyBytes := sha256.Sum256(append(salt, sharedSecret...))
 
-	// Finally we enable encryption for the encoder and decoder using the secret pubKey bytes we produced.
-	conn.encoder.EnableEncryption(keyBytes)
-	conn.decoder.EnableEncryption(keyBytes)
+	// Finally we enable encryption for the enc and dec using the secret pubKey bytes we produced.
+	conn.enc.EnableEncryption(keyBytes)
+	conn.dec.EnableEncryption(keyBytes)
 
 	// We write a ClientToServerHandshake packet (which has no payload) as a response.
-	return conn.WritePacket(&packet.ClientToServerHandshake{})
+	_ = conn.WritePacket(&packet.ClientToServerHandshake{})
+	return nil
 }
 
 // handleClientCacheStatus handles a ClientCacheStatus packet sent by the client. It specifies if the client
@@ -782,14 +774,16 @@ func (conn *Conn) handleResourcePacksInfo(pk *packet.ResourcePacksInfo) error {
 
 	if len(packsToDownload) != 0 {
 		conn.expect(packet.IDResourcePackDataInfo, packet.IDResourcePackChunkData)
-		return conn.WritePacket(&packet.ResourcePackClientResponse{
+		_ = conn.WritePacket(&packet.ResourcePackClientResponse{
 			Response:        packet.PackResponseSendPacks,
 			PacksToDownload: packsToDownload,
 		})
+		return nil
 	}
 	conn.expect(packet.IDResourcePackStack)
 
-	return conn.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseAllPacksDownloaded})
+	_ = conn.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseAllPacksDownloaded})
+	return nil
 }
 
 // handleResourcePackStack handles a ResourcePackStack packet sent by the server. The stack defines the order
@@ -816,7 +810,8 @@ func (conn *Conn) handleResourcePackStack(pk *packet.ResourcePackStack) error {
 		}
 	}
 	conn.expect(packet.IDStartGame)
-	return conn.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseCompleted})
+	_ = conn.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseCompleted})
+	return nil
 }
 
 // hasPack checks if the connection has a resource pack downloaded with the UUID and version passed, provided
@@ -829,8 +824,8 @@ func (conn *Conn) hasPack(uuid string, version string, hasBehaviours bool) bool 
 			return true
 		}
 	}
-	conn.packMutex.Lock()
-	defer conn.packMutex.Unlock()
+	conn.packMu.Lock()
+	defer conn.packMu.Unlock()
 
 	for _, pack := range conn.resourcePacks {
 		if pack.UUID() == uuid && pack.Version() == version && pack.HasBehaviours() == hasBehaviours {
@@ -899,14 +894,14 @@ func (conn *Conn) startGame() {
 		EntityUniqueID:               data.EntityUniqueID,
 		EntityRuntimeID:              data.EntityRuntimeID,
 		PlayerGameMode:               data.PlayerGameMode,
-		PlayerPosition:               data.PlayerPosition.Add(mgl32.Vec3{0, 1.62}), // Add the offset pos.
+		PlayerPosition:               data.PlayerPosition,
 		Pitch:                        data.Pitch,
 		Yaw:                          data.Yaw,
 		Dimension:                    data.Dimension,
 		WorldSpawn:                   data.WorldSpawn,
 		GameRules:                    data.GameRules,
 		Time:                         data.Time,
-		Blocks:                       data.Blocks,
+		Blocks:                       data.CustomBlocks,
 		Items:                        data.Items,
 		AchievementsDisabled:         true,
 		Generator:                    1,
@@ -916,9 +911,11 @@ func (conn *Conn) startGame() {
 		CommandsEnabled:              true,
 		WorldName:                    data.WorldName,
 		LANBroadcastEnabled:          true,
-		ServerAuthoritativeMovement:  data.ServerAuthoritativeMovement,
+		PlayerMovementSettings:       data.PlayerMovementSettings,
 		WorldGameMode:                data.WorldGameMode,
 		ServerAuthoritativeInventory: data.ServerAuthoritativeInventory,
+		Experiments:                  data.Experiments,
+		GameVersion:                  protocol.CurrentVersion,
 	})
 	conn.expect(packet.IDRequestChunkRadius, packet.IDSetLocalPlayerAsInitialised)
 }
@@ -942,50 +939,57 @@ func (conn *Conn) nextResourcePackDownload() error {
 // pack by the client.
 func (conn *Conn) handleResourcePackDataInfo(pk *packet.ResourcePackDataInfo) error {
 	id := strings.Split(pk.UUID, "_")[0]
-	chunkCount := pk.ChunkCount
 
-	downloadingPack, ok := conn.packQueue.downloadingPacks[id]
-
+	pack, ok := conn.packQueue.downloadingPacks[id]
 	if !ok {
 		// We either already downloaded the pack or we got sent an invalid UUID, that did not match any pack
 		// sent in the ResourcePacksInfo packet.
 		return fmt.Errorf("unknown pack to download with UUID %v", id)
 	}
-	if downloadingPack.size != pk.Size {
+	if pack.size != pk.Size {
 		// Size mismatch: The ResourcePacksInfo packet had a size for the pack that did not match with the
 		// size sent here.
 		conn.log.Printf("pack %v had a different size in the ResourcePacksInfo packet than the ResourcePackDataInfo packet\n", id)
-		downloadingPack.size = pk.Size
+		pack.size = pk.Size
 	}
 
 	// Remove the resource pack from the downloading packs and add it to the awaiting packets.
 	delete(conn.packQueue.downloadingPacks, id)
-	conn.packQueue.awaitingPacks[id] = &downloadingPack
+	conn.packQueue.awaitingPacks[id] = &pack
 
-	downloadingPack.chunkSize = pk.DataChunkSize
+	pack.chunkSize = pk.DataChunkSize
+
+	// The client calculates the chunk count by itself: You could in theory send a chunk count of 0 even
+	// though there's data, and the client will still download normally.
+	chunkCount := uint32(pk.Size / uint64(pk.DataChunkSize))
+	if pk.Size%uint64(pk.DataChunkSize) != 0 {
+		chunkCount++
+	}
+
+	idCopy := pk.UUID
 	go func() {
 		for i := uint32(0); i < chunkCount; i++ {
 			_ = conn.WritePacket(&packet.ResourcePackChunkRequest{
-				UUID:       pk.UUID,
+				UUID:       idCopy,
 				ChunkIndex: i,
 			})
 			select {
-			case frag := <-downloadingPack.newFrag:
-				// Write the fragment to the full buffer of the downloading resource pack.
-				_, _ = downloadingPack.buf.Write(frag)
-			case <-conn.closeCtx.Done():
+			case <-conn.close:
 				return
+			case frag := <-pack.newFrag:
+				// Write the fragment to the full buffer of the downloading resource pack.
+				_, _ = pack.buf.Write(frag)
 			}
 		}
-		conn.packMutex.Lock()
-		defer conn.packMutex.Unlock()
+		conn.packMu.Lock()
+		defer conn.packMu.Unlock()
 
-		if downloadingPack.buf.Len() != int(downloadingPack.size) {
-			conn.log.Printf("incorrect resource pack size: expected %v, but got %v\n", downloadingPack.size, downloadingPack.buf.Len())
+		if pack.buf.Len() != int(pack.size) {
+			conn.log.Printf("incorrect resource pack size: expected %v, but got %v\n", pack.size, pack.buf.Len())
 			return
 		}
 		// First parse the resource pack from the total byte buffer we obtained.
-		pack, err := resource.FromBytes(downloadingPack.buf.Bytes())
+		pack, err := resource.FromBytes(pack.buf.Bytes())
 		if err != nil {
 			conn.log.Printf("invalid full resource pack data for UUID %v: %v\n", id, err)
 			return
@@ -1005,23 +1009,23 @@ func (conn *Conn) handleResourcePackDataInfo(pk *packet.ResourcePackDataInfo) er
 // pack that is being downloaded.
 func (conn *Conn) handleResourcePackChunkData(pk *packet.ResourcePackChunkData) error {
 	pk.UUID = strings.Split(pk.UUID, "_")[0]
-	downloadingPack, ok := conn.packQueue.awaitingPacks[pk.UUID]
+	pack, ok := conn.packQueue.awaitingPacks[pk.UUID]
 	if !ok {
 		// We haven't received a ResourcePackDataInfo packet from the server, so we can't use this data to
 		// download a resource pack.
 		return fmt.Errorf("resource pack chunk data for resource pack that was not being downloaded")
 	}
-	lastData := downloadingPack.buf.Len()+int(downloadingPack.chunkSize) >= int(downloadingPack.size)
-	if !lastData && uint32(len(pk.Data)) != downloadingPack.chunkSize {
+	lastData := pack.buf.Len()+int(pack.chunkSize) >= int(pack.size)
+	if !lastData && uint32(len(pk.Data)) != pack.chunkSize {
 		// The chunk data didn't have the full size and wasn't the last data to be sent for the resource pack,
 		// meaning we got too little data.
-		return fmt.Errorf("resource pack chunk data had a length of %v, but expected %v", len(pk.Data), downloadingPack.chunkSize)
+		return fmt.Errorf("resource pack chunk data had a length of %v, but expected %v", len(pk.Data), pack.chunkSize)
 	}
-	if pk.ChunkIndex != downloadingPack.expectedIndex {
-		return fmt.Errorf("resource pack chunk data had chunk index %v, but expected %v", pk.ChunkIndex, downloadingPack.expectedIndex)
+	if pk.ChunkIndex != pack.expectedIndex {
+		return fmt.Errorf("resource pack chunk data had chunk index %v, but expected %v", pk.ChunkIndex, pack.expectedIndex)
 	}
-	downloadingPack.expectedIndex++
-	downloadingPack.newFrag <- pk.Data
+	pack.expectedIndex++
+	pack.newFrag <- pk.Data
 	return nil
 }
 
@@ -1069,29 +1073,38 @@ func (conn *Conn) handleResourcePackChunkRequest(pk *packet.ResourcePackChunkReq
 // handleStartGame handles an incoming StartGame packet. It is the signal that the player has been added to a
 // world, and it obtains most of its dedicated properties.
 func (conn *Conn) handleStartGame(pk *packet.StartGame) error {
+	conn.gameDataReceived.Store(true)
 	conn.gameData = GameData{
 		Difficulty:                   pk.Difficulty,
 		WorldName:                    pk.WorldName,
 		EntityUniqueID:               pk.EntityUniqueID,
 		EntityRuntimeID:              pk.EntityRuntimeID,
 		PlayerGameMode:               pk.PlayerGameMode,
-		PlayerPosition:               pk.PlayerPosition.Sub(mgl32.Vec3{0, 1.62}), // Subtract offset position.
+		PlayerPosition:               pk.PlayerPosition,
 		Pitch:                        pk.Pitch,
 		Yaw:                          pk.Yaw,
 		Dimension:                    pk.Dimension,
 		WorldSpawn:                   pk.WorldSpawn,
 		GameRules:                    pk.GameRules,
 		Time:                         pk.Time,
-		Blocks:                       pk.Blocks,
+		CustomBlocks:                 pk.Blocks,
 		Items:                        pk.Items,
-		ServerAuthoritativeMovement:  pk.ServerAuthoritativeMovement,
+		PlayerMovementSettings:       pk.PlayerMovementSettings,
 		WorldGameMode:                pk.WorldGameMode,
 		ServerAuthoritativeInventory: pk.ServerAuthoritativeInventory,
+		Experiments:                  pk.Experiments,
 	}
+	for _, item := range pk.Items {
+		if item.Name == "minecraft:shield" {
+			conn.shieldID.Store(int32(item.RuntimeID))
+		}
+	}
+
 	conn.loggedIn = true
 
 	conn.expect(packet.IDChunkRadiusUpdated, packet.IDPlayStatus)
-	return conn.WritePacket(&packet.RequestChunkRadius{ChunkRadius: int32(conn.chunkRadius)})
+	_ = conn.WritePacket(&packet.RequestChunkRadius{ChunkRadius: int32(conn.chunkRadius)})
+	return nil
 }
 
 // handleRequestChunkRadius handles an incoming RequestChunkRadius packet. It sets the initial chunk radius
@@ -1112,7 +1125,10 @@ func (conn *Conn) handleRequestChunkRadius(pk *packet.RequestChunkRadius) error 
 		SerialisedBiomeDefinitions: b,
 	})
 
-	return conn.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusPlayerSpawn})
+	_ = conn.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusPlayerSpawn})
+
+	_ = conn.WritePacket(&packet.CreativeContent{})
+	return nil
 }
 
 // handleChunkRadiusUpdated handles an incoming ChunkRadiusUpdated packet, which updates the initial chunk
@@ -1133,8 +1149,9 @@ func (conn *Conn) handleSetLocalPlayerAsInitialised(pk *packet.SetLocalPlayerAsI
 	if pk.EntityRuntimeID != conn.gameData.EntityRuntimeID {
 		return fmt.Errorf("entity runtime ID mismatch: entity runtime ID in StartGame and SetLocalPlayerAsInitialised packets should be equal")
 	}
-	conn.spawn <- true
-	conn.waitingForSpawn.Store(false)
+	if conn.waitingForSpawn.CAS(true, false) {
+		close(conn.spawn)
+	}
 	return nil
 }
 
@@ -1157,9 +1174,11 @@ func (conn *Conn) handlePlayStatus(pk *packet.PlayStatus) error {
 		return fmt.Errorf("server outdated")
 	case packet.PlayStatusPlayerSpawn:
 		// We've spawned and can send the last packet in the spawn sequence.
-		conn.spawn <- true
-		conn.waitingForSpawn.Store(false)
-		return conn.WritePacket(&packet.SetLocalPlayerAsInitialised{EntityRuntimeID: conn.gameData.EntityRuntimeID})
+		if conn.waitingForSpawn.CAS(true, false) {
+			close(conn.spawn)
+			_ = conn.WritePacket(&packet.SetLocalPlayerAsInitialised{EntityRuntimeID: conn.gameData.EntityRuntimeID})
+		}
+		return nil
 	case packet.PlayStatusLoginFailedInvalidTenant:
 		_ = conn.Close()
 		return fmt.Errorf("invalid edu edition game owner")
@@ -1180,22 +1199,16 @@ func (conn *Conn) handlePlayStatus(pk *packet.PlayStatus) error {
 // enableEncryption enables encryption on the server side over the connection. It sends an unencrypted
 // handshake packet to the client and enables encryption after that.
 func (conn *Conn) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
-	pubKey := jwt.MarshalPublicKey(&conn.privateKey.PublicKey)
-	header := jwt.Header{
-		Algorithm: "ES384",
-		X5U:       pubKey,
-	}
-	payload := map[string]interface{}{
-		"salt": base64.StdEncoding.EncodeToString(conn.salt),
-	}
-
+	signer, _ := jose.NewSigner(jose.SigningKey{Key: conn.privateKey, Algorithm: jose.ES384}, &jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{"x5u": login.MarshalPublicKey(&conn.privateKey.PublicKey)},
+	})
 	// We produce an encoded JWT using the header and payload above, then we send the JWT in a ServerToClient-
 	// Handshake packet so that the client can initialise encryption.
-	serverJWT, err := jwt.New(header, payload, conn.privateKey)
+	serverJWT, err := jwt.Signed(signer).Claims(saltClaims{Salt: base64.RawStdEncoding.EncodeToString(conn.salt)}).CompactSerialize()
 	if err != nil {
-		return fmt.Errorf("error creating encoded JWT: %v", err)
+		return fmt.Errorf("compact serialise server JWT: %w", err)
 	}
-	if err := conn.WritePacket(&packet.ServerToClientHandshake{JWT: serverJWT}); err != nil {
+	if err := conn.WritePacket(&packet.ServerToClientHandshake{JWT: []byte(serverJWT)}); err != nil {
 		return fmt.Errorf("error sending ServerToClientHandshake packet: %v", err)
 	}
 	// Flush immediately as we'll enable encryption after this.
@@ -1203,12 +1216,14 @@ func (conn *Conn) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
 
 	// We first compute the shared secret.
 	x, _ := clientPublicKey.Curve.ScalarMult(clientPublicKey.X, clientPublicKey.Y, conn.privateKey.D.Bytes())
-	sharedSecret := x.Bytes()
+
+	sharedSecret := append(bytes.Repeat([]byte{0}, 48-len(x.Bytes())), x.Bytes()...)
+
 	keyBytes := sha256.Sum256(append(conn.salt, sharedSecret...))
 
 	// Finally we enable encryption for the encoder and decoder using the secret key bytes we produced.
-	conn.encoder.EnableEncryption(keyBytes)
-	conn.decoder.EnableEncryption(keyBytes)
+	conn.enc.EnableEncryption(keyBytes)
+	conn.dec.EnableEncryption(keyBytes)
 
 	return nil
 }
@@ -1216,4 +1231,13 @@ func (conn *Conn) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
 // expect sets the packet IDs that are next expected to arrive.
 func (conn *Conn) expect(packetIDs ...uint32) {
 	conn.expectedIDs.Store(packetIDs)
+}
+
+// closeErr returns an adequate connection closed error for the op passed. If the connection was closed
+// through a Disconnect packet, the message is contained.
+func (conn *Conn) closeErr(op string) error {
+	if msg := conn.disconnectMessage.Load(); msg != "" {
+		return conn.wrap(DisconnectError(msg), op)
+	}
+	return conn.wrap(errClosed, op)
 }

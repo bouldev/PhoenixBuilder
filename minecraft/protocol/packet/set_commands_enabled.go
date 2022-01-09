@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // SetCommandsEnabled is sent by the server to enable or disable the ability to execute commands for the
@@ -18,11 +17,11 @@ func (*SetCommandsEnabled) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetCommandsEnabled) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.Enabled)
+func (pk *SetCommandsEnabled) Marshal(w *protocol.Writer) {
+	w.Bool(&pk.Enabled)
 }
 
 // Unmarshal ...
-func (pk *SetCommandsEnabled) Unmarshal(buf *bytes.Buffer) error {
-	return binary.Read(buf, binary.LittleEndian, &pk.Enabled)
+func (pk *SetCommandsEnabled) Unmarshal(r *protocol.Reader) {
+	r.Bool(&pk.Enabled)
 }

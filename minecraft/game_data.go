@@ -49,22 +49,22 @@ type GameData struct {
 	// GameRules defines game rules currently active with their respective values. The value of these game
 	// rules may be either 'bool', 'int32' or 'float32'. Some game rules are server side only, and don't
 	// necessarily need to be sent to the client.
-	GameRules map[string]interface{}
+	GameRules []protocol.GameRule
 	// Time is the total time that has elapsed since the start of the world.
 	Time int64
-	// Blocks is a list of all blocks and variants existing in the game. Failing to send any of the blocks
-	// that are in the game, including any specific variants of that block, will crash mobile clients. It
-	// seems Windows 10 games do not crash.
-	Blocks []interface{}
-	// Items is a list of all items existing in the game. Failing to send any of the default items that are in
-	// the game will crash mobile clients.
+	// CustomBlocks is a list of custom blocks added to the game by the server. These blocks all have a name
+	// and block properties.
+	CustomBlocks []protocol.BlockEntry
+	// Items is a list of all items existing in the game, including custom items registered by the server.
 	Items []protocol.ItemEntry
-	// ServerAuthoritativeMovement specifies if the client should use the 'server authoritative movement',
-	// meaning it will send PlayerAuthInput packets instead of MovePlayer packets, which the server should
-	// verify.
-	ServerAuthoritativeMovement bool
+	// PlayerMovementSettings specify the different server authoritative movement settings that it has
+	// enabled.
+	PlayerMovementSettings protocol.PlayerMovementSettings
 	// ServerAuthoritativeInventory specifies if the server authoritative inventory system is enabled. This
 	// is a new system introduced in 1.16. Backwards compatibility with the inventory transactions has to
 	// some extent been preserved, but will eventually be removed.
 	ServerAuthoritativeInventory bool
+	// Experiments is a list of experiments enabled on the server side. These experiments are used to enable
+	// disable experimental features.
+	Experiments []protocol.ExperimentData
 }

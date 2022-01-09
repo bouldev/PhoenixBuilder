@@ -1,9 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -31,34 +28,31 @@ func (*SetScore) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetScore) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.ActionType)
-	if pk.ActionType != ScoreboardActionRemove && pk.ActionType != ScoreboardActionModify {
-		panic(fmt.Sprintf("invalid scoreboard action type %v", pk.ActionType))
-	}
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Entries)))
-	for _, entry := range pk.Entries {
-		_ = protocol.WriteScoreEntry(buf, entry, pk.ActionType == ScoreboardActionModify)
+func (pk *SetScore) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.ActionType)
+	switch pk.ActionType {
+	case ScoreboardActionRemove, ScoreboardActionModify:
+		l := uint32(len(pk.Entries))
+		w.Varuint32(&l)
+		for _, entry := range pk.Entries {
+			protocol.ScoreEntry(w, &entry, pk.ActionType == ScoreboardActionModify)
+		}
+	default:
+		w.UnknownEnumOption(pk.ActionType, "set score action type")
 	}
 }
 
 // Unmarshal ...
-func (pk *SetScore) Unmarshal(buf *bytes.Buffer) error {
+func (pk *SetScore) Unmarshal(r *protocol.Reader) {
 	var count uint32
-	if err := chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.ActionType),
-		protocol.Varuint32(buf, &count),
-	); err != nil {
-		return err
-	}
+	r.Uint8(&pk.ActionType)
+	r.Varuint32(&count)
+
 	if pk.ActionType != ScoreboardActionRemove && pk.ActionType != ScoreboardActionModify {
-		return fmt.Errorf("unknown scoreboard action type %v", pk.ActionType)
+		r.UnknownEnumOption(pk.ActionType, "set score action type")
 	}
 	pk.Entries = make([]protocol.ScoreboardEntry, count)
 	for i := uint32(0); i < count; i++ {
-		if err := protocol.ScoreEntry(buf, &pk.Entries[i], pk.ActionType == ScoreboardActionModify); err != nil {
-			return err
-		}
+		protocol.ScoreEntry(r, &pk.Entries[i], pk.ActionType == ScoreboardActionModify)
 	}
-	return nil
 }

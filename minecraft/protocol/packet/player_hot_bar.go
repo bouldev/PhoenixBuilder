@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -25,17 +23,15 @@ func (*PlayerHotBar) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PlayerHotBar) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, pk.SelectedHotBarSlot)
-	_ = binary.Write(buf, binary.LittleEndian, pk.WindowID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.SelectHotBarSlot)
+func (pk *PlayerHotBar) Marshal(w *protocol.Writer) {
+	w.Varuint32(&pk.SelectedHotBarSlot)
+	w.Uint8(&pk.WindowID)
+	w.Bool(&pk.SelectHotBarSlot)
 }
 
 // Unmarshal ...
-func (pk *PlayerHotBar) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint32(buf, &pk.SelectedHotBarSlot),
-		binary.Read(buf, binary.LittleEndian, &pk.WindowID),
-		binary.Read(buf, binary.LittleEndian, &pk.SelectHotBarSlot),
-	)
+func (pk *PlayerHotBar) Unmarshal(r *protocol.Reader) {
+	r.Varuint32(&pk.SelectedHotBarSlot)
+	r.Uint8(&pk.WindowID)
+	r.Bool(&pk.SelectHotBarSlot)
 }

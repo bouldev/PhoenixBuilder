@@ -92,10 +92,12 @@ jobs:
         printf "StrictHostKeyChecking no\nUserKnownHostsFile /dev/null">~/.ssh/config
         chmod 0600 ~/fbkey
     - name: Upload binaries and publish
+      env:
+        FBSERVER: ${{ secrets.FBSERVER }}
       run: |
-        echo "put fb-linux-binaries.tar.gz">~/a
-        sftp -i ~/fbkey -b ~/a root@fastbuilder.pro
-        ssh -i ~/fbkey root@fastbuilder.pro "mkdir -p fbbinaries;mv fb-linux-binaries.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rm -rf build;cd ~/cv4;node updateHashes.js ../fbbinaries/hashes.json;mv ../fbbinaries/* /var/www/pro/downloads/phoenix/"
+        echo "put fb-linux-binaries-v2.tar.gz">~/a
+        sftp -i ~/fbkey -b ~/a root@$FBSERVER
+        ssh -i ~/fbkey root@$FBSERVER "mkdir -p fbbinariesv2;mv fb-linux-binaries-v2.tar.gz fbbinariesv2/;cd fbbinariesv2;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rm -rf build;cd ~/cv4;node updateV2Hashes.js ../fbbinariesv2/hashes.json;mv ../fbbinariesv2/* /var/www/prostorage/epsilon"
 
 
 

@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -13,7 +12,7 @@ type GameRulesChanged struct {
 	// Note that some game rules are server side only, and don't necessarily need to be sent to the client.
 	// Only changed game rules need to be sent in this packet. Game rules that were not changed do not need to
 	// be sent if the client is already updated on them.
-	GameRules map[string]interface{}
+	GameRules []protocol.GameRule
 }
 
 // ID ...
@@ -22,12 +21,11 @@ func (*GameRulesChanged) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *GameRulesChanged) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteGameRules(buf, pk.GameRules)
+func (pk *GameRulesChanged) Marshal(w *protocol.Writer) {
+	protocol.WriteGameRules(w, &pk.GameRules)
 }
 
 // Unmarshal ...
-func (pk *GameRulesChanged) Unmarshal(buf *bytes.Buffer) error {
-	pk.GameRules = make(map[string]interface{})
-	return protocol.GameRules(buf, &pk.GameRules)
+func (pk *GameRulesChanged) Unmarshal(r *protocol.Reader) {
+	protocol.GameRules(r, &pk.GameRules)
 }

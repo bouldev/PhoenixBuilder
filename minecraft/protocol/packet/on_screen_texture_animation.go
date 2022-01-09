@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // OnScreenTextureAnimation is sent by the server to show a certain animation on the screen of the player.
@@ -19,11 +18,11 @@ func (*OnScreenTextureAnimation) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *OnScreenTextureAnimation) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.AnimationType)
+func (pk *OnScreenTextureAnimation) Marshal(w *protocol.Writer) {
+	w.Int32(&pk.AnimationType)
 }
 
 // Unmarshal ...
-func (pk *OnScreenTextureAnimation) Unmarshal(buf *bytes.Buffer) error {
-	return binary.Read(buf, binary.LittleEndian, &pk.AnimationType)
+func (pk *OnScreenTextureAnimation) Unmarshal(r *protocol.Reader) {
+	r.Int32(&pk.AnimationType)
 }

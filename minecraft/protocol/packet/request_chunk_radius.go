@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -20,11 +19,11 @@ func (*RequestChunkRadius) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *RequestChunkRadius) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.ChunkRadius)
+func (pk *RequestChunkRadius) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.ChunkRadius)
 }
 
 // Unmarshal ...
-func (pk *RequestChunkRadius) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.Varint32(buf, &pk.ChunkRadius)
+func (pk *RequestChunkRadius) Unmarshal(r *protocol.Reader) {
+	r.Varint32(&pk.ChunkRadius)
 }

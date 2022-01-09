@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -20,11 +19,11 @@ func (*SetTime) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetTime) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.Time)
+func (pk *SetTime) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.Time)
 }
 
 // Unmarshal ...
-func (pk *SetTime) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.Varint32(buf, &pk.Time)
+func (pk *SetTime) Unmarshal(r *protocol.Reader) {
+	r.Varint32(&pk.Time)
 }

@@ -84,7 +84,7 @@ FastBuilder Phoenix与其他程序的不同点在于，存在「客户端」与�
 - Linux x86_64 (推荐使用此平台): 
 
   ```shell
-  wget -O fastbuilder https://fastbuilder.pro/downloads/phoenix/phoenixbuilder
+  wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder
   chmod +x fastbuilder
   ```
 
@@ -117,9 +117,10 @@ FastBuilder Phoenix与其他程序的不同点在于，存在「客户端」与�
      > **注意：此步骤(d)也为更新步骤，之后更新Fast Builder可以直接通过执行本步骤完成。**
 
      ```shell
-     wget -O fastbuilder https://fastbuilder.pro/downloads/phoenix/phoenixbuilder-android-executable-arm64
+     wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder-android-executable-arm64
      chmod +x fastbuilder
      ```
+
 ### 使用指导
 
 FastBuilder Phoenix是纯命令行程序，没有复杂的GUI，这使得程序本身非常易于使用。

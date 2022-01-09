@@ -1,9 +1,5 @@
 package protocol
 
-import (
-	"bytes"
-)
-
 // Attribute is an entity attribute, that holds specific data such as the health of the entity. Each attribute
 // holds a default value, maximum and minimum value, name and its current value.
 type Attribute struct {
@@ -22,92 +18,59 @@ type Attribute struct {
 	Default float32
 }
 
-// Attributes reads an Attribute slice from bytes.Buffer src and stores it in the pointer passed.
-func Attributes(src *bytes.Buffer, attributes *[]Attribute) error {
+// Attributes reads an Attribute slice x from Reader r.
+func Attributes(r *Reader, x *[]Attribute) {
 	var count uint32
-	if err := Varuint32(src, &count); err != nil {
-		return wrap(err)
-	}
-	if count > mediumLimit {
-		return LimitHitError{Limit: mediumLimit, Type: "attribute"}
-	}
-	*attributes = make([]Attribute, count)
+	r.Varuint32(&count)
+	r.LimitUint32(count, mediumLimit)
+
+	*x = make([]Attribute, count)
 	for i := uint32(0); i < count; i++ {
-		attribute := Attribute{}
-		if err := chainErr(
-			Float32(src, &attribute.Min),
-			Float32(src, &attribute.Max),
-			Float32(src, &attribute.Value),
-			Float32(src, &attribute.Default),
-			String(src, &attribute.Name),
-		); err != nil {
-			return wrap(err)
-		}
-		(*attributes)[i] = attribute
+		r.Float32(&(*x)[i].Min)
+		r.Float32(&(*x)[i].Max)
+		r.Float32(&(*x)[i].Value)
+		r.Float32(&(*x)[i].Default)
+		r.String(&(*x)[i].Name)
 	}
-	return nil
 }
 
-// WriteAttributes writes a slice of Attributes x to buffer dst.
-func WriteAttributes(dst *bytes.Buffer, x []Attribute) error {
-	if err := WriteVaruint32(dst, uint32(len(x))); err != nil {
-		return wrap(err)
+// WriteAttributes writes a slice of Attributes x to Writer w.
+func WriteAttributes(w *Writer, x *[]Attribute) {
+	l := uint32(len(*x))
+	w.Varuint32(&l)
+	for _, attribute := range *x {
+		w.Float32(&attribute.Min)
+		w.Float32(&attribute.Max)
+		w.Float32(&attribute.Value)
+		w.Float32(&attribute.Default)
+		w.String(&attribute.Name)
 	}
-	for _, attribute := range x {
-		if err := chainErr(
-			WriteFloat32(dst, attribute.Min),
-			WriteFloat32(dst, attribute.Max),
-			WriteFloat32(dst, attribute.Value),
-			WriteFloat32(dst, attribute.Default),
-			WriteString(dst, attribute.Name),
-		); err != nil {
-			return wrap(err)
-		}
-	}
-	return nil
 }
 
 // InitialAttributes reads an Attribute slice from bytes.Buffer src and stores it in the pointer passed.
 // InitialAttributes is used when reading the attributes of a new entity. (AddEntity packet)
-func InitialAttributes(src *bytes.Buffer, attributes *[]Attribute) error {
+func InitialAttributes(r *Reader, x *[]Attribute) {
 	var count uint32
-	if err := Varuint32(src, &count); err != nil {
-		return wrap(err)
-	}
-	if count > mediumLimit {
-		return LimitHitError{Limit: mediumLimit, Type: "attribute"}
-	}
-	*attributes = make([]Attribute, count)
+	r.Varuint32(&count)
+	r.LimitUint32(count, mediumLimit)
+	*x = make([]Attribute, count)
 	for i := uint32(0); i < count; i++ {
-		attribute := Attribute{}
-		if err := chainErr(
-			String(src, &attribute.Name),
-			Float32(src, &attribute.Min),
-			Float32(src, &attribute.Value),
-			Float32(src, &attribute.Max),
-		); err != nil {
-			return wrap(err)
-		}
-		(*attributes)[i] = attribute
+		r.String(&(*x)[i].Name)
+		r.Float32(&(*x)[i].Min)
+		r.Float32(&(*x)[i].Value)
+		r.Float32(&(*x)[i].Max)
 	}
-	return nil
 }
 
-// WriteInitialAttributes writes a slice of Attributes x to buffer dst. WriteInitialAttributes is used when
+// WriteInitialAttributes writes a slice of Attributes x to Writer w. WriteInitialAttributes is used when
 // writing the attributes of a new entity. (AddEntity packet)
-func WriteInitialAttributes(dst *bytes.Buffer, x []Attribute) error {
-	if err := WriteVaruint32(dst, uint32(len(x))); err != nil {
-		return wrap(err)
+func WriteInitialAttributes(w *Writer, x *[]Attribute) {
+	l := uint32(len(*x))
+	w.Varuint32(&l)
+	for _, attribute := range *x {
+		w.String(&attribute.Name)
+		w.Float32(&attribute.Min)
+		w.Float32(&attribute.Value)
+		w.Float32(&attribute.Max)
 	}
-	for _, attribute := range x {
-		if err := chainErr(
-			WriteString(dst, attribute.Name),
-			WriteFloat32(dst, attribute.Min),
-			WriteFloat32(dst, attribute.Value),
-			WriteFloat32(dst, attribute.Max),
-		); err != nil {
-			return wrap(err)
-		}
-	}
-	return nil
 }

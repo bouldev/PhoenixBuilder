@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -23,24 +22,21 @@ func (*PlayerEnchantOptions) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PlayerEnchantOptions) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Options)))
+func (pk *PlayerEnchantOptions) Marshal(w *protocol.Writer) {
+	l := uint32(len(pk.Options))
+	w.Varuint32(&l)
 	for _, option := range pk.Options {
-		_ = protocol.WriteEnchantOption(buf, option)
+		protocol.WriteEnchantOption(w, &option)
 	}
 }
 
 // Unmarshal ...
-func (pk *PlayerEnchantOptions) Unmarshal(buf *bytes.Buffer) error {
+func (pk *PlayerEnchantOptions) Unmarshal(r *protocol.Reader) {
 	var l uint32
-	if err := protocol.Varuint32(buf, &l); err != nil {
-		return err
-	}
+
+	r.Varuint32(&l)
 	pk.Options = make([]protocol.EnchantmentOption, l)
 	for i := uint32(0); i < l; i++ {
-		if err := protocol.EnchantOption(buf, &pk.Options[i]); err != nil {
-			return err
-		}
+		protocol.EnchantOption(r, &pk.Options[i])
 	}
-	return nil
 }

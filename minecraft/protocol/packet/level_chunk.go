@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -40,41 +38,34 @@ func (*LevelChunk) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *LevelChunk) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.ChunkX)
-	_ = protocol.WriteVarint32(buf, pk.ChunkZ)
-	_ = protocol.WriteVaruint32(buf, pk.SubChunkCount)
-	_ = binary.Write(buf, binary.LittleEndian, pk.CacheEnabled)
+func (pk *LevelChunk) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.ChunkX)
+	w.Varint32(&pk.ChunkZ)
+	w.Varuint32(&pk.SubChunkCount)
+	w.Bool(&pk.CacheEnabled)
 	if pk.CacheEnabled {
-		_ = protocol.WriteVaruint32(buf, uint32(len(pk.BlobHashes)))
+		l := uint32(len(pk.BlobHashes))
+		w.Varuint32(&l)
 		for _, hash := range pk.BlobHashes {
-			_ = binary.Write(buf, binary.LittleEndian, hash)
+			w.Uint64(&hash)
 		}
 	}
-	_ = protocol.WriteByteSlice(buf, pk.RawPayload)
+	w.ByteSlice(&pk.RawPayload)
 }
 
 // Unmarshal ...
-func (pk *LevelChunk) Unmarshal(buf *bytes.Buffer) error {
-	if err := chainErr(
-		protocol.Varint32(buf, &pk.ChunkX),
-		protocol.Varint32(buf, &pk.ChunkZ),
-		protocol.Varuint32(buf, &pk.SubChunkCount),
-		binary.Read(buf, binary.LittleEndian, &pk.CacheEnabled),
-	); err != nil {
-		return err
-	}
+func (pk *LevelChunk) Unmarshal(r *protocol.Reader) {
+	r.Varint32(&pk.ChunkX)
+	r.Varint32(&pk.ChunkZ)
+	r.Varuint32(&pk.SubChunkCount)
+	r.Bool(&pk.CacheEnabled)
 	if pk.CacheEnabled {
 		var count uint32
-		if err := protocol.Varuint32(buf, &count); err != nil {
-			return err
-		}
+		r.Varuint32(&count)
 		pk.BlobHashes = make([]uint64, count)
 		for i := uint32(0); i < count; i++ {
-			if err := binary.Read(buf, binary.LittleEndian, &pk.BlobHashes[i]); err != nil {
-				return err
-			}
+			r.Uint64(&pk.BlobHashes[i])
 		}
 	}
-	return protocol.ByteSlice(buf, &pk.RawPayload)
+	r.ByteSlice(&pk.RawPayload)
 }

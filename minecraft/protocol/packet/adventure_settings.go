@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -29,13 +27,15 @@ const (
 )
 
 const (
-	ActionPermissionBuildAndMine = 1 << iota
+	ActionPermissionBuild = 1 << iota
 	ActionPermissionDoorsAndSwitched
 	ActionPermissionOpenContainers
 	ActionPermissionAttackPlayers
 	ActionPermissionAttackMobs
 	ActionPermissionOperator
 	ActionPermissionTeleport
+	ActionPermissionMine
+	ActionPermissionDefault
 )
 
 const (
@@ -78,23 +78,21 @@ func (*AdventureSettings) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *AdventureSettings) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, pk.Flags)
-	_ = protocol.WriteVaruint32(buf, pk.CommandPermissionLevel)
-	_ = protocol.WriteVaruint32(buf, pk.ActionPermissions)
-	_ = protocol.WriteVaruint32(buf, pk.PermissionLevel)
-	_ = protocol.WriteVaruint32(buf, pk.CustomStoredPermissions)
-	_ = binary.Write(buf, binary.LittleEndian, pk.PlayerUniqueID)
+func (pk *AdventureSettings) Marshal(w *protocol.Writer) {
+	w.Varuint32(&pk.Flags)
+	w.Varuint32(&pk.CommandPermissionLevel)
+	w.Varuint32(&pk.ActionPermissions)
+	w.Varuint32(&pk.PermissionLevel)
+	w.Varuint32(&pk.CustomStoredPermissions)
+	w.Int64(&pk.PlayerUniqueID)
 }
 
 // Unmarshal ...
-func (pk *AdventureSettings) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint32(buf, &pk.Flags),
-		protocol.Varuint32(buf, &pk.CommandPermissionLevel),
-		protocol.Varuint32(buf, &pk.ActionPermissions),
-		protocol.Varuint32(buf, &pk.PermissionLevel),
-		protocol.Varuint32(buf, &pk.CustomStoredPermissions),
-		binary.Read(buf, binary.LittleEndian, &pk.PlayerUniqueID),
-	)
+func (pk *AdventureSettings) Unmarshal(r *protocol.Reader) {
+	r.Varuint32(&pk.Flags)
+	r.Varuint32(&pk.CommandPermissionLevel)
+	r.Varuint32(&pk.ActionPermissions)
+	r.Varuint32(&pk.PermissionLevel)
+	r.Varuint32(&pk.CustomStoredPermissions)
+	r.Int64(&pk.PlayerUniqueID)
 }

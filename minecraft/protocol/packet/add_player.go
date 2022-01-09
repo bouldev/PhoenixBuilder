@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"
 	"phoenixbuilder/minecraft/protocol"
@@ -46,7 +44,7 @@ type AddPlayer struct {
 	// HeldItem is the item that the player is holding. The item is shown to the viewer as soon as the player
 	// itself shows up. Needless to say that this field is rather pointless, as additional packets still must
 	// be sent for armour to show up.
-	HeldItem protocol.ItemStack
+	HeldItem protocol.ItemInstance
 	// EntityMetadata is a map of entity metadata, which includes flags and data properties that alter in
 	// particular the way the player looks. Flags include ones such as 'on fire' and 'sprinting'.
 	// The metadata values are indexed by their property key.
@@ -85,54 +83,51 @@ func (*AddPlayer) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *AddPlayer) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteUUID(buf, pk.UUID)
-	_ = protocol.WriteString(buf, pk.Username)
-	_ = protocol.WriteVarint64(buf, pk.EntityUniqueID)
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteString(buf, pk.PlatformChatID)
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = protocol.WriteVec3(buf, pk.Velocity)
-	_ = protocol.WriteFloat32(buf, pk.Pitch)
-	_ = protocol.WriteFloat32(buf, pk.Yaw)
-	_ = protocol.WriteFloat32(buf, pk.HeadYaw)
-	_ = protocol.WriteItem(buf, pk.HeldItem)
-	_ = protocol.WriteEntityMetadata(buf, pk.EntityMetadata)
-	_ = protocol.WriteVaruint32(buf, pk.Flags)
-	_ = protocol.WriteVaruint32(buf, pk.CommandPermissionLevel)
-	_ = protocol.WriteVaruint32(buf, pk.ActionPermissions)
-	_ = protocol.WriteVaruint32(buf, pk.PermissionLevel)
-	_ = protocol.WriteVaruint32(buf, pk.CustomStoredPermissions)
-	_ = binary.Write(buf, binary.LittleEndian, pk.PlayerUniqueID)
-	_ = protocol.WriteEntityLinks(buf, pk.EntityLinks)
-	_ = protocol.WriteString(buf, pk.DeviceID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.BuildPlatform)
+func (pk *AddPlayer) Marshal(w *protocol.Writer) {
+	w.UUID(&pk.UUID)
+	w.String(&pk.Username)
+	w.Varint64(&pk.EntityUniqueID)
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.String(&pk.PlatformChatID)
+	w.Vec3(&pk.Position)
+	w.Vec3(&pk.Velocity)
+	w.Float32(&pk.Pitch)
+	w.Float32(&pk.Yaw)
+	w.Float32(&pk.HeadYaw)
+	w.ItemInstance(&pk.HeldItem)
+	w.EntityMetadata(&pk.EntityMetadata)
+	w.Varuint32(&pk.Flags)
+	w.Varuint32(&pk.CommandPermissionLevel)
+	w.Varuint32(&pk.ActionPermissions)
+	w.Varuint32(&pk.PermissionLevel)
+	w.Varuint32(&pk.CustomStoredPermissions)
+	w.Int64(&pk.PlayerUniqueID)
+	protocol.WriteEntityLinks(w, &pk.EntityLinks)
+	w.String(&pk.DeviceID)
+	w.Int32(&pk.BuildPlatform)
 }
 
 // Unmarshal ...
-func (pk *AddPlayer) Unmarshal(buf *bytes.Buffer) error {
-	pk.EntityMetadata = map[uint32]interface{}{}
-	return chainErr(
-		protocol.UUID(buf, &pk.UUID),
-		protocol.String(buf, &pk.Username),
-		protocol.Varint64(buf, &pk.EntityUniqueID),
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.String(buf, &pk.PlatformChatID),
-		protocol.Vec3(buf, &pk.Position),
-		protocol.Vec3(buf, &pk.Velocity),
-		protocol.Float32(buf, &pk.Pitch),
-		protocol.Float32(buf, &pk.Yaw),
-		protocol.Float32(buf, &pk.HeadYaw),
-		protocol.Item(buf, &pk.HeldItem),
-		protocol.EntityMetadata(buf, &pk.EntityMetadata),
-		protocol.Varuint32(buf, &pk.Flags),
-		protocol.Varuint32(buf, &pk.CommandPermissionLevel),
-		protocol.Varuint32(buf, &pk.ActionPermissions),
-		protocol.Varuint32(buf, &pk.PermissionLevel),
-		protocol.Varuint32(buf, &pk.CustomStoredPermissions),
-		binary.Read(buf, binary.LittleEndian, &pk.PlayerUniqueID),
-		protocol.EntityLinks(buf, &pk.EntityLinks),
-		protocol.String(buf, &pk.DeviceID),
-		binary.Read(buf, binary.LittleEndian, &pk.BuildPlatform),
-	)
+func (pk *AddPlayer) Unmarshal(r *protocol.Reader) {
+	r.UUID(&pk.UUID)
+	r.String(&pk.Username)
+	r.Varint64(&pk.EntityUniqueID)
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.String(&pk.PlatformChatID)
+	r.Vec3(&pk.Position)
+	r.Vec3(&pk.Velocity)
+	r.Float32(&pk.Pitch)
+	r.Float32(&pk.Yaw)
+	r.Float32(&pk.HeadYaw)
+	r.ItemInstance(&pk.HeldItem)
+	r.EntityMetadata(&pk.EntityMetadata)
+	r.Varuint32(&pk.Flags)
+	r.Varuint32(&pk.CommandPermissionLevel)
+	r.Varuint32(&pk.ActionPermissions)
+	r.Varuint32(&pk.PermissionLevel)
+	r.Varuint32(&pk.CustomStoredPermissions)
+	r.Int64(&pk.PlayerUniqueID)
+	protocol.EntityLinks(r, &pk.EntityLinks)
+	r.String(&pk.DeviceID)
+	r.Int32(&pk.BuildPlatform)
 }

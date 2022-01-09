@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -25,17 +23,15 @@ func (*GUIDataPickItem) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *GUIDataPickItem) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.ItemName)
-	_ = protocol.WriteString(buf, pk.ItemEffects)
-	_ = binary.Write(buf, binary.LittleEndian, pk.HotBarSlot)
+func (pk *GUIDataPickItem) Marshal(w *protocol.Writer) {
+	w.String(&pk.ItemName)
+	w.String(&pk.ItemEffects)
+	w.Int32(&pk.HotBarSlot)
 }
 
 // Unmarshal ...
-func (pk *GUIDataPickItem) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.String(buf, &pk.ItemName),
-		protocol.String(buf, &pk.ItemEffects),
-		binary.Read(buf, binary.LittleEndian, &pk.HotBarSlot),
-	)
+func (pk *GUIDataPickItem) Unmarshal(r *protocol.Reader) {
+	r.String(&pk.ItemName)
+	r.String(&pk.ItemEffects)
+	r.Int32(&pk.HotBarSlot)
 }

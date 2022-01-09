@@ -1,10 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
-	"math"
 )
 
 const (
@@ -53,20 +50,15 @@ func (*PositionTrackingDBServerBroadcast) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PositionTrackingDBServerBroadcast) Marshal(buf *bytes.Buffer) {
-	buf.WriteByte(pk.BroadcastAction)
-	_ = protocol.WriteVarint32(buf, pk.TrackingID)
-	buf.Write(pk.SerialisedData)
+func (pk *PositionTrackingDBServerBroadcast) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.BroadcastAction)
+	w.Varint32(&pk.TrackingID)
+	w.Bytes(&pk.SerialisedData)
 }
 
 // Unmarshal ...
-func (pk *PositionTrackingDBServerBroadcast) Unmarshal(buf *bytes.Buffer) error {
-	if err := binary.Read(buf, binary.LittleEndian, &pk.BroadcastAction); err != nil {
-		return err
-	}
-	if err := protocol.Varint32(buf, &pk.TrackingID); err != nil {
-		return err
-	}
-	pk.SerialisedData = buf.Next(math.MaxInt32)
-	return nil
+func (pk *PositionTrackingDBServerBroadcast) Unmarshal(r *protocol.Reader) {
+	r.Uint8(&pk.BroadcastAction)
+	r.Varint32(&pk.TrackingID)
+	r.Bytes(&pk.SerialisedData)
 }

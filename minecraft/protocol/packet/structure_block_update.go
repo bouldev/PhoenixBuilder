@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -60,29 +58,27 @@ func (*StructureBlockUpdate) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *StructureBlockUpdate) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteUBlockPosition(buf, pk.Position)
-	_ = protocol.WriteString(buf, pk.StructureName)
-	_ = protocol.WriteString(buf, pk.DataField)
-	_ = binary.Write(buf, binary.LittleEndian, pk.IncludePlayers)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ShowBoundingBox)
-	_ = protocol.WriteVarint32(buf, pk.StructureBlockType)
-	_ = protocol.WriteStructSettings(buf, pk.Settings)
-	_ = protocol.WriteVarint32(buf, pk.RedstoneSaveMode)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ShouldTrigger)
+func (pk *StructureBlockUpdate) Marshal(w *protocol.Writer) {
+	w.UBlockPos(&pk.Position)
+	w.String(&pk.StructureName)
+	w.String(&pk.DataField)
+	w.Bool(&pk.IncludePlayers)
+	w.Bool(&pk.ShowBoundingBox)
+	w.Varint32(&pk.StructureBlockType)
+	protocol.StructSettings(w, &pk.Settings)
+	w.Varint32(&pk.RedstoneSaveMode)
+	w.Bool(&pk.ShouldTrigger)
 }
 
 // Unmarshal ...
-func (pk *StructureBlockUpdate) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.UBlockPosition(buf, &pk.Position),
-		protocol.String(buf, &pk.StructureName),
-		protocol.String(buf, &pk.DataField),
-		binary.Read(buf, binary.LittleEndian, &pk.IncludePlayers),
-		binary.Read(buf, binary.LittleEndian, &pk.ShowBoundingBox),
-		protocol.Varint32(buf, &pk.StructureBlockType),
-		protocol.StructSettings(buf, &pk.Settings),
-		protocol.Varint32(buf, &pk.RedstoneSaveMode),
-		binary.Read(buf, binary.LittleEndian, &pk.ShouldTrigger),
-	)
+func (pk *StructureBlockUpdate) Unmarshal(r *protocol.Reader) {
+	r.UBlockPos(&pk.Position)
+	r.String(&pk.StructureName)
+	r.String(&pk.DataField)
+	r.Bool(&pk.IncludePlayers)
+	r.Bool(&pk.ShowBoundingBox)
+	r.Varint32(&pk.StructureBlockType)
+	protocol.StructSettings(r, &pk.Settings)
+	r.Varint32(&pk.RedstoneSaveMode)
+	r.Bool(&pk.ShouldTrigger)
 }

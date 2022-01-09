@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -21,27 +20,22 @@ func (*ItemStackRequest) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ItemStackRequest) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Requests)))
+func (pk *ItemStackRequest) Marshal(w *protocol.Writer) {
+	l := uint32(len(pk.Requests))
+	w.Varuint32(&l)
 	for _, req := range pk.Requests {
-		_ = protocol.WriteStackRequest(buf, req)
+		protocol.WriteStackRequest(w, &req)
 	}
 }
 
 // Unmarshal ...
-func (pk *ItemStackRequest) Unmarshal(buf *bytes.Buffer) error {
+func (pk *ItemStackRequest) Unmarshal(r *protocol.Reader) {
 	var count uint32
-	if err := protocol.Varuint32(buf, &count); err != nil {
-		return err
-	}
-	if count > 64 {
-		return protocol.LimitHitError{Limit: 64, Type: "ItemStackRequest"}
-	}
+	r.Varuint32(&count)
+	r.LimitUint32(count, 64)
+
 	pk.Requests = make([]protocol.ItemStackRequest, count)
 	for i := uint32(0); i < count; i++ {
-		if err := protocol.StackRequest(buf, &pk.Requests[i]); err != nil {
-			return err
-		}
+		protocol.StackRequest(r, &pk.Requests[i])
 	}
-	return nil
 }

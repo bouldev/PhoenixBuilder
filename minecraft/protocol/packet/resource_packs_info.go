@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -18,11 +16,11 @@ type ResourcePacksInfo struct {
 	HasScripts bool
 	// BehaviourPack is a list of behaviour packs that the client needs to download before joining the server.
 	// All of these behaviour packs will be applied together.
-	BehaviourPacks []protocol.ResourcePackInfo
+	BehaviourPacks []protocol.BehaviourPackInfo
 	// TexturePacks is a list of texture packs that the client needs to download before joining the server.
 	// The order of these texture packs is not relevant in this packet. It is however important in the
 	// ResourcePackStack packet.
-	TexturePacks []protocol.ResourcePackInfo
+	TexturePacks []protocol.TexturePackInfo
 }
 
 // ID ...
@@ -31,43 +29,36 @@ func (*ResourcePacksInfo) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ResourcePacksInfo) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.TexturePackRequired)
-	_ = binary.Write(buf, binary.LittleEndian, pk.HasScripts)
-	_ = binary.Write(buf, binary.LittleEndian, uint16(len(pk.BehaviourPacks)))
+func (pk *ResourcePacksInfo) Marshal(w *protocol.Writer) {
+	w.Bool(&pk.TexturePackRequired)
+	w.Bool(&pk.HasScripts)
+	l := uint16(len(pk.BehaviourPacks))
+	w.Uint16(&l)
 	for _, pack := range pk.BehaviourPacks {
-		_ = protocol.WritePackInfo(buf, pack)
+		protocol.BehaviourPackInformation(w, &pack)
 	}
-	_ = binary.Write(buf, binary.LittleEndian, uint16(len(pk.TexturePacks)))
+	l = uint16(len(pk.TexturePacks))
+	w.Uint16(&l)
 	for _, pack := range pk.TexturePacks {
-		_ = protocol.WritePackInfo(buf, pack)
+		protocol.TexturePackInformation(w, &pack)
 	}
 }
 
 // Unmarshal ...
-func (pk *ResourcePacksInfo) Unmarshal(buf *bytes.Buffer) error {
+func (pk *ResourcePacksInfo) Unmarshal(r *protocol.Reader) {
 	var length uint16
-	if err := chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.TexturePackRequired),
-		binary.Read(buf, binary.LittleEndian, &pk.HasScripts),
-		binary.Read(buf, binary.LittleEndian, &length),
-	); err != nil {
-		return err
-	}
-	pk.BehaviourPacks = make([]protocol.ResourcePackInfo, length)
+	r.Bool(&pk.TexturePackRequired)
+	r.Bool(&pk.HasScripts)
+	r.Uint16(&length)
+
+	pk.BehaviourPacks = make([]protocol.BehaviourPackInfo, length)
 	for i := uint16(0); i < length; i++ {
-		if err := protocol.PackInfo(buf, &pk.BehaviourPacks[i]); err != nil {
-			return err
-		}
+		protocol.BehaviourPackInformation(r, &pk.BehaviourPacks[i])
 	}
-	if err := binary.Read(buf, binary.LittleEndian, &length); err != nil {
-		return err
-	}
-	pk.TexturePacks = make([]protocol.ResourcePackInfo, length)
+
+	r.Uint16(&length)
+	pk.TexturePacks = make([]protocol.TexturePackInfo, length)
 	for i := uint16(0); i < length; i++ {
-		if err := protocol.PackInfo(buf, &pk.TexturePacks[i]); err != nil {
-			return err
-		}
+		protocol.TexturePackInformation(r, &pk.TexturePacks[i])
 	}
-	return nil
 }

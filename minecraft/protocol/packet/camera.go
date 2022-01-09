@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -22,15 +21,13 @@ func (*Camera) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *Camera) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint64(buf, pk.CameraEntityUniqueID)
-	_ = protocol.WriteVarint64(buf, pk.TargetPlayerUniqueID)
+func (pk *Camera) Marshal(w *protocol.Writer) {
+	w.Varint64(&pk.CameraEntityUniqueID)
+	w.Varint64(&pk.TargetPlayerUniqueID)
 }
 
 // Unmarshal ...
-func (pk *Camera) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varint64(buf, &pk.CameraEntityUniqueID),
-		protocol.Varint64(buf, &pk.TargetPlayerUniqueID),
-	)
+func (pk *Camera) Unmarshal(r *protocol.Reader) {
+	r.Varint64(&pk.CameraEntityUniqueID)
+	r.Varint64(&pk.TargetPlayerUniqueID)
 }

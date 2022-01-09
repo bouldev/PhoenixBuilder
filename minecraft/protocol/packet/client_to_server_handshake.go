@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"bytes"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // ClientToServerHandshake is sent by the client in response to a ServerToClientHandshake packet sent by the
@@ -17,11 +17,11 @@ func (*ClientToServerHandshake) ID() uint32 {
 }
 
 // Marshal ...
-func (*ClientToServerHandshake) Marshal(*bytes.Buffer) {
+func (*ClientToServerHandshake) Marshal(*protocol.Writer) {
 
 }
 
 // Unmarshal ...
-func (*ClientToServerHandshake) Unmarshal(*bytes.Buffer) error {
-	return nil
+func (*ClientToServerHandshake) Unmarshal(*protocol.Reader) {
+
 }

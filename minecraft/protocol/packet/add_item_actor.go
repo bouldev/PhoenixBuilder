@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -19,7 +17,7 @@ type AddItemActor struct {
 	EntityRuntimeID uint64
 	// Item is the item that is spawned. It must have a valid ID for it to show up client-side. If it is not
 	// a valid item, the client will crash when coming near.
-	Item protocol.ItemStack
+	Item protocol.ItemInstance
 	// Position is the position to spawn the entity on. If the entity is on a distance that the player cannot
 	// see it, the entity will still show up if the player moves closer.
 	Position mgl32.Vec3
@@ -41,26 +39,23 @@ func (*AddItemActor) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *AddItemActor) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint64(buf, pk.EntityUniqueID)
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteItem(buf, pk.Item)
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = protocol.WriteVec3(buf, pk.Velocity)
-	_ = protocol.WriteEntityMetadata(buf, pk.EntityMetadata)
-	_ = binary.Write(buf, binary.LittleEndian, pk.FromFishing)
+func (pk *AddItemActor) Marshal(w *protocol.Writer) {
+	w.Varint64(&pk.EntityUniqueID)
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.ItemInstance(&pk.Item)
+	w.Vec3(&pk.Position)
+	w.Vec3(&pk.Velocity)
+	w.EntityMetadata(&pk.EntityMetadata)
+	w.Bool(&pk.FromFishing)
 }
 
 // Unmarshal ...
-func (pk *AddItemActor) Unmarshal(buf *bytes.Buffer) error {
-	pk.EntityMetadata = map[uint32]interface{}{}
-	return chainErr(
-		protocol.Varint64(buf, &pk.EntityUniqueID),
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.Item(buf, &pk.Item),
-		protocol.Vec3(buf, &pk.Position),
-		protocol.Vec3(buf, &pk.Velocity),
-		protocol.EntityMetadata(buf, &pk.EntityMetadata),
-		binary.Read(buf, binary.LittleEndian, &pk.FromFishing),
-	)
+func (pk *AddItemActor) Unmarshal(r *protocol.Reader) {
+	r.Varint64(&pk.EntityUniqueID)
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.ItemInstance(&pk.Item)
+	r.Vec3(&pk.Position)
+	r.Vec3(&pk.Velocity)
+	r.EntityMetadata(&pk.EntityMetadata)
+	r.Bool(&pk.FromFishing)
 }

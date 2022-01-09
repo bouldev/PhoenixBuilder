@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -18,11 +17,11 @@ func (*SetDifficulty) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetDifficulty) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, pk.Difficulty)
+func (pk *SetDifficulty) Marshal(w *protocol.Writer) {
+	w.Varuint32(&pk.Difficulty)
 }
 
 // Unmarshal ...
-func (pk *SetDifficulty) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.Varuint32(buf, &pk.Difficulty)
+func (pk *SetDifficulty) Unmarshal(r *protocol.Reader) {
+	r.Varuint32(&pk.Difficulty)
 }

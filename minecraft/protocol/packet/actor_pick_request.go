@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // ActorPickRequest is sent by the client when it tries to pick an entity, so that it gets a spawn egg which
@@ -22,15 +21,13 @@ func (*ActorPickRequest) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ActorPickRequest) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.EntityUniqueID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.HotBarSlot)
+func (pk *ActorPickRequest) Marshal(w *protocol.Writer) {
+	w.Int64(&pk.EntityUniqueID)
+	w.Uint8(&pk.HotBarSlot)
 }
 
 // Unmarshal ...
-func (pk *ActorPickRequest) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.EntityUniqueID),
-		binary.Read(buf, binary.LittleEndian, &pk.HotBarSlot),
-	)
+func (pk *ActorPickRequest) Unmarshal(r *protocol.Reader) {
+	r.Int64(&pk.EntityUniqueID)
+	r.Uint8(&pk.HotBarSlot)
 }

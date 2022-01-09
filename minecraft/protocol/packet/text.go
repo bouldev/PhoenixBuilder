@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -55,68 +53,55 @@ func (*Text) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *Text) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.TextType)
-	_ = binary.Write(buf, binary.LittleEndian, pk.NeedsTranslation)
+func (pk *Text) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.TextType)
+	w.Bool(&pk.NeedsTranslation)
 	switch pk.TextType {
 	case TextTypeChat, TextTypeWhisper, TextTypeAnnouncement:
-		_ = protocol.WriteString(buf, pk.SourceName)
-		_ = protocol.WriteString(buf, pk.Message)
+		w.String(&pk.SourceName)
+		w.String(&pk.Message)
 	case TextTypeRaw, TextTypeTip, TextTypeSystem, TextTypeObject, TextTypeObjectWhisper:
-		_ = protocol.WriteString(buf, pk.Message)
+		w.String(&pk.Message)
 	case TextTypeTranslation, TextTypePopup, TextTypeJukeboxPopup:
-		_ = protocol.WriteString(buf, pk.Message)
-		_ = protocol.WriteVaruint32(buf, uint32(len(pk.Parameters)))
+		w.String(&pk.Message)
+		l := uint32(len(pk.Parameters))
+		w.Varuint32(&l)
 		for _, x := range pk.Parameters {
-			_ = protocol.WriteString(buf, x)
+			w.String(&x)
 		}
 	}
-	_ = protocol.WriteString(buf, pk.XUID)
-	_ = protocol.WriteString(buf, pk.PlatformChatID)
+	w.String(&pk.XUID)
+	w.String(&pk.PlatformChatID)
 	if pk.TextType == TextTypeChat {
-		_ = binary.Write(buf, binary.LittleEndian, byte(2))
-		_ = protocol.WriteString(buf, "PlayerId")
-		_ = protocol.WriteString(buf, "-12345678")
+		b1:=byte(2)
+		s1:="PlayerId"
+		s2:="-12345678"
+		w.Uint8(&b1)
+		w.String(&s1)
+		w.String(&s2)
 	}
 }
 
 // Unmarshal ...
-func (pk *Text) Unmarshal(buf *bytes.Buffer) error {
-	if err := chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.TextType),
-		binary.Read(buf, binary.LittleEndian, &pk.NeedsTranslation),
-	); err != nil {
-		return err
-	}
+func (pk *Text) Unmarshal(r *protocol.Reader) {
+	r.Uint8(&pk.TextType)
+	r.Bool(&pk.NeedsTranslation)
 	switch pk.TextType {
 	case TextTypeChat, TextTypeWhisper, TextTypeAnnouncement:
-		if err := chainErr(
-			protocol.String(buf, &pk.SourceName),
-			protocol.String(buf, &pk.Message),
-		); err != nil {
-			return err
-		}
+		r.String(&pk.SourceName)
+		r.String(&pk.Message)
 	case TextTypeRaw, TextTypeTip, TextTypeSystem, TextTypeObject, TextTypeObjectWhisper:
-		if err := protocol.String(buf, &pk.Message); err != nil {
-			return err
-		}
+		r.String(&pk.Message)
 	case TextTypeTranslation, TextTypePopup, TextTypeJukeboxPopup:
 		var length uint32
-		if err := chainErr(
-			protocol.String(buf, &pk.Message),
-			protocol.Varuint32(buf, &length),
-		); err != nil {
-			return err
-		}
+
+		r.String(&pk.Message)
+		r.Varuint32(&length)
 		pk.Parameters = make([]string, length)
 		for i := uint32(0); i < length; i++ {
-			if err := protocol.String(buf, &pk.Parameters[i]); err != nil {
-				return err
-			}
+			r.String(&pk.Parameters[i])
 		}
 	}
-	return chainErr(
-		protocol.String(buf, &pk.XUID),
-		protocol.String(buf, &pk.PlatformChatID),
-	)
+	r.String(&pk.XUID)
+	r.String(&pk.PlatformChatID)
 }

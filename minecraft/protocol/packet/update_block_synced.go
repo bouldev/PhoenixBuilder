@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -17,7 +16,7 @@ type UpdateBlockSynced struct {
 	// Position is the block position at which a block is updated.
 	Position protocol.BlockPos
 	// NewBlockRuntimeID is the runtime ID of the block that is placed at Position after sending the packet
-	// to the client. The runtime ID must point to a block sent in the list in the StartGame packet.
+	// to the client.
 	NewBlockRuntimeID uint32
 	// Flags is a combination of flags that specify the way the block is updated client-side. It is a
 	// combination of the flags above, but typically sending only the BlockUpdateNetwork flag is sufficient.
@@ -42,23 +41,21 @@ func (*UpdateBlockSynced) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *UpdateBlockSynced) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteUBlockPosition(buf, pk.Position)
-	_ = protocol.WriteVaruint32(buf, pk.NewBlockRuntimeID)
-	_ = protocol.WriteVaruint32(buf, pk.Flags)
-	_ = protocol.WriteVaruint32(buf, pk.Layer)
-	_ = protocol.WriteVarint64(buf, pk.EntityUniqueID)
-	_ = protocol.WriteVaruint64(buf, pk.TransitionType)
+func (pk *UpdateBlockSynced) Marshal(w *protocol.Writer) {
+	w.UBlockPos(&pk.Position)
+	w.Varuint32(&pk.NewBlockRuntimeID)
+	w.Varuint32(&pk.Flags)
+	w.Varuint32(&pk.Layer)
+	w.Varint64(&pk.EntityUniqueID)
+	w.Varuint64(&pk.TransitionType)
 }
 
 // Unmarshal ...
-func (pk *UpdateBlockSynced) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.UBlockPosition(buf, &pk.Position),
-		protocol.Varuint32(buf, &pk.NewBlockRuntimeID),
-		protocol.Varuint32(buf, &pk.Flags),
-		protocol.Varuint32(buf, &pk.Layer),
-		protocol.Varint64(buf, &pk.EntityUniqueID),
-		protocol.Varuint64(buf, &pk.TransitionType),
-	)
+func (pk *UpdateBlockSynced) Unmarshal(r *protocol.Reader) {
+	r.UBlockPos(&pk.Position)
+	r.Varuint32(&pk.NewBlockRuntimeID)
+	r.Varuint32(&pk.Flags)
+	r.Varuint32(&pk.Layer)
+	r.Varint64(&pk.EntityUniqueID)
+	r.Varuint64(&pk.TransitionType)
 }

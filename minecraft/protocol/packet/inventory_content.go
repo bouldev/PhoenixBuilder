@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -23,28 +22,23 @@ func (*InventoryContent) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *InventoryContent) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, pk.WindowID)
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Content)))
+func (pk *InventoryContent) Marshal(w *protocol.Writer) {
+	l := uint32(len(pk.Content))
+	w.Varuint32(&pk.WindowID)
+	w.Varuint32(&l)
 	for _, item := range pk.Content {
-		_ = protocol.WriteItemInst(buf, item)
+		w.ItemInstance(&item)
 	}
 }
 
 // Unmarshal ...
-func (pk *InventoryContent) Unmarshal(buf *bytes.Buffer) error {
+func (pk *InventoryContent) Unmarshal(r *protocol.Reader) {
 	var length uint32
-	if err := chainErr(
-		protocol.Varuint32(buf, &pk.WindowID),
-		protocol.Varuint32(buf, &length),
-	); err != nil {
-		return err
-	}
+	r.Varuint32(&pk.WindowID)
+	r.Varuint32(&length)
+
 	pk.Content = make([]protocol.ItemInstance, length)
 	for i := uint32(0); i < length; i++ {
-		if err := protocol.ItemInst(buf, &pk.Content[i]); err != nil {
-			return err
-		}
+		r.ItemInstance(&pk.Content[i])
 	}
-	return nil
 }

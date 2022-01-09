@@ -1,11 +1,9 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 	"image/color"
+	"math"
 )
 
 const (
@@ -78,29 +76,32 @@ func (*ClientBoundMapItemData) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ClientBoundMapItemData) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint64(buf, pk.MapID)
-	_ = protocol.WriteVaruint32(buf, pk.UpdateFlags)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Dimension)
-	_ = binary.Write(buf, binary.LittleEndian, pk.LockedMap)
+func (pk *ClientBoundMapItemData) Marshal(w *protocol.Writer) {
+	w.Varint64(&pk.MapID)
+	w.Varuint32(&pk.UpdateFlags)
+	w.Uint8(&pk.Dimension)
+	w.Bool(&pk.LockedMap)
 
 	if pk.UpdateFlags&MapUpdateFlagInitialisation != 0 {
-		_ = protocol.WriteVaruint32(buf, uint32(len(pk.MapsIncludedIn)))
+		l := uint32(len(pk.MapsIncludedIn))
+		w.Varuint32(&l)
 		for _, mapID := range pk.MapsIncludedIn {
-			_ = protocol.WriteVarint64(buf, mapID)
+			w.Varint64(&mapID)
 		}
 	}
 	if pk.UpdateFlags&(MapUpdateFlagInitialisation|MapUpdateFlagDecoration|MapUpdateFlagTexture) != 0 {
-		_ = binary.Write(buf, binary.LittleEndian, pk.Scale)
+		w.Uint8(&pk.Scale)
 	}
 	if pk.UpdateFlags&MapUpdateFlagDecoration != 0 {
-		_ = protocol.WriteVaruint32(buf, uint32(len(pk.TrackedObjects)))
+		l := uint32(len(pk.TrackedObjects))
+		w.Varuint32(&l)
 		for _, obj := range pk.TrackedObjects {
-			_ = protocol.WriteMapTrackedObj(buf, obj)
+			protocol.MapTrackedObj(w, &obj)
 		}
-		_ = protocol.WriteVaruint32(buf, uint32(len(pk.Decorations)))
+		l = uint32(len(pk.TrackedObjects))
+		w.Varuint32(&l)
 		for _, decoration := range pk.Decorations {
-			_ = protocol.WriteMapDeco(buf, decoration)
+			protocol.MapDeco(w, &decoration)
 		}
 	}
 	if pk.UpdateFlags&MapUpdateFlagTexture != 0 {
@@ -108,12 +109,14 @@ func (pk *ClientBoundMapItemData) Marshal(buf *bytes.Buffer) {
 		if pk.Width <= 0 || pk.Height <= 0 {
 			panic("invalid map texture update: width and height must be at least 1")
 		}
-		_ = protocol.WriteVarint32(buf, pk.Width)
-		_ = protocol.WriteVarint32(buf, pk.Height)
-		_ = protocol.WriteVarint32(buf, pk.XOffset)
-		_ = protocol.WriteVarint32(buf, pk.YOffset)
 
-		_ = protocol.WriteVaruint32(buf, uint32(pk.Width*pk.Height))
+		w.Varint32(&pk.Width)
+		w.Varint32(&pk.Height)
+		w.Varint32(&pk.XOffset)
+		w.Varint32(&pk.YOffset)
+
+		l := uint32(pk.Width * pk.Height)
+		w.Varuint32(&l)
 
 		if len(pk.Pixels) != int(pk.Height) {
 			panic("invalid map texture update: length of outer pixels array must be equal to height")
@@ -123,85 +126,59 @@ func (pk *ClientBoundMapItemData) Marshal(buf *bytes.Buffer) {
 				panic("invalid map texture update: length of inner pixels array must be equal to width")
 			}
 			for x := int32(0); x < pk.Width; x++ {
-				_ = protocol.WriteVarRGBA(buf, pk.Pixels[y][x])
+				w.VarRGBA(&pk.Pixels[y][x])
 			}
 		}
 	}
 }
 
 // Unmarshal ...
-func (pk *ClientBoundMapItemData) Unmarshal(buf *bytes.Buffer) error {
-	if err := chainErr(
-		protocol.Varint64(buf, &pk.MapID),
-		protocol.Varuint32(buf, &pk.UpdateFlags),
-		binary.Read(buf, binary.LittleEndian, &pk.Dimension),
-		binary.Read(buf, binary.LittleEndian, &pk.LockedMap),
-	); err != nil {
-		return err
-	}
+func (pk *ClientBoundMapItemData) Unmarshal(r *protocol.Reader) {
+	r.Varint64(&pk.MapID)
+	r.Varuint32(&pk.UpdateFlags)
+	r.Uint8(&pk.Dimension)
+	r.Bool(&pk.LockedMap)
+
 	var count uint32
 	if pk.UpdateFlags&MapUpdateFlagInitialisation != 0 {
-		if err := protocol.Varuint32(buf, &count); err != nil {
-			return err
-		}
+		r.Varuint32(&count)
 		pk.MapsIncludedIn = make([]int64, count)
 		for i := uint32(0); i < count; i++ {
-			if err := protocol.Varint64(buf, &pk.MapsIncludedIn[i]); err != nil {
-				return err
-			}
+			r.Varint64(&pk.MapsIncludedIn[i])
 		}
 	}
 	if pk.UpdateFlags&(MapUpdateFlagInitialisation|MapUpdateFlagDecoration|MapUpdateFlagTexture) != 0 {
-		if err := binary.Read(buf, binary.LittleEndian, &pk.Scale); err != nil {
-			return err
-		}
+		r.Uint8(&pk.Scale)
 	}
 	if pk.UpdateFlags&MapUpdateFlagDecoration != 0 {
-		if err := protocol.Varuint32(buf, &count); err != nil {
-			return err
-		}
+		r.Varuint32(&count)
 		pk.TrackedObjects = make([]protocol.MapTrackedObject, count)
 		for i := uint32(0); i < count; i++ {
-			if err := protocol.MapTrackedObj(buf, &pk.TrackedObjects[i]); err != nil {
-				return err
-			}
+			protocol.MapTrackedObj(r, &pk.TrackedObjects[i])
 		}
-		if err := protocol.Varuint32(buf, &count); err != nil {
-			return err
-		}
+		r.Varuint32(&count)
 		pk.Decorations = make([]protocol.MapDecoration, count)
 		for i := uint32(0); i < count; i++ {
-			if err := protocol.MapDeco(buf, &pk.Decorations[i]); err != nil {
-				return err
-			}
+			protocol.MapDeco(r, &pk.Decorations[i])
 		}
 	}
 	if pk.UpdateFlags&MapUpdateFlagTexture != 0 {
-		if err := chainErr(
-			protocol.Varint32(buf, &pk.Width),
-			protocol.Varint32(buf, &pk.Height),
-			protocol.Varint32(buf, &pk.XOffset),
-			protocol.Varint32(buf, &pk.YOffset),
-			protocol.Varuint32(buf, &count),
-		); err != nil {
-			return err
-		}
-		// Make sure the values we decoded are correct: We do some basic sanity checks.
-		if pk.Width <= 0 || pk.Height <= 0 {
-			return fmt.Errorf("invalid map texture size: width or height is below 1")
-		}
-		if uint32(pk.Width*pk.Height) != count {
-			return fmt.Errorf("invalid map pixel count: %v * %v = %v, not %v", pk.Width, pk.Height, pk.Width*pk.Height, count)
-		}
+		r.Varint32(&pk.Width)
+		r.Varint32(&pk.Height)
+		r.Varint32(&pk.XOffset)
+		r.Varint32(&pk.YOffset)
+		r.Varuint32(&count)
+
+		r.LimitInt32(pk.Width, 0, math.MaxInt16)
+		r.LimitInt32(pk.Height, 0, math.MaxInt16)
+		r.LimitInt32(pk.Width*pk.Height, int32(count), int32(count))
+
 		pk.Pixels = make([][]color.RGBA, pk.Height)
 		for y := int32(0); y < pk.Height; y++ {
 			pk.Pixels[y] = make([]color.RGBA, pk.Width)
 			for x := int32(0); x < pk.Width; x++ {
-				if err := protocol.VarRGBA(buf, &pk.Pixels[y][x]); err != nil {
-					return err
-				}
+				r.VarRGBA(&pk.Pixels[y][x])
 			}
 		}
 	}
-	return nil
 }

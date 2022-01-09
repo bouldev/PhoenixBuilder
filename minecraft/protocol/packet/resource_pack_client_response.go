@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -30,29 +28,23 @@ func (*ResourcePackClientResponse) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ResourcePackClientResponse) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.Response)
-	_ = binary.Write(buf, binary.LittleEndian, uint16(len(pk.PacksToDownload)))
+func (pk *ResourcePackClientResponse) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.Response)
+	l := uint16(len(pk.PacksToDownload))
+	w.Uint16(&l)
 	for _, pack := range pk.PacksToDownload {
-		_ = protocol.WriteString(buf, pack)
+		w.String(&pack)
 	}
 }
 
 // Unmarshal ...
-func (pk *ResourcePackClientResponse) Unmarshal(buf *bytes.Buffer) error {
+func (pk *ResourcePackClientResponse) Unmarshal(r *protocol.Reader) {
 	var length uint16
-	if err := chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.Response),
-		binary.Read(buf, binary.LittleEndian, &length),
-	); err != nil {
-		return err
-	}
+	r.Uint8(&pk.Response)
+	r.Uint16(&length)
+
+	pk.PacksToDownload = make([]string, length)
 	for i := uint16(0); i < length; i++ {
-		var pack string
-		if err := protocol.String(buf, &pack); err != nil {
-			return err
-		}
-		pk.PacksToDownload = append(pk.PacksToDownload, pack)
+		r.String(&pk.PacksToDownload[i])
 	}
-	return nil
 }

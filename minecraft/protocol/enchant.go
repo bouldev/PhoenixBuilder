@@ -1,10 +1,5 @@
 package protocol
 
-import (
-	"bytes"
-	"encoding/binary"
-)
-
 // EnchantmentOption represents a single option in the enchantment table for a single item.
 type EnchantmentOption struct {
 	// Cost is the cost of the option. This is the amount of XP levels required to select this enchantment
@@ -27,56 +22,26 @@ type EnchantmentOption struct {
 	RecipeNetworkID uint32
 }
 
-// WriteEnchantOption writes an EnchantmentOption x to Buffer dst.
-func WriteEnchantOption(dst *bytes.Buffer, x EnchantmentOption) error {
-	return chainErr(
-		WriteVaruint32(dst, x.Cost),
-		WriteItemEnchants(dst, x.Enchantments),
-		WriteString(dst, x.Name),
-		WriteVaruint32(dst, x.RecipeNetworkID),
-	)
+// WriteEnchantOption writes an EnchantmentOption x to Writer w.
+func WriteEnchantOption(w *Writer, x *EnchantmentOption) {
+	w.Varuint32(&x.Cost)
+	WriteItemEnchants(w, &x.Enchantments)
+	w.String(&x.Name)
+	w.Varuint32(&x.RecipeNetworkID)
 }
 
-// EnchantOption reads an EnchantmentOption x from Buffer src.
-func EnchantOption(src *bytes.Buffer, x *EnchantmentOption) error {
-	return chainErr(
-		Varuint32(src, &x.Cost),
-		ItemEnchants(src, &x.Enchantments),
-		String(src, &x.Name),
-		Varuint32(src, &x.RecipeNetworkID),
-	)
+// EnchantOption reads an EnchantmentOption x from Reader r.
+func EnchantOption(r *Reader, x *EnchantmentOption) {
+	r.Varuint32(&x.Cost)
+	ItemEnchants(r, &x.Enchantments)
+	r.String(&x.Name)
+	r.Varuint32(&x.RecipeNetworkID)
 }
-
-const (
-	EnchantmentSlotNone           = 0
-	EnchantmentSlotAll            = 0xffff
-	EnchantmentSlotArmour         = EnchantmentSlotHelmet | EnchantmentSlotChestplate | EnchantmentSlotLeggings | EnchantmentSlotBoots
-	EnchantmentSlotHelmet         = 0x1
-	EnchantmentSlotChestplate     = 0x2
-	EnchantmentSlotLeggings       = 0x4
-	EnchantmentSlotBoots          = 0x8
-	EnchantmentSlotSword          = 0x10
-	EnchantmentSlotBow            = 0x20
-	EnchantmentSlotToolOther      = EnchantmentSlotHoe | EnchantmentSlotShears | EnchantmentSlotFlintAndSteel
-	EnchantmentSlotHoe            = 0x40
-	EnchantmentSlotShears         = 0x80
-	EnchantmentSlotFlintAndSteel  = 0x100
-	EnchantmentSlotDig            = EnchantmentSlotAxe | EnchantmentSlotPickaxe | EnchantmentSlotShovel
-	EnchantmentSlotAxe            = 0x200
-	EnchantmentSlotPickaxe        = 0x400
-	EnchantmentSlotShovel         = 0x800
-	EnchantmentSlotFishingRod     = 0x1000
-	EnchantmentSlotCarrotOnAStick = 0x2000
-	EnchantmentSlotElytra         = 0x4000
-	EnchantmentSlotTrident        = 0x8000
-)
 
 // ItemEnchantments holds information on the enchantments that are applied to an item when a specific button
 // is clicked in the enchantment table.
 type ItemEnchantments struct {
-	// Slot is the enchantment slot of the item that was put into the enchantment table, for which the
-	// following enchantments will apply.
-	// The possible slots can be found above.
+	// Slot is either 0, 1 or 2. Its exact usage is not clear.
 	Slot int32
 	// Enchantments is an array of 3 slices of enchantment instances. Each array represents enchantments that
 	// will be added to the item with a different activation type. The arrays in which enchantments are sent
@@ -92,42 +57,29 @@ type ItemEnchantments struct {
 	Enchantments [3][]EnchantmentInstance
 }
 
-// WriteItemEnchants writes an ItemEnchantments x to Buffer dst.
-func WriteItemEnchants(dst *bytes.Buffer, x ItemEnchantments) error {
-	if err := binary.Write(dst, binary.LittleEndian, x.Slot); err != nil {
-		return err
-	}
+// WriteItemEnchants writes an ItemEnchantments x to Writer w..
+func WriteItemEnchants(w *Writer, x *ItemEnchantments) {
+	w.Int32(&x.Slot)
 	for _, enchantments := range x.Enchantments {
-		if err := WriteVaruint32(dst, uint32(len(enchantments))); err != nil {
-			return err
-		}
+		l := uint32(len(enchantments))
+		w.Varuint32(&l)
 		for _, enchantment := range enchantments {
-			if err := WriteEnchant(dst, enchantment); err != nil {
-				return err
-			}
+			Enchant(w, &enchantment)
 		}
 	}
-	return nil
 }
 
-// ItemEnchants reads an ItemEnchantments x from Buffer src.
-func ItemEnchants(src *bytes.Buffer, x *ItemEnchantments) error {
-	if err := binary.Read(src, binary.LittleEndian, &x.Slot); err != nil {
-		return err
-	}
+// ItemEnchants reads an ItemEnchantments x from Reader r.
+func ItemEnchants(r *Reader, x *ItemEnchantments) {
+	var l uint32
+	r.Int32(&x.Slot)
 	for i := 0; i < 3; i++ {
-		var l uint32
-		if err := Varuint32(src, &l); err != nil {
-			return err
-		}
+		r.Varuint32(&l)
 		x.Enchantments[i] = make([]EnchantmentInstance, l)
 		for j := uint32(0); j < l; j++ {
-			if err := Enchant(src, &x.Enchantments[i][j]); err != nil {
-				return err
-			}
+			Enchant(r, &x.Enchantments[i][j])
 		}
 	}
-	return nil
 }
 
 // EnchantmentInstance represents a single enchantment instance with the type of the enchantment and its
@@ -137,17 +89,8 @@ type EnchantmentInstance struct {
 	Level byte
 }
 
-// WriteEnchant writes an EnchantmentInstance x to Buffer dst.
-func WriteEnchant(dst *bytes.Buffer, x EnchantmentInstance) error {
-	dst.WriteByte(x.Type)
-	dst.WriteByte(x.Level)
-	return nil
-}
-
-// Enchant reads an EnchantmentInstance x from Buffer src.
-func Enchant(src *bytes.Buffer, x *EnchantmentInstance) error {
-	return chainErr(
-		binary.Read(src, binary.LittleEndian, &x.Type),
-		binary.Read(src, binary.LittleEndian, &x.Level),
-	)
+// Enchant reads/writes an EnchantmentInstance x using IO r.
+func Enchant(r IO, x *EnchantmentInstance) {
+	r.Uint8(&x.Type)
+	r.Uint8(&x.Level)
 }

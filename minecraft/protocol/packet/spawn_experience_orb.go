@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -24,15 +23,13 @@ func (*SpawnExperienceOrb) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SpawnExperienceOrb) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = protocol.WriteVarint32(buf, pk.ExperienceAmount)
+func (pk *SpawnExperienceOrb) Marshal(w *protocol.Writer) {
+	w.Vec3(&pk.Position)
+	w.Varint32(&pk.ExperienceAmount)
 }
 
 // Unmarshal ...
-func (pk *SpawnExperienceOrb) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Vec3(buf, &pk.Position),
-		protocol.Varint32(buf, &pk.ExperienceAmount),
-	)
+func (pk *SpawnExperienceOrb) Unmarshal(r *protocol.Reader) {
+	r.Vec3(&pk.Position)
+	r.Varint32(&pk.ExperienceAmount)
 }

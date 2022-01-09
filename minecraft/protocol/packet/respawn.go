@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -38,17 +36,15 @@ func (*Respawn) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *Respawn) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = binary.Write(buf, binary.LittleEndian, pk.State)
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
+func (pk *Respawn) Marshal(w *protocol.Writer) {
+	w.Vec3(&pk.Position)
+	w.Uint8(&pk.State)
+	w.Varuint64(&pk.EntityRuntimeID)
 }
 
 // Unmarshal ...
-func (pk *Respawn) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Vec3(buf, &pk.Position),
-		binary.Read(buf, binary.LittleEndian, &pk.State),
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-	)
+func (pk *Respawn) Unmarshal(r *protocol.Reader) {
+	r.Vec3(&pk.Position)
+	r.Uint8(&pk.State)
+	r.Varuint64(&pk.EntityRuntimeID)
 }

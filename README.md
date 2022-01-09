@@ -73,7 +73,7 @@ That's all for the completion of necessary informations, and the following conte
 - Linux x86_64 (recommended platform): 
 
   ```shell
-  wget -O fastbuilder https://fastbuilder.pro/downloads/phoenix/phoenixbuilder
+  wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder
   chmod +x fastbuilder
   ```
 
@@ -108,7 +108,7 @@ That's all for the completion of necessary informations, and the following conte
      > **Note: This step (d) is also the way of upgrading FastBuilder Phoenix, execute this step directly to upgrade FastBuilder afterwards.**
 
      ```shell
-     wget -O fastbuilder https://fastbuilder.pro/downloads/phoenix/phoenixbuilder-android-executable-arm64
+     wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder-android-executable-arm64
      chmod +x fastbuilder
      ```
 ### Usage

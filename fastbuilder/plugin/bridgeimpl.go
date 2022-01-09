@@ -120,7 +120,7 @@ func (br *PluginBridgeImpl) SendCommandCB(cmd string, cb func([]plugin_structs.C
 	command.SendCommand(cmd, ud, br.sessionConnection)
 	resp:=<-wchan
 	close(wchan)
-	unk:=resp.UnknownString
+	unk:=resp.DataSet
 	arr:=make([]plugin_structs.CommandOutputMessage,len(resp.OutputMessages))
 	for i,c:= range resp.OutputMessages {
 		arr[i]=plugin_structs.CommandOutputMessage(c)
@@ -135,7 +135,7 @@ func (br *PluginBridgeImpl) SendWSCommandCB(cmd string, cb func([]plugin_structs
 	command.SendWSCommand(cmd, ud, br.sessionConnection)
 	resp:=<-wchan
 	close(wchan)
-	unk:=resp.UnknownString
+	unk:=resp.DataSet
 	arr:=make([]plugin_structs.CommandOutputMessage,len(resp.OutputMessages))
 	for i,c:= range resp.OutputMessages {
 		arr[i]=plugin_structs.CommandOutputMessage(c)

@@ -1,8 +1,6 @@
 package protocol
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 )
 
@@ -13,6 +11,10 @@ type Skin struct {
 	// SkinID is a unique ID produced for the skin, for example 'c18e65aa-7b21-4637-9b63-8ad63622ef01_Alex'
 	// for the default Alex skin.
 	SkinID string
+	// PlayFabID is the PlayFab ID produced for the skin. PlayFab is the company that hosts the Marketplace,
+	// skins and other related features from the game. This ID is the ID of the skin used to store the skin
+	// inside of PlayFab.
+	PlayFabID string
 	// SkinResourcePatch is a JSON encoded object holding some fields that point to the geometry that the
 	// skin has.
 	// The JSON object that this holds specifies the way that the geometry of animations and the default skin
@@ -65,114 +67,89 @@ type Skin struct {
 	Trusted bool
 }
 
-// WriteSerialisedSkin writes a Skin x to Buffer dst. WriteSerialisedSkin panics if the fields of the skin
+// WriteSerialisedSkin writes a Skin x to Writer w. WriteSerialisedSkin panics if the fields of the skin
 // have invalid values, usually indicating that the dimensions of the skin images are incorrect.
-func WriteSerialisedSkin(dst *bytes.Buffer, x Skin) error {
+func WriteSerialisedSkin(w *Writer, x *Skin) {
 	if err := x.validate(); err != nil {
 		panic(err)
 	}
-	if err := chainErr(
-		WriteString(dst, x.SkinID),
-		WriteByteSlice(dst, x.SkinResourcePatch),
-		binary.Write(dst, binary.LittleEndian, x.SkinImageWidth),
-		binary.Write(dst, binary.LittleEndian, x.SkinImageHeight),
-		WriteByteSlice(dst, x.SkinData),
-		binary.Write(dst, binary.LittleEndian, uint32(len(x.Animations))),
-	); err != nil {
-		return err
-	}
+	w.String(&x.SkinID)
+	w.String(&x.PlayFabID)
+	w.ByteSlice(&x.SkinResourcePatch)
+	w.Uint32(&x.SkinImageWidth)
+	w.Uint32(&x.SkinImageHeight)
+	w.ByteSlice(&x.SkinData)
+	l := uint32(len(x.Animations))
+	w.Uint32(&l)
 	for _, anim := range x.Animations {
-		if err := WriteAnimation(dst, anim); err != nil {
-			return err
-		}
+		Animation(w, &anim)
 	}
-	if err := chainErr(
-		binary.Write(dst, binary.LittleEndian, x.CapeImageWidth),
-		binary.Write(dst, binary.LittleEndian, x.CapeImageHeight),
-		WriteByteSlice(dst, x.CapeData),
-		WriteByteSlice(dst, x.SkinGeometry),
-		WriteByteSlice(dst, x.AnimationData),
-		binary.Write(dst, binary.LittleEndian, x.PremiumSkin),
-		binary.Write(dst, binary.LittleEndian, x.PersonaSkin),
-		binary.Write(dst, binary.LittleEndian, x.PersonaCapeOnClassicSkin),
-		WriteString(dst, x.CapeID),
-		WriteString(dst, x.FullSkinID),
-		WriteString(dst, x.ArmSize),
-		WriteString(dst, x.SkinColour),
-		binary.Write(dst, binary.LittleEndian, uint32(len(x.PersonaPieces))),
-	); err != nil {
-		return err
-	}
+	w.Uint32(&x.CapeImageWidth)
+	w.Uint32(&x.CapeImageHeight)
+	w.ByteSlice(&x.CapeData)
+	w.ByteSlice(&x.SkinGeometry)
+	w.ByteSlice(&x.AnimationData)
+	w.Bool(&x.PremiumSkin)
+	w.Bool(&x.PersonaSkin)
+	w.Bool(&x.PersonaCapeOnClassicSkin)
+	w.String(&x.CapeID)
+	w.String(&x.FullSkinID)
+	w.String(&x.ArmSize)
+	w.String(&x.SkinColour)
+	l = uint32(len(x.PersonaPieces))
+	w.Uint32(&l)
 	for _, piece := range x.PersonaPieces {
-		if err := WriteSkinPiece(dst, piece); err != nil {
-			return err
-		}
+		SkinPiece(w, &piece)
 	}
-	if err := binary.Write(dst, binary.LittleEndian, uint32(len(x.PieceTintColours))); err != nil {
-		return err
-	}
+	l = uint32(len(x.PieceTintColours))
+	w.Uint32(&l)
 	for _, tint := range x.PieceTintColours {
-		if err := WriteSkinPieceTint(dst, tint); err != nil {
-			return err
-		}
+		WriteSkinPieceTint(w, &tint)
 	}
-	return nil
 }
 
-// SerialisedSkin reads a Skin x from Buffer src.
-func SerialisedSkin(src *bytes.Buffer, x *Skin) error {
-	var animationCount uint32
-	var c uint32
-	if err := chainErr(
-		String(src, &x.SkinID),
-		ByteSlice(src, &x.SkinResourcePatch),
-		binary.Read(src, binary.LittleEndian, &x.SkinImageWidth),
-		binary.Read(src, binary.LittleEndian, &x.SkinImageHeight),
-		ByteSlice(src, &x.SkinData),
-		binary.Read(src, binary.LittleEndian, &animationCount),
-	); err != nil {
-		return err
-	}
-	x.Animations = make([]SkinAnimation, animationCount)
+// SerialisedSkin reads a Skin x from Reader r.
+func SerialisedSkin(r *Reader, x *Skin) {
+	var animationCount, count uint32
 
+	r.String(&x.SkinID)
+	r.String(&x.PlayFabID)
+	r.ByteSlice(&x.SkinResourcePatch)
+	r.Uint32(&x.SkinImageWidth)
+	r.Uint32(&x.SkinImageHeight)
+	r.ByteSlice(&x.SkinData)
+	r.Uint32(&animationCount)
+
+	x.Animations = make([]SkinAnimation, animationCount)
 	for i := uint32(0); i < animationCount; i++ {
-		if err := Animation(src, &x.Animations[i]); err != nil {
-			return err
-		}
+		Animation(r, &x.Animations[i])
 	}
-	if err := chainErr(
-		binary.Read(src, binary.LittleEndian, &x.CapeImageWidth),
-		binary.Read(src, binary.LittleEndian, &x.CapeImageHeight),
-		ByteSlice(src, &x.CapeData),
-		ByteSlice(src, &x.SkinGeometry),
-		ByteSlice(src, &x.AnimationData),
-		binary.Read(src, binary.LittleEndian, &x.PremiumSkin),
-		binary.Read(src, binary.LittleEndian, &x.PersonaSkin),
-		binary.Read(src, binary.LittleEndian, &x.PersonaCapeOnClassicSkin),
-		String(src, &x.CapeID),
-		String(src, &x.FullSkinID),
-		String(src, &x.ArmSize),
-		String(src, &x.SkinColour),
-		binary.Read(src, binary.LittleEndian, &c),
-	); err != nil {
-		return err
+	r.Uint32(&x.CapeImageWidth)
+	r.Uint32(&x.CapeImageHeight)
+	r.ByteSlice(&x.CapeData)
+	r.ByteSlice(&x.SkinGeometry)
+	r.ByteSlice(&x.AnimationData)
+	r.Bool(&x.PremiumSkin)
+	r.Bool(&x.PersonaSkin)
+	r.Bool(&x.PersonaCapeOnClassicSkin)
+	r.String(&x.CapeID)
+	r.String(&x.FullSkinID)
+	r.String(&x.ArmSize)
+	r.String(&x.SkinColour)
+
+	r.Uint32(&count)
+	x.PersonaPieces = make([]PersonaPiece, count)
+	for i := uint32(0); i < count; i++ {
+		SkinPiece(r, &x.PersonaPieces[i])
 	}
-	x.PersonaPieces = make([]PersonaPiece, c)
-	for i := uint32(0); i < c; i++ {
-		if err := SkinPiece(src, &x.PersonaPieces[i]); err != nil {
-			return err
-		}
+	r.Uint32(&count)
+	x.PieceTintColours = make([]PersonaPieceTintColour, count)
+	for i := uint32(0); i < count; i++ {
+		SkinPieceTint(r, &x.PieceTintColours[i])
 	}
-	if err := binary.Read(src, binary.LittleEndian, &c); err != nil {
-		return err
+	if err := x.validate(); err != nil {
+		r.InvalidValue(fmt.Sprintf("Skin %v", x.SkinID), "serialised skin", err.Error())
 	}
-	x.PieceTintColours = make([]PersonaPieceTintColour, c)
-	for i := uint32(0); i < c; i++ {
-		if err := SkinPieceTint(src, &x.PieceTintColours[i]); err != nil {
-			return err
-		}
-	}
-	return x.validate()
 }
 
 // validate checks the skin and makes sure every one of its values are correct. It checks the image dimensions
@@ -196,6 +173,9 @@ const (
 	SkinAnimationHead = iota + 1
 	SkinAnimationBody32x32
 	SkinAnimationBody128x128
+
+	ExpressionTypeLinear = iota
+	ExpressionTypeBlinking
 )
 
 // SkinAnimation represents an animation that may be added to a skin. The client plays the animation itself,
@@ -217,28 +197,18 @@ type SkinAnimation struct {
 	// FrameCount is the amount of frames that the skin animation holds. The number of frames here is the
 	// amount of images that may be found in the ImageData field.
 	FrameCount float32
+	// ExpressionType is the type of expression made by the skin, which is one the types found above.
+	ExpressionType uint32
 }
 
-// WriteAnimation writes a SkinAnimation x to Buffer dst.
-func WriteAnimation(dst *bytes.Buffer, x SkinAnimation) error {
-	return chainErr(
-		binary.Write(dst, binary.LittleEndian, x.ImageWidth),
-		binary.Write(dst, binary.LittleEndian, x.ImageHeight),
-		WriteByteSlice(dst, x.ImageData),
-		binary.Write(dst, binary.LittleEndian, x.AnimationType),
-		WriteFloat32(dst, x.FrameCount),
-	)
-}
-
-// Animation reads a SkinAnimation x from Buffer src.
-func Animation(src *bytes.Buffer, x *SkinAnimation) error {
-	return chainErr(
-		binary.Read(src, binary.LittleEndian, &x.ImageWidth),
-		binary.Read(src, binary.LittleEndian, &x.ImageHeight),
-		ByteSlice(src, &x.ImageData),
-		binary.Read(src, binary.LittleEndian, &x.AnimationType),
-		Float32(src, &x.FrameCount),
-	)
+// Animation reads/writes a SkinAnimation x using IO r.
+func Animation(r IO, x *SkinAnimation) {
+	r.Uint32(&x.ImageWidth)
+	r.Uint32(&x.ImageHeight)
+	r.ByteSlice(&x.ImageData)
+	r.Uint32(&x.AnimationType)
+	r.Float32(&x.FrameCount)
+	r.Uint32(&x.ExpressionType)
 }
 
 // PersonaPiece represents a piece of a persona skin. All pieces are sent separately.
@@ -267,26 +237,13 @@ type PersonaPiece struct {
 	ProductID string
 }
 
-// WriteSkinPiece writes a PersonaPiece x to Buffer dst.
-func WriteSkinPiece(dst *bytes.Buffer, x PersonaPiece) error {
-	return chainErr(
-		WriteString(dst, x.PieceID),
-		WriteString(dst, x.PieceType),
-		WriteString(dst, x.PackID),
-		binary.Write(dst, binary.LittleEndian, x.Default),
-		WriteString(dst, x.ProductID),
-	)
-}
-
-// SkinPiece reads a PersonaPiece x from Buffer src.
-func SkinPiece(src *bytes.Buffer, x *PersonaPiece) error {
-	return chainErr(
-		String(src, &x.PieceID),
-		String(src, &x.PieceType),
-		String(src, &x.PackID),
-		binary.Read(src, binary.LittleEndian, &x.Default),
-		String(src, &x.ProductID),
-	)
+// SkinPiece reads/writes a PersonaPiece x using IO r.
+func SkinPiece(r IO, x *PersonaPiece) {
+	r.String(&x.PieceID)
+	r.String(&x.PieceType)
+	r.String(&x.PackID)
+	r.Bool(&x.Default)
+	r.String(&x.ProductID)
 }
 
 // PersonaPieceTintColour describes the tint colours of a specific piece of a persona skin.
@@ -308,36 +265,24 @@ type PersonaPieceTintColour struct {
 	Colours []string
 }
 
-// WriteSkinPieceTint writes a PersonaPieceTintColour x to Buffer dst.
-func WriteSkinPieceTint(dst *bytes.Buffer, x PersonaPieceTintColour) error {
-	if err := chainErr(
-		WriteString(dst, x.PieceType),
-		binary.Write(dst, binary.LittleEndian, uint32(len(x.Colours))),
-	); err != nil {
-		return err
-	}
+// WriteSkinPieceTint writes a PersonaPieceTintColour x to Writer w.
+func WriteSkinPieceTint(w *Writer, x *PersonaPieceTintColour) {
+	w.String(&x.PieceType)
+	l := uint32(len(x.Colours))
+	w.Uint32(&l)
 	for _, c := range x.Colours {
-		if err := WriteString(dst, c); err != nil {
-			return err
-		}
+		w.String(&c)
 	}
-	return nil
 }
 
-// SkinPieceTint reads a PersonaPieceTintColour x from Buffer src.
-func SkinPieceTint(src *bytes.Buffer, x *PersonaPieceTintColour) error {
+// SkinPieceTint reads a PersonaPieceTintColour x from Reader r.
+func SkinPieceTint(r *Reader, x *PersonaPieceTintColour) {
 	var c uint32
-	if err := chainErr(
-		String(src, &x.PieceType),
-		binary.Read(src, binary.LittleEndian, &c),
-	); err != nil {
-		return err
-	}
+	r.String(&x.PieceType)
+
+	r.Uint32(&c)
 	x.Colours = make([]string, c)
 	for i := uint32(0); i < c; i++ {
-		if err := String(src, &x.Colours[i]); err != nil {
-			return err
-		}
+		r.String(&x.Colours[i])
 	}
-	return nil
 }

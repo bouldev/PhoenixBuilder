@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -25,17 +23,15 @@ func (*BlockPickRequest) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *BlockPickRequest) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteBlockPosition(buf, pk.Position)
-	_ = binary.Write(buf, binary.LittleEndian, pk.AddBlockNBT)
-	_ = binary.Write(buf, binary.LittleEndian, pk.HotBarSlot)
+func (pk *BlockPickRequest) Marshal(w *protocol.Writer) {
+	w.BlockPos(&pk.Position)
+	w.Bool(&pk.AddBlockNBT)
+	w.Uint8(&pk.HotBarSlot)
 }
 
 // Unmarshal ...
-func (pk *BlockPickRequest) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.BlockPosition(buf, &pk.Position),
-		binary.Read(buf, binary.LittleEndian, &pk.AddBlockNBT),
-		binary.Read(buf, binary.LittleEndian, &pk.HotBarSlot),
-	)
+func (pk *BlockPickRequest) Unmarshal(r *protocol.Reader) {
+	r.BlockPos(&pk.Position)
+	r.Bool(&pk.AddBlockNBT)
+	r.Uint8(&pk.HotBarSlot)
 }

@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 const (
@@ -40,15 +39,13 @@ func (*CompletedUsingItem) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *CompletedUsingItem) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.UsedItemID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.UseMethod)
+func (pk *CompletedUsingItem) Marshal(w *protocol.Writer) {
+	w.Int16(&pk.UsedItemID)
+	w.Int32(&pk.UseMethod)
 }
 
 // Unmarshal ...
-func (pk *CompletedUsingItem) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.UsedItemID),
-		binary.Read(buf, binary.LittleEndian, &pk.UseMethod),
-	)
+func (pk *CompletedUsingItem) Unmarshal(r *protocol.Reader) {
+	r.Int16(&pk.UsedItemID)
+	r.Int32(&pk.UseMethod)
 }

@@ -1,7 +1,7 @@
 package packet
 
 import (
-	"bytes"
+	//"bytes"
 	//"fmt"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -17,12 +17,14 @@ func (*PyRpc) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PyRpc) Marshal(buf *bytes.Buffer) {
+func (pk *PyRpc) Marshal(w *protocol.Writer) {
+	w.ByteSlice(&pk.Content)
+	w.Bytes(&[]byte{0xae,0x23,0xdb,0x05})
 	//fmt.Printf("%d\n",len(pk.Content))
 	//fmt.Printf("%X\n",buf.Bytes())
-	_ = protocol.WriteByteSlice(buf, pk.Content)
+	//_ = protocol.WriteByteSlice(buf, pk.Content)
 	//_ = protocol.WriteVaruint32(buf, pk.DisallowBatching)
-	buf.Write([]byte{0xae,0x23,0xdb,0x05})
+	//buf.Write([]byte{0xae,0x23,0xdb,0x05})
 	//fmt.Printf("%X\n\n",buf.Bytes())
 	//var outuint32 uint32
 	//protocol.Varuint32(bytes.NewBuffer([]byte{0xae,0x23,0xdb,0x05}),&outuint32)
@@ -31,8 +33,6 @@ func (pk *PyRpc) Marshal(buf *bytes.Buffer) {
 }
 
 // Unmarshal ...
-func (pk *PyRpc) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.ByteSlice(buf, &pk.Content),
-	)
+func (pk *PyRpc) Unmarshal(r *protocol.Reader) {
+	r.ByteSlice(&pk.Content)
 }

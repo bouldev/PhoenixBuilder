@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -19,11 +18,11 @@ func (*MapInfoRequest) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *MapInfoRequest) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint64(buf, pk.MapID)
+func (pk *MapInfoRequest) Marshal(w *protocol.Writer) {
+	w.Varint64(&pk.MapID)
 }
 
 // Unmarshal ...
-func (pk *MapInfoRequest) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.Varint64(buf, &pk.MapID)
+func (pk *MapInfoRequest) Unmarshal(r *protocol.Reader) {
+	r.Varint64(&pk.MapID)
 }

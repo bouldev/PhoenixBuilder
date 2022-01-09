@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -18,11 +17,11 @@ func (*ItemFrameDropItem) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ItemFrameDropItem) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteUBlockPosition(buf, pk.Position)
+func (pk *ItemFrameDropItem) Marshal(w *protocol.Writer) {
+	w.UBlockPos(&pk.Position)
 }
 
 // Unmarshal ...
-func (pk *ItemFrameDropItem) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.UBlockPosition(buf, &pk.Position)
+func (pk *ItemFrameDropItem) Unmarshal(r *protocol.Reader) {
+	r.UBlockPos(&pk.Position)
 }

@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -20,11 +19,11 @@ func (*SetActorLink) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetActorLink) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteEntityLinkAction(buf, pk.EntityLink)
+func (pk *SetActorLink) Marshal(w *protocol.Writer) {
+	protocol.EntityLinkAction(w, &pk.EntityLink)
 }
 
 // Unmarshal ...
-func (pk *SetActorLink) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.EntityLinkAction(buf, &pk.EntityLink)
+func (pk *SetActorLink) Unmarshal(r *protocol.Reader) {
+	protocol.EntityLinkAction(r, &pk.EntityLink)
 }

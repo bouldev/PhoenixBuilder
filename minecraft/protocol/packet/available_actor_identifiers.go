@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"math"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // AvailableActorIdentifiers is sent by the server at the start of the game to let the client know all
@@ -19,12 +18,11 @@ func (*AvailableActorIdentifiers) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *AvailableActorIdentifiers) Marshal(buf *bytes.Buffer) {
-	_, _ = buf.Write(pk.SerialisedEntityIdentifiers)
+func (pk *AvailableActorIdentifiers) Marshal(w *protocol.Writer) {
+	w.Bytes(&pk.SerialisedEntityIdentifiers)
 }
 
 // Unmarshal ...
-func (pk *AvailableActorIdentifiers) Unmarshal(buf *bytes.Buffer) error {
-	pk.SerialisedEntityIdentifiers = buf.Next(math.MaxInt32)
-	return nil
+func (pk *AvailableActorIdentifiers) Unmarshal(r *protocol.Reader) {
+	r.Bytes(&pk.SerialisedEntityIdentifiers)
 }

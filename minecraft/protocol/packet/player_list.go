@@ -1,9 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -32,57 +29,47 @@ func (*PlayerList) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PlayerList) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.ActionType)
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Entries)))
+func (pk *PlayerList) Marshal(w *protocol.Writer) {
+	l := uint32(len(pk.Entries))
+	w.Uint8(&pk.ActionType)
+	w.Varuint32(&l)
 	for _, entry := range pk.Entries {
 		switch pk.ActionType {
 		case PlayerListActionAdd:
-			_ = protocol.WritePlayerAddEntry(buf, entry)
+			protocol.WritePlayerAddEntry(w, &entry)
 		case PlayerListActionRemove:
-			_ = protocol.WritePlayerRemoveEntry(buf, entry)
+			w.UUID(&entry.UUID)
 		default:
-			panic(fmt.Sprintf("invalid player list action type %v", pk.ActionType))
+			w.UnknownEnumOption(pk.ActionType, "player list action type")
 		}
 	}
 	if pk.ActionType == PlayerListActionAdd {
 		for _, entry := range pk.Entries {
-			_ = binary.Write(buf, binary.LittleEndian, entry.Skin.Trusted)
+			w.Bool(&entry.Skin.Trusted)
 		}
 	}
 }
 
 // Unmarshal ...
-func (pk *PlayerList) Unmarshal(buf *bytes.Buffer) error {
+func (pk *PlayerList) Unmarshal(r *protocol.Reader) {
 	var count uint32
-	if err := chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.ActionType),
-		protocol.Varuint32(buf, &count),
-	); err != nil {
-		return err
-	}
+	r.Uint8(&pk.ActionType)
+	r.Varuint32(&count)
+
 	pk.Entries = make([]protocol.PlayerListEntry, count)
 	for i := uint32(0); i < count; i++ {
 		switch pk.ActionType {
 		case PlayerListActionAdd:
-			if err := protocol.PlayerAddEntry(buf, &pk.Entries[i]); err != nil {
-				return err
-			}
+			protocol.PlayerAddEntry(r, &pk.Entries[i])
 		case PlayerListActionRemove:
-			if err := protocol.PlayerRemoveEntry(buf, &pk.Entries[i]); err != nil {
-				return err
-			}
+			r.UUID(&pk.Entries[i].UUID)
 		default:
-			return fmt.Errorf("unknown player list action type %v", pk.ActionType)
+			r.UnknownEnumOption(pk.ActionType, "player list action type")
 		}
 	}
 	if pk.ActionType == PlayerListActionAdd {
 		for i := uint32(0); i < count; i++ {
-			if err := binary.Read(buf, binary.LittleEndian, &pk.Entries[i].Skin.Trusted); err != nil {
-				// These booleans at the end are optional, they might not be there.
-				return nil
-			}
+			r.Bool(&pk.Entries[i].Skin.Trusted)
 		}
 	}
-	return nil
 }

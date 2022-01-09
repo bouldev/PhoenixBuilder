@@ -1,24 +1,20 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
-// LecternUpdate is sent by the server to update a lectern block, so that players can see that the block
-// changed. It is used, for example, when a page is turned.
+// LecternUpdate is sent by the client to update the server on which page was opened in a book on a lectern,
+// or if the book should be removed from it.
 type LecternUpdate struct {
-	// Page is the page number in the book that was opened on the lectern. If no book was opened, the field
-	// is ignored.
+	// Page is the page number in the book that was opened by the player on the lectern.
 	Page byte
-	// PageCount is the number of pages that the book opened in the lectern has. If can be ignored if no
-	// book is on the lectern.
+	// PageCount is the number of pages that the book opened in the lectern has.
 	PageCount byte
 	// Position is the position of the lectern that was updated. If no lectern is at the block position,
-	// the packet is ignored.
+	// the packet should be ignored.
 	Position protocol.BlockPos
-	// DropBook specifies if the book currently set on display in the lectern should be dropped.
+	// DropBook specifies if the book currently set on display in the lectern should be dropped server-side.
 	DropBook bool
 }
 
@@ -28,19 +24,17 @@ func (*LecternUpdate) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *LecternUpdate) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.Page)
-	_ = binary.Write(buf, binary.LittleEndian, pk.PageCount)
-	_ = protocol.WriteBlockPosition(buf, pk.Position)
-	_ = binary.Write(buf, binary.LittleEndian, pk.DropBook)
+func (pk *LecternUpdate) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.Page)
+	w.Uint8(&pk.PageCount)
+	w.BlockPos(&pk.Position)
+	w.Bool(&pk.DropBook)
 }
 
 // Unmarshal ...
-func (pk *LecternUpdate) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.Page),
-		binary.Read(buf, binary.LittleEndian, &pk.PageCount),
-		protocol.BlockPosition(buf, &pk.Position),
-		binary.Read(buf, binary.LittleEndian, &pk.DropBook),
-	)
+func (pk *LecternUpdate) Unmarshal(r *protocol.Reader) {
+	r.Uint8(&pk.Page)
+	r.Uint8(&pk.PageCount)
+	r.BlockPos(&pk.Position)
+	r.Bool(&pk.DropBook)
 }

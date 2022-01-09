@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -29,28 +28,22 @@ func (*PlaySound) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PlaySound) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.SoundName)
-	_ = protocol.WriteBlockPosition(buf, protocol.BlockPos{int32(pk.Position[0] * 8), int32(pk.Position[1] * 8), int32(pk.Position[2] * 8)})
-	_ = protocol.WriteFloat32(buf, pk.Volume)
-	_ = protocol.WriteFloat32(buf, pk.Pitch)
+func (pk *PlaySound) Marshal(w *protocol.Writer) {
+	b := protocol.BlockPos{int32(pk.Position[0] * 8), int32(pk.Position[1] * 8), int32(pk.Position[2] * 8)}
+
+	w.String(&pk.SoundName)
+	w.BlockPos(&b)
+	w.Float32(&pk.Volume)
+	w.Float32(&pk.Pitch)
 }
 
 // Unmarshal ...
-func (pk *PlaySound) Unmarshal(buf *bytes.Buffer) error {
-	b := protocol.BlockPos{}
-	if err := chainErr(
-		protocol.String(buf, &pk.SoundName),
-		protocol.BlockPosition(buf, &b),
-		protocol.Float32(buf, &pk.Volume),
-		protocol.Float32(buf, &pk.Pitch),
-	); err != nil {
-		return err
-	}
-	pk.Position = mgl32.Vec3{
-		float32(b[0]) / 8,
-		float32(b[1]) / 8,
-		float32(b[2]) / 8,
-	}
-	return nil
+func (pk *PlaySound) Unmarshal(r *protocol.Reader) {
+	var b protocol.BlockPos
+	r.String(&pk.SoundName)
+	r.BlockPos(&b)
+	r.Float32(&pk.Volume)
+	r.Float32(&pk.Pitch)
+
+	pk.Position = mgl32.Vec3{float32(b[0]) / 8, float32(b[1]) / 8, float32(b[2]) / 8}
 }

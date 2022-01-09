@@ -1,9 +1,15 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
+)
+
+const (
+	CommandOutputTypeNone = iota
+	CommandOutputTypeLastOutput
+	CommandOutputTypeSilent
+	CommandOutputTypeAllOutput
+	CommandOutputTypeDataSet
 )
 
 // CommandOutput is sent by the server to the client to send text as output of a command. Most servers do not
@@ -27,8 +33,8 @@ type CommandOutput struct {
 	// OutputMessages is a list of all output messages that should be sent to the player. Whether they are
 	// shown or not, depends on the type of the messages.
 	OutputMessages []protocol.CommandOutputMessage
-	// UnknownString ...
-	UnknownString string
+	// DataSet ... TODO: Find out what this is for.
+	DataSet string
 }
 
 // ID ...
@@ -37,38 +43,33 @@ func (*CommandOutput) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *CommandOutput) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteCommandOriginData(buf, pk.CommandOrigin)
-	_ = binary.Write(buf, binary.LittleEndian, pk.OutputType)
-	_ = protocol.WriteVaruint32(buf, pk.SuccessCount)
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.OutputMessages)))
+func (pk *CommandOutput) Marshal(w *protocol.Writer) {
+	l := uint32(len(pk.OutputMessages))
+
+	protocol.CommandOriginData(w, &pk.CommandOrigin)
+	w.Uint8(&pk.OutputType)
+	w.Varuint32(&pk.SuccessCount)
+	w.Varuint32(&l)
 	for _, message := range pk.OutputMessages {
-		_ = protocol.WriteCommandMessage(buf, message)
+		protocol.WriteCommandMessage(w, &message)
 	}
-	if pk.OutputType == 4 {
-		_ = protocol.WriteString(buf, pk.UnknownString)
+	if pk.OutputType == CommandOutputTypeDataSet {
+		w.String(&pk.DataSet)
 	}
 }
 
 // Unmarshal ...
-func (pk *CommandOutput) Unmarshal(buf *bytes.Buffer) error {
+func (pk *CommandOutput) Unmarshal(r *protocol.Reader) {
 	var count uint32
-	if err := chainErr(
-		protocol.CommandOriginData(buf, &pk.CommandOrigin),
-		binary.Read(buf, binary.LittleEndian, &pk.OutputType),
-		protocol.Varuint32(buf, &pk.SuccessCount),
-		protocol.Varuint32(buf, &count),
-	); err != nil {
-		return err
-	}
+	protocol.CommandOriginData(r, &pk.CommandOrigin)
+	r.Uint8(&pk.OutputType)
+	r.Varuint32(&pk.SuccessCount)
+	r.Varuint32(&count)
 	pk.OutputMessages = make([]protocol.CommandOutputMessage, count)
 	for i := uint32(0); i < count; i++ {
-		if err := protocol.CommandMessage(buf, &pk.OutputMessages[i]); err != nil {
-			return err
-		}
+		protocol.CommandMessage(r, &pk.OutputMessages[i])
 	}
-	if pk.OutputType == 4 {
-		return protocol.String(buf, &pk.UnknownString)
+	if pk.OutputType == CommandOutputTypeDataSet {
+		r.String(&pk.DataSet)
 	}
-	return nil
 }

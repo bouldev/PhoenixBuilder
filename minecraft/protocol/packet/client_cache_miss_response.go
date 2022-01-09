@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -20,24 +19,20 @@ func (pk *ClientCacheMissResponse) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ClientCacheMissResponse) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Blobs)))
+func (pk *ClientCacheMissResponse) Marshal(w *protocol.Writer) {
+	l := uint32(len(pk.Blobs))
+	w.Varuint32(&l)
 	for _, blob := range pk.Blobs {
-		_ = protocol.WriteBlob(buf, blob)
+		protocol.Blob(w, &blob)
 	}
 }
 
 // Unmarshal ...
-func (pk *ClientCacheMissResponse) Unmarshal(buf *bytes.Buffer) error {
+func (pk *ClientCacheMissResponse) Unmarshal(r *protocol.Reader) {
 	var count uint32
-	if err := protocol.Varuint32(buf, &count); err != nil {
-		return err
-	}
+	r.Varuint32(&count)
 	pk.Blobs = make([]protocol.CacheBlob, count)
 	for i := uint32(0); i < count; i++ {
-		if err := protocol.Blob(buf, &pk.Blobs[i]); err != nil {
-			return err
-		}
+		protocol.Blob(r, &pk.Blobs[i])
 	}
-	return nil
 }

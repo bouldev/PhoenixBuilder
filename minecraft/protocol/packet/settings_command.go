@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -24,15 +22,13 @@ func (*SettingsCommand) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SettingsCommand) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.CommandLine)
-	_ = binary.Write(buf, binary.LittleEndian, pk.SuppressOutput)
+func (pk *SettingsCommand) Marshal(w *protocol.Writer) {
+	w.String(&pk.CommandLine)
+	w.Bool(&pk.SuppressOutput)
 }
 
 // Unmarshal ...
-func (pk *SettingsCommand) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.String(buf, &pk.CommandLine),
-		binary.Read(buf, binary.LittleEndian, &pk.SuppressOutput),
-	)
+func (pk *SettingsCommand) Unmarshal(r *protocol.Reader) {
+	r.String(&pk.CommandLine)
+	r.Bool(&pk.SuppressOutput)
 }

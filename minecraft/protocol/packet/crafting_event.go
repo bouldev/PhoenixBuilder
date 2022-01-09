@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/google/uuid"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -21,9 +19,9 @@ type CraftingEvent struct {
 	RecipeUUID uuid.UUID
 	// Input is a list of items that the player put into the recipe so that it could create the Output items.
 	// These items are consumed in the process.
-	Input []protocol.ItemStack
+	Input []protocol.ItemInstance
 	// Output is a list of items that were obtained as a result of crafting the recipe.
-	Output []protocol.ItemStack
+	Output []protocol.ItemInstance
 }
 
 // ID ...
@@ -32,51 +30,39 @@ func (*CraftingEvent) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *CraftingEvent) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.WindowID)
-	_ = protocol.WriteVarint32(buf, pk.CraftingType)
-	_ = protocol.WriteUUID(buf, pk.RecipeUUID)
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Input)))
+func (pk *CraftingEvent) Marshal(w *protocol.Writer) {
+	inputLen, outputLen := uint32(len(pk.Input)), uint32(len(pk.Output))
+	w.Uint8(&pk.WindowID)
+	w.Varint32(&pk.CraftingType)
+	w.UUID(&pk.RecipeUUID)
+	w.Varuint32(&inputLen)
 	for _, input := range pk.Input {
-		_ = protocol.WriteItem(buf, input)
+		w.ItemInstance(&input)
 	}
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Output)))
+	w.Varuint32(&outputLen)
 	for _, output := range pk.Output {
-		_ = protocol.WriteItem(buf, output)
+		w.ItemInstance(&output)
 	}
 }
 
 // Unmarshal ...
-func (pk *CraftingEvent) Unmarshal(buf *bytes.Buffer) error {
+func (pk *CraftingEvent) Unmarshal(r *protocol.Reader) {
 	var length uint32
-	if err := chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.WindowID),
-		protocol.Varint32(buf, &pk.CraftingType),
-		protocol.UUID(buf, &pk.RecipeUUID),
-		protocol.Varuint32(buf, &length),
-	); err != nil {
-		return err
-	}
-	if length > 64 {
-		return protocol.LimitHitError{Type: "crafting event", Limit: 64}
-	}
-	pk.Input = make([]protocol.ItemStack, length)
+	r.Uint8(&pk.WindowID)
+	r.Varint32(&pk.CraftingType)
+	r.UUID(&pk.RecipeUUID)
+	r.Varuint32(&length)
+	r.LimitUint32(length, 64)
+
+	pk.Input = make([]protocol.ItemInstance, length)
 	for i := uint32(0); i < length; i++ {
-		if err := protocol.Item(buf, &pk.Input[i]); err != nil {
-			return err
-		}
+		r.ItemInstance(&pk.Input[i])
 	}
-	if err := protocol.Varuint32(buf, &length); err != nil {
-		return err
-	}
-	if length > 64 {
-		return protocol.LimitHitError{Type: "crafting event", Limit: 64}
-	}
-	pk.Output = make([]protocol.ItemStack, length)
+	r.Varuint32(&length)
+	r.LimitUint32(length, 64)
+
+	pk.Output = make([]protocol.ItemInstance, length)
 	for i := uint32(0); i < length; i++ {
-		if err := protocol.Item(buf, &pk.Output[i]); err != nil {
-			return err
-		}
+		r.ItemInstance(&pk.Output[i])
 	}
-	return nil
 }

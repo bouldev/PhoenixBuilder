@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -20,11 +18,17 @@ type ResourcePackStack struct {
 	// The order of these texture packs specifies the order that they are applied in on the client side. The
 	// first in the list will be applied first.
 	TexturePacks []protocol.StackResourcePack
-	// Experimental specifies if the resource packs in the stack are experimental. This is internal and should
-	// always be set to false.
-	Experimental bool
 	// BaseGameVersion is the vanilla version that the client should set its resource pack stack to.
 	BaseGameVersion string
+	// Experiments holds a list of experiments that are either enabled or disabled in the world that the
+	// player spawns in.
+	// It is not clear why experiments are sent both here and in the StartGame packet.
+	Experiments []protocol.ExperimentData
+	// ExperimentsPreviouslyToggled specifies if any experiments were previously toggled in this world. It is
+	// probably used for some kind of metrics.
+	ExperimentsPreviouslyToggled bool
+	Unknown1 bool
+	Unknown2 bool
 }
 
 // ID ...
@@ -33,46 +37,51 @@ func (*ResourcePackStack) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ResourcePackStack) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.TexturePackRequired)
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.BehaviourPacks)))
+func (pk *ResourcePackStack) Marshal(w *protocol.Writer) {
+	w.Bool(&pk.TexturePackRequired)
+	behaviourLen, textureLen := uint32(len(pk.BehaviourPacks)), uint32(len(pk.TexturePacks))
+	w.Varuint32(&behaviourLen)
 	for _, pack := range pk.BehaviourPacks {
-		_ = protocol.WriteStackPack(buf, pack)
+		protocol.StackPack(w, &pack)
 	}
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.TexturePacks)))
+	w.Varuint32(&textureLen)
 	for _, pack := range pk.TexturePacks {
-		_ = protocol.WriteStackPack(buf, pack)
+		protocol.StackPack(w, &pack)
 	}
-	_ = binary.Write(buf, binary.LittleEndian, pk.Experimental)
-	_ = protocol.WriteString(buf, pk.BaseGameVersion)
+	w.String(&pk.BaseGameVersion)
+	l := uint32(len(pk.Experiments))
+	w.Uint32(&l)
+	for _, experiment := range pk.Experiments {
+		protocol.Experiment(w, &experiment)
+	}
+	w.Bool(&pk.ExperimentsPreviouslyToggled)
+	w.Bool(&pk.Unknown1)
+	w.Bool(&pk.Unknown2)
 }
 
 // Unmarshal ...
-func (pk *ResourcePackStack) Unmarshal(buf *bytes.Buffer) error {
+func (pk *ResourcePackStack) Unmarshal(r *protocol.Reader) {
 	var length uint32
-	if err := chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.TexturePackRequired),
-		protocol.Varuint32(buf, &length),
-	); err != nil {
-		return err
-	}
+	r.Bool(&pk.TexturePackRequired)
+	r.Varuint32(&length)
+
 	pk.BehaviourPacks = make([]protocol.StackResourcePack, length)
 	for i := uint32(0); i < length; i++ {
-		if err := protocol.StackPack(buf, &pk.BehaviourPacks[i]); err != nil {
-			return err
-		}
+		protocol.StackPack(r, &pk.BehaviourPacks[i])
 	}
-	if err := protocol.Varuint32(buf, &length); err != nil {
-		return err
-	}
+	r.Varuint32(&length)
 	pk.TexturePacks = make([]protocol.StackResourcePack, length)
 	for i := uint32(0); i < length; i++ {
-		if err := protocol.StackPack(buf, &pk.TexturePacks[i]); err != nil {
-			return err
-		}
+		protocol.StackPack(r, &pk.TexturePacks[i])
 	}
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.Experimental),
-		protocol.String(buf, &pk.BaseGameVersion),
-	)
+	r.String(&pk.BaseGameVersion)
+	var l uint32
+	r.Uint32(&l)
+	pk.Experiments = make([]protocol.ExperimentData, l)
+	for i := uint32(0); i < l; i++ {
+		protocol.Experiment(r, &pk.Experiments[i])
+	}
+	r.Bool(&pk.ExperimentsPreviouslyToggled)
+	r.Bool(&pk.Unknown1)
+	r.Bool(&pk.Unknown2)
 }

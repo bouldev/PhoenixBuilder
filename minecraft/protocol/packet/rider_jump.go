@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -18,11 +17,11 @@ func (*RiderJump) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *RiderJump) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.JumpStrength)
+func (pk *RiderJump) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.JumpStrength)
 }
 
 // Unmarshal ...
-func (pk *RiderJump) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.Varint32(buf, &pk.JumpStrength)
+func (pk *RiderJump) Unmarshal(r *protocol.Reader) {
+	r.Varint32(&pk.JumpStrength)
 }

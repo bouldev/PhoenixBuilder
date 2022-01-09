@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -29,19 +27,17 @@ func (*ResourcePackChunkData) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ResourcePackChunkData) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.UUID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ChunkIndex)
-	_ = binary.Write(buf, binary.LittleEndian, pk.DataOffset)
-	_ = protocol.WriteByteSlice(buf, pk.Data)
+func (pk *ResourcePackChunkData) Marshal(w *protocol.Writer) {
+	w.String(&pk.UUID)
+	w.Uint32(&pk.ChunkIndex)
+	w.Uint64(&pk.DataOffset)
+	w.ByteSlice(&pk.Data)
 }
 
 // Unmarshal ...
-func (pk *ResourcePackChunkData) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.String(buf, &pk.UUID),
-		binary.Read(buf, binary.LittleEndian, &pk.ChunkIndex),
-		binary.Read(buf, binary.LittleEndian, &pk.DataOffset),
-		protocol.ByteSlice(buf, &pk.Data),
-	)
+func (pk *ResourcePackChunkData) Unmarshal(r *protocol.Reader) {
+	r.String(&pk.UUID)
+	r.Uint32(&pk.ChunkIndex)
+	r.Uint64(&pk.DataOffset)
+	r.ByteSlice(&pk.Data)
 }

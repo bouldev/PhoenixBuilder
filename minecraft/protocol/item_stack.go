@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 )
 
@@ -16,16 +15,16 @@ type ItemStackRequest struct {
 	// Actions is a list of actions performed by the client. The actual type of the actions depends on which
 	// ID was present, and is one of the concrete types below.
 	Actions []StackRequestAction
+	// CustomNames is a list of custom names involved in the request. This is typically filled with one string
+	// when an anvil is used.
+	CustomNames []string
 }
 
-// WriteStackRequest writes an ItemStackRequest x to Buffer dst.
-func WriteStackRequest(dst *bytes.Buffer, x ItemStackRequest) error {
-	if err := WriteVarint32(dst, x.RequestID); err != nil {
-		return err
-	}
-	if err := WriteVaruint32(dst, uint32(len(x.Actions))); err != nil {
-		return err
-	}
+// WriteStackRequest writes an ItemStackRequest x to Writer w.
+func WriteStackRequest(w *Writer, x *ItemStackRequest) {
+	l := uint32(len(x.Actions))
+	w.Varint32(&x.RequestID)
+	w.Varuint32(&l)
 	for _, action := range x.Actions {
 		var id byte
 		switch action.(type) {
@@ -47,43 +46,45 @@ func WriteStackRequest(dst *bytes.Buffer, x ItemStackRequest) error {
 			id = StackRequestActionLabTableCombine
 		case *BeaconPaymentStackRequestAction:
 			id = StackRequestActionBeaconPayment
+		case *MineBlockStackRequestAction:
+			id = StackRequestActionMineBlock
 		case *CraftRecipeStackRequestAction:
 			id = StackRequestActionCraftRecipe
 		case *AutoCraftRecipeStackRequestAction:
 			id = StackRequestActionCraftRecipeAuto
 		case *CraftCreativeStackRequestAction:
 			id = StackRequestActionCraftCreative
+		case *CraftRecipeOptionalStackRequestAction:
+			id = StackRequestActionCraftRecipeOptional
 		case *CraftNonImplementedStackRequestAction:
 			id = StackRequestActionCraftNonImplementedDeprecated
 		case *CraftResultsDeprecatedStackRequestAction:
 			id = StackRequestActionCraftResultsDeprecated
 		default:
-			panic(fmt.Sprintf("unknown item stack request action type %T", action))
+			w.UnknownEnumOption(fmt.Sprintf("%T", action), "stack request action type")
 		}
-		dst.WriteByte(id)
-		action.Marshal(dst)
+		w.Uint8(&id)
+		action.Marshal(w)
 	}
-	return nil
+	l = uint32(len(x.CustomNames))
+	w.Varuint32(&l)
+	for _, n := range x.CustomNames {
+		w.String(&n)
+	}
 }
 
-// StackRequest reads an ItemStackRequest x from Buffer src.
-func StackRequest(src *bytes.Buffer, x *ItemStackRequest) error {
+// StackRequest reads an ItemStackRequest x from Reader r.
+func StackRequest(r *Reader, x *ItemStackRequest) {
 	var count uint32
-	if err := Varint32(src, &x.RequestID); err != nil {
-		return err
-	}
-	if err := Varuint32(src, &count); err != nil {
-		return err
-	}
-	if count > mediumLimit {
-		return LimitHitError{Limit: mediumLimit, Type: "ItemStackRequest"}
-	}
+	r.Varint32(&x.RequestID)
+	r.Varuint32(&count)
+	r.LimitUint32(count, mediumLimit)
+
 	x.Actions = make([]StackRequestAction, count)
 	for i := uint32(0); i < count; i++ {
-		id, err := src.ReadByte()
-		if err != nil {
-			return wrap(err)
-		}
+		var id uint8
+		r.Uint8(&id)
+
 		var action StackRequestAction
 		switch id {
 		case StackRequestActionTake:
@@ -104,33 +105,50 @@ func StackRequest(src *bytes.Buffer, x *ItemStackRequest) error {
 			action = &LabTableCombineStackRequestAction{}
 		case StackRequestActionBeaconPayment:
 			action = &BeaconPaymentStackRequestAction{}
+		case StackRequestActionMineBlock:
+			action = &MineBlockStackRequestAction{}
 		case StackRequestActionCraftRecipe:
 			action = &CraftRecipeStackRequestAction{}
 		case StackRequestActionCraftRecipeAuto:
 			action = &AutoCraftRecipeStackRequestAction{}
 		case StackRequestActionCraftCreative:
 			action = &CraftCreativeStackRequestAction{}
+		case StackRequestActionCraftRecipeOptional:
+			action = &CraftRecipeOptionalStackRequestAction{}
 		case StackRequestActionCraftNonImplementedDeprecated:
 			action = &CraftNonImplementedStackRequestAction{}
 		case StackRequestActionCraftResultsDeprecated:
 			action = &CraftResultsDeprecatedStackRequestAction{}
 		default:
-			return fmt.Errorf("unknown stack request action %v", id)
+			r.UnknownEnumOption(id, "stack request action type")
+			return
 		}
-		if err := action.Unmarshal(src); err != nil {
-			return err
-		}
+		action.Unmarshal(r)
 		x.Actions[i] = action
 	}
-	return nil
+
+	r.Varuint32(&count)
+	r.LimitUint32(count, 64)
+
+	x.CustomNames = make([]string, count)
+	for i := uint32(0); i < count; i++ {
+		r.String(&x.CustomNames[i])
+	}
 }
+
+const (
+	ItemStackResponseStatusOK = iota
+	ItemStackResponseStatusError
+	// There are lots more of these statuses for specific errors, but they don't seem to be very useful.
+)
 
 // ItemStackResponse is a response to an individual ItemStackRequest.
 type ItemStackResponse struct {
-	// Success specifies if the request with the RequestID below was successful. If this is the case, the
+	// Status specifies if the request with the RequestID below was successful. If this is the case, the
 	// ContainerInfo below will have information on what slots ended up changing. If not, the container info
 	// will be empty.
-	Success bool
+	// A non-0 status means an error occurred and will result in the action being reverted.
+	Status uint8
 	// RequestID is the unique ID of the request that this response is in reaction to. If rejected, the client
 	// will undo the actions from the request with this ID.
 	RequestID int32
@@ -159,113 +177,76 @@ type StackResponseSlotInfo struct {
 	Count byte
 	// StackNetworkID is the network ID of the new stack at a specific slot.
 	StackNetworkID int32
+	// CustomName is the custom name of the item stack. It is used in relation to text filtering.
+	CustomName string
+	// DurabilityCorrection is the current durability of the item stack. This durability will be shown
+	// client-side after the response is sent to the client.
+	DurabilityCorrection int32
 }
 
-// WriteStackResponse writes an ItemStackResponse x to Buffer dst.
-func WriteStackResponse(dst *bytes.Buffer, x ItemStackResponse) error {
-	if err := chainErr(
-		binary.Write(dst, binary.LittleEndian, x.Success),
-		WriteVarint32(dst, x.RequestID),
-	); err != nil {
-		return err
+// WriteStackResponse writes an ItemStackResponse x to Writer w.
+func WriteStackResponse(w *Writer, x *ItemStackResponse) {
+	w.Uint8(&x.Status)
+	w.Varint32(&x.RequestID)
+	if x.Status != ItemStackResponseStatusOK {
+		return
 	}
-	if !x.Success {
-		return nil
-	}
-	if err := WriteVaruint32(dst, uint32(len(x.ContainerInfo))); err != nil {
-		return err
-	}
+	l := uint32(len(x.ContainerInfo))
+	w.Varuint32(&l)
 	for _, info := range x.ContainerInfo {
-		if err := WriteStackContainerInfo(dst, info); err != nil {
-			return err
-		}
+		WriteStackContainerInfo(w, &info)
 	}
-	return nil
 }
 
-// StackResponse reads an ItemStackResponse x from Buffer src.
-func StackResponse(src *bytes.Buffer, x *ItemStackResponse) error {
-	if err := chainErr(
-		binary.Read(src, binary.LittleEndian, &x.Success),
-		Varint32(src, &x.RequestID),
-	); err != nil {
-		return err
-	}
-	if !x.Success {
-		return nil
-	}
+// StackResponse reads an ItemStackResponse x from Reader r.
+func StackResponse(r *Reader, x *ItemStackResponse) {
 	var l uint32
-	if err := Varuint32(src, &l); err != nil {
-		return err
+	r.Uint8(&x.Status)
+	r.Varint32(&x.RequestID)
+	if x.Status != ItemStackResponseStatusOK {
+		return
 	}
+	r.Varuint32(&l)
+
 	x.ContainerInfo = make([]StackResponseContainerInfo, l)
 	for i := uint32(0); i < l; i++ {
-		if err := StackContainerInfo(src, &x.ContainerInfo[i]); err != nil {
-			return err
-		}
+		StackContainerInfo(r, &x.ContainerInfo[i])
 	}
-	return nil
 }
 
-// WriteStackContainerInfo writes a StackResponseContainerInfo x to Buffer dst.
-func WriteStackContainerInfo(dst *bytes.Buffer, x StackResponseContainerInfo) error {
-	dst.WriteByte(x.ContainerID)
-	if err := WriteVaruint32(dst, uint32(len(x.SlotInfo))); err != nil {
-		return err
-	}
+// WriteStackContainerInfo writes a StackResponseContainerInfo x to Writer w.
+func WriteStackContainerInfo(w *Writer, x *StackResponseContainerInfo) {
+	w.Uint8(&x.ContainerID)
+	l := uint32(len(x.SlotInfo))
+	w.Varuint32(&l)
 	for _, info := range x.SlotInfo {
-		if err := WriteStackSlotInfo(dst, info); err != nil {
-			return err
-		}
+		StackSlotInfo(w, &info)
 	}
-	return nil
 }
 
-// StackContainerInfo reads a StackResponseContainerInfo x from Buffer src.
-func StackContainerInfo(src *bytes.Buffer, x *StackResponseContainerInfo) error {
-	if err := binary.Read(src, binary.LittleEndian, &x.ContainerID); err != nil {
-		return err
-	}
+// StackContainerInfo reads a StackResponseContainerInfo x from Reader r.
+func StackContainerInfo(r *Reader, x *StackResponseContainerInfo) {
 	var l uint32
-	if err := Varuint32(src, &l); err != nil {
-		return err
-	}
+	r.Uint8(&x.ContainerID)
+	r.Varuint32(&l)
+
 	x.SlotInfo = make([]StackResponseSlotInfo, l)
 	for i := uint32(0); i < l; i++ {
-		if err := StackSlotInfo(src, &x.SlotInfo[i]); err != nil {
-			return err
-		}
+		StackSlotInfo(r, &x.SlotInfo[i])
 	}
-	return nil
 }
 
-// WriteStackSlotInfo writes a StackResponseSlotInfo x to Buffer dst.
-func WriteStackSlotInfo(dst *bytes.Buffer, x StackResponseSlotInfo) error {
+// StackSlotInfo reads/writes a StackResponseSlotInfo x using IO r.
+func StackSlotInfo(r IO, x *StackResponseSlotInfo) {
+	r.Uint8(&x.Slot)
+	r.Uint8(&x.HotbarSlot)
+	r.Uint8(&x.Count)
+	r.Varint32(&x.StackNetworkID)
 	if x.Slot != x.HotbarSlot {
-		panic(fmt.Errorf("%v: Slot and HotbarSlot had different values: %v vs %v", callFrame(), x.Slot, x.HotbarSlot))
+		r.InvalidValue(x.HotbarSlot, "hotbar slot", "hot bar slot must be equal to normal slot")
 	}
-	return chainErr(
-		binary.Write(dst, binary.LittleEndian, x.Slot),
-		binary.Write(dst, binary.LittleEndian, x.HotbarSlot),
-		binary.Write(dst, binary.LittleEndian, x.Count),
-		WriteVarint32(dst, x.StackNetworkID),
-	)
-}
-
-// StackSlotInfo reads a StackResponseSlotInfo x from Buffer src.
-func StackSlotInfo(src *bytes.Buffer, x *StackResponseSlotInfo) error {
-	if err := chainErr(
-		binary.Read(src, binary.LittleEndian, &x.Slot),
-		binary.Read(src, binary.LittleEndian, &x.HotbarSlot),
-		binary.Read(src, binary.LittleEndian, &x.Count),
-		Varint32(src, &x.StackNetworkID),
-	); err != nil {
-		return err
-	}
-	if x.Slot != x.HotbarSlot {
-		return fmt.Errorf("%v: Slot and HotbarSlot had different values: %v vs %v", callFrame(), x.Slot, x.HotbarSlot)
-	}
-	return nil
+	r.String(&x.CustomName)
+	r.Varint32(&x.DurabilityCorrection)
 }
 
 // StackRequestAction represents a single action related to the inventory present in an ItemStackRequest.
@@ -273,10 +254,10 @@ func StackSlotInfo(src *bytes.Buffer, x *StackResponseSlotInfo) error {
 // client, such as moving an item around the inventory or placing a block.
 type StackRequestAction interface {
 	// Marshal encodes the stack request action its binary representation into buf.
-	Marshal(buf *bytes.Buffer)
-	// Unmarshal decodes a serialised stack request action object in buf into the InventoryTransactionData
-	// instance.
-	Unmarshal(buf *bytes.Buffer) error
+	Marshal(w *Writer)
+	// Unmarshal decodes a serialised stack request action object from Reader r into the
+	// InventoryTransactionData instance.
+	Unmarshal(r *Reader)
 }
 
 const (
@@ -289,9 +270,11 @@ const (
 	StackRequestActionCreate
 	StackRequestActionLabTableCombine
 	StackRequestActionBeaconPayment
+	StackRequestActionMineBlock
 	StackRequestActionCraftRecipe
 	StackRequestActionCraftRecipeAuto
 	StackRequestActionCraftCreative
+	StackRequestActionCraftRecipeOptional
 	StackRequestActionCraftNonImplementedDeprecated
 	StackRequestActionCraftResultsDeprecated
 )
@@ -307,19 +290,17 @@ type transferStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *transferStackRequestAction) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, a.Count)
-	_ = WriteStackReqSlotInfo(buf, a.Source)
-	_ = WriteStackReqSlotInfo(buf, a.Destination)
+func (a *transferStackRequestAction) Marshal(w *Writer) {
+	w.Uint8(&a.Count)
+	StackReqSlotInfo(w, &a.Source)
+	StackReqSlotInfo(w, &a.Destination)
 }
 
 // Unmarshal ...
-func (a *transferStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &a.Count),
-		StackReqSlotInfo(buf, &a.Source),
-		StackReqSlotInfo(buf, &a.Destination),
-	)
+func (a *transferStackRequestAction) Unmarshal(r *Reader) {
+	r.Uint8(&a.Count)
+	StackReqSlotInfo(r, &a.Source)
+	StackReqSlotInfo(r, &a.Destination)
 }
 
 // TakeStackRequestAction is sent by the client to the server to take x amount of items from one slot in a
@@ -344,17 +325,15 @@ type SwapStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *SwapStackRequestAction) Marshal(buf *bytes.Buffer) {
-	_ = WriteStackReqSlotInfo(buf, a.Source)
-	_ = WriteStackReqSlotInfo(buf, a.Destination)
+func (a *SwapStackRequestAction) Marshal(w *Writer) {
+	StackReqSlotInfo(w, &a.Source)
+	StackReqSlotInfo(w, &a.Destination)
 }
 
 // Unmarshal ...
-func (a *SwapStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		StackReqSlotInfo(buf, &a.Source),
-		StackReqSlotInfo(buf, &a.Destination),
-	)
+func (a *SwapStackRequestAction) Unmarshal(r *Reader) {
+	StackReqSlotInfo(r, &a.Source)
+	StackReqSlotInfo(r, &a.Destination)
 }
 
 // DropStackRequestAction is sent by the client when it drops an item out of the inventory when it has its
@@ -372,19 +351,17 @@ type DropStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *DropStackRequestAction) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, a.Count)
-	_ = WriteStackReqSlotInfo(buf, a.Source)
-	_ = binary.Write(buf, binary.LittleEndian, a.Randomly)
+func (a *DropStackRequestAction) Marshal(w *Writer) {
+	w.Uint8(&a.Count)
+	StackReqSlotInfo(w, &a.Source)
+	w.Bool(&a.Randomly)
 }
 
 // Unmarshal ...
-func (a *DropStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &a.Count),
-		StackReqSlotInfo(buf, &a.Source),
-		binary.Read(buf, binary.LittleEndian, &a.Randomly),
-	)
+func (a *DropStackRequestAction) Unmarshal(r *Reader) {
+	r.Uint8(&a.Count)
+	StackReqSlotInfo(r, &a.Source)
+	r.Bool(&a.Randomly)
 }
 
 // DestroyStackRequestAction is sent by the client when it destroys an item in creative mode by moving it
@@ -398,17 +375,15 @@ type DestroyStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *DestroyStackRequestAction) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, a.Count)
-	_ = WriteStackReqSlotInfo(buf, a.Source)
+func (a *DestroyStackRequestAction) Marshal(w *Writer) {
+	w.Uint8(&a.Count)
+	StackReqSlotInfo(w, &a.Source)
 }
 
 // Unmarshal ...
-func (a *DestroyStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &a.Count),
-		StackReqSlotInfo(buf, &a.Source),
-	)
+func (a *DestroyStackRequestAction) Unmarshal(r *Reader) {
+	r.Uint8(&a.Count)
+	StackReqSlotInfo(r, &a.Source)
 }
 
 // ConsumeStackRequestAction is sent by the client when it uses an item to craft another item. The original
@@ -430,23 +405,23 @@ type CreateStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *CreateStackRequestAction) Marshal(buf *bytes.Buffer) {
-	buf.WriteByte(a.ResultsSlot)
+func (a *CreateStackRequestAction) Marshal(w *Writer) {
+	w.Uint8(&a.ResultsSlot)
 }
 
 // Unmarshal ...
-func (a *CreateStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
-	return binary.Read(buf, binary.LittleEndian, &a.ResultsSlot)
+func (a *CreateStackRequestAction) Unmarshal(r *Reader) {
+	r.Uint8(&a.ResultsSlot)
 }
 
 // LabTableCombineStackRequestAction is sent by the client when it uses a lab table to combine item stacks.
 type LabTableCombineStackRequestAction struct{}
 
 // Marshal ...
-func (a *LabTableCombineStackRequestAction) Marshal(*bytes.Buffer) {}
+func (a *LabTableCombineStackRequestAction) Marshal(*Writer) {}
 
 // Unmarshal ...
-func (a *LabTableCombineStackRequestAction) Unmarshal(*bytes.Buffer) error { return nil }
+func (a *LabTableCombineStackRequestAction) Unmarshal(*Reader) {}
 
 // BeaconPaymentStackRequestAction is sent by the client when it submits an item to enable effects from a
 // beacon. These items will have been moved into the beacon item slot in advance.
@@ -456,17 +431,41 @@ type BeaconPaymentStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *BeaconPaymentStackRequestAction) Marshal(buf *bytes.Buffer) {
-	_ = WriteVarint32(buf, a.PrimaryEffect)
-	_ = WriteVarint32(buf, a.SecondaryEffect)
+func (a *BeaconPaymentStackRequestAction) Marshal(w *Writer) {
+	w.Varint32(&a.PrimaryEffect)
+	w.Varint32(&a.SecondaryEffect)
 }
 
 // Unmarshal ...
-func (a *BeaconPaymentStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		Varint32(buf, &a.PrimaryEffect),
-		Varint32(buf, &a.SecondaryEffect),
-	)
+func (a *BeaconPaymentStackRequestAction) Unmarshal(r *Reader) {
+	r.Varint32(&a.PrimaryEffect)
+	r.Varint32(&a.SecondaryEffect)
+}
+
+// MineBlockStackRequestAction is sent by the client when it breaks a block.
+type MineBlockStackRequestAction struct {
+	// Unknown1 ... TODO: Find out what this is for
+	Unknown1 int32
+	// PredictedDurability is the durability of the item that the client assumes to be present at the time.
+	PredictedDurability int32
+	// StackNetworkID is the unique stack ID that the client assumes to be present at the time. The server
+	// must check if these IDs match. If they do not match, servers should reject the stack request that the
+	// action holding this info was in.
+	StackNetworkID int32
+}
+
+// Marshal ...
+func (a *MineBlockStackRequestAction) Marshal(w *Writer) {
+	w.Varint32(&a.Unknown1)
+	w.Varint32(&a.PredictedDurability)
+	w.Varint32(&a.StackNetworkID)
+}
+
+// Unmarshal ...
+func (a *MineBlockStackRequestAction) Unmarshal(r *Reader) {
+	r.Varint32(&a.Unknown1)
+	r.Varint32(&a.PredictedDurability)
+	r.Varint32(&a.StackNetworkID)
 }
 
 // CraftRecipeStackRequestAction is sent by the client the moment it begins crafting an item. This is the
@@ -481,13 +480,13 @@ type CraftRecipeStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *CraftRecipeStackRequestAction) Marshal(buf *bytes.Buffer) {
-	_ = WriteVaruint32(buf, a.RecipeNetworkID)
+func (a *CraftRecipeStackRequestAction) Marshal(w *Writer) {
+	w.Varuint32(&a.RecipeNetworkID)
 }
 
 // Unmarshal ...
-func (a *CraftRecipeStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
-	return Varuint32(buf, &a.RecipeNetworkID)
+func (a *CraftRecipeStackRequestAction) Unmarshal(r *Reader) {
+	r.Varuint32(&a.RecipeNetworkID)
 }
 
 // AutoCraftRecipeStackRequestAction is sent by the client similarly to the CraftRecipeStackRequestAction. The
@@ -505,13 +504,41 @@ type CraftCreativeStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *CraftCreativeStackRequestAction) Marshal(buf *bytes.Buffer) {
-	_ = WriteVaruint32(buf, a.CreativeItemNetworkID)
+func (a *CraftCreativeStackRequestAction) Marshal(w *Writer) {
+	w.Varuint32(&a.CreativeItemNetworkID)
 }
 
 // Unmarshal ...
-func (a *CraftCreativeStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
-	return Varuint32(buf, &a.CreativeItemNetworkID)
+func (a *CraftCreativeStackRequestAction) Unmarshal(r *Reader) {
+	r.Varuint32(&a.CreativeItemNetworkID)
+}
+
+// CraftRecipeOptionalStackRequestAction is sent when using an anvil. When this action is sent, the
+// CustomNames field in the respective stack request is non-empty and contains the name of the item created
+// using the anvil.
+type CraftRecipeOptionalStackRequestAction struct {
+	// UnknownBytes currently has an unknown usage. It seems to always be 5 zero bytes when using an anvil.
+	UnknownBytes [5]byte
+}
+
+// Marshal ...
+func (c *CraftRecipeOptionalStackRequestAction) Marshal(w *Writer) {
+	for i := 0; i < len(c.UnknownBytes); i++ {
+		w.Uint8(&c.UnknownBytes[i])
+	}
+}
+
+// zeroBytes holds 5 zero bytes.
+var zeroBytes = make([]byte, 5)
+
+// Unmarshal ...
+func (c *CraftRecipeOptionalStackRequestAction) Unmarshal(r *Reader) {
+	for i := 0; i < len(c.UnknownBytes); i++ {
+		r.Uint8(&c.UnknownBytes[i])
+	}
+	if !bytes.Equal(c.UnknownBytes[:], zeroBytes) {
+		panic(fmt.Sprintf("craft recipe optional stack request action unknown bytes are not all 0: %x", c.UnknownBytes))
+	}
 }
 
 // CraftNonImplementedStackRequestAction is an action sent for inventory actions that aren't yet implemented
@@ -519,10 +546,10 @@ func (a *CraftCreativeStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
 type CraftNonImplementedStackRequestAction struct{}
 
 // Marshal ...
-func (*CraftNonImplementedStackRequestAction) Marshal(*bytes.Buffer) {}
+func (*CraftNonImplementedStackRequestAction) Marshal(*Writer) {}
 
 // Unmarshal ...
-func (*CraftNonImplementedStackRequestAction) Unmarshal(*bytes.Buffer) error { return nil }
+func (*CraftNonImplementedStackRequestAction) Unmarshal(*Reader) {}
 
 // CraftResultsDeprecatedStackRequestAction is an additional, deprecated packet sent by the client after
 // crafting. It holds the final results and the amount of times the recipe was crafted. It shouldn't be used.
@@ -534,30 +561,26 @@ type CraftResultsDeprecatedStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *CraftResultsDeprecatedStackRequestAction) Marshal(buf *bytes.Buffer) {
-	_ = WriteVaruint32(buf, uint32(len(a.ResultItems)))
+func (a *CraftResultsDeprecatedStackRequestAction) Marshal(w *Writer) {
+	l := uint32(len(a.ResultItems))
+	w.Varuint32(&l)
 	for _, i := range a.ResultItems {
-		_ = WriteItem(buf, i)
+		w.Item(&i)
 	}
-	buf.WriteByte(a.TimesCrafted)
+	w.Uint8(&a.TimesCrafted)
 }
 
 // Unmarshal ...
-func (a *CraftResultsDeprecatedStackRequestAction) Unmarshal(buf *bytes.Buffer) error {
+func (a *CraftResultsDeprecatedStackRequestAction) Unmarshal(r *Reader) {
 	var l uint32
-	if err := Varuint32(buf, &l); err != nil {
-		return err
-	}
-	if l > higherLimit/2 {
-		return LimitHitError{Limit: higherLimit / 2, Type: "CraftResultsDeprecated ResultItems"}
-	}
+	r.Varuint32(&l)
+	r.LimitUint32(l, mediumLimit*2)
+
 	a.ResultItems = make([]ItemStack, l)
 	for i := uint32(0); i < l; i++ {
-		if err := Item(buf, &a.ResultItems[i]); err != nil {
-			return err
-		}
+		r.Item(&a.ResultItems[i])
 	}
-	return binary.Read(buf, binary.LittleEndian, &a.TimesCrafted)
+	r.Uint8(&a.TimesCrafted)
 }
 
 // StackRequestSlotInfo holds information on a specific slot client-side.
@@ -572,20 +595,9 @@ type StackRequestSlotInfo struct {
 	StackNetworkID int32
 }
 
-// WriteStackReqSlotInfo writes a StackRequestSlotInfo x to Buffer dst.
-func WriteStackReqSlotInfo(dst *bytes.Buffer, x StackRequestSlotInfo) error {
-	return chainErr(
-		binary.Write(dst, binary.LittleEndian, x.ContainerID),
-		binary.Write(dst, binary.LittleEndian, x.Slot),
-		WriteVarint32(dst, x.StackNetworkID),
-	)
-}
-
-// StackReqSlotInfo reads a StackRequestSlotInfo x from Buffer src.
-func StackReqSlotInfo(src *bytes.Buffer, x *StackRequestSlotInfo) error {
-	return chainErr(
-		binary.Read(src, binary.LittleEndian, &x.ContainerID),
-		binary.Read(src, binary.LittleEndian, &x.Slot),
-		Varint32(src, &x.StackNetworkID),
-	)
+// StackReqSlotInfo reads/writes a StackRequestSlotInfo x using IO r.
+func StackReqSlotInfo(r IO, x *StackRequestSlotInfo) {
+	r.Uint8(&x.ContainerID)
+	r.Uint8(&x.Slot)
+	r.Varint32(&x.StackNetworkID)
 }

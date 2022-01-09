@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -26,17 +25,15 @@ func (*InventorySlot) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *InventorySlot) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, pk.WindowID)
-	_ = protocol.WriteVaruint32(buf, pk.Slot)
-	_ = protocol.WriteItemInst(buf, pk.NewItem)
+func (pk *InventorySlot) Marshal(w *protocol.Writer) {
+	w.Varuint32(&pk.WindowID)
+	w.Varuint32(&pk.Slot)
+	w.ItemInstance(&pk.NewItem)
 }
 
 // Unmarshal ...
-func (pk *InventorySlot) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint32(buf, &pk.WindowID),
-		protocol.Varuint32(buf, &pk.Slot),
-		protocol.ItemInst(buf, &pk.NewItem),
-	)
+func (pk *InventorySlot) Unmarshal(r *protocol.Reader) {
+	r.Varuint32(&pk.WindowID)
+	r.Varuint32(&pk.Slot)
+	r.ItemInstance(&pk.NewItem)
 }

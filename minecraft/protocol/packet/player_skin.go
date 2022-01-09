@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/google/uuid"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -29,21 +27,19 @@ func (*PlayerSkin) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PlayerSkin) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteUUID(buf, pk.UUID)
-	_ = protocol.WriteSerialisedSkin(buf, pk.Skin)
-	_ = protocol.WriteString(buf, pk.NewSkinName)
-	_ = protocol.WriteString(buf, pk.OldSkinName)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Skin.Trusted)
+func (pk *PlayerSkin) Marshal(w *protocol.Writer) {
+	w.UUID(&pk.UUID)
+	protocol.WriteSerialisedSkin(w, &pk.Skin)
+	w.String(&pk.NewSkinName)
+	w.String(&pk.OldSkinName)
+	w.Bool(&pk.Skin.Trusted)
 }
 
 // Unmarshal ...
-func (pk *PlayerSkin) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.UUID(buf, &pk.UUID),
-		protocol.SerialisedSkin(buf, &pk.Skin),
-		protocol.String(buf, &pk.NewSkinName),
-		protocol.String(buf, &pk.OldSkinName),
-		binary.Read(buf, binary.LittleEndian, &pk.Skin.Trusted),
-	)
+func (pk *PlayerSkin) Unmarshal(r *protocol.Reader) {
+	r.UUID(&pk.UUID)
+	protocol.SerialisedSkin(r, &pk.Skin)
+	r.String(&pk.NewSkinName)
+	r.String(&pk.OldSkinName)
+	r.Bool(&pk.Skin.Trusted)
 }

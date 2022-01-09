@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -32,21 +31,19 @@ func (*AddPainting) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *AddPainting) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint64(buf, pk.EntityUniqueID)
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = protocol.WriteVarint32(buf, pk.Direction)
-	_ = protocol.WriteString(buf, pk.Title)
+func (pk *AddPainting) Marshal(w *protocol.Writer) {
+	w.Varint64(&pk.EntityUniqueID)
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.Vec3(&pk.Position)
+	w.Varint32(&pk.Direction)
+	w.String(&pk.Title)
 }
 
 // Unmarshal ...
-func (pk *AddPainting) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varint64(buf, &pk.EntityUniqueID),
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.Vec3(buf, &pk.Position),
-		protocol.Varint32(buf, &pk.Direction),
-		protocol.String(buf, &pk.Title),
-	)
+func (pk *AddPainting) Unmarshal(r *protocol.Reader) {
+	r.Varint64(&pk.EntityUniqueID)
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.Vec3(&pk.Position)
+	r.Varint32(&pk.Direction)
+	r.String(&pk.Title)
 }

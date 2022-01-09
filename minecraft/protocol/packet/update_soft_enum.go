@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -36,30 +34,25 @@ func (*UpdateSoftEnum) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *UpdateSoftEnum) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.EnumType)
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Options)))
+func (pk *UpdateSoftEnum) Marshal(w *protocol.Writer) {
+	w.String(&pk.EnumType)
+	l := uint32(len(pk.Options))
+	w.Varuint32(&l)
 	for _, option := range pk.Options {
-		_ = protocol.WriteString(buf, option)
+		w.String(&option)
 	}
-	_ = binary.Write(buf, binary.LittleEndian, pk.ActionType)
+	w.Uint8(&pk.ActionType)
 }
 
 // Unmarshal ...
-func (pk *UpdateSoftEnum) Unmarshal(buf *bytes.Buffer) error {
+func (pk *UpdateSoftEnum) Unmarshal(r *protocol.Reader) {
 	var count uint32
-	if err := chainErr(
-		protocol.String(buf, &pk.EnumType),
-		protocol.Varuint32(buf, &count),
-	); err != nil {
-		return err
-	}
+	r.String(&pk.EnumType)
+	r.Varuint32(&count)
+
 	pk.Options = make([]string, count)
 	for i := uint32(0); i < count; i++ {
-		if err := protocol.String(buf, &pk.Options[i]); err != nil {
-			return err
-		}
+		r.String(&pk.Options[i])
 	}
-
-	return binary.Read(buf, binary.LittleEndian, &pk.ActionType)
+	r.Uint8(&pk.ActionType)
 }

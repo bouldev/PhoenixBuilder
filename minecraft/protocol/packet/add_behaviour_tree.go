@@ -1,15 +1,13 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
-// AddBehaviourTree is sent by the server to the client. Its usage remains unknown, as behaviour packs are
-// typically all sent at the start of the game.
+// AddBehaviourTree is sent by the server to the client. The packet is currently unused by both client and
+// server.
 type AddBehaviourTree struct {
-	// BehaviourTree is a JSON encoded tree containing behaviour. It does not seem like it has any real
-	// effect on the client.
+	// BehaviourTree is an unused string.
 	BehaviourTree string
 }
 
@@ -19,11 +17,11 @@ func (*AddBehaviourTree) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *AddBehaviourTree) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.BehaviourTree)
+func (pk *AddBehaviourTree) Marshal(w *protocol.Writer) {
+	w.String(&pk.BehaviourTree)
 }
 
 // Unmarshal ...
-func (pk *AddBehaviourTree) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.String(buf, &pk.BehaviourTree)
+func (pk *AddBehaviourTree) Unmarshal(r *protocol.Reader) {
+	r.String(&pk.BehaviourTree)
 }

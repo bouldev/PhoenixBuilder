@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -71,23 +69,21 @@ func (*MobEffect) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *MobEffect) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Operation)
-	_ = protocol.WriteVarint32(buf, pk.EffectType)
-	_ = protocol.WriteVarint32(buf, pk.Amplifier)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Particles)
-	_ = protocol.WriteVarint32(buf, pk.Duration)
+func (pk *MobEffect) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.Uint8(&pk.Operation)
+	w.Varint32(&pk.EffectType)
+	w.Varint32(&pk.Amplifier)
+	w.Bool(&pk.Particles)
+	w.Varint32(&pk.Duration)
 }
 
 // Unmarshal ...
-func (pk *MobEffect) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		binary.Read(buf, binary.LittleEndian, &pk.Operation),
-		protocol.Varint32(buf, &pk.EffectType),
-		protocol.Varint32(buf, &pk.Amplifier),
-		binary.Read(buf, binary.LittleEndian, &pk.Particles),
-		protocol.Varint32(buf, &pk.Duration),
-	)
+func (pk *MobEffect) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.Uint8(&pk.Operation)
+	r.Varint32(&pk.EffectType)
+	r.Varint32(&pk.Amplifier)
+	r.Bool(&pk.Particles)
+	r.Varint32(&pk.Duration)
 }

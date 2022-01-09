@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -33,19 +31,17 @@ func (pk *StructureTemplateDataRequest) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *StructureTemplateDataRequest) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.StructureName)
-	_ = protocol.WriteUBlockPosition(buf, pk.Position)
-	_ = protocol.WriteStructSettings(buf, pk.Settings)
-	_ = binary.Write(buf, binary.LittleEndian, pk.RequestType)
+func (pk *StructureTemplateDataRequest) Marshal(w *protocol.Writer) {
+	w.String(&pk.StructureName)
+	w.UBlockPos(&pk.Position)
+	protocol.StructSettings(w, &pk.Settings)
+	w.Uint8(&pk.RequestType)
 }
 
 // Unmarshal ...
-func (pk *StructureTemplateDataRequest) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.String(buf, &pk.StructureName),
-		protocol.UBlockPosition(buf, &pk.Position),
-		protocol.StructSettings(buf, &pk.Settings),
-		binary.Read(buf, binary.LittleEndian, &pk.RequestType),
-	)
+func (pk *StructureTemplateDataRequest) Unmarshal(r *protocol.Reader) {
+	r.String(&pk.StructureName)
+	r.UBlockPos(&pk.Position)
+	protocol.StructSettings(r, &pk.Settings)
+	r.Uint8(&pk.RequestType)
 }

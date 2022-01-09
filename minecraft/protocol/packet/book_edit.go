@@ -1,9 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -55,57 +52,47 @@ func (*BookEdit) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *BookEdit) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.ActionType)
-	_ = binary.Write(buf, binary.LittleEndian, pk.InventorySlot)
+func (pk *BookEdit) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.ActionType)
+	w.Uint8(&pk.InventorySlot)
 	switch pk.ActionType {
 	case BookActionReplacePage, BookActionAddPage:
-		_ = binary.Write(buf, binary.LittleEndian, pk.PageNumber)
-		_ = protocol.WriteString(buf, pk.Text)
-		_ = protocol.WriteString(buf, pk.PhotoName)
+		w.Uint8(&pk.PageNumber)
+		w.String(&pk.Text)
+		w.String(&pk.PhotoName)
 	case BookActionDeletePage:
-		_ = binary.Write(buf, binary.LittleEndian, pk.PageNumber)
+		w.Uint8(&pk.PageNumber)
 	case BookActionSwapPages:
-		_ = binary.Write(buf, binary.LittleEndian, pk.PageNumber)
-		_ = binary.Write(buf, binary.LittleEndian, pk.SecondaryPageNumber)
+		w.Uint8(&pk.PageNumber)
+		w.Uint8(&pk.SecondaryPageNumber)
 	case BookActionSign:
-		_ = protocol.WriteString(buf, pk.Title)
-		_ = protocol.WriteString(buf, pk.Author)
-		_ = protocol.WriteString(buf, pk.XUID)
+		w.String(&pk.Title)
+		w.String(&pk.Author)
+		w.String(&pk.XUID)
 	default:
-		panic(fmt.Sprintf("invalid book edit action type %v", pk.ActionType))
+		w.UnknownEnumOption(pk.ActionType, "book edit action type")
 	}
 }
 
 // Unmarshal ...
-func (pk *BookEdit) Unmarshal(buf *bytes.Buffer) error {
-	if err := chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.ActionType),
-		binary.Read(buf, binary.LittleEndian, &pk.InventorySlot),
-	); err != nil {
-		return err
-	}
+func (pk *BookEdit) Unmarshal(r *protocol.Reader) {
+	r.Uint8(&pk.ActionType)
+	r.Uint8(&pk.InventorySlot)
 	switch pk.ActionType {
 	case BookActionReplacePage, BookActionAddPage:
-		return chainErr(
-			binary.Read(buf, binary.LittleEndian, &pk.PageNumber),
-			protocol.String(buf, &pk.Text),
-			protocol.String(buf, &pk.PhotoName),
-		)
+		r.Uint8(&pk.PageNumber)
+		r.String(&pk.Text)
+		r.String(&pk.PhotoName)
 	case BookActionDeletePage:
-		return binary.Read(buf, binary.LittleEndian, &pk.PageNumber)
+		r.Uint8(&pk.PageNumber)
 	case BookActionSwapPages:
-		return chainErr(
-			binary.Read(buf, binary.LittleEndian, &pk.PageNumber),
-			binary.Read(buf, binary.LittleEndian, &pk.SecondaryPageNumber),
-		)
+		r.Uint8(&pk.PageNumber)
+		r.Uint8(&pk.SecondaryPageNumber)
 	case BookActionSign:
-		return chainErr(
-			protocol.String(buf, &pk.Title),
-			protocol.String(buf, &pk.Author),
-			protocol.String(buf, &pk.XUID),
-		)
+		r.String(&pk.Title)
+		r.String(&pk.Author)
+		r.String(&pk.XUID)
 	default:
-		return fmt.Errorf("invalid book edit action type %v", pk.ActionType)
+		r.UnknownEnumOption(pk.ActionType, "book edit action type")
 	}
 }

@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -204,10 +202,6 @@ const (
 	SoundEventLtReactionBleach
 	SoundEventLtReactionEPaste
 	SoundEventLtReactionEPaste2
-	_
-	_
-	_
-	_
 	SoundEventLtReactionFertilizer
 	SoundEventLtReactionFireball
 	SoundEventLtReactionMgsalt
@@ -231,12 +225,12 @@ const (
 	SoundEventHurtBaby
 	SoundEventDeathBaby
 	SoundEventStepBaby
-	_
+	SoundEventBabySpawn
 	SoundEventBorn
 	SoundEventBlockTurtleEggBreak
 	SoundEventBlockTurtleEggCrack
 	SoundEventBlockTurtleEggHatch
-	_
+	SoundEventTurtleLayEgg
 	SoundEventBlockTurtleEggAttack
 	SoundEventBeaconActivate
 	SoundEventBeaconAmbient
@@ -283,6 +277,96 @@ const (
 	SoundEventBlockBarrelClose
 	SoundEventRaidHorn
 	SoundEventBlockLoomUse
+	SoundEventAmbientRaid
+	SoundEventUICartographyTableUse
+	SoundEventUIStoneCutterUse
+	SoundEventUILoomUse
+	SoundEventSmokerUse
+	SoundEventBlastFurnaceUse
+	SoundEventSmithingTableUse
+	SoundEventScreech
+	SoundEventSleep
+	SoundEventFurnaceUse
+	SoundEventMooshroomConvert
+	SoundEventMilkSuspiciously
+	SoundEventCelebrate
+	SoundEventJumpPrevent
+	SoundEventAmbientPollinate
+	SoundEventBeeHiveDrip
+	SoundEventBeeHiveEnter
+	SoundEventBeeHiveExit
+	SoundEventBeeHiveWork
+	SoundEventBeeHiveShear
+	SoundEventHoneyBottleDrink
+	SoundEventAmbientCave
+	SoundEventRetreat
+	SoundEventConvertToZombified
+	SoundEventAdmire
+	SoundEventStepLava
+	SoundEventTempt
+	SoundEventPanic
+	SoundEventAngry
+	SoundEventAmbientWarpedForest
+	SoundEventAmbientSoulsandValley
+	SoundEventAmbientNetherWastes
+	SoundEventAmbientBasaltDeltas
+	SoundEventAmbientCrimsonForest
+	SoundEventRespawnAnchorCharge
+	SoundEventRespawnAnchorDeplete
+	SoundEventRespawnAnchorSetSpawn
+	SoundEventRespawnAnchorAmbient
+	SoundEventSoulEscapeQuiet
+	SoundEventSoulEscapeLoud
+	SoundEventRecordPigstep
+	SoundEventLinkCompassToLodestone
+	SoundEventBlockSmithingTableUse
+	SoundEventEquipNetherite
+	SoundEventAmbientLoopWarpedForest
+	SoundEventAmbientLoopSoulsandValley
+	SoundEventAmbientLoopNetherWastes
+	SoundEventAmbientLoopBasaltDeltas
+	SoundEventAmbientLoopCrimsonForest
+	SoundEventAmbientAdditionWarpedForest
+	SoundEventAmbientAdditionSoulsandValley
+	SoundEventAmbientAdditionNetherWastes
+	SoundEventAmbientAdditionBasaltDeltas
+	SoundEventAmbientAdditionCrimsonForest
+	SoundEventSculkSensorPowerOn
+	SoundEventSculkSensorPowerOff
+	SoundEventBucketFillPowderSnow
+	SoundEventBucketEmptyPowderSnow
+	SoundEventPointedDripstoneCauldronDripWater
+	SoundEventPointedDripstoneCauldronDripLava
+	SoundEventPointedDripstoneDripWater
+	SoundEventPointedDripstoneDripLava
+	SoundEventCaveVinesPickBerries
+	SoundEventBigDripleafTiltDown
+	SoundEventBigDripleafTiltUp
+	_
+	_
+	_
+	_
+	SoundEventCopperWaxOn
+	SoundEventCopperWaxOff
+	SoundEventScrape
+	SoundEventPlayerHurtDrown
+	SoundEventPlayerHurtOnFire
+	SoundEventPlayerHurtFreeze
+	SoundEventUseSpyglass
+	SoundEventStopUsingSpyglass
+	SoundEventAmetheystBlockChime
+	SoundEventAmbientScreamer
+	SoundEventHurtScreamer
+	SoundEventDeathScreamer
+	SoundEventMilkScreamer
+	SoundEventJumpToBlock
+	SoundEventPreRam
+	SoundEventPreRamScreamer
+	SoundEventRamImpact
+	SoundEventRamImpactScreamer
+	SoundEventSquidInkSquirt
+	SoundEventGlowSquidInkSquirt
+	SoundEventConvertToStray
 	SoundEventUndefined
 )
 
@@ -318,23 +402,21 @@ func (*LevelSoundEvent) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *LevelSoundEvent) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, pk.SoundType)
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = protocol.WriteVarint32(buf, pk.ExtraData)
-	_ = protocol.WriteString(buf, pk.EntityType)
-	_ = binary.Write(buf, binary.LittleEndian, pk.BabyMob)
-	_ = binary.Write(buf, binary.LittleEndian, pk.DisableRelativeVolume)
+func (pk *LevelSoundEvent) Marshal(w *protocol.Writer) {
+	w.Varuint32(&pk.SoundType)
+	w.Vec3(&pk.Position)
+	w.Varint32(&pk.ExtraData)
+	w.String(&pk.EntityType)
+	w.Bool(&pk.BabyMob)
+	w.Bool(&pk.DisableRelativeVolume)
 }
 
 // Unmarshal ...
-func (pk *LevelSoundEvent) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint32(buf, &pk.SoundType),
-		protocol.Vec3(buf, &pk.Position),
-		protocol.Varint32(buf, &pk.ExtraData),
-		protocol.String(buf, &pk.EntityType),
-		binary.Read(buf, binary.LittleEndian, &pk.BabyMob),
-		binary.Read(buf, binary.LittleEndian, &pk.DisableRelativeVolume),
-	)
+func (pk *LevelSoundEvent) Unmarshal(r *protocol.Reader) {
+	r.Varuint32(&pk.SoundType)
+	r.Vec3(&pk.Position)
+	r.Varint32(&pk.ExtraData)
+	r.String(&pk.EntityType)
+	r.Bool(&pk.BabyMob)
+	r.Bool(&pk.DisableRelativeVolume)
 }

@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -24,16 +23,14 @@ func (*BlockActorData) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *BlockActorData) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteUBlockPosition(buf, pk.Position)
-	_ = nbt.NewEncoder(buf).Encode(pk.NBTData)
+func (pk *BlockActorData) Marshal(w *protocol.Writer) {
+	w.UBlockPos(&pk.Position)
+	w.NBT(&pk.NBTData, nbt.NetworkLittleEndian)
 }
 
 // Unmarshal ...
-func (pk *BlockActorData) Unmarshal(buf *bytes.Buffer) error {
+func (pk *BlockActorData) Unmarshal(r *protocol.Reader) {
 	pk.NBTData = make(map[string]interface{})
-	return chainErr(
-		protocol.UBlockPosition(buf, &pk.Position),
-		nbt.NewDecoder(buf).Decode(&pk.NBTData),
-	)
+	r.UBlockPos(&pk.Position)
+	r.NBT(&pk.NBTData, nbt.NetworkLittleEndian)
 }

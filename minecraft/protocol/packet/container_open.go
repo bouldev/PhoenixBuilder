@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -32,19 +30,17 @@ func (*ContainerOpen) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ContainerOpen) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.WindowID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ContainerType)
-	_ = protocol.WriteUBlockPosition(buf, pk.ContainerPosition)
-	_ = protocol.WriteVarint64(buf, pk.ContainerEntityUniqueID)
+func (pk *ContainerOpen) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.WindowID)
+	w.Uint8(&pk.ContainerType)
+	w.UBlockPos(&pk.ContainerPosition)
+	w.Varint64(&pk.ContainerEntityUniqueID)
 }
 
 // Unmarshal ...
-func (pk *ContainerOpen) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.WindowID),
-		binary.Read(buf, binary.LittleEndian, &pk.ContainerType),
-		protocol.UBlockPosition(buf, &pk.ContainerPosition),
-		protocol.Varint64(buf, &pk.ContainerEntityUniqueID),
-	)
+func (pk *ContainerOpen) Unmarshal(r *protocol.Reader) {
+	r.Uint8(&pk.WindowID)
+	r.Uint8(&pk.ContainerType)
+	r.UBlockPos(&pk.ContainerPosition)
+	r.Varint64(&pk.ContainerEntityUniqueID)
 }

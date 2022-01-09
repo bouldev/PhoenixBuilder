@@ -1,10 +1,8 @@
 package packet
 
 import (
-	"bytes"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
-	"encoding/binary"
 )
 
 const (
@@ -33,6 +31,18 @@ const (
 	InputFlagDescendScaffolding
 	InputFlagSneakToggleDown
 	InputFlagPersistSneak
+	InputFlagStartSprinting
+	InputFlagStopSprinting
+	InputFlagStartSneaking
+	InputFlagStopSneaking
+	InputFlagStartSwimming
+	InputFlagStopSwimming
+	InputFlagStartJumping
+	InputFlagStartGliding
+	InputFlagStopGliding
+	InputFlagPerformItemInteraction
+	InputFlagPerformBlockActions
+	InputFlagPerformItemStackRequest
 )
 
 const (
@@ -57,7 +67,7 @@ const (
 
 // PlayerAuthInput is sent by the client to allow for server authoritative movement. It is used to synchronise
 // the player input with the position server-side.
-// The client sends this packet when the ServerAuthoritativeMovement field in the StartGame packet is set
+// The client sends this packet when the ServerAuthoritativeMovementMode field in the StartGame packet is set
 // to true, instead of the MovePlayer packet. The client will send this packet once every tick.
 type PlayerAuthInput struct {
 	// Pitch and Yaw hold the rotation that the player reports it has.
@@ -81,7 +91,18 @@ type PlayerAuthInput struct {
 	// GazeDirection is the direction in which the player is gazing, when the PlayMode is PlayModeReality: In
 	// other words, when the player is playing in virtual reality.
 	GazeDirection mgl32.Vec3
+	// Tick is the server tick at which the packet was sent. It is used in relation to
+	// CorrectPlayerMovePrediction.
 	Tick uint64
+	// Delta was the delta between the old and the new position. There isn't any practical use for this field
+	// as it can be calculated by the server itself.
+	Delta mgl32.Vec3
+	// ItemInteractionData is the transaction data if the InputData includes an item interaction.
+	ItemInteractionData protocol.UseItemTransactionData
+	// ItemStackRequest is sent by the client to change an item in their inventory.
+	ItemStackRequest protocol.ItemStackRequest
+	// BlockActions is a slice of block actions that the client has interacted with.
+	BlockActions []protocol.PlayerBlockAction
 }
 
 // ID ...
@@ -90,43 +111,68 @@ func (pk *PlayerAuthInput) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PlayerAuthInput) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteFloat32(buf, pk.Pitch)
-	_ = protocol.WriteFloat32(buf, pk.Yaw)
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = protocol.WriteVec2(buf, pk.MoveVector)
-	_ = protocol.WriteFloat32(buf, pk.HeadYaw)
-	_ = protocol.WriteVaruint64(buf, pk.InputData)
-	_ = protocol.WriteVaruint32(buf, pk.InputMode)
-	_ = protocol.WriteVaruint32(buf, pk.PlayMode)
+func (pk *PlayerAuthInput) Marshal(w *protocol.Writer) {
+	w.Float32(&pk.Pitch)
+	w.Float32(&pk.Yaw)
+	w.Vec3(&pk.Position)
+	w.Vec2(&pk.MoveVector)
+	w.Float32(&pk.HeadYaw)
+	w.Varuint64(&pk.InputData)
+	w.Varuint32(&pk.InputMode)
+	w.Varuint32(&pk.PlayMode)
 	if pk.PlayMode == PlayModeReality {
-		_ = protocol.WriteVec3(buf, pk.GazeDirection)
+		w.Vec3(&pk.GazeDirection)
 	}
-	_ = protocol.WriteVaruint64(buf, pk.Tick)
-	_ = protocol.WriteVec3(buf, pk.Position)
-	a:=byte(1)
-	_ = binary.Read(buf, binary.LittleEndian, &a)
-	_ = binary.Read(buf, binary.LittleEndian, &a)
-	_ = protocol.WriteFloat32(buf, 0)
-	_ = protocol.WriteFloat32(buf, 0)
+	w.Varuint64(&pk.Tick)
+	w.Vec3(&pk.Delta)
+
+	if pk.InputData&InputFlagPerformItemInteraction != 0 {
+		protocol.PlayerInventoryAction(w, &pk.ItemInteractionData)
+	}
+
+	if pk.InputData&InputFlagPerformItemStackRequest != 0 {
+		protocol.WriteStackRequest(w, &pk.ItemStackRequest)
+	}
+
+	if pk.InputData&InputFlagPerformBlockActions != 0 {
+		l := int32(len(pk.BlockActions))
+		w.Varint32(&l)
+		for _, action := range pk.BlockActions {
+			protocol.BlockAction(w, &action)
+		}
+	}
 }
 
 // Unmarshal ...
-func (pk *PlayerAuthInput) Unmarshal(buf *bytes.Buffer) error {
-	if err := chainErr(
-		protocol.Float32(buf, &pk.Pitch),
-		protocol.Float32(buf, &pk.Yaw),
-		protocol.Vec3(buf, &pk.Position),
-		protocol.Vec2(buf, &pk.MoveVector),
-		protocol.Float32(buf, &pk.HeadYaw),
-		protocol.Varuint64(buf, &pk.InputData),
-		protocol.Varuint32(buf, &pk.InputMode),
-		protocol.Varuint32(buf, &pk.PlayMode),
-	); err != nil {
-		return err
-	}
+func (pk *PlayerAuthInput) Unmarshal(r *protocol.Reader) {
+	r.Float32(&pk.Pitch)
+	r.Float32(&pk.Yaw)
+	r.Vec3(&pk.Position)
+	r.Vec2(&pk.MoveVector)
+	r.Float32(&pk.HeadYaw)
+	r.Varuint64(&pk.InputData)
+	r.Varuint32(&pk.InputMode)
+	r.Varuint32(&pk.PlayMode)
 	if pk.PlayMode == PlayModeReality {
-		return protocol.Vec3(buf, &pk.GazeDirection)
+		r.Vec3(&pk.GazeDirection)
 	}
-	return nil
+	r.Varuint64(&pk.Tick)
+	r.Vec3(&pk.Delta)
+
+	if pk.InputData&InputFlagPerformItemInteraction != 0 {
+		protocol.PlayerInventoryAction(r, &pk.ItemInteractionData)
+	}
+
+	if pk.InputData&InputFlagPerformItemStackRequest != 0 {
+		protocol.StackRequest(r, &pk.ItemStackRequest)
+	}
+
+	if pk.InputData&InputFlagPerformBlockActions != 0 {
+		var l int32
+		r.Varint32(&l)
+		pk.BlockActions = make([]protocol.PlayerBlockAction, l)
+		for i := int32(0); i < l; i++ {
+			protocol.BlockAction(r, &pk.BlockActions[i])
+		}
+	}
 }

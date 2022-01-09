@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"fmt"
 	"github.com/google/uuid"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -26,34 +24,27 @@ func (*EmoteList) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *EmoteList) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.PlayerRuntimeID)
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.EmotePieces)))
+func (pk *EmoteList) Marshal(w *protocol.Writer) {
+	l := uint32(len(pk.EmotePieces))
+	w.Varuint64(&pk.PlayerRuntimeID)
+	w.Varuint32(&l)
 	if len(pk.EmotePieces) > 6 {
 		panic("player can have at most 6 emotes set")
 	}
 	for _, piece := range pk.EmotePieces {
-		_ = protocol.WriteUUID(buf, piece)
+		w.UUID(&piece)
 	}
 }
 
 // Unmarshal ...
-func (pk *EmoteList) Unmarshal(buf *bytes.Buffer) error {
-	if err := protocol.Varuint64(buf, &pk.PlayerRuntimeID); err != nil {
-		return err
-	}
+func (pk *EmoteList) Unmarshal(r *protocol.Reader) {
 	var count uint32
-	if err := protocol.Varuint32(buf, &count); err != nil {
-		return err
-	}
-	if count > 6 {
-		return fmt.Errorf("player can have at most 6 emotes set, got %v", count)
-	}
+	r.Varuint64(&pk.PlayerRuntimeID)
+	r.Varuint32(&count)
+	r.LimitUint32(count, 6)
+
 	pk.EmotePieces = make([]uuid.UUID, count)
 	for i := uint32(0); i < count; i++ {
-		if err := protocol.UUID(buf, &pk.EmotePieces[i]); err != nil {
-			return err
-		}
+		r.UUID(&pk.EmotePieces[i])
 	}
-	return nil
 }

@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -28,17 +27,15 @@ func (*BlockEvent) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *BlockEvent) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteUBlockPosition(buf, pk.Position)
-	_ = protocol.WriteVarint32(buf, pk.EventType)
-	_ = protocol.WriteVarint32(buf, pk.EventData)
+func (pk *BlockEvent) Marshal(w *protocol.Writer) {
+	w.UBlockPos(&pk.Position)
+	w.Varint32(&pk.EventType)
+	w.Varint32(&pk.EventData)
 }
 
 // Unmarshal ...
-func (pk *BlockEvent) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.UBlockPosition(buf, &pk.Position),
-		protocol.Varint32(buf, &pk.EventType),
-		protocol.Varint32(buf, &pk.EventData),
-	)
+func (pk *BlockEvent) Unmarshal(r *protocol.Reader) {
+	r.UBlockPos(&pk.Position)
+	r.Varint32(&pk.EventType)
+	r.Varint32(&pk.EventData)
 }

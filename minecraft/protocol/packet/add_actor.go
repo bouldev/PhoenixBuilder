@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -52,34 +51,31 @@ func (*AddActor) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *AddActor) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint64(buf, pk.EntityUniqueID)
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteString(buf, pk.EntityType)
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = protocol.WriteVec3(buf, pk.Velocity)
-	_ = protocol.WriteFloat32(buf, pk.Pitch)
-	_ = protocol.WriteFloat32(buf, pk.Yaw)
-	_ = protocol.WriteFloat32(buf, pk.HeadYaw)
-	_ = protocol.WriteInitialAttributes(buf, pk.Attributes)
-	_ = protocol.WriteEntityMetadata(buf, pk.EntityMetadata)
-	_ = protocol.WriteEntityLinks(buf, pk.EntityLinks)
+func (pk *AddActor) Marshal(w *protocol.Writer) {
+	w.Varint64(&pk.EntityUniqueID)
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.String(&pk.EntityType)
+	w.Vec3(&pk.Position)
+	w.Vec3(&pk.Velocity)
+	w.Float32(&pk.Pitch)
+	w.Float32(&pk.Yaw)
+	w.Float32(&pk.HeadYaw)
+	protocol.WriteInitialAttributes(w, &pk.Attributes)
+	w.EntityMetadata(&pk.EntityMetadata)
+	protocol.WriteEntityLinks(w, &pk.EntityLinks)
 }
 
 // Unmarshal ...
-func (pk *AddActor) Unmarshal(buf *bytes.Buffer) error {
-	pk.EntityMetadata = map[uint32]interface{}{}
-	return chainErr(
-		protocol.Varint64(buf, &pk.EntityUniqueID),
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.String(buf, &pk.EntityType),
-		protocol.Vec3(buf, &pk.Position),
-		protocol.Vec3(buf, &pk.Velocity),
-		protocol.Float32(buf, &pk.Pitch),
-		protocol.Float32(buf, &pk.Yaw),
-		protocol.Float32(buf, &pk.HeadYaw),
-		protocol.InitialAttributes(buf, &pk.Attributes),
-		protocol.EntityMetadata(buf, &pk.EntityMetadata),
-		protocol.EntityLinks(buf, &pk.EntityLinks),
-	)
+func (pk *AddActor) Unmarshal(r *protocol.Reader) {
+	r.Varint64(&pk.EntityUniqueID)
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.String(&pk.EntityType)
+	r.Vec3(&pk.Position)
+	r.Vec3(&pk.Velocity)
+	r.Float32(&pk.Pitch)
+	r.Float32(&pk.Yaw)
+	r.Float32(&pk.HeadYaw)
+	protocol.InitialAttributes(r, &pk.Attributes)
+	r.EntityMetadata(&pk.EntityMetadata)
+	protocol.EntityLinks(r, &pk.EntityLinks)
 }

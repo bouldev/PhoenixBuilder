@@ -1,8 +1,6 @@
 package protocol
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
@@ -36,80 +34,34 @@ type InventoryAction struct {
 	InventorySlot uint32
 	// OldItem is the item that was present in the slot before the inventory action. It should be checked by
 	// the server to ensure the inventories were not out of sync.
-	OldItem ItemStack
+	OldItem ItemInstance
 	// NewItem is the new item that was put in the InventorySlot that the OldItem was in. It must be checked
 	// in combination with other inventory actions to ensure that the transaction is balanced.
-	NewItem ItemStack
-	// StackNetworkID is the unique network ID of the new stack. This is always 0 when an InventoryTransaction
-	// packet is sent by the client. It is also always 0 when the HasNetworkIDs field in the
-	// InventoryTransaction packet is set to false.
-	StackNetworkID int32
+	NewItem ItemInstance
 }
 
-// InvAction reads an inventory action from buffer src.
-func InvAction(src *bytes.Buffer, action *InventoryAction, netIDs bool) error {
-	if err := Varuint32(src, &action.SourceType); err != nil {
-		return wrap(err)
-	}
-	switch action.SourceType {
+// InvAction reads/writes an InventoryAction x using IO r.
+func InvAction(r IO, x *InventoryAction) {
+	r.Varuint32(&x.SourceType)
+	switch x.SourceType {
 	case InventoryActionSourceContainer, InventoryActionSourceTODO:
-		if err := Varint32(src, &action.WindowID); err != nil {
-			return wrap(err)
-		}
+		r.Varint32(&x.WindowID)
 	case InventoryActionSourceWorld:
-		if err := Varuint32(src, &action.SourceFlags); err != nil {
-			return wrap(err)
-		}
+		r.Varuint32(&x.SourceFlags)
 	}
-	if err := chainErr(
-		Varuint32(src, &action.InventorySlot),
-		Item(src, &action.OldItem),
-		Item(src, &action.NewItem),
-	); err != nil {
-		return err
-	}
-	if netIDs {
-		return Varint32(src, &action.StackNetworkID)
-	}
-	return nil
-}
-
-// WriteInvAction writes an inventory action to buffer dst.
-func WriteInvAction(dst *bytes.Buffer, action InventoryAction, netIDs bool) error {
-	if err := WriteVaruint32(dst, action.SourceType); err != nil {
-		return wrap(err)
-	}
-	switch action.SourceType {
-	case InventoryActionSourceContainer, InventoryActionSourceTODO:
-		if err := WriteVarint32(dst, action.WindowID); err != nil {
-			return wrap(err)
-		}
-	case InventoryActionSourceWorld:
-		if err := WriteVaruint32(dst, action.SourceFlags); err != nil {
-			return wrap(err)
-		}
-	}
-	if err := chainErr(
-		WriteVaruint32(dst, action.InventorySlot),
-		WriteItem(dst, action.OldItem),
-		WriteItem(dst, action.NewItem),
-	); err != nil {
-		return err
-	}
-	if netIDs {
-		return WriteVarint32(dst, action.StackNetworkID)
-	}
-	return nil
+	r.Varuint32(&x.InventorySlot)
+	r.ItemInstance(&x.OldItem)
+	r.ItemInstance(&x.NewItem)
 }
 
 // InventoryTransactionData represents an object that holds data specific to an inventory transaction type.
 // The data it holds depends on the type.
 type InventoryTransactionData interface {
 	// Marshal encodes the inventory transaction data to its binary representation into buf.
-	Marshal(buf *bytes.Buffer)
-	// Unmarshal decodes a serialised inventory transaction data object in buf into the
+	Marshal(w *Writer)
+	// Unmarshal decodes a serialised inventory transaction data object from Reader r into the
 	// InventoryTransactionData instance.
-	Unmarshal(buf *bytes.Buffer) error
+	Unmarshal(r *Reader)
 }
 
 // NormalTransactionData represents an inventory transaction data object for normal transactions, such as
@@ -128,6 +80,22 @@ const (
 // UseItemTransactionData represents an inventory transaction data object sent when the client uses an item on
 // a block.
 type UseItemTransactionData struct {
+	// LegacyRequestID is an ID that is only non-zero at times when sent by the client. The server should
+	// always send 0 for this. When this field is not 0, the LegacySetItemSlots slice below will have values
+	// in it.
+	// LegacyRequestID ties in with the ItemStackResponse packet. If this field is non-0, the server should
+	// respond with an ItemStackResponse packet. Some inventory actions such as dropping an item out of the
+	// hotbar are still one using this packet, and the ItemStackResponse packet needs to tie in with it.
+	LegacyRequestID int32
+	// LegacySetItemSlots are only present if the LegacyRequestID is non-zero. These item slots inform the
+	// server of the slots that were changed during the inventory transaction, and the server should send
+	// back an ItemStackResponse packet with these slots present in it. (Or false with no slots, if rejected.)
+	LegacySetItemSlots []LegacySetItemSlot
+	// Actions is a list of actions that took place, that form the inventory transaction together. Each of
+	// these actions hold one slot in which one item was changed to another. In general, the combination of
+	// all of these actions results in a balanced inventory transaction. This should be checked to ensure that
+	// no items are cheated into the inventory.
+	Actions []InventoryAction
 	// ActionType is the type of the UseItem inventory transaction. It is one of the action types found above,
 	// and specifies the way the player interacted with the block.
 	ActionType uint32
@@ -142,7 +110,7 @@ type UseItemTransactionData struct {
 	HotBarSlot int32
 	// HeldItem is the item that was held to interact with the block. The server should check if this item
 	// is actually present in the HotBarSlot.
-	HeldItem ItemStack
+	HeldItem ItemInstance
 	// Position is the position of the player at the time of interaction. For clicking a block, this is the
 	// position at that time, whereas for breaking the block it is the position at the time of breaking.
 	Position mgl32.Vec3
@@ -173,7 +141,7 @@ type UseItemOnEntityTransactionData struct {
 	HotBarSlot int32
 	// HeldItem is the item that was held to interact with the entity. The server should check if this item
 	// is actually present in the HotBarSlot.
-	HeldItem ItemStack
+	HeldItem ItemInstance
 	// Position is the position of the player at the time of clicking the entity.
 	Position mgl32.Vec3
 	// ClickedPosition is the position that was clicked relative to the entity's base coordinate. It can be
@@ -199,97 +167,83 @@ type ReleaseItemTransactionData struct {
 	HotBarSlot int32
 	// HeldItem is the item that was released. The server should check if this item is actually present in the
 	// HotBarSlot.
-	HeldItem ItemStack
+	HeldItem ItemInstance
 	// HeadPosition is the position of the player's head at the time of releasing the item. This is used
 	// mainly for purposes such as spawning eating particles at that position.
 	HeadPosition mgl32.Vec3
 }
 
 // Marshal ...
-func (data *UseItemTransactionData) Marshal(buf *bytes.Buffer) {
-	_ = WriteVaruint32(buf, data.ActionType)
-	_ = WriteUBlockPosition(buf, data.BlockPosition)
-	_ = WriteVarint32(buf, data.BlockFace)
-	_ = WriteVarint32(buf, data.HotBarSlot)
-	_ = WriteItem(buf, data.HeldItem)
-	_ = WriteVec3(buf, data.Position)
-	_ = WriteVec3(buf, data.ClickedPosition)
-	_ = WriteVaruint32(buf, data.BlockRuntimeID)
+func (data *UseItemTransactionData) Marshal(w *Writer) {
+	w.Varuint32(&data.ActionType)
+	w.UBlockPos(&data.BlockPosition)
+	w.Varint32(&data.BlockFace)
+	w.Varint32(&data.HotBarSlot)
+	w.ItemInstance(&data.HeldItem)
+	w.Vec3(&data.Position)
+	w.Vec3(&data.ClickedPosition)
+	w.Varuint32(&data.BlockRuntimeID)
 }
 
 // Unmarshal ...
-func (data *UseItemTransactionData) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		Varuint32(buf, &data.ActionType),
-		UBlockPosition(buf, &data.BlockPosition),
-		Varint32(buf, &data.BlockFace),
-		Varint32(buf, &data.HotBarSlot),
-		Item(buf, &data.HeldItem),
-		Vec3(buf, &data.Position),
-		Vec3(buf, &data.ClickedPosition),
-		Varuint32(buf, &data.BlockRuntimeID),
-	)
+func (data *UseItemTransactionData) Unmarshal(r *Reader) {
+	r.Varuint32(&data.ActionType)
+	r.UBlockPos(&data.BlockPosition)
+	r.Varint32(&data.BlockFace)
+	r.Varint32(&data.HotBarSlot)
+	r.ItemInstance(&data.HeldItem)
+	r.Vec3(&data.Position)
+	r.Vec3(&data.ClickedPosition)
+	r.Varuint32(&data.BlockRuntimeID)
 }
 
 // Marshal ...
-func (data *UseItemOnEntityTransactionData) Marshal(buf *bytes.Buffer) {
-	_ = WriteVaruint64(buf, data.TargetEntityRuntimeID)
-	_ = WriteVaruint32(buf, data.ActionType)
-	_ = WriteVarint32(buf, data.HotBarSlot)
-	_ = WriteItem(buf, data.HeldItem)
-	_ = WriteVec3(buf, data.Position)
-	_ = WriteVec3(buf, data.ClickedPosition)
+func (data *UseItemOnEntityTransactionData) Marshal(w *Writer) {
+	w.Varuint64(&data.TargetEntityRuntimeID)
+	w.Varuint32(&data.ActionType)
+	w.Varint32(&data.HotBarSlot)
+	w.ItemInstance(&data.HeldItem)
+	w.Vec3(&data.Position)
+	w.Vec3(&data.ClickedPosition)
 }
 
 // Unmarshal ...
-func (data *UseItemOnEntityTransactionData) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		Varuint64(buf, &data.TargetEntityRuntimeID),
-		Varuint32(buf, &data.ActionType),
-		Varint32(buf, &data.HotBarSlot),
-		Item(buf, &data.HeldItem),
-		Vec3(buf, &data.Position),
-		Vec3(buf, &data.ClickedPosition),
-	)
+func (data *UseItemOnEntityTransactionData) Unmarshal(r *Reader) {
+	r.Varuint64(&data.TargetEntityRuntimeID)
+	r.Varuint32(&data.ActionType)
+	r.Varint32(&data.HotBarSlot)
+	r.ItemInstance(&data.HeldItem)
+	r.Vec3(&data.Position)
+	r.Vec3(&data.ClickedPosition)
 }
 
 // Marshal ...
-func (data *ReleaseItemTransactionData) Marshal(buf *bytes.Buffer) {
-	_ = WriteVaruint32(buf, data.ActionType)
-	_ = WriteVarint32(buf, data.HotBarSlot)
-	_ = WriteItem(buf, data.HeldItem)
-	_ = WriteVec3(buf, data.HeadPosition)
+func (data *ReleaseItemTransactionData) Marshal(w *Writer) {
+	w.Varuint32(&data.ActionType)
+	w.Varint32(&data.HotBarSlot)
+	w.ItemInstance(&data.HeldItem)
+	w.Vec3(&data.HeadPosition)
 }
 
 // Unmarshal ...
-func (data *ReleaseItemTransactionData) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		Varuint32(buf, &data.ActionType),
-		Varint32(buf, &data.HotBarSlot),
-		Item(buf, &data.HeldItem),
-		Vec3(buf, &data.HeadPosition),
-	)
+func (data *ReleaseItemTransactionData) Unmarshal(r *Reader) {
+	r.Varuint32(&data.ActionType)
+	r.Varint32(&data.HotBarSlot)
+	r.ItemInstance(&data.HeldItem)
+	r.Vec3(&data.HeadPosition)
 }
 
 // Marshal ...
-func (*NormalTransactionData) Marshal(*bytes.Buffer) {
-	// No payload.
-}
+func (*NormalTransactionData) Marshal(*Writer) {}
 
 // Unmarshal ...
-func (*NormalTransactionData) Unmarshal(*bytes.Buffer) error {
-	return nil
-}
+func (*NormalTransactionData) Unmarshal(*Reader) {}
 
 // Marshal ...
-func (*MismatchTransactionData) Marshal(*bytes.Buffer) {
-	// No payload.
-}
+func (*MismatchTransactionData) Marshal(*Writer) {}
 
 // Unmarshal ...
-func (*MismatchTransactionData) Unmarshal(*bytes.Buffer) error {
-	return nil
-}
+func (*MismatchTransactionData) Unmarshal(*Reader) {}
 
 // LegacySetItemSlot represents a slot that was changed during an InventoryTransaction. These slots have to
 // have their values set accordingly for actions such as when dropping an item out of the hotbar, where the
@@ -299,32 +253,8 @@ type LegacySetItemSlot struct {
 	Slots       []byte
 }
 
-// WriteSetItemSlot writes a LegacySetItemSlot x to Buffer dst.
-func WriteSetItemSlot(dst *bytes.Buffer, x LegacySetItemSlot) error {
-	dst.WriteByte(x.ContainerID)
-	if err := WriteVaruint32(dst, uint32(len(x.Slots))); err != nil {
-		return err
-	}
-	for _, slot := range x.Slots {
-		dst.WriteByte(slot)
-	}
-	return nil
-}
-
-// SetItemSlot reads a LegacySetItemSlot x from Buffer src.
-func SetItemSlot(src *bytes.Buffer, x *LegacySetItemSlot) error {
-	if err := binary.Read(src, binary.LittleEndian, &x.ContainerID); err != nil {
-		return wrap(err)
-	}
-	var length uint32
-	if err := Varuint32(src, &length); err != nil {
-		return err
-	}
-	x.Slots = make([]byte, length)
-	for i := uint32(0); i < length; i++ {
-		if err := binary.Read(src, binary.LittleEndian, &x.Slots[i]); err != nil {
-			return wrap(err)
-		}
-	}
-	return nil
+// SetItemSlot reads/writes a LegacySetItemSlot x using IO r.
+func SetItemSlot(r IO, x *LegacySetItemSlot) {
+	r.Uint8(&x.ContainerID)
+	r.ByteSlice(&x.Slots)
 }

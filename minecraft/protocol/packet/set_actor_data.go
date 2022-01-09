@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -15,6 +14,8 @@ type SetActorData struct {
 	// particular the way the entity looks. Flags include ones such as 'on fire' and 'sprinting'.
 	// The metadata values are indexed by their property key.
 	EntityMetadata map[uint32]interface{}
+	// Tick is the server tick at which the packet was sent. It is used in relation to CorrectPlayerMovePrediction.
+	Tick uint64
 }
 
 // ID ...
@@ -23,16 +24,15 @@ func (*SetActorData) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetActorData) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteEntityMetadata(buf, pk.EntityMetadata)
+func (pk *SetActorData) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.EntityMetadata(&pk.EntityMetadata)
+	w.Varuint64(&pk.Tick)
 }
 
 // Unmarshal ...
-func (pk *SetActorData) Unmarshal(buf *bytes.Buffer) error {
-	pk.EntityMetadata = map[uint32]interface{}{}
-	return chainErr(
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.EntityMetadata(buf, &pk.EntityMetadata),
-	)
+func (pk *SetActorData) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.EntityMetadata(&pk.EntityMetadata)
+	r.Varuint64(&pk.Tick)
 }

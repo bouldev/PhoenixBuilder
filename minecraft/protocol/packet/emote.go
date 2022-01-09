@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -29,17 +27,15 @@ func (*Emote) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *Emote) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteString(buf, pk.EmoteID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Flags)
+func (pk *Emote) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.String(&pk.EmoteID)
+	w.Uint8(&pk.Flags)
 }
 
 // Unmarshal ...
-func (pk *Emote) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.String(buf, &pk.EmoteID),
-		binary.Read(buf, binary.LittleEndian, &pk.Flags),
-	)
+func (pk *Emote) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.String(&pk.EmoteID)
+	r.Uint8(&pk.Flags)
 }

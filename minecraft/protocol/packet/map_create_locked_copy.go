@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -22,15 +21,13 @@ func (*MapCreateLockedCopy) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *MapCreateLockedCopy) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint64(buf, pk.OriginalMapID)
-	_ = protocol.WriteVarint64(buf, pk.NewMapID)
+func (pk *MapCreateLockedCopy) Marshal(w *protocol.Writer) {
+	w.Varint64(&pk.OriginalMapID)
+	w.Varint64(&pk.NewMapID)
 }
 
 // Unmarshal ...
-func (pk *MapCreateLockedCopy) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varint64(buf, &pk.OriginalMapID),
-		protocol.Varint64(buf, &pk.NewMapID),
-	)
+func (pk *MapCreateLockedCopy) Unmarshal(r *protocol.Reader) {
+	r.Varint64(&pk.OriginalMapID)
+	r.Varint64(&pk.NewMapID)
 }

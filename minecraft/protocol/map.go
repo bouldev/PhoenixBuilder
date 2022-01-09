@@ -1,9 +1,6 @@
 package protocol
 
 import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
 	"image/color"
 )
 
@@ -45,74 +42,25 @@ type MapDecoration struct {
 	Colour color.RGBA
 }
 
-// MapTrackedObj reads a MapTrackedObject from buf into x.
-func MapTrackedObj(buf *bytes.Buffer, x *MapTrackedObject) error {
-	if err := binary.Read(buf, binary.LittleEndian, &x.Type); err != nil {
-		return wrap(err)
-	}
+// MapTrackedObj reads/writes a MapTrackedObject x using IO r.
+func MapTrackedObj(r IO, x *MapTrackedObject) {
+	r.Int32(&x.Type)
 	switch x.Type {
 	case MapObjectTypeEntity:
-		return wrap(Varint64(buf, &x.EntityUniqueID))
+		r.Varint64(&x.EntityUniqueID)
 	case MapObjectTypeBlock:
-		return wrap(UBlockPosition(buf, &x.BlockPosition))
+		r.UBlockPos(&x.BlockPosition)
 	default:
-		return fmt.Errorf("unknown map tracked object type %v", x.Type)
+		r.UnknownEnumOption(x.Type, "map tracked object type")
 	}
 }
 
-// WriteMapTrackedObj writes a MapTrackedObject xx to buf.
-func WriteMapTrackedObj(buf *bytes.Buffer, x MapTrackedObject) error {
-	if err := binary.Write(buf, binary.LittleEndian, x.Type); err != nil {
-		return wrap(err)
-	}
-	switch x.Type {
-	case MapObjectTypeEntity:
-		return wrap(WriteVarint64(buf, x.EntityUniqueID))
-	case MapObjectTypeBlock:
-		return wrap(WriteUBlockPosition(buf, x.BlockPosition))
-	default:
-		panic(fmt.Sprintf("invalid map tracked object type %v", x.Type))
-	}
-}
-
-// MapDeco reads a MapDecoration from buf into x.
-func MapDeco(buf *bytes.Buffer, x *MapDecoration) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &x.Type),
-		binary.Read(buf, binary.LittleEndian, &x.Rotation),
-		binary.Read(buf, binary.LittleEndian, &x.X),
-		binary.Read(buf, binary.LittleEndian, &x.Y),
-		String(buf, &x.Label),
-		VarRGBA(buf, &x.Colour),
-	)
-}
-
-// WriteMapDeco writes a MapDecoration x to buf.
-func WriteMapDeco(buf *bytes.Buffer, x MapDecoration) error {
-	return chainErr(
-		binary.Write(buf, binary.LittleEndian, x.Type),
-		binary.Write(buf, binary.LittleEndian, x.Rotation),
-		binary.Write(buf, binary.LittleEndian, x.X),
-		binary.Write(buf, binary.LittleEndian, x.Y),
-		WriteString(buf, x.Label),
-		WriteVarRGBA(buf, x.Colour),
-	)
-}
-
-// VarRGBA reads an RGBA value from buf into x packed into a varuint32.
-func VarRGBA(buf *bytes.Buffer, x *color.RGBA) error {
-	var v uint32
-	err := wrap(Varuint32(buf, &v))
-	*x = color.RGBA{
-		R: byte(v),
-		G: byte(v >> 8),
-		B: byte(v >> 16),
-		A: byte(v >> 24),
-	}
-	return err
-}
-
-// WriteVarRGBA writes an RGBA value to buf by packing it into a varuint32.
-func WriteVarRGBA(buf *bytes.Buffer, x color.RGBA) error {
-	return wrap(WriteVaruint32(buf, uint32(x.R)|uint32(x.G)<<8|uint32(x.B)<<16|uint32(x.A)<<24))
+// MapDeco reads/writes a MapDecoration x using IO r.
+func MapDeco(r IO, x *MapDecoration) {
+	r.Uint8(&x.Type)
+	r.Uint8(&x.Rotation)
+	r.Uint8(&x.X)
+	r.Uint8(&x.Y)
+	r.String(&x.Label)
+	r.VarRGBA(&x.Colour)
 }

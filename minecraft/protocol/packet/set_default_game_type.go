@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -20,11 +19,11 @@ func (*SetDefaultGameType) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetDefaultGameType) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.GameType)
+func (pk *SetDefaultGameType) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.GameType)
 }
 
 // Unmarshal ...
-func (pk *SetDefaultGameType) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.Varint32(buf, &pk.GameType)
+func (pk *SetDefaultGameType) Unmarshal(r *protocol.Reader) {
+	r.Varint32(&pk.GameType)
 }

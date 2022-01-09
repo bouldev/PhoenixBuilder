@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // ClientCacheStatus is sent by the client to the server at the start of the game. It is sent to let the
@@ -20,11 +19,11 @@ func (pk *ClientCacheStatus) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ClientCacheStatus) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.Enabled)
+func (pk *ClientCacheStatus) Marshal(w *protocol.Writer) {
+	w.Bool(&pk.Enabled)
 }
 
 // Unmarshal ...
-func (pk *ClientCacheStatus) Unmarshal(buf *bytes.Buffer) error {
-	return binary.Read(buf, binary.LittleEndian, &pk.Enabled)
+func (pk *ClientCacheStatus) Unmarshal(r *protocol.Reader) {
+	r.Bool(&pk.Enabled)
 }

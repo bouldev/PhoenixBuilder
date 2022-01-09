@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // NetworkStackLatency is sent by the server (and the client, on development builds) to measure the latency
@@ -24,15 +23,13 @@ func (*NetworkStackLatency) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *NetworkStackLatency) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.Timestamp)
-	_ = binary.Write(buf, binary.LittleEndian, pk.NeedsResponse)
+func (pk *NetworkStackLatency) Marshal(w *protocol.Writer) {
+	w.Int64(&pk.Timestamp)
+	w.Bool(&pk.NeedsResponse)
 }
 
 // Unmarshal ...
-func (pk *NetworkStackLatency) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.Timestamp),
-		binary.Read(buf, binary.LittleEndian, &pk.NeedsResponse),
-	)
+func (pk *NetworkStackLatency) Unmarshal(r *protocol.Reader) {
+	r.Int64(&pk.Timestamp)
+	r.Bool(&pk.NeedsResponse)
 }

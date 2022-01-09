@@ -38,7 +38,7 @@ type IdentityData struct {
 	// Mobile: 1739947436
 	// Nintendo: 2047319603
 	// Note that these IDs are protected using XBOX Live, making the spoofing of this data very difficult.
-	//TitleID string `json:"titleId,omitempty"`
+	TitleID string `json:"titleId,omitempty"`
 }
 
 // checkUsername is used to check if a username is valid according to the Microsoft specification: "You can
@@ -78,8 +78,6 @@ func (data IdentityData) Validate() error {
 // ClientData is a container of client specific data of a Login packet. It holds data such as the skin of a
 // player, but also its language code and device information.
 type ClientData struct {
-	SkinIID string
-	GrowthLevel uint
 	// AnimatedImageData is a list of image data for animations. Each of the elements in this slice holds the
 	// image data of a single frame of the animation.
 	AnimatedImageData []SkinAnimation
@@ -122,7 +120,7 @@ type ClientData struct {
 	PersonaSkin bool
 	// PlatformOfflineID is either a UUID or an empty string ...
 	PlatformOfflineID string `json:"PlatformOfflineId"`
-	// PlatformOnlineID is either a UUID or an empty string ...
+	// PlatformOnlineID is either a uint64 or an empty string ...
 	PlatformOnlineID string `json:"PlatformOnlineId"`
 	// PlatformUserID holds a UUID which is only sent if the DeviceOS is of type device.XBOX. Its function
 	// is not exactly clear.
@@ -147,6 +145,10 @@ type ClientData struct {
 	// SkinID is a unique ID produced for the skin, for example 'c18e65aa-7b21-4637-9b63-8ad63622ef01_Alex'
 	// for the default Alex skin.
 	SkinID string `json:"SkinId"`
+	// PlayFabID is the PlayFab ID produced for the player's skin. PlayFab is the company that hosts the
+	// Marketplace, skins and other related features from the game. This ID is the ID of the skin used to
+	// store the skin inside of PlayFab.
+	PlayFabID string `json:"PlayFabId"`
 	// SkinImageHeight and SkinImageWidth are the dimensions of the skin's image data.
 	SkinImageHeight, SkinImageWidth int
 	// SkinResourcePatch is a base64 encoded string which holds JSON data. The content of the JSON data points
@@ -252,6 +254,10 @@ type SkinAnimation struct {
 	// 2 -> 32x32 Body animation.
 	// 3 -> 128x128 Body animation.
 	Type int
+	// ExpressionType is the type of expression made by the skin, which is one of the following:
+	// 0 -> Linear.
+	// 1 -> Blinking.
+	AnimationExpression int
 }
 
 // checkVersion is used to check if a version is an actual valid version. It must only contain numbers and
@@ -276,8 +282,8 @@ func (data ClientData) Validate() error {
 	if _, err := uuid.Parse(data.PlatformOfflineID); err != nil && len(data.PlatformOfflineID) != 0 {
 		return fmt.Errorf("PlatformOfflineID must be parseable as a valid UUID or empty, but got %v", data.PlatformOfflineID)
 	}
-	if _, err := uuid.Parse(data.PlatformOnlineID); err != nil && len(data.PlatformOnlineID) != 0 {
-		return fmt.Errorf("PlatformOnlineID must be parseable as a valid UUID or empty, but got %v", data.PlatformOnlineID)
+	if _, err := strconv.ParseUint(data.PlatformOnlineID, 10, 64); err != nil && len(data.PlatformOnlineID) != 0 {
+		return fmt.Errorf("PlatformOnlineID must be parseable as an int64 or empty, but got %v", data.PlatformOnlineID)
 	}
 	if _, err := uuid.Parse(data.SelfSignedID); err != nil {
 		return fmt.Errorf("SelfSignedID must be parseable as a valid UUID, but got %v", data.SelfSignedID)

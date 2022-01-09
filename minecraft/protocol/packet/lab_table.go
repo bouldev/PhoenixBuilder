@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -32,17 +30,15 @@ func (*LabTable) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *LabTable) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.ActionType)
-	_ = protocol.WriteBlockPosition(buf, pk.Position)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ReactionType)
+func (pk *LabTable) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.ActionType)
+	w.BlockPos(&pk.Position)
+	w.Uint8(&pk.ReactionType)
 }
 
 // Unmarshal ...
-func (pk *LabTable) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.ActionType),
-		protocol.BlockPosition(buf, &pk.Position),
-		binary.Read(buf, binary.LittleEndian, &pk.ReactionType),
-	)
+func (pk *LabTable) Unmarshal(r *protocol.Reader) {
+	r.Uint8(&pk.ActionType)
+	r.BlockPos(&pk.Position)
+	r.Uint8(&pk.ReactionType)
 }

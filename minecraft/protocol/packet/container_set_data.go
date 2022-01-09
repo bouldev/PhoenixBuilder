@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -40,17 +38,15 @@ func (*ContainerSetData) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *ContainerSetData) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.WindowID)
-	_ = protocol.WriteVarint32(buf, pk.Key)
-	_ = protocol.WriteVarint32(buf, pk.Value)
+func (pk *ContainerSetData) Marshal(w *protocol.Writer) {
+	w.Uint8(&pk.WindowID)
+	w.Varint32(&pk.Key)
+	w.Varint32(&pk.Value)
 }
 
 // Unmarshal ...
-func (pk *ContainerSetData) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.WindowID),
-		protocol.Varint32(buf, &pk.Key),
-		protocol.Varint32(buf, &pk.Value),
-	)
+func (pk *ContainerSetData) Unmarshal(r *protocol.Reader) {
+	r.Uint8(&pk.WindowID)
+	r.Varint32(&pk.Key)
+	r.Varint32(&pk.Value)
 }

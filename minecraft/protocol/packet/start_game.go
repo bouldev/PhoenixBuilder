@@ -1,11 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
 	"github.com/go-gl/mathgl/mgl32"
-	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -108,7 +104,13 @@ type StartGame struct {
 	// GameRules defines game rules currently active with their respective values. The value of these game
 	// rules may be either 'bool', 'int32' or 'float32'. Some game rules are server side only, and don't
 	// necessarily need to be sent to the client.
-	GameRules map[string]interface{}
+	GameRules []protocol.GameRule
+	// Experiments holds a list of experiments that are either enabled or disabled in the world that the
+	// player spawns in.
+	Experiments []protocol.ExperimentData
+	// ExperimentsPreviouslyToggled specifies if any experiments were previously toggled in this world. It is
+	// probably used for some kind of metrics.
+	ExperimentsPreviouslyToggled bool
 	// BonusChestEnabled specifies if the world had the bonus map setting enabled when generating it. It does
 	// not have any effect client-side.
 	BonusChestEnabled bool
@@ -168,20 +170,16 @@ type StartGame struct {
 	// Trial specifies if the world was a trial world, meaning features are limited and there is a time limit
 	// on the world.
 	Trial bool
-	// ServerAuthoritativeMovement specifies if the server is authoritative over the movement of the player,
-	// meaning it controls the movement of it.
-	// In reality, the only thing that changes when this field is set to true is the packet sent by the player
-	// when it moves. When set to true, it will send the PlayerAuthInput packet instead of the MovePlayer
-	// packet.
-	ServerAuthoritativeMovement bool
+	// PlayerMovementSettings ...
+	PlayerMovementSettings protocol.PlayerMovementSettings
 	// Time is the total time that has elapsed since the start of the world.
 	Time int64
 	// EnchantmentSeed is the seed used to seed the random used to produce enchantments in the enchantment
 	// table. Note that the exact correct random implementation must be used to produce the correct results
 	// both client- and server-side.
 	EnchantmentSeed int32
-	// Blocks is a list of all blocks registered on the server.
-	Blocks []interface{}
+	// Blocks is a list of all custom blocks registered on the server.
+	Blocks []protocol.BlockEntry
 	// Items is a list of all items with their legacy IDs which are available in the game. Failing to send any
 	// of the items that are in the game will crash mobile clients.
 	Items []protocol.ItemEntry
@@ -192,6 +190,8 @@ type StartGame struct {
 	// is a new system introduced in 1.16. Backwards compatibility with the inventory transactions has to
 	// some extent been preserved, but will eventually be removed.
 	ServerAuthoritativeInventory bool
+	// GameVersion is the version of the game the server is running. The exact function of this field isn't clear.
+	GameVersion string
 }
 
 // ID ...
@@ -200,159 +200,167 @@ func (*StartGame) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *StartGame) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint64(buf, pk.EntityUniqueID)
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteVarint32(buf, pk.PlayerGameMode)
-	_ = protocol.WriteVec3(buf, pk.PlayerPosition)
-	_ = protocol.WriteFloat32(buf, pk.Pitch)
-	_ = protocol.WriteFloat32(buf, pk.Yaw)
-	_ = protocol.WriteVarint32(buf, pk.WorldSeed)
-	_ = binary.Write(buf, binary.LittleEndian, pk.SpawnBiomeType)
-	_ = protocol.WriteString(buf, pk.UserDefinedBiomeName)
-	_ = protocol.WriteVarint32(buf, pk.Dimension)
-	_ = protocol.WriteVarint32(buf, pk.Generator)
-	_ = protocol.WriteVarint32(buf, pk.WorldGameMode)
-	_ = protocol.WriteVarint32(buf, pk.Difficulty)
-	_ = protocol.WriteUBlockPosition(buf, pk.WorldSpawn)
-	_ = binary.Write(buf, binary.LittleEndian, pk.AchievementsDisabled)
-	_ = protocol.WriteVarint32(buf, pk.DayCycleLockTime)
-	_ = protocol.WriteVarint32(buf, pk.EducationEditionOffer)
-	_ = binary.Write(buf, binary.LittleEndian, pk.EducationFeaturesEnabled)
-	_ = protocol.WriteString(buf, pk.EducationProductID)
-	_ = protocol.WriteFloat32(buf, pk.RainLevel)
-	_ = protocol.WriteFloat32(buf, pk.LightningLevel)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ConfirmedPlatformLockedContent)
-	_ = binary.Write(buf, binary.LittleEndian, pk.MultiPlayerGame)
-	_ = binary.Write(buf, binary.LittleEndian, pk.LANBroadcastEnabled)
-	_ = protocol.WriteVarint32(buf, pk.XBLBroadcastMode)
-	_ = protocol.WriteVarint32(buf, pk.PlatformBroadcastMode)
-	_ = binary.Write(buf, binary.LittleEndian, pk.CommandsEnabled)
-	_ = binary.Write(buf, binary.LittleEndian, pk.TexturePackRequired)
-	_ = protocol.WriteGameRules(buf, pk.GameRules)
-	_ = binary.Write(buf, binary.LittleEndian, pk.BonusChestEnabled)
-	_ = binary.Write(buf, binary.LittleEndian, pk.StartWithMapEnabled)
-	_ = protocol.WriteVarint32(buf, pk.PlayerPermissions)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ServerChunkTickRadius)
-	_ = binary.Write(buf, binary.LittleEndian, pk.HasLockedBehaviourPack)
-	_ = binary.Write(buf, binary.LittleEndian, pk.HasLockedTexturePack)
-	_ = binary.Write(buf, binary.LittleEndian, pk.FromLockedWorldTemplate)
-	_ = binary.Write(buf, binary.LittleEndian, pk.MSAGamerTagsOnly)
-	_ = binary.Write(buf, binary.LittleEndian, pk.FromWorldTemplate)
-	_ = binary.Write(buf, binary.LittleEndian, pk.WorldTemplateSettingsLocked)
-	_ = binary.Write(buf, binary.LittleEndian, pk.OnlySpawnV1Villagers)
-	_ = protocol.WriteString(buf, pk.BaseGameVersion)
-	_ = binary.Write(buf, binary.LittleEndian, pk.LimitedWorldWidth)
-	_ = binary.Write(buf, binary.LittleEndian, pk.LimitedWorldDepth)
-	_ = binary.Write(buf, binary.LittleEndian, pk.NewNether)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ForceExperimentalGameplay)
+func (pk *StartGame) Marshal(w *protocol.Writer) {
+	w.Varint64(&pk.EntityUniqueID)
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.Varint32(&pk.PlayerGameMode)
+	w.Vec3(&pk.PlayerPosition)
+	w.Float32(&pk.Pitch)
+	w.Float32(&pk.Yaw)
+	w.Varint32(&pk.WorldSeed)
+	w.Int16(&pk.SpawnBiomeType)
+	w.String(&pk.UserDefinedBiomeName)
+	w.Varint32(&pk.Dimension)
+	w.Varint32(&pk.Generator)
+	w.Varint32(&pk.WorldGameMode)
+	w.Varint32(&pk.Difficulty)
+	w.UBlockPos(&pk.WorldSpawn)
+	w.Bool(&pk.AchievementsDisabled)
+	w.Varint32(&pk.DayCycleLockTime)
+	w.Varint32(&pk.EducationEditionOffer)
+	w.Bool(&pk.EducationFeaturesEnabled)
+	w.String(&pk.EducationProductID)
+	w.Float32(&pk.RainLevel)
+	w.Float32(&pk.LightningLevel)
+	w.Bool(&pk.ConfirmedPlatformLockedContent)
+	w.Bool(&pk.MultiPlayerGame)
+	w.Bool(&pk.LANBroadcastEnabled)
+	w.Varint32(&pk.XBLBroadcastMode)
+	w.Varint32(&pk.PlatformBroadcastMode)
+	w.Bool(&pk.CommandsEnabled)
+	w.Bool(&pk.TexturePackRequired)
+	protocol.WriteGameRules(w, &pk.GameRules)
+	l := uint32(len(pk.Experiments))
+	w.Uint32(&l)
+	for _, experiment := range pk.Experiments {
+		protocol.Experiment(w, &experiment)
+	}
+	w.Bool(&pk.ExperimentsPreviouslyToggled)
+	w.Bool(&pk.BonusChestEnabled)
+	w.Bool(&pk.StartWithMapEnabled)
+	w.Varint32(&pk.PlayerPermissions)
+	w.Int32(&pk.ServerChunkTickRadius)
+	w.Bool(&pk.HasLockedBehaviourPack)
+	w.Bool(&pk.HasLockedTexturePack)
+	w.Bool(&pk.FromLockedWorldTemplate)
+	w.Bool(&pk.MSAGamerTagsOnly)
+	w.Bool(&pk.FromWorldTemplate)
+	w.Bool(&pk.WorldTemplateSettingsLocked)
+	w.Bool(&pk.OnlySpawnV1Villagers)
+	w.String(&pk.BaseGameVersion)
+	w.Int32(&pk.LimitedWorldWidth)
+	w.Int32(&pk.LimitedWorldDepth)
+	w.Bool(&pk.NewNether)
+	w.Bool(&pk.ForceExperimentalGameplay)
 	if pk.ForceExperimentalGameplay {
-		// Thanks for this useful field Mojang.
-		_ = binary.Write(buf, binary.LittleEndian, pk.ForceExperimentalGameplay)
+		// This might look wrong, but is in fact correct: Mojang is writing this bool if the same bool above
+		// is set to true.
+		w.Bool(&pk.ForceExperimentalGameplay)
 	}
-	_ = protocol.WriteString(buf, pk.LevelID)
-	_ = protocol.WriteString(buf, pk.WorldName)
-	_ = protocol.WriteString(buf, pk.TemplateContentIdentity)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Trial)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ServerAuthoritativeMovement)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Time)
-	_ = protocol.WriteVarint32(buf, pk.EnchantmentSeed)
-	if err := nbt.NewEncoder(buf).Encode(pk.Blocks); err != nil {
-		panic(fmt.Errorf("cannot encode block palette: %w", err))
+	w.String(&pk.LevelID)
+	w.String(&pk.WorldName)
+	w.String(&pk.TemplateContentIdentity)
+	w.Bool(&pk.Trial)
+	protocol.PlayerMoveSettings(w, &pk.PlayerMovementSettings)
+	w.Int64(&pk.Time)
+	w.Varint32(&pk.EnchantmentSeed)
+
+	l = uint32(len(pk.Blocks))
+	w.Varuint32(&l)
+	for i := range pk.Blocks {
+		protocol.Block(w, &pk.Blocks[i])
 	}
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Items)))
-	for _, item := range pk.Items {
-		_ = protocol.WriteString(buf, item.Name)
-		_ = binary.Write(buf, binary.LittleEndian, item.LegacyID)
+
+	l = uint32(len(pk.Items))
+	w.Varuint32(&l)
+	for i := range pk.Items {
+		protocol.Item(w, &pk.Items[i])
 	}
-	_ = protocol.WriteString(buf, pk.MultiPlayerCorrelationID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ServerAuthoritativeInventory)
+	w.String(&pk.MultiPlayerCorrelationID)
+	w.Bool(&pk.ServerAuthoritativeInventory)
+	w.String(&pk.GameVersion)
 }
 
 // Unmarshal ...
-func (pk *StartGame) Unmarshal(buf *bytes.Buffer) error {
-	if pk.GameRules == nil {
-		pk.GameRules = make(map[string]interface{})
+func (pk *StartGame) Unmarshal(r *protocol.Reader) {
+	var blockCount, itemCount uint32
+	r.Varint64(&pk.EntityUniqueID)
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.Varint32(&pk.PlayerGameMode)
+	r.Vec3(&pk.PlayerPosition)
+	r.Float32(&pk.Pitch)
+	r.Float32(&pk.Yaw)
+	r.Varint32(&pk.WorldSeed)
+	r.Int16(&pk.SpawnBiomeType)
+	r.String(&pk.UserDefinedBiomeName)
+	r.Varint32(&pk.Dimension)
+	r.Varint32(&pk.Generator)
+	r.Varint32(&pk.WorldGameMode)
+	r.Varint32(&pk.Difficulty)
+	r.UBlockPos(&pk.WorldSpawn)
+	r.Bool(&pk.AchievementsDisabled)
+	r.Varint32(&pk.DayCycleLockTime)
+	r.Varint32(&pk.EducationEditionOffer)
+	r.Bool(&pk.EducationFeaturesEnabled)
+	r.String(&pk.EducationProductID)
+	r.Float32(&pk.RainLevel)
+	r.Float32(&pk.LightningLevel)
+	r.Bool(&pk.ConfirmedPlatformLockedContent)
+	r.Bool(&pk.MultiPlayerGame)
+	r.Bool(&pk.LANBroadcastEnabled)
+	r.Varint32(&pk.XBLBroadcastMode)
+	r.Varint32(&pk.PlatformBroadcastMode)
+	r.Bool(&pk.CommandsEnabled)
+	r.Bool(&pk.TexturePackRequired)
+	protocol.GameRules(r, &pk.GameRules)
+	var l uint32
+	r.Uint32(&l)
+	pk.Experiments = make([]protocol.ExperimentData, l)
+	for i := uint32(0); i < l; i++ {
+		protocol.Experiment(r, &pk.Experiments[i])
 	}
-	var itemCount uint32
-	if err := chainErr(
-		protocol.Varint64(buf, &pk.EntityUniqueID),
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.Varint32(buf, &pk.PlayerGameMode),
-		protocol.Vec3(buf, &pk.PlayerPosition),
-		protocol.Float32(buf, &pk.Pitch),
-		protocol.Float32(buf, &pk.Yaw),
-		protocol.Varint32(buf, &pk.WorldSeed),
-		binary.Read(buf, binary.LittleEndian, &pk.SpawnBiomeType),
-		protocol.String(buf, &pk.UserDefinedBiomeName),
-		protocol.Varint32(buf, &pk.Dimension),
-		protocol.Varint32(buf, &pk.Generator),
-		protocol.Varint32(buf, &pk.WorldGameMode),
-		protocol.Varint32(buf, &pk.Difficulty),
-		protocol.UBlockPosition(buf, &pk.WorldSpawn),
-		binary.Read(buf, binary.LittleEndian, &pk.AchievementsDisabled),
-		protocol.Varint32(buf, &pk.DayCycleLockTime),
-		protocol.Varint32(buf, &pk.EducationEditionOffer),
-		binary.Read(buf, binary.LittleEndian, &pk.EducationFeaturesEnabled),
-		protocol.String(buf, &pk.EducationProductID),
-		protocol.Float32(buf, &pk.RainLevel),
-		protocol.Float32(buf, &pk.LightningLevel),
-		binary.Read(buf, binary.LittleEndian, &pk.ConfirmedPlatformLockedContent),
-		binary.Read(buf, binary.LittleEndian, &pk.MultiPlayerGame),
-		binary.Read(buf, binary.LittleEndian, &pk.LANBroadcastEnabled),
-		protocol.Varint32(buf, &pk.XBLBroadcastMode),
-		protocol.Varint32(buf, &pk.PlatformBroadcastMode),
-		binary.Read(buf, binary.LittleEndian, &pk.CommandsEnabled),
-		binary.Read(buf, binary.LittleEndian, &pk.TexturePackRequired),
-		protocol.GameRules(buf, &pk.GameRules),
-		binary.Read(buf, binary.LittleEndian, &pk.BonusChestEnabled),
-		binary.Read(buf, binary.LittleEndian, &pk.StartWithMapEnabled),
-		protocol.Varint32(buf, &pk.PlayerPermissions),
-		binary.Read(buf, binary.LittleEndian, &pk.ServerChunkTickRadius),
-		binary.Read(buf, binary.LittleEndian, &pk.HasLockedBehaviourPack),
-		binary.Read(buf, binary.LittleEndian, &pk.HasLockedTexturePack),
-		binary.Read(buf, binary.LittleEndian, &pk.FromLockedWorldTemplate),
-		binary.Read(buf, binary.LittleEndian, &pk.MSAGamerTagsOnly),
-		binary.Read(buf, binary.LittleEndian, &pk.FromWorldTemplate),
-		binary.Read(buf, binary.LittleEndian, &pk.WorldTemplateSettingsLocked),
-		binary.Read(buf, binary.LittleEndian, &pk.OnlySpawnV1Villagers),
-		protocol.String(buf, &pk.BaseGameVersion),
-		binary.Read(buf, binary.LittleEndian, &pk.LimitedWorldWidth),
-		binary.Read(buf, binary.LittleEndian, &pk.LimitedWorldDepth),
-		binary.Read(buf, binary.LittleEndian, &pk.NewNether),
-		binary.Read(buf, binary.LittleEndian, &pk.ForceExperimentalGameplay),
-	); err != nil {
-		return err
-	}
+	r.Bool(&pk.ExperimentsPreviouslyToggled)
+	r.Bool(&pk.BonusChestEnabled)
+	r.Bool(&pk.StartWithMapEnabled)
+	r.Varint32(&pk.PlayerPermissions)
+	r.Int32(&pk.ServerChunkTickRadius)
+	r.Bool(&pk.HasLockedBehaviourPack)
+	r.Bool(&pk.HasLockedTexturePack)
+	r.Bool(&pk.FromLockedWorldTemplate)
+	r.Bool(&pk.MSAGamerTagsOnly)
+	r.Bool(&pk.FromWorldTemplate)
+	r.Bool(&pk.WorldTemplateSettingsLocked)
+	r.Bool(&pk.OnlySpawnV1Villagers)
+	r.String(&pk.BaseGameVersion)
+	r.Int32(&pk.LimitedWorldWidth)
+	r.Int32(&pk.LimitedWorldDepth)
+	r.Bool(&pk.NewNether)
+	r.Bool(&pk.ForceExperimentalGameplay)
 	if pk.ForceExperimentalGameplay {
-		_ = binary.Read(buf, binary.LittleEndian, &pk.ForceExperimentalGameplay)
+		// This might look wrong, but is in fact correct: Mojang is writing this bool if the same bool above
+		// is set to true.
+		r.Bool(&pk.ForceExperimentalGameplay)
 	}
-	if err := chainErr(
-		protocol.String(buf, &pk.LevelID),
-		protocol.String(buf, &pk.WorldName),
-		protocol.String(buf, &pk.TemplateContentIdentity),
-		binary.Read(buf, binary.LittleEndian, &pk.Trial),
-		binary.Read(buf, binary.LittleEndian, &pk.ServerAuthoritativeMovement),
-		binary.Read(buf, binary.LittleEndian, &pk.Time),
-		protocol.Varint32(buf, &pk.EnchantmentSeed),
-		nbt.NewDecoder(buf).Decode(&pk.Blocks),
-		protocol.Varuint32(buf, &itemCount),
-	); err != nil {
-		return err
+	r.String(&pk.LevelID)
+	r.String(&pk.WorldName)
+	r.String(&pk.TemplateContentIdentity)
+	r.Bool(&pk.Trial)
+	protocol.PlayerMoveSettings(r, &pk.PlayerMovementSettings)
+	r.Int64(&pk.Time)
+	r.Varint32(&pk.EnchantmentSeed)
+
+	r.Varuint32(&blockCount)
+	pk.Blocks = make([]protocol.BlockEntry, blockCount)
+	for i := uint32(0); i < blockCount; i++ {
+		protocol.Block(r, &pk.Blocks[i])
 	}
+
+	r.Varuint32(&itemCount)
 	pk.Items = make([]protocol.ItemEntry, itemCount)
 	for i := uint32(0); i < itemCount; i++ {
-		item := protocol.ItemEntry{}
-		if err := chainErr(
-			protocol.String(buf, &item.Name),
-			binary.Read(buf, binary.LittleEndian, &item.LegacyID),
-		); err != nil {
-			return err
-		}
-		pk.Items[i] = item
+		protocol.Item(r, &pk.Items[i])
 	}
-	return chainErr(
-		protocol.String(buf, &pk.MultiPlayerCorrelationID),
-		binary.Read(buf, binary.LittleEndian, &pk.ServerAuthoritativeInventory),
-	)
+	r.String(&pk.MultiPlayerCorrelationID)
+	r.Bool(&pk.ServerAuthoritativeInventory)
+	r.String(&pk.GameVersion)
 }

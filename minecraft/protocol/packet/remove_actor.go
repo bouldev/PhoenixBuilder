@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -20,11 +19,11 @@ func (*RemoveActor) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *RemoveActor) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint64(buf, pk.EntityUniqueID)
+func (pk *RemoveActor) Marshal(w *protocol.Writer) {
+	w.Varint64(&pk.EntityUniqueID)
 }
 
 // Unmarshal ...
-func (pk *RemoveActor) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.Varint64(buf, &pk.EntityUniqueID)
+func (pk *RemoveActor) Unmarshal(r *protocol.Reader) {
+	r.Varint64(&pk.EntityUniqueID)
 }

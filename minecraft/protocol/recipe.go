@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/google/uuid"
 )
@@ -21,22 +20,11 @@ type PotionContainerChangeRecipe struct {
 	OutputItemID int32
 }
 
-// WritePotContainerChangeRecipe writes a PotionContainerChangeRecipe x to Buffer dst.
-func WritePotContainerChangeRecipe(dst *bytes.Buffer, x PotionContainerChangeRecipe) error {
-	return chainErr(
-		WriteVarint32(dst, x.InputItemID),
-		WriteVarint32(dst, x.ReagentItemID),
-		WriteVarint32(dst, x.OutputItemID),
-	)
-}
-
-// PotContainerChangeRecipe reads a PotionContainerChangeRecipe x from Buffer src.
-func PotContainerChangeRecipe(src *bytes.Buffer, x *PotionContainerChangeRecipe) error {
-	return chainErr(
-		Varint32(src, &x.InputItemID),
-		Varint32(src, &x.ReagentItemID),
-		Varint32(src, &x.OutputItemID),
-	)
+// PotContainerChangeRecipe reads/writes a PotionContainerChangeRecipe x using IO r.
+func PotContainerChangeRecipe(r IO, x *PotionContainerChangeRecipe) {
+	r.Varint32(&x.InputItemID)
+	r.Varint32(&x.ReagentItemID)
+	r.Varint32(&x.OutputItemID)
 }
 
 // PotionRecipe represents a potion mixing recipe which may be used in a brewing stand.
@@ -59,32 +47,18 @@ type PotionRecipe struct {
 	OutputPotionMetadata int32
 }
 
-// WritePotRecipe writes a PotionRecipe x to Buffer dst.
-func WritePotRecipe(dst *bytes.Buffer, x PotionRecipe) error {
-	return chainErr(
-		WriteVarint32(dst, x.InputPotionID),
-		WriteVarint32(dst, x.InputPotionMetadata),
-		WriteVarint32(dst, x.ReagentItemID),
-		WriteVarint32(dst, x.ReagentItemMetadata),
-		WriteVarint32(dst, x.OutputPotionID),
-		WriteVarint32(dst, x.OutputPotionMetadata),
-	)
-}
-
-// PotRecipe reads a PotionRecipe x from Buffer src.
-func PotRecipe(src *bytes.Buffer, x *PotionRecipe) error {
-	return chainErr(
-		Varint32(src, &x.InputPotionID),
-		Varint32(src, &x.InputPotionMetadata),
-		Varint32(src, &x.ReagentItemID),
-		Varint32(src, &x.ReagentItemMetadata),
-		Varint32(src, &x.OutputPotionID),
-		Varint32(src, &x.OutputPotionMetadata),
-	)
+// PotRecipe reads/writes a PotionRecipe x using IO r.
+func PotRecipe(r IO, x *PotionRecipe) {
+	r.Varint32(&x.InputPotionID)
+	r.Varint32(&x.InputPotionMetadata)
+	r.Varint32(&x.ReagentItemID)
+	r.Varint32(&x.ReagentItemMetadata)
+	r.Varint32(&x.OutputPotionID)
+	r.Varint32(&x.OutputPotionMetadata)
 }
 
 const (
-	RecipeShapeless = iota
+	RecipeShapeless int32 = iota
 	RecipeShaped
 	RecipeFurnace
 	RecipeFurnaceData
@@ -98,9 +72,9 @@ const (
 // are available server-side.
 type Recipe interface {
 	// Marshal encodes the recipe data to its binary representation into buf.
-	Marshal(buf *bytes.Buffer)
-	// Unmarshal decodes a serialised recipe in buf into the recipe instance.
-	Unmarshal(buf *bytes.Buffer) error
+	Marshal(w *Writer)
+	// Unmarshal decodes a serialised recipe from Reader r into the recipe instance.
+	Unmarshal(r *Reader)
 }
 
 // ShapelessRecipe is a recipe that has no particular shape. Its functionality is shared with the
@@ -111,7 +85,7 @@ type ShapelessRecipe struct {
 	RecipeID string
 	// Input is a list of items that serve as the input of the shapeless recipe. These items are the items
 	// required to craft the output.
-	Input []ItemStack
+	Input []RecipeIngredientItem
 	// Output is a list of items that are created as a result of crafting the recipe.
 	Output []ItemStack
 	// UUID is a UUID identifying the recipe. This can actually be set to an empty UUID if the CraftingEvent
@@ -157,7 +131,7 @@ type ShapedRecipe struct {
 	Height int32
 	// Input is a list of items that serve as the input of the shapeless recipe. These items are the items
 	// required to craft the output. The amount of input items must be exactly equal to Width * Height.
-	Input []ItemStack
+	Input []RecipeIngredientItem
 	// Output is a list of items that are created as a result of crafting the recipe.
 	Output []ItemStack
 	// UUID is a UUID identifying the recipe. This can actually be set to an empty UUID if the CraftingEvent
@@ -207,131 +181,115 @@ type MultiRecipe struct {
 }
 
 // Marshal ...
-func (recipe *ShapelessRecipe) Marshal(buf *bytes.Buffer) {
-	marshalShapeless(buf, recipe)
+func (recipe *ShapelessRecipe) Marshal(w *Writer) {
+	marshalShapeless(w, recipe)
 }
 
 // Unmarshal ...
-func (recipe *ShapelessRecipe) Unmarshal(buf *bytes.Buffer) error {
-	return unmarshalShapeless(buf, recipe)
+func (recipe *ShapelessRecipe) Unmarshal(r *Reader) {
+	unmarshalShapeless(r, recipe)
 }
 
 // Marshal ...
-func (recipe *ShulkerBoxRecipe) Marshal(buf *bytes.Buffer) {
+func (recipe *ShulkerBoxRecipe) Marshal(w *Writer) {
 	r := ShapelessRecipe(*recipe)
-	marshalShapeless(buf, &r)
+	marshalShapeless(w, &r)
 }
 
 // Unmarshal ...
-func (recipe *ShulkerBoxRecipe) Unmarshal(buf *bytes.Buffer) error {
-	r := ShapelessRecipe{}
-	if err := unmarshalShapeless(buf, &r); err != nil {
-		return err
-	}
-	*recipe = ShulkerBoxRecipe(r)
-	return nil
+func (recipe *ShulkerBoxRecipe) Unmarshal(r *Reader) {
+	shapeless := ShapelessRecipe{}
+	unmarshalShapeless(r, &shapeless)
+	*recipe = ShulkerBoxRecipe(shapeless)
 }
 
 // Marshal ...
-func (recipe *ShapelessChemistryRecipe) Marshal(buf *bytes.Buffer) {
+func (recipe *ShapelessChemistryRecipe) Marshal(w *Writer) {
 	r := ShapelessRecipe(*recipe)
-	marshalShapeless(buf, &r)
+	marshalShapeless(w, &r)
 }
 
 // Unmarshal ...
-func (recipe *ShapelessChemistryRecipe) Unmarshal(buf *bytes.Buffer) error {
-	r := ShapelessRecipe{}
-	if err := unmarshalShapeless(buf, &r); err != nil {
-		return err
-	}
-	*recipe = ShapelessChemistryRecipe(r)
-	return nil
+func (recipe *ShapelessChemistryRecipe) Unmarshal(r *Reader) {
+	shapeless := ShapelessRecipe{}
+	unmarshalShapeless(r, &shapeless)
+	*recipe = ShapelessChemistryRecipe(shapeless)
 }
 
 // Marshal ...
-func (recipe *ShapedRecipe) Marshal(buf *bytes.Buffer) {
-	marshalShaped(buf, recipe)
+func (recipe *ShapedRecipe) Marshal(w *Writer) {
+	marshalShaped(w, recipe)
 }
 
 // Unmarshal ...
-func (recipe *ShapedRecipe) Unmarshal(buf *bytes.Buffer) error {
-	return unmarshalShaped(buf, recipe)
+func (recipe *ShapedRecipe) Unmarshal(r *Reader) {
+	unmarshalShaped(r, recipe)
 }
 
 // Marshal ...
-func (recipe *ShapedChemistryRecipe) Marshal(buf *bytes.Buffer) {
+func (recipe *ShapedChemistryRecipe) Marshal(w *Writer) {
 	r := ShapedRecipe(*recipe)
-	marshalShaped(buf, &r)
+	marshalShaped(w, &r)
 }
 
 // Unmarshal ...
-func (recipe *ShapedChemistryRecipe) Unmarshal(buf *bytes.Buffer) error {
-	r := ShapedRecipe{}
-	if err := unmarshalShaped(buf, &r); err != nil {
-		return err
-	}
-	*recipe = ShapedChemistryRecipe(r)
-	return nil
+func (recipe *ShapedChemistryRecipe) Unmarshal(r *Reader) {
+	shaped := ShapedRecipe{}
+	unmarshalShaped(r, &shaped)
+	*recipe = ShapedChemistryRecipe(shaped)
 }
 
 // Marshal ...
-func (recipe *FurnaceRecipe) Marshal(buf *bytes.Buffer) {
-	_ = WriteVarint32(buf, recipe.InputType.NetworkID)
-	_ = WriteItem(buf, recipe.Output)
-	_ = WriteString(buf, recipe.Block)
+func (recipe *FurnaceRecipe) Marshal(w *Writer) {
+	w.Varint32(&recipe.InputType.NetworkID)
+	w.Item(&recipe.Output)
+	w.String(&recipe.Block)
 }
 
 // Unmarshal ...
-func (recipe *FurnaceRecipe) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		Varint32(buf, &recipe.InputType.NetworkID),
-		Item(buf, &recipe.Output),
-		String(buf, &recipe.Block),
-	)
+func (recipe *FurnaceRecipe) Unmarshal(r *Reader) {
+	r.Varint32(&recipe.InputType.NetworkID)
+	r.Item(&recipe.Output)
+	r.String(&recipe.Block)
 }
 
 // Marshal ...
-func (recipe *FurnaceDataRecipe) Marshal(buf *bytes.Buffer) {
-	_ = WriteVarint32(buf, recipe.InputType.NetworkID)
-	_ = WriteVarint32(buf, int32(recipe.InputType.MetadataValue))
-	_ = WriteItem(buf, recipe.Output)
-	_ = WriteString(buf, recipe.Block)
+func (recipe *FurnaceDataRecipe) Marshal(w *Writer) {
+	w.Varint32(&recipe.InputType.NetworkID)
+	aux := int32(recipe.InputType.MetadataValue)
+	w.Varint32(&aux)
+	w.Item(&recipe.Output)
+	w.String(&recipe.Block)
 }
 
 // Unmarshal ...
-func (recipe *FurnaceDataRecipe) Unmarshal(buf *bytes.Buffer) error {
+func (recipe *FurnaceDataRecipe) Unmarshal(r *Reader) {
 	var dataValue int32
-	if err := chainErr(
-		Varint32(buf, &recipe.InputType.NetworkID),
-		Varint32(buf, &dataValue),
-		Item(buf, &recipe.Output),
-		String(buf, &recipe.Block),
-	); err != nil {
-		return err
-	}
-	recipe.InputType.MetadataValue = int16(dataValue)
-	return nil
+	r.Varint32(&recipe.InputType.NetworkID)
+	r.Varint32(&dataValue)
+	r.Item(&recipe.Output)
+	r.String(&recipe.Block)
+
+	recipe.InputType.MetadataValue = uint32(dataValue)
 }
 
 // Marshal ...
-func (recipe *MultiRecipe) Marshal(buf *bytes.Buffer) {
-	_ = WriteUUID(buf, recipe.UUID)
-	_ = WriteVaruint32(buf, recipe.RecipeNetworkID)
+func (recipe *MultiRecipe) Marshal(w *Writer) {
+	w.UUID(&recipe.UUID)
+	w.Varuint32(&recipe.RecipeNetworkID)
 }
 
 // Unmarshal ...
-func (recipe *MultiRecipe) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		UUID(buf, &recipe.UUID),
-		Varuint32(buf, &recipe.RecipeNetworkID),
-	)
+func (recipe *MultiRecipe) Unmarshal(r *Reader) {
+	r.UUID(&recipe.UUID)
+	r.Varuint32(&recipe.RecipeNetworkID)
 }
 
 // marshalShaped ...
-func marshalShaped(buf *bytes.Buffer, recipe *ShapedRecipe) {
-	_ = WriteString(buf, recipe.RecipeID)
-	_ = WriteVarint32(buf, recipe.Width)
-	_ = WriteVarint32(buf, recipe.Height)
+func marshalShaped(w *Writer, recipe *ShapedRecipe) {
+	w.String(&recipe.RecipeID)
+	w.Varint32(&recipe.Width)
+	w.Varint32(&recipe.Height)
 	itemCount := int(recipe.Width * recipe.Height)
 	if len(recipe.Input) != itemCount {
 		// We got an input count that was not as as big as the full size of the recipe, so we panic as this is
@@ -339,114 +297,82 @@ func marshalShaped(buf *bytes.Buffer, recipe *ShapedRecipe) {
 		panic(fmt.Sprintf("shaped recipe must have exactly %vx%v input items, but got %v", recipe.Width, recipe.Height, len(recipe.Input)))
 	}
 	for _, input := range recipe.Input {
-		_ = WriteRecipeIngredient(buf, input)
+		RecipeIngredient(w, &input)
 	}
-	_ = WriteVaruint32(buf, uint32(len(recipe.Output)))
+	l := uint32(len(recipe.Output))
+	w.Varuint32(&l)
 	for _, output := range recipe.Output {
-		_ = WriteItem(buf, output)
+		w.Item(&output)
 	}
-	_ = WriteUUID(buf, recipe.UUID)
-	_ = WriteString(buf, recipe.Block)
-	_ = WriteVarint32(buf, recipe.Priority)
-	_ = WriteVaruint32(buf, recipe.RecipeNetworkID)
+	w.UUID(&recipe.UUID)
+	w.String(&recipe.Block)
+	w.Varint32(&recipe.Priority)
+	w.Varuint32(&recipe.RecipeNetworkID)
 }
 
 // unmarshalShaped ...
-func unmarshalShaped(buf *bytes.Buffer, recipe *ShapedRecipe) error {
-	if err := chainErr(
-		String(buf, &recipe.RecipeID),
-		Varint32(buf, &recipe.Width),
-		Varint32(buf, &recipe.Height),
-	); err != nil {
-		return err
-	}
-	if recipe.Width <= 0 || recipe.Height <= 0 {
-		// Make sure we don't have a width/height smaller than or equal to 0, as it means we get an invalid
-		// item count.
-		return fmt.Errorf("recipe width and height must be bigger than 0, but got %v by %v", recipe.Width, recipe.Height)
-	}
-	if recipe.Width > lowerLimit || recipe.Height > lowerLimit {
-		return LimitHitError{Type: "shaped recipe dimensions", Limit: lowerLimit}
-	}
+func unmarshalShaped(r *Reader, recipe *ShapedRecipe) {
+	r.String(&recipe.RecipeID)
+	r.Varint32(&recipe.Width)
+	r.Varint32(&recipe.Height)
+	r.LimitInt32(recipe.Width, 0, lowerLimit)
+	r.LimitInt32(recipe.Height, 0, lowerLimit)
+
 	itemCount := int(recipe.Width * recipe.Height)
-	recipe.Input = make([]ItemStack, itemCount)
+	recipe.Input = make([]RecipeIngredientItem, itemCount)
 	for i := 0; i < itemCount; i++ {
-		if err := RecipeIngredient(buf, &recipe.Input[i]); err != nil {
-			return err
-		}
+		RecipeIngredient(r, &recipe.Input[i])
 	}
 	var outputCount uint32
-	if err := Varuint32(buf, &outputCount); err != nil {
-		return err
-	}
-	if outputCount > lowerLimit {
-		return LimitHitError{Type: "shaped recipe output", Limit: lowerLimit}
-	}
+	r.Varuint32(&outputCount)
+	r.LimitUint32(outputCount, lowerLimit)
+
 	recipe.Output = make([]ItemStack, outputCount)
 	for i := uint32(0); i < outputCount; i++ {
-		if err := Item(buf, &recipe.Output[i]); err != nil {
-			return err
-		}
+		r.Item(&recipe.Output[i])
 	}
-	return chainErr(
-		UUID(buf, &recipe.UUID),
-		String(buf, &recipe.Block),
-		Varint32(buf, &recipe.Priority),
-		Varuint32(buf, &recipe.RecipeNetworkID),
-	)
+	r.UUID(&recipe.UUID)
+	r.String(&recipe.Block)
+	r.Varint32(&recipe.Priority)
+	r.Varuint32(&recipe.RecipeNetworkID)
 }
 
 // marshalShapeless ...
-func marshalShapeless(buf *bytes.Buffer, recipe *ShapelessRecipe) {
-	_ = WriteString(buf, recipe.RecipeID)
-	_ = WriteVaruint32(buf, uint32(len(recipe.Input)))
+func marshalShapeless(w *Writer, recipe *ShapelessRecipe) {
+	inputLen, outputLen := uint32(len(recipe.Input)), uint32(len(recipe.Output))
+	w.String(&recipe.RecipeID)
+	w.Varuint32(&inputLen)
 	for _, input := range recipe.Input {
-		_ = WriteRecipeIngredient(buf, input)
+		RecipeIngredient(w, &input)
 	}
-	_ = WriteVaruint32(buf, uint32(len(recipe.Output)))
+	w.Varuint32(&outputLen)
 	for _, output := range recipe.Output {
-		_ = WriteItem(buf, output)
+		w.Item(&output)
 	}
-	_ = WriteUUID(buf, recipe.UUID)
-	_ = WriteString(buf, recipe.Block)
-	_ = WriteVarint32(buf, recipe.Priority)
-	_ = WriteVaruint32(buf, recipe.RecipeNetworkID)
+	w.UUID(&recipe.UUID)
+	w.String(&recipe.Block)
+	w.Varint32(&recipe.Priority)
+	w.Varuint32(&recipe.RecipeNetworkID)
 }
 
 // unmarshalShapeless ...
-func unmarshalShapeless(buf *bytes.Buffer, recipe *ShapelessRecipe) error {
+func unmarshalShapeless(r *Reader, recipe *ShapelessRecipe) {
 	var count uint32
-	if err := chainErr(
-		String(buf, &recipe.RecipeID),
-		Varuint32(buf, &count),
-	); err != nil {
-		return err
-	}
-	if count > lowerLimit {
-		return LimitHitError{Type: "shapeless recipe input", Limit: lowerLimit}
-	}
-	recipe.Input = make([]ItemStack, count)
+	r.String(&recipe.RecipeID)
+	r.Varuint32(&count)
+	r.LimitUint32(count, lowerLimit)
+	recipe.Input = make([]RecipeIngredientItem, count)
 	for i := uint32(0); i < count; i++ {
-		if err := RecipeIngredient(buf, &recipe.Input[i]); err != nil {
-			return wrap(err)
-		}
+		RecipeIngredient(r, &recipe.Input[i])
 	}
-	if err := Varuint32(buf, &count); err != nil {
-		return wrap(err)
-	}
-	if count > lowerLimit {
-		return LimitHitError{Type: "shapeless recipe output", Limit: lowerLimit}
-	}
+	r.Varuint32(&count)
+	r.LimitUint32(count, lowerLimit)
 	recipe.Output = make([]ItemStack, count)
 	for i := uint32(0); i < count; i++ {
-		if err := Item(buf, &recipe.Output[i]); err != nil {
-			return wrap(err)
-		}
+		r.Item(&recipe.Output[i])
 	}
-	return chainErr(
-		UUID(buf, &recipe.UUID),
-		String(buf, &recipe.Block),
-		Varint32(buf, &recipe.Priority),
-		Varuint32(buf, &recipe.RecipeNetworkID),
-	)
+	r.UUID(&recipe.UUID)
+	r.String(&recipe.Block)
+	r.Varint32(&recipe.Priority)
+	r.Varuint32(&recipe.RecipeNetworkID)
 }

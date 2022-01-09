@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // TickSync is sent by the client and the server to maintain a synchronized, server-authoritative tick between
@@ -26,15 +25,13 @@ func (*TickSync) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *TickSync) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.ClientRequestTimestamp)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ServerReceptionTimestamp)
+func (pk *TickSync) Marshal(w *protocol.Writer) {
+	w.Int64(&pk.ClientRequestTimestamp)
+	w.Int64(&pk.ServerReceptionTimestamp)
 }
 
 // Unmarshal ...
-func (pk *TickSync) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		binary.Read(buf, binary.LittleEndian, &pk.ClientRequestTimestamp),
-		binary.Read(buf, binary.LittleEndian, &pk.ServerReceptionTimestamp),
-	)
+func (pk *TickSync) Unmarshal(r *protocol.Reader) {
+	r.Int64(&pk.ClientRequestTimestamp)
+	r.Int64(&pk.ServerReceptionTimestamp)
 }

@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -19,11 +18,11 @@ func (*SetLastHurtBy) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetLastHurtBy) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.EntityType)
+func (pk *SetLastHurtBy) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.EntityType)
 }
 
 // Unmarshal ...
-func (pk *SetLastHurtBy) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.Varint32(buf, &pk.EntityType)
+func (pk *SetLastHurtBy) Unmarshal(r *protocol.Reader) {
+	r.Varint32(&pk.EntityType)
 }

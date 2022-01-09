@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -19,27 +18,22 @@ func (*PurchaseReceipt) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PurchaseReceipt) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Receipts)))
+func (pk *PurchaseReceipt) Marshal(w *protocol.Writer) {
+	l := uint32(len(pk.Receipts))
+	w.Varuint32(&l)
 	for _, receipt := range pk.Receipts {
-		_ = protocol.WriteString(buf, receipt)
+		w.String(&receipt)
 	}
 }
 
 // Unmarshal ...
-func (pk *PurchaseReceipt) Unmarshal(buf *bytes.Buffer) error {
+func (pk *PurchaseReceipt) Unmarshal(r *protocol.Reader) {
 	var count uint32
-	if err := protocol.Varuint32(buf, &count); err != nil {
-		return err
-	}
-	if count > 64 {
-		return protocol.LimitHitError{Type: "purchase receipt", Limit: 64}
-	}
+	r.Varuint32(&count)
+	r.LimitUint32(count, 64)
+
 	pk.Receipts = make([]string, count)
 	for i := uint32(0); i < count; i++ {
-		if err := protocol.String(buf, &pk.Receipts[i]); err != nil {
-			return err
-		}
+		r.String(&pk.Receipts[i])
 	}
-	return nil
 }

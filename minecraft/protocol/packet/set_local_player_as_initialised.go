@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -20,11 +19,11 @@ func (*SetLocalPlayerAsInitialised) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetLocalPlayerAsInitialised) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
+func (pk *SetLocalPlayerAsInitialised) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
 }
 
 // Unmarshal ...
-func (pk *SetLocalPlayerAsInitialised) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.Varuint64(buf, &pk.EntityRuntimeID)
+func (pk *SetLocalPlayerAsInitialised) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
 }

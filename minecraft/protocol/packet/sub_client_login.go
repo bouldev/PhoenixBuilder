@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -23,11 +22,11 @@ func (*SubClientLogin) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SubClientLogin) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteByteSlice(buf, pk.ConnectionRequest)
+func (pk *SubClientLogin) Marshal(w *protocol.Writer) {
+	w.ByteSlice(&pk.ConnectionRequest)
 }
 
 // Unmarshal ...
-func (pk *SubClientLogin) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.ByteSlice(buf, &pk.ConnectionRequest)
+func (pk *SubClientLogin) Unmarshal(r *protocol.Reader) {
+	r.ByteSlice(&pk.ConnectionRequest)
 }

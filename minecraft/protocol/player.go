@@ -1,9 +1,44 @@
 package protocol
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/google/uuid"
+)
+
+const (
+	PlayerActionStartBreak = iota
+	PlayerActionAbortBreak
+	PlayerActionStopBreak
+	PlayerActionGetUpdatedBlock
+	PlayerActionDropItem
+	PlayerActionStartSleeping
+	PlayerActionStopSleeping
+	PlayerActionRespawn
+	PlayerActionJump
+	PlayerActionStartSprint
+	PlayerActionStopSprint
+	PlayerActionStartSneak
+	PlayerActionStopSneak
+	PlayerActionCreativePlayerDestroyBlock
+	PlayerActionDimensionChangeDone
+	PlayerActionStartGlide
+	PlayerActionStopGlide
+	PlayerActionBuildDenied
+	PlayerActionCrackBreak
+	PlayerActionChangeSkin
+	PlayerActionSetEnchantmentSeed
+	PlayerActionStartSwimming
+	PlayerActionStopSwimming
+	PlayerActionStartSpinAttack
+	PlayerActionStopSpinAttack
+	PlayerActionStartBuildingBlock
+	PlayerActionPredictDestroyBlock
+	PlayerActionContinueDestroyBlock
+)
+
+const (
+	PlayerMovementModeClient = iota
+	PlayerMovementModeServer
+	PlayerMovementModeServerWithRewind
 )
 
 // PlayerListEntry is an entry found in the PlayerList packet. It represents a single player using the UUID
@@ -37,43 +72,99 @@ type PlayerListEntry struct {
 	Host bool
 }
 
-// WritePlayerAddEntry writes a PlayerListEntry x to Buffer buf in a way that adds the player to the list.
-func WritePlayerAddEntry(buf *bytes.Buffer, x PlayerListEntry) error {
-	return chainErr(
-		WriteUUID(buf, x.UUID),
-		WriteVarint64(buf, x.EntityUniqueID),
-		WriteString(buf, x.Username),
-		WriteString(buf, x.XUID),
-		WriteString(buf, x.PlatformChatID),
-		binary.Write(buf, binary.LittleEndian, x.BuildPlatform),
-		WriteSerialisedSkin(buf, x.Skin),
-		binary.Write(buf, binary.LittleEndian, x.Teacher),
-		binary.Write(buf, binary.LittleEndian, x.Host),
-	)
+// WritePlayerAddEntry writes a PlayerListEntry x to Writer w in a way that adds the player to the list.
+func WritePlayerAddEntry(w *Writer, x *PlayerListEntry) {
+	w.UUID(&x.UUID)
+	w.Varint64(&x.EntityUniqueID)
+	w.String(&x.Username)
+	w.String(&x.XUID)
+	w.String(&x.PlatformChatID)
+	w.Int32(&x.BuildPlatform)
+	WriteSerialisedSkin(w, &x.Skin)
+	w.Bool(&x.Teacher)
+	w.Bool(&x.Host)
 }
 
-// PlayerAddEntry reads a PlayerListEntry x from Buffer buf in a way that adds a player to the list.
-func PlayerAddEntry(buf *bytes.Buffer, x *PlayerListEntry) error {
-	return chainErr(
-		UUID(buf, &x.UUID),
-		Varint64(buf, &x.EntityUniqueID),
-		String(buf, &x.Username),
-		String(buf, &x.XUID),
-		String(buf, &x.PlatformChatID),
-		binary.Read(buf, binary.LittleEndian, &x.BuildPlatform),
-		SerialisedSkin(buf, &x.Skin),
-		binary.Read(buf, binary.LittleEndian, &x.Teacher),
-		binary.Read(buf, binary.LittleEndian, &x.Host),
-	)
+// PlayerAddEntry reads a PlayerListEntry x from Reader r in a way that adds a player to the list.
+func PlayerAddEntry(r *Reader, x *PlayerListEntry) {
+	r.UUID(&x.UUID)
+	r.Varint64(&x.EntityUniqueID)
+	r.String(&x.Username)
+	r.String(&x.XUID)
+	r.String(&x.PlatformChatID)
+	r.Int32(&x.BuildPlatform)
+	SerialisedSkin(r, &x.Skin)
+	r.Bool(&x.Teacher)
+	r.Bool(&x.Host)
 }
 
-// WritePlayerRemoveEntry writes a PlayerListEntry x to Buffer buf in a way that removes a player from the
-// list.
-func WritePlayerRemoveEntry(buf *bytes.Buffer, x PlayerListEntry) error {
-	return WriteUUID(buf, x.UUID)
+// PlayerMovementSettings represents the different server authoritative movement settings. These control how
+// the client will provide input to the server.
+type PlayerMovementSettings struct {
+	// MovementType specifies the way the server handles player movement. Available options are
+	// packet.AuthoritativeMovementModeClient, packet.AuthoritativeMovementModeServer and
+	// packet.AuthoritativeMovementModeServerWithRewind, where server the server authoritative types result
+	// in the client sending PlayerAuthInput packets instead of MovePlayer packets and the rewind mode
+	// requires sending the tick of movement and several actions.
+	MovementType int32
+	// RewindHistorySize is the amount of history to keep at maximum if MovementType is
+	// packet.AuthoritativeMovementModeServerWithRewind.
+	RewindHistorySize int32
+	// ServerAuthoritativeBlockBreaking specifies if block breaking should be sent through
+	// packet.PlayerAuthInput or not. This field is somewhat redundant as it is always enabled if
+	// MovementType is packet.AuthoritativeMovementModeServer or
+	// packet.AuthoritativeMovementModeServerWithRewind
+	ServerAuthoritativeBlockBreaking bool
 }
 
-// PlayerRemoveEntry reads a PlayerListEntry x from Buffer buf in a way that removes a player from the list.
-func PlayerRemoveEntry(buf *bytes.Buffer, x *PlayerListEntry) error {
-	return UUID(buf, &x.UUID)
+// PlayerMoveSettings reads/writes PlayerMovementSettings x to/from IO r.
+func PlayerMoveSettings(r IO, x *PlayerMovementSettings) {
+	r.Varint32(&x.MovementType)
+	r.Varint32(&x.RewindHistorySize)
+	r.Bool(&x.ServerAuthoritativeBlockBreaking)
+}
+
+// PlayerInventoryAction reads/writes a PlayerInventoryAction x to/from IO r.
+func PlayerInventoryAction(r IO, x *UseItemTransactionData) {
+	r.Varint32(&x.LegacyRequestID)
+	if x.LegacyRequestID != 0 {
+		l := uint32(len(x.LegacySetItemSlots))
+		r.Varuint32(&l)
+		for _, slot := range x.LegacySetItemSlots {
+			SetItemSlot(r, &slot)
+		}
+	}
+	l := uint32(len(x.Actions))
+	r.Varuint32(&l)
+	for _, a := range x.Actions {
+		InvAction(r, &a)
+	}
+	r.Varuint32(&x.ActionType)
+	r.BlockPos(&x.BlockPosition)
+	r.Varint32(&x.BlockFace)
+	r.Varint32(&x.HotBarSlot)
+	r.ItemInstance(&x.HeldItem)
+	r.Vec3(&x.Position)
+	r.Vec3(&x.ClickedPosition)
+	r.Varuint32(&x.BlockRuntimeID)
+}
+
+// PlayerBlockAction ...
+type PlayerBlockAction struct {
+	// Action is the action to be performed, and is one of the constants listed above.
+	Action int32
+	// BlockPos is the position of the block that was interacted with.
+	BlockPos BlockPos
+	// Face is the face of the block that was interacted with.
+	Face int32
+}
+
+// BlockAction reads/writes a PlayerBlockAction x to/from IO r.
+func BlockAction(r IO, x *PlayerBlockAction) {
+	r.Varint32(&x.Action)
+	switch x.Action {
+	case PlayerActionStartBreak, PlayerActionAbortBreak, PlayerActionCrackBreak, PlayerActionPredictDestroyBlock, PlayerActionContinueDestroyBlock:
+		r.BlockPos(&x.BlockPos)
+		r.Varint32(&x.Face)
+	}
 }

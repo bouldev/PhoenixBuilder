@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -35,19 +33,21 @@ func (*MoveActorAbsolute) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *MoveActorAbsolute) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Flags)
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = protocol.WriteRotation(buf, pk.Rotation)
+func (pk *MoveActorAbsolute) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.Uint8(&pk.Flags)
+	w.Vec3(&pk.Position)
+	w.ByteFloat(&pk.Rotation[0])
+	w.ByteFloat(&pk.Rotation[1])
+	w.ByteFloat(&pk.Rotation[2])
 }
 
 // Unmarshal ...
-func (pk *MoveActorAbsolute) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		binary.Read(buf, binary.LittleEndian, &pk.Flags),
-		protocol.Vec3(buf, &pk.Position),
-		protocol.Rotation(buf, &pk.Rotation),
-	)
+func (pk *MoveActorAbsolute) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.Uint8(&pk.Flags)
+	r.Vec3(&pk.Position)
+	r.ByteFloat(&pk.Rotation[0])
+	r.ByteFloat(&pk.Rotation[1])
+	r.ByteFloat(&pk.Rotation[2])
 }

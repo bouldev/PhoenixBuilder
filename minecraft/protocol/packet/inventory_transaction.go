@@ -1,9 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
-	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -31,9 +28,6 @@ type InventoryTransaction struct {
 	// server of the slots that were changed during the inventory transaction, and the server should send
 	// back an ItemStackResponse packet with these slots present in it. (Or false with no slots, if rejected.)
 	LegacySetItemSlots []protocol.LegacySetItemSlot
-	// HasNetworkIDs specifies if the inventory actions below have network IDs associated with them. It is
-	// always set to false when a client sends this packet to the server.
-	HasNetworkIDs bool
 	// Actions is a list of actions that took place, that form the inventory transaction together. Each of
 	// these actions hold one slot in which one item was changed to another. In general, the combination of
 	// all of these actions results in a balanced inventory transaction. This should be checked to ensure that
@@ -52,70 +46,60 @@ func (*InventoryTransaction) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *InventoryTransaction) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.LegacyRequestID)
+func (pk *InventoryTransaction) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.LegacyRequestID)
 	if pk.LegacyRequestID != 0 {
-		_ = protocol.WriteVaruint32(buf, uint32(len(pk.LegacySetItemSlots)))
+		l := uint32(len(pk.LegacySetItemSlots))
+		w.Varuint32(&l)
 		for _, slot := range pk.LegacySetItemSlots {
-			_ = protocol.WriteSetItemSlot(buf, slot)
+			protocol.SetItemSlot(w, &slot)
 		}
 	}
+	var id uint32
 	switch pk.TransactionData.(type) {
 	case nil, *protocol.NormalTransactionData:
-		_ = protocol.WriteVaruint32(buf, InventoryTransactionTypeNormal)
+		id = InventoryTransactionTypeNormal
 	case *protocol.MismatchTransactionData:
-		_ = protocol.WriteVaruint32(buf, InventoryTransactionTypeMismatch)
+		id = InventoryTransactionTypeMismatch
 	case *protocol.UseItemTransactionData:
-		_ = protocol.WriteVaruint32(buf, InventoryTransactionTypeUseItem)
+		id = InventoryTransactionTypeUseItem
 	case *protocol.UseItemOnEntityTransactionData:
-		_ = protocol.WriteVaruint32(buf, InventoryTransactionTypeUseItemOnEntity)
+		id = InventoryTransactionTypeUseItemOnEntity
 	case *protocol.ReleaseItemTransactionData:
-		_ = protocol.WriteVaruint32(buf, InventoryTransactionTypeReleaseItem)
+		id = InventoryTransactionTypeReleaseItem
 	}
-	_ = binary.Write(buf, binary.LittleEndian, pk.HasNetworkIDs)
-	_ = protocol.WriteVaruint32(buf, uint32(len(pk.Actions)))
+	w.Varuint32(&id)
+	l := uint32(len(pk.Actions))
+	w.Varuint32(&l)
 	for _, action := range pk.Actions {
-		_ = protocol.WriteInvAction(buf, action, pk.HasNetworkIDs)
+		protocol.InvAction(w, &action)
 	}
 	if pk.TransactionData != nil {
-		pk.TransactionData.Marshal(buf)
+		pk.TransactionData.Marshal(w)
 	}
 }
 
 // Unmarshal ...
-func (pk *InventoryTransaction) Unmarshal(buf *bytes.Buffer) error {
+func (pk *InventoryTransaction) Unmarshal(r *protocol.Reader) {
 	var length, transactionType uint32
-	if err := protocol.Varint32(buf, &pk.LegacyRequestID); err != nil {
-		return err
-	}
+	r.Varint32(&pk.LegacyRequestID)
 	if pk.LegacyRequestID != 0 {
-		if err := protocol.Varuint32(buf, &length); err != nil {
-			return err
-		}
+		r.Varuint32(&length)
+
 		pk.LegacySetItemSlots = make([]protocol.LegacySetItemSlot, length)
 		for i := uint32(0); i < length; i++ {
-			if err := protocol.SetItemSlot(buf, &pk.LegacySetItemSlots[i]); err != nil {
-				return err
-			}
+			protocol.SetItemSlot(r, &pk.LegacySetItemSlots[i])
 		}
 	}
-	if err := chainErr(
-		protocol.Varuint32(buf, &transactionType),
-		binary.Read(buf, binary.LittleEndian, &pk.HasNetworkIDs),
-		protocol.Varuint32(buf, &length),
-	); err != nil {
-		return err
-	}
-	if length > 512 {
-		return protocol.LimitHitError{Type: "inventory transaction", Limit: 512}
-	}
+	r.Varuint32(&transactionType)
+	r.Varuint32(&length)
+	r.LimitUint32(length, 512)
+
 	pk.Actions = make([]protocol.InventoryAction, length)
 	for i := uint32(0); i < length; i++ {
 		// Each InventoryTransaction packet has a list of actions at the start, with a transaction data object
 		// after that, depending on the transaction type.
-		if err := protocol.InvAction(buf, &pk.Actions[i], pk.HasNetworkIDs); err != nil {
-			return err
-		}
+		protocol.InvAction(r, &pk.Actions[i])
 	}
 	switch transactionType {
 	case InventoryTransactionTypeNormal:
@@ -129,8 +113,7 @@ func (pk *InventoryTransaction) Unmarshal(buf *bytes.Buffer) error {
 	case InventoryTransactionTypeReleaseItem:
 		pk.TransactionData = &protocol.ReleaseItemTransactionData{}
 	default:
-		// We don't try to decode transactions that have some transaction type we don't know.
-		return fmt.Errorf("unknown inventory transaction type %v", transactionType)
+		r.UnknownEnumOption(transactionType, "inventory transaction type")
 	}
-	return pk.TransactionData.Unmarshal(buf)
+	pk.TransactionData.Unmarshal(r)
 }

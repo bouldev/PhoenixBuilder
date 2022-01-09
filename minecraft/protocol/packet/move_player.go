@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -53,7 +51,8 @@ type MovePlayer struct {
 	TeleportCause int32
 	// TeleportSourceEntityType is the entity type that caused the teleportation, for example an ender pearl.
 	TeleportSourceEntityType int32
-	Counter uint64
+	// Tick is the server tick at which the packet was sent. It is used in relation to CorrectPlayerMovePrediction.
+	Tick uint64
 }
 
 // ID ...
@@ -61,45 +60,36 @@ func (*MovePlayer) ID() uint32 {
 	return IDMovePlayer
 }
 
-var globalCounter uint64
-
 // Marshal ...
-func (pk *MovePlayer) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = protocol.WriteVec3(buf, pk.Position)
-	_ = protocol.WriteFloat32(buf, pk.Pitch)
-	_ = protocol.WriteFloat32(buf, pk.Yaw)
-	_ = protocol.WriteFloat32(buf, pk.HeadYaw)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Mode)
-	_ = binary.Write(buf, binary.LittleEndian, pk.OnGround)
-	_ = protocol.WriteVaruint64(buf, pk.RiddenEntityRuntimeID)
+func (pk *MovePlayer) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.Vec3(&pk.Position)
+	w.Float32(&pk.Pitch)
+	w.Float32(&pk.Yaw)
+	w.Float32(&pk.HeadYaw)
+	w.Uint8(&pk.Mode)
+	w.Bool(&pk.OnGround)
+	w.Varuint64(&pk.RiddenEntityRuntimeID)
 	if pk.Mode == MoveModeTeleport {
-		_ = binary.Write(buf, binary.LittleEndian, pk.TeleportCause)
-		_ = binary.Write(buf, binary.LittleEndian, pk.TeleportSourceEntityType)
+		w.Int32(&pk.TeleportCause)
+		w.Int32(&pk.TeleportSourceEntityType)
 	}
-	_ = protocol.WriteVaruint64(buf, pk.Counter)
+	w.Varuint64(&pk.Tick)
 }
 
 // Unmarshal ...
-func (pk *MovePlayer) Unmarshal(buf *bytes.Buffer) error {
-	if err := chainErr(
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		protocol.Vec3(buf, &pk.Position),
-		protocol.Float32(buf, &pk.Pitch),
-		protocol.Float32(buf, &pk.Yaw),
-		protocol.Float32(buf, &pk.HeadYaw),
-		binary.Read(buf, binary.LittleEndian, &pk.Mode),
-		binary.Read(buf, binary.LittleEndian, &pk.OnGround),
-		protocol.Varuint64(buf, &pk.RiddenEntityRuntimeID),
-	); err != nil {
-		return err
-	}
+func (pk *MovePlayer) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.Vec3(&pk.Position)
+	r.Float32(&pk.Pitch)
+	r.Float32(&pk.Yaw)
+	r.Float32(&pk.HeadYaw)
+	r.Uint8(&pk.Mode)
+	r.Bool(&pk.OnGround)
+	r.Varuint64(&pk.RiddenEntityRuntimeID)
 	if pk.Mode == MoveModeTeleport {
-		return chainErr(
-			binary.Read(buf, binary.LittleEndian, &pk.TeleportCause),
-			binary.Read(buf, binary.LittleEndian, &pk.TeleportSourceEntityType),
-		)
+		r.Int32(&pk.TeleportCause)
+		r.Int32(&pk.TeleportSourceEntityType)
 	}
-	protocol.Varuint64(buf, &pk.Counter)
-	return nil
+	r.Varuint64(&pk.Tick)
 }

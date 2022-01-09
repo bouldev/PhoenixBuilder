@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -30,17 +28,15 @@ func (*PlayerInput) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *PlayerInput) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVec2(buf, pk.Movement)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Jumping)
-	_ = binary.Write(buf, binary.LittleEndian, pk.Sneaking)
+func (pk *PlayerInput) Marshal(w *protocol.Writer) {
+	w.Vec2(&pk.Movement)
+	w.Bool(&pk.Jumping)
+	w.Bool(&pk.Sneaking)
 }
 
 // Unmarshal ...
-func (pk *PlayerInput) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Vec2(buf, &pk.Movement),
-		binary.Read(buf, binary.LittleEndian, &pk.Jumping),
-		binary.Read(buf, binary.LittleEndian, &pk.Sneaking),
-	)
+func (pk *PlayerInput) Unmarshal(r *protocol.Reader) {
+	r.Vec2(&pk.Movement)
+	r.Bool(&pk.Jumping)
+	r.Bool(&pk.Sneaking)
 }

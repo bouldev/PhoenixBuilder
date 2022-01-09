@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -29,19 +27,17 @@ func (*NPCRequest) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *NPCRequest) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVaruint64(buf, pk.EntityRuntimeID)
-	_ = binary.Write(buf, binary.LittleEndian, pk.RequestType)
-	_ = protocol.WriteString(buf, pk.CommandString)
-	_ = binary.Write(buf, binary.LittleEndian, pk.ActionType)
+func (pk *NPCRequest) Marshal(w *protocol.Writer) {
+	w.Varuint64(&pk.EntityRuntimeID)
+	w.Uint8(&pk.RequestType)
+	w.String(&pk.CommandString)
+	w.Uint8(&pk.ActionType)
 }
 
 // Unmarshal ...
-func (pk *NPCRequest) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varuint64(buf, &pk.EntityRuntimeID),
-		binary.Read(buf, binary.LittleEndian, &pk.RequestType),
-		protocol.String(buf, &pk.CommandString),
-		binary.Read(buf, binary.LittleEndian, &pk.ActionType),
-	)
+func (pk *NPCRequest) Unmarshal(r *protocol.Reader) {
+	r.Varuint64(&pk.EntityRuntimeID)
+	r.Uint8(&pk.RequestType)
+	r.String(&pk.CommandString)
+	r.Uint8(&pk.ActionType)
 }

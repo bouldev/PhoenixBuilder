@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -19,11 +18,11 @@ func (*RemoveObjective) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *RemoveObjective) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteString(buf, pk.ObjectiveName)
+func (pk *RemoveObjective) Marshal(w *protocol.Writer) {
+	w.String(&pk.ObjectiveName)
 }
 
 // Unmarshal ...
-func (pk *RemoveObjective) Unmarshal(buf *bytes.Buffer) error {
-	return protocol.String(buf, &pk.ObjectiveName)
+func (pk *RemoveObjective) Unmarshal(r *protocol.Reader) {
+	r.String(&pk.ObjectiveName)
 }

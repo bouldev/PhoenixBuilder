@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -40,21 +39,19 @@ func (*SetTitle) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *SetTitle) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteVarint32(buf, pk.ActionType)
-	_ = protocol.WriteString(buf, pk.Text)
-	_ = protocol.WriteVarint32(buf, pk.FadeInDuration)
-	_ = protocol.WriteVarint32(buf, pk.RemainDuration)
-	_ = protocol.WriteVarint32(buf, pk.FadeOutDuration)
+func (pk *SetTitle) Marshal(w *protocol.Writer) {
+	w.Varint32(&pk.ActionType)
+	w.String(&pk.Text)
+	w.Varint32(&pk.FadeInDuration)
+	w.Varint32(&pk.RemainDuration)
+	w.Varint32(&pk.FadeOutDuration)
 }
 
 // Unmarshal ...
-func (pk *SetTitle) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.Varint32(buf, &pk.ActionType),
-		protocol.String(buf, &pk.Text),
-		protocol.Varint32(buf, &pk.FadeInDuration),
-		protocol.Varint32(buf, &pk.RemainDuration),
-		protocol.Varint32(buf, &pk.FadeOutDuration),
-	)
+func (pk *SetTitle) Unmarshal(r *protocol.Reader) {
+	r.Varint32(&pk.ActionType)
+	r.String(&pk.Text)
+	r.Varint32(&pk.FadeInDuration)
+	r.Varint32(&pk.RemainDuration)
+	r.Varint32(&pk.FadeOutDuration)
 }

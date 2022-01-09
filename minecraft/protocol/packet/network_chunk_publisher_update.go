@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bytes"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -28,15 +27,13 @@ func (*NetworkChunkPublisherUpdate) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *NetworkChunkPublisherUpdate) Marshal(buf *bytes.Buffer) {
-	_ = protocol.WriteBlockPosition(buf, pk.Position)
-	_ = protocol.WriteVaruint32(buf, pk.Radius)
+func (pk *NetworkChunkPublisherUpdate) Marshal(w *protocol.Writer) {
+	w.BlockPos(&pk.Position)
+	w.Varuint32(&pk.Radius)
 }
 
 // Unmarshal ...
-func (pk *NetworkChunkPublisherUpdate) Unmarshal(buf *bytes.Buffer) error {
-	return chainErr(
-		protocol.BlockPosition(buf, &pk.Position),
-		protocol.Varuint32(buf, &pk.Radius),
-	)
+func (pk *NetworkChunkPublisherUpdate) Unmarshal(r *protocol.Reader) {
+	r.BlockPos(&pk.Position)
+	r.Varuint32(&pk.Radius)
 }

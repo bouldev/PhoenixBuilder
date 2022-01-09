@@ -1,8 +1,7 @@
 package packet
 
 import (
-	"bytes"
-	"encoding/binary"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 // NetworkSettings is sent by the server to update a variety of network settings. These settings modify the
@@ -20,11 +19,11 @@ func (*NetworkSettings) ID() uint32 {
 }
 
 // Marshal ...
-func (pk *NetworkSettings) Marshal(buf *bytes.Buffer) {
-	_ = binary.Write(buf, binary.LittleEndian, pk.CompressionThreshold)
+func (pk *NetworkSettings) Marshal(w *protocol.Writer) {
+	w.Uint16(&pk.CompressionThreshold)
 }
 
 // Unmarshal ...
-func (pk *NetworkSettings) Unmarshal(buf *bytes.Buffer) error {
-	return binary.Read(buf, binary.LittleEndian, &pk.CompressionThreshold)
+func (pk *NetworkSettings) Unmarshal(r *protocol.Reader) {
+	r.Uint16(&pk.CompressionThreshold)
 }
