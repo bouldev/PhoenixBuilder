@@ -188,6 +188,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
 			_, _=bufio.NewReader(os.Stdin).ReadString('\n')
 		}
+		panic(err)
 		os.Exit(6)
 		//panic(err)
 	}
