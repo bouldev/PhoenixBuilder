@@ -78,7 +78,7 @@ Let's see how to make a `bdx` file using these commands.
 
 If we want to place a TNT block at `{3,5,6}`(**relative**), and a repeating command block with command `kill @e[type=tnt]` and name `Kill TNT!` that doesn't need redstone to be activated at `{3,6,6}`, then a glass block at `{114514,15,1919810}` and a iron block at `{114514,15,1919800}`, the uncompressed bdx file might be:
 
-`BDX\0DEMO\0\x01tnt\0\x1D\x03\x01repeating_command_block\0\x01glass\0\x01iron_block\0\x1F\x06\x1E\x05\x07\0\0\0\0\x11\x1C\0\x01\0\0\x01kill @e[type=tnt]\0Kill TNT!\0\0\0\0\0\0\x01\x01\0\0\x1E\x09\x1A\0\x1D\x4B\x3C\x16\0\x01\xBF\x4F\x07\0\x02\0\0\x1F\xF6\x07\0\x03\0\0XE`
+`BDX\0DEMO\0\x01tnt\0\x1C\x03\x01repeating_command_block\0\x01glass\0\x01iron_block\0\x1E\x06\x1D\x05\x07\0\0\0\0\x10\x1B\0\x01\0\0\x01kill @e[type=tnt]\0Kill TNT!\0\0\0\0\0\0\x01\x01\0\0\x1D\x09\x19\0\x1D\x4B\x3C\x15\0\x01\xBF\x4F\x07\0\x02\0\0\x1E\xF6\x07\0\x03\0\0XE`
 
 The pseudo assembly code form of this file is:
 
