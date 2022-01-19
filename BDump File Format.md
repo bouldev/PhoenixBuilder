@@ -6,7 +6,7 @@ By writing the ids that represent each blocks in a specific order is a workable 
 
 ## Basic File Structure
 
-BDump v3 file's extension is `.bdx`, and the general header of it is `BD@`, which stands for that the file was compressed with brotli compression algorithm. Note that there's also a header `BDZ` that stands for the file was compressed with gzip compression algorithm, which is no longer supported by FastBuilder Phoenix today since it has been deprecated for a long time and it's hard to find this type's file again. We define such kind of header as "compression header"  and the content after it is compressed with the compression algorithm it indicates.
+BDump v3 file's extension is `.bdx`, and the general header of it is `BD@`, which stands for that the file was compressed with brotli compression algorithm (official compress quality is 6). Note that there's also a header `BDZ` that stands for the file was compressed with gzip compression algorithm, which is no longer supported by FastBuilder Phoenix today since it has been deprecated for a long time and it's hard to find this type's file again. We define such kind of header as "compression header"  and the content after it is compressed with the compression algorithm it indicates.
 
 > Tip: BDump v2's extension is `.bdp` and the header is `BDMPS\0\x02\0`.
 
@@ -32,7 +32,7 @@ Type definition:
 * `unsigned short`: an {unsigned int} value with 2 bytes long.
 * `int32_t`: an {int} value with 4 bytes long.
 * `uint32_t`: an {unsigned int} value with 4 bytes long.
-* `char *`: a string that terminated with `\0`.
+* `char *`: a string that terminated with `\0` (encoding is utf-8).
 * `int`: alias of `int32_t`
 * `unsigned int`: alias of `uint32_t`
 * `bool`: a value that can be either `true(1)` or `false(0)`, 1 byte long.
@@ -64,8 +64,8 @@ Type definition:
 | 23, `0x17`        | `*addBigY`                  | Add `y` to the brush position's `Y`.                         | `int y`                                                      |
 | 24, `0x18`        | `*addZ`                     | Add `z` to the brush position's `Z`.                         | `short z`                                                    |
 | 25, `0x19`        | `*addBigZ`                  | Add `z` to the brush position's `Z`.                         | `int z`                                                      |
-| 26, `0x1A`        | `assignCommandBlockData`    | Set the command block data for the block at the brush's position. | `unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
-| 27, `0x1B`        | `placeCommandBlockWithData` | Place a command block, and set its data at the brush's position. | `unsigned short blockID`<br/>`unsigned short blockData`<br/>`unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
+| 26, `0x1A`        | `assignCommandBlockData`    | Set the command block data for the block at the brush's position. | `unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (no effect and can be set to'\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
+| 27, `0x1B`        | `placeCommandBlockWithData` | Place a command block, and set its data at the brush's position. | `unsigned short blockID`<br/>`unsigned short blockData`<br/>`unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (no effect and can be set to'\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
 | 28, `0x1C`        | `addSmallX`                 | Add `x` to the brush position's `X`. The difference between this command and the `*addX` command is that this command uses `char` as its argument. | `char x //int8_t x`                                          |
 | 29, `0x1D`        | `addSmallY`                 | Add `y` to the brush position's `Y`.                         | `char y //int8_t y`                                          |
 | 30, `0x1E`        | `addSmallZ`                 | Add `z` to the brush position's `Z`.                         | `char z //int8_t z`                                          |

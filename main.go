@@ -288,7 +288,33 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 			function.Process(conn, cmd)
 		}
-	} ()
+	}()
+	// fb can not working properly when "sendcommandfeedback=false", we need to notify the user
+	gameRuleValue, hasKey := conn.GameData().GameRules["sendcommandfeedback"]
+	sendcommandfeedbackStatue := false
+	if hasKey {
+		sendcommandfeedbackStatue = gameRuleValue.(bool)
+		if !sendcommandfeedbackStatue {
+			// notify user
+			tellraw(conn, fmt.Sprintf("%s", I18n.T(I18n.Notify_TurnOnCmdFeedBack)))
+		}
+	}
+
+	// it seems that GetLoadingTime PyRPC will not send to client now, so we move it here
+	// and we need a delay to ensure the client is ready to sent cmd
+	time.AfterFunc(time.Second*5, func() {
+		// if a "get/set" is already called, do nothing
+		if sendcommandfeedbackStatue && !configuration.IsOp {
+			sendCommand("testforblock ~ ~ ~ air", configuration.ZeroId, conn)
+			// wait for another 2 second and check if server response to check whether the bot is granted op privilege
+			time.AfterFunc(time.Second*2, func() {
+				if !configuration.IsOp {
+					sendChat(I18n.T(I18n.Notify_NeedOp), conn)
+				}
+			})
+		}
+	})
+
 	// A loop that reads packets from the connection until it is closed.
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
@@ -398,6 +424,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			//if p.SuccessCount > 0 {
 				if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
 					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+					if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
+						configuration.IsOp = true
+					}
 					if len(pos) == 0 {
 						tellraw(conn, I18n.T(I18n.InvalidPosition))
 						break
@@ -558,6 +587,10 @@ func sendCommand(commands string, UUID uuid.UUID, conn *minecraft.Conn) error {
 	}
 	return conn.WritePacket(commandRequest)*/
 	return command.SendCommand(commands,UUID,conn)
+}
+
+func sendChat(content string, conn *minecraft.Conn) error {
+	return command.SendChat(content,conn)
 }
 
 func tellraw(conn *minecraft.Conn, lines ...string) error {

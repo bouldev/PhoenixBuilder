@@ -132,6 +132,8 @@ const (
 	Auth_InvalidToken //111
 	Auth_UserCombined //112
 	Auth_InvalidFBVersion //113
+	Notify_TurnOnCmdFeedBack            //114
+	Notify_NeedOp
 )
 
 var LangDict map[string]map[uint16]string = map[string]map[uint16]string {
