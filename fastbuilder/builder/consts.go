@@ -50,7 +50,7 @@ var ColorTable = []ColorBlock{
 	{Block: &types.ConstBlock{Name: "double_stone_slab", Data: 1}, Color: colorful.Color{196, 187, 136}},
 	{Block: &types.ConstBlock{Name: "double_stone_slab", Data: 6}, Color: colorful.Color{204, 202, 196}},
 	{Block: &types.ConstBlock{Name: "double_stone_slab", Data: 7}, Color: colorful.Color{81, 11, 5}},
-	{Block: &types.ConstBlock{Name: "tnt", Data: 0}, Color: colorful.Color{188, 39, 26}},
+	{Block: &types.ConstBlock{Name: "redstone_block", Data: 0}, Color: colorful.Color{188, 39, 26}},
 	{Block: &types.ConstBlock{Name: "mossy_cobblestone", Data: 0}, Color: colorful.Color{131, 134, 146}},
 	{Block: &types.ConstBlock{Name: "diamond_block", Data: 0}, Color: colorful.Color{102, 173, 169}},
 	{Block: &types.ConstBlock{Name: "farmland", Data: 0}, Color: colorful.Color{116, 88, 65}},
