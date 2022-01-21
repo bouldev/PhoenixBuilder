@@ -289,31 +289,22 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			function.Process(conn, cmd)
 		}
 	}()
-	// fb can not working properly when "sendcommandfeedback=false", we need to notify the user
-	gameRuleValue, hasKey := conn.GameData().GameRules["sendcommandfeedback"]
-	sendcommandfeedbackStatue := false
-	if hasKey {
-		sendcommandfeedbackStatue = gameRuleValue.(bool)
-		if !sendcommandfeedbackStatue {
-			// notify user
-			tellraw(conn, fmt.Sprintf("%s", I18n.T(I18n.Notify_TurnOnCmdFeedBack)))
-		}
-	}
-
-	// it seems that GetLoadingTime PyRPC will not send to client now, so we move it here
-	// and we need a delay to ensure the client is ready to sent cmd
-	time.AfterFunc(time.Second*5, func() {
-		// if a "get/set" is already called, do nothing
-		if sendcommandfeedbackStatue && !configuration.IsOp {
-			sendCommand("testforblock ~ ~ ~ air", configuration.ZeroId, conn)
-			// wait for another 2 second and check if server response to check whether the bot is granted op privilege
-			time.AfterFunc(time.Second*2, func() {
-				if !configuration.IsOp {
+	go func() {
+		// fb can not work properly when "sendcommandfeedback=false", we need to notify the user
+		for _, rule := range conn.GameData().GameRules {
+			if rule.Name=="sendcommandfeedback" {
+				sendcommandfeedbackStatus:=rule.Value.(bool)
+				if !sendcommandfeedbackStatus {
+					// notify user
+					tellraw(conn, fmt.Sprintf("%s", I18n.T(I18n.Notify_TurnOnCmdFeedBack)))
+				}
+				if(!rule.CanBeModifiedByPlayer) {
 					sendChat(I18n.T(I18n.Notify_NeedOp), conn)
 				}
-			})
+				break
+			}
 		}
-	})
+	} ()
 
 	// A loop that reads packets from the connection until it is closed.
 	for {

@@ -77,9 +77,9 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM l
 	if(msg==WM_PAINT) {
 		if(currentPainter)currentPainter(/*hwnd=window so no need to send it*/);
 	}else if(msg==WM_CLOSE) {
-		exit(0);
+		((void(*)())GetProcAddress(fastbuilder,"teardownFastBuilder"))();
 	}else if(msg==WM_DESTROY) {
-		exit(0);
+		((void(*)())GetProcAddress(fastbuilder,"teardownFastBuilder"))();
 	}else if(msg==WM_COMMAND) {
 		if(currentHandler)currentHandler(wParam,lParam);
 	}

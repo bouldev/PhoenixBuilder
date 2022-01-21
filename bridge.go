@@ -31,7 +31,7 @@ static inline void InitFinished() {
 */
 import "C"
 
-var bridgeConn *minecraft.Conn
+var bridgeConn *minecraft.Conn = nil
 
 func bridgeLoginFailed(msg string) {
 	C.LoginFailed(C.CString(msg))
@@ -184,4 +184,13 @@ func _getEndPos() *C.char {
 	pos:=configuration.GlobalFullConfig().Main().End
 	o:=fmt.Sprintf("%d, %d, %d",pos.X,pos.Y,pos.Z)
 	return C.CString(o)
+}
+
+//export teardownFastBuilder
+func teardownFastBuilder() {
+	fmt.Printf("Quit correctly\n")
+	if(bridgeConn!=nil) {
+		bridgeConn.Close()
+	}
+	os.Exit(0)
 }
