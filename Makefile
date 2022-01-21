@@ -31,7 +31,7 @@ ifneq ($(wildcard /usr/bin/i686-w64-mingw32-gcc),)
 	TARGETS:=${TARGETS} windows-executable-x86
 endif
 ifneq ($(wildcard /usr/bin/x86_64-w64-mingw32-gcc),)
-	TARGETS:=${TARGETS} windows-executable-x86_64
+	TARGETS:=${TARGETS} windows-executable-x86_64 windows-shared
 endif
 ifneq ($(wildcard /usr/bin/aarch64-linux-gnu-gcc),)
 	TARGETS:=${TARGETS} current-arm64-executable
@@ -55,6 +55,7 @@ android-executable-x86: build/phoenixbuilder-android-executable-x86
 windows-executable: windows-executable-x86 windows-executable-x86_64
 windows-executable-x86: build/phoenixbuilder-windows-executable-x86.exe
 windows-executable-x86_64: build/phoenixbuilder-windows-executable-x86_64.exe
+windows-shared: build/phoenixbuilder-windows-shared.dll
 
 package: ${PACKAGETARGETS}
 release/:
@@ -89,6 +90,8 @@ build/phoenixbuilder-windows-executable-x86.exe: build/ /usr/bin/i686-w64-mingw3
 	CC=/usr/bin/i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86.exe
 build/phoenixbuilder-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
 	CC=/usr/bin/x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86_64.exe
+build/phoenixbuilder-windows-shared.dll: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
+	CGO_CFLAGS="-Wl,--enable-stdcall-fixup -luser32 -lcomdlg32 -Wno-pointer-to-int-cast -mwindows -m64 -march=x86-64 -luser32 -lkernel32 -lgdi32 -lwinmm -lcomctl32 -ladvapi32 -lshell32 -lpsapi -nodefaultlibs -nostdlib -lmsvcrt -D_UCRT=1" CC=/usr/bin/x86_64-w64-mingw32-gcc CGO_LDFLAGS="--enable-stdcall-fixup" GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=c-shared -trimpath -o build/phoenixbuilder-windows-shared.dll
 build/hashes.json: build genhash.js ${TARGETS}
 	node genhash.js
 	cp version build/version

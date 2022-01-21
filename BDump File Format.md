@@ -52,23 +52,23 @@ Type definition:
 | 11, `0x0B`        | `jumpY`                     | **(DEPRECATED)** Add `y` to the brush position's `Y`, and reset the value of `Z` to `0`. | `unsigned int y`                                             |
 | 12, `0x0C`        | `jumpZ`                     | Add `z` to the brush position's `Z`, it's not deprecated since it resets nothing, though it's no longer used by the current version of PhonixBuilder. | `unsigned int z`                                             |
 | 13, `0x0D`        | `reserved`                  | Reserved command, shouldn't be used by your program.         | ???                                                          |
-| 14, `0x0F`        | `*X++`                      | Add `1` to the brush position's `X`.                         | -                                                            |
-| 15, `0x10`        | `*X--`                      | Subtract `1` from the brush position's `X`.                  | -                                                            |
-| 16, `0x11`        | `*Y++`                      | Add `1` to the brush position's `Y`.                         | -                                                            |
-| 17, `0x12`        | `*Y--`                      | Subtract `1` from the brush position's `Y`.                  | -                                                            |
-| 18, `0x13`        | `*Z++`                      | Add `1` to the brush position's `Z`.                         | -                                                            |
-| 19, `0x14`        | `*Z--`                      | Subtract `1` from the brush position's `Z`.                  | -                                                            |
-| 20, `0x15`        | `*addX`                     | Add `x` to the brush position's `X`. `x` could be either positive, negative or zero. | `short x`                                                    |
-| 21, `0x16`        | `*addBigX`                  | Add `x` to the brush position's `X`. The difference between this command and the previous one is this command uses `int32` as its argument. | `int x`                                                      |
-| 22, `0x17`        | `*addY`                     | Add `y` to the brush position's `Y`.                         | `short y`                                                    |
-| 23, `0x18`        | `*addBigY`                  | Add `y` to the brush position's `Y`.                         | `int y`                                                      |
-| 24, `0x19`        | `*addZ`                     | Add `z` to the brush position's `Z`.                         | `short z`                                                    |
-| 25, `0x1A`        | `*addBigZ`                  | Add `z` to the brush position's `Z`.                         | `int z`                                                      |
-| 26, `0x1B`        | `assignCommandBlockData`    | Set the command block data for the block at the brush's position. | `unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
-| 27, `0x1C`        | `placeCommandBlockWithData` | Place a command block, and set its data at the brush's position. | `unsigned short blockID`<br/>`unsigned short blockData`<br/>`unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
-| 28, `0x1D`        | `addSmallX`                 | Add `x` to the brush position's `X`. The difference between this command and the `*addX` command is that this command uses `char` as its argument. | `char x //int8_t x`                                          |
-| 29, `0x1E`        | `addSmallY`                 | Add `y` to the brush position's `Y`.                         | `char y //int8_t y`                                          |
-| 30, `0x1F`        | `addSmallZ`                 | Add `z` to the brush position's `Z`.                         | `char z //int8_t z`                                          |
+| 14, `0x0E`        | `*X++`                      | Add `1` to the brush position's `X`.                         | -                                                            |
+| 15, `0x0F`        | `*X--`                      | Subtract `1` from the brush position's `X`.                  | -                                                            |
+| 16, `0x10`        | `*Y++`                      | Add `1` to the brush position's `Y`.                         | -                                                            |
+| 17, `0x11`        | `*Y--`                      | Subtract `1` from the brush position's `Y`.                  | -                                                            |
+| 18, `0x12`        | `*Z++`                      | Add `1` to the brush position's `Z`.                         | -                                                            |
+| 19, `0x13`        | `*Z--`                      | Subtract `1` from the brush position's `Z`.                  | -                                                            |
+| 20, `0x14`        | `*addX`                     | Add `x` to the brush position's `X`. `x` could be either positive, negative or zero. | `short x`                                                    |
+| 21, `0x15`        | `*addBigX`                  | Add `x` to the brush position's `X`. The difference between this command and the previous one is this command uses `int32` as its argument. | `int x`                                                      |
+| 22, `0x16`        | `*addY`                     | Add `y` to the brush position's `Y`.                         | `short y`                                                    |
+| 23, `0x17`        | `*addBigY`                  | Add `y` to the brush position's `Y`.                         | `int y`                                                      |
+| 24, `0x18`        | `*addZ`                     | Add `z` to the brush position's `Z`.                         | `short z`                                                    |
+| 25, `0x19`        | `*addBigZ`                  | Add `z` to the brush position's `Z`.                         | `int z`                                                      |
+| 26, `0x1A`        | `assignCommandBlockData`    | Set the command block data for the block at the brush's position. | `unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
+| 27, `0x1B`        | `placeCommandBlockWithData` | Place a command block, and set its data at the brush's position. | `unsigned short blockID`<br/>`unsigned short blockData`<br/>`unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
+| 28, `0x1C`        | `addSmallX`                 | Add `x` to the brush position's `X`. The difference between this command and the `*addX` command is that this command uses `char` as its argument. | `char x //int8_t x`                                          |
+| 29, `0x1D`        | `addSmallY`                 | Add `y` to the brush position's `Y`.                         | `char y //int8_t y`                                          |
+| 30, `0x1E`        | `addSmallZ`                 | Add `z` to the brush position's `Z`.                         | `char z //int8_t z`                                          |
 | 88, `'X'`, `0x58` | `end`                       | Stop reading. Note that though the general end is "XE" (2 bytes long), but a 'X' (1 byte long) character is enough. | -                                                            |
 | 90, `0x5A`        | `isSigned`                  | A command that functions a little different with other commands, its argument is the previous byte of it, would only appear in the end of the file. Please do not use it unless you know how to use since an invalid signature would prevent PhoenixBuilder from constructing your structure. See paragraph `Signing` for details. | `unsigned char signatureSize`                                |
 
@@ -114,7 +114,7 @@ Note that a signature isn't required for a `bdx` file unless the user sets a `-S
 
 First let's learn the APIs of `bdx` file signing. We've implemented two apis to finish the signing process.
 
-The host of these APIs is `uc.fastbuilder.pro` and HTTPS is required.
+The host of those APIs is `uc.fastbuilder.pro` and HTTPS is required.
 
 #### Signing
 

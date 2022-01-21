@@ -1,7 +1,6 @@
 package main
 
 import (
-	"C"
 	"bufio"
 	"encoding/json"
 	"fmt"
@@ -39,15 +38,16 @@ type FBPlainToken struct {
 	Password     string `json:"password"`
 }
 
+//Version num should seperate from fellow strings
+//for implenting print version feature later
+const FBVersion = "1.0.0~2"
+const FBCodeName = "Phoenix"
+
 func main() {
 	pterm.Error.Prefix = pterm.Prefix{
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
-	//Version num should seperate from fellow strings
-	//for implenting print version feature later
-	const FBVersion = "1.0.0~2"
-	const FBCodeName = "Phoenix"
 	
 	I18n.Init()
 
@@ -128,13 +128,6 @@ func main() {
 	}
 }
 
-//export iOSAppStart
-func iOSAppStart(token string, version string, serverCode string, serverPasswd string, onError func()) {
-	defer func() {
-		onError()
-	}()
-	runClient(token, version, serverCode, serverPasswd)
-}
 
 func runShellClient(token string, version string) {
 	code, serverPasswd, err := getRentalServerCode()
@@ -151,6 +144,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	if token[0] == '{' {
 		token = client.GetToken("", token)
 		if token == "" {
+			if(IsUnderLib) {
+				bridgeLoginFailed(I18n.T(I18n.FBUC_LoginFailed))
+				return
+			}
 			fmt.Println(I18n.T(I18n.FBUC_LoginFailed))
 			return
 		}
@@ -183,6 +180,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	conn, err := dialer.Dial("raknet", "")
 
 	if err != nil {
+		if(IsUnderLib) {
+			bridgeLoginFailed(fmt.Sprintf("%v",err))
+			return
+			panic(err)
+		}
 		pterm.Error.Println(err)
 		if runtime.GOOS == "windows" {
 			pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
@@ -193,6 +195,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		//panic(err)
 	}
 	defer conn.Close()
+	if(IsUnderLib) {
+		bridgeConn=conn
+		bridgeInitFinished()
+	}
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 	user := client.ShouldRespondUser()
 	configuration.RespondUser=user
@@ -436,6 +442,10 @@ func runDebugClient() {
 		DebugMode: true,
 	}
 	defer conn.Close()
+	if(IsUnderLib) {
+		bridgeConn=conn
+		bridgeInitFinished()
+	}
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 	user := "DEBUG USER"
 	configuration.RespondUser=user
