@@ -132,7 +132,7 @@ const (
 	Auth_InvalidToken //111
 	Auth_UserCombined //112
 	Auth_InvalidFBVersion //113
-	Notify_TurnOnCmdFeedBack            //114
+	Notify_TurnOnCmdFeedBack
 	Notify_NeedOp
 )
 
