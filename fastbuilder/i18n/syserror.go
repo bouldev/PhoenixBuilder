@@ -11,7 +11,11 @@ func ProcessSystemFileError(err error) error {
 	if(!HasTranslationFor(SysError_HasTranslation)) {
 		return fmt.Errorf("%v",err)
 	}
-	patherror:=err.(*os.PathError)
+	patherror, succ:=err.(*os.PathError)
+	if(!succ) {
+		// Not an os.PathError
+		return fmt.Errorf("%v",error)
+	}
 	syserr:=patherror.Err
 	// Not included all errors
 	switch syserr {
