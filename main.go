@@ -40,7 +40,7 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.0.0~2"
+const FBVersion = "1.0.1"
 const FBCodeName = "Phoenix"
 
 func main() {
@@ -295,8 +295,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			if rule.Name=="sendcommandfeedback" {
 				sendcommandfeedbackStatus:=rule.Value.(bool)
 				if !sendcommandfeedbackStatus {
-					// notify user
-					tellraw(conn, fmt.Sprintf("%s", I18n.T(I18n.Notify_TurnOnCmdFeedBack)))
+					command.SendSizukanaCommand("gamerule sendcommandfeedback true", conn)
 				}
 				if(!rule.CanBeModifiedByPlayer) {
 					sendChat(I18n.T(I18n.Notify_NeedOp), conn)

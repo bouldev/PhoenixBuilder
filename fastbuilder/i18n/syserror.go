@@ -14,7 +14,7 @@ func ProcessSystemFileError(err error) error {
 	patherror, succ:=err.(*os.PathError)
 	if(!succ) {
 		// Not an os.PathError
-		return fmt.Errorf("%v",error)
+		return fmt.Errorf("%v",err)
 	}
 	syserr:=patherror.Err
 	// Not included all errors

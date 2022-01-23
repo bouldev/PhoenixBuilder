@@ -198,6 +198,9 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		isFastMode := false
 		if dcfg.DelayMode==types.DelayModeDiscrete||dcfg.DelayMode==types.DelayModeNone {
 			isFastMode=true
+		}else{
+			//isFastMode=false
+			command.SendWSCommand("gamerule sendcommandfeedback true", und, conn)
 		}
 		for {
 			task.ContinueLock.Lock()
