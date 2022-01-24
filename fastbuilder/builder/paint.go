@@ -34,9 +34,9 @@ func Paint(config *types.MainConfig, blc chan *types.Module) error {
 		for y := 0; y < Y; y++ {
 			r, g, b, _ := img.At(x, y).RGBA()
 			c := colorful.Color{
-				R: float64(r & 0xff),
-				G: float64(g & 0xff),
-				B: float64(b & 0xff),
+				R: float64(r >> 8),
+				G: float64(g >> 8),
+				B: float64(b >> 8),
 			}
 			switch facing {
 			default:
