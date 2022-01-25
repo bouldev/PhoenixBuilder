@@ -200,6 +200,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 			isFastMode=true
 		}else{
 			//isFastMode=false
+			command.SendWSCommand("gamemode c", und, conn)
 			command.SendWSCommand("gamerule sendcommandfeedback true", und, conn)
 		}
 		for {
