@@ -142,3 +142,9 @@ func (br *PluginBridgeImpl) SendWSCommandCB(cmd string, cb func([]plugin_structs
 	}
 	cb(arr,unk)
 }
+
+var ChatEventListeners []func(string,string) = []func(string,string){}
+
+func (br *PluginBridgeImpl) SubscribeChat(cb func(string, string)) {
+	ChatEventListeners=append(ChatEventListeners, cb)
+}

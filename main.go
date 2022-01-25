@@ -391,6 +391,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
+				for _, item := range plugin.ChatEventListeners {
+					item(p.SourceName, p.Message)
+				}
 				if user == p.SourceName {
 					if p.Message[0] == '>'&&len(p.Message)>1 {
 						umsg:=p.Message[1:]

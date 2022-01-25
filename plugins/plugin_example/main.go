@@ -17,6 +17,9 @@ func Main(bridge plugin_structs.PluginBridge) string {
 			bridge.Tellraw("Tellraw test from example_plugin_test")
 		},
 	})
+	bridge.SubscribeChat(func(sender string, content string) {
+		fmt.Printf("Chat event: <%s> %s\n",sender,content)
+	})
 	fmt.Printf("Execute command: example_plugin_test to check.\n")
 	return "example"
 }
