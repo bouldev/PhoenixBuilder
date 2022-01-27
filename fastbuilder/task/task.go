@@ -222,10 +222,10 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				task.Finalize()
 				return
 			}
-			if blkscounter%20 == 0 {
+			/*if blkscounter%20 == 0 {
 				u_d, _ := uuid.NewUUID()
 				command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y,curblock.Point.Z),u_d, conn)
-			}
+			}*/
 			blkscounter++
 			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				if curblock.Block != nil {
@@ -246,8 +246,8 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				}
 				u_d, _ := uuid.NewUUID()
 				if !isFastMode {
-					wchan:=make(chan *packet.CommandOutput)
-					command.UUIDMap.Store(u_d.String(),wchan)
+					wchan:=make(chan bool)
+					command.PlayerTeleportSubscribers.Put(wchan)
 					command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z),u_d, conn)
 					<-wchan
 					close(wchan)

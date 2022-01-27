@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/Tnze/go-mc v1.17.0
 	github.com/andybalholm/brotli v1.0.3 // indirect
+	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9 // indirect
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/uuid v1.1.2

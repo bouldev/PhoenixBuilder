@@ -14,8 +14,9 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/minecraft/utils"
+	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/fastbuilder/function"
 	"phoenixbuilder/fastbuilder/configuration"
 	"strings"
@@ -30,6 +31,7 @@ import (
 	"encoding/binary"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/world_provider"
 )
 
 type FBPlainToken struct {
@@ -230,6 +232,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 					[]byte{0xc0},
 				},[]byte{}),
 	})
+	conn.WritePacket(&packet.ClientCacheStatus {
+		Enabled: false,
+	})
 	go func() {
 		for {
 			csmsg:=<-worldchatchannel
@@ -241,6 +246,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 
 	function.InitInternalFunctions()
 	fbtask.InitTaskStatusDisplay(conn)
+	world_provider.Init(conn)
 
 	signalhandler.Init(conn)
 
@@ -451,8 +457,32 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				pu:=pr.(chan *packet.CommandOutput)
 				pu<-p
 			}
+		case *packet.MovePlayer:
+			if p.Mode==packet.MoveModeTeleport && p.TeleportCause==packet.TeleportCauseCommand {
+				for {
+					n:=command.PlayerTeleportSubscribers.Get()
+					if n==nil {
+						break
+					}
+					cn, e:=n.(chan bool)
+					if !e {
+						continue
+					}
+					cn<-true
+				}
+			}
+		case *packet.ActorEvent:
+			if(p.EventType==packet.ActorEventDeath&&p.EntityRuntimeID==conn.GameData().EntityRuntimeID) {
+				conn.WritePacket(&packet.PlayerAction {
+					EntityRuntimeID: conn.GameData().EntityRuntimeID,
+					ActionType: protocol.PlayerActionRespawn,
+				})
+			}
+		case *packet.LevelChunk:
+			if(world_provider.ChunkInput!=nil) {
+				world_provider.ChunkInput<-p
+			}
 		}
-
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/function"
-	"phoenixbuilder/minecraft/utils"
+	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/fastbuilder/configuration"
 	"path/filepath"
 	"runtime/debug"
