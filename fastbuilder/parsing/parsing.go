@@ -120,8 +120,8 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 	//		}
 	//	}
 	//}
-	Config.Block.Data=int16(tempBlockData)
-	Config.OldBlock.Data=int16(tempOldBlockData)
+	Config.Block.Data=uint16(tempBlockData)
+	Config.OldBlock.Data=uint16(tempOldBlockData)
 	return Config, nil
 }
 

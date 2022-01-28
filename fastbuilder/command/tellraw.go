@@ -38,6 +38,10 @@ func Tellraw(conn *minecraft.Conn, lines ...string) error {
 	fmt.Printf("%s\n", lines[0])
 	//return nil
 	msg := strings.Replace(lines[0], "schematic", "sc***atic", -1)
+	msg =  strings.Replace(msg, ".", "．", -1)
+	// Netease set .bdx, .schematic, .mcacblock, etc as blocked words
+	// So we should replace half-width points w/ full-width points to avoid being
+	// blocked
 	return SendChat(fmt.Sprintf("§b%s",msg), conn)
 	//return SendSizukanaCommand(TellRawRequest(types.AllPlayers, lines...), conn)
 }

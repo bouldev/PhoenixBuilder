@@ -35,13 +35,18 @@ func LoadBlockState(block Block, nbt map[string]interface{}) Block {
 	return blk
 }
 
+func LoadRuntimeID(block Block) uint32 {
+	blk:=block.(unknownBlock)
+	return blk.runtimeId
+}
+
 func RegisterBlockState(name string, data int32) {
 	registerBlockState(blockState {
 		Name: name,
 		Properties: map[string]interface{} {
 			"data": data,
 		},
-	})
+	},false)
 }
 
 func RegisterUnimplementedBlock(times int32) {
@@ -50,7 +55,7 @@ func RegisterUnimplementedBlock(times int32) {
 		Properties: map[string]interface{} {
 			"times": times,
 		},
-	})
+	},true)
 }
 
 func init() {
@@ -66,48 +71,6 @@ func init() {
 		return rid, ok
 	}
 	return
-	var content []interface{}
-	err:=error(nil)//json.Unmarshal(blockStateData, &content)
-	if(err!=nil) {
-		panic("Invalid embedded json: runtimeIds.json")
-	}
-	uit:=int32(0)
-	for _, item := range content {
-		if(item==nil) {
-			registerBlockState(blockState {
-				Name: "minecraft:unimplemented",
-				Properties: map[string]interface{} {
-					"times": uit,
-				},
-			})
-			uit++
-		}else{
-			subarr,succ:=item.([]interface{})
-			if !succ {
-				panic("Invalid embedded runtimeIds json, invalid subitem")
-			}
-			name:=subarr[0].(string)
-			dataf:=subarr[1].(float64)
-			data:=uint16(dataf)
-			registerBlockState(blockState {
-				Name: fmt.Sprintf("minecraft:%s",name),
-				Properties: map[string]interface{} {
-					"data": int32(data),
-				},
-			})
-		}
-	}
-	/*dec := nbt.NewDecoder(bytes.NewBuffer(blockStateData))
-
-	// Register all block states present in the block_states.nbt file. These are all possible options registered
-	// blocks may encode to.
-	var s blockState
-	for {
-		if err := dec.Decode(&s); err != nil {
-			break
-		}
-		registerBlockState(s)
-	}*/
 
 	chunk.RuntimeIDToState = func(runtimeID uint32) (name string, properties map[string]interface{}, found bool) {
 		if runtimeID >= uint32(len(blocks)) {
@@ -124,17 +87,20 @@ func init() {
 
 // registerBlockState registers a new blockState to the states slice. The function panics if the properties the
 // blockState hold are invalid or if the blockState was already registered.
-func registerBlockState(s blockState) {
+func registerBlockState(s blockState, unimplemented bool) {
 	h := stateHash{name: s.Name, properties: hashProperties(s.Properties)}
 	if _, ok := stateRuntimeIDs[h]; ok {
 		panic(fmt.Sprintf("cannot register the same state twice (%+v)", s))
 	}
 	rid := uint32(len(blocks))
-	if s.Name == "minecraft:air" {
+	if s.Name == "minecraft:air" || s.Name=="air" {
 		airRID = rid
 	}
 	stateRuntimeIDs[h] = rid
-	blocks = append(blocks, unknownBlock{s})
+	if unimplemented {
+		rid=50000000
+	}
+	blocks = append(blocks, unknownBlock{s,rid})
 
 	nbtBlocks = append(nbtBlocks, false)
 	chunk.FilteringBlocks = append(chunk.FilteringBlocks, 15)
@@ -145,6 +111,7 @@ func registerBlockState(s blockState) {
 // states that haven't yet been added.
 type unknownBlock struct {
 	blockState
+	runtimeId uint32
 }
 
 // EncodeBlock ...

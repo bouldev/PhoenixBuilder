@@ -1,0 +1,16 @@
+// Format: C++
+Json::Value out;
+BlockTypeRegistry::forEachBlock([&out](BlockLegacy const& legacy_block) -> bool {
+	std::string const &rawNameId=getRawNameId(&legacy_block);
+	const char *rawId=rawNameId.c_str();
+	BlockLegacy_forEachBlockPermutation(&legacy_block,[rawId,&dictionary,&max](Block const& block) -> bool {
+		unsigned short dataValue=*(unsigned short *)((char*)&block+8);
+		unsigned int *runtimeIdPtr=getRuntimeId(&block);
+		Json::Value cur;
+		cur[0]=rawId;
+		cur[1]=dataValue;
+		out[*runtimeIdPtr]=cur;
+		return true;
+	});
+	return true;
+});

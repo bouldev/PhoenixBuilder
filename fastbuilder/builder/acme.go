@@ -99,7 +99,7 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 				curBlkSpl:=strings.Split(blName,":")
 				blocksTable[item]=&types.Block {
 					Name: &(curBlkSpl[1]),
-					Data: int16(blDataF),
+					Data: uint16(blDataF),
 				}
 			}
 			blocksTableSet=true

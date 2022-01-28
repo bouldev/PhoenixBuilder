@@ -142,11 +142,6 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 	}
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
 	dcfg := fcfg.Delay()
-	/*if cfg.Execute == "" {
-		return nil
-	}
-	Needless since it will be checked in function module.
-	*/
 	und, _ := uuid.NewUUID()
 	command.SendWSCommand("gamemode c", und, conn)
 	blockschannel := make(chan *types.Module, 10240)
@@ -232,10 +227,8 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 					request:=command.SetBlockRequest(curblock, cfg)
 					tuid, _ := uuid.NewUUID()
 					if !isFastMode {
-						wchan:=make(chan *packet.CommandOutput)
-						command.UUIDMap.Store(tuid.String(),wchan)
 						command.SendWSCommand(request,tuid, conn)
-						<-wchan
+						<-time.After(time.Second/20)
 					}else{
 						command.SendWSCommand(request,tuid, conn)
 					}
@@ -246,11 +239,17 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				}
 				u_d, _ := uuid.NewUUID()
 				if !isFastMode {
-					wchan:=make(chan bool)
-					command.PlayerTeleportSubscribers.Put(wchan)
-					command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z),u_d, conn)
-					<-wchan
-					close(wchan)
+					//wchan:=make(chan *packet.CommandOutput)
+					//command.UUIDMap.Store(u_d.String(),wchan)
+					command.SendCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z),u_d, conn)
+					<-time.After(time.Second/20)
+					//<-wchan
+					//select {
+					//case <-wchan:
+					//case <-time.After(time.Second):
+					//	command.UUIDMap.Delete(u_d.String())
+					//}
+					//close(wchan)
 				}
 				conn.WritePacket(&packet.CommandBlockUpdate {
 					Block: true,

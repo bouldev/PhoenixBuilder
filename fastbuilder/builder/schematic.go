@@ -53,10 +53,10 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 				p.Z += z + Offset[Z]
 				var b types.Block
 				b.Name = &BlockStr[SchematicModule.Blocks[BlockIndex]]
-				b.Data = int16(SchematicModule.Data[BlockIndex])
+				b.Data = uint16(SchematicModule.Data[BlockIndex])
 				if BlockIndex - 188 <= 5 && BlockIndex - 188 >= 0 {
 					b.Name = &FenceName
-					b.Data = int16(BlockIndex - 188)
+					b.Data = uint16(BlockIndex - 188)
 				}
 				if BlockIndex == 3 && b.Data == 2 {
 					b.Name = &PodzolName

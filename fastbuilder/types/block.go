@@ -8,9 +8,15 @@ type Module struct {
 	Point  Position
 }
 
+type RuntimeModule struct {
+	BlockRuntimeId uint32 // The current total count of runtime ids didn't exceed 65536
+	CommandBlockData *CommandBlockData
+	Point Position
+}
+
 type Block struct {
 	Name *string
-	Data int16
+	Data uint16
 }
 
 type CommandBlockData struct {
@@ -27,7 +33,7 @@ type CommandBlockData struct {
 
 type ConstBlock struct {
 	Name string
-	Data int16
+	Data uint16
 }
 
 type DoubleModule struct {
@@ -39,7 +45,7 @@ type DoubleModule struct {
 
 var takenBlocks map[*ConstBlock]*Block = make(map[*ConstBlock]*Block)
 
-func CreateBlock(name string,data int16) *Block {
+func CreateBlock(name string,data uint16) *Block {
 	return &Block {
 		Name:&name,
 		Data:data,

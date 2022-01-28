@@ -5,7 +5,12 @@ let out=`package world_provider
 
 // Auto generated, DO NOT EDIT
 
-import "phoenixbuilder/dragonfly/server/world"
+import (
+	"phoenixbuilder/dragonfly/server/world"
+	"phoenixbuilder/fastbuilder/types"
+)
+
+var AirRuntimeId uint32 = 134
 
 func InitRuntimeIds() {
 `;
@@ -28,6 +33,15 @@ for(let i of rids) {
 		continue;
 	}
 	out+=`\tworld.RegisterBlockState("${i[0]}",${i[1]})\n`;
+}
+out+="}\n\n"
+out+="var RuntimeIdArray_117 []*types.ConstBlock = []*types.ConstBlock {\n";
+for(let i of rids) {
+	if(i===null) {
+		out+="\tnil,\n";
+		continue;
+	}
+	out+=`\t&types.ConstBlock { Name: "${i[0]}", Data: ${i[1]} },\n`;
 }
 out+="}\n\n"
 fs.writeFileSync("runtime_ids.go",out);

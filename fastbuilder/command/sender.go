@@ -9,7 +9,6 @@ import (
 )
 
 var UUIDMap sync.Map//= make(map[string]func(*minecraft.Conn,*[]protocol.CommandOutputMessage))
-var PlayerTeleportSubscribers sync.Pool
 
 func ClearUUIDMap() {
 	UUIDMap=sync.Map{}

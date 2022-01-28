@@ -9,19 +9,17 @@ import (
 	"encoding/binary"
 )
 
-type BDumpOrigin struct {
-	Origin types.Position
-	Blocks []*types.Module
-}
-
-type BDump struct {
+type BDumpORIGINAL struct {
 	Author string
 	Blocks []*types.Module
 }
 
+type BDump struct {
+	Blocks []*types.RuntimeModule
+}
+
 func (bdump *BDump) formatBlocks() {
-	/*min:=[]int{2147483647,2147483647,2147483647}
-	
+	min:=[]int{2147483647,2147483647,2147483647}
 	for _, mdl := range bdump.Blocks {
 		if mdl.Point.X<min[0] {
 			min[0]=mdl.Point.X
@@ -37,7 +35,7 @@ func (bdump *BDump) formatBlocks() {
 		mdl.Point.X-=min[0]
 		mdl.Point.Y-=min[1]
 		mdl.Point.Z-=min[2]
-	}*/
+	}
 }
 
 /*
@@ -83,12 +81,19 @@ reserved 13
 *addBigY 23
 *addZ 24
 *addBigZ 25
-* : あたらしいのいみ
 assignCommandBlockData 26
 placeCommandBlockWithData 27
 addSmallX 28
 addSmallY 29
 addSmallZ 30
+
+useRuntimeIdPalette 31
+placeBlockWithRuntimeId(uint16_t) 32
+placeBlockWithRuntimeId 33
+// command 32 is informal but it occupies less space.
+placeCommandBlockWithRuntimeId(uint16_t) 34
+placeCommandBlockWithRuntimeId 35
+placeCommandBlockWithDataNew 36
 
 end 88
 isSigned    90
@@ -103,10 +108,10 @@ func (bdump *BDump) writeHeader(w *bytes.Buffer) error {
 	if err!=nil {
 		return err
 	}
-	_, err=w.Write([]byte(bdump.Author))
-	if err!=nil {
-		return err
-	}
+	//_, err=w.Write([]byte(bdump.Author))
+	//if err!=nil {
+	//	return err
+	//}
 	_, err=w.Write([]byte{0})
 	return err
 }
@@ -114,29 +119,8 @@ func (bdump *BDump) writeHeader(w *bytes.Buffer) error {
 func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 	bdump.formatBlocks()
 	brushPosition:=[]int{0,0,0}
-	blocksPalette:=make(map[string]int)
-	cursor := 0
-	for _, mdl := range bdump.Blocks {
-		blknm:=*mdl.Block.Name
-		_, found := blocksPalette[blknm]
-		if found {
-			continue
-		}
-		_, err:=w.Write([]byte{1}) //addToPalette
-		if (err != nil) {
-			return fmt.Errorf("Failed to write palette")
-		}
-		_, err=w.Write([]byte(blknm))
-		if (err != nil) {
-			return fmt.Errorf("Failed to write palette p2")
-		}
-		_, err=w.Write([]byte{0})
-		if (err != nil) {
-			return fmt.Errorf("Failed to write palette p3")
-		}
-		blocksPalette[blknm]=cursor;
-		cursor++
-	}
+	// Use block runtime id palette 117.
+	w.Write([]byte{31,117})
 	for _,mdl := range bdump.Blocks {
 		for {
 			if(mdl.Point.X!=brushPosition[0]) {
@@ -289,23 +273,24 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 			break
 		}
 		if mdl.CommandBlockData != nil {
-			_, err:=w.Write([]byte{27})
-			writeA:=make([]byte,2)
-			wac, _ := blocksPalette[*mdl.Block.Name]
-			binary.BigEndian.PutUint16(writeA,uint16(wac))
-			_, err1 := w.Write(writeA)
-			writeB:=make([]byte,2)
-			binary.BigEndian.PutUint16(writeB,uint16(mdl.Block.Data))
-			_, err2 := w.Write(writeB)
-			if(err!=nil||err1!=nil||err2!=nil){
-				return fmt.Errorf("Failed to write line230")
+			var erra error
+			if mdl.BlockRuntimeId<65536 {
+				_, _=w.Write([]byte{34})
+				datavbuf:=make([]byte,2)
+				binary.BigEndian.PutUint16(datavbuf,uint16(mdl.BlockRuntimeId))
+				_, erra=w.Write(datavbuf)
+			}else {
+				_, _=w.Write([]byte{35})
+				datavbuf:=make([]byte,4)
+				binary.BigEndian.PutUint32(datavbuf,mdl.BlockRuntimeId)
+				_, erra=w.Write(datavbuf)
 			}
 			dt:=mdl.CommandBlockData
 			//_, err=w.Write([]byte{27})
 			wMode:=make([]byte,4)
 			binary.BigEndian.PutUint32(wMode,dt.Mode)
-			_, err1=w.Write(wMode)
-			_, err2=w.Write([]byte(dt.Command))
+			_, err1:=w.Write(wMode)
+			_, err2:=w.Write([]byte(dt.Command))
 			_, err3:=w.Write([]byte{0})
 			_, err4:=w.Write([]byte(dt.CustomName))
 			_, err5:=w.Write([]byte{0})
@@ -336,21 +321,27 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 				fBools[3]=0
 			}
 			_, err9:=w.Write(fBools)
-			if(err!=nil||err1!=nil||err2!=nil||err3!=nil||err4!=nil||err5!=nil||err6!=nil||err7!=nil||err8!=nil||err9!=nil){
+			if(erra!=nil||err1!=nil||err2!=nil||err3!=nil||err4!=nil||err5!=nil||err6!=nil||err7!=nil||err8!=nil||err9!=nil){
 				return fmt.Errorf("Failed to write cbcmd")
 			}
 			continue
 		}
-		_, err:=w.Write([]byte{7})
-		writeA:=make([]byte,2)
-		wac, _ := blocksPalette[*mdl.Block.Name]
-		binary.BigEndian.PutUint16(writeA,uint16(wac))
-		_, err1 := w.Write(writeA)
-		writeB:=make([]byte,2)
-		binary.BigEndian.PutUint16(writeB,uint16(mdl.Block.Data))
-		_, err2 := w.Write(writeB)
-		if(err!=nil||err1!=nil||err2!=nil){
-			return fmt.Errorf("Failed to write line230")
+		if(mdl.BlockRuntimeId<65536) {
+			_, err:=w.Write([]byte{32})
+			writeA:=make([]byte,2)
+			binary.BigEndian.PutUint16(writeA,uint16(mdl.BlockRuntimeId))
+			_, err1 := w.Write(writeA)
+			if(err!=nil||err1!=nil){
+				return fmt.Errorf("Failed to write /line336")
+			}
+		}else{
+			_, err:=w.Write([]byte{33})
+			writeA:=make([]byte,4)
+			binary.BigEndian.PutUint32(writeA,mdl.BlockRuntimeId)
+			_, err1 := w.Write(writeA)
+			if(err!=nil||err1!=nil){
+				return fmt.Errorf("Failed to write /line343")
+			}
 		}
 	}
 	//w.Write([]byte("XE"))

@@ -2,7 +2,6 @@ package builder
 
 import (
 	"phoenixbuilder/fastbuilder/types"
-
 	"github.com/lucasb-eyer/go-colorful"
 )
 

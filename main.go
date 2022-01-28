@@ -42,7 +42,7 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.0.2"
+const FBVersion = "1.1.0"
 const FBCodeName = "Phoenix"
 
 func main() {
@@ -457,20 +457,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				pu:=pr.(chan *packet.CommandOutput)
 				pu<-p
 			}
-		case *packet.MovePlayer:
-			if p.Mode==packet.MoveModeTeleport && p.TeleportCause==packet.TeleportCauseCommand {
-				for {
-					n:=command.PlayerTeleportSubscribers.Get()
-					if n==nil {
-						break
-					}
-					cn, e:=n.(chan bool)
-					if !e {
-						continue
-					}
-					cn<-true
-				}
-			}
 		case *packet.ActorEvent:
 			if(p.EventType==packet.ActorEventDeath&&p.EntityRuntimeID==conn.GameData().EntityRuntimeID) {
 				conn.WritePacket(&packet.PlayerAction {
@@ -481,6 +467,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		case *packet.LevelChunk:
 			if(world_provider.ChunkInput!=nil) {
 				world_provider.ChunkInput<-p
+			}else{
+				world_provider.DoCache(p)
 			}
 		}
 	}
