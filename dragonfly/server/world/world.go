@@ -137,6 +137,11 @@ func (w *World) Block(pos cube.Pos) Block {
 			return nbtB
 		}
 	}
+	bnbt, ok:=c.BlockNBT()[pos]
+	if ok {
+		c.Unlock()
+		return LoadBlockState(b, bnbt)
+	}
 	c.Unlock()
 
 	return b

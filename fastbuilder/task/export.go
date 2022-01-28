@@ -30,61 +30,17 @@ type SolidRet struct {
 
 var ExportWaiter chan map[string]interface{}
 
-func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
+func CreateExportTaskDEPRECATED(commandLine string, conn *minecraft.Conn) *Task {
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig().Main())
-	//cfg.Execute = "export"
 	if err!=nil {
 		command.Tellraw(conn, fmt.Sprintf("Failed to parse command: %v",err))
 		return nil
 	}
-	//fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
-	//dcfg := fcfg.Delay()
 	beginPos := cfg.Position
 	endPos   := cfg.End
-	/*conn.WritePacket(&packet.BlockPickRequest {
-		Position: protocol.BlockPos {int32(beginPos.X),int32(beginPos.Y),int32(beginPos.Z)},
-		AddBlockNBT: true,
-		HotBarSlot: 0,
-	})*/
-	/*if beginPos.X > endPos.X {
-		f:=beginPos.X
-		endPos.X=beginPos.X
-		beginPos.X=f
-	}
-	if beginPos.Y > endPos.Y {
-		f:=beginPos.Y
-		endPos.Y=beginPos.Y
-		beginPos.Y=f
-	}
-	if beginPos.Z > endPos.Z {
-		f:=beginPos.Z
-		endPos.Z=beginPos.Z
-		beginPos.Z=f
-	}*/
-	/*offsetx:=0
-	offsety:=0
-	offsetz:=0*/
 	msizex:=0
 	msizey:=0
 	msizez:=0
-	/*if(endPos.X-beginPos.X>=0) {
-		sizex=endPos.X-beginPos.X
-	}else{
-		offsetx=endPos.X-beginPos.X
-		sizex=beginPos.X-endPos.X
-	}
-	if(endPos.Y-beginPos.Y>=0) {
-		sizey=endPos.Y-beginPos.Y
-	}else{
-		offsety=endPos.Y-beginPos.Y
-		sizey=beginPos.Y-endPos.Y
-	}
-	if(endPos.Z-beginPos.Z>=0) {
-		sizez=endPos.Z-beginPos.Z
-	}else{
-		offsetz=endPos.Z-beginPos.Z
-		sizez=beginPos.Z-endPos.Z
-	}*/
 	if(endPos.X-beginPos.X<0) {
 		temp:=endPos.X
 		endPos.X=beginPos.X
@@ -103,10 +59,7 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 		beginPos.Z=temp
 	}
 	msizez=endPos.Z-beginPos.Z+1
-	//gsizex:=msizex
 	gsizez:=msizez
-	//fmt.Printf("%v,%v\n%v,%v,%v\n%v,%v,%v\n",beginPos,endPos,offsetx,offsety,offsetz,sizex,sizey,sizez)
-	//return nil
 	go func() {
 		u_d, _ := uuid.NewUUID()
 		command.SendWSCommand("gamemode c", u_d, conn)
@@ -151,7 +104,6 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 			})
 			exportData:=<-ExportWaiter
 			close(ExportWaiter)
-			//fmt.Printf("%v",exportData["size"])
 			command.Tellraw(conn, "EXPORT >> Data received, processing.")
 			command.Tellraw(conn, "EXPORT >> Extracting blocks")
 			sizeoo, _:=exportData["size"].([]interface{})

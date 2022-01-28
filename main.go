@@ -246,7 +246,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 
 	function.InitInternalFunctions()
 	fbtask.InitTaskStatusDisplay(conn)
-	world_provider.Init(conn)
+	world_provider.Init()
 
 	signalhandler.Init(conn)
 

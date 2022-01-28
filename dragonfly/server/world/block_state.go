@@ -10,12 +10,11 @@ import (
 	"sort"
 	"strings"
 	"unsafe"
-	"encoding/json"
 )
 
 var (
-	//go:embed runtimeIds.json
-	blockStateData []byte
+	//ngo:embed runtimeIds.json
+	//blockStateData []byte
 	// blocks holds a list of all registered Blocks indexed by their runtime ID. Blocks that were not explicitly
 	// registered are of the type unknownBlock.
 	blocks []Block
@@ -29,9 +28,46 @@ var (
 	airRID uint32
 )
 
+func LoadBlockState(block Block, nbt map[string]interface{}) Block {
+	blk:=block.(unknownBlock)
+	nbt["data"]=blk.blockState.Properties["data"]
+	blk.blockState.Properties=nbt
+	return blk
+}
+
+func RegisterBlockState(name string, data int32) {
+	registerBlockState(blockState {
+		Name: name,
+		Properties: map[string]interface{} {
+			"data": data,
+		},
+	})
+}
+
+func RegisterUnimplementedBlock(times int32) {
+	registerBlockState(blockState {
+		Name: "minecraft:unimplemented",
+		Properties: map[string]interface{} {
+			"times": times,
+		},
+	})
+}
+
 func init() {
+	chunk.RuntimeIDToState = func(runtimeID uint32) (name string, properties map[string]interface{}, found bool) {
+		if runtimeID >= uint32(len(blocks)) {
+			return "", nil, false
+		}
+		name, properties = blocks[runtimeID].EncodeBlock()
+		return name, properties, true
+	}
+	chunk.StateToRuntimeID = func(name string, properties map[string]interface{}) (runtimeID uint32, found bool) {
+		rid, ok := stateRuntimeIDs[stateHash{name: name, properties: hashProperties(properties)}]
+		return rid, ok
+	}
+	return
 	var content []interface{}
-	err:=json.Unmarshal(blockStateData, &content)
+	err:=error(nil)//json.Unmarshal(blockStateData, &content)
 	if(err!=nil) {
 		panic("Invalid embedded json: runtimeIds.json")
 	}

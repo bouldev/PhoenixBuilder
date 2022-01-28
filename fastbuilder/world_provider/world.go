@@ -3,6 +3,7 @@ package world_provider
 import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/dragonfly/server/world"
+	"phoenixbuilder/minecraft/protocol/packet"
 )
 
 var CurrentWorld *world.World
@@ -13,6 +14,16 @@ func Create(conn *minecraft.Conn) *world.World {
 	return intw
 }
 
-func Init(conn *minecraft.Conn) {
+func NewWorld(conn *minecraft.Conn) {
+	ChunkCache=make(map[world.ChunkPos]*packet.LevelChunk)
 	CurrentWorld=Create(conn)
+}
+
+func DestroyWorld() {
+	CurrentWorld=nil
+	ChunkCache=nil
+}
+
+func Init() {
+	InitRuntimeIdsWithoutMinecraftPrefix()
 }
