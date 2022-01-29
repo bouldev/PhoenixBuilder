@@ -12,7 +12,7 @@ FastBuilder currently using an all-new technology, and no longer limited by the 
 
 ### Open Source
 
-FastBuilder Phoenix is **fully** opened source [on GitHub](https://github.com/LNSSPsd/PhoenixBuilder).
+FastBuilder Phoenix's client is **fully** opened source [on GitHub](https://github.com/LNSSPsd/PhoenixBuilder).
 
 (The source code is licensed under GPL v3.)
 
@@ -73,7 +73,7 @@ That's all for the completion of necessary informations, and the following conte
 - Linux x86_64 (recommended platform): 
 
   ```shell
-  wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder
+  wget -O fastbuilder https://storage.fastbuilder.pro/epsilon/phoenixbuilder
   chmod +x fastbuilder
   ```
 
@@ -83,34 +83,16 @@ That's all for the completion of necessary informations, and the following conte
 
   - b. After the installation of Termux, navigate to your system configuration, and give it **the permission of accessing the storage space (aka sdcard)**, and allow it to **run in the background without limitations**.
 
-  - c. Open the Termux application, copy and execute following commands.
+   - c. Download the FastBuilder binary. (x86 or x86_64 android devices are not supported.)
 
-    First, use the commands below to replace the official source to the TUNA mirror source (optional, recommended for users in China since it will boost the follow-up steps, users in other countries shouldn't perform this step.)
-
-    > **WARNING: These 3 commands should be executed in order. The mentioned mirror is only suitable for Android version 7.0 (API 24) and above, the use of this mirror in older versions of system may cause program exceptions. Please do not use this mirror in case of you are using older versions of system.**
-
-    ```shell
-    sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/termux-packages-24 stable main@' $PREFIX/etc/apt/sources.list
-    sed -i 's@^\(deb.*games stable\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/game-packages-24 games stable@' $PREFIX/etc/apt/sources.list.d/game.list
-    sed -i 's@^\(deb.*science stable\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/science-packages-24 science stable@' $PREFIX/etc/apt/sources.list.d/science.list
-    ```
-
-  - c. Update sources and packages (**REQUIRED**) :
-
-    ```shell
-    apt update -y
-    apt upgrade -y
-    apt install wget -y
-    ```
-
-   - d. After successfully executed commands mentioned above, download the FastBuilder binary.(Replace the `arm64` part to `armv7` if you surely know that your device is an armv7 device. Note that nowadays armv7 device is seldom. x86 or x86_64 android device are not supported.)
-
-     > **Note: This step (d) is also the way of upgrading FastBuilder Phoenix, execute this step directly to upgrade FastBuilder afterwards.**
+     > **Note: This step (c) is also the way of upgrading FastBuilder Phoenix, execute this step directly to upgrade FastBuilder afterwards.**
 
      ```shell
-     wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder-android-executable-arm64
-     chmod +x fastbuilder
+     o=$(uname -o) a=$(uname -m) && if [ "$o" == "Android" ]; then [[ "$a" == "aarch64" ]] && f="arm64" || f="armv7" && curl -o fastbuilder https://storage.fastbuilder.pro/epsilon/phoenixbuilder-android-executable-$f && chmod +x fastbuilder && ./fastbuilder; else echo "for Android only"; fi
+     
      ```
+     **Thanks [@CMA2401PT](https://github.com/CMA2401PT) for providing the easier version of the download command for fastbuilder.**
+
 ### Usage
 
 FastBuilder Phoenix is a pure command line program without complicated GUI, which made the program very easy to use.

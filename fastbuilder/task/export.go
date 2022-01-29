@@ -61,7 +61,9 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 	world_provider.NewWorld(conn)
 	go func() {
 		command.Tellraw(conn, "EXPORT >> Exporting...")
-		blocks:=make([]*types.RuntimeModule,0)
+		V:=(endPos.X-beginPos.X+1)*(endPos.Y-beginPos.Y+1)*(endPos.Z-beginPos.Z+1)
+		blocks:=make([]*types.RuntimeModule,V)
+		counter:=0
 		for x:=beginPos.X; x<=endPos.X; x++ {
 			for z:=beginPos.Z; z<=endPos.Z; z++ {
 				for y:=beginPos.Y; y<=endPos.Y; y++ {
@@ -69,11 +71,29 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 					runtimeId:=world.LoadRuntimeID(blk)
 					if runtimeId==world_provider.AirRuntimeId {
 						continue
-					}else if runtimeId==50000000 {
-						continue
 					}
 					block, item:=blk.EncodeBlock()
 					var cbdata *types.CommandBlockData = nil
+					var chestData *types.ChestData = nil
+					if(block=="chest"||strings.Contains(block,"shulker_box")) {
+						content:=item["Items"].([]interface{})
+						chest:=make(types.ChestData, len(content))
+						for index, iface := range content {
+							i:=iface.(map[string]interface{})
+							name:=i["Name"].(string)
+							count:=i["Count"].(uint8)
+							damage:=i["Damage"].(int16)
+							slot:=i["Slot"].(uint8)
+							name_mcnk:=name[10:]
+							chest[index]=types.ChestSlot {
+								Name: name_mcnk,
+								Count: count,
+								Damage: uint16(int(damage)),
+								Slot: slot,
+							}
+						}
+						chestData=&chest
+					}
 					if strings.Contains(block,"command_block") {
 						var mode uint32
 						if(block=="command_block"){
@@ -129,19 +149,23 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 							NeedRedstone: nrb,
 						}
 					}
-					blocks=append(blocks,&types.RuntimeModule {
+					blocks[counter]=&types.RuntimeModule {
 						BlockRuntimeId: runtimeId,
 						CommandBlockData: cbdata,
+						ChestData: chestData,
 						Point: types.Position {
 							X: x,
 							Y: y,
 							Z: z,
 						},
-					})
+					}
+					counter++
 				}
 			}
 		}
 		world_provider.DestroyWorld()
+		blocks=blocks[:counter]
+		runtime.GC()
 		out:=bdump.BDump {
 			Blocks: blocks,
 		}

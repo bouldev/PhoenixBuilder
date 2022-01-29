@@ -39,7 +39,7 @@ endif
 
 VERSION=$(shell cat version)
 
-SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go))
+SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go $(dir)/*.c))
 
 all: ${TARGETS} build/hashes.json
 #all: build current ios-executable ios-lib macos android-executable-v7 android-executable-64 windows-executable

@@ -55,7 +55,7 @@ if(i.cmd=="addToBlockPalette"){
 }else if(i.cmd=="addZ"){
 	writebuf(6,1);
 	writebuf(i.count,2);
-}else if(i.cmd=="placeBlock"){
+}else if(i.cmd=="placeBlock"){ // -> placeLegacyBlock
 	writebuf(7,1);
 	writebuf(i.blockID,2);
 	writebuf(i.blockData,2);
@@ -81,8 +81,8 @@ reserved 13
 *addBigY 23
 *addZ 24
 *addBigZ 25
-assignCommandBlockData 26
-placeCommandBlockWithData 27
+assignCommandBlockDataDeprecated 26
+placeCommandBlockWithDataDeprecated 27
 addSmallX 28
 addSmallY 29
 addSmallZ 30
@@ -93,7 +93,10 @@ placeBlockWithRuntimeId 33
 // command 32 is informal but it occupies less space.
 placeCommandBlockWithRuntimeId(uint16_t) 34
 placeCommandBlockWithRuntimeId 35
-placeCommandBlockWithDataNew 36
+placeLegacyCommandBlockWithData 36
+
+placeBlockWithChestData(uint16_t) 37
+placeBlockWithChestData 38
 
 end 88
 isSigned    90
@@ -272,15 +275,41 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 			}
 			break
 		}
-		if mdl.CommandBlockData != nil {
+		if mdl.ChestData != nil {
+			if mdl.CommandBlockData != nil {
+				return fmt.Errorf("A block shouldn't have CommandBlockData and ChestData at the same time.")
+			}
+			if mdl.BlockRuntimeId<65536 {
+				w.Write([]byte{37})
+				datavbuf:=make([]byte,2)
+				binary.BigEndian.PutUint16(datavbuf,uint16(mdl.BlockRuntimeId))
+				w.Write(datavbuf)
+			}else {
+				w.Write([]byte{38})
+				datavbuf:=make([]byte,4)
+				binary.BigEndian.PutUint32(datavbuf,mdl.BlockRuntimeId)
+				w.Write(datavbuf)
+			}
+			w.Write([]byte{uint8(len(*mdl.ChestData))})
+			for _, entry := range *mdl.ChestData {
+				w.Write([]byte(entry.Name))
+				w.Write([]byte{0})
+				w.Write([]byte{entry.Count})
+				damageBuf:=make([]byte,2)
+				binary.BigEndian.PutUint16(damageBuf,entry.Damage)
+				w.Write(damageBuf)
+				w.Write([]byte{entry.Slot})
+			}
+			continue
+		}else if mdl.CommandBlockData != nil {
 			var erra error
 			if mdl.BlockRuntimeId<65536 {
-				_, _=w.Write([]byte{34})
+				w.Write([]byte{34})
 				datavbuf:=make([]byte,2)
 				binary.BigEndian.PutUint16(datavbuf,uint16(mdl.BlockRuntimeId))
 				_, erra=w.Write(datavbuf)
 			}else {
-				_, _=w.Write([]byte{35})
+				w.Write([]byte{35})
 				datavbuf:=make([]byte,4)
 				binary.BigEndian.PutUint32(datavbuf,mdl.BlockRuntimeId)
 				_, erra=w.Write(datavbuf)
@@ -332,7 +361,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 			binary.BigEndian.PutUint16(writeA,uint16(mdl.BlockRuntimeId))
 			_, err1 := w.Write(writeA)
 			if(err!=nil||err1!=nil){
-				return fmt.Errorf("Failed to write /line336")
+				return fmt.Errorf("Failed to write /1")
 			}
 		}else{
 			_, err:=w.Write([]byte{33})
@@ -340,7 +369,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 			binary.BigEndian.PutUint32(writeA,mdl.BlockRuntimeId)
 			_, err1 := w.Write(writeA)
 			if(err!=nil||err1!=nil){
-				return fmt.Errorf("Failed to write /line343")
+				return fmt.Errorf("Failed to write /2")
 			}
 		}
 	}

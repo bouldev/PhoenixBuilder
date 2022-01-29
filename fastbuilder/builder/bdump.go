@@ -611,6 +611,52 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			}
 			cmdl.CommandBlockData=cbdata
 			blc<-cmdl
+		}else if(cmd==37||cmd==38){
+			var runtimeId uint32
+			if cmd==37 {
+				rIdBuf:=make([]byte,2)
+				_, err=br.Read(rIdBuf)
+				runtimeId=uint32(binary.BigEndian.Uint16(rIdBuf))
+			}else{
+				rIdBuf:=make([]byte,4)
+				_, err=br.Read(rIdBuf)
+				runtimeId=binary.BigEndian.Uint32(rIdBuf)
+			}
+			slotCountCon:=make([]byte,1)
+			br.Read(slotCountCon)
+			chest:=make(types.ChestData,slotCountCon[0])
+			for i:=uint8(0);i<slotCountCon[0];i++ {
+				itemname, _ := ReadBrString(br)
+				countcon := make([]byte,1)
+				damageBuf := make([]byte,2)
+				slotcon := make([]byte,1)
+				br.Read(countcon)
+				br.Read(damageBuf)
+				br.Read(slotcon)
+				damageVal:=binary.BigEndian.Uint16(damageBuf)
+				chest[i]=types.ChestSlot {
+					Name: itemname,
+					Count: countcon[0],
+					Damage: damageVal,
+					Slot: slotcon[0],
+				}
+			}
+			pos := types.Position {
+				X: brushPosition[0]+config.Position.X,
+				Y: brushPosition[1]+config.Position.Y,
+				Z: brushPosition[2]+config.Position.Z,
+			}
+			blc <- &types.Module {
+				Block: runtimeIdPoolUsing[runtimeId].Take(),
+				Point: pos,
+			}
+			for _, slot:=range chest {
+				slotcopy:=types.ChestSlot(slot)
+				blc <- &types.Module {
+					ChestSlot: &slotcopy,
+					Point: pos,
+				}
+			}
 		}else{
 			fmt.Printf("WARNING: BDump/Import: Unimplemented method found : %d\n",cmd)
 			fmt.Printf("WARNING: BDump/Import: Previous command is: %d\n",prevCmd)

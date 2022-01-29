@@ -84,7 +84,7 @@ FastBuilder Phoenix与其他程序的不同点在于，存在「客户端」与�
 - Linux x86_64 (推荐使用此平台): 
 
   ```shell
-  wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder
+  wget -O fastbuilder https://storage.fastbuilder.pro/epsilon/phoenixbuilder
   chmod +x fastbuilder
   ```
 
@@ -94,33 +94,15 @@ FastBuilder Phoenix与其他程序的不同点在于，存在「客户端」与�
 
   - b. 安装完成后，前往系统设置，给予Termux app**存储空间权限**且允许**无限制后台运行**。
 
-  - c. 打开Termux app，复制并执行如下命令，第一步，先使用如下命令替换将官方源替换为TUNA镜像源（可选，此步骤**在中国**可以让后续步骤更快完成）
+   - c. 下载 FastBuilder (x86 或 x86_64/amd64 架构的Android设备不被支持。)
 
-    > **警告：三个命令要按序依次执行， 该镜像仅适用于 Android 7.0 (API 24) 及以上版本，旧版本系统使用本镜像可能导致程序错误。如果您是旧版，请不要使用该镜像**
-
-    ```shell
-    sed -i 's@^\(deb.*stable main\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/termux-packages-24 stable main@' $PREFIX/etc/apt/sources.list
-    sed -i 's@^\(deb.*games stable\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/game-packages-24 games stable@' $PREFIX/etc/apt/sources.list.d/game.list
-    sed -i 's@^\(deb.*science stable\)$@#\1\ndeb https://mirrors.tuna.tsinghua.edu.cn/termux/science-packages-24 science stable@' $PREFIX/etc/apt/sources.list.d/science.list
-    ```
-
-    接下来执行更新源和软件包的命令（**必须**）：
-
-    ```shell
-    apt update -y
-    apt upgrade -y
-    apt install wget -y
-    ```
-
-   - d.待上述命令执行完成后，再下载 FastBuilder (如果您非常清楚您的设备是`armv7`架构，则将命令中的`arm64`改成`armv7`。注意：今日 armv7 架构的设备已非常少见。x86 或 x86_64/amd64 架构的Android设备不被支持。)
-
-     > **注意：此步骤(d)也为更新步骤，之后更新Fast Builder可以直接通过执行本步骤完成。**
+     > **注意：此步骤(c)也为更新步骤，之后更新Fast Builder可以直接通过执行本步骤完成。**
 
      ```shell
-     wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder-android-executable-arm64
-     chmod +x fastbuilder
+     o=$(uname -o) a=$(uname -m) && if [ "$o" == "Android" ]; then [[ "$a" == "aarch64" ]] && f="arm64" || f="armv7" && curl -o fastbuilder https://storage.fastbuilder.pro/epsilon/phoenixbuilder-android-executable-$f && chmod +x fastbuilder && ./fastbuilder; else echo "for Android only"; fi
+     
      ```
-
+     **感谢 [@CMA2401PT](https://github.com/CMA2401PT) 提供此段步骤更加简单的下载指令。**
 ### 使用指导
 
 FastBuilder Phoenix是纯命令行程序，没有复杂的GUI，这使得程序本身非常易于使用。

@@ -75,10 +75,25 @@ Type definition:
 | 34, `0x22`        | `placeCommandBlockWithRuntimeId(uint16_t)` | Place a command block with the specified runtime id, and set its data at the brush's position. | `unsigned short runtimeId`<br/>`unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (no effect and can be set to'\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
 | 35, `0x23`        | `placeCommandBlockWithRuntimeId`           | Place a command block with the specified runtime id, and set its data at the brush's position. | `unsigned int runtimeId`<br/>`unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (no effect and can be set to'\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
 | 36, `0x24`        | `placeCommandBlockWithDataNew`             | Place a command block with the specified data value, and set its data at the brush's position. | `unsigned short data`<br/>`unsigned int mode {Impulse=0, Repeat=1, Chain=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (no effect and can be set to'\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
+| 37, `0x25`        | `placeBlockWithChestData(uint16_t)`        | Place a (chest) block with the specified data within the chest. `slotCount`'s type is `unsigned char` since Minecraft uses only a byte for the slot ID. | `unsigned short runtimeId`<br/>`unsigned char slotCount`<br/>`struct ChestData data` |
+| 38, `0x26`        | `placeBlockWithChestData`                  | Place a (chest) block with the specified data within the chest. `slotCount`'s type is `unsigned char` since Minecraft uses only a byte for the slot ID. | `unsigned int runtimeId`<br/>`unsigned char slotCount`<br/>`struct ChestData data` |
 | 88, `'X'`, `0x58` | `end`                                      | Stop reading. Note that though the general end is "XE" (2 bytes long), but a 'X' (1 byte long) character is enough. | -                                                            |
 | 90, `0x5A`        | `isSigned`                                 | A command that functions a little different with other commands, its argument is the previous byte of it, would only appear in the end of the file. Please do not use it unless you know how to use since an invalid signature would prevent PhoenixBuilder from constructing your structure. See paragraph `Signing` for details. | `unsigned char signatureSize`                                |
 
-The list above is all the commands of the bdump v3 till 2021-8-15.
+The list above is all the commands of the bdump v4 till 2022-1-29.
+
+For the `struct ChestData` data format:
+
+```
+struct ChestData {
+	char *itemName;
+	unsigned char count;
+	unsigned short data;
+	unsigned char slotID;
+}
+```
+
+(Contents below are not updated currently, but they should work correctly.)
 
 Let's see how to make a `bdx` file using these commands.
 

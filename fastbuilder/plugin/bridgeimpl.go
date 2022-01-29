@@ -44,7 +44,7 @@ func (*PluginBridgeImpl) RegisterBuilder(name string, function_cont func(config 
 						Data:curblock.Block.Data,
 					},
 					CommandBlockData: &convcbdata,
-					Entity: (*types.Entity)(curblock.Entity),
+					//Entity: (*types.Entity)(curblock.Entity),
 					Point: types.Position {
 						curblock.Point.X,
 						curblock.Point.Y,

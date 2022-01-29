@@ -4,13 +4,15 @@ package types
 type Module struct {
 	Block  *Block
 	CommandBlockData *CommandBlockData
-	Entity *Entity
+	//Entity *Entity
+	ChestSlot *ChestSlot
 	Point  Position
 }
 
 type RuntimeModule struct {
 	BlockRuntimeId uint32 // The current total count of runtime ids didn't exceed 65536
 	CommandBlockData *CommandBlockData
+	ChestData *ChestData
 	Point Position
 }
 
@@ -29,6 +31,15 @@ type CommandBlockData struct {
 	TrackOutput bool //byte
 	Conditional bool
 	NeedRedstone bool
+}
+
+type ChestData []ChestSlot
+
+type ChestSlot struct {
+	Name string
+	Count uint8
+	Damage uint16
+	Slot uint8
 }
 
 type ConstBlock struct {
@@ -58,7 +69,7 @@ func (req *ConstBlock) Take() *Block {
 		return block
 	}
 	block=&Block {
-		Name:&req.Name, //ConstBlock shouldn't be destroyed
+		Name:&req.Name, //ConstBlock won't be destroyed
 		Data:req.Data,
 	}
 	takenBlocks[req]=block

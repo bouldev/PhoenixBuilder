@@ -5,8 +5,18 @@ type Entity string
 type Module struct {
 	Block  *Block
 	CommandBlockData *CommandBlockData
-	Entity *Entity
+	ChestData *ChestData
+	//Entity *Entity
 	Point  Position
+}
+
+type ChestData []ChestSlot
+
+type ChestSlot struct {
+	Name string
+	Count uint8
+	Damage uint16
+	Slot uint8
 }
 
 type Block struct {
