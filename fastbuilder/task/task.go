@@ -228,7 +228,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 					command.SetBlockRequest(request,curblock, cfg)
 					command.SendSizukanaCommand(*request,conn)
 					if !isFastMode {
-						<-time.After(time.Second/20)
+						<-time.After(time.Second)
 					}
 				}
 				cbdata:=curblock.CommandBlockData
@@ -237,7 +237,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				}
 				if !isFastMode {
 					command.SendSizukanaCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z), conn)
-					<-time.After(time.Second/20)
+					<-time.After(time.Second)
 				}
 				conn.WritePacket(&packet.CommandBlockUpdate {
 					Block: true,
