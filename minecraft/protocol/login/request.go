@@ -11,7 +11,12 @@ import (
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 	"time"
+	_ "embed"
+	"strings"
 )
+
+//go:embed skindump.json
+var claimData string
 
 // chain holds a chain with claims, each with their own headers, payloads and signatures. Each claim holds
 // a public key used to verify other claims.
@@ -210,7 +215,11 @@ func Encode(loginChain string, data ClientData, key *ecdsa.PrivateKey) []byte {
 	request.Chain = append(chain{firstJWT}, request.Chain...)
 	// We create another token this time, which is signed the same as the claim we just inserted in the chain,
 	// just now it contains client data.
-	request.RawToken, _ = jwt.Signed(signer).Claims(data).CompactSerialize()
+	//data=claimData
+	var outmap map[string]interface{}
+	str:=strings.Replace(claimData,"Ni3rtfss",data.ThirdPartyName,-1)
+	json.Unmarshal([]byte(str),&outmap)
+	request.RawToken, _ = jwt.Signed(signer).Claims(outmap).CompactSerialize()
 
 	return encodeRequest(request)
 }

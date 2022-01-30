@@ -145,6 +145,7 @@ type ClientData struct {
 	// SkinID is a unique ID produced for the skin, for example 'c18e65aa-7b21-4637-9b63-8ad63622ef01_Alex'
 	// for the default Alex skin.
 	SkinID string `json:"SkinId"`
+	SkinIID string
 	// PlayFabID is the PlayFab ID produced for the player's skin. PlayFab is the company that hosts the
 	// Marketplace, skins and other related features from the game. This ID is the ID of the skin used to
 	// store the skin inside of PlayFab.
