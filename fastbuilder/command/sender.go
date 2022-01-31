@@ -9,6 +9,7 @@ import (
 )
 
 var UUIDMap sync.Map//= make(map[string]func(*minecraft.Conn,*[]protocol.CommandOutputMessage))
+var BlockUpdateSubscribeMap sync.Map
 
 func ClearUUIDMap() {
 	UUIDMap=sync.Map{}

@@ -42,7 +42,7 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.2.2"
+const FBVersion = "1.2.3"
 const FBCodeName = "Phoenix"
 
 func main() {
@@ -469,6 +469,12 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				world_provider.ChunkInput<-p
 			}else{
 				world_provider.DoCache(p)
+			}
+		case *packet.UpdateBlock:
+			channel, h:=command.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
+			if h {
+				ch:=channel.(chan bool)
+				ch<-true
 			}
 		}
 	}

@@ -218,17 +218,29 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				task.Finalize()
 				return
 			}
-			/*if blkscounter%20 == 0 {
+			if blkscounter%20 == 0 {
 				u_d, _ := uuid.NewUUID()
 				command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y,curblock.Point.Z),u_d, conn)
-			}*/
+				// SettingsCommand is unable to teleport the player.
+			}
 			blkscounter++
 			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				if curblock.Block != nil {
 					command.SetBlockRequest(request,curblock, cfg)
-					command.SendSizukanaCommand(*request,conn)
 					if !isFastMode {
-						<-time.After(time.Second)
+						//<-time.After(time.Second)
+						wc:=make(chan bool)
+						command.BlockUpdateSubscribeMap.Store(protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)},wc)
+						command.SendSizukanaCommand(*request,conn)
+						select {
+						case <-wc:
+							break
+						case <-time.After(time.Second*2):
+							command.BlockUpdateSubscribeMap.Delete(protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)})
+						}
+						close(wc)
+					}else{
+						command.SendSizukanaCommand(*request,conn)
 					}
 				}
 				cbdata:=curblock.CommandBlockData
@@ -236,8 +248,17 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 					cbdata.Command="|"+cbdata.Command
 				}
 				if !isFastMode {
-					command.SendSizukanaCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z), conn)
-					<-time.After(time.Second)
+					UUID:=uuid.New()
+					w:=make(chan *packet.CommandOutput)
+					command.UUIDMap.Store(UUID.String(), w)
+					command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z), UUID, conn)
+					select {
+					case <-time.After(time.Second):
+						command.UUIDMap.Delete(UUID.String())
+						break
+					case <-w:
+					}
+					close(w)
 				}
 				conn.WritePacket(&packet.CommandBlockUpdate {
 					Block: true,
