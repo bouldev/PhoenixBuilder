@@ -32,6 +32,7 @@ import (
 	"phoenixbuilder/fastbuilder/signalhandler"
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/world_provider"
+	"phoenixbuilder/fastbuilder/enchant"
 )
 
 type FBPlainToken struct {
@@ -42,7 +43,7 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.2.4"
+const FBVersion = "1.2.990"
 const FBCodeName = "Phoenix"
 
 func main() {
@@ -284,6 +285,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				fmt.Printf("OK\n")
 				continue
 			}
+			if cmd=="ench" {
+				enchant.StartSession(conn)
+				continue
+			}
 			if cmd[0] == '>'&&len(cmd)>1 {
 				umsg:=cmd[1:]
 				if(!client.CanSendMessage()) {
@@ -475,6 +480,44 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			if h {
 				ch:=channel.(chan bool)
 				ch<-true
+			}
+		case *packet.AddActor:
+			if p.EntityType == "minecraft:villager_v2" {
+				if enchant.AddVillagerChannel!=nil {
+					//fmt.Printf("Input 1")
+					enchant.AddVillagerChannel<-p
+					//fmt.Printf("Input 1 fin")
+				}
+			}
+		case *packet.TakeItemActor:
+			if enchant.PacketToResend!=nil{
+				if p.TakerEntityRuntimeID==conn.GameData().EntityRuntimeID {
+					command.SendWSCommand("give @s paper", uuid.New(), conn)
+				}
+			}
+		case *packet.InventoryContent:
+			if p.WindowID == 0 {
+				if len(p.Content)==0 {
+					break
+				}
+				if(enchant.InventoryContentChannel!=nil) {
+					//fmt.Printf("Input 2")
+					enchant.InventoryContentChannel<-p
+					//fmt.Printf("Input 2 fin")
+				}
+			}
+		case *packet.ItemStackResponse:
+			if(enchant.ItemStackResponseChannel!=nil) {
+				//fmt.Printf("Input 3")
+				enchant.ItemStackResponseChannel<-p
+				//fmt.Printf("Input 3 fin")
+			}
+		case *packet.UpdateTrade:
+			if(enchant.PacketToResend!=nil) {
+				//fmt.Printf("Input 4")
+				//enchant.TradeWindowIDChannel<-p.WindowID
+				//fmt.Printf("Input 4 fin")
+				enchant.TradeWindowID=p.WindowID
 			}
 		}
 	}
