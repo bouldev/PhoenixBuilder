@@ -1,12 +1,13 @@
 package cube
 
 import (
-	"github.com/go-gl/mathgl/mgl64"
 	"math"
+
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 const (
-	MaxY = 255
+	MaxY = 319
 	MinY = 0
 )
 
