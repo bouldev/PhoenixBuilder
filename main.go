@@ -43,7 +43,7 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.2.990"
+const FBVersion = "1.2.991"
 const FBCodeName = "Phoenix"
 
 func main() {
@@ -286,7 +286,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				continue
 			}
 			if cmd=="ench" {
-				enchant.StartSession(conn)
+				go func() {
+					enchant.StartSession(conn)
+				} ()
 				continue
 			}
 			if cmd[0] == '>'&&len(cmd)>1 {

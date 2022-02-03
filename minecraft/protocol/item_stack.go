@@ -59,7 +59,7 @@ func WriteStackRequest(w *Writer, x *ItemStackRequest) {
 		case *CraftNonImplementedStackRequestAction:
 			id = StackRequestActionCraftNonImplementedDeprecated
 		case *CraftResultsDeprecatedStackRequestAction:
-			id = StackRequestActionCraftResultsDeprecated
+			id = 17//StackRequestActionCraftResultsDeprecated
 		default:
 			w.UnknownEnumOption(fmt.Sprintf("%T", action), "stack request action type")
 		}
@@ -118,6 +118,8 @@ func StackRequest(r *Reader, x *ItemStackRequest) {
 		case StackRequestActionCraftNonImplementedDeprecated:
 			action = &CraftNonImplementedStackRequestAction{}
 		case StackRequestActionCraftResultsDeprecated:
+			action = &CraftResultsDeprecatedStackRequestAction{}
+		case 17:
 			action = &CraftResultsDeprecatedStackRequestAction{}
 		default:
 			r.UnknownEnumOption(id, "stack request action type")

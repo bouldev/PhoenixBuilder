@@ -42,8 +42,8 @@ func Tellraw(conn *minecraft.Conn, lines ...string) error {
 	// Netease set .bdx, .schematic, .mcacblock, etc as blocked words
 	// So we should replace half-width points w/ full-width points to avoid being
 	// blocked
-	return SendChat(fmt.Sprintf("§b%s",msg), conn)
-	//return SendSizukanaCommand(TellRawRequest(types.AllPlayers, lines...), conn)
+	//return SendChat(fmt.Sprintf("§b%s",msg), conn)
+	return SendSizukanaCommand(TellRawRequest(types.AllPlayers, lines...), conn)
 }
 
 func RawTellRawRequest(target types.Target, line string) string {

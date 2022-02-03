@@ -45,6 +45,7 @@ type Text struct {
 	// Nintendo Switch). It is otherwise an empty string, and is used to decide which players are able to
 	// chat with each other.
 	PlatformChatID string
+	PlayerRuntimeID string
 }
 
 // ID ...
@@ -75,10 +76,10 @@ func (pk *Text) Marshal(w *protocol.Writer) {
 	if pk.TextType == TextTypeChat {
 		b1:=byte(2)
 		s1:="PlayerId"
-		s2:="-12345678"
+		//s2:="-12345678"
 		w.Uint8(&b1)
 		w.String(&s1)
-		w.String(&s2)
+		w.String(&pk.PlayerRuntimeID)
 	}
 }
 
