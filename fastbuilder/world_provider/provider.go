@@ -113,7 +113,7 @@ func (p *OnlineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chunk
 		// Hit
 		close(ChunkInput)
 		ChunkInput=nil
-		chunk, err:=chunk.NetworkDecode(AirRuntimeId, inp.RawPayload, int(inp.SubChunkCount))
+		chunk, err:=chunk.NetworkDecode(AirRuntimeId, inp.RawPayload, /*int(inp.SubChunkCount)*/16)
 		if(err!=nil) {
 			fmt.Printf("Failed to decode chunk: %v\n",err)
 			return nil, true, err

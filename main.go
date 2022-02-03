@@ -42,7 +42,7 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.2.3"
+const FBVersion = "1.2.4"
 const FBCodeName = "Phoenix"
 
 func main() {
