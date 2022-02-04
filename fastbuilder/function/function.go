@@ -36,7 +36,8 @@ const (
 	SimpleFunctionArgumentString  = 0
 	SimpleFunctionArgumentDecider = 1
 	SimpleFunctionArgumentInt     = 2
-	//SimpleFunctionArgumentEnum  = ---->
+	SimpleFunctionArgumentMessage = 3
+	SimpleFunctionArgumentEnum    = 4
 )
 
 var FunctionMap = make(map[string]*Function)
@@ -59,7 +60,7 @@ var SimpleFunctionEnums []*EnumInfo
 
 func RegisterEnum(desc string,parser func(string)byte,inv byte) int {
 	SimpleFunctionEnums=append(SimpleFunctionEnums,&EnumInfo{WantedValuesDescription:desc,InvalidValue:inv,Parser:parser})
-	return len(SimpleFunctionEnums)-1+3
+	return len(SimpleFunctionEnums)-1+SimpleFunctionArgumentEnum
 }
 
 func Process(conn *minecraft.Conn,msg string) {
@@ -124,8 +125,13 @@ func Process(conn *minecraft.Conn,msg string) {
 					return
 				}
 				arguments=append(arguments,parsedInt)
+			}else if tp==SimpleFunctionArgumentMessage {
+				messageContent:=strings.Join(slc[ic:]," ")
+				arguments=append(arguments,messageContent)
+				// Arguments after the message argument isn't allowed.
+				break
 			}else{
-				eindex:=int(tp-3)
+				eindex:=int(tp-SimpleFunctionArgumentEnum)
 				if eindex>=len(SimpleFunctionEnums) {
 					command.Tellraw(conn, "Parser: Internal error, unregistered enum")
 					fmt.Printf("Internal error, unregistered enum %d\n",int(tp))

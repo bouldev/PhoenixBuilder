@@ -33,6 +33,7 @@ import (
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/fastbuilder/enchant"
+	"phoenixbuilder/fastbuilder/nbtconstructor"
 )
 
 type FBPlainToken struct {
@@ -246,6 +247,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	plugin.StartPluginSystem(conn)
 
 	function.InitInternalFunctions()
+	nbtconstructor.InitNBTConstructor()
 	fbtask.InitTaskStatusDisplay(conn)
 	world_provider.Init()
 
@@ -556,6 +558,7 @@ func runDebugClient() {
 	plugin.StartPluginSystem(conn)
 
 	function.InitInternalFunctions()
+	nbtconstructor.InitNBTConstructor()
 	fbtask.InitTaskStatusDisplay(conn)
 
 	signalhandler.Init(conn)
