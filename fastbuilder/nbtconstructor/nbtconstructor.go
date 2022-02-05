@@ -3,7 +3,6 @@ package nbtconstructor
 import (
 	"phoenixbuilder/fastbuilder/function"
 	"phoenixbuilder/fastbuilder/command"
-	"phoenixbuilder/fastbuilder/enchant"
 	"phoenixbuilder/minecraft"
 	"encoding/base64"
 	"encoding/json"
@@ -382,7 +381,7 @@ func evalNBT(content string,conn *minecraft.Conn) {
 		return
 	}
 	go func() {
-		enchant.StartSessionWithCustomNBT(conn, int32(item.NetworkID), uint32(dataVal), nbtmap)
+		StartSessionWithCustomNBT(conn, int32(item.NetworkID), uint32(dataVal), nbtmap)
 	} ()
 	return
 }

@@ -32,7 +32,6 @@ import (
 	"phoenixbuilder/fastbuilder/signalhandler"
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/world_provider"
-	"phoenixbuilder/fastbuilder/enchant"
 	"phoenixbuilder/fastbuilder/nbtconstructor"
 )
 
@@ -44,7 +43,7 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.2.991"
+const FBVersion = "1.3.0"
 const FBCodeName = "Phoenix"
 
 func main() {
@@ -288,9 +287,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				continue
 			}
 			if cmd=="ench" {
-				go func() {
-					enchant.StartSession(conn)
-				} ()
+				command.Tellraw(conn, "[ench] Command \"ench\" is DEPRECATED and removed since")
+				command.Tellraw(conn, "[ench] it contains many uncertain behaviors, please use")
+				command.Tellraw(conn, "[ench] command \"simpleconstruct <nbt_json>\" or       ")
+				command.Tellraw(conn, "[ench] \"construct <filename>\" instead.               ")
 				continue
 			}
 			if cmd[0] == '>'&&len(cmd)>1 {
@@ -487,16 +487,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 		case *packet.AddActor:
 			if p.EntityType == "minecraft:villager_v2" {
-				if enchant.AddVillagerChannel!=nil {
-					//fmt.Printf("Input 1")
-					enchant.AddVillagerChannel<-p
-					//fmt.Printf("Input 1 fin")
-				}
-			}
-		case *packet.TakeItemActor:
-			if enchant.PacketToResend!=nil{
-				if p.TakerEntityRuntimeID==conn.GameData().EntityRuntimeID {
-					command.SendWSCommand("give @s paper", uuid.New(), conn)
+				if nbtconstructor.AddVillagerChannel!=nil {
+					nbtconstructor.AddVillagerChannel<-p
 				}
 			}
 		case *packet.InventoryContent:
@@ -504,24 +496,17 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				if len(p.Content)==0 {
 					break
 				}
-				if(enchant.InventoryContentChannel!=nil) {
-					//fmt.Printf("Input 2")
-					enchant.InventoryContentChannel<-p
-					//fmt.Printf("Input 2 fin")
+				if(nbtconstructor.InventoryContentChannel!=nil) {
+					nbtconstructor.InventoryContentChannel<-p
 				}
 			}
 		case *packet.ItemStackResponse:
-			if(enchant.ItemStackResponseChannel!=nil) {
-				//fmt.Printf("Input 3")
-				enchant.ItemStackResponseChannel<-p
-				//fmt.Printf("Input 3 fin")
+			if(nbtconstructor.ItemStackResponseChannel!=nil) {
+				nbtconstructor.ItemStackResponseChannel<-p
 			}
 		case *packet.UpdateTrade:
-			if(enchant.PacketToResend!=nil) {
-				//fmt.Printf("Input 4")
-				//enchant.TradeWindowIDChannel<-p.WindowID
-				//fmt.Printf("Input 4 fin")
-				enchant.TradeWindowID=p.WindowID
+			if(nbtconstructor.IsWorking) {
+				nbtconstructor.TradeWindowID=p.WindowID
 			}
 		}
 	}
