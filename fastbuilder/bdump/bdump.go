@@ -139,7 +139,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 					}
 				}else{
 					wrap:=mdl.Point.X-brushPosition[0]
-					if (wrap < -32767||wrap > 32767) {
+					if (wrap < -32767||wrap > 32768) {
 						_, err:=w.Write([]byte{21})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -150,7 +150,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
-					}else if(wrap < -127||wrap > 127){
+					}else if(wrap < -128||wrap > 127){
 						_, err:=w.Write([]byte{20})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -189,7 +189,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 					}
 				}else{
 					wrap:=mdl.Point.Y-brushPosition[1]
-					if (wrap > 32767||wrap< -32767) {
+					if (wrap > 32767||wrap< -32768) {
 						_, err:=w.Write([]byte{23})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -200,7 +200,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
-					}else if(wrap > 127||wrap < -127){
+					}else if(wrap > 127||wrap < -128){
 						_, err:=w.Write([]byte{22})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -238,7 +238,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 					}
 				}else{
 					wrap:=mdl.Point.Z-brushPosition[2]
-					if (wrap > 32767||wrap < -32767) {
+					if (wrap > 32767||wrap < -32768) {
 						_, err:=w.Write([]byte{25})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
@@ -249,7 +249,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 						if err != nil {
 							return fmt.Errorf("Failed to write command")
 						}
-					}else if(wrap > 127||wrap < -127){
+					}else if(wrap > 127||wrap < -128){
 						_, err:=w.Write([]byte{24})
 						if err != nil {
 							return fmt.Errorf("Failed to write command")

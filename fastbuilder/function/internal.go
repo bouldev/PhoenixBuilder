@@ -421,6 +421,17 @@ func InitInternalFunctions() {
 			command.Tellraw(conn, fmt.Sprintf("NBT: %+v",properties))
 		},
 	})
+	RegisterFunction(&Function {
+		Name: "say",
+		OwnedKeywords: []string {"say"},
+		FunctionType:FunctionTypeSimple,
+		SFArgumentTypes: []byte { SimpleFunctionArgumentMessage },
+		SFMinSliceLen: 1,
+		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+			str:=args[0].(string)
+			command.Tellraw(conn,str)
+		},
+	})
 }
 
 

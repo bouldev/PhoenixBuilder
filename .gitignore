@@ -76,4 +76,4 @@ rust/
 *.zip
 *.pyc
 *.pyo
-
+private/
