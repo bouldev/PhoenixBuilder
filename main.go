@@ -43,7 +43,7 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.3.0"
+const FBVersion = "1.3.1"
 const FBCodeName = "Phoenix"
 
 func main() {
@@ -246,7 +246,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	plugin.StartPluginSystem(conn)
 
 	function.InitInternalFunctions()
-	nbtconstructor.InitNBTConstructor()
+	if !fbauth.ShouldAllowNBTConstructor {
+		nbtconstructor.InitNBTConstructor()
+	}
 	fbtask.InitTaskStatusDisplay(conn)
 	world_provider.Init()
 

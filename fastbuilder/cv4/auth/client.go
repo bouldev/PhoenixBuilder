@@ -16,12 +16,7 @@ import (
 )
 
 const authServer="wss://api.fastbuilder.pro:2053/"
-const rsaPublicKey=`-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCaKerXdVxYJs18US6HPuGXpQyR
-xJvgdK+vUPqtVGwGASkq/AEEwRvfSQ5ePSJjfs1icovDl2tPp2Xy7bSm6qBzzYAE
-F0Eqw+tVEu2RSqRUme5et8L9os7LiXokqwxJzzupYI+Jmy/UBm3ATvvW0zp1nnhu
-7Ozwskhx4FYc6rGoWQIDAQAB
------END PUBLIC KEY-----`
+var ShouldAllowNBTConstructor = false
 
 type Client struct {
 	privateKey *ecdsa.PrivateKey
@@ -185,6 +180,8 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 		}
 		return "",int(code),fmt.Errorf("%s",err)
 	}
+	shouldAllowNBTConstructor, _ := resp["should_allow_nbt_constructor"].(bool)
+	ShouldAllowNBTConstructor=shouldAllowNBTConstructor
 	str,_:=resp["chainInfo"].(string)
 	return str,0,nil
 }
