@@ -35,7 +35,10 @@ func NetworkDecode(air uint32, data []byte, subChunkCount int) (*Chunk, error) {
 	for buf.Len() != 0 {
 		var m map[string]interface{}
 		if err := dec.Decode(&m); err != nil {
-			return nil, fmt.Errorf("error decoding block entity: %w", err)
+			// the rest of buf is also effect, so we stop decoding and return immediately
+			fmt.Printf("error decoding block entity: %v\n", err)
+			return c, nil
+			// return nil, fmt.Errorf("error decoding block entity: %w", err)
 		}
 		c.SetBlockNBT(cube.Pos{int(m["x"].(int32)), int(m["y"].(int32)), int(m["z"].(int32))}, m)
 	}
