@@ -125,7 +125,9 @@ func (pk *PlayerAuthInput) Marshal(w *protocol.Writer) {
 	}
 	w.Varuint64(&pk.Tick)
 	w.Vec3(&pk.Delta)
-
+	unk:=[]byte{0}
+	unkFloat:=float32(0)
+	w.Bytes(&unk)
 	if pk.InputData&InputFlagPerformItemInteraction != 0 {
 		protocol.PlayerInventoryAction(w, &pk.ItemInteractionData)
 	}
@@ -141,6 +143,9 @@ func (pk *PlayerAuthInput) Marshal(w *protocol.Writer) {
 			protocol.BlockAction(w, &action)
 		}
 	}
+	w.Bytes(&unk)
+	w.Float32(&unkFloat)
+	w.Float32(&unkFloat)
 }
 
 // Unmarshal ...

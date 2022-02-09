@@ -12,7 +12,7 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 	"time"
 	_ "embed"
-	"strings"
+	//"strings"
 )
 
 //go:embed skindump.json
@@ -216,10 +216,10 @@ func Encode(loginChain string, data ClientData, key *ecdsa.PrivateKey) []byte {
 	// We create another token this time, which is signed the same as the claim we just inserted in the chain,
 	// just now it contains client data.
 	//data=claimData
-	var outmap map[string]interface{}
-	str:=strings.Replace(claimData,"Ni3rtfss",data.ThirdPartyName,-1)
-	json.Unmarshal([]byte(str),&outmap)
-	request.RawToken, _ = jwt.Signed(signer).Claims(outmap).CompactSerialize()
+	//var outmap map[string]interface{}
+	//str:=strings.Replace(claimData,"Ni3rtfss",data.ThirdPartyName,-1)
+	//json.Unmarshal([]byte(str),&outmap)
+	request.RawToken, _ = jwt.Signed(signer).Claims(data).CompactSerialize()
 
 	return encodeRequest(request)
 }

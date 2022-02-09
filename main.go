@@ -33,6 +33,7 @@ import (
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/fastbuilder/nbtconstructor"
+	"phoenixbuilder/fastbuilder/move"
 )
 
 type FBPlainToken struct {
@@ -43,7 +44,7 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.3.1"
+const FBVersion = "1.3.2"
 const FBCodeName = "Phoenix"
 
 func main() {
@@ -246,11 +247,17 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	plugin.StartPluginSystem(conn)
 
 	function.InitInternalFunctions()
-	if !fbauth.ShouldAllowNBTConstructor {
+	if !fbauth.ShouldDisableNBTConstructor {
 		nbtconstructor.InitNBTConstructor()
 	}
 	fbtask.InitTaskStatusDisplay(conn)
 	world_provider.Init()
+	move.ConnectTime=conn.GameData().ConnectTime
+	move.Position=conn.GameData().PlayerPosition
+	move.Pitch=conn.GameData().Pitch
+	move.Yaw=conn.GameData().Yaw
+	move.Connection=conn
+	move.RuntimeID=conn.GameData().EntityRuntimeID
 
 	signalhandler.Init(conn)
 
@@ -293,6 +300,37 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				command.Tellraw(conn, "[ench] it contains many uncertain behaviors, please use")
 				command.Tellraw(conn, "[ench] command \"simpleconstruct <nbt_json>\" or       ")
 				command.Tellraw(conn, "[ench] \"construct <filename>\" instead.               ")
+				continue
+			}
+			if cmd=="move" {
+				go func() {
+					/*var counter int=0
+					var direction bool=false
+					for{
+						if counter%20==0 {
+							//move.Jump()
+						}
+						if counter>280 {
+							counter=0
+							direction= !direction
+						}
+						if direction {
+							move.Move(-2+2*moveP/100,0,2*moveP/100)
+							time.Sleep(time.Second/20)
+							counter++
+							continue
+						}else{
+							move.Move(2*moveP/100,0,-2+2*moveP/100)
+							time.Sleep(time.Second/20)
+							counter++
+							continue
+						}
+					}*/
+					for {
+						move.Auto()
+						time.Sleep(time.Second/20)
+					}
+				} ()
 				continue
 			}
 			if cmd[0] == '>'&&len(cmd)>1 {
@@ -509,6 +547,30 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		case *packet.UpdateTrade:
 			if(nbtconstructor.IsWorking) {
 				nbtconstructor.TradeWindowID=p.WindowID
+			}
+		case *packet.Respawn:
+			if p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
+				move.Position=p.Position
+			}
+		case *packet.MovePlayer:
+			if p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
+				move.Position=p.Position
+			}else if p.EntityRuntimeID == move.TargetRuntimeID {
+				move.Target=p.Position
+			}
+		case *packet.CorrectPlayerMovePrediction:
+			//fmt.Printf("correct %v\n",time.Now())
+			move.MoveP+=10
+			if move.MoveP>100 {
+				move.MoveP=0
+			}
+			move.Position=p.Position
+			move.Jump()
+		case *packet.AddPlayer:
+			if move.TargetRuntimeID==0&&p.EntityRuntimeID!=conn.GameData().EntityRuntimeID {
+				move.Target=p.Position
+				move.TargetRuntimeID=p.EntityRuntimeID
+				//fmt.Printf("Got target: %s\n",p.Username)
 			}
 		}
 	}
