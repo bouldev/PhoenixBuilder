@@ -326,6 +326,9 @@ func parseJsonNBT(st map[string]interface{}, isRoot bool) (map[string]interface{
 		if b!=nil {
 			return nil, b
 		}
+		if(realKey=="modelName"||realKey=="modelTexture") {
+			return nil, fmt.Errorf("Sorry, but we're unable to process the keys \"modelName\" and \"modelTexture\", at least in the official version, as they may violate copyright.")
+		}
 		out[realKey]=a
 	}
 	return out,nil

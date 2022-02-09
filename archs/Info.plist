@@ -23,6 +23,6 @@
 	<key>DTPlatformVersion</key>
 	<string>9.3</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright 2022 Bouldev. All rights reserved.</string>
+	<string>Licensed under GNU AGPL v3</string>
 </dict>
 </plist>
