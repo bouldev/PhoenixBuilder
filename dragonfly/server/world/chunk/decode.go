@@ -31,6 +31,26 @@ func NetworkDecode(air uint32, data []byte, subChunkCount int) (*Chunk, error) {
 	}
 	_, _ = buf.ReadByte()
 
+	// it seems netease add something after biomes info,
+	// e.g. [13 45 77 109 141 173 205 237]
+	//      [5 13 37 45 69 77 85 109 141 173 205 237]
+	// the following 14 lines try to get rid of it, but i don't know what
+	// is missed
+	for _, b := range buf.Bytes() {
+		// Nbt should start with a Nbt TAG_Compound
+		if b != uint8(10) {
+			buf.ReadByte()
+		} else {
+			dec := nbt.NewDecoder(bytes.NewBuffer(buf.Bytes()))
+			var m map[string]interface{}
+			if err := dec.Decode(&m); err != nil {
+				buf.ReadByte()
+			} else {
+				break
+			}
+		}
+	}
+
 	dec := nbt.NewDecoder(buf)
 	for buf.Len() != 0 {
 		var m map[string]interface{}
