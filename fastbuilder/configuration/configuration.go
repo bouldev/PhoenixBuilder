@@ -50,6 +50,9 @@ func CreateFullConfig() *FullConfig {
 		Facing:    "y",
 		Path:      "",
 		Shape:     "solid",
+		MapX:      1,
+		MapZ:      1,
+		MapY:      0,
 	}
 	dConf := types.DelayConfig {
 		Delay:     decideDelay(types.DelayModeContinuous),

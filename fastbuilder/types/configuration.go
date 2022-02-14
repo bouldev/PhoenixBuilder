@@ -25,6 +25,7 @@ type MainConfig struct {
 	End, Position         Position //Position=Begin
 	Radius                int
 	Length, Width, Height int
+	MapX, MapZ, MapY      int
 	Method, OldMethod     string
 	Facing, Path, Shape   string
 	ExcludeCommands       bool

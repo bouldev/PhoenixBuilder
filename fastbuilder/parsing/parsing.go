@@ -83,6 +83,10 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 	//Radius
 	FlagSet.IntVar(&Config.Radius,"radius",defaultConfig.Radius,"The radius")
 	FlagSet.IntVar(&Config.Radius,"r",defaultConfig.Radius,"The radius")
+	// Map Art Configuration
+	FlagSet.IntVar(&Config.MapX, "mapX", defaultConfig.MapX, "Take X maps in map art")
+	FlagSet.IntVar(&Config.MapZ, "mapZ", defaultConfig.MapZ, "Take Z maps in map art")
+	FlagSet.IntVar(&Config.MapY, "mapY", defaultConfig.MapY, "Available Height (blocks) for 3D map art")
 	//Facing, Path, Shape
 	FlagSet.StringVar(&Config.Facing,"facing",defaultConfig.Facing,"Building's facing")
 	FlagSet.StringVar(&Config.Facing,"f",defaultConfig.Facing,"Building's facing")
