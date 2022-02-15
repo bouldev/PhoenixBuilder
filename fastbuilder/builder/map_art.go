@@ -70,20 +70,20 @@ func clip(c int) int {
 }
 
 func Closest(tc [3]float64, colors *[]*colorful.Color) int {
-	r, g, b := int(tc[0]), int(tc[1]), int(tc[2])
+	r, g, b := int64(tc[0]), int64(tc[1]), int64(tc[2])
 	r = clip(r)
 	g = clip(g)
 	b = clip(b)
-	delta := 2 << 30
+	delta := int64(2 << 30)
 	bestCi := 0
 	for ci, c := range *colors {
 		pR_, pG_, pB_, _ := c.RGBA()
 		pR, pG, pB := int(pR_>>8), int(pG_>>8), int(pB_>>8)
-		d := 0
+		var d int64
 		if r+pR > 256 {
-			d = int(2*(r-pR)*(r-pR) + 4*(g-pG)*(g-pG) + 3*(b-pB)*(b-pB))
+			d = int64(2*(r-pR)*(r-pR) + 4*(g-pG)*(g-pG) + 3*(b-pB)*(b-pB))
 		} else {
-			d = int(3*(r-pR)*(r-pR) + 4*(g-pG)*(g-pG) + 2*(b-pB)*(b-pB))
+			d = int64(3*(r-pR)*(r-pR) + 4*(g-pG)*(g-pG) + 2*(b-pB)*(b-pB))
 		}
 		if d < delta {
 			delta = d
