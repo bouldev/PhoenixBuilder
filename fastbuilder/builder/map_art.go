@@ -59,7 +59,7 @@ func init() {
 	}
 }
 
-func clip(c int) int {
+func clip(c int64) int64 {
 	if c < 0 {
 		return 0
 	}
@@ -78,7 +78,7 @@ func Closest(tc [3]float64, colors *[]*colorful.Color) int {
 	bestCi := 0
 	for ci, c := range *colors {
 		pR_, pG_, pB_, _ := c.RGBA()
-		pR, pG, pB := int(pR_>>8), int(pG_>>8), int(pB_>>8)
+		pR, pG, pB := int64(pR_>>8), int64(pG_>>8), int64(pB_>>8)
 		var d int64
 		if r+pR > 256 {
 			d = int64(2*(r-pR)*(r-pR) + 4*(g-pG)*(g-pG) + 3*(b-pB)*(b-pB))
