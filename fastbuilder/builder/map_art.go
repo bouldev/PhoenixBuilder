@@ -50,12 +50,12 @@ func init() {
 		//r, g, b := cdata[1][0].(float64)/255.0, cdata[1][1].(float64)/255.0, cdata[1][2].(float64)/255.0
 		blockArray2D = append(blockArray2D, &colorBlock{Name: name, Meta: meta, Height: Height2D})
 		colorArray2D = append(colorArray2D, &colorful.Color{R: r, G: g, B: b})
-		blockArray3D = append(blockArray2D, &colorBlock{Name: name, Meta: meta, Height: Heigth3D_Normal})
-		colorArray3D = append(colorArray2D, &colorful.Color{R: r, G: g, B: b})
-		blockArray3D = append(blockArray2D, &colorBlock{Name: name, Meta: meta, Height: Height3D_Light})
-		colorArray3D = append(colorArray2D, &colorful.Color{R: r * ligther, G: g * ligther, B: b * ligther})
-		blockArray3D = append(blockArray2D, &colorBlock{Name: name, Meta: meta, Height: Height3D_Dark})
-		colorArray3D = append(colorArray2D, &colorful.Color{R: r * darker, G: g * darker, B: b * darker})
+		blockArray3D = append(blockArray3D, &colorBlock{Name: name, Meta: meta, Height: Heigth3D_Normal})
+		colorArray3D = append(colorArray3D, &colorful.Color{R: r, G: g, B: b})
+		blockArray3D = append(blockArray3D, &colorBlock{Name: name, Meta: meta, Height: Height3D_Light})
+		colorArray3D = append(colorArray3D, &colorful.Color{R: r * ligther, G: g * ligther, B: b * ligther})
+		blockArray3D = append(blockArray3D, &colorBlock{Name: name, Meta: meta, Height: Height3D_Dark})
+		colorArray3D = append(colorArray3D, &colorful.Color{R: r * darker, G: g * darker, B: b * darker})
 	}
 }
 
