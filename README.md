@@ -12,7 +12,7 @@ FastBuilder currently using an all-new technology, and no longer limited by the 
 
 ### Open Source
 
-FastBuilder Phoenix's client is **fully** opened source [on GitHub](https://github.com/LNSSPsd/PhoenixBuilder).
+FastBuilder Phoenix's **client** is fully opened source [on GitHub](https://github.com/LNSSPsd/PhoenixBuilder).
 
 (The source code is licensed under GPL v3.)
 
