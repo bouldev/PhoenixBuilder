@@ -71,7 +71,9 @@ jobs:
         export THEOS=~/theos
         make
     - name: Compress binaries with UPX
-      run: upx build/* --best --8mib-ram --ultra-brute | cat
+      run: |
+        upx build/* --best --8mib-ram | cat
+        node genhash.js
     - name: Package for specific platforms
       run: |
         export THEOS=~/theos
