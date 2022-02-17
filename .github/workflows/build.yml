@@ -27,7 +27,7 @@ jobs:
       run: |
         sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu -y
     - name: Setup theos's dependencies
-      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5
+      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 upx-ucl
     - name: Clone theos
       uses: actions/checkout@v2
       with:
@@ -70,6 +70,8 @@ jobs:
       run: |
         export THEOS=~/theos
         make
+    - name: Compress binaries with UPX
+      run: upx build/* --best --8mib-ram --ultra-brute | true
     - name: Package for specific platforms
       run: |
         export THEOS=~/theos
