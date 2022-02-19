@@ -13,9 +13,10 @@ import (
 	"io"
 	"fmt"
 	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/args"
 )
 
-const authServer="wss://api.fastbuilder.pro:2053/"
+//const authServer="wss://api.fastbuilder.pro:2053/"
 var ShouldDisableNBTConstructor = true
 
 type Client struct {
@@ -43,7 +44,7 @@ func CreateClient(world_chat_channel chan []string) *Client {
 		serverResponse:make(chan map[string]interface{}),
 		closed:false,
 	}
-	cl,_,err:=websocket.DefaultDialer.Dial(authServer,nil)
+	cl,_,err:=websocket.DefaultDialer.Dial(args.AuthServer(),nil)
 	if err != nil {
 		panic(err)
 	}
@@ -151,8 +152,7 @@ type AuthRequest struct {
 	Key string `json:"publicKey"`
 	FBToken string
 	FBVersion string
-	//IGNOREUPDATE_PLEASEMAKESUREYOUKNOWWHATITMEANS bool
-	// Uncomment it and the another part below to disable invalid version error
+	IGNOREUPDATE_PLEASEMAKESUREYOUKNOWWHATITMEANS bool
 }
 
 func (client *Client) Auth(serverCode string,serverPassword string,key string,fbtoken string,fbversion string) (string,int,error) {
@@ -163,7 +163,7 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 		Key:key,
 		FBToken:fbtoken,
 		FBVersion:fbversion,
-		//IGNOREUPDATE_PLEASEMAKESUREYOUKNOWWHATITMEANS: true,
+		IGNOREUPDATE_PLEASEMAKESUREYOUKNOWWHATITMEANS: args.ShouldDisableHashCheck(),
 	}
 	msg,err:=json.Marshal(authreq)
 	if err!=nil {

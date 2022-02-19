@@ -23,7 +23,7 @@ FastBuilder Phoenix のクライアントは [GitHub](https://github.com/LNSSPsd
 - FastBuilderが使っているテクはいつか失効するかもしれないですので、FastBuilderの永遠なサポートって言うことは保証できない。
 - お客様が買ったFastBuilderは、上述の機能が含んでいる、それ以上の機能がこの後で加えるかもしれないですが、それは保証されない。
 - 一部のインストールのステップはある程度の**ITと数学の知識**が必要ですので、このマニュアルはお客様はもうそれらを備えてると考えます。
-- FastBuilder personal account can only be binded to at most two rental servers, and it allows to be changed once per month. FastBuilder Phoenix can't be used in multi-player mode of NEMC or in the international version of Minecraft.
+- FastBuilder ユーザーセンターには、新しいアカウントには二つのスロットが含まれています（ぼっち版には一つ）、そのスロットがNetEaseのMinecraftのサーバー番号とバインドできます、バインド後は一ヶ月に変動不能の状態になります。FastBuilder Phoenix はNEMCのムルチプレーヤーモードやMinecraft Bedrock Edition (国際版)に使用はできないのでご了承下さい。
 - Please **do not** import any files **without the author's permission**, every single content creator survives in the community with their own energy and wisdom. Using others' IP (stands for Intellectual Property) commercially would cause destructions to the whole environment of the game. Moreover, if the copyright owner of contents you have used ascertains the liability, you should and must take your responsibility, and we shouldn't bear any liability for it.
 - Developers aren't customer service reps, they don't have the obligation to **resolve** the various problems you met when using the software, moreover they would not guide you to install the software **by themselves**. If you found bugs when using the software and **you are very sure of it**, you can **submit bug reports** to a seller.
 - The current version (Phoenix Alpha) is under testing, various bugs might be triggered, purchasing means you **volunteer to bear the risks**.

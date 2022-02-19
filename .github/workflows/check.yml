@@ -1,0 +1,72 @@
+name: Check
+
+on:
+  push:
+    branches: [ epsilon ]
+
+jobs:
+  linux-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+    - name: Set up NDK
+      uses: nttld/setup-ndk@v1
+      id: setup-ndk
+      with:
+        ndk-version: r20b
+        add-to-path: false
+    - name: Move NDK
+      run: mv ${{ steps.setup-ndk.outputs.ndk-path }} ${HOME}/android-ndk-r20b
+    - name: Install compilers
+      run: |
+        sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu -y
+    - name: Setup theos's dependencies
+      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5
+    - name: Clone theos
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+        repository: 'theos/theos'
+        path: 'theos'
+    - name: Setup theos
+      run: |
+        mv $GITHUB_WORKSPACE/theos ~/theos
+        export THEOS=~/theos
+        echo "export THEOS=~/theos" >> ~/.profile
+        curl -LO https://github.com/sbingner/llvm-project/releases/latest/download/linux-ios-arm64e-clang-toolchain.tar.lzma
+        TMP=$(mktemp -d)
+        tar -xf linux-ios-arm64e-clang-toolchain.tar.lzma -C $TMP
+        mkdir -p $THEOS/toolchain/linux/iphone
+        mv $TMP/ios-arm64e-clang-toolchain/* $THEOS/toolchain/linux/iphone/
+        rm -r linux-ios-arm64e-clang-toolchain.tar.lzma $TMP
+        curl -LO https://github.com/theos/sdks/archive/master.zip
+        TMP=$(mktemp -d)
+        unzip -q master.zip -d $TMP
+        mv $TMP/sdks-master/*.sdk $THEOS/sdks
+        rm -r master.zip $TMP
+    - name: Clone macOS SDK
+      uses: actions/checkout@v2
+      with:
+        repository: 'phracker/MacOSX-SDKs'
+        path: 'macOS-sdks'
+    - name: Configure macOS SDK
+      run: |
+        mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
+        rm -rf $GITHUB_WORKSPACE/macOS-sdks
+    - name: Pre-Build & configure go-raknet
+      run: |
+        make current
+        make clean
+        chmod 777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
+        sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go>~/conn.go
+        cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
+    - name: Build
+      run: |
+        export THEOS=~/theos
+        make
+
+
