@@ -45,10 +45,11 @@ type FBPlainToken struct {
 
 //Version num should seperate from fellow strings
 //for implenting print version feature later
-const FBVersion = "1.4.0"
+//const FBVersion = "1.4.0"
 const FBCodeName = "Phoenix"
 
 func main() {
+	args.ParseArgs()
 	pterm.Error.Prefix = pterm.Prefix{
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
@@ -65,7 +66,7 @@ func main() {
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix " + FBVersion))
+	pterm.Println(pterm.Yellow("FastBuilder Phoenix " + args.GetFBVersion()))
 	
 	if(I18n.ShouldDisplaySpecial()) {
 		fmt.Printf("%s", I18n.T(I18n.Special_Startup))

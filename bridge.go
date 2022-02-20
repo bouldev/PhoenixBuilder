@@ -9,6 +9,7 @@ import (
 	"phoenixbuilder/fastbuilder/function"
 	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/fastbuilder/configuration"
+	"phoenixbuilder/fastbuilder/args"
 	"path/filepath"
 	"runtime/debug"
 	"unsafe"
@@ -133,7 +134,7 @@ func runLibClient(_guiversion *C.char, _token *C.char, _serverCode *C.char, _ser
 
 //export GetFBVersion
 func GetFBVersion() string {
-	return FBVersion
+	return args.GetFBVersion()
 }
 
 //export isDebugMode

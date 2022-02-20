@@ -14,8 +14,6 @@ char args_muteWorldChat=0;
 char args_noPyRpc=0;
 char args_noNBT=0;
 
-int main(int argc, char **argv, const char **envp);
-
 void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
 	printf("\t--debug: Run in debug mode.\n");
@@ -26,11 +24,26 @@ void print_help(const char *self_name) {
 	printf("\t--no-nbt: Disable NBT Construction feature.\n");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
+	printf("\t-v, --version: Show the version information of this program.\n");
+	printf("\t\t--version-plain: Show the version of this program.\n");
 }
 
+char *get_fb_version() {
+	return FB_VERSION " (" FB_COMMIT ")";
+}
 
+void print_version(int detailed) {
+	if(!detailed) {
+		printf(FB_VERSION "\n");
+		return;
+	}
+	printf("FastBuilder " FB_VERSION "\n");
+	printf("COMMIT " FB_COMMIT_LONG "\n");
+	printf("Copyright (C) 2022 Bouldev\n");
+	printf("\n");
+}
 
-int __wrap_main(int argc, char **argv, const char **envp) {
+int _parse_args(int argc, char **argv) {
 	while(1) {
 		static struct option opts[]={
 			{"debug", no_argument, 0, 0}, // 0
@@ -40,10 +53,12 @@ int __wrap_main(int argc, char **argv, const char **envp) {
 			{"no-world-chat", no_argument, 0, 'M'}, //4
 			{"no-pyrpc", no_argument, 0, 0}, //5
 			{"no-nbt", no_argument, 0, 0}, //6
+			{"version", no_argument, 0, 'v'}, //7
+			{"version-plain", no_argument, 0, 0}, //8
 			{0, 0, 0, 0}
 		};
 		int option_index;
-		int c=getopt_long(argc,argv,"hA:", opts, &option_index);
+		int c=getopt_long(argc,argv,"hA:Mv", opts, &option_index);
 		if(c==-1)
 			break;
 		switch(c) {
@@ -61,6 +76,9 @@ int __wrap_main(int argc, char **argv, const char **envp) {
 			case 6:
 				args_noNBT=1;
 				break;
+			case 8:
+				print_version(0);
+				return 0;
 			};
 			break;
 		case 'h':
@@ -75,10 +93,21 @@ int __wrap_main(int argc, char **argv, const char **envp) {
 		case 'M':
 			args_muteWorldChat=1;
 			break;
+		case 'v':
+			print_version(1);
+			return 0;
 		default:
 			print_help(argv[0]);
 			return 1;
 		};
 	};
-	return main(argc,argv,envp);
+	return -1;
+}
+
+void parse_args(int argc, char **argv) {
+	int ec;
+	if((ec=_parse_args(argc,argv))!=-1) {
+		exit(ec);
+	}
+	return;
 }

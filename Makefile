@@ -6,7 +6,6 @@ ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
 IOS_STRIP=/usr/bin/strip
 LIPO=/usr/bin/lipo
 LDID=/usr/bin/ldid
-IOS_OBJCOPY=/usr/bin/objcopy
 TARGETS:=${TARGETS} ios-executable ios-lib
 else
 IOS_STRIP=$(shell xcrun --sdk iphoneos -f strip)
@@ -44,6 +43,8 @@ VERSION=$(shell cat version)
 
 SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go $(dir)/*.c))
 
+CGO_DEF := "-DFB_VERSION=\"$(VERSION)\" -DFB_COMMIT=\"$(shell git log -1 --format=format:"%h")\" -DFB_COMMIT_LONG=\"$(shell git log -1 --format=format:"%H")\""
+
 all: ${TARGETS} build/hashes.json
 #all: build current ios-executable ios-lib macos android-executable-v7 android-executable-64 windows-executable
 current: build/phoenixbuilder
@@ -66,35 +67,35 @@ release/:
 build/:
 	mkdir build
 build/phoenixbuilder: build/ ${SRCS_GO}
-	CGO_ENABLED=1  go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder
+	CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1  go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder
 build/phoenixbuilder-aarch64: build/ ${SRCS_GO}
-	OBJCOPY=/usr/bin/aarch64-linux-gnu-objcopy CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-aarch64
+	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
 build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}
-	OBJCOPY=${IOS_OBJCOPY} CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-ios-executable
+	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-executable
 	${IOS_STRIP} build/phoenixbuilder-ios-executable
 	${LDID} -Sios-ent.xml build/phoenixbuilder-ios-executable
 build/phoenixbuilder-ios-static.a: build/ ${SRCS_GO}
-	CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -buildmode=c-archive -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-static.a
+	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -buildmode=c-archive -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-static.a
 build/phoenixbuilder-macos-x86_64: build/ ${SRCS_GO}
-	OBJCOPY=${IOS_OBJCOPY} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-macos-x86_64
+	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-x86_64
 build/phoenixbuilder-macos-arm64: build/ ${SRCS_GO}
-	OBJCOPY=${IOS_OBJCOPY} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-macos-arm64
+	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-arm64
 build/phoenixbuilder-macos: build/ build/phoenixbuilder-macos-x86_64 build/phoenixbuilder-macos-arm64 ${SRCS_GO}
 	${LIPO} -create build/phoenixbuilder-macos-x86_64 build/phoenixbuilder-macos-arm64 -output build/phoenixbuilder-macos
 build/phoenixbuilder-android-executable-armv7: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang ${SRCS_GO}
-	OBJCOPY=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/arm-linux-androideabi/bin/objcopy CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang GOOS=android GOARCH=arm CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-android-executable-armv7
+	CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang GOOS=android GOARCH=arm CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-executable-armv7
 build/phoenixbuilder-android-executable-arm64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
-	OBJCOPY=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/aarch64-linux-android/bin/objcopy CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-android-executable-arm64
+	CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-executable-arm64
 build/phoenixbuilder-android-executable-x86: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang ${SRCS_GO}
-	OBJCOPY=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/i686-linux-android/bin/objcopy CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang GOOS=android GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-android-executable-x86
+	CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang GOOS=android GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-executable-x86
 build/phoenixbuilder-android-executable-x86_64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang ${SRCS_GO}
-	OBJCOPY=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/x86_64-linux-android/bin/objcopy CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang GOOS=android GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-android-executable-x86_64
+	CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang GOOS=android GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-executable-x86_64
 build/phoenixbuilder-windows-executable-x86.exe: build/ /usr/bin/i686-w64-mingw32-gcc ${SRCS_GO}
-	OBJCOPY=/usr/bin/i686-w64-mingw32-objcopy CC=/usr/bin/i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-windows-executable-x86.exe
+	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86.exe
 build/phoenixbuilder-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
-	OBJCOPY=/usr/bin/x86_64-w64-mingw32-objcopy CC=/usr/bin/x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -extld `pwd`/archs/redefine-main.js" -o build/phoenixbuilder-windows-executable-x86_64.exe
+	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86_64.exe
 build/phoenixbuilder-windows-shared.dll: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
-	CGO_CFLAGS="-Wl,--enable-stdcall-fixup -luser32 -lcomdlg32 -Wno-pointer-to-int-cast -mwindows -m64 -march=x86-64 -luser32 -lkernel32 -lgdi32 -lwinmm -lcomctl32 -ladvapi32 -lshell32 -lpsapi -nodefaultlibs -nostdlib -lmsvcrt -D_UCRT=1" CC=/usr/bin/x86_64-w64-mingw32-gcc CGO_LDFLAGS="--enable-stdcall-fixup" GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=c-shared -trimpath -o build/phoenixbuilder-windows-shared.dll
+	CGO_CFLAGS="${CGO_DEF} -Wl,--enable-stdcall-fixup -luser32 -lcomdlg32 -Wno-pointer-to-int-cast -mwindows -m64 -march=x86-64 -luser32 -lkernel32 -lgdi32 -lwinmm -lcomctl32 -ladvapi32 -lshell32 -lpsapi -nodefaultlibs -nostdlib -lmsvcrt -D_UCRT=1" CC=/usr/bin/x86_64-w64-mingw32-gcc CGO_LDFLAGS="--enable-stdcall-fixup" GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=c-shared -trimpath -o build/phoenixbuilder-windows-shared.dll
 build/hashes.json: build genhash.js ${TARGETS}
 	node genhash.js
 	cp version build/version
