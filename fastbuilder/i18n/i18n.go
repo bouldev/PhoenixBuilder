@@ -1,13 +1,12 @@
 package I18n
 
 import (
-	"path/filepath"
-	"os"
-	"fmt"
 	"bufio"
-	"strings"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
-	"io/ioutil"
+	"strings"
 )
 
 const (
@@ -202,31 +201,7 @@ func UpdateLanguage() {
 	fmt.Printf("%s\n",T(LanguageUpdated))
 }
 
-func Init() {
-	config:=loadConfigPath()
-	if _, err:=os.Stat(config); os.IsNotExist(err) {
-		SelectLanguage()
-	}else{
-		content, err:=ioutil.ReadFile(config)
-		if (err != nil) {
-			panic("Language config file isn't accessible")
-			return
-		}
-		langCode:=string(content)
-		SelectedLanguage=langCode
-	}
-	langdict, aru := LangDict[SelectedLanguage]
-	if(!aru) {
-		fmt.Printf("Ordered language doesn't exist.\nPlease reselect one:\n")
-		SelectLanguage()
-		langdict, aru=LangDict[SelectedLanguage]
-		if !aru {
-			panic("Language still unexists after reselection")
-			return
-		}
-	}
-	I18nDict=langdict
-}
+
 
 func T(code uint16) string {
 	r, has := I18nDict[code]
