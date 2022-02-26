@@ -1,0 +1,5 @@
+[Details]
+  Icon = "./unbundled_assets/Icon.png"
+  Name = "fastbuilder.fyne.gui"
+  ID = "fastbuilder.fyne.gui"
+  Build = 196
