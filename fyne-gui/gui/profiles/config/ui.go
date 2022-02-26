@@ -2,7 +2,7 @@ package config
 
 import (
 	//"golang.design/x/clipboard"
-	"phoenixbuilder/dedicate/fyne/session"
+	"phoenixbuilder_fyne_gui/dedicate/fyne/session"
 	"strings"
 
 	"fyne.io/fyne/v2"

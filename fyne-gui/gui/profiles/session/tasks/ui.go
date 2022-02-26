@@ -3,7 +3,7 @@ package tasks
 import (
 	"fmt"
 	"log"
-	bot_session "phoenixbuilder/dedicate/fyne/session"
+	bot_session "phoenixbuilder_fyne_gui/dedicate/fyne/session"
 	"strings"
 
 	"fyne.io/fyne/v2"

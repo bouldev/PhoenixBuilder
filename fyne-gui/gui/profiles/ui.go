@@ -7,7 +7,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"phoenixbuilder/dedicate/fyne/session"
+	"phoenixbuilder_fyne_gui/dedicate/fyne/session"
 	"phoenixbuilder_fyne_gui/gui/profiles/config"
 	ui_session "phoenixbuilder_fyne_gui/gui/profiles/session"
 
