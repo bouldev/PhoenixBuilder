@@ -83,7 +83,7 @@ build/phoenixbuilder-ios-app.ipa: build/ build/phoenixbuilder-ios-executable
 	#ln unbundled_assets/*.png build/ipa/Payload/phoenixbuilder.app/
 	ln unbundled_assets/Assets.car build/ipa/Payload/phoenixbuilder.app/
 	ln unbundled_assets/Info.plist build/ipa/Payload/phoenixbuilder.app/
-	rm build/phoenixbuilder-ios-app.ipa
+	rm -f build/phoenixbuilder-ios-app.ipa
 	cd build/ipa&&zip -r ../phoenixbuilder-ios-app.ipa Payload&&cd ../..
 	rm -rf build/ipa
 build/phoenixbuilder-macos-x86_64: build/ ${SRCS_GO}

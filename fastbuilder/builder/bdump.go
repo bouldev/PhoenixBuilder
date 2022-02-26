@@ -1,15 +1,15 @@
 package builder
 
 import (
-	"github.com/andybalholm/brotli"
-	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/bdump"
-	"phoenixbuilder/fastbuilder/i18n"
-	"phoenixbuilder/fastbuilder/world_provider"
-	"fmt"
-	"os"
-	"encoding/binary"
 	"bytes"
+	"encoding/binary"
+	"fmt"
+	"github.com/andybalholm/brotli"
+	"phoenixbuilder/fastbuilder/bdump"
+	bridge_path "phoenixbuilder/fastbuilder/builder/path"
+	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/fastbuilder/world_provider"
 )
 
 func ReadBrString(br *bytes.Buffer) (string, error) {
@@ -29,7 +29,7 @@ func ReadBrString(br *bytes.Buffer) (string, error) {
 }
 
 func BDump(config *types.MainConfig, blc chan *types.Module) error {
-	file, err:=os.OpenFile(config.Path,os.O_RDONLY,0644)
+	file, err:=bridge_path.ReadFile(config.Path)
 	if err!=nil {
 		return I18n.ProcessSystemFileError(err)
 	}

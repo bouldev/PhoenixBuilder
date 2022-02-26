@@ -1,14 +1,14 @@
 package builder
 
 import (
-	"compress/gzip"
-	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/i18n"
 	"bufio"
-	"os"
-	"fmt"
+	"compress/gzip"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
+	bridge_path "phoenixbuilder/fastbuilder/builder/path"
+	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/types"
 	"strconv"
 	"strings"
 )
@@ -38,7 +38,7 @@ func readBig(buf *bufio.Reader,out []byte) error {
 }
 
 func Acme(config *types.MainConfig, blc chan *types.Module) error {
-	file, err := os.Open(config.Path)
+	file, err := bridge_path.ReadFile(config.Path)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
 	}

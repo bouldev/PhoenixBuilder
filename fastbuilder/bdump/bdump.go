@@ -2,10 +2,10 @@ package bdump
 
 import (
 	"github.com/andybalholm/brotli"
+	variant_path "phoenixbuilder/fastbuilder/bdump/path"
 	"phoenixbuilder/fastbuilder/types"
 	"bytes"
 	"fmt"
-	"os"
 	"encoding/binary"
 )
 
@@ -378,9 +378,9 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 }
 
 func (bdump *BDump) WriteToFile(path string) (error, error) {
-	file, err:=os.OpenFile(path, os.O_RDWR|os.O_TRUNC|os.O_CREATE,0666)
+	file, err:=variant_path.CreateFile(path)
 	if err!=nil {
-		return fmt.Errorf("Failed to open file: %v", err), nil
+		return nil,err
 	}
 	defer file.Close()
 	_, err=file.Write([]byte("BD@"))

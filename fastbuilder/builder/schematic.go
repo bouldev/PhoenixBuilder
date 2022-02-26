@@ -2,16 +2,16 @@ package builder
 
 import (
 	"compress/gzip"
-	"github.com/Tnze/go-mc/nbt"
-	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/i18n"
-	"io/ioutil"
-	"os"
 	"fmt"
+	"github.com/Tnze/go-mc/nbt"
+	"io/ioutil"
+	bridge_path "phoenixbuilder/fastbuilder/builder/path"
+	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/types"
 )
 
 func Schematic(config *types.MainConfig, blc chan *types.Module) error {
-	file, err := os.Open(config.Path)
+	file, err:=bridge_path.ReadFile(config.Path)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
 	}

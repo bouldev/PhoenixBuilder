@@ -6,6 +6,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/lucasb-eyer/go-colorful"
 	"image"
+	bridge_path "phoenixbuilder/fastbuilder/builder/path"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/i18n"
 )
@@ -207,7 +208,7 @@ func GetYMap(blocks [][]*colorBlock, MapY int) [][]int {
 }
 
 func MapArt(config *types.MainConfig, blc chan *types.Module) error {
-	path := config.Path
+	//path := config.Path
 	MapX := config.MapX
 	MapZ := config.MapZ
 	MapY := config.MapY
@@ -222,7 +223,8 @@ func MapArt(config *types.MainConfig, blc chan *types.Module) error {
 
 	}
 	pos := config.Position
-	img, err := imaging.Open(path)
+	file, err:=bridge_path.ReadFile(config.Path)
+	img, err := imaging.Decode(file)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
 	}

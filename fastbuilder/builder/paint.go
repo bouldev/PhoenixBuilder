@@ -4,8 +4,9 @@ import (
 	"errors"
 	"github.com/disintegration/imaging"
 	"github.com/lucasb-eyer/go-colorful"
-	"phoenixbuilder/fastbuilder/types"
+	bridge_path "phoenixbuilder/fastbuilder/builder/path"
 	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/types"
 )
 
 type ColorBlock struct {
@@ -14,12 +15,12 @@ type ColorBlock struct {
 }
 
 func Paint(config *types.MainConfig, blc chan *types.Module) error {
-	path := config.Path
 	width := config.Width
 	height := config.Height
 	facing := config.Facing
 	pos := config.Position
-	img, err := imaging.Open(path)
+	file, err:=bridge_path.ReadFile(config.Path)
+	img, err := imaging.Decode(file)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
 	}
