@@ -1,3 +1,5 @@
+// +build ios
+
 #import <Foundation/Foundation.h>
 
 void NetworkRequest() {
