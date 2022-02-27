@@ -23,6 +23,7 @@ type MainConfig struct {
 	Execute               string
 	Block, OldBlock       *ConstBlock
 	End, Position         Position //Position=Begin
+	ResumeFrom 			  float64
 	Radius                int
 	Length, Width, Height int
 	MapX, MapZ, MapY      int

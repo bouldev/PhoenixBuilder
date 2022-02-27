@@ -157,6 +157,7 @@ task命令用于管理当前的【**任务**】（每个**建筑进程**都被�
 
 ````shell
 tasktype <type:async|sync> # Task类型，sync不支持进度显示，一边计算一边发送数据，async则是完成计算后发送，支持速度显示
+当使用async模式时，所有的构建指令都支持 -resume 百分比 参数，例如 bdump -p xx.bdx -resume 90 即为跳过前90%，只构建最后 10%
 task list # 列出所有任务的ID，内容以及状态
 task pause <taskID> # 暂停某个任务
 task resume <taskID> # 恢复某个被暂停的任务

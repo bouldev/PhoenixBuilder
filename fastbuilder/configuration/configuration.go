@@ -1,8 +1,8 @@
 package configuration
 
 import (
-	"phoenixbuilder/fastbuilder/types"
 	"github.com/google/uuid"
+	"phoenixbuilder/fastbuilder/types"
 )
 
 const (
@@ -41,6 +41,7 @@ func CreateFullConfig() *FullConfig {
 			Y: 0,
 			Z: 0,
 		},
+		ResumeFrom: 0,
 		Radius:    5,
 		Length:    0,
 		Width:     0,

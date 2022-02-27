@@ -2,10 +2,10 @@ package parsing
 
 import (
 	"flag"
-	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/i18n"
-	"strings"
 	"fmt"
+	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/types"
+	"strings"
 )
 
 func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, error) {
@@ -104,6 +104,9 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 	FlagSet.StringVar(&Config.OldBlock.Name,"ob",defaultConfig.OldBlock.Name,"Blocks that make up the building")
 	FlagSet.IntVar(&tempOldBlockData,"old_data",int(defaultConfig.OldBlock.Data),"The data of Block")
 	FlagSet.IntVar(&tempOldBlockData,"od",int(defaultConfig.OldBlock.Data),"The data of Block")
+	// Resume
+	FlagSet.Float64Var(&Config.ResumeFrom,"resume",float64(defaultConfig.ResumeFrom),"Resume Construction from percentage, async only")
+
 
 	FlagSet.Parse(SLC[1:])
 	/*for k, _ := range builder.Builder {
