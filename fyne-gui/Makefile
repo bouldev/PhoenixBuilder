@@ -87,9 +87,9 @@ build/phoenixbuilder-ios-app.ipa: build/ build/phoenixbuilder-ios-executable
 	cd build/ipa&&zip -r ../phoenixbuilder-ios-app.ipa Payload&&cd ../..
 	rm -rf build/ipa
 build/phoenixbuilder-macos-x86_64: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 -tags fyne_gui go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-x86_64
+	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -tags fyne_gui -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-x86_64
 build/phoenixbuilder-macos-arm64: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 -tags fyne_gui go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-arm64
+	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -tags fyne_gui -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-arm64
 build/phoenixbuilder-macos: build/ build/phoenixbuilder-macos-x86_64 build/phoenixbuilder-macos-arm64 ${SRCS_GO}
 	${LIPO} -create build/phoenixbuilder-macos-x86_64 build/phoenixbuilder-macos-arm64 -output build/phoenixbuilder-macos
 build/phoenixbuilder-android-executable-armv7: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang ${SRCS_GO}

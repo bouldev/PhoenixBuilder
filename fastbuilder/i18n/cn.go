@@ -112,7 +112,7 @@ var I18nDict_cn map[uint16]string = map[uint16]string{
 	Auth_InvalidToken: "无效Token，请重新登录。",
 	Auth_UserCombined: "该用户已经合并到另一个账户中，请使用新账户登录。",
 	Auth_InvalidFBVersion: "FastBuilder 版本无效，请更新。",
-	Notify_TurnOnCmdFeedBack:            "FastBuilder 需要 sendcommandfeedback 为 true，请输入:\"/gamerule sendcommandfeedfack true\"并重启 FastBuilder。",
+	Notify_TurnOnCmdFeedBack:            "需要 sendcommandfeedback 为 true，我们已经为你打开该选项，记得使用完后关闭",
 	Notify_NeedOp:                       "需要 OP 权限以正常工作。",
 
 }
