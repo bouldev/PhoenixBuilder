@@ -10,7 +10,9 @@ import (
 	"github.com/pterm/pterm"
 	"golang.org/x/term"
 	"io/ioutil"
+	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/command"
@@ -279,10 +281,13 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	configuration.OneId=oneId
 	types.ForwardedBrokSender=fbtask.BrokSender
 	go func() {
+		logger,closeFn :=makeLogFile()
+		defer closeFn()
 		reader:=bufio.NewReader(os.Stdin)
 		for {
 			//cmd, _:=getInput()
 			inp, _ := reader.ReadString('\n')
+			logger.Println(inp)
 			cmd:=strings.TrimRight(inp,"\r\n")
 			if len(cmd) == 0 {
 				continue
@@ -756,4 +761,15 @@ func loadTokenPath() string {
 	os.MkdirAll(fbconfigdir, 0755)
 	token := filepath.Join(fbconfigdir,"fbtoken")
 	return token
+}
+
+func makeLogFile() (*log.Logger,func()) {
+	homedir, err := os.UserHomeDir()
+	fileName := path.Join(homedir, ".config/fastbuilder/history.log")
+	logFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil && os.IsNotExist(err) {
+		fmt.Printf("Cannot create or append Log file %v (%v)\n", fileName, err)
+		return log.New(os.Stdout,"",log.Ldate|log.Ltime), func() {}
+	}
+	return log.New(logFile, "", log.Ldate|log.Ltime), func() {logFile.Close()}
 }

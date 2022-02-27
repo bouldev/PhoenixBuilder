@@ -7,6 +7,7 @@ import (
 	"phoenixbuilder_fyne_gui/gui/assets"
 	"phoenixbuilder_fyne_gui/gui/global"
 	"phoenixbuilder_fyne_gui/gui/profiles"
+	"phoenixbuilder/fastbuilder/args"
 	my_theme "phoenixbuilder_fyne_gui/gui/theme"
 	"phoenixbuilder_fyne_gui/platform_helper"
 
@@ -103,7 +104,8 @@ func main() {
 	global.MakeThemeToggleBtn(app, appTheme)
 	global.MakeInformPopButton(topWindow)
 	// global.MakeDebugButton(app, setContent, getContent)
-	global.MakeBannner("v0.0.4")
+	global.MakeReadMePopupButton(topWindow)
+	global.MakeBannner(args.GetFBVersion())
 
 	//vsplit := container.NewVSplit(debugContent, majorContent)
 	//vsplit.Offset = 0.05

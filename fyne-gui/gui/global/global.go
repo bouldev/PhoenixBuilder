@@ -2,6 +2,7 @@ package global
 
 import (
 	"fmt"
+	"net/url"
 	"phoenixbuilder_fyne_gui/gui/assets"
 	my_theme "phoenixbuilder_fyne_gui/gui/theme"
 
@@ -16,6 +17,7 @@ import (
 
 var ThemeToggleBtn *ThemeToggler
 var InformBtn *widget.Button
+var ReadmeBtn *widget.Button
 var Banner *fyne.Container
 var DebugBtn *widget.Button
 
@@ -68,6 +70,53 @@ func MakeThemeToggleBtn(app fyne.App, appTheme *my_theme.MyTheme) *ThemeToggler 
 	return ThemeToggleBtn
 }
 
+func MakeReadMePopupButton(win fyne.Window) *widget.Button{
+	if ReadmeBtn != nil {
+		return InformBtn
+	}
+	ReadmeBtn = &widget.Button{
+		DisableableWidget: widget.DisableableWidget{},
+		Text:              "",
+		Icon:              theme.QuestionIcon(),
+		Importance:        widget.LowImportance,
+		Alignment:         0,
+		IconPlacement:     0,
+		OnTapped: func() {
+			uclink:=&widget.Hyperlink{
+				Text:       "用户中心",
+				URL:        &url.URL{Path: "http://uc.fastbuilder.pro/"},
+				TextStyle:  fyne.TextStyle{Bold: true},
+			}
+			uclink.SetURLFromString("http://uc.fastbuilder.pro/")
+			downloadLink:=&widget.Hyperlink{
+				Text:       "软件下载/更新",
+				URL:        &url.URL{Path: "https://storage.fastbuilder.pro/epsilon/"},
+				TextStyle:  fyne.TextStyle{Bold: true},
+			}
+			downloadLink.SetURLFromString("https://storage.fastbuilder.pro/epsilon/")
+			readmeLink:=&widget.Hyperlink{
+				Text:       "FB使用教程",
+				URL:        &url.URL{Path: "https://fastbuilder.pro/phoenix.cn.html"},
+				TextStyle:  fyne.TextStyle{Bold: true},
+			}
+			readmeLink.SetURLFromString("https://fastbuilder.pro/phoenix.cn.html")
+			nbtLink:=&widget.Hyperlink{
+				Text:       "NBT教程",
+				URL:        &url.URL{Path: "https://fastbuilder.pro/nbt.html"},
+				TextStyle:  fyne.TextStyle{Bold: true},
+			}
+			nbtLink.SetURLFromString("https://fastbuilder.pro/nbt.html")
+			dialog.ShowCustom("帮助链接","知道了",container.NewVBox(
+				uclink,
+				readmeLink,
+				downloadLink,
+				nbtLink,
+			), win)
+		},
+	}
+	return ReadmeBtn
+}
+
 func MakeInformPopButton(win fyne.Window) *widget.Button {
 	if InformBtn != nil {
 		return InformBtn
@@ -80,7 +129,18 @@ func MakeInformPopButton(win fyne.Window) *widget.Button {
 		Alignment:         0,
 		IconPlacement:     0,
 		OnTapped: func() {
-			dialog.NewInformation("说明", "本项目是PhoenixBuilder的GUI版本\n项目的核心(FB)为:\nhttps://github.com/LNSSPsd/PhoenixBuilder\n核心功能开发者为: Ruphane, CAIMEO\n界面开发者: CMA2401PT", win).Show()
+			dialog.ShowCustom("说明","知道了",widget.NewRichTextWithText(`
+## 版权相关信息:  
+FastBuilder Phoenix 使用了来自  
+Sandertv所作之Gophertunnel的代码，  
+其被以 MIT 协议发布于  
+https://github.com/Sandertv/gophertunnel  
+  
+ファスト　ビルダー  
+F A S T  B U I L D E R  
+Contributors: Ruphane, CAIMEO  
+Copyright (c) FastBuilder DevGroup, Bouldev 2022 
+`), win)
 		},
 	}
 	return InformBtn
@@ -218,15 +278,13 @@ func MakeBannner(build string) *fyne.Container {
 	if Banner != nil {
 		return Banner
 	}
-	var Right fyne.CanvasObject
-	if DebugBtn == nil {
-		Right = container.NewGridWithColumns(2, InformBtn, ThemeToggleBtn.Btn)
-	} else {
-		Right = container.NewGridWithColumns(3, DebugBtn, InformBtn, ThemeToggleBtn.Btn)
+	allBtns:=[]fyne.CanvasObject{ThemeToggleBtn.Btn,ReadmeBtn,InformBtn}
+	if DebugBtn!=nil{
+		allBtns=append(allBtns, DebugBtn)
 	}
 	Banner = container.NewBorder(nil, &widget.Separator{},
-		widget.NewLabel("FB.Gui (Alpha) "+build),
-		Right,
+		widget.NewLabel("FB."+build),
+		container.NewGridWithColumns(len(allBtns),allBtns...),
 		widget.NewLabel(""),
 	)
 	return Banner

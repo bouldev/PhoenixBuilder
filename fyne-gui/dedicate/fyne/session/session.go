@@ -189,22 +189,6 @@ func (s *Session) beforeStart() (err error) {
 		}
 	}()
 
-	// print copyright
-	bridge_fmt.Print("The Following are copyright of Phoenix Builder Inside:")
-	bridge_fmt.Print(I18n.T(I18n.Copyright_Notice_Headline))
-	bridge_fmt.Print(I18n.T(I18n.Copyright_Notice_Line_1))
-	bridge_fmt.Print(I18n.T(I18n.Copyright_Notice_Line_2))
-	bridge_fmt.Print(I18n.T(I18n.Copyright_Notice_Line_3))
-	bridge_fmt.Print("https://github.com/Sandertv/gophertunnel")
-	bridge_fmt.Print("ファスト　ビルダー")
-	bridge_fmt.Print("F A S T  B U I L D E R")
-	bridge_fmt.Print("Contributors: Ruphane, CAIMEO")
-	bridge_fmt.Print("Copyright (c) FastBuilder DevGroup, Bouldev 2022")
-	bridge_fmt.Print("FastBuilder Phoenix " + s.Config.FBVersion)
-	if I18n.ShouldDisplaySpecial() {
-		bridge_fmt.Printf("%s", I18n.T(I18n.Special_Startup))
-	}
-
 	// check credentials
 	if (s.Config.FBUserName == "" || s.Config.FBPassword == "") && s.Config.FBToken == "" {
 		return fmt.Errorf("no credientials provided")
