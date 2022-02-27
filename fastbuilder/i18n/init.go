@@ -2,6 +2,12 @@
 
 package I18n
 
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
 func Init() {
 	config:=loadConfigPath()
 	if _, err:=os.Stat(config); os.IsNotExist(err) {
