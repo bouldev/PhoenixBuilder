@@ -356,21 +356,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			function.Process(conn, cmd)
 		}
 	}()
-	go func() {
-		// fb can not work properly when "sendcommandfeedback=false", we need to notify the user
-		for _, rule := range conn.GameData().GameRules {
-			if rule.Name=="sendcommandfeedback" {
-				sendcommandfeedbackStatus:=rule.Value.(bool)
-				if !sendcommandfeedbackStatus {
-					command.SendSizukanaCommand("gamerule sendcommandfeedback true", conn)
-				}
-				if(!rule.CanBeModifiedByPlayer) {
-					sendChat(I18n.T(I18n.Notify_NeedOp), conn)
-				}
-				break
-			}
-		}
-	} ()
 
 	// A loop that reads packets from the connection until it is closed.
 	for {
@@ -448,6 +433,21 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				})
 			}
 			break
+		case *packet.SetCommandsEnabled:
+			if(!p.Enabled) {
+				sendChat(I18n.T(I18n.Notify_NeedOp), conn)
+			}
+		case *packet.GameRulesChanged:
+			for _, rule := range p.GameRules {
+				//fmt.Println(rule.Name, " ", rule.Value)
+				if rule.Name == "sendcommandfeedback" {
+					sendCommandFeedBack := rule.Value.(bool)
+					if !sendCommandFeedBack{
+						sendChat(I18n.T(I18n.Notify_TurnOnCmdFeedBack), conn)
+						//command.SendSizukanaCommand("gamerule sendcommandfeedback true", conn)
+					}
+				}
+			}
 		case *packet.StructureTemplateDataResponse:
 			//fmt.Printf("RESPONSE %+v\n",p.StructureTemplate)
 			fbtask.ExportWaiter<-p.StructureTemplate

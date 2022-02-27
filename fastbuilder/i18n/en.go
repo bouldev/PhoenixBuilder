@@ -104,7 +104,7 @@ var I18nDict_en map[uint16]string = map[uint16]string{
 	Auth_InvalidToken: "Invalid login token.",
 	Auth_UserCombined: "Given user has been combined to another account, please login using another account's information.",
 	Auth_InvalidFBVersion: "Invalid FastBuilder version, please update.",
-	Notify_TurnOnCmdFeedBack:            "FastBuilder requires gamerule sendcommandfeedback to be true, please execute command:\"/gamerule sendcommandfeedfack true\" and restart FastBuilder.",
+	Notify_TurnOnCmdFeedBack:            "FastBuilder requires gamerule sendcommandfeedback to be true, we have already turn it on, and remember to turn it off",
 	Notify_NeedOp:                       "FastBuilder requires operator privilege.",
 
 }
