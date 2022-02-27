@@ -131,6 +131,21 @@ func (g *GUI) makeIntEntry(v int, name string, hint string) (*widget.FormItem, f
 	return &widget.FormItem{Text: name, Widget: widget.NewEntryWithData(binding.IntToString(bv)), HintText: hint}, getter
 }
 
+func (g *GUI) makeIntOption(v int, describe string) (fyne.CanvasObject, func() (int, error)) {
+	cv := v
+	bv := binding.BindInt(&cv)
+	getter := func() (int, error) {
+		gv, err := bv.Get()
+		if err != nil {
+			err = fmt.Errorf("%v数据错误\n%v", describe, err)
+			dialog.NewError(err, g.masterWindow).Show()
+		}
+		return gv, err
+	}
+	return container.NewBorder(nil,nil,widget.NewLabel(describe),nil,widget.NewEntryWithData(binding.IntToString(bv))), getter
+}
+
+
 func (g *GUI) makeSelectEntry(options []string, name string, hint string) (*widget.FormItem, func() (string, error)) {
 	coptions := make([]string, len(options))
 	copy(coptions, options)
@@ -484,7 +499,7 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 	blockFormItem, blockGet := g.makeStringEntry("air", "方块", "方块名称")
 	blockdataFormItem, blockdataGet := g.makeIntEntry(0, "值", "方块特殊值")
 	shpere_shapeFormItem, shpere_shapeGet := g.makeTranslateRGSelectEntry([]string{"空心", "实心"}, []string{"hollow", "solid"}, "球填充", "空心则只有一个壳")
-
+	resumeFormItem,resumeGet:=g.makeIntEntry(0,"恢复构建于","百分比,从上次构建中断处继续")
 	c := container.NewDocTabs(
 		&container.TabItem{
 			Text: "圆面/圈",
@@ -496,6 +511,7 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 					// heightFormItem, this doesn't work
 					blockFormItem,
 					blockdataFormItem,
+					resumeFormItem,
 				),
 				container.NewGridWithColumns(2, widget.NewLabel("圆心位置"), g.startPos.UpdateBtn),
 				g.startPos.PosContent(),
@@ -520,11 +536,15 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 					if err != nil {
 						return
 					}
+					resume,err:=resumeGet()
+					if err!=nil{
+						return
+					}
 					err = g.setStartPos()
 					if err != nil {
 						return
 					}
-					g.sendCmdAndClose(fmt.Sprintf("%v -r %v -f %v -h 1 -b %v -d %v", target, radius, facing, block, blockData))
+					g.sendCmdAndClose(fmt.Sprintf("%v -r %v -f %v -h 1 -b %v -d %v -resume %v", target, radius, facing, block, blockData,resume))
 				}),
 			),
 		},
@@ -532,7 +552,8 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 			Text: "球",
 			Content: container.NewVBox(widget.NewForm(
 				radiusFormItem,
-				shpere_shapeFormItem),
+				shpere_shapeFormItem,
+				resumeFormItem),
 				container.NewGridWithColumns(2, widget.NewLabel("球心位置"), g.startPos.UpdateBtn),
 				g.startPos.PosContent(),
 				g.makeConfirmButton("绘制", func() {
@@ -544,11 +565,15 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 					if err != nil {
 						return
 					}
+					resume,err:=resumeGet()
+					if err!=nil{
+						return
+					}
 					err = g.setStartPos()
 					if err != nil {
 						return
 					}
-					g.sendCmdAndClose(fmt.Sprintf("sphere -r %v -s %v", radius, shape))
+					g.sendCmdAndClose(fmt.Sprintf("sphere -r %v -s %v -resume %v", radius, shape,resume))
 				}),
 			),
 		},
@@ -557,7 +582,8 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 			Content: container.NewVBox(widget.NewForm(
 				lengthFormItem,
 				widthFormItem,
-				facingFormItem),
+				facingFormItem,
+				resumeFormItem),
 				container.NewGridWithColumns(2, widget.NewLabel("圆心位置"), g.startPos.UpdateBtn),
 				g.startPos.PosContent(),
 				g.makeConfirmButton("绘制", func() {
@@ -573,11 +599,15 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 					if err != nil {
 						return
 					}
+					resume,err:=resumeGet()
+					if err!=nil{
+						return
+					}
 					err = g.setStartPos()
 					if err != nil {
 						return
 					}
-					g.sendCmdAndClose(fmt.Sprintf("ellipse -l %v -w %v -f %v", length, width, facing))
+					g.sendCmdAndClose(fmt.Sprintf("ellipse -l %v -w %v -f %v -resume %v", length, width, facing, resume))
 				}),
 			),
 		},
@@ -586,7 +616,8 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 			Content: container.NewVBox(widget.NewForm(
 				lengthFormItem,
 				widthFormItem,
-				heightFormItem),
+				heightFormItem,
+				resumeFormItem),
 				container.NewGridWithColumns(2, widget.NewLabel("球心位置"), g.startPos.UpdateBtn),
 				g.startPos.PosContent(),
 				g.makeConfirmButton("绘制", func() {
@@ -602,11 +633,15 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 					if err != nil {
 						return
 					}
+					resume,err:=resumeGet()
+					if err!=nil{
+						return
+					}
 					err = g.setStartPos()
 					if err != nil {
 						return
 					}
-					g.sendCmdAndClose(fmt.Sprintf("ellipsoid -l %v -w %v -h %v", length, width, height))
+					g.sendCmdAndClose(fmt.Sprintf("ellipsoid -l %v -w %v -h %v -resume %v", length, width, height,resume))
 				}),
 			),
 		},
@@ -619,12 +654,14 @@ func (g *GUI) makeBuildingContent() fyne.CanvasObject {
 	invalidatecommandsOption, invalidateCommandsGet := g.makeBoolOption(false, "导入，但无效化命令方块中的命令")
 	strictOption, strictGet := g.makeBoolOption(true, "验证文件签名")
 	pathOption, pathGet := g.makeReadPathOption("选择建筑文件", ".schematic/.bdx/.mcacblock", []string{".schematic", ".bdx", ".mcacblock"})
+	resumeOption,resumeGet:=g.makeIntOption(0,"恢复构建于(百分比),用于上次构造部分完成时")
 	return container.NewVBox(
 		widget.NewLabel("支持 schematic/bdx/mcacblock 文件"),
 		pathOption,
 		excludecommandsOption,
 		invalidatecommandsOption,
 		strictOption,
+		resumeOption,
 		container.NewGridWithColumns(2, widget.NewLabel("建筑起点位置"), g.startPos.UpdateBtn),
 		g.startPos.PosContent(),
 		g.makeConfirmButton("导入", func() {
@@ -654,6 +691,10 @@ func (g *GUI) makeBuildingContent() fyne.CanvasObject {
 			if strict {
 				flags = append(flags, "--strict")
 			}
+			resume,err:=resumeGet()
+			if err!=nil{
+				return
+			}
 			flagStr := strings.Join(flags, " ")
 			err = g.setStartPos()
 			if err != nil {
@@ -668,6 +709,7 @@ func (g *GUI) makeBuildingContent() fyne.CanvasObject {
 			} else if ext == ".bdx" {
 				cmd = "bdump -p " + cmd
 			}
+			cmd+=fmt.Sprintf(" -resume %v",resume)
 			// g.addMonkeyPathReader(path, fp)
 			g.sendCmdAndClose(cmd)
 		}),
@@ -680,12 +722,13 @@ func (g *GUI) makePlotContent() fyne.CanvasObject {
 	mapXFormItem, mapXGet := g.makeIntEntry(1, "横向", "横向由几张地图构成")
 	mapZFormItem, mapZGet := g.makeIntEntry(1, "纵向", "纵向由几张地图构成")
 	mapYFormItem, mapYGet := g.makeIntEntry(0, "允许使用高度", ">40时通过阴影产生更多颜色")
+	resumeOption,resumeGet:=g.makeIntEntry(0,"恢复构建于","百分比,用于上次构造部分完成时")
 	c := container.NewDocTabs(
 		&container.TabItem{
 			Text: "图片",
 			Content: container.NewVBox(
 				pathOption,
-				widget.NewForm(facingFormItem),
+				widget.NewForm(facingFormItem,resumeOption),
 				widget.NewLabel("提示:起点为64的奇数倍时可以和地图对齐"),
 				container.NewGridWithColumns(2, widget.NewLabel("图片绘制起点"), g.startPos.UpdateBtn),
 				g.startPos.PosContent(),
@@ -698,12 +741,16 @@ func (g *GUI) makePlotContent() fyne.CanvasObject {
 					if err != nil {
 						return
 					}
+					resume,err:=resumeGet()
+					if err!=nil{
+						return
+					}
 					err = g.setStartPos()
 					if err != nil {
 						return
 					}
 					// g.addMonkeyPathReader(path, fp)
-					g.sendCmdAndClose(fmt.Sprintf("plot -p %v -f %v", path, facing))
+					g.sendCmdAndClose(fmt.Sprintf("plot -p %v -f %v -resume %v", path, facing,resume))
 				}),
 			),
 		},
@@ -714,6 +761,7 @@ func (g *GUI) makePlotContent() fyne.CanvasObject {
 				widget.NewForm(mapXFormItem,
 					mapZFormItem,
 					mapYFormItem,
+					resumeOption,
 				),
 				widget.NewLabel("提示:起点为64的奇数倍时可以和地图对齐"),
 				container.NewGridWithColumns(2, widget.NewLabel("图片绘制起点"), g.startPos.UpdateBtn),
@@ -738,12 +786,16 @@ func (g *GUI) makePlotContent() fyne.CanvasObject {
 					if mapY < 20 {
 						mapY = 0
 					}
+					resume,err:=resumeGet()
+					if err!=nil{
+						return
+					}
 					err = g.setStartPos()
 					if err != nil {
 						return
 					}
 					// g.addMonkeyPathReader(path, fp)
-					g.sendCmdAndClose(fmt.Sprintf("mapart -p %v -mapX %v -mapZ %v -mapY %v", path, mapX, mapZ, mapY))
+					g.sendCmdAndClose(fmt.Sprintf("mapart -p %v -mapX %v -mapZ %v -mapY %v -resume %v", path, mapX, mapZ, mapY,resume))
 				}),
 			),
 		},

@@ -1,21 +1,22 @@
 package task
+
 import (
-	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/parsing"
+	"fmt"
+	"github.com/google/uuid"
+	"go.uber.org/atomic"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/configuration"
+	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/parsing"
+	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/minecraft"
-	"phoenixbuilder/fastbuilder/i18n"
-	"go.uber.org/atomic"
-	"sync"
-	"fmt"
-	"time"
 	"runtime"
 	"strings"
-	"github.com/google/uuid"
+	"sync"
+	"time"
 )
 
 const (
@@ -177,8 +178,20 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				Total: total,
 				BeginTime: t1,
 			}
+			skipBlocks:=int(cfg.ResumeFrom*float64(task.AsyncInfo.Total)/100.0)
+			skipBlocks-=10
+			if skipBlocks<=0{
+				skipBlocks=0
+			}else{
+				if skipBlocks>task.AsyncInfo.Total{
+					skipBlocks=task.AsyncInfo.Total
+				}
+				fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n",skipBlocks)
+			}
 			for _, blk := range blocks {
-				blockschannel <- blk
+				if task.AsyncInfo.Built>skipBlocks{
+					blockschannel <- blk
+				}
 				task.AsyncInfo.Built++
 			}
 			close(blockschannel)

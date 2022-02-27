@@ -106,5 +106,5 @@ var I18nDict_en map[uint16]string = map[uint16]string{
 	Auth_InvalidFBVersion: "Invalid FastBuilder version, please update.",
 	Notify_TurnOnCmdFeedBack:            "FastBuilder requires gamerule sendcommandfeedback to be true, we have already turn it on, and remember to turn it off",
 	Notify_NeedOp:                       "FastBuilder requires operator privilege.",
-
+	Task_ResumeBuildFrom: "Resume Build From Block Number %v ",
 }

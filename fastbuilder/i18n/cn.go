@@ -114,5 +114,5 @@ var I18nDict_cn map[uint16]string = map[uint16]string{
 	Auth_InvalidFBVersion: "FastBuilder 版本无效，请更新。",
 	Notify_TurnOnCmdFeedBack:            "需要 sendcommandfeedback 为 true，我们已经为你打开该选项，记得使用完后关闭",
 	Notify_NeedOp:                       "需要 OP 权限以正常工作。",
-
+	Task_ResumeBuildFrom: "从第 %v 个方块处恢复构建",
 }
