@@ -1,17 +1,19 @@
 package session
 
 import (
+	"bufio"
 	"fmt"
 	"phoenixbuilder_fyne_gui/gui/profiles/config"
 	"phoenixbuilder_fyne_gui/gui/profiles/session/list_terminal"
 	"phoenixbuilder_fyne_gui/gui/profiles/session/task_config"
 	"phoenixbuilder_fyne_gui/gui/profiles/session/tasks"
+	"phoenixbuilder_fyne_gui/gui/utils"
 	"strings"
 	"time"
 
 	bot_bridge_command "phoenixbuilder/fastbuilder/command"
-	bot_session "phoenixbuilder_fyne_gui/dedicate/fyne/session"
 	bot_bridge_fmt "phoenixbuilder_fyne_gui/dedicate/fyne/bridge"
+	bot_session "phoenixbuilder_fyne_gui/dedicate/fyne/session"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -19,6 +21,11 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
+
+type LogEntry struct {
+	time time.Time
+	cmd string
+}
 
 type GUI struct {
 	setContent   func(v fyne.CanvasObject)
@@ -51,12 +58,14 @@ type GUI struct {
 	alreadyClosed                   bool
 	terminateChan                   chan string
 	BotSession                      *bot_session.Session
+	OperationLogs []*LogEntry
 }
 
 func New(config *config.SessionConfigWithName, writeBackConfigFn func()) *GUI {
 	gui := &GUI{
 		sessionConfig:     config,
 		writeBackConfigFn: writeBackConfigFn,
+		OperationLogs: make([]*LogEntry,0),
 	}
 	return gui
 }
@@ -87,6 +96,7 @@ func (g *GUI) closeGUI() {
 func (g *GUI) sendCmd(s string) {
 	s = strings.TrimSpace(s)
 	fmt.Println("Cmd:", s)
+	g.logOperation(s)
 	g.cmdInputBar.SetText("")
 	g.term.AppendNewLine(s, true)
 	g.BotSession.Execute(s)
@@ -176,11 +186,27 @@ func (g *GUI) makeToolContent() fyne.CanvasObject {
 		},
 	}
 	var cmdInputRight *fyne.Container
+	var cmdInputLeft *fyne.Container
 	if fyne.CurrentDevice().IsMobile() {
 		cmdInputRight = container.NewGridWithColumns(2, g.leftKeyEntryButton, g.handleCmdInputButton)
 	} else {
 		cmdInputRight = container.NewGridWithColumns(1, g.handleCmdInputButton)
 	}
+	cmdInputLeft = container.NewGridWithColumns(2, &widget.Button{
+		Text:       "",
+		Icon:       theme.CancelIcon(),
+		Importance: widget.MediumImportance,
+		OnTapped: func() {
+			g.cmdInputBar.SetText("")
+		},
+	}, &widget.Button{
+		Text:       "",
+		Icon:       theme.HistoryIcon(),
+		Importance: widget.MediumImportance,
+		OnTapped: func() {
+			g.PopupOperationLog()
+		},
+	})
 
 	g.quitButton = widget.NewButton("结束会话", func() {
 		g.closeGUI()
@@ -202,14 +228,7 @@ func (g *GUI) makeToolContent() fyne.CanvasObject {
 	g.titleRedirectBar.Hide()
 	g.functionGroup = container.NewVBox(
 		g.titleRedirectBar,
-		container.NewBorder(nil, nil, &widget.Button{
-			Text:       "",
-			Icon:       theme.CancelIcon(),
-			Importance: widget.MediumImportance,
-			OnTapped: func() {
-				g.cmdInputBar.SetText("")
-			},
-		}, cmdInputRight, g.cmdInputBar),
+		container.NewBorder(nil, nil,cmdInputLeft , cmdInputRight, g.cmdInputBar),
 		container.NewGridWithColumns(3,
 			g.quitButton, g.taskSettingsButton, g.createFromTemplateBtn,
 		),
@@ -218,6 +237,68 @@ func (g *GUI) makeToolContent() fyne.CanvasObject {
 
 	g.functionGroup.Hide()
 	return container.NewVBox(g.loadingIndicator, g.functionGroup)
+}
+
+func (g *GUI) PopupOperationLog(){
+	currentPage:=g.getContent()
+	expandEntry:=widget.NewMultiLineEntry()
+	timeLable:=widget.NewLabel("time")
+	DetailHeader:=container.NewVBox(timeLable,expandEntry)
+	expandEntry.Disable()
+	DetailHeader.Hide()
+	LogList:=widget.NewList(func() int {
+		return len(g.OperationLogs)
+	}, func() fyne.CanvasObject {
+		dataLabel:=widget.NewLabel("cmd")
+		dataLabel.Wrapping=fyne.TextTruncate
+		hiddenTimeLable:=widget.NewLabel("time")
+		hiddenTimeLable.Hide()
+		return container.NewBorder(nil,nil,hiddenTimeLable,
+			container.NewGridWithColumns(2,
+				&widget.Button{
+					DisableableWidget: widget.DisableableWidget{},
+					Icon:              theme.ContentCopyIcon(),
+					Importance:        widget.LowImportance,
+					OnTapped: func() {g.masterWindow.Clipboard().SetContent(dataLabel.Text)},
+				},&widget.Button{
+					DisableableWidget: widget.DisableableWidget{},
+					Icon:              theme.VisibilityIcon(),
+					Importance:        widget.LowImportance,
+					OnTapped: func() {
+						if DetailHeader.Hidden {
+							DetailHeader.Show()
+						}
+						expandEntry.SetText(dataLabel.Text)
+						timeLable.SetText(hiddenTimeLable.Text)
+					},
+				},
+			),dataLabel,
+		)
+	}, func(id widget.ListItemID, object fyne.CanvasObject) {
+		object.(*fyne.Container).Objects[0].(*widget.Label).SetText(g.OperationLogs[id].cmd)
+		////(*widget.Label).SetText(g.OperationLogs[id].time.Format("2006-01-02 15:04:05"))
+		object.(*fyne.Container).Objects[1].(*widget.Label).
+			SetText(g.OperationLogs[id].time.Format("2006-01-02 15:04:05"))
+	})
+	LogPage:=container.NewBorder(
+	//&widget.Button{
+	//	Text:              "insert",
+	//	Icon:              theme.CancelIcon(),
+	//	Importance:        widget.MediumImportance,
+	//	OnTapped: func() {
+	//		g.OperationLogs=append(g.OperationLogs,&LogEntry{time.Now(),"insert"})
+	//		LogList.Refresh()
+	//	},},
+	DetailHeader,
+	&widget.Button{
+		Text:              "关闭",
+		Icon:              theme.CancelIcon(),
+		Importance:        widget.MediumImportance,
+		OnTapped: func() {
+			g.setContent(currentPage)
+		},
+	},nil,nil, LogList)
+	g.setContent(LogPage)
 }
 
 func (g *GUI) GetContent(setContent func(v fyne.CanvasObject), getContent func() fyne.CanvasObject, masterWindow fyne.Window, app fyne.App) fyne.CanvasObject {
@@ -257,6 +338,8 @@ func (g *GUI) AfterMount() {
 			return
 		}
 		g.writeBackConfigFn()
+		g.loadOperationLogFile()
+		defer g.writeBackOperationLog()
 		g.taskMenu = tasks.New(g.BotSession, g.sendCmd, g.app)
 		g.createFromTemplateBtn.OnTapped = func() {
 			g.setContent(g.taskMenu.GetContent(g.setContent, g.getContent, g.masterWindow))
@@ -273,4 +356,42 @@ func (g *GUI) AfterMount() {
 			return
 		}
 	}()
+}
+
+func (g *GUI) loadOperationLogFile() {
+	fp, err := g.app.Storage().Open("history.log")
+	if err == nil {
+		defer fp.Close()
+		reader:=bufio.NewReader(fp)
+		for {
+			l,_,err:=reader.ReadLine()
+			if err!=nil{
+				break
+			}
+			ls:=strings.Split(string(l)," ")
+			if len(ls)<2{
+				break
+			}
+			t, err := time.Parse("2006-01-02/15:04:05",ls[0])
+			if err != nil {
+				break 
+			}
+			g.OperationLogs=append(g.OperationLogs,&LogEntry{
+				time: t,
+				cmd:  strings.Join(ls[1:]," "),
+			})
+		}
+	}
+}
+
+func (g *GUI) logOperation(cmd string) {
+	g.OperationLogs=append(g.OperationLogs,&LogEntry{time.Now(),cmd})
+}
+
+func (g *GUI) writeBackOperationLog (){
+	data:=make([]string,0)
+	for _,l:=range g.OperationLogs{
+		data= append(data, fmt.Sprintf("%v %v",l.time.Format("2006-01-02/15:04:05"),l.cmd))
+	}
+	utils.WriteOrCreateFile(g.app.Storage(),"history.log",[]byte(strings.Join(data,"\n")))
 }
