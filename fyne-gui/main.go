@@ -103,6 +103,7 @@ func main() {
 	global.MakeThemeToggleBtn(app, appTheme)
 	global.MakeInformPopButton(topWindow)
 	// global.MakeDebugButton(app, setContent, getContent)
+	global.MakeReadMePopupButton(topWindow)
 	global.MakeBannner("v0.0.4")
 
 	//vsplit := container.NewVSplit(debugContent, majorContent)
