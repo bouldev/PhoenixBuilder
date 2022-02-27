@@ -4,6 +4,7 @@ import (
 	"os"
 	"fmt"
 	"path/filepath"
+	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/configuration"
@@ -27,7 +28,7 @@ func InitInternalFunctions() {
 		SFMinSliceLen: 1,
 		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
 			command.Tellraw(conn,I18n.T(I18n.QuitCorrectly))
-			fmt.Printf("%s\n",I18n.T(I18n.QuitCorrectly))
+			bridge_fmt.Printf("%s\n",I18n.T(I18n.QuitCorrectly))
 			conn.Close()
 			os.Exit(0)
 		},
@@ -40,7 +41,7 @@ func InitInternalFunctions() {
 		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
 			homedir, err := os.UserHomeDir()
 			if err != nil {
-				fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
+				bridge_fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
 				homedir="."
 			}
 			fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
@@ -53,7 +54,7 @@ func InitInternalFunctions() {
 			}
 			command.Tellraw(conn,I18n.T(I18n.Logout_Done))
 			command.Tellraw(conn,I18n.T(I18n.QuitCorrectly))
-			fmt.Printf("%s\n",I18n.T(I18n.QuitCorrectly))
+			bridge_fmt.Printf("%s\n",I18n.T(I18n.QuitCorrectly))
 			conn.Close()
 			os.Exit(0)
 		},

@@ -26,7 +26,7 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/minecraft"
-	bridge_fmt "phoenixbuilder_fyne_gui/dedicate/fyne/bridge"
+	bridge_fmt "phoenixbuilder/bridge/bridge_fmt"
 	"strings"
 	"time"
 )

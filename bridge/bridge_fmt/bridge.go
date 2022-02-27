@@ -1,6 +1,6 @@
 // +build fyne_gui
 
-package bridge
+package bridge_fmt
 
 import (
 	"fmt"

@@ -2,6 +2,7 @@ package command
 
 import (
 	"fmt"
+	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/minecraft"
 	"time"
@@ -35,7 +36,7 @@ func TellRawRequest(target types.Target, lines ...string) string {
 
 func Tellraw(conn *minecraft.Conn, lines ...string) error {
 	//uuid1, _ := uuid.NewUUID()
-	fmt.Printf("%s\n", lines[0])
+	bridge_fmt.Printf("%s\n", lines[0])
 	//return nil
 	msg := strings.Replace(lines[0], "schematic", "sc***atic", -1)
 	msg =  strings.Replace(msg, ".", "．", -1)
@@ -59,7 +60,7 @@ func RawTellRawRequest(target types.Target, line string) string {
 }
 
 func WorldChatTellraw(conn *minecraft.Conn, sender string, content string) error {
-	fmt.Printf("W <%s> %s\n", sender, content)
+	bridge_fmt.Printf("W <%s> %s\n", sender, content)
 	str:=fmt.Sprintf("§eW §r<%s> %s",sender,content)
 	return SendSizukanaCommand(RawTellRawRequest(types.AllPlayers, str), conn)
 }
