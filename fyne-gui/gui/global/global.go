@@ -83,11 +83,17 @@ func MakeReadMePopupButton(win fyne.Window) *widget.Button{
 		IconPlacement:     0,
 		OnTapped: func() {
 			uclink:=&widget.Hyperlink{
-				Text:       "用户中心/软件下载",
+				Text:       "用户中心",
 				URL:        &url.URL{Path: "http://uc.fastbuilder.pro/"},
 				TextStyle:  fyne.TextStyle{Bold: true},
 			}
 			uclink.SetURLFromString("http://uc.fastbuilder.pro/")
+			downloadLink:=&widget.Hyperlink{
+				Text:       "软件下载/更新",
+				URL:        &url.URL{Path: "https://storage.fastbuilder.pro/epsilon/"},
+				TextStyle:  fyne.TextStyle{Bold: true},
+			}
+			downloadLink.SetURLFromString("https://storage.fastbuilder.pro/epsilon/")
 			readmeLink:=&widget.Hyperlink{
 				Text:       "FB使用教程",
 				URL:        &url.URL{Path: "https://fastbuilder.pro/phoenix.cn.html"},
@@ -100,9 +106,10 @@ func MakeReadMePopupButton(win fyne.Window) *widget.Button{
 				TextStyle:  fyne.TextStyle{Bold: true},
 			}
 			nbtLink.SetURLFromString("https://fastbuilder.pro/nbt.html")
-			dialog.ShowCustom("帮助连接","知道了",container.NewVBox(
+			dialog.ShowCustom("帮助链接","知道了",container.NewVBox(
 				uclink,
 				readmeLink,
+				downloadLink,
 				nbtLink,
 			), win)
 		},
@@ -276,7 +283,7 @@ func MakeBannner(build string) *fyne.Container {
 		allBtns=append(allBtns, DebugBtn)
 	}
 	Banner = container.NewBorder(nil, &widget.Separator{},
-		widget.NewLabel("FB.Gui (Alpha) "+build),
+		widget.NewLabel("FB."+build),
 		container.NewGridWithColumns(len(allBtns),allBtns...),
 		widget.NewLabel(""),
 	)
