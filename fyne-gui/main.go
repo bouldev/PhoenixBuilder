@@ -10,6 +10,7 @@ import (
 	"phoenixbuilder_fyne_gui/gui/profiles"
 	my_theme "phoenixbuilder_fyne_gui/gui/theme"
 	"phoenixbuilder_fyne_gui/platform_helper"
+	"phoenixbuilder/fastbuilder/args"
 
 	"fyne.io/fyne/v2/storage"
 

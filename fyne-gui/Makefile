@@ -78,11 +78,13 @@ build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}
 build/phoenixbuilder-ios-app.ipa: build/ build/phoenixbuilder-ios-executable
 	rm -rf build/ipa
 	mkdir -p build/ipa/Payload/phoenixbuilder.app
+	sed "s/@VERSION@/${VERSION}" unbundled_assets/Info.xml > build/ipa/Payload/phoenixbuilder.app/Info.xml
+	plistutil -i build/ipa/Payload/phoenixbuilder.app/Info.xml -o build/ipa/Payload/phoenixbuilder.app/Info.plist
 	ln build/phoenixbuilder-ios-executable build/ipa/Payload/phoenixbuilder.app/
 	#ln unbundled_assets/*.ttf build/ipa/Payload/phoenixbuilder.app/
 	#ln unbundled_assets/*.png build/ipa/Payload/phoenixbuilder.app/
 	ln unbundled_assets/Assets.car build/ipa/Payload/phoenixbuilder.app/
-	ln unbundled_assets/Info.plist build/ipa/Payload/phoenixbuilder.app/
+	#ln unbundled_assets/Info.plist build/ipa/Payload/phoenixbuilder.app/
 	rm -f build/phoenixbuilder-ios-app.ipa
 	cd build/ipa&&zip -r ../phoenixbuilder-ios-app.ipa Payload&&cd ../..
 	rm -rf build/ipa

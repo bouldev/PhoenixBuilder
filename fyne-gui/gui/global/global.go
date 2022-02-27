@@ -274,17 +274,19 @@ func makeDebugContent(app fyne.App, setContent func(v fyne.CanvasObject), getCon
 	return content
 }
 
-func MakeBannner(build string) *fyne.Container {
+func MakeBanner(build string) *fyne.Container {
 	if Banner != nil {
 		return Banner
 	}
+	// TODO: Move those buttons to an individual page and leave only 1 button
+	//       here.
 	allBtns:=[]fyne.CanvasObject{ThemeToggleBtn.Btn,ReadmeBtn,InformBtn}
 	if DebugBtn!=nil{
 		allBtns=append(allBtns, DebugBtn)
 	}
 	Banner = container.NewBorder(nil, &widget.Separator{},
-		widget.NewLabel("FB."+build),
-		container.NewGridWithColumns(len(allBtns),allBtns...),
+		widget.NewLabel("PhoenixBuilder"+build),
+		container.NewGridWithColumns(len(allBtns),allBtns...),=
 		widget.NewLabel(""),
 	)
 	return Banner
