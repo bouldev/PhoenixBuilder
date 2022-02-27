@@ -1,6 +1,7 @@
 package minecraft
 
 import (
+	"phoenixbuilder/bridge/bridge_fmt"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"bytes"
 	"context"
@@ -10,7 +11,6 @@ import (
 	"crypto/x509"
 	"path/filepath"
 	"encoding/base64"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
 	"phoenixbuilder/minecraft/internal/resource"
@@ -122,12 +122,12 @@ func (d Dialer) DialContext(ctx context.Context, network, address string) (conn 
 		pubKeyData := base64.StdEncoding.EncodeToString(data)
 		chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token, d.Version)
 		chainAndAddr := strings.Split(chainAddr,"|")
-		fmt.Printf("Auth pass\n")
+		bridge_fmt.Printf("Auth pass\n")
 		if err != nil {
 			if (code == -3) {
 				homedir, err := os.UserHomeDir()
 				if err != nil {
-					fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
+					bridge_fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
 					homedir="."
 				}
 				fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")

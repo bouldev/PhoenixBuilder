@@ -77,3 +77,4 @@ rust/
 *.pyc
 *.pyo
 private/
+.DS_Store

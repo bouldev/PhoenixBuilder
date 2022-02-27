@@ -12,7 +12,7 @@ import (
 	"time"
 
 	bot_bridge_command "phoenixbuilder/fastbuilder/command"
-	bot_bridge_fmt "phoenixbuilder_fyne_gui/dedicate/fyne/bridge"
+	bot_bridge_fmt "phoenixbuilder/bridge/bridge_fmt"
 	bot_session "phoenixbuilder_fyne_gui/dedicate/fyne/session"
 
 	"fyne.io/fyne/v2"

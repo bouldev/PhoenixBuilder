@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"io"
 	"fmt"
+	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/args"
 )
@@ -134,7 +135,7 @@ func (client *Client) SendMessage(data[] byte){
 		panic("早すぎる")
 	}
 	if client.closed {
-		fmt.Println("Error: SendMessage: Connection closed")
+		bridge_fmt.Println("Error: SendMessage: Connection closed")
 		panic("Message after auth close")
 	}
 	client.encryptor.encrypt(data)
@@ -206,7 +207,7 @@ func (client *Client) ShouldRespondUser() string {
 	code,_:=resp["code"].(float64)
 	if code != 0 {
 		//This should never happen
-		fmt.Println("UNK_1")
+		bridge_fmt.Println("UNK_1")
 		panic("??????")
 		//return true
 		//Torrekie 22/07/21 13.12: and this

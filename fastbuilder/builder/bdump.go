@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/andybalholm/brotli"
+	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/bdump"
 	bridge_path "phoenixbuilder/fastbuilder/builder/path"
 	"phoenixbuilder/fastbuilder/i18n"
@@ -155,7 +156,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				return fmt.Errorf("Failed to get argument for cmd[pos5], file may be corrupted")
 			}
 			if(int(blockId)>=len(blocksStrPool)){
-				fmt.Printf("WARNING: Invalid command")
+				bridge_fmt.Printf("WARNING: Invalid command")
 				continue
 			}
 			blockData:=binary.BigEndian.Uint16(rdst)
@@ -203,7 +204,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			jumpval:=binary.BigEndian.Uint32(rdst)
 			brushPosition[2]+=int(jumpval)
 		}else if(cmd==13){
-			fmt.Printf("WARNING: BDump/Import: Use of reserved command\n")
+			bridge_fmt.Printf("WARNING: BDump/Import: Use of reserved command\n")
 		}else if(cmd==14){
 			brushPosition[0]++
 		}else if(cmd==15){
@@ -336,7 +337,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				return fmt.Errorf("Failed to get argument for cmd[pos5], file may be corrupted")
 			}
 			if(int(blockId)>=len(blocksStrPool)){
-				fmt.Printf("WARNING: Invalid command")
+				bridge_fmt.Printf("WARNING: Invalid command")
 				continue
 			}
 			blockData:=binary.BigEndian.Uint16(rdst)
@@ -658,9 +659,9 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				}
 			}
 		}else{
-			fmt.Printf("WARNING: BDump/Import: Unimplemented method found : %d\n",cmd)
-			fmt.Printf("WARNING: BDump/Import: Previous command is: %d\n",prevCmd)
-			fmt.Printf("WARNING: BDump/Import: Trying to ignore, it will probably cause an error!\n")
+			bridge_fmt.Printf("WARNING: BDump/Import: Unimplemented method found : %d\n",cmd)
+			bridge_fmt.Printf("WARNING: BDump/Import: Previous command is: %d\n",prevCmd)
+			bridge_fmt.Printf("WARNING: BDump/Import: Trying to ignore, it will probably cause an error!\n")
 		}
 	}
 	return nil
