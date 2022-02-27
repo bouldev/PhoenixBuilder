@@ -110,7 +110,7 @@ func (g *GUI) makeForm(config *SessionConfigWithName) fyne.CanvasObject {
 
 	var developerOptions fyne.CanvasObject
 	if !config.Config.IsDeveloper() {
-		developerOptions = widget.NewLabel("你不是开发者，无法设置这些选项")
+		developerOptions = widget.NewLabel("请在源码中启用")
 	} else {
 		developerOptions = container.NewVBox(
 			widget.NewCheckWithData("NoPyRPC", binding.BindBool(&config.Config.NoPyRPC)),

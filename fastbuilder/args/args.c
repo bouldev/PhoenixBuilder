@@ -32,6 +32,10 @@ char *get_fb_version() {
 	return FB_VERSION " (" FB_COMMIT ")";
 }
 
+char *commit_hash() {
+	return FB_COMMIT_LONG;
+}
+
 void print_version(int detailed) {
 	if(!detailed) {
 		printf(FB_VERSION "\n");

@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"phoenixbuilder_fyne_gui/gui/assets"
 	my_theme "phoenixbuilder_fyne_gui/gui/theme"
+	"phoenixbuilder/fastbuilder/args"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -129,6 +130,7 @@ func MakeInformPopButton(win fyne.Window) *widget.Button {
 		Alignment:         0,
 		IconPlacement:     0,
 		OnTapped: func() {
+<<<<<<< HEAD
 			dialog.ShowCustom("说明","知道了",widget.NewRichTextWithText(`
 ## 版权相关信息:  
 FastBuilder Phoenix 使用了来自  
@@ -141,6 +143,9 @@ F A S T  B U I L D E R
 Contributors: Ruphane, CAIMEO  
 Copyright (c) FastBuilder DevGroup, Bouldev 2022 
 `), win)
+=======
+			dialog.NewInformation("说明", "项目地址: https://github.com/LNSSPsd/PhoenixBuilder\n贡献者: Ruphane, CAIMEO, CMA2401PT\n\n版本: "+args.GetFBVersion()+"\nCommit hash: "+args.GetFBCommitHash(), win).Show()
+>>>>>>> 14cdb61 (Background in iOS)
 		},
 	}
 	return InformBtn

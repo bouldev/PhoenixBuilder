@@ -24,6 +24,8 @@ var topWindow fyne.Window
 var appTheme *my_theme.MyTheme
 
 func main() {
+	args.ParseArgs()
+	args.SetShouldDisableHashCheck()
 	bridge_write_path.CreateFile = func(p string) (bridge_write_path.FileWriter, error) {
 		uri, err := storage.ParseURI(p)
 		if err != nil {

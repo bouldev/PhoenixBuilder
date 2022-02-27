@@ -66,7 +66,7 @@ func main() {
 		"https://github.com/Sandertv/gophertunnel"))
 	pterm.Println(pterm.Yellow("ファスト　ビルダー"))
 	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
-	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO"))
+	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO, CMA2401PT"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
 	pterm.Println(pterm.Yellow("FastBuilder Phoenix " + args.GetFBVersion()))
 	

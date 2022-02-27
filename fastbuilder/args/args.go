@@ -19,11 +19,16 @@ extern char args_noNBT;
 extern void parse_args(int argc, char **argv);
 
 extern char *get_fb_version(void);
+extern char *commit_hash(void);
 */
 import "C"
 
 func GetFBVersion() string {
 	return C.GoString(C.get_fb_version())
+}
+
+func GetFBCommitHash() string {
+	return C.GoString(C.commit_hash())
 }
 
 func ParseArgs() {
@@ -59,6 +64,10 @@ func AuthServer() string {
 
 func ShouldDisableHashCheck() bool {
 	return boolify(C.args_disableHashCheck)
+}
+
+func SetShouldDisableHashCheck() {
+	C.args_disableHashCheck=C.char(1)
 }
 
 func ShouldMuteWorldChat() bool {

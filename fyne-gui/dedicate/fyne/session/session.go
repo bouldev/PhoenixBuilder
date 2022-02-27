@@ -26,9 +26,15 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/minecraft"
+<<<<<<< HEAD
 	bridge_fmt "phoenixbuilder/bridge/bridge_fmt"
+=======
+	bridge_fmt "phoenixbuilder_fyne_gui/dedicate/fyne/bridge"
+	"phoenixbuilder_fyne_gui/platform_helper"
+>>>>>>> 14cdb61 (Background in iOS)
 	"strings"
 	"time"
+	"phoenixbuilder/fastbuilder/args"
 )
 
 type SessionConfig struct {
@@ -67,7 +73,7 @@ func NewConfig() *SessionConfig {
 		MuteWorldChat:         false,
 		NoPyRPC:               false,
 		NBTConstructorEnabled: true,
-		FBVersion:             DefaultFBVersion,
+		FBVersion:             args.GetFBVersion(),
 		FBHash:                DefaultFBHash,
 		FBCodeName:            DefaultFBCodeName,
 	}
@@ -81,7 +87,7 @@ type Session struct {
 	cmdChan          chan string
 	closeFns         []func()
 	worldChatChannel chan []string
-	fbClinet         *fbauth.Client
+	fbClient         *fbauth.Client
 	mcConn           *minecraft.Conn
 	botRuntimeID     string
 	Config           *SessionConfig
@@ -171,6 +177,7 @@ func (s *Session) Start() (terminateChan chan string, startErr error) {
 
 func (s *Session) afterStart() chan string {
 	c := make(chan string)
+	platform_helper.RunBackground()
 	go s.routine(c)
 	return c
 }
@@ -203,7 +210,7 @@ func (s *Session) beforeStart() (err error) {
 	worldChatChannel := make(chan []string)
 	s.worldChatChannel = worldChatChannel
 	client := fbauth.CreateClient(worldChatChannel)
-	s.fbClinet = client
+	s.fbClient = client
 	if s.Config.FBToken == "" {
 		// we need to get the token
 		tokenReq := &FBPlainToken{
@@ -326,6 +333,9 @@ func (s *Session) routine(c chan string) {
 		r := recover()
 		if r != nil {
 			terminateReason = fmt.Sprintf("Session terminated\n because a panic occoured in routine: \n%v", r)
+		}else{
+			s.mcConn.Close()
+			platform_helper.StopBackground()
 		}
 		s.close()
 		c <- terminateReason
@@ -398,7 +408,7 @@ func (s *Session) routine(c chan string) {
 	conn := s.mcConn
 	user := s.Config.RespondUser
 	zeroId := configuration.ZeroId
-	client := s.fbClinet
+	client := s.fbClient
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
 		// a read timeout is set. You will generally want to return or break if this happens.
@@ -644,7 +654,7 @@ func (s *Session) close() {
 		fn()
 	}
 	// let GC do the work
-	s.fbClinet = nil
+	s.fbClient = nil
 	s.mcConn = nil
 }
 
