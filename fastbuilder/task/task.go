@@ -200,6 +200,10 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		task.State=TaskStateRunning
 	}
 	go func() {
+		isWindows:=false
+		if runtime.GOOS == "windows" {
+			isWindows=true
+		}
 		t1 := time.Now()
 		blkscounter := 0
 		tothresholdcounter := 0
@@ -302,7 +306,12 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				//}
 			}*/
 			if dcfg.DelayMode==types.DelayModeContinuous {
-				time.Sleep(time.Duration(dcfg.Delay) * time.Microsecond)
+				if isWindows{
+					// the timer in windows is not the same as that in other system
+					time.Sleep(time.Duration(dcfg.Delay/10) * time.Microsecond)
+				}else{
+					time.Sleep(time.Duration(dcfg.Delay) * time.Microsecond)
+				}
 			}else if dcfg.DelayMode==types.DelayModeDiscrete {
 				tothresholdcounter++
 				if tothresholdcounter>=dcfg.DelayThreshold {
