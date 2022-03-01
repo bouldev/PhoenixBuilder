@@ -35,17 +35,21 @@ with open(os.path.join(tmp_workspace,"go.mod"),"w") as f:
     f.write(data)
 for root, dirs, files in os.walk(tmp_workspace):
     for f in files:
-        if f.endswith(".c") or f.endswith(".h"):
-            os.remove(os.path.join(root, f))
-        if f.endswith(".go"):
+        # if f.endswith(".c") or f.endswith(".h"):
+        #     os.remove(os.path.join(root, f))
+        if f.endswith(".go") or f.endswith(".c") or f.endswith(".h") or f.endswith(".m"):
             rewrite=""
             remove=False
             with open(os.path.join(root, f),"r") as fp:
                 data=fp.readline()
                 if "!fyne_gui" in data:
                     remove=True
-                if "fyne_gui" in data:
+                elif "fyne_gui" in data:
                     rewrite="\n".join(fp.readlines())
+                elif "!ios" in data:
+                    rewrite="\n".join(fp.readlines())
+                elif "ios" in data:
+                    remove=True
             if remove:
                 os.remove(os.path.join(root, f))
             elif rewrite!="":
