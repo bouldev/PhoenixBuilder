@@ -29,7 +29,7 @@ jobs:
       run: |
         sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu libgl1-mesa-dev -y
     - name: Setup theos's dependencies
-      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 libplist-utils brotli
+      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 libplist-utils brotli xorg-dev
     - name: Clone theos
       uses: actions/checkout@v2
       with:
@@ -65,7 +65,7 @@ jobs:
       run: |
         make current
         make clean
-        chmod 777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
+        chmod 0755 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
         sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go>~/conn.go
         cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
     - name: Build
