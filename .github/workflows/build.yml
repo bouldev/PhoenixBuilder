@@ -80,8 +80,7 @@ jobs:
       run: |
         cd fyne-gui
         cd android_wrapper
-        brotli -d prebuilt_binary.br
-        mv prebuilt_binary android_pack
+        go build
         cd ..
         make
         node simpleappend.js
