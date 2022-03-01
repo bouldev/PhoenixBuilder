@@ -5,6 +5,7 @@ on:
     branches: [ epsilon ]
     paths:
       - "version"
+      - "fyne-gui/version"
 
 jobs:
   linux-build:
@@ -27,7 +28,7 @@ jobs:
       run: |
         sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu -y
     - name: Setup theos's dependencies
-      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5
+      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 libplist-utils brotli
     - name: Clone theos
       uses: actions/checkout@v2
       with:
@@ -74,6 +75,20 @@ jobs:
       run: |
         export THEOS=~/theos
         make package
+    - name: Build GUI applications
+      run: |
+        cd fyne-gui
+        cd android_wrapper
+        brotli -d prebuilt_binary.br
+        mv prebuilt_binary android_pack
+        cd ..
+        make
+        node simpleappend.js
+        ls -lh build/>release.txt
+        mv release.txt build/release-list.txt
+        cp version build/version.txt
+        mv build ../build/gui
+        cd ..
     - name: Pack binaries
       run: |
         #mv build/hashes.json build/hashes-2.json
@@ -82,6 +97,7 @@ jobs:
         rm build/phoenixbuilder-macos-x86_64
         ls -lh build/>release.txt
         mv release.txt build/release-list.txt
+        cp version build/version.txt
         tar -czf fb-linux-binaries-v2.tar.gz build/*
     - name: Load Key
       env:

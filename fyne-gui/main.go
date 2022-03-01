@@ -64,7 +64,7 @@ func main() {
 		return file, nil
 	}
 
-	app := app.NewWithID("fastbuilder.fyne.gui")
+	app := app.NewWithID("pro.fastbuilder.app")
 	appStorage := app.Storage()
 	//appStorage.Create("config.yaml")
 
@@ -75,7 +75,7 @@ func main() {
 	appTheme.SetLight()
 	app.Settings().SetTheme(appTheme)
 
-	topWindow = app.NewWindow("fastbuilder.fyne.gui")
+	topWindow = app.NewWindow("PhoenixBuilder")
 	icon := canvas.NewImageFromResource(assets.ResourceIconPng)
 	icon.FillMode = canvas.ImageFillContain
 	app.SetIcon(icon.Resource)

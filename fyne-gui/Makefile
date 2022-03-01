@@ -1,6 +1,5 @@
 .PHONY: all clean current current-arm64-executable ios-executable ios-app macos-executable windows-executable android-lib-arm64 android-app windows-executable-x86 windows-executable-x86_64
 TARGETS:=build/ current
-PACKAGETARGETS:=
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
 ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
 IOS_STRIP=/usr/bin/strip
@@ -14,12 +13,10 @@ LDID=ldid2
 LIPO=/usr/bin/lipo
 TARGETS:=${TARGETS} macos-executable ios-executable ios-app
 endif
-PACKAGETARGETS:=${PACKAGETARGETS} package/ios
 else
 IOS_STRIP=true
 LDID=$${THEOS}/toolchain/linux/iphone/bin/ldid
 LIPO=$${THEOS}/toolchain/linux/iphone/bin/lipo
-IOS_OBJCOPY=$${THEOS}/toolchain/linux/iphone/bin/llvm-objcopy
 endif
 ifneq (${THEOS},)
 	TARGETS:=${TARGETS} ios-executable macos-executable ios-app
@@ -55,9 +52,6 @@ windows-executable: windows-executable-x86 windows-executable-x86_64
 windows-executable-x86: build/phoenixbuilder-windows-executable-x86.exe
 windows-executable-x86_64: build/phoenixbuilder-windows-executable-x86_64.exe
 
-package: ${PACKAGETARGETS}
-release/:
-	mkdir -p release
 build/:
 	mkdir build
 build/phoenixbuilder: build/ ${SRCS_GO}

@@ -70,7 +70,7 @@ func NewConfig() *SessionConfig {
 		NoPyRPC:               false,
 		NBTConstructorEnabled: true,
 		FBVersion:             args.GetFBVersion(),
-		FBHash:                DefaultFBHash,
+		FBHash:                "gui~"+args.GetFBVersion(),
 		FBCodeName:            DefaultFBCodeName,
 	}
 }
