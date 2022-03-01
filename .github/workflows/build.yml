@@ -91,7 +91,6 @@ jobs:
         cd ..
     - name: Pack binaries
       run: |
-        #mv build/hashes.json build/hashes-2.json
         mv release/*.deb build/
         rm build/phoenixbuilder-macos-arm64
         rm build/phoenixbuilder-macos-x86_64

@@ -1,4 +1,4 @@
-.PHONY: all clean current current-arm64-executable ios-executable ios-app macos-executable windows-executable android-lib-arm64 android-app windows-executable-x86 windows-executable-x86_64
+.PHONY: all clean current ios-executable ios-app macos-executable windows-executable android-lib-arm64 android-app windows-executable-x86 windows-executable-x86_64
 TARGETS:=build/ current
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
 ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
@@ -30,9 +30,9 @@ endif
 ifneq ($(wildcard /usr/bin/x86_64-w64-mingw32-gcc),)
 	TARGETS:=${TARGETS} windows-executable-x86_64
 endif
-ifneq ($(wildcard /usr/bin/aarch64-linux-gnu-gcc),)
-	TARGETS:=${TARGETS} current-arm64-executable
-endif
+#ifneq ($(wildcard /usr/bin/aarch64-linux-gnu-gcc),)
+#	TARGETS:=${TARGETS} current-arm64-executable
+#endif
 
 VERSION=$(shell cat version)
 
@@ -42,7 +42,6 @@ CGO_DEF := "-DFB_VERSION=\"$(VERSION)\" -DFB_COMMIT=\"$(shell git log -1 --forma
 
 all: ${TARGETS}
 current: build/phoenixbuilder
-current-arm64-executable: build/phoenixbuilder-aarch64
 ios-executable: build/phoenixbuilder-ios-executable
 ios-app: build/phoenixbuilder-ios-app.ipa
 macos-executable: build/phoenixbuilder-macos
@@ -56,8 +55,8 @@ build/:
 	mkdir build
 build/phoenixbuilder: build/ ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1  go build -tags fyne_gui -trimpath -ldflags "-s -w" -o build/phoenixbuilder
-build/phoenixbuilder-aarch64: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -tags fyne_gui -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
+#build/phoenixbuilder-aarch64: build/ ${SRCS_GO}
+#	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -tags fyne_gui -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
 build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Wl,-undefined,dynamic_lookup -Wl,-platform_version,2,11.0,14.5" CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -tags "fyne_gui ios" -trimpath -ldflags "-s -w -extldflags \"-Wl,-platform_version,2,11.0,14.5 platform_helper/assets/isOSVersionAtLeast_provider.m\"" -o build/phoenixbuilder-ios-executable
 	${LDID} -Sios-ent.xml build/phoenixbuilder-ios-executable
