@@ -26,12 +26,8 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/minecraft"
-<<<<<<< HEAD
-	bridge_fmt "phoenixbuilder/bridge/bridge_fmt"
-=======
-	bridge_fmt "phoenixbuilder_fyne_gui/dedicate/fyne/bridge"
+	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder_fyne_gui/platform_helper"
->>>>>>> 14cdb61 (Background in iOS)
 	"strings"
 	"time"
 	"phoenixbuilder/fastbuilder/args"

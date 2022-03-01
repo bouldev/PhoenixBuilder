@@ -78,3 +78,4 @@ rust/
 *.pyo
 private/
 .DS_Store
+android_pack

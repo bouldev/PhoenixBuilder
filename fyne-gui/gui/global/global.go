@@ -276,7 +276,7 @@ func MakeBanner(build string) *fyne.Container {
 	}
 	Banner = container.NewBorder(nil, &widget.Separator{},
 		widget.NewLabel("PhoenixBuilder"+build),
-		container.NewGridWithColumns(len(allBtns),allBtns...),=
+		container.NewGridWithColumns(len(allBtns),allBtns...),
 		widget.NewLabel(""),
 	)
 	return Banner
