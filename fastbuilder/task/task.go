@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"go.uber.org/atomic"
+	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/configuration"
@@ -186,7 +187,7 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 				if skipBlocks>task.AsyncInfo.Total{
 					skipBlocks=task.AsyncInfo.Total
 				}
-				fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n",skipBlocks)
+				bridge_fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n",skipBlocks)
 			}
 			for _, blk := range blocks {
 				if task.AsyncInfo.Built>skipBlocks{
@@ -367,11 +368,13 @@ func InitTaskStatusDisplay(conn *minecraft.Conn) {
 			TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
 				tid, _:=_tid.(int64)
 				v, _:=_v.(*Task)
+
 				addstr:=fmt.Sprintf("Task ID %d - %s - %s [%s]",tid,v.Config.Main().Execute,GetStateDesc(v.State),types.MakeTaskType(v.Type))
 				if v.Type==types.TaskTypeAsync && v.State == TaskStateRunning {
 					addstr=fmt.Sprintf("%s\nProgress: %s",addstr,ProgressThemes[0](&v.AsyncInfo))
 				}
 				displayStrs=append(displayStrs,addstr)
+				command.AdditionalTitleCb(addstr)
 				return true
 			})
 			displayStrs=append(displayStrs, ExtraDisplayStrings...)
