@@ -78,6 +78,7 @@ jobs:
         make package
     - name: Build GUI applications
       run: |
+        export THEOS=~/theos
         cd fyne-gui
         cd android_wrapper
         go build
