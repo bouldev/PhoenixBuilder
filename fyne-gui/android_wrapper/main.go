@@ -14,6 +14,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"encoding/xml"
+	"flag"
 	"fmt"
 	"hash"
 	"html/template"
@@ -25,17 +26,42 @@ import (
 	"time"
 )
 
+var libPathInAPK string
+var libPath string
+var targetSDK int
+var iconPath string
+var bundleID string
+var libName string
+var appName string
+var outputFile string
+var version string
+var build int
+
+// go run main.go -libPath libfastbuilder_fyne_gui.so -libInApk lib/arm64-v8a/libFastBuilder_Gui.so -iconPath icon.png -bundleID fastbuilder.gui -libName FastBuilder_Gui -appName fastbuilder_gui -O fastbuilder_gui.apk -version 0.0.4 -build 200
+
+func init() {
+	// a~z A~Z 0~9 _
+	flag.StringVar(&libPathInAPK, "libInApk", "", "where to place the lib in apk file, e.g. lib/arm64-v8a/libFastBuilder_Gui.so")
+	flag.StringVar(&libPath, "libPath", "", "where is the lib file, e.g. libFastBuilder_Gui.so")
+	flag.IntVar(&targetSDK, "sdkTarget", 30, "what is target Android SDK, only 29/30 is ok, default is 30")
+	flag.StringVar(&iconPath, "iconPath", "icon.png", "where is the icon file, e.g. icon.png")
+	flag.StringVar(&bundleID, "bundleID", "fastbuilder.gui", "where is the bundle ID, e.g. fastbuilder.gui")
+	flag.StringVar(&libName, "libName", "", "where is the lib name in short, should match libInApk, e.g. FastBuilder_Gui")
+	flag.StringVar(&appName, "appName", "", "app name, e.g. fastbuilder_gui")
+	flag.StringVar(&outputFile, "O", "", "output file, e.g. fastbuilder_gui.apk")
+	flag.StringVar(&version, "version", "", "version, in x.y.z format e.g. 0.0.4")
+	flag.IntVar(&build, "build", 200, "build number, int val, e.g. 200")
+}
+
 func main() {
-	libFiles := []string{"lib/arm64-v8a/libFastBuilder_3rd_Gui.so"}
-	libFilesSrc := []string{"libFastBuilder_3rd_Gui.so"}
-	targetSDK := 30
-	iconPath := "icon.png"
-	bundleID := "fastbuilder.fyne.gui"
-	libname := "FastBuilder_3rd_Gui"// a~z A~Z 0~9 _
-	appName := "fastbuilder_fyne_gui"
-	outputFile := appName + ".apk"
-	version := "0.0.4"
-	build := 200
+	flag.Parse()
+	libName = strings.TrimPrefix(libName, "lib")
+	if !strings.HasSuffix(libPathInAPK, libName+".so") {
+		panic("libName should match libPathInAPK")
+	}
+
+	libFiles := []string{libPathInAPK}
+	libFilesSrc := []string{libPath}
 
 	// AndroidManifest.xml
 	buf := new(bytes.Buffer)
@@ -44,15 +70,23 @@ func main() {
 		JavaPkgPath: bundleID,
 		Name:        strings.Title(appName),
 		Debug:       false,
-		LibName:     libname,
+		LibName:     libName,
 		Version:     version,
 		Build:       build,
 	})
 	manifestData := buf.Bytes()
 
+	noSuchFilePanic := func(err error) {
+		pathErr, ok := err.(*os.PathError)
+		if ok {
+			panic(fmt.Errorf("No Such File %v", pathErr.Path))
+		}
+		panic(err)
+	}
+	fmt.Println("output file: ", outputFile)
 	out, err := os.Create(outputFile)
 	if err != nil {
-		panic(err)
+		noSuchFilePanic(err)
 	}
 
 	block, _ := pem.Decode([]byte(debugCert))
@@ -66,11 +100,11 @@ func main() {
 		src := libFilesSrc[i]
 		f, err := os.Open(filepath.Clean(src))
 		if err != nil {
-			panic(err)
+			noSuchFilePanic(err)
 		}
 		defer f.Close()
 		if _, err := io.Copy(w, f); err != nil {
-			panic(err)
+			noSuchFilePanic(err)
 		}
 	}
 	bxml, err := binres.UnmarshalXML(bytes.NewReader(manifestData), true, targetSDK)
@@ -85,7 +119,7 @@ func main() {
 	iconWriter, _ := apkWriter.Create(name)
 	f, err := os.Open(filepath.Clean(iconPath))
 	if err != nil {
-		panic(err)
+		noSuchFilePanic(err)
 	}
 	defer f.Close()
 	if _, err := io.Copy(iconWriter, f); err != nil {
