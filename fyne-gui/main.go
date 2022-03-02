@@ -79,14 +79,6 @@ func main() {
 	icon := canvas.NewImageFromResource(assets.ResourceIconPng)
 	icon.FillMode = canvas.ImageFillContain
 	app.SetIcon(icon.Resource)
-	//iconRes, err := utils.LoadFromAssets("Icon", "Icon.png")
-	//if err == nil {
-	//	icon := canvas.NewImageFromResource(iconRes)
-	//	icon.FillMode = canvas.ImageFillContain
-	//	app.SetIcon(icon.Resource)
-	//} else {
-	//	dialog.ShowError(fmt.Errorf("无法加载图标：\n\n%v", err), topWindow)
-	//}
 	topWindow.SetMaster()
 
 	majorContent := container.NewMax()
@@ -103,11 +95,13 @@ func main() {
 		majorContent.Refresh()
 	}
 
-	global.MakeThemeToggleBtn(app, appTheme)
-	global.MakeInformPopButton(topWindow)
+	global.MakeBannerAndSettings(args.GetFBVersion(),app,topWindow,setContent,getContent)
+
+	//global.MakeThemeToggleBtn(app, appTheme)
+	//global.MakeInformPopButton(topWindow)
 	// global.MakeDebugButton(app, setContent, getContent)
-	global.MakeReadMePopupButton(topWindow)
-	global.MakeBanner(args.GetFBVersion())
+	//global.MakeReadMePopupButton(topWindow)
+	//global.MakeBanner(args.GetFBVersion())
 
 	//vsplit := container.NewVSplit(debugContent, majorContent)
 	//vsplit.Offset = 0.05
