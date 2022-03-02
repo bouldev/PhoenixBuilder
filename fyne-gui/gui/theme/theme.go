@@ -11,12 +11,14 @@ type MyTheme struct {
 	defaultTheme                                 fyne.Theme
 	IsLight                                      binding.Bool
 	Regular, Bold, Italic, BoldItalic, Monospace fyne.Resource
+	SizeScale float32
 }
 
 func NewTheme() *MyTheme {
 	isLight := false
 	t := &MyTheme{
 		IsLight: binding.BindBool(&isLight),
+		SizeScale: 1.0,
 	}
 	t.SetDefaultFont()
 	t.SetDark()
@@ -57,7 +59,7 @@ func (t *MyTheme) Font(style fyne.TextStyle) fyne.Resource {
 }
 
 func (t *MyTheme) Size(name fyne.ThemeSizeName) float32 {
-	return t.defaultTheme.Size(name)
+	return t.defaultTheme.Size(name)*t.SizeScale
 }
 
 func (t *MyTheme) SetDefaultFont() {

@@ -140,7 +140,7 @@ func New() *Terminal {
 							// since it is in a dialog, we need to force it's min size
 							// it's suck!
 							container.NewBorder(widget.NewLabel(""+
-								"|---------|---------|---------|---------|---------|"),
+								"                                         "),
 								&widget.Button{
 									DisableableWidget: widget.DisableableWidget{},
 									Icon:              theme.ContentCopyIcon(),
