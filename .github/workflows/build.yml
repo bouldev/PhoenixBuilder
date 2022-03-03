@@ -107,6 +107,8 @@ jobs:
       run: |
         echo "$STORAGEKEY">~/storagekey
         chmod 0600 ~/storagekey
+        git config --global user.email "24724395+LNSSPsd@users.noreply.github.com"
+        git config --global user.name "LNSSPsd"
         git clone git@github.com:LNSSPsd/PhoenixBuilder-storage.git --config core.sshCommand="ssh -i ~/storagekey"
         ln PhoenixBuilder-storage/CNAME build/CNAME
         cp -r PhoenixBuilder-storage/.git build/.git
