@@ -133,7 +133,15 @@ func MakeElementScaleBtn(app fyne.App,topWindow fyne.Window, setContent func(v f
 	sampleTitle:=widget.NewMultiLineEntry()
 	sampleTitle.Text="Task 1: Async\nProgress 50/100 (50%)"
 	SettingsPage:=container.NewBorder(
-		container.NewBorder(nil,nil,widget.NewLabel("界面元素缩放"),nil, scaleSlider),
+		container.NewVBox(
+			container.NewBorder(nil,nil,widget.NewLabel("界面元素缩放"),nil, scaleSlider),
+			container.NewBorder(nil,nil,nil,widget.NewButton("恢复默认",func(){
+				t:=app.Settings().Theme().(*my_theme.MyTheme)
+				t.SizeScale=float32(1)
+				app.Settings().SetTheme(t)
+				scaleSlider.Value=100
+			})),
+		),
 		nil,nil,nil,
 
 		widget.NewCard("预览","调整直到找到一个合适的尺寸",
@@ -176,11 +184,25 @@ func MakeSettingsPage(app fyne.App,topWindow fyne.Window, setContent func(v fyne
 	ThemeToggler:=MakeThemeToggleBtn(app,app.Settings().Theme().(*my_theme.MyTheme))
 	ScaleBtn:=MakeElementScaleBtn(app,topWindow,setContent, getContent )
 	ReadMeBtn:=MakeReadMePopupButton(topWindow)
+	AdvSBtn:=&widget.Button {
+		Text: "高级设置",
+		Icon: theme.SettingsIcon(),
+		Importance: widget.LowImportance,
+		Alignment: widget.ButtonAlignLeading,
+		IconPlacement: widget.ButtonIconLeadingText,
+		OnTapped: func() {
+			origContent:=getContent()
+			setContent(container.NewBorder(nil,
+				&widget.Button{Text:"返回",Importance:widget.HighImportance,OnTapped:func(){setContent(origContent)},
+						},nil,nil,MakeAdvancedSettingsPage(app,topWindow,setContent,getContent)))
+		},
+	}
 	InformBtn:=MakeInformPopButton(topWindow)
 	return container.NewVScroll(container.NewVBox(
 		ThemeToggler.Btn,widget.NewSeparator(),
 		ScaleBtn,widget.NewSeparator(),
 		ReadMeBtn,widget.NewSeparator(),
+		AdvSBtn,widget.NewSeparator(),
 		InformBtn,widget.NewSeparator(),
 	))
 }

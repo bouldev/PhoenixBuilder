@@ -23,6 +23,43 @@ extern char *commit_hash(void);
 */
 import "C"
 
+func charify(val bool) C.char {
+	if(val) {
+		return C.char(1)
+	}else{
+		return C.char(0)
+	}
+}
+
+func Set_args_isDebugMode(val bool) {
+	C.args_isDebugMode=charify(val)
+}
+
+func Do_replace_authserver(val string) {
+	if(boolify(C.replaced_auth_server)) {
+		C.free(unsafe.Pointer(C.newAuthServer))
+	}else{
+		C.replaced_auth_server=C.char(1)
+	}
+	C.newAuthServer=C.CString(val)
+}
+
+func Set_disableHashCheck(val bool) {
+	C.args_disableHashCheck=charify(val)
+}
+
+func Set_muteWorldChat(val bool) {
+	C.args_muteWorldChat=charify(val)
+}
+
+func Set_noPyRpc(val bool) {
+	C.args_noPyRpc=charify(val);
+}
+
+func Set_noNBT(val bool) {
+	C.args_noNBT=charify(val);
+}
+
 func GetFBVersion() string {
 	return C.GoString(C.get_fb_version())
 }
