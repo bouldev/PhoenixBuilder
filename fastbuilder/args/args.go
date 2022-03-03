@@ -15,9 +15,11 @@ extern char args_disableHashCheck;
 extern char args_muteWorldChat;
 extern char args_noPyRpc;
 extern char args_noNBT;
+extern char *startup_script;
 
 extern void parse_args(int argc, char **argv);
 
+extern char use_startup_script;
 extern char *get_fb_version(void);
 extern char *commit_hash(void);
 */
@@ -119,3 +121,9 @@ func NoNBT() bool {
 	return boolify(C.args_noNBT)
 }
 
+func StartupScript() string {
+	if  int(C.use_startup_script)==0 {
+		return ""
+	}
+	return C.GoString(C.startup_script)
+}

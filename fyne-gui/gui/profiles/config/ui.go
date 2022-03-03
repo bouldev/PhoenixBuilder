@@ -59,7 +59,7 @@ func (g *GUI) makeForm(config *SessionConfigWithName) fyne.CanvasObject {
 	}
 
 	fbPasswordEntry := widget.NewEntryWithData(binding.BindString(&config.Config.FBPassword))
-	fbPasswordEntry.Password = true
+	fbPasswordEntry.Password=true
 	fbPasswordEntry.OnChanged = func(s string) {
 		config.Config.FBPassword = s
 	}
@@ -86,8 +86,8 @@ func (g *GUI) makeForm(config *SessionConfigWithName) fyne.CanvasObject {
 		}
 	}
 	serverPasswdEntry := widget.NewEntryWithData(binding.BindString(&config.Config.ServerPasswd))
+	serverPasswdEntry.Password=true
 	serverPasswdEntry.PlaceHolder = "(没有密码就留空)"
-	serverPasswdEntry.Password = true
 	languageSelector := widget.NewRadioGroup([]string{"中文", "English"}, func(lang string) {
 		if lang == "中文" {
 			config.Config.Lang = "zh_CN"
