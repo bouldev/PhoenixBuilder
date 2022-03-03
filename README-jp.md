@@ -8,7 +8,7 @@
 
 ### 原理
 
-目下のFastBuilderは一新したテクを使用しているので、もうWebSocketに制限されないですので、新しいFastBuilderの建造するスピードも、性能も、スタビリティーも、かなり増進した。今のFastBuilderのコアはSandertvのMITライセンスで発表した[Gophertunnel](https://github.com/Sandertv/gophertunnel/)に基づいている。
+目下のFastBuilderは一新したテクを使用しているので、WebSocketに制限されないですので、新しいFastBuilderの建造するスピードも、性能も、スタビリティーも、かなり増進した。今のFastBuilderのコアはSandertvのMITライセンスで発表した[Gophertunnel](https://github.com/Sandertv/gophertunnel/)に基づいている。
 
 ### オープンソース
 
@@ -24,15 +24,17 @@ FastBuilder Phoenix のクライアントは [GitHub](https://github.com/LNSSPsd
 - お客様が買ったFastBuilderは、上述の機能が含んでいる、それ以上の機能がこの後で加えるかもしれないですが、それは保証されない。
 - 一部のインストールのステップはある程度の**ITと数学の知識**が必要ですので、このマニュアルはお客様はもうそれらを備えてると考えます。
 - FastBuilder ユーザーセンターには、新しいアカウントには二つのスロットが含まれています（ぼっち版には一つ）、そのスロットがNetEaseのMinecraftのサーバー番号とバインドできます、バインド後は一ヶ月に変動不能の状態になります。FastBuilder Phoenix はNEMCのムルチプレーヤーモードやMinecraft Bedrock Edition (国際版)に使用はできないのでご了承下さい。
-- Please **do not** import any files **without the author's permission**, every single content creator survives in the community with their own energy and wisdom. Using others' IP (stands for Intellectual Property) commercially would cause destructions to the whole environment of the game. Moreover, if the copyright owner of contents you have used ascertains the liability, you should and must take your responsibility, and we shouldn't bear any liability for it.
-- Developers aren't customer service reps, they don't have the obligation to **resolve** the various problems you met when using the software, moreover they would not guide you to install the software **by themselves**. If you found bugs when using the software and **you are very sure of it**, you can **submit bug reports** to a seller.
-- The current version (Phoenix Alpha) is under testing, various bugs might be triggered, purchasing means you **volunteer to bear the risks**.
-- **The nearly full-English prompts in the program doesn't mean that we are not Chinese.**
-- We designed every feature **as perfect as possible**, but it still contains **defects**.
+- FastBuilder　ユーザーセンターには、二つのプランが選択可能となります（どれでもNEMCのムルチプレーヤーモードやMinecraft Bedrock Edition (国際版)に使用はできない）
+  * ぼっち版（７０CNY）：アカウントは一つのスロットが含まれていますので、一つだけのレンタルサーバーとバインドできます。
+  * 一般版（１２０CNY）：アカウントは二つのスロットが含まれていますので、二つのレンタルサーバーとバインドできます。
+  * もしももっと多いレンタルサーバーが持っているなら、スロットも購入出来ます：
+    * 変更出来るスロット（６０CNY）：一つのレンタルサーバーにバインドできます、一ヶ月に一回だけ変更できます。
+    * 変更出来ないスロット（２０CNY）：一つのレンタルサーバーにバインドできますけど、バインド後は変更できません。
+- 建築ファイルを**無許可的**に使用**しない**で下さい。創作者はみんな自分の力と知識でコミュニティーで生きることを求めているんです。他の人のIP(知的財産)の営利的な無駄使いは全ゲームにとっては破壊的なことになります。その上、もしもファイルの作者があなたの無駄使いを追及したら、あなたはそれを負担しなければならないです、そのうち、うちらはなにも負担しないはずです。
 
-### World View
+### <ruby><rb>基本概念</rb><rp>(</rp><rt style="font-size:80%">せかいかん</rt><rp>)</rp></ruby>
 
-The differences between FastBuilder and other programs is that it contains the concept of "server" and "client". The game that players running is a client, FastBuilder is also a client, and the rental server the player enters is a server.
+FastBuilderには、サーバーやクライアントっていう概念があります。ユーザーのゲームーとFastBuilderはみんなクライアントである、そのうちレンタルサーバーだけはサーバーである。
 
 Therefore, clients can run on different devices, and FastBuilder can be executed to join your server w/o your game running.
 
