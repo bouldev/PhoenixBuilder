@@ -65,7 +65,7 @@ jobs:
       run: |
         make current
         make clean
-        chmod 0755 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
+        chmod 0644 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
         sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go>~/conn.go
         cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
     - name: Build
@@ -106,6 +106,7 @@ jobs:
         STORAGEKEY: ${{ secrets.STORAGEKEY }}
       run: |
         echo "$STORAGEKEY">~/storagekey
+        chmod 0600 ~/storagekey
         git clone git@github.com:LNSSPsd/PhoenixBuilder-storage.git --config core.sshCommand="ssh -i ~/storagekey"
         ln PhoenixBuilder-storage/CNAME build/CNAME
         cp -r PhoenixBuilder-storage/.git build/.git
