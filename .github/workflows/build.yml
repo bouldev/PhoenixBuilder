@@ -99,6 +99,21 @@ jobs:
         mv release.txt build/release-list.txt
         cp version build/version.txt
         tar -czf fb-linux-binaries-v2.tar.gz build/*
+    - name: Generate index files for storage over github
+      run: node index_generator.js build
+    - name: Deploy to storage
+      env:
+        STORAGEKEY: ${{ secrets.STORAGEKEY }}
+      run: |
+        echo "$STORAGEKEY">~/storagekey
+        git clone git@github.com:LNSSPsd/PhoenixBuilder-storage.git --config core.sshCommand="ssh -i ~/storagekey"
+        ln PhoenixBuilder-storage/CNAME build/CNAME
+        cp -r PhoenixBuilder-storage/.git build/.git
+        cd build
+        git add .
+        git commit -m "Auto update" -a
+        git push --config core.sshCommand="ssh -i ~/storagekey"
+        cd ..
     - name: Load Key
       env:
         FBKEY: ${{ secrets.FBKEY }}
