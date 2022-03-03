@@ -249,6 +249,23 @@ sendFn=FB_websocketConnectV1("ws://localhost:8888/ws_test",onNewMessage)
 sendFn("hello ws!")
 ```
 
+- example05.js  
+本脚本演示了fetch功能
+
+```
+var x = fetch('https://storage.fastbuilder.pro').then(function(r) {
+    r.text().then(function(d) {
+        FB_Println(r.statusText)
+        for (var k in r.headers._headers) {
+            FB_Println(k + ':', r.headers.get(k))
+        }
+        FB_Println(d)
+    });
+});
+
+FB_Println("Awaiting...")
+```
+
 ## 其他
 以下内容会被自动插入到用户脚本的开头
 ```
