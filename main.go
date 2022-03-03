@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -32,6 +34,7 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/ottoVM"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -56,7 +59,7 @@ func main() {
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
 	}
-	
+
 	I18n.Init()
 
 	pterm.DefaultBox.Println(pterm.LightCyan(I18n.T(I18n.Copyright_Notice_Headline) +
@@ -69,11 +72,11 @@ func main() {
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO, CMA2401PT"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
 	pterm.Println(pterm.Yellow("FastBuilder Phoenix " + args.GetFBVersion()))
-	
+
 	if(I18n.ShouldDisplaySpecial()) {
 		fmt.Printf("%s", I18n.T(I18n.Special_Startup))
 	}
-	
+
 	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err:=recover(); err!=nil {
@@ -152,6 +155,22 @@ func runShellClient(token string, version string) {
 }
 
 func runClient(token string, version string, code string, serverPasswd string) {
+	vmHostBridge:=&ottoVM.HostBridge{}
+	vmHostBridge.Init(true)
+	vmHostBridge.HostQueryExpose= map[string]func() string{
+		"user_name": func() string {
+			return configuration.RespondUser
+		},
+		"sha_token": func() string {
+			h := sha256.New()
+			h.Write([]byte(configuration.UserToken))
+			return base64.RawStdEncoding.EncodeToString(h.Sum(nil))
+		},
+	}
+	ottoKeeper:=&ottoVM.OttoKeeperAlpha{}
+	ottoKeeper.SetInitFn(vmHostBridge.GetVMInitFn())
+	runScript(args.StartupScript(),ottoKeeper)
+
 	worldchatchannel:=make(chan []string)
 	client := fbauth.CreateClient(worldchatchannel)
 	if token[0] == '{' {
@@ -212,10 +231,27 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		bridgeConn=conn
 		bridgeInitFinished()
 	}
+
+	// ottoVM
+	vmHostBridge.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
+		ud,_:=uuid.NewUUID()
+		chann:=make(chan *packet.CommandOutput)
+		if waitResponse{command.UUIDMap.Store(ud.String(), chann)}
+		command.SendCommand(mcCmd, ud, conn)
+		if waitResponse{
+			resp:=<-chann
+			return resp
+		}else {
+			return nil
+		}
+	})
+	vmHostBridge.HostConnectEstablished()
+	defer vmHostBridge.HostConnectTerminate()
+
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 	user := client.ShouldRespondUser()
 	configuration.RespondUser=user
-	
+
 	runtimeid:=fmt.Sprintf("%d",conn.GameData().EntityUniqueID)
 	if !args.NoPyRpc() {
 		conn.WritePacket(&packet.PyRpc {
@@ -229,20 +265,20 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		})
 		conn.WritePacket(&packet.PyRpc {
 			Content: bytes.Join( [][]byte{[]byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0xb,0x4d,0x6f,0x64,0x45,0x76,0x65,0x6e,0x74,0x43,0x32,0x53,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x94,0xc4,0x9,0x4d,0x69,0x6e,0x65,0x63,0x72,0x61,0x66,0x74,0xc4,0x6,0x70,0x72,0x65,0x73,0x65,0x74,0xc4,0x12,0x47,0x65,0x74,0x4c,0x6f,0x61,0x64,0x65,0x64,0x49,0x6e,0x73,0x74,0x61,0x6e,0x63,0x65,0x73,0x81,0xc4,0x8,0x70,0x6c,0x61,0x79,0x65,0x72,0x49,0x64,0xc4},
-						[]byte{byte(len(runtimeid))},
-						[]byte(runtimeid),
-						[]byte{0xc0},
-					},[]byte{}),
+				[]byte{byte(len(runtimeid))},
+				[]byte(runtimeid),
+				[]byte{0xc0},
+			},[]byte{}),
 		})
 		conn.WritePacket(&packet.PyRpc {
 			Content: []byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0x19,0x61,0x72,0x65,0x6e,0x61,0x47,0x61,0x6d,0x65,0x50,0x6c,0x61,0x79,0x65,0x72,0x46,0x69,0x6e,0x69,0x73,0x68,0x4c,0x6f,0x61,0x64,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x90,0xc0},
 		})
 		conn.WritePacket(&packet.PyRpc {
 			Content: bytes.Join([][]byte{[]byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0xb,0x4d,0x6f,0x64,0x45,0x76,0x65,0x6e,0x74,0x43,0x32,0x53,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x94,0xc4,0x9,0x4d,0x69,0x6e,0x65,0x63,0x72,0x61,0x66,0x74,0xc4,0xe,0x76,0x69,0x70,0x45,0x76,0x65,0x6e,0x74,0x53,0x79,0x73,0x74,0x65,0x6d,0xc4,0xc,0x50,0x6c,0x61,0x79,0x65,0x72,0x55,0x69,0x49,0x6e,0x69,0x74,0xc4},
-					[]byte{byte(len(runtimeid))},
-						[]byte(runtimeid),
-						[]byte{0xc0},
-					},[]byte{}),
+				[]byte{byte(len(runtimeid))},
+				[]byte(runtimeid),
+				[]byte{0xc0},
+			},[]byte{}),
 		})
 	}
 	conn.WritePacket(&packet.ClientCacheStatus {
@@ -257,7 +293,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			command.WorldChatTellraw(conn, csmsg[0], csmsg[1])
 		}
 	} ()
-	
+
 	plugin.StartPluginSystem(conn)
 
 	function.InitInternalFunctions()
@@ -283,10 +319,11 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	go func() {
 		logger,closeFn :=makeLogFile()
 		defer closeFn()
-		reader:=bufio.NewReader(os.Stdin)
+		//reader:=bufio.NewReader(os.Stdin)
 		for {
 			//cmd, _:=getInput()
-			inp, _ := reader.ReadString('\n')
+			//inp, _ := reader.ReadString('\n')
+			inp:=vmHostBridge.HostUser2FBInputHijack()
 			logger.Println(inp)
 			cmd:=strings.TrimRight(inp,"\r\n")
 			if len(cmd) == 0 {
@@ -318,6 +355,12 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				command.Tellraw(conn, "[ench] command \"simpleconstruct <nbt_json>\" or       ")
 				command.Tellraw(conn, "[ench] \"construct <filename>\" instead.               ")
 				continue
+			}
+			if strings.HasPrefix(cmd,"script"){
+				cmdArgs:=strings.Split(cmd," ")
+				if len(cmdArgs)>1 {
+					runScript(cmdArgs[1], ottoKeeper)
+				}
 			}
 			if cmd=="move" {
 				go func() {
@@ -367,6 +410,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
 		// a read timeout is set. You will generally want to return or break if this happens.
 		pk, err := conn.ReadPacket()
+		vmHostBridge.HostPumpMcPacket(pk)
 		if err != nil {
 			panic(err)
 		}
@@ -390,7 +434,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				})
 				// Good job, netease, you wasted 3 days of my idle time
 				// (-Ruphane)
-				
+
 				// See analyze/nemcfix/final.py for its python version
 				// and see analyze/ for how I did it.
 				tellraw(conn, "Welcome to FastBuilder!")
@@ -398,8 +442,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
 			}else if(strings.Contains(string(p.Content),"check_server_contain_pet")) {
 				//fmt.Printf("Checkpet!!\n")
-				
-				
+
+
 				// Pet req
 				/*conn.WritePacket(&packet.PyRpc {
 					Content: bytes.Join([][]byte{[]byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0xb,0x4d,0x6f,0x64,0x45,0x76,0x65,0x6e,0x74,0x43,0x32,0x53,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x94,0xc4,0x9,0x4d,0x69,0x6e,0x65,0x63,0x72,0x61,0x66,0x74,0xc4,0x3,0x70,0x65,0x74,0xc4,0x12,0x73,0x75,0x6d,0x6d,0x6f,0x6e,0x5f,0x70,0x65,0x74,0x5f,0x72,0x65,0x71,0x75,0x65,0x73,0x74,0x87,0xc4,0x13,0x61,0x6c,0x6c,0x6f,0x77,0x5f,0x73,0x74,0x65,0x70,0x5f,0x6f,0x6e,0x5f,0x62,0x6c,0x6f,0x63,0x6b,0xc2,0xc4,0xb,0x61,0x76,0x6f,0x69,0x64,0x5f,0x6f,0x77,0x6e,0x65,0x72,0xc3,0xc4,0x7,0x73,0x6b,0x69,0x6e,0x5f,0x69,0x64,0xcd,0x27,0x11,0xc4,0x9,0x70,0x6c,0x61,0x79,0x65,0x72,0x5f,0x69,0x64,0xc4},
@@ -408,7 +452,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 								[]byte{0xc4,0x6,0x70,0x65,0x74,0x5f,0x69,0x64,0x1,0xc4,0xa,0x6d,0x6f,0x64,0x65,0x6c,0x5f,0x6e,0x61,0x6d,0x65,0xc4,0x14,0x74,0x79,0x5f,0x79,0x75,0x61,0x6e,0x73,0x68,0x65,0x6e,0x67,0x68,0x75,0x6c,0x69,0x5f,0x30,0x5f,0x30,0xc4,0x4,0x6e,0x61,0x6d,0x65,0xc4,0xc,0xe6,0x88,0x91,0xe7,0x9a,0x84,0xe4,0xbc,0x99,0xe4,0xbc,0xb4,0xc0},
 						},[]byte{}),
 				})*/
-				
+
 			}else if(strings.Contains(string(p.Content),"summon_pet_response")){
 				//fmt.Printf("summonpetres\n")
 				/*conn.WritePacket(&packet.PyRpc {
@@ -431,10 +475,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				response:=client.TransferData(string(encData), fmt.Sprintf("%d",conn.IdentityData().Uid))
 				conn.WritePacket(&packet.PyRpc {
 					Content: bytes.Join( [][]byte{[]byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0xc,0x53,0x65,0x74,0x53,0x74,0x61,0x72,0x74,0x54,0x79,0x70,0x65,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x91,0xc4},
-								[]byte{byte(len(response))},
-								[]byte(response),
-								[]byte{0xc0},
-							},[]byte{}),
+						[]byte{byte(len(response))},
+						[]byte(response),
+						[]byte{0xc0},
+					},[]byte{}),
 				})
 			}
 			break
@@ -458,12 +502,12 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fbtask.ExportWaiter<-p.StructureTemplate
 			break
 		/*case *packet.InventoryContent:
-			for _, item := range p.Content {
-				fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
-			}
-			break*/
+		for _, item := range p.Content {
+			fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
+		}
+		break*/
 		/*case *packet.InventorySlot:
-			fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
+		fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
 				for _, item := range plugin.ChatEventListeners {
@@ -490,36 +534,36 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 		case *packet.CommandOutput:
 			//if p.SuccessCount > 0 {
-				if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
-					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-					if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
-						configuration.IsOp = true
-					}
-					if len(pos) == 0 {
-						tellraw(conn, I18n.T(I18n.InvalidPosition))
-						break
-					}
-					configuration.GlobalFullConfig().Main().Position = types.Position{
-						X: pos[0],
-						Y: pos[1],
-						Z: pos[2],
-					}
-					tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
-					break
-				}else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
-					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-					if len(pos) == 0 {
-						tellraw(conn, I18n.T(I18n.InvalidPosition))
-						break
-					}
-					configuration.GlobalFullConfig().Main().End = types.Position{
-						X: pos[0],
-						Y: pos[1],
-						Z: pos[2],
-					}
-					tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
+			if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
+				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+				if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
+					configuration.IsOp = true
+				}
+				if len(pos) == 0 {
+					tellraw(conn, I18n.T(I18n.InvalidPosition))
 					break
 				}
+				configuration.GlobalFullConfig().Main().Position = types.Position{
+					X: pos[0],
+					Y: pos[1],
+					Z: pos[2],
+				}
+				tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+				break
+			}else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
+				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+				if len(pos) == 0 {
+					tellraw(conn, I18n.T(I18n.InvalidPosition))
+					break
+				}
+				configuration.GlobalFullConfig().Main().End = types.Position{
+					X: pos[0],
+					Y: pos[1],
+					Z: pos[2],
+				}
+				tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
+				break
+			}
 			//}
 			pr, ok := command.UUIDMap.LoadAndDelete(p.CommandOrigin.UUID.String())
 			if ok {
@@ -594,12 +638,13 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 		}
 	}
+
 }
 
 func runDebugClient() {
 	serverCode := fmt.Sprintf("%s", strings.TrimSuffix("[DEBUG, NO SERVER]", "\n"))
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), serverCode)))
-	
+
 	conn := &minecraft.Conn {
 		DebugMode: true,
 	}
@@ -623,7 +668,7 @@ func runDebugClient() {
 	conn.WritePacket(&packet.PyRpc {
 		Content: []byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0x19,0x61,0x72,0x65,0x6e,0x61,0x47,0x61,0x6d,0x65,0x50,0x6c,0x61,0x79,0x65,0x72,0x46,0x69,0x6e,0x69,0x73,0x68,0x4c,0x6f,0x61,0x64,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x90,0xc0},
 	})
-	
+
 	plugin.StartPluginSystem(conn)
 
 	function.InitInternalFunctions()
@@ -667,7 +712,7 @@ func runDebugClient() {
 		}
 		function.Process(conn, cmd)
 	}
-	
+
 }
 
 func getInput() (string, error) {
@@ -772,4 +817,24 @@ func makeLogFile() (*log.Logger,func()) {
 		return log.New(os.Stdout,"",log.Ldate|log.Ltime), func() {}
 	}
 	return log.New(logFile, "", log.Ldate|log.Ltime), func() {logFile.Close()}
+}
+
+func runScript(scriptPath string,ottoKeeper ottoVM.OttoKeeper){
+	scriptPath=strings.TrimSpace(scriptPath)
+	if scriptPath!=""{
+		fmt.Println("load script: "+scriptPath)
+		_,fileName:=path.Split(scriptPath)
+		file, err := os.OpenFile(scriptPath,os.O_RDONLY,0755)
+		if err != nil {
+			fmt.Println(err)
+		}
+		all, err := ioutil.ReadAll(file)
+		if err != nil {
+			fmt.Println(err)
+		}
+		script := ottoKeeper.LoadNewScript(string(all), fileName)
+		script.RunInRoutine(func(Result string, err error) {
+			fmt.Printf("Script[%v]\nerr=%v\nresult=%v\n",fileName,err,Result)
+		})
+	}
 }
