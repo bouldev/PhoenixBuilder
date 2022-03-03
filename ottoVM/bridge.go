@@ -80,6 +80,8 @@ func (hb *HostBridge)GetVMInitFn() func(r Runnable) {
 		FBDisconnetedError:= func(funcName string) otto.Value {
 			return vm.MakeCustomError("FB_Disconnect",scriptName+" call "+funcName+", but FB-MC connection is disconnected!")
 		}
+		// network
+		addExt(vm)
 		// common functions
 		addTimeOut(vm)
 		// add websocket function!
