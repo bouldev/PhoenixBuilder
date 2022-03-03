@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>fastbuilder_fyne_gui</string>
+	<string>PhoenixBuilder</string>
 	<key>CFBundleExecutable</key>
-	<string>phoenixbuilder_fyne_gui</string>
+	<string>phoenixbuilder-macos</string>
 	<key>CFBundleIdentifier</key>
-	<string>fastbuilder.fyne.gui</string>
+	<string>pro.fastbuilder.app</string>
 	<key>CFBundleIconFile</key>
 	<string>icon.icns</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.0.4</string>
+	<string>@VERSION@</string>
 	<key>CFBundleSupportedPlatforms</key>
 	<array>
 		<string>MacOSX</string>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>197</string>
+	<string>@COMMIT_COUNT@</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>

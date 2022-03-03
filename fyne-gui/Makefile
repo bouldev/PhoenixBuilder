@@ -1,4 +1,4 @@
-.PHONY: all clean current ios-executable ios-app macos-executable windows-executable android-lib-arm64 android-app windows-executable-x86 windows-executable-x86_64
+.PHONY: all clean current ios-executable ios-app macos-executable windows-executable android-lib-arm64 android-app windows-executable-x86 windows-executable-x86_64 macos-app
 TARGETS:=build/ current
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
 ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
@@ -11,7 +11,7 @@ IOS_STRIP=$(shell xcrun --sdk iphoneos -f strip)
 IOS_OBJCOPY=$(shell xcrun --sdk iphoneos -f objcopy)
 LDID=ldid2
 LIPO=/usr/bin/lipo
-TARGETS:=${TARGETS} macos-executable ios-executable ios-app
+TARGETS:=${TARGETS} macos-executable macos-app ios-executable ios-app
 endif
 else
 IOS_STRIP=true
@@ -19,7 +19,7 @@ LDID=$${THEOS}/toolchain/linux/iphone/bin/ldid
 LIPO=$${THEOS}/toolchain/linux/iphone/bin/lipo
 endif
 ifneq (${THEOS},)
-	TARGETS:=${TARGETS} ios-executable macos-executable ios-app
+	TARGETS:=${TARGETS} ios-executable macos-executable ios-app macos-app
 endif
 ifneq ($(wildcard ${HOME}/android-ndk-r20b),)
 	TARGETS:=${TARGETS} android-lib-arm64 android-app
@@ -45,6 +45,7 @@ current: build/phoenixbuilder
 ios-executable: build/phoenixbuilder-ios-executable
 ios-app: build/phoenixbuilder-ios-app.ipa
 macos-executable: build/phoenixbuilder-macos
+macos-app: build/phoenixbuilder-macos-app.app.zip
 android-app: build/phoenixbuilder-android-app.apk
 android-lib-arm64: build/phoenixbuilder-android-arm64-lib.so
 windows-executable: windows-executable-x86 windows-executable-x86_64
@@ -78,6 +79,16 @@ build/phoenixbuilder-macos-arm64: build/ ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -tags fyne_gui -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-arm64
 build/phoenixbuilder-macos: build/ build/phoenixbuilder-macos-x86_64 build/phoenixbuilder-macos-arm64 ${SRCS_GO}
 	${LIPO} -create build/phoenixbuilder-macos-x86_64 build/phoenixbuilder-macos-arm64 -output build/phoenixbuilder-macos
+build/phoenixbuilder-macos-app.app.zip: build/ build/phoenixbuilder-macos
+	rm -rf build/phoenixbuilder-macos-app.app
+	rm -f build/phoenixbuilder-macos-app.app.zip
+	mkdir -p build/phoenixbuilder-macos-app.app
+	mkdir -p build/phoenixbuilder-macos-app.app/Resources
+	mkdir -p build/phoenixbuilder-macos-app.app/MacOS
+	ln build/phoenixbuilder-macos build/phoenixbuilder-macos-app.app/MacOS/phoenixbuilder-macos
+	ln unbundled_assets/icon.icns build/phoenixbuilder-macos-app.app/Resources/icon.icns
+	sed "s/@VERSION@/${VERSION}/g; s/@COMMIT_COUNT@/`git rev-list --count --all`/g" unbundled_assets/macos_Info.plist>build/phoenixbuilder-macos-app.app/Info.plist
+	cd build/&&zip -r phoenixbuilder-macos-app.app.zip phoenixbuilder-macos-app.app&&rm -rf phoenixbuilder-macos-app.app&&cd ..
 build/phoenixbuilder-android-arm64-lib.so: build/ ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -tags "fyne_gui android" -trimpath -buildmode=c-shared -ldflags "-s -w" -o build/phoenixbuilder-android-arm64-lib.so
 build/phoenixbuilder-android-app.apk: build/ build/phoenixbuilder-android-arm64-lib.so android_wrapper/android_pack

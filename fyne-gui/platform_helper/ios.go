@@ -3,6 +3,8 @@
 package platform_helper
 
 /*
+#cgo CFLAGS: -fobjc-arc
+
 void NetworkRequest();
 void playBackgroundMusic();
 void stopBackgroundMusic();
