@@ -500,7 +500,7 @@ func (g *GUI) makeGeoCmdContent() fyne.CanvasObject {
 	blockdataFormItem, blockdataGet := g.makeIntEntry(0, "值", "方块特殊值")
 	shpere_shapeFormItem, shpere_shapeGet := g.makeTranslateRGSelectEntry([]string{"空心", "实心"}, []string{"hollow", "solid"}, "球填充", "空心则只有一个壳")
 	resumeFormItem,resumeGet:=g.makeIntEntry(0,"恢复构建于","百分比,从上次构建中断处继续")
-	c := container.NewDocTabs(
+	c := container.NewAppTabs(
 		&container.TabItem{
 			Text: "圆面/圈",
 			Content: container.NewVBox(
