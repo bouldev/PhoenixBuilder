@@ -35,6 +35,10 @@ char *get_fb_version() {
 	return FB_VERSION " (" FB_COMMIT ")";
 }
 
+char *get_fb_plain_version() {
+	return FB_VERSION;
+}
+
 char *commit_hash() {
 	return FB_COMMIT_LONG;
 }
