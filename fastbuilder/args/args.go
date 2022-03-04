@@ -21,6 +21,7 @@ extern void parse_args(int argc, char **argv);
 
 extern char use_startup_script;
 extern char *get_fb_version(void);
+extern char *get_fb_plain_version(void);
 extern char *commit_hash(void);
 */
 import "C"
@@ -64,6 +65,10 @@ func Set_noNBT(val bool) {
 
 func GetFBVersion() string {
 	return C.GoString(C.get_fb_version())
+}
+
+func GetFBPlainVersion() string {
+	return C.GoString(C.get_fb_plain_version())
 }
 
 func GetFBCommitHash() string {
