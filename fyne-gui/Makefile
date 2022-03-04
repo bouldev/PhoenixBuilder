@@ -35,10 +35,12 @@ endif
 #endif
 
 VERSION=$(shell cat version)
+FBVERSION=$(shell cat version)
+GUIVERSION=$(shell cat ../version)
 
 SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go $(dir)/*.c))
 
-CGO_DEF := "-DFB_VERSION=\"$(VERSION)\" -DFB_COMMIT=\"$(shell git log -1 --format=format:"%h")\" -DFB_COMMIT_LONG=\"$(shell git log -1 --format=format:"%H")\""
+CGO_DEF := "-DFB_VERSION=\"$(FBVERSION)\" -DFBGUI_VERSION=\"$(GUIVERSION)\" -DFB_COMMIT=\"$(shell git log -1 --format=format:"%h")\" -DFB_COMMIT_LONG=\"$(shell git log -1 --format=format:"%H")\""
 
 all: ${TARGETS}
 current: build/phoenixbuilder

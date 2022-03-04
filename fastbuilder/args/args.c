@@ -29,11 +29,19 @@ void print_help(const char *self_name) {
 }
 
 char *get_fb_version() {
+#ifdef FBGUI_VERSION
+	return FB_VERSION "@" FBGUI_VERSION " (" FB_COMMIT ")";
+#else
 	return FB_VERSION " (" FB_COMMIT ")";
+#endif
 }
 
 char *get_fb_plain_version() {
+#ifdef FBGUI_VERSION
+	return FBGUI_VERSION
+#else
 	return FB_VERSION;
+#endif
 }
 
 char *commit_hash() {
@@ -45,7 +53,10 @@ void print_version(int detailed) {
 		printf(FB_VERSION "\n");
 		return;
 	}
-	printf("FastBuilder " FB_VERSION "\n");
+	printf("PhoenixBuilder " FB_VERSION "\n");
+#ifdef FBGUI_VERSION
+	printf("With GUI " FBGUI_VERSION "\n");
+#endif
 	printf("COMMIT " FB_COMMIT_LONG "\n");
 	printf("Copyright (C) 2022 Bouldev\n");
 	printf("\n");
