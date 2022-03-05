@@ -171,3 +171,5 @@ fknsrs.biz/p/ottoext v0.0.0-20170408110602-5871ae9499f3 h1:DTdMqL+znTHXyo241OVnH
 fknsrs.biz/p/ottoext v0.0.0-20170408110602-5871ae9499f3/go.mod h1:M7Y4s1GbifBG+nkA7gTi5MdEAIiapERsAbbw0vOMbw4=
 github.com/GeertJohan/go.rice v1.0.2 h1:PtRw+Tg3oa3HYwiDBZyvOJ8LdIyf6lAovJJtr7YOAYk=
 github.com/GeertJohan/go.rice v1.0.2/go.mod h1:af5vUNlDNkCjOZeSGFgIJxDje9qdjsO6hshx0gTmZt4=
+github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
+github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
