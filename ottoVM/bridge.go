@@ -289,13 +289,15 @@ func (hb *HostBridge) vmRegPackCallBack(packetType string,cbFn otto.Value) (func
 			fmt.Printf("VM: Send Packet %v to Js fail: %v",strPacket,err)
 		}
 	}
-	c,ok:=hb.vmCbsCount[packetID]
+	_c,ok:=hb.vmCbsCount[packetID]
+	c:=_c
 	if !ok{
 		hb.vmCbsCount[packetID]=0
 		hb.vmCbs[packetID]=make(map[uint64]func(packet.Packet))
 		c=0
 	}
 	c+=1
+	hb.vmCbsCount[packetID]++
 	hb.vmCbs[packetID][c]=cb
 	return func(){delete(hb.vmCbs[packetID],c)},nil
 }
