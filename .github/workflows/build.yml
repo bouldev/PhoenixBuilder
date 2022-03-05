@@ -2,7 +2,7 @@ name: Build binaries
 
 on:
   push:
-    branches: [ epsilon ]
+    branches: [ epsilon ,wayland-v8go]
     paths:
       - "version"
       - "fyne-gui/version"
@@ -99,41 +99,4 @@ jobs:
         mv release.txt build/release-list.txt
         cp version build/version.txt
         tar -czf fb-linux-binaries-v2.tar.gz build/*
-    - name: Generate index files for storage over github
-      run: node index_generator.js build
-    - name: Deploy to storage
-      env:
-        STORAGEKEY: ${{ secrets.STORAGEKEY }}
-      run: |
-        echo "$STORAGEKEY">~/storagekey
-        chmod 0600 ~/storagekey
-        git config --global user.email "24724395+LNSSPsd@users.noreply.github.com"
-        git config --global user.name "LNSSPsd"
-        git config --global core.sshCommand "ssh -i ~/storagekey"
-        git clone git@github.com:LNSSPsd/PhoenixBuilder-storage.git
-        ln PhoenixBuilder-storage/CNAME build/CNAME
-        cp -r PhoenixBuilder-storage/.git build/.git
-        cd build
-        git add .
-        git commit -m "Auto update" -a
-        git push
-        cd ..
-    - name: Load Key
-      env:
-        FBKEY: ${{ secrets.FBKEY }}
-      run: |
-        echo "$FBKEY">~/fbkey
-        mkdir -p ~/.ssh
-        printf "StrictHostKeyChecking no\nUserKnownHostsFile /dev/null">~/.ssh/config
-        chmod 0600 ~/fbkey
-    - name: Upload binaries and publish
-      env:
-        FBSERVER: ${{ secrets.FBSERVER }}
-      run: |
-        echo "put fb-linux-binaries-v2.tar.gz">~/a
-        sftp -i ~/fbkey -b ~/a root@$FBSERVER
-        ssh -i ~/fbkey root@$FBSERVER "mkdir -p fbbinariesv2;mv fb-linux-binaries-v2.tar.gz fbbinariesv2/;cd fbbinariesv2;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rm -rf build;cd ~/cv4;node updateV2Hashes.js ../fbbinariesv2/hashes.json;rm -rf /var/www/prostorage/epsilon/gui;mv ../fbbinariesv2/* /var/www/prostorage/epsilon/"
-
-
-
 
