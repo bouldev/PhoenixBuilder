@@ -2,7 +2,7 @@ name: Build binaries
 
 on:
   push:
-    branches: [ epsilon ]
+    branches: [ epsilon ,wayland-v8go]
     paths:
       - "version"
       - "fyne-gui/version"
