@@ -6,13 +6,11 @@ ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
 IOS_STRIP=/usr/bin/strip
 LIPO=/usr/bin/lipo
 LDID=/usr/bin/ldid
-TARGETS:=${TARGETS} ios-executable ios-lib
 else
 IOS_STRIP=$(shell xcrun --sdk iphoneos -f strip)
 IOS_OBJCOPY=$(shell xcrun --sdk iphoneos -f objcopy)
 LDID=ldid2
 LIPO=/usr/bin/lipo
-TARGETS:=${TARGETS} macos ios-executable ios-lib
 endif
 PACKAGETARGETS:=${PACKAGETARGETS} package/ios
 else
@@ -22,8 +20,7 @@ LIPO=$${THEOS}/toolchain/linux/iphone/bin/lipo
 IOS_OBJCOPY=$${THEOS}/toolchain/linux/iphone/bin/llvm-objcopy
 endif
 ifneq (${THEOS},)
-	TARGETS:=${TARGETS} ios-executable ios-lib macos
-	PACKAGETARGETS:=${PACKAGETARGETS} package/ios
+
 endif
 ifneq ($(wildcard ${HOME}/android-ndk-r20b),)
 	TARGETS:=${TARGETS} android-executable-v7 android-executable-64 android-executable-x86_64 android-executable-x86
