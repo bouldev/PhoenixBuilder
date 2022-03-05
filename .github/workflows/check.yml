@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - name: Install libraries
+      run: sudo apt install libgl1-mesa-dev xorg-dev -y
     - name: Set up Go
       uses: actions/setup-go@v2
       with:

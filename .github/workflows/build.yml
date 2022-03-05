@@ -27,9 +27,9 @@ jobs:
       run: mv ${{ steps.setup-ndk.outputs.ndk-path }} ${HOME}/android-ndk-r20b
     - name: Install compilers
       run: |
-        sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu libgl1-mesa-dev -y
+        sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu libgl1-mesa-dev xorg-dev -y
     - name: Setup theos's dependencies
-      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 libplist-utils brotli xorg-dev
+      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 libplist-utils brotli
     - name: Clone theos
       uses: actions/checkout@v2
       with:
