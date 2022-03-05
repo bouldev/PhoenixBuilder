@@ -38,7 +38,7 @@ char *get_fb_version() {
 
 char *get_fb_plain_version() {
 #ifdef FBGUI_VERSION
-	return FBGUI_VERSION
+	return FBGUI_VERSION;
 #else
 	return FB_VERSION;
 #endif

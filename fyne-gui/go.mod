@@ -46,4 +46,6 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
+	fknsrs.biz/p/ottoext v0.0.0-20170408110602-5871ae9499f3 // indirect
+	github.com/robertkrimen/otto v0.0.0-20210614181706-373ff5438452
 )
