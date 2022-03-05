@@ -18,7 +18,6 @@ import (
 )
 
 //const authServer="wss://api.fastbuilder.pro:2053/"
-var ShouldDisableNBTConstructor = true
 
 type Client struct {
 	privateKey *ecdsa.PrivateKey
@@ -181,8 +180,6 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 		}
 		return "",int(code),fmt.Errorf("%s",err)
 	}
-	shouldAllowNBTConstructor, _ := resp["should_allow_nbt_constructor"].(bool)
-	ShouldDisableNBTConstructor=shouldAllowNBTConstructor
 	str,_:=resp["chainInfo"].(string)
 	return str,0,nil
 }

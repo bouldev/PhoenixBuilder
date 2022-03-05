@@ -19,8 +19,6 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 
-	"phoenixbuilder/fastbuilder/nbtconstructor"
-
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
@@ -46,7 +44,6 @@ type SessionConfig struct {
 	// when "iamDeveloper" is true, the following fields are used,
 	// otherwise, the fields are ignored (restore to default)
 	NoPyRPC               bool   `yaml:"no_py_rpc" json:"no_py_rpc"`
-	NBTConstructorEnabled bool   `yaml:"nbt_constructor_enable" json:"nbt_constructor_enable"`
 	FBVersion             string `yaml:"fb_version" json:"fb_version"`
 	FBHash                string `yaml:"fb_hash" json:"fb_hash"`
 	FBCodeName            string `yaml:"fb_codename" json:"fb_codename"`
@@ -68,7 +65,6 @@ func NewConfig() *SessionConfig {
 		iamDeveloper:          false,
 		MuteWorldChat:         false,
 		NoPyRPC:               false,
-		NBTConstructorEnabled: true,
 		FBVersion:             args.GetFBVersion(),
 		FBHash:                "gui~"+args.GetFBPlainVersion(),
 		FBCodeName:            DefaultFBCodeName,
@@ -117,7 +113,6 @@ func NewSession(config *SessionConfig) *Session {
 	if !config.iamDeveloper {
 		defaultConfig := NewConfig()
 		config.NoPyRPC = defaultConfig.NoPyRPC
-		config.NBTConstructorEnabled = defaultConfig.NBTConstructorEnabled
 		config.FBVersion = defaultConfig.FBVersion
 		config.FBHash = defaultConfig.FBHash
 		config.FBCodeName = defaultConfig.FBCodeName
@@ -288,14 +283,6 @@ func (s *Session) beforeStart() (err error) {
 
 	// init FB Functions
 	function.InitInternalFunctions()
-
-	// override the default nbt state
-	if !s.Config.iamDeveloper {
-		s.Config.NBTConstructorEnabled = !fbauth.ShouldDisableNBTConstructor
-	}
-	if s.Config.NBTConstructorEnabled {
-		nbtconstructor.InitNBTConstructor()
-	}
 
 	// TODO: don't make those global
 	fbtask.InitTaskStatusDisplay(conn)
@@ -569,29 +556,6 @@ func (s *Session) routine(c chan string) {
 			if h {
 				ch := channel.(chan bool)
 				ch <- true
-			}
-		case *packet.AddActor:
-			if p.EntityType == "minecraft:villager_v2" {
-				if nbtconstructor.AddVillagerChannel != nil {
-					nbtconstructor.AddVillagerChannel <- p
-				}
-			}
-		case *packet.InventoryContent:
-			if p.WindowID == 0 {
-				if len(p.Content) == 0 {
-					break
-				}
-				if nbtconstructor.InventoryContentChannel != nil {
-					nbtconstructor.InventoryContentChannel <- p
-				}
-			}
-		case *packet.ItemStackResponse:
-			if nbtconstructor.ItemStackResponseChannel != nil {
-				nbtconstructor.ItemStackResponseChannel <- p
-			}
-		case *packet.UpdateTrade:
-			if nbtconstructor.IsWorking {
-				nbtconstructor.TradeWindowID = p.WindowID
 			}
 		case *packet.Respawn:
 			if p.EntityRuntimeID == conn.GameData().EntityRuntimeID {

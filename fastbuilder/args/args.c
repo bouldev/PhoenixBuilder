@@ -9,7 +9,6 @@ char replaced_auth_server=0;
 char *newAuthServer;
 char args_muteWorldChat=0;
 char args_noPyRpc=0;
-char args_noNBT=0;
 char use_startup_script=0;
 char *startup_script;
 
@@ -20,7 +19,6 @@ void print_help(const char *self_name) {
 	printf("\t--no-hash-check: Disable the hash check.\n");
 	printf("\t-M, --no-world-chat: Ignore world chat on client side.\n");
 	printf("\t--no-pyrpc: Disable the PyRpcPacket interaction, the client's commands will be prevented from execution by netease's rental server.\n");
-	printf("\t--no-nbt: Disable NBT Construction feature.\n");
 	printf("\t-S, --script=<*.js>: run a .js script at start");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
@@ -95,7 +93,8 @@ int _parse_args(int argc, char **argv) {
 				args_noPyRpc=1;
 				break;
 			case 6:
-				args_noNBT=1;
+				fprintf(stderr, "--no-nbt option is no longer available.\n");
+				return 10;
 				break;
 			case 9:
 				print_version(0);

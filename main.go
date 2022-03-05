@@ -24,7 +24,6 @@ import (
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/menu"
 	"phoenixbuilder/fastbuilder/move"
-	"phoenixbuilder/fastbuilder/nbtconstructor"
 	"phoenixbuilder/fastbuilder/plugin"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
@@ -297,9 +296,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	plugin.StartPluginSystem(conn)
 
 	function.InitInternalFunctions()
-	if !fbauth.ShouldDisableNBTConstructor&&!args.NoNBT() {
-		nbtconstructor.InitNBTConstructor()
-	}
 	fbtask.InitTaskStatusDisplay(conn)
 	world_provider.Init()
 	move.ConnectTime=conn.GameData().ConnectTime
@@ -589,29 +585,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				ch:=channel.(chan bool)
 				ch<-true
 			}
-		case *packet.AddActor:
-			if p.EntityType == "minecraft:villager_v2" {
-				if nbtconstructor.AddVillagerChannel!=nil {
-					nbtconstructor.AddVillagerChannel<-p
-				}
-			}
-		case *packet.InventoryContent:
-			if p.WindowID == 0 {
-				if len(p.Content)==0 {
-					break
-				}
-				if(nbtconstructor.InventoryContentChannel!=nil) {
-					nbtconstructor.InventoryContentChannel<-p
-				}
-			}
-		case *packet.ItemStackResponse:
-			if(nbtconstructor.ItemStackResponseChannel!=nil) {
-				nbtconstructor.ItemStackResponseChannel<-p
-			}
-		case *packet.UpdateTrade:
-			if(nbtconstructor.IsWorking) {
-				nbtconstructor.TradeWindowID=p.WindowID
-			}
 		case *packet.Respawn:
 			if p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
 				move.Position=p.Position
@@ -672,7 +645,6 @@ func runDebugClient() {
 	plugin.StartPluginSystem(conn)
 
 	function.InitInternalFunctions()
-	nbtconstructor.InitNBTConstructor()
 	fbtask.InitTaskStatusDisplay(conn)
 
 	signalhandler.Init(conn)

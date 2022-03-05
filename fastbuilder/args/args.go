@@ -14,7 +14,6 @@ extern char *newAuthServer;
 extern char args_disableHashCheck;
 extern char args_muteWorldChat;
 extern char args_noPyRpc;
-extern char args_noNBT;
 extern char *startup_script;
 
 extern void parse_args(int argc, char **argv);
@@ -57,10 +56,6 @@ func Set_muteWorldChat(val bool) {
 
 func Set_noPyRpc(val bool) {
 	C.args_noPyRpc=charify(val);
-}
-
-func Set_noNBT(val bool) {
-	C.args_noNBT=charify(val);
 }
 
 func GetFBVersion() string {
@@ -120,10 +115,6 @@ func ShouldMuteWorldChat() bool {
 
 func NoPyRpc() bool {
 	return boolify(C.args_noPyRpc)
-}
-
-func NoNBT() bool {
-	return boolify(C.args_noNBT)
 }
 
 func StartupScript() string {

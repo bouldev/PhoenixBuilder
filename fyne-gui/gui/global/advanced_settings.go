@@ -36,8 +36,6 @@ func MakeAdvancedSettingsPage(app fyne.App,topWindow fyne.Window, setContent fun
 			args.Set_noPyRpc(val)
 		},topWindow)
 	}
-	noNBTCheck:=widget.NewCheck("", args.Set_noNBT)
-	noNBTCheck.Checked=args.NoNBT()
 	
 	return container.NewVScroll(container.NewVBox(
 		widget.NewLabel("所有设置将在程序退出后重置。"),
@@ -49,8 +47,6 @@ func MakeAdvancedSettingsPage(app fyne.App,topWindow fyne.Window, setContent fun
 		container.NewBorder(nil,nil,widget.NewLabel("不监听世界聊天"),muteWorldChatCheck),
 		widget.NewSeparator(),
 		container.NewBorder(nil,nil,widget.NewLabel("禁用PyRpc包"),noPyRpcCheck),
-		widget.NewSeparator(),
-		container.NewBorder(nil,nil,widget.NewLabel("无论如何都禁用NBT"),noNBTCheck),
 		widget.NewSeparator(),
 		widget.NewButton("os.Exit(0)",func(){os.Exit(0)}),
 		widget.NewSeparator(),

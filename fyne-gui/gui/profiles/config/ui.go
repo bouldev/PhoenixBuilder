@@ -116,7 +116,6 @@ func (g *GUI) makeForm(config *SessionConfigWithName) fyne.CanvasObject {
 	} else {
 		developerOptions = container.NewVBox(
 			widget.NewCheckWithData("NoPyRPC", binding.BindBool(&config.Config.NoPyRPC)),
-			widget.NewCheckWithData("NBTConstructorEnabled", binding.BindBool(&config.Config.NBTConstructorEnabled)),
 			container.NewGridWithColumns(2, widget.NewLabel("FBVersion"), widget.NewEntryWithData(binding.BindString(&config.Config.FBVersion))),
 			container.NewGridWithColumns(2, widget.NewLabel("FBHash"), widget.NewEntryWithData(binding.BindString(&config.Config.FBHash))),
 			container.NewGridWithColumns(2, widget.NewLabel("FBCodeName"), widget.NewEntryWithData(binding.BindString(&config.Config.FBCodeName))),

@@ -804,9 +804,6 @@ func (g *GUI) makePlotContent() fyne.CanvasObject {
 }
 
 func (g *GUI) makeNbtContent() fyne.CanvasObject {
-	if !g.BotSession.Config.NBTConstructorEnabled {
-		return widget.NewLabel("应FB要求，你不能在该服务器使用此功能")
-	}
 	pathOption, pathGet := g.makeReadPathOption("选择nbt文件", "json/txt", []string{".json", ".txt"})
 	nbtEntry := widget.NewMultiLineEntry()
 	nbtEntry.SetPlaceHolder(`{
@@ -905,7 +902,7 @@ func (g *GUI) makeMajorContent() fyne.CanvasObject {
 				Detail: g.makeGeoCmdContent(),
 			},
 			&widget.AccordionItem{
-				Title:  "建筑导入 ",
+				Title:  "建筑导入",
 				Detail: g.makeBuildingContent(),
 			},
 			&widget.AccordionItem{
@@ -916,10 +913,10 @@ func (g *GUI) makeMajorContent() fyne.CanvasObject {
 				Title:  "导出",
 				Detail: g.makeExportContent(),
 			},
-			&widget.AccordionItem{
-				Title:  "构造nbt物品",
-				Detail: g.makeNbtContent(),
-			},
+			//&widget.AccordionItem{
+			//	Title:  "构造nbt物品",
+			//	Detail: g.makeNbtContent(),
+			//},
 		},
 	}
 }
