@@ -36,34 +36,8 @@ jobs:
         submodules: 'recursive'
         repository: 'theos/theos'
         path: 'theos'
-    - name: Setup theos
-      run: |
-        mv $GITHUB_WORKSPACE/theos ~/theos
-        export THEOS=~/theos
-        echo "export THEOS=~/theos" >> ~/.profile
-        curl -LO https://github.com/sbingner/llvm-project/releases/latest/download/linux-ios-arm64e-clang-toolchain.tar.lzma
-        TMP=$(mktemp -d)
-        tar -xf linux-ios-arm64e-clang-toolchain.tar.lzma -C $TMP
-        mkdir -p $THEOS/toolchain/linux/iphone
-        mv $TMP/ios-arm64e-clang-toolchain/* $THEOS/toolchain/linux/iphone/
-        rm -r linux-ios-arm64e-clang-toolchain.tar.lzma $TMP
-        curl -LO https://github.com/theos/sdks/archive/master.zip
-        TMP=$(mktemp -d)
-        unzip -q master.zip -d $TMP
-        mv $TMP/sdks-master/*.sdk $THEOS/sdks
-        rm -r master.zip $TMP
-    - name: Clone macOS SDK
-      uses: actions/checkout@v2
-      with:
-        repository: 'phracker/MacOSX-SDKs'
-        path: 'macOS-sdks'
-    - name: Configure macOS SDK
-      run: |
-        mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
-        rm -rf $GITHUB_WORKSPACE/macOS-sdks
     - name: Pre-Build & configure go-raknet
       run: |
-        make current
         make clean
         chmod 0644 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
         sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go>~/conn.go
