@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"phoenixbuilder/minecraft"
 	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/minecraft"
 	"syscall"
 )
 
 func Init(conn *minecraft.Conn) {
 	go func() {
+		defer func() {
+			r:=recover()
+			if r!=nil{
+				fmt.Println("go routine @ fastbuilder.signalhandler crashed ",r)
+			}
+		}()
 		signalchannel:=make(chan os.Signal)
 		signal.Notify(signalchannel, os.Interrupt) // ^C
 		signal.Notify(signalchannel, syscall.SIGTERM)
