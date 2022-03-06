@@ -8,9 +8,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/pterm/pterm"
-	"golang.org/x/term"
 	"io/ioutil"
 	"log"
 	"os"
@@ -35,12 +32,16 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/ottoVM"
 	"phoenixbuilder/wayland_v8/host"
-	v8 "rogchap.com/v8go"
 	"runtime"
 	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/pterm/pterm"
+	"golang.org/x/term"
+	v8 "rogchap.com/v8go"
 )
 
 type FBPlainToken struct {
