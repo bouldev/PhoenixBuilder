@@ -31,4 +31,4 @@ jobs:
     - name: Build
       run: |
         export THEOS=~/theos
-        make android-executable-64
+        make ios-executable

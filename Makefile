@@ -71,7 +71,7 @@ build/phoenixbuilder: build/ ${SRCS_GO}
 build/phoenixbuilder-aarch64: build/ ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
 build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-executable
+	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/ios.sh CXX=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-executable
 	${IOS_STRIP} build/phoenixbuilder-ios-executable
 	${LDID} -Sios-ent.xml build/phoenixbuilder-ios-executable
 build/phoenixbuilder-ios-static.a: build/ ${SRCS_GO}
