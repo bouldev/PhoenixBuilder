@@ -72,31 +72,3 @@ jobs:
       run: |
         export THEOS=~/theos
         make
-    - name: Package for specific platforms
-      run: |
-        export THEOS=~/theos
-        make package
-    - name: Build GUI applications
-      run: |
-        export THEOS=~/theos
-        cd fyne-gui
-        cd android_wrapper
-        go build
-        cd ..
-        make
-        node simpleappend.js
-        ls -lh build/>release.txt
-        mv release.txt build/release-list.txt
-        cp version build/version.txt
-        mv build ../build/gui
-        cd ..
-    - name: Pack binaries
-      run: |
-        mv release/*.deb build/
-        rm build/phoenixbuilder-macos-arm64
-        rm build/phoenixbuilder-macos-x86_64
-        ls -lh build/>release.txt
-        mv release.txt build/release-list.txt
-        cp version build/version.txt
-        tar -czf fb-linux-binaries-v2.tar.gz build/*
-
