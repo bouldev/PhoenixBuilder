@@ -88,14 +88,14 @@ That's all for the completion of necessary informations, and the following conte
      > **Note: This step (c) is also the way of upgrading FastBuilder Phoenix, execute this step directly to upgrade FastBuilder afterwards.**
 
      ```shell
-     o=$(uname -o) a=$(uname -m) && if [ "$o" == "Android" ]; then [[ "$a" == "aarch64" ]] && f="arm64" || f="armv7" && curl -o fastbuilder https://storage.fastbuilder.pro/epsilon/phoenixbuilder-android-executable-$f && chmod +x fastbuilder && ./fastbuilder; else echo "for Android only"; fi
+     o=$(uname -o) a=$(uname -m) && if [ "$o" == "Android" ]; then [[ "$a" == "aarch64" ]] && f="arm64" || f="armv7" && curl -o fastbuilder https://storage.fastbuilder.pro/phoenixbuilder-android-executable-$f && chmod +x fastbuilder && ./fastbuilder; else echo "for Android only"; fi
      
      ```
      **Thanks [@CMA2401PT](https://github.com/CMA2401PT) for providing the easier version of the download command for fastbuilder.**
 
 ### Usage
 
-FastBuilder Phoenix is a pure command line program without complicated GUI, which made the program very easy to use.
+FastBuilder Phoenix is a pure command line program ~~without complicated GUI~~, which made the program very easy to use.
 
 #### Launching
 
