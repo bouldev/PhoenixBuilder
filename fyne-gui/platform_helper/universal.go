@@ -1,12 +1,8 @@
-// +build !ios
-
 package platform_helper
 
-func DoNetworkRequest() {
-}
+// void initStdoutRedirector(char *rootPath);
+import "C"
 
-func RunBackground() {
-}
-
-func StopBackground() {
+func InitStdoutRedirector(rootPath string) {
+	C.initStdoutRedirector(C.CString(rootPath))
 }

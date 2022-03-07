@@ -69,6 +69,7 @@ func main() {
 	//appStorage.Create("config.yaml")
 
 	platform_helper.DoNetworkRequest()
+	platform_helper.InitStdoutRedirector(appStorage.RootURI().Path())
 
 	appTheme = my_theme.NewTheme()
 	setThemeChineseFont(appTheme)
