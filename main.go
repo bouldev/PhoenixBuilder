@@ -168,7 +168,7 @@ func runShellClient(token string, version string) {
 func dropInRestartLoop(token string, version string, code string, serverPasswd string){
 	failureCount:=0
 	for {
-		delayTime:=30*(2<<failureCount)
+		delayTime:=30*((2<<failureCount)/2)
 		if delayTime>60*20{
 			delayTime=60*20
 		}
@@ -226,13 +226,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fn()
 		}
 	}()
-	regScript:=func (path string,stopFn func()){
-		if fn,ok:=allScripts[path];ok{
-			fmt.Println("Script "+path+" Reloaded!")
-			fn()
-		}
-		allScripts[path]=stopFn
-	}
+
 	if args.StartupScript()==""{
 		hostBridgeGamma.HostRemoveBlock()
 	}else{
@@ -241,7 +235,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Println("Cannot load Startup Script ",err)
 			hostBridgeGamma.HostRemoveBlock()
 		}else {
-			regScript(args.StartupScript(),stopFn)
+			allScripts[args.StartupScript()]=stopFn
 			hostBridgeGamma.HostWaitScriptBlock()
 		}
 	}
@@ -382,7 +376,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 
 	function.InitInternalFunctions()
 	fbtask.InitTaskStatusDisplay(conn)
-	world_provider.Init()
+	//world_provider.Init()
 	move.ConnectTime = conn.GameData().ConnectTime
 	move.Position = conn.GameData().PlayerPosition
 	move.Pitch = conn.GameData().Pitch
@@ -445,13 +439,18 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 			if strings.HasPrefix(cmd, "script") {
 				cmdArgs := strings.Split(cmd, " ")
+				scriptPath:=cmdArgs[1]
 				if len(cmdArgs) > 1 {
-					stopFn, err := LoadScript(cmdArgs[1], hostBridgeGamma)
+					if stopFn,ok:=allScripts[scriptPath];ok{
+						fmt.Println("Reload Script "+scriptPath)
+						stopFn()
+						delete(allScripts,scriptPath)
+					}
+					stopFn, err := LoadScript(scriptPath, hostBridgeGamma)
 					if err != nil {
 						fmt.Println("Cannot load Script ",err)
-					}else {
-						regScript(cmdArgs[1],stopFn)
 					}
+					allScripts[scriptPath]=stopFn
 				}
 			}
 			if cmd == "move" {

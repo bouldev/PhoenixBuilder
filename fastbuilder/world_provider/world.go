@@ -1,8 +1,8 @@
 package world_provider
 
 import (
-	"phoenixbuilder/minecraft"
 	"phoenixbuilder/dragonfly/server/world"
+	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
@@ -26,6 +26,6 @@ func DestroyWorld() {
 	ChunkCache=nil
 }
 
-func Init() {
+func init() {
 	InitRuntimeIdsWithoutMinecraftPrefix()
 }
