@@ -19,7 +19,7 @@ void print_help(const char *self_name) {
 	printf("\t--no-hash-check: Disable the hash check.\n");
 	printf("\t-M, --no-world-chat: Ignore world chat on client side.\n");
 	printf("\t--no-pyrpc: Disable the PyRpcPacket interaction, the client's commands will be prevented from execution by netease's rental server.\n");
-	printf("\t-S, --script=<*.js>: run a .js script at start");
+	printf("\t-S, --script=<*.js>: run a .js script at start\n");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
@@ -79,7 +79,6 @@ int _parse_args(int argc, char **argv) {
 		int c=getopt_long(argc,argv,"hA:MvS:", opts, &option_index);
 		if(c==-1)
 			break;
-		size_t loo=strlen(optarg);
 		switch(c) {
 		case 0:
 			switch(option_index) {
@@ -106,6 +105,7 @@ int _parse_args(int argc, char **argv) {
 			return 0;
 		case 'A':
 			replaced_auth_server=1;
+			size_t loo=strlen(optarg);
 			newAuthServer=malloc(loo+1);
 			memcpy(newAuthServer,optarg,loo+1);
 			break;
@@ -114,8 +114,9 @@ int _parse_args(int argc, char **argv) {
 			break;
 		case 'S':
 			use_startup_script=1;
-			startup_script=malloc(loo+1);
-			memcpy(startup_script,optarg,loo+1);
+			size_t looa=strlen(optarg);
+			startup_script=malloc(looa+1);
+			memcpy(startup_script,optarg,looa+1);
 			break;
 		case 'v':
 			print_version(1);
