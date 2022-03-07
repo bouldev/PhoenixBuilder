@@ -1,19 +1,19 @@
 package task
 
 import (
-	"phoenixbuilder/minecraft"
-	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/fastbuilder/types"
+	"fmt"
+	"phoenixbuilder/dragonfly/server/block/cube"
+	"phoenixbuilder/dragonfly/server/world"
+	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/parsing"
-	"phoenixbuilder/fastbuilder/bdump"
-	"fmt"
-	"strings"
-	"runtime"
+	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
-	"phoenixbuilder/dragonfly/server/block/cube"
-	"phoenixbuilder/dragonfly/server/world"
+	"phoenixbuilder/minecraft"
+	"phoenixbuilder/minecraft/protocol/packet"
+	"runtime"
+	"strings"
 )
 
 
@@ -60,6 +60,12 @@ func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
 	}
 	world_provider.NewWorld(conn)
 	go func() {
+		defer func() {
+			r:=recover()
+			if r!=nil{
+				fmt.Println("go routine @ fastbuilder.task export crashed ",r)
+			}
+		}()
 		command.Tellraw(conn, "EXPORT >> Exporting...")
 		V:=(endPos.X-beginPos.X+1)*(endPos.Y-beginPos.Y+1)*(endPos.Z-beginPos.Z+1)
 		blocks:=make([]*types.RuntimeModule,V)

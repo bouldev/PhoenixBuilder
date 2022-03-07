@@ -163,6 +163,12 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		blockschannel=make(chan *types.Module)
 		task.OutputChannel=blockschannel
 		go func() {
+			defer func() {
+				r:=recover()
+				if r!=nil{
+					fmt.Println("go routine @ fastbuilder.task.task.async crashed ",r)
+				}
+			}()
 			var blocks []*types.Module
 			for {
 				curblock, ok := <-asyncblockschannel
@@ -201,6 +207,12 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		task.State=TaskStateRunning
 	}
 	go func() {
+		defer func() {
+			r:=recover()
+			if r!=nil{
+				fmt.Println("go routine @ fastbuilder.task.task.sendblock crashed ",r)
+			}
+		}()
 		isWindows:=false
 		if runtime.GOOS == "windows" {
 			isWindows=true
@@ -324,6 +336,12 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 		command.FreeRequestStringPtr(request)
 	} ()
 	go func() {
+		defer func() {
+			r:=recover()
+			if r!=nil{
+				fmt.Println("go routine @ fastbuilder.task.task.generator crashed ",r)
+			}
+		}()
 		if task.Type==types.TaskTypeAsync {
 			err := builder.Generate(cfg, asyncblockschannel)
 			close(asyncblockschannel)
@@ -345,6 +363,12 @@ var ActivateTaskStatus chan bool=make(chan bool)
 
 func InitTaskStatusDisplay(conn *minecraft.Conn) {
 	go func() {
+		defer func() {
+			r:=recover()
+			if r!=nil{
+				fmt.Println("go routine @ fastbuilder.task.task.BrokSender crashed ",r)
+			}
+		}()
 		for {
 			str:=<-BrokSender
 			command.Tellraw(conn,str)
@@ -352,12 +376,24 @@ func InitTaskStatusDisplay(conn *minecraft.Conn) {
 	} ()
 	ticker := time.NewTicker(500 * time.Millisecond)
 	go func() {
+		defer func() {
+			r:=recover()
+			if r!=nil{
+				fmt.Println("go routine @ fastbuilder.task.task.Ticker crashed ",r)
+			}
+		}()
 		for {
 			<-ticker.C
 			ActivateTaskStatus<-true
 		}
 	} ()
 	go func() {
+		defer func() {
+			r:=recover()
+			if r!=nil{
+				fmt.Println("go routine @ fastbuilder.task.task.ActivateTaskStatus crashed ",r)
+			}
+		}()
 		for {
 			<-ActivateTaskStatus
 			//<- ticker.C

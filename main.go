@@ -30,7 +30,6 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/ottoVM"
 	"phoenixbuilder/wayland_v8/host"
 	"runtime"
 	"runtime/debug"
@@ -55,17 +54,7 @@ type FBPlainToken struct {
 //const FBVersion = "1.4.0"
 const FBCodeName = "Phoenix"
 
-func dummySimulation() {
-	iso := v8.NewIsolate()
-	global := v8.NewObjectTemplate(iso)
-
-	hb := host.NewHostBridge()
-	scriptName := "test.js"
-	host.InitHostFns(iso, global, hb, scriptName)
-}
-
 func main() {
-	dummySimulation()
 	args.ParseArgs()
 	pterm.Error.Prefix = pterm.Prefix{
 		Text:  "ERROR",
@@ -156,19 +145,59 @@ func main() {
 	}
 }
 
+var autoRestartEnabled bool
+var successfullyConnectedToFB bool
+
 func runShellClient(token string, version string) {
+	autoRestartEnabled=false
+	successfullyConnectedToFB=false
 	code, serverPasswd, err := getRentalServerCode()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	defer func() {
+		_=recover()
+		if autoRestartEnabled{
+			dropInRestartLoop(token, version, code, serverPasswd)
+		}
+	}()
+	runClient(token, version, code, serverPasswd)
+}
+
+func dropInRestartLoop(token string, version string, code string, serverPasswd string){
+	failureCount:=0
+	for {
+		delayTime:=30*(2<<failureCount)
+		if delayTime>60*20{
+			delayTime=60*20
+		}
+		fmt.Printf("FB will Restart after %v second, retry time=%v",delayTime,failureCount)
+		time.Sleep(time.Duration(delayTime)*time.Second)
+		recoverableRun(token, version, code, serverPasswd)
+		if successfullyConnectedToFB{
+			failureCount=0
+		}else {
+			failureCount+=0
+		}
+	}
+}
+
+func recoverableRun(token string, version string, code string, serverPasswd string){
+	defer func() {
+		r:=recover()
+		if r!=nil{
+			fmt.Println("FB Crashed, reason: ",r)
+		}
+	}()
+	successfullyConnectedToFB=false
 	runClient(token, version, code, serverPasswd)
 }
 
 func runClient(token string, version string, code string, serverPasswd string) {
-	vmHostBridge := &ottoVM.HostBridge{}
-	vmHostBridge.Init(true)
-	vmHostBridge.HostQueryExpose = map[string]func() string{
+	hostBridgeGamma:=&host.HostBridgeGamma{}
+	hostBridgeGamma.Init()
+	hostBridgeGamma.HostQueryExpose = map[string]func() string{
 		"user_name": func() string {
 			return configuration.RespondUser
 		},
@@ -177,10 +206,45 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			h.Write([]byte(configuration.UserToken))
 			return base64.RawStdEncoding.EncodeToString(h.Sum(nil))
 		},
+		"server_code": func() string {
+			return code
+		},
+		"fb_version": func() string {
+			return version
+		},
+		"fb_dir": func() string {
+			dir,_:= os.Getwd()
+			return dir
+		},
 	}
-	ottoKeeper := &ottoVM.OttoKeeperAlpha{}
-	ottoKeeper.SetInitFn(vmHostBridge.GetVMInitFn())
-	runScript(args.StartupScript(), ottoKeeper)
+	hostBridgeGamma.HostAutoRestartSetter= func(b bool) {
+		autoRestartEnabled=b
+	}
+	allScripts:=map[string]func(){}
+	defer func() {
+		for _,fn:=range allScripts{
+			fn()
+		}
+	}()
+	regScript:=func (path string,stopFn func()){
+		if fn,ok:=allScripts[path];ok{
+			fmt.Println("Script "+path+" Reloaded!")
+			fn()
+		}
+		allScripts[path]=stopFn
+	}
+	if args.StartupScript()==""{
+		hostBridgeGamma.HostRemoveBlock()
+	}else{
+		stopFn, err := LoadScript(args.StartupScript(), hostBridgeGamma)
+		if err != nil {
+			fmt.Println("Cannot load Startup Script ",err)
+			hostBridgeGamma.HostRemoveBlock()
+		}else {
+			regScript(args.StartupScript(),stopFn)
+			hostBridgeGamma.HostWaitScriptBlock()
+		}
+	}
 
 	worldchatchannel := make(chan []string)
 	client := fbauth.CreateClient(worldchatchannel)
@@ -242,9 +306,10 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		bridgeConn = conn
 		bridgeInitFinished()
 	}
+	successfullyConnectedToFB=true
 
-	// ottoVM
-	vmHostBridge.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
+	// jsVM
+	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
 		ud, _ := uuid.NewUUID()
 		chann := make(chan *packet.CommandOutput)
 		if waitResponse {
@@ -258,8 +323,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			return nil
 		}
 	})
-	vmHostBridge.HostConnectEstablished()
-	defer vmHostBridge.HostConnectTerminate()
+	hostBridgeGamma.HostConnectEstablished()
+	defer hostBridgeGamma.HostConnectTerminate()
 
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 	user := client.ShouldRespondUser()
@@ -298,6 +363,12 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		Enabled: false,
 	})
 	go func() {
+		defer func() {
+			r:=recover()
+			if r!=nil{
+				fmt.Println("go routine @ main.worldchat crashed ",r)
+			}
+		}()
 		if args.ShouldMuteWorldChat() {
 			return
 		}
@@ -327,13 +398,19 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	configuration.OneId = oneId
 	types.ForwardedBrokSender = fbtask.BrokSender
 	go func() {
+		defer func() {
+			r:=recover()
+			if r!=nil{
+				fmt.Println("go routine @ main.userinput crashed ",r)
+			}
+		}()
 		logger, closeFn := makeLogFile()
 		defer closeFn()
 		//reader:=bufio.NewReader(os.Stdin)
 		for {
 			//cmd, _:=getInput()
 			//inp, _ := reader.ReadString('\n')
-			inp := vmHostBridge.HostUser2FBInputHijack()
+			inp := hostBridgeGamma.HostUser2FBInputHijack()
 			logger.Println(inp)
 			cmd := strings.TrimRight(inp, "\r\n")
 			if len(cmd) == 0 {
@@ -369,11 +446,22 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			if strings.HasPrefix(cmd, "script") {
 				cmdArgs := strings.Split(cmd, " ")
 				if len(cmdArgs) > 1 {
-					runScript(cmdArgs[1], ottoKeeper)
+					stopFn, err := LoadScript(cmdArgs[1], hostBridgeGamma)
+					if err != nil {
+						fmt.Println("Cannot load Script ",err)
+					}else {
+						regScript(cmdArgs[1],stopFn)
+					}
 				}
 			}
 			if cmd == "move" {
 				go func() {
+					defer func() {
+						r:=recover()
+						if r!=nil{
+							fmt.Println("go routine @ main.recvMsg.move crashed ",r)
+						}
+					}()
 					/*var counter int=0
 					var direction bool=false
 					for{
@@ -420,7 +508,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
 		// a read timeout is set. You will generally want to return or break if this happens.
 		pk, err := conn.ReadPacket()
-		vmHostBridge.HostPumpMcPacket(pk)
+		hostBridgeGamma.HostPumpMcPacket(pk)
 		if err != nil {
 			panic(err)
 		}
@@ -804,22 +892,34 @@ func makeLogFile() (*log.Logger, func()) {
 	return log.New(logFile, "", log.Ldate|log.Ltime), func() { logFile.Close() }
 }
 
-func runScript(scriptPath string, ottoKeeper ottoVM.OttoKeeper) {
+func LoadScript(scriptPath string, hb host.HostBridge)(func(),error) {
+	iso := v8.NewIsolate()
+	global := v8.NewObjectTemplate(iso)
 	scriptPath = strings.TrimSpace(scriptPath)
-	if scriptPath != "" {
-		fmt.Println("load script: " + scriptPath)
-		_, fileName := path.Split(scriptPath)
-		file, err := os.OpenFile(scriptPath, os.O_RDONLY, 0755)
-		if err != nil {
-			fmt.Println(err)
-		}
-		all, err := ioutil.ReadAll(file)
-		if err != nil {
-			fmt.Println(err)
-		}
-		script := ottoKeeper.LoadNewScript(string(all), fileName)
-		script.RunInRoutine(func(Result string, err error) {
-			fmt.Printf("Script[%v]\nerr=%v\nresult=%v\n", fileName, err, Result)
-		})
+	if scriptPath == "" {
+		return nil,fmt.Errorf("Script Path Empty!")
 	}
+	fmt.Println("load script: " + scriptPath)
+	_, scriptName := path.Split(scriptPath)
+	file, err := os.OpenFile(scriptPath, os.O_RDONLY, 0755)
+	if err != nil {
+		return nil,err
+	}
+	scriptData, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil,err
+	}
+	script:=string(scriptData)
+	identifyStr:= host.GetStringSha(script)
+	stopFunc:=host.InitHostFns(iso,global,hb,scriptName,identifyStr,scriptPath)
+	ctx := v8.NewContext(iso, global)
+	host.CtxFunctionInject(ctx)
+	go func() {
+		finalVal, err := ctx.RunScript(script, scriptName)
+		if err != nil {
+			fmt.Println("script "+scriptPath+" runtime Error: "+err.Error())
+		}
+		fmt.Println("script "+scriptPath+" Complete: ",finalVal)
+	}()
+	return  stopFunc,nil
 }
