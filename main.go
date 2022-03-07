@@ -166,19 +166,19 @@ func runShellClient(token string, version string) {
 }
 
 func dropInRestartLoop(token string, version string, code string, serverPasswd string){
-	failureCount:=0
+	failureCount:=1
 	for {
 		delayTime:=30*((2<<failureCount)/2)
-		if delayTime>60*20{
-			delayTime=60*20
+		if delayTime>60*60{
+			delayTime=60*60
 		}
 		fmt.Printf("FB will Restart after %v second, retry time=%v",delayTime,failureCount)
 		time.Sleep(time.Duration(delayTime)*time.Second)
 		recoverableRun(token, version, code, serverPasswd)
 		if successfullyConnectedToFB{
-			failureCount=0
+			failureCount=1
 		}else {
-			failureCount+=0
+			failureCount+=1
 		}
 	}
 }
