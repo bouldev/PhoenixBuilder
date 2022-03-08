@@ -272,6 +272,7 @@ func (hb *HostBridgeGamma) GetAbsPath(p string) string {
 func (hb *HostBridgeGamma) LoadFile(p string) (string, error) {
 	p = hb.GetAbsPath(p)
 	fp, err := os.OpenFile(p, os.O_RDONLY|os.O_CREATE, 0755)
+	defer fp.Close()
 	if err != nil {
 		return "", err
 	}
@@ -293,6 +294,7 @@ func (hb *HostBridgeGamma) SaveFile(p string, data string) error {
 	if err != nil {
 		return err
 	}
+	defer fp.Close()
 	_, err = fp.Write([]byte(data))
 	return err
 }
