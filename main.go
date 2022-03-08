@@ -3,8 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -30,7 +28,8 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/wayland_v8/host"
+	"phoenixbuilder/fastbuilder/script"
+	"phoenixbuilder/fastbuilder/script/kickstart"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -40,7 +39,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pterm/pterm"
 	"golang.org/x/term"
-	v8 "rogchap.com/v8go"
 )
 
 type FBPlainToken struct {
@@ -195,16 +193,11 @@ func recoverableRun(token string, version string, code string, serverPasswd stri
 }
 
 func runClient(token string, version string, code string, serverPasswd string) {
-	hostBridgeGamma:=&host.HostBridgeGamma{}
+	hostBridgeGamma:=&script.HostBridgeGamma{}
 	hostBridgeGamma.Init()
 	hostBridgeGamma.HostQueryExpose = map[string]func() string{
 		"user_name": func() string {
 			return configuration.RespondUser
-		},
-		"sha_token": func() string {
-			h := sha256.New()
-			h.Write([]byte(configuration.UserToken))
-			return base64.RawStdEncoding.EncodeToString(h.Sum(nil))
 		},
 		"server_code": func() string {
 			return code
@@ -230,7 +223,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	if args.StartupScript()==""{
 		hostBridgeGamma.HostRemoveBlock()
 	}else{
-		stopFn, err := LoadScript(args.StartupScript(), hostBridgeGamma)
+		stopFn, err := script_kickstarter.LoadScript(args.StartupScript(), hostBridgeGamma)
 		if err != nil {
 			fmt.Println("Cannot load Startup Script ",err)
 			hostBridgeGamma.HostRemoveBlock()
@@ -430,13 +423,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				fmt.Printf("OK\n")
 				continue
 			}
-			if cmd == "ench" {
-				command.Tellraw(conn, "[ench] Command \"ench\" is DEPRECATED and removed since")
-				command.Tellraw(conn, "[ench] it contains many uncertain behaviors, please use")
-				command.Tellraw(conn, "[ench] command \"simpleconstruct <nbt_json>\" or       ")
-				command.Tellraw(conn, "[ench] \"construct <filename>\" instead.               ")
-				continue
-			}
 			if strings.HasPrefix(cmd, "script") {
 				cmdArgs := strings.Split(cmd, " ")
 				scriptPath:=cmdArgs[1]
@@ -446,7 +432,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 						stopFn()
 						delete(allScripts,scriptPath)
 					}
-					stopFn, err := LoadScript(scriptPath, hostBridgeGamma)
+					stopFn, err := script_kickstarter.LoadScript(scriptPath, hostBridgeGamma)
 					if err != nil {
 						fmt.Println("Cannot load Script ",err)
 					}
@@ -889,36 +875,4 @@ func makeLogFile() (*log.Logger, func()) {
 		return log.New(os.Stdout, "", log.Ldate|log.Ltime), func() {}
 	}
 	return log.New(logFile, "", log.Ldate|log.Ltime), func() { logFile.Close() }
-}
-
-func LoadScript(scriptPath string, hb host.HostBridge)(func(),error) {
-	iso := v8.NewIsolate()
-	global := v8.NewObjectTemplate(iso)
-	scriptPath = strings.TrimSpace(scriptPath)
-	if scriptPath == "" {
-		return nil,fmt.Errorf("Script Path Empty!")
-	}
-	fmt.Println("load script: " + scriptPath)
-	_, scriptName := path.Split(scriptPath)
-	file, err := os.OpenFile(scriptPath, os.O_RDONLY, 0755)
-	if err != nil {
-		return nil,err
-	}
-	scriptData, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil,err
-	}
-	script:=string(scriptData)
-	identifyStr:= host.GetStringSha(script)
-	stopFunc:=host.InitHostFns(iso,global,hb,scriptName,identifyStr,scriptPath)
-	ctx := v8.NewContext(iso, global)
-	host.CtxFunctionInject(ctx)
-	go func() {
-		finalVal, err := ctx.RunScript(script, scriptName)
-		if err != nil {
-			fmt.Println("script "+scriptPath+" runtime Error: "+err.Error())
-		}
-		fmt.Println("script "+scriptPath+" Complete: ",finalVal)
-	}()
-	return  stopFunc,nil
 }

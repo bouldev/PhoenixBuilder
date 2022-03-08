@@ -19,7 +19,9 @@ void print_help(const char *self_name) {
 	printf("\t--no-hash-check: Disable the hash check.\n");
 	printf("\t-M, --no-world-chat: Ignore world chat on client side.\n");
 	printf("\t--no-pyrpc: Disable the PyRpcPacket interaction, the client's commands will be prevented from execution by netease's rental server.\n");
+#ifdef WITH_V8
 	printf("\t-S, --script=<*.js>: run a .js script at start\n");
+#endif
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
@@ -54,6 +56,9 @@ void print_version(int detailed) {
 	printf("PhoenixBuilder " FB_VERSION "\n");
 #ifdef FBGUI_VERSION
 	printf("With GUI " FBGUI_VERSION "\n");
+#endif
+#ifdef WITH_V8
+	printf("With V8 linked.\n");
 #endif
 	printf("COMMIT " FB_COMMIT_LONG "\n");
 	printf("Copyright (C) 2022 Bouldev\n");
@@ -113,6 +118,10 @@ int _parse_args(int argc, char **argv) {
 			args_muteWorldChat=1;
 			break;
 		case 'S':
+#ifndef WITH_V8
+			fprintf(stderr,"-S, --script option isn't available: No V8 linked for this version.\n");
+			return 10;
+#endif
 			use_startup_script=1;
 			size_t looa=strlen(optarg);
 			startup_script=malloc(looa+1);
