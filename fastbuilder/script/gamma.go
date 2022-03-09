@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"phoenixbuilder/fastbuilder/move"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
 	"sync"
@@ -301,4 +302,8 @@ func (hb *HostBridgeGamma) SaveFile(p string, data string) error {
 
 func (hb *HostBridgeGamma) RequireAutoRestart() {
 	hb.HostAutoRestartSetter(true)
+}
+
+func (hb *HostBridgeGamma) GetBotPos() (float32,float32,float32){
+	return move.Position.X(),move.Position.Y(),move.Position.Z()
 }

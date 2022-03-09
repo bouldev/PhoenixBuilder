@@ -73,6 +73,9 @@ type HostBridge interface {
 
 	// AutoRestart
 	RequireAutoRestart()
+
+	// bot pos
+	GetBotPos() (float32,float32,float32)
 }
 
 type HostBridgeBeta struct {
@@ -291,3 +294,6 @@ func (hb *HostBridgeBeta) RequireAutoRestart() {
 
 }
 
+func (hb *HostBridgeBeta) GetBotPos()(float32,float32,float32) {
+	return 0,0,0
+}
