@@ -202,7 +202,7 @@ func (hb *HostBridgeGamma) GetInput(hint string,t *Terminator,scriptName string)
 	}
 	// if FB is not connected to MC, at this time
 	if !hb.IsConnected(){
-		fmt.Print("[scriptName]: "+hint)
+		fmt.Printf("[%v]: %v", scriptName, hint)
 		userInputReader:=bufio.NewReader(os.Stdin)
 		l,_, _ :=userInputReader.ReadLine()
 		s:=strings.TrimSpace(string(l))
