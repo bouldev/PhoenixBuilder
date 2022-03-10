@@ -1,4 +1,4 @@
-.PHONY: android-executable-64
+.PHONY: all current current-v8 current-arm64-executable ios-executable ios-v8-executable ios-lib macos android-executable-v7 android-executable-64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64 windows-v8-executable-x86_64 windows-shared
 TARGETS:=build/ current
 PACKAGETARGETS:=
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
@@ -51,6 +51,7 @@ current: build/phoenixbuilder
 current-v8: build/phoenixbuilder-v8
 current-arm64-executable: build/phoenixbuilder-aarch64
 ios-executable: build/phoenixbuilder-ios-executable
+ios-v8-executable: build/phoenixbuilder-v8-ios-executable
 ios-lib: build/phoenixbuilder-ios-static.a
 macos: build/phoenixbuilder-macos
 android-executable-v7: build/phoenixbuilder-android-executable-armv7
@@ -60,6 +61,7 @@ android-executable-x86: build/phoenixbuilder-android-executable-x86
 windows-executable: windows-executable-x86 windows-executable-x86_64
 windows-executable-x86: build/phoenixbuilder-windows-executable-x86.exe
 windows-executable-x86_64: build/phoenixbuilder-windows-executable-x86_64.exe
+windows-v8-executable-x86_64: build/phoenixbuilder-v8-windows-executable-x86_64.exe
 windows-shared: build/phoenixbuilder-windows-shared.dll
 
 package: ${PACKAGETARGETS}
@@ -103,6 +105,8 @@ build/phoenixbuilder-windows-executable-x86.exe: build/ /usr/bin/i686-w64-mingw3
 	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86.exe
 build/phoenixbuilder-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86_64.exe
+#build/phoenixbuilder-v8-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
+#	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=/usr/bin/x86_64-w64-mingw32-gcc CXX=/usr/bin/x86_64-w64-mingw32-g++ GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8-windows-executable-x86_64.exe
 build/phoenixbuilder-windows-shared.dll: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
 	CGO_CFLAGS="-Wl,--enable-stdcall-fixup -luser32 -lcomdlg32 -Wno-pointer-to-int-cast -mwindows -m64 -march=x86-64 -luser32 -lkernel32 -lgdi32 -lwinmm -lcomctl32 -ladvapi32 -lshell32 -lpsapi -nodefaultlibs -nostdlib -lmsvcrt -D_UCRT=1" CC=/usr/bin/x86_64-w64-mingw32-gcc CGO_LDFLAGS="--enable-stdcall-fixup" GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=c-shared -trimpath -o build/phoenixbuilder-windows-shared.dll
 build/hashes.json: build genhash.js ${TARGETS}

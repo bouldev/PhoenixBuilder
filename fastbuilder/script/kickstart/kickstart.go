@@ -29,27 +29,30 @@ func LoadScript(scriptPath string, hb script.HostBridge) (func(),error) {
 	fmt.Printf("JS engine vesion: %v\n",host.JSVERSION)
 	var script string
 	var scriptName string
-	urlPath, err := url.ParseRequestURI(scriptPath)
-	if err==nil{
-		scriptName=urlPath.Path
-		fmt.Printf("It seems to be a url, try loading it...\n")
-		result,err:=obtainPageContent(scriptPath,30*time.Second)
-		if err!=nil{
-			return nil,err
-		}
-		script=string(result)
-	}else{
+
+	file, fileErr := os.OpenFile(scriptPath, os.O_RDONLY, 0755)
+	if fileErr==nil{
 		_, scriptName = path.Split(scriptPath)
-		file, err := os.OpenFile(scriptPath, os.O_RDONLY, 0755)
-		if err != nil {
-			return nil,err
-		}
 		scriptData, err := ioutil.ReadAll(file)
 		if err != nil {
 			return nil,err
 		}
 		script=string(scriptData)
+	}else{
+		urlPath, err := url.ParseRequestURI(scriptPath)
+		if err==nil{
+			scriptName=urlPath.Path
+			fmt.Printf("It seems to be a url, try loading it...\n")
+			result,err:=obtainPageContent(scriptPath,30*time.Second)
+			if err!=nil{
+				return nil,err
+			}
+			script=string(result)
+		}else{
+			return nil,fmt.Errorf("script %v \nis neither a valid file %v,\nnor a valid url %v",scriptPath,fileErr,err)
+		}
 	}
+	
 	identifyStr:= ""//script.GetStringSha(script)
 	stopFunc:=host.InitHostFns(iso,global,hb,scriptName,identifyStr,scriptPath)
 	ctx := v8.NewContext(iso, global)
@@ -59,7 +62,7 @@ func LoadScript(scriptPath string, hb script.HostBridge) (func(),error) {
 		if err != nil {
 			fmt.Printf("Script %s ran into a runtime error: %v\n",scriptPath,err.Error())
 		}
-		fmt.Printf("Script %s completed: %v\n",scriptPath,finalVal)
+		fmt.Printf("Script %s Successfully Loaded, Additional info(%v)\n",scriptPath,finalVal)
 	}()
 	return stopFunc,nil
 }
