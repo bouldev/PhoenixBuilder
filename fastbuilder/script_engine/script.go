@@ -392,7 +392,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 					cbFn.Call(info.Context().Global(), SourceName, Message)
 				}, t)
 				if err != nil {
-					return throwException("FB_RegChat", err.Error())
+					return throwException("game.listenChat", err.Error())
 				}
 				jsCbFn := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 					deRegFn()
@@ -437,14 +437,14 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 			}),
 		); err!=nil{panic(err)}*/
 
-	// function FB_GetAbsPath(path string) string
+	// function engine.getAbsolutePath(path string) string
 	// I think we should allow the script to tell user where a file is
-	if err:=engine.Set("getAbsPath",
+	if err:=engine.Set("getAbsolutePath",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str,ok:= hasStrIn(info,0,"engine.getAbsPath[path]"); !ok{
-				throwException("engine.getAbsPath",str)
+			if str,ok:= hasStrIn(info,0,"engine.getAbsolutePath[path]"); !ok{
+				throwException("engine.getAbsolutePath",str)
 			}else{
-				absPath:=hb.GetAbsPath(str)
+				absPath:=hb.GetAbsolutePath(str)
 				value,_:=v8go.NewValue(iso,absPath)
 				return value
 			}
@@ -620,7 +620,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 					ctx := info.Context()
 					conn, _, err := websocket.DefaultDialer.Dial(address, nil)
 					if err != nil {
-						return throwException("FB_WebSocketConnectV2", err.Error())
+						return throwException("engine.connectws", err.Error())
 					}
 					jsWriteFn := v8go.NewFunctionTemplate(iso, func(writeInfo *v8go.FunctionCallbackInfo) *v8go.Value {
 						if t.Terminated() {
@@ -646,7 +646,7 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 							return
 						}
 						if err != nil {
-							cbFn.Call(info.This(), v8go.Null(iso), v8go.Null(iso))
+							cbFn.Call(ctx.Global(), v8go.Null(iso), v8go.Null(iso))
 							return
 						}
 						jsMsgType, err := v8go.NewValue(iso, int32(msgType))
