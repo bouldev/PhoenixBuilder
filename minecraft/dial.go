@@ -96,7 +96,7 @@ func DialContext(ctx context.Context, network, address string) (*Conn, error) {
 // Dial dials a Minecraft connection to the address passed over the network passed. The network is typically
 // "raknet". A Conn is returned which may be used to receive packets from and send packets to.
 func (d Dialer) Dial(network, address string) (*Conn, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30*2*5)
 	defer cancel()
 	return d.DialContext(ctx, network, address)
 }
