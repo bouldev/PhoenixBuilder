@@ -470,10 +470,10 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 	fs := v8go.NewObjectTemplate(iso)
 	global.Set("fs", fs)
 
-	if err := fs.Set("getAbsolutePath",
+	if err := fs.Set("getAbsPath",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str, ok := hasStrIn(info, 0, "fs.getAbsolutePath[path]"); !ok {
-				throwException("fs.getAbsolutePath", str)
+			if str, ok := hasStrIn(info, 0, "fs.getAbsPath[path]"); !ok {
+				throwException("fs.getAbsPath", str)
 			} else {
 				absPath := hb.GetAbsPath(str)
 				value, _ := v8go.NewValue(iso, absPath)
@@ -650,17 +650,19 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 						return nil
 					})
 					go func() {
-						msgType, data, err := conn.ReadMessage()
-						if t.Terminated() {
-							return
+						for {
+							msgType, data, err := conn.ReadMessage()
+							if t.Terminated() {
+								return
+							}
+							if err != nil {
+								cbFn.Call(info.This(), v8go.Null(iso), v8go.Null(iso))
+								return
+							}
+							jsMsgType, err := v8go.NewValue(iso, int32(msgType))
+							jsMsgData, err := v8go.NewValue(iso, string(data))
+							cbFn.Call(info.This(), jsMsgType, jsMsgData)
 						}
-						if err != nil {
-							cbFn.Call(ctx.Global(), v8go.Null(iso), v8go.Null(iso))
-							return
-						}
-						jsMsgType, err := v8go.NewValue(iso, int32(msgType))
-						jsMsgData, err := v8go.NewValue(iso, string(data))
-						cbFn.Call(ctx.Global(), jsMsgType, jsMsgData)
 					}()
 					return jsWriteFn.GetFunction(ctx).Value
 				}
