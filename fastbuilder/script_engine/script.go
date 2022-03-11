@@ -59,6 +59,10 @@ func SavePermission(hb bridge.HostBridge, identifyStr string, permission map[str
 	hb.SaveFile("fb_script_permission.json", string(dataToSave))
 }
 
+func getReceiver(info *v8go.FunctionCallbackInfo) *v8go.Object {
+	return info.This()
+}
+
 func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostBridge, _scriptName string, identifyStr string, scriptPath string) func() {
 	scriptName := _scriptName
 	permission := LoadPermission(hb, identifyStr)
@@ -145,7 +149,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 			}
 			go func() {
 				hb.WaitConnect(t)
-				f.Call(info.Context().Global())
+				f.Call(getReceiver(info))
 			}()
 			return nil
 		}),
@@ -195,7 +199,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 					go func() {
 						userInput := hb.GetInput(str, t, scriptName)
 						value, _ := v8go.NewValue(iso, userInput)
-						cbFn.Call(info.Context().Global(), value)
+						cbFn.Call(getReceiver(info), value)
 					}()
 				}
 
@@ -315,16 +319,16 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 						strPk, err := json.Marshal(pk)
 						if err != nil {
 							printException("game.sendCommand", "Cannot convert host packet to Json Str: "+str)
-							cbFn.Call(info.Context().Global(), v8go.Null(iso))
+							cbFn.Call(getReceiver(info), v8go.Null(iso))
 							return
 						}
 						val, err := v8go.JSONParse(ctx, string(strPk))
 						if err != nil {
 							printException("game.sendCommand", "Cannot Parse Json Packet in Host: "+str)
-							cbFn.Call(info.Context().Global(), v8go.Null(iso))
+							cbFn.Call(getReceiver(info), v8go.Null(iso))
 							return
 						} else {
-							cbFn.Call(info.Context().Global(), val)
+							cbFn.Call(getReceiver(info), val)
 						}
 					}()
 				}
@@ -362,20 +366,19 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 				if errStr, cbFn := hasFuncIn(info, 1, "game.listenPacket[onPacketCb]"); cbFn == nil {
 					throwException("game.subscribePacket", errStr)
 				} else {
-					ctx := info.Context()
 					deRegFn, err := hb.RegPacketCallBack(str, func(pk packet.Packet) {
 						strPk, err := json.Marshal(pk)
 						if err != nil {
 							printException("game.subscribePacket", "Cannot convert host packet to Json Str: "+err.Error())
-							cbFn.Call(ctx.Global(), v8go.Null(iso))
+							cbFn.Call(getReceiver(info), v8go.Null(iso))
 						} else {
-							val, err := v8go.JSONParse(ctx, string(strPk))
+							val, err := v8go.JSONParse(info.Context(), string(strPk))
 							if err != nil {
 								printException("game.subscribePacket", "Cannot Parse Json Packet in Host: "+str)
-								cbFn.Call(ctx.Global(), v8go.Null(iso))
+								cbFn.Call(getReceiver(info), v8go.Null(iso))
 								return
 							} else {
-								cbFn.Call(ctx.Global(), val)
+								cbFn.Call(getReceiver(info), val)
 							}
 						}
 					}, t)
@@ -386,7 +389,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 						deRegFn()
 						return nil
 					})
-					return jsCbFn.GetFunction(ctx).Value
+					return jsCbFn.GetFunction(info.Context()).Value
 				}
 			}
 			return nil
@@ -407,16 +410,16 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 					SourceName, err := v8go.NewValue(iso, p.SourceName)
 					if err != nil {
 						printException("game.listenChat", err.Error())
-						cbFn.Call(info.Context().Global(), v8go.Null(iso), v8go.Null(iso))
+						cbFn.Call(getReceiver(info), v8go.Null(iso), v8go.Null(iso))
 						return
 					}
 					Message, err := v8go.NewValue(iso, p.Message)
 					if err != nil {
 						printException("game.listenChat", err.Error())
-						cbFn.Call(info.Context().Global(), v8go.Null(iso), v8go.Null(iso))
+						cbFn.Call(getReceiver(info), v8go.Null(iso), v8go.Null(iso))
 						return
 					}
-					cbFn.Call(info.Context().Global(), SourceName, Message)
+					cbFn.Call(getReceiver(info), SourceName, Message)
 				}, t)
 				if err != nil {
 					return throwException("game.listenChat", err.Error())
@@ -656,12 +659,12 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 								return
 							}
 							if err != nil {
-								cbFn.Call(info.This(), v8go.Null(iso), v8go.Null(iso))
+								cbFn.Call(getReceiver(info), v8go.Null(iso), v8go.Null(iso))
 								return
 							}
 							jsMsgType, err := v8go.NewValue(iso, int32(msgType))
 							jsMsgData, err := v8go.NewValue(iso, string(data))
-							cbFn.Call(info.This(), jsMsgType, jsMsgData)
+							cbFn.Call(getReceiver(info), jsMsgType, jsMsgData)
 						}
 					}()
 					return jsWriteFn.GetFunction(ctx).Value
@@ -722,7 +725,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 				return nil
 			}).GetFunction(info.Context())
 
-			onMsgFn, err := jsOnConnect.Call(info.This(), jsSendFn, jsCloseFn)
+			onMsgFn, err := jsOnConnect.Call(getReceiver(info), jsSendFn, jsCloseFn)
 			if err != nil {
 				throwException("ws.serve.onConnect.onMsgFn", err.Error())
 				t.Terminate()
@@ -739,11 +742,11 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 					msgType, data, err := wsConn.ReadMessage()
 					//fmt.Println("line 739")
 					if err != nil {
-						jsOnMsgFn.Call(info.This(), v8go.Null(iso), v8go.Null(iso))
+						jsOnMsgFn.Call(getReceiver(info), v8go.Null(iso), v8go.Null(iso))
 					} else {
 						jsMsgType, _ := v8go.NewValue(iso, int32(msgType))
 						jsMsgData, _ := v8go.NewValue(iso, string(data))
-						jsOnMsgFn.Call(info.This(), jsMsgType, jsMsgData)
+						jsOnMsgFn.Call(getReceiver(info), jsMsgType, jsMsgData)
 					}
 					//if err!=nil{
 					//	println(err)

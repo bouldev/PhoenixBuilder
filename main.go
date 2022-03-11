@@ -20,6 +20,8 @@ import (
 	"phoenixbuilder/fastbuilder/menu"
 	"phoenixbuilder/fastbuilder/move"
 	"phoenixbuilder/fastbuilder/plugin"
+	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
+	"phoenixbuilder/fastbuilder/script_engine/bridge/kickstarter"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
@@ -28,8 +30,6 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
-	"phoenixbuilder/fastbuilder/script_engine/bridge/kickstarter"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -147,53 +147,53 @@ var autoRestartEnabled bool
 var successfullyConnectedToFB bool
 
 func runShellClient(token string, version string) {
-	autoRestartEnabled=false
-	successfullyConnectedToFB=false
+	autoRestartEnabled = false
+	successfullyConnectedToFB = false
 	code, serverPasswd, err := getRentalServerCode()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer func() {
-		_=recover()
-		if autoRestartEnabled{
+		_ = recover()
+		if autoRestartEnabled {
 			dropInRestartLoop(token, version, code, serverPasswd)
 		}
 	}()
 	runClient(token, version, code, serverPasswd)
 }
 
-func dropInRestartLoop(token string, version string, code string, serverPasswd string){
-	failureCount:=1
+func dropInRestartLoop(token string, version string, code string, serverPasswd string) {
+	failureCount := 1
 	for {
-		delayTime:=30*((2<<failureCount)/2)
-		if delayTime>60*60{
-			delayTime=60*60
+		delayTime := 30 * ((2 << failureCount) / 2)
+		if delayTime > 2*60*60 {
+			delayTime = 2 * 60 * 60
 		}
-		fmt.Printf("FB will Restart after %v second, retry time=%v",delayTime,failureCount)
-		time.Sleep(time.Duration(delayTime)*time.Second)
+		fmt.Printf("FB will Restart after %v second, retry time=%v", delayTime, failureCount)
+		time.Sleep(time.Duration(delayTime) * time.Second)
 		recoverableRun(token, version, code, serverPasswd)
-		if successfullyConnectedToFB{
-			failureCount=1
-		}else {
-			failureCount+=1
+		if successfullyConnectedToFB {
+			failureCount = 1
+		} else {
+			failureCount += 1
 		}
 	}
 }
 
-func recoverableRun(token string, version string, code string, serverPasswd string){
+func recoverableRun(token string, version string, code string, serverPasswd string) {
 	defer func() {
-		r:=recover()
-		if r!=nil{
-			fmt.Println("FB Crashed, reason: ",r)
+		r := recover()
+		if r != nil {
+			fmt.Println("FB Crashed, reason: ", r)
 		}
 	}()
-	successfullyConnectedToFB=false
+	successfullyConnectedToFB = false
 	runClient(token, version, code, serverPasswd)
 }
 
 func runClient(token string, version string, code string, serverPasswd string) {
-	hostBridgeGamma:=&script_bridge.HostBridgeGamma{}
+	hostBridgeGamma := &script_bridge.HostBridgeGamma{}
 	hostBridgeGamma.Init()
 	hostBridgeGamma.HostQueryExpose = map[string]func() string{
 		"user_name": func() string {
@@ -206,29 +206,29 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			return version
 		},
 		"fb_dir": func() string {
-			dir,_:= os.Getwd()
+			dir, _ := os.Getwd()
 			return dir
 		},
 	}
-	hostBridgeGamma.HostAutoRestartSetter= func(b bool) {
-		autoRestartEnabled=b
+	hostBridgeGamma.HostAutoRestartSetter = func(b bool) {
+		autoRestartEnabled = b
 	}
-	allScripts:=map[string]func(){}
+	allScripts := map[string]func(){}
 	defer func() {
-		for _,fn:=range allScripts{
+		for _, fn := range allScripts {
 			fn()
 		}
 	}()
 
-	if args.StartupScript()==""{
+	if args.StartupScript() == "" {
 		hostBridgeGamma.HostRemoveBlock()
-	}else{
+	} else {
 		stopFn, err := script_kickstarter.LoadScript(args.StartupScript(), hostBridgeGamma)
 		if err != nil {
-			fmt.Println("Cannot load Startup Script ",err)
+			fmt.Println("Cannot load Startup Script ", err)
 			hostBridgeGamma.HostRemoveBlock()
-		}else {
-			allScripts[args.StartupScript()]=stopFn
+		} else {
+			allScripts[args.StartupScript()] = stopFn
 			hostBridgeGamma.HostWaitScriptBlock()
 		}
 	}
@@ -293,7 +293,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		bridgeConn = conn
 		bridgeInitFinished()
 	}
-	successfullyConnectedToFB=true
+	successfullyConnectedToFB = true
 
 	// jsVM
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
@@ -351,9 +351,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	})
 	go func() {
 		defer func() {
-			r:=recover()
-			if r!=nil{
-				fmt.Println("go routine @ main.worldchat crashed ",r)
+			r := recover()
+			if r != nil {
+				fmt.Println("go routine @ main.worldchat crashed ", r)
 			}
 		}()
 		if args.ShouldMuteWorldChat() {
@@ -386,9 +386,9 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	types.ForwardedBrokSender = fbtask.BrokSender
 	go func() {
 		defer func() {
-			r:=recover()
-			if r!=nil{
-				fmt.Println("go routine @ main.userinput crashed ",r)
+			r := recover()
+			if r != nil {
+				fmt.Println("go routine @ main.userinput crashed ", r)
 			}
 		}()
 		logger, closeFn := makeLogFile()
@@ -425,26 +425,26 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 			if strings.HasPrefix(cmd, "script") {
 				cmdArgs := strings.Split(cmd, " ")
-				scriptPath:=cmdArgs[1]
+				scriptPath := cmdArgs[1]
 				if len(cmdArgs) > 1 {
-					if stopFn,ok:=allScripts[scriptPath];ok{
-						fmt.Println("Reload Script "+scriptPath)
+					if stopFn, ok := allScripts[scriptPath]; ok {
+						fmt.Println("Reload Script " + scriptPath)
 						stopFn()
-						delete(allScripts,scriptPath)
+						delete(allScripts, scriptPath)
 					}
 					stopFn, err := script_kickstarter.LoadScript(scriptPath, hostBridgeGamma)
 					if err != nil {
-						fmt.Println("Cannot load Script ",err)
+						fmt.Println("Cannot load Script ", err)
 					}
-					allScripts[scriptPath]=stopFn
+					allScripts[scriptPath] = stopFn
 				}
 			}
 			if cmd == "move" {
 				go func() {
 					defer func() {
-						r:=recover()
-						if r!=nil{
-							fmt.Println("go routine @ main.recvMsg.move crashed ",r)
+						r := recover()
+						if r != nil {
+							fmt.Println("go routine @ main.recvMsg.move crashed ", r)
 						}
 					}()
 					/*var counter int=0
