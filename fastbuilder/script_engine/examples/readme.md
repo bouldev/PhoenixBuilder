@@ -90,7 +90,8 @@ engine.question(string hint,function onResult)
 // 请参考 example03，以下内容可以被查询
 consts.script_sha256 脚本哈希值
 consts.script_path 脚本所在路径 (可能被移除)
-consts.engine_version JS解释器实现版本号
+consts.engine_version JS解释器实现版本号 jsEngine.hostBridge.api
+// 第一位表示 JS 引擎实现，第二位表示桥接器，第三位表示 api 版本，一般，只有api需要关心
 consts.user_name 用户名 (可能被移除)
 consts.sha_token 用户FB Token的哈希值
 consts.server_code 服务器代码 (可能被移除)

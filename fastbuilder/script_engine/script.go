@@ -18,7 +18,8 @@ import (
 	"rogchap.com/v8go"
 )
 
-const JSVERSION = "script_engine@v8.gamma.3"
+// jsEngine.hostBridge.api
+const JSVERSION = "script_engine@v8.gamma.5"
 
 func AllowPath(path string) bool {
 	if strings.Contains(path, "fbtoken") {
