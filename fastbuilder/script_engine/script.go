@@ -3,9 +3,10 @@ package script_engine
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
-	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/fastbuilder/script_engine/built_in"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -17,7 +18,7 @@ import (
 	"rogchap.com/v8go"
 )
 
-const JSVERSION="script_engine@v8.gamma.3"
+const JSVERSION = "script_engine@v8.gamma.3"
 
 func AllowPath(path string) bool {
 	if strings.Contains(path, "fbtoken") {
@@ -29,9 +30,9 @@ func AllowPath(path string) bool {
 	return true
 }
 
-func LoadPermission(hb bridge.HostBridge,identifyStr string) map[string]bool{
-	permission:= map[string]bool{}
-	fullPermission:=map[string]map[string]bool{}
+func LoadPermission(hb bridge.HostBridge, identifyStr string) map[string]bool {
+	permission := map[string]bool{}
+	fullPermission := map[string]map[string]bool{}
 	file, err := hb.LoadFile("fb_script_permission.json")
 	if err != nil {
 		return permission
@@ -46,8 +47,8 @@ func LoadPermission(hb bridge.HostBridge,identifyStr string) map[string]bool{
 	return permission
 }
 
-func SavePermission(hb bridge.HostBridge,identifyStr string,permission map[string]bool){
-	fullPermission:=map[string]map[string]bool{}
+func SavePermission(hb bridge.HostBridge, identifyStr string, permission map[string]bool) {
+	fullPermission := map[string]map[string]bool{}
 	file, err := hb.LoadFile("fb_script_permission.json")
 	dataToSave := []byte{}
 	if err == nil {
@@ -58,11 +59,11 @@ func SavePermission(hb bridge.HostBridge,identifyStr string,permission map[strin
 	hb.SaveFile("fb_script_permission.json", string(dataToSave))
 }
 
-func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBridge,_scriptName string,identifyStr string,scriptPath string) func() {
-	scriptName:=_scriptName
-	permission:=LoadPermission(hb,identifyStr)
-	updatePermission:= func() {
-		SavePermission(hb,identifyStr,permission)
+func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostBridge, _scriptName string, identifyStr string, scriptPath string) func() {
+	scriptName := _scriptName
+	permission := LoadPermission(hb, identifyStr)
+	updatePermission := func() {
+		SavePermission(hb, identifyStr, permission)
 	}
 
 	throwException := func(funcName string, str string) *v8go.Value {
@@ -165,6 +166,71 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 	); err != nil {
 		panic(err)
 	}
+
+	// function engine.questionSync(hint string) string
+	if err := engine.Set("questionSync",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if str, ok := hasStrIn(info, 0, "engine.questionSync[hint]"); !ok {
+				throwException("engine.questionSync", str)
+			} else {
+				userInput := hb.GetInput(str, t, scriptName)
+				value, _ := v8go.NewValue(iso, userInput)
+				return value
+			}
+			return nil
+		}),
+	); err != nil {
+		panic(err)
+	}
+
+	// function question(hint,cb) None
+	if err := engine.Set("question",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if str, ok := hasStrIn(info, 0, "engine.question[hint,cb]"); !ok {
+				throwException("engine.question", str)
+			} else {
+				if errStr, cbFn := hasFuncIn(info, 1, "engine.question[hint,cb]"); cbFn == nil {
+					throwException("engine.question", errStr)
+				} else {
+					go func() {
+						userInput := hb.GetInput(str, t, scriptName)
+						value, _ := v8go.NewValue(iso, userInput)
+						cbFn.Call(info.Context().Global(), value)
+					}()
+				}
+
+			}
+			return nil
+		}),
+	); err != nil {
+		panic(err)
+	}
+
+	// function engine.crash(string reason) None
+	if err := engine.Set("crash",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+
+			if str, ok := hasStrIn(info, 0, "engine.crash[reason]"); !ok {
+				throwException("engine.crash", str)
+			} else {
+				throwException("engine.crash", str)
+				t.Terminate()
+			}
+			return nil
+		})); err != nil {
+		panic(err)
+	}
+
+	// function fs.autoRestart() None
+	// 这里做了指数退避，几次重连失败就会放缓到1小时重连一次，见 main.go 170行
+	if err := engine.Set("autoRestart",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			hb.RequireAutoRestart()
+			return nil
+		})); err != nil {
+		panic(err)
+	}
+
 	game := v8go.NewObjectTemplate(iso)
 	global.Set("game", game)
 	// One shot command
@@ -270,58 +336,19 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 		panic(err)
 	}
 
-	if err:=game.Set("botPos",
+	if err := game.Set("botPos",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			ot:=v8go.NewObjectTemplate(iso)
-			x,y,z:=hb.GetBotPos()
-			jsX,_:=v8go.NewValue(iso,int32(x))
-			jsY,_:=v8go.NewValue(iso,int32(y))
-			jsZ,_:=v8go.NewValue(iso,int32(z))
-			ot.Set("x",jsX)
-			ot.Set("y",jsY)
-			ot.Set("z",jsZ)
-			jsPos,_:= ot.NewInstance(info.Context())
+			ot := v8go.NewObjectTemplate(iso)
+			x, y, z := hb.GetBotPos()
+			jsX, _ := v8go.NewValue(iso, int32(x))
+			jsY, _ := v8go.NewValue(iso, int32(y))
+			jsZ, _ := v8go.NewValue(iso, int32(z))
+			ot.Set("x", jsX)
+			ot.Set("y", jsY)
+			ot.Set("z", jsZ)
+			jsPos, _ := ot.NewInstance(info.Context())
 			return jsPos.Value
-		}));err!=nil{
-		panic(err)
-	}
-
-	// function engine.questionSync(hint string) string
-	if err := engine.Set("questionSync",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str, ok := hasStrIn(info, 0, "engine.questionSync[hint]"); !ok {
-				throwException("engine.questionSync", str)
-			} else {
-				userInput := hb.GetInput(str, t, scriptName)
-				value, _ := v8go.NewValue(iso, userInput)
-				return value
-			}
-			return nil
-		}),
-	); err != nil {
-		panic(err)
-	}
-
-	// function question(hint,cb) None
-	if err := engine.Set("question",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str, ok := hasStrIn(info, 0, "engine.question[hint,cb]"); !ok {
-				throwException("engine.question", str)
-			} else {
-				if errStr, cbFn := hasFuncIn(info, 1, "engine.question[hint,cb]"); cbFn == nil {
-					throwException("engine.question", errStr)
-				} else {
-					go func() {
-						userInput := hb.GetInput(str, t, scriptName)
-						value, _ := v8go.NewValue(iso, userInput)
-						cbFn.Call(info.Context().Global(), value)
-					}()
-				}
-
-			}
-			return nil
-		}),
-	); err != nil {
+		})); err != nil {
 		panic(err)
 	}
 
@@ -403,18 +430,21 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 			}
 			return nil
 		}),
-	); err!=nil{panic(err)}
-	
-	consts:=v8go.NewObjectTemplate(iso)
-	s256v,_:=v8go.NewValue(iso,identifyStr)
-	consts.Set("script_sha256",s256v)
-	consts.Set("engine_version",JSVERSION)
-	//consts.Set("user_name","Not implemented")
-	for k,v:=range hb.GetQueries() {
-		val,_:=v8go.NewValue(iso,v())
-		consts.Set(k,val)
+	); err != nil {
+		panic(err)
 	}
-	global.Set("consts",consts)
+
+	consts := v8go.NewObjectTemplate(iso)
+	s256v, _ := v8go.NewValue(iso, identifyStr)
+	consts.Set("script_sha256", s256v)
+	consts.Set("script_path", scriptPath)
+	consts.Set("engine_version", JSVERSION)
+	//consts.Set("user_name","Not implemented")
+	for k, v := range hb.GetQueries() {
+		val, _ := v8go.NewValue(iso, v())
+		consts.Set(k, val)
+	}
+	global.Set("consts", consts)
 	/*
 		// function FB_Query(info string) string
 		if err:=global.Set("FB_Query",
@@ -437,34 +467,36 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 			}),
 		); err!=nil{panic(err)}*/
 
-	// function engine.getAbsolutePath(path string) string
-	// I think we should allow the script to tell user where a file is
-	if err:=engine.Set("getAbsolutePath",
+	fs := v8go.NewObjectTemplate(iso)
+	global.Set("fs", fs)
+
+	if err := fs.Set("getAbsolutePath",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str,ok:= hasStrIn(info,0,"engine.getAbsolutePath[path]"); !ok{
-				throwException("engine.getAbsolutePath",str)
-			}else{
-				absPath:=hb.GetAbsolutePath(str)
-				value,_:=v8go.NewValue(iso,absPath)
+			if str, ok := hasStrIn(info, 0, "fs.getAbsolutePath[path]"); !ok {
+				throwException("fs.getAbsolutePath", str)
+			} else {
+				absPath := hb.GetAbsPath(str)
+				value, _ := v8go.NewValue(iso, absPath)
 				return value
 			}
 			return nil
-		})); err!=nil{panic(err)}
+		})); err != nil {
+		panic(err)
+	}
 
-	// function engine.requestFilePermission(hint,path) isSuccess
-	if err := engine.Set("requestFilePermission",
+	if err := fs.Set("requestFilePermission",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if hint, ok := hasStrIn(info, 1, "engine.requestFilePermission[hint]"); !ok {
-				throwException("engine.requestFilePermission", hint)
+			if hint, ok := hasStrIn(info, 1, "fs.requestFilePermission[hint]"); !ok {
+				throwException("fs.requestFilePermission", hint)
 				return nil
 			} else {
-				if dir, ok := hasStrIn(info, 0, "engine.requestFilePermission[hint]"); !ok {
-					throwException("engine.requestFilePermission", dir)
+				if dir, ok := hasStrIn(info, 0, "fs.requestFilePermission[hint]"); !ok {
+					throwException("fs.requestFilePermission", dir)
 					return nil
 				} else {
 					dir = hb.GetAbsPath(dir) + string(os.PathSeparator)
 					if !AllowPath(dir) {
-						throwException("engine.requestFilePermission", "The script is breaking out sandbox, aborting.")
+						throwException("fs.requestFilePermission", "The script is breaking out sandbox, aborting.")
 						t.Terminate()
 						return nil
 					}
@@ -499,12 +531,12 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 		panic(err)
 	}
 
-	// function engine.readFile(path string) string
+	// function fs.readFile(path string) string
 	// if permission is not granted or read fail, "" is returned
-	if err := engine.Set("readFile",
+	if err := fs.Set("readFile",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str, ok := hasStrIn(info, 0, "engine.readFile[path]"); !ok {
-				throwException("engine.readFile", str)
+			if str, ok := hasStrIn(info, 0, "fs.readFile[path]"); !ok {
+				throwException("fs.readFile", str)
 			} else {
 				p := hb.GetAbsPath(str)
 				hasPermission := false
@@ -517,12 +549,12 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 					}
 				}
 				if !hasPermission {
-					throwException("engine.readFile", "The script is trying to access an external path (without permission), aborting.")
+					throwException("fs.readFile", "The script is trying to access an external path (without permission), aborting.")
 					t.Terminate()
 					return nil
 				}
 				if !AllowPath(p) {
-					throwException("engine.readFile", "The script is trying to access an external path (without permission), aborting.")
+					throwException("fs.readFile", "The script is trying to access an external path (without permission), aborting.")
 					t.Terminate()
 					return nil
 				}
@@ -540,14 +572,14 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 		panic(err)
 	}
 
-	// function engine.writeFile(path string,data string) isSuccess
-	if err := engine.Set("writeFile",
+	// function fs.writeFile(path string,data string) isSuccess
+	if err := fs.Set("writeFile",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if p, ok := hasStrIn(info, 0, "engine.writeFile[path]"); !ok {
-				throwException("engine.writeFile", p)
+			if p, ok := hasStrIn(info, 0, "fs.writeFile[path]"); !ok {
+				throwException("fs.writeFile", p)
 			} else {
-				if data, ok := hasStrIn(info, 1, "engine.writeFile[data]"); !ok {
-					throwException("engine.writeFile", data)
+				if data, ok := hasStrIn(info, 1, "fs.writeFile[data]"); !ok {
+					throwException("fs.writeFile", data)
 				} else {
 					p := hb.GetAbsPath(p)
 					hasPermission := false
@@ -560,12 +592,12 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 						}
 					}
 					if !hasPermission {
-						throwException("engine.writeFile", "The script is trying to access an external path (without permission), aborting.")
+						throwException("fs.writeFile", "The script is trying to access an external path (without permission), aborting.")
 						t.Terminate()
 						return nil
 					}
 					if !AllowPath(p) {
-						throwException("engine.writeFile", "The script is trying to access an external path (without permission), aborting.")
+						throwException("fs.writeFile", "The script is trying to access an external path (without permission), aborting.")
 						t.Terminate()
 						return nil
 					}
@@ -583,44 +615,21 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 		panic(err)
 	}
 
-	// function engine.crash(string reason) None
-	if err := engine.Set("crash",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+	ws := v8go.NewObjectTemplate(iso)
+	global.Set("ws", ws)
 
-			if str, ok := hasStrIn(info, 0, "engine.crash[reason]"); !ok {
-				throwException("engine.crash", str)
+	if err := ws.Set("connect",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if address, ok := hasStrIn(info, 0, "ws.connect[address]"); !ok {
+				throwException("ws.connect", address)
 			} else {
-				throwException("engine.crash", str)
-				t.Terminate()
-			}
-			return nil
-		})); err != nil {
-		panic(err)
-	}
-
-	// function engine.autoRestart() None
-	// 这里做了指数退避，几次重连失败就会放缓到1小时重连一次，见 main.go 170行
-	if err:=engine.Set("autoRestart",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			hb.RequireAutoRestart()
-			return nil
-		})); err!=nil{panic(err)}
-
-	// engine.connectws(address string,onNewMessage func(msgType int,data string)) func SendMsg(msgType int, data string)
-	// 一般情况下，MessageType 为1(Text Messsage),即字符串类型，或者 0 byteArray (也被以字符串的方式传递)
-	// onNewMessage 在连接关闭时会读取到两个null值
-	if err := engine.Set("connectws",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if address, ok := hasStrIn(info, 0, "engine.connectws[address]"); !ok {
-				throwException("engine.connectws", address)
-			} else {
-				if errStr, cbFn := hasFuncIn(info, 1, "engine.connectws[onNewMessage]"); cbFn == nil {
-					throwException("engine.connectws", errStr)
+				if errStr, cbFn := hasFuncIn(info, 1, "ws.connect[onNewMessage]"); cbFn == nil {
+					throwException("ws.connect", errStr)
 				} else {
 					ctx := info.Context()
 					conn, _, err := websocket.DefaultDialer.Dial(address, nil)
 					if err != nil {
-						return throwException("engine.connectws", err.Error())
+						return throwException("ws.connect", err.Error())
 					}
 					jsWriteFn := v8go.NewFunctionTemplate(iso, func(writeInfo *v8go.FunctionCallbackInfo) *v8go.Value {
 						if t.Terminated() {
@@ -659,6 +668,102 @@ func InitHostFns(iso *v8go.Isolate,global *v8go.ObjectTemplate,hb bridge.HostBri
 			return nil
 		}),
 	); err != nil {
+		panic(err)
+	}
+
+	wsserve := func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		var address, pattern, errStr string
+		var jsOnConnect *v8go.Function
+		var ok bool
+		if address, ok = hasStrIn(info, 0, "ws.serve[address]"); !ok {
+			throwException("ws.serve", address)
+			return nil
+		}
+		if pattern, ok = hasStrIn(info, 1, "ws.serve[pattern]"); !ok {
+			throwException("ws.serve", pattern)
+			return nil
+		}
+		if errStr, jsOnConnect = hasFuncIn(info, 2, "ws.serve[onConnect]"); jsOnConnect == nil {
+			throwException("ws.serve", errStr)
+			return nil
+		}
+		http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+			wsConn, err := (&websocket.Upgrader{
+				ReadBufferSize:  1024 * 10,
+				WriteBufferSize: 1024 * 10,
+			}).Upgrade(w, r, nil)
+			if err != nil {
+				throwException("ws.serve", err.Error())
+				return
+			}
+
+			jsSendFn := v8go.NewFunctionTemplate(iso, func(writeInfo *v8go.FunctionCallbackInfo) *v8go.Value {
+				if t.Terminated() {
+					return nil
+				}
+				if len(writeInfo.Args()) < 2 {
+					throwException("ws.serve.onConnect.sendMsg", "not enough arguments")
+					return nil
+				}
+				if !writeInfo.Args()[1].IsString() {
+					throwException("ws.serve.onConnect.sendMsg", "SendMsg[data] should be string")
+				}
+				msgType := int(writeInfo.Args()[0].Number())
+				err := wsConn.WriteMessage(msgType, []byte(writeInfo.Args()[1].String()))
+				if err != nil {
+					return throwException("ws.serve.onConnect.sendMsg", "write fail")
+				}
+				return nil
+			}).GetFunction(info.Context())
+			jsCloseFn := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+				wsConn.Close()
+				return nil
+			}).GetFunction(info.Context())
+
+			onMsgFn, err := jsOnConnect.Call(info.This(), jsSendFn, jsCloseFn)
+			if err != nil {
+				throwException("ws.serve.onConnect.onMsgFn", err.Error())
+				t.Terminate()
+				return
+			}
+			jsOnMsgFn, err := onMsgFn.AsFunction()
+			if err != nil {
+				throwException("ws.serve.onConnect.onMsgFn", err.Error())
+				t.Terminate()
+				return
+			}
+			go func() {
+				for {
+					msgType, data, err := wsConn.ReadMessage()
+					//fmt.Println("line 739")
+					if err != nil {
+						jsOnMsgFn.Call(info.This(), v8go.Null(iso), v8go.Null(iso))
+					} else {
+						jsMsgType, _ := v8go.NewValue(iso, int32(msgType))
+						jsMsgData, _ := v8go.NewValue(iso, string(data))
+						jsOnMsgFn.Call(info.This(), jsMsgType, jsMsgData)
+					}
+					//if err!=nil{
+					//	println(err)
+					//	return
+					//}
+					//fmt.Printf("%v %v\n",msgType,data)
+					//err = wsConn.WriteMessage(msgType, data)
+					//if err!=nil{
+					//	println(err)
+					//	return
+					//}
+				}
+			}()
+		})
+		go http.ListenAndServe(address, nil)
+		return nil
+	}
+
+	// ws.serve(address string,onNewMessage func(msgType int,data string)) func SendMsg(msgType int, data string)
+	// 一般情况下，MessageType 为1(Text Messsage),即字符串类型，或者 0 byteArray (也被以字符串的方式传递)
+	// onNewMessage 在连接关闭时会读取到两个null值
+	if err := ws.Set("serve", v8go.NewFunctionTemplate(iso, wsserve)); err != nil {
 		panic(err)
 	}
 
@@ -745,7 +850,7 @@ func CtxFunctionInject(ctx *v8go.Context) {
 	if err := url.InjectTo(ctx); err != nil {
 		panic(err)
 	}
-	_, err := ctx.RunScript(built_in.GetbuiltIn(),"built_in")
+	_, err := ctx.RunScript(built_in.GetbuiltIn(), "built_in")
 	if err != nil {
 		panic(err)
 	}
