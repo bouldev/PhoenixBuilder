@@ -61,7 +61,7 @@ func SavePermission(hb bridge.HostBridge, identifyStr string, permission map[str
 }
 
 func getReceiver(info *v8go.FunctionCallbackInfo) *v8go.Object {
-	return info.This()
+	return info.Context().Global()
 }
 
 func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostBridge, _scriptName string, identifyStr string, scriptPath string) func() {
