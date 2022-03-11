@@ -11,14 +11,14 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"phoenixbuilder/fastbuilder/script"
-	"phoenixbuilder/wayland_v8/host"
+	"phoenixbuilder/fastbuilder/script_engine/bridge"
+	"phoenixbuilder/fastbuilder/script_engine"
 	v8 "rogchap.com/v8go"
 	"strings"
 	"time"
 )
 
-func LoadScript(scriptPath string, hb script.HostBridge) (func(),error) {
+func LoadScript(scriptPath string, hb bridge.HostBridge) (func(),error) {
 	iso := v8.NewIsolate()
 	global := v8.NewObjectTemplate(iso)
 	scriptPath = strings.TrimSpace(scriptPath)
@@ -26,7 +26,7 @@ func LoadScript(scriptPath string, hb script.HostBridge) (func(),error) {
 		return nil,fmt.Errorf("Empty script path!")
 	}
 	fmt.Printf("Loading script: %s\n", scriptPath)
-	fmt.Printf("JS engine vesion: %v\n",host.JSVERSION)
+	fmt.Printf("JS engine vesion: %v\n",script_engine.JSVERSION)
 	var script string
 	var scriptName string
 
@@ -53,10 +53,10 @@ func LoadScript(scriptPath string, hb script.HostBridge) (func(),error) {
 		}
 	}
 	
-	identifyStr:= ""//script.GetStringSha(script)
-	stopFunc:=host.InitHostFns(iso,global,hb,scriptName,identifyStr,scriptPath)
+	identifyStr:= ""//bridge.GetStringSha(script)
+	stopFunc:=script_engine.InitHostFns(iso,global,hb,scriptName,identifyStr,scriptPath)
 	ctx := v8.NewContext(iso, global)
-	host.CtxFunctionInject(ctx)
+	script_engine.CtxFunctionInject(ctx)
 	go func() {
 		finalVal, err := ctx.RunScript(script, scriptPath)
 		if err != nil {

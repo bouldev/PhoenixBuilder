@@ -4,7 +4,7 @@ go 1.16
 
 require rogchap.com/v8go v0.7.0
 
-replace rogchap.com/v8go v0.7.0 => ./wayland_v8/v8go@v0.7.0
+replace rogchap.com/v8go v0.7.0 => ./depends/v8go@v0.7.0
 
 require (
 	fknsrs.biz/p/ottoext v0.0.0-20170408110602-5871ae9499f3

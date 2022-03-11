@@ -28,8 +28,8 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/fastbuilder/script"
-	"phoenixbuilder/fastbuilder/script/kickstart"
+	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
+	"phoenixbuilder/fastbuilder/script_engine/bridge/kickstarter"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -193,7 +193,7 @@ func recoverableRun(token string, version string, code string, serverPasswd stri
 }
 
 func runClient(token string, version string, code string, serverPasswd string) {
-	hostBridgeGamma:=&script.HostBridgeGamma{}
+	hostBridgeGamma:=&script_bridge.HostBridgeGamma{}
 	hostBridgeGamma.Init()
 	hostBridgeGamma.HostQueryExpose = map[string]func() string{
 		"user_name": func() string {
