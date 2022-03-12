@@ -26,8 +26,7 @@ require (
 	github.com/go-gl/mathgl v1.0.0 // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
 	github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff // indirect
-	github.com/google/go-cmp v0.5.7 // indirect
-	github.com/google/uuid v1.1.2 // indirect
+	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/klauspost/compress v1.11.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
@@ -45,7 +44,4 @@ require (
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
-	gopkg.in/yaml.v2 v2.2.8 // indirect
-	fknsrs.biz/p/ottoext v0.0.0-20170408110602-5871ae9499f3 // indirect
-	github.com/robertkrimen/otto v0.0.0-20210614181706-373ff5438452
 )
