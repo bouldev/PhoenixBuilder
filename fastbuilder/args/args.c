@@ -11,6 +11,11 @@ char args_muteWorldChat=0;
 char args_noPyRpc=0;
 char use_startup_script=0;
 char *startup_script;
+char specified_server=0;
+char *server_code;
+char *server_password="";
+char custom_token=0;
+char *token_content;
 
 void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
@@ -22,6 +27,10 @@ void print_help(const char *self_name) {
 #ifdef WITH_V8
 	printf("\t-S, --script=<*.js>: run a .js script at start\n");
 #endif
+	printf("\t-c, --code=<server code>: Specify a server code.\n");
+	printf("\t-p, --password=<server password>: Specify the server specified by -c's password.\n");
+	printf("\t-t, --token=<path of FBToken>: Specify the path of FBToken, and quit if the file is unaccessible.\n");
+	printf("\t-T, --plain-token=<token>: Specify the token content.\n");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
@@ -65,6 +74,21 @@ void print_version(int detailed) {
 	printf("\n");
 }
 
+void read_token(char *token_path) {
+	FILE *file=fopen(token_path,"rb");
+	if(!file) {
+		fprintf(stderr, "Failed to read token at %s.\n",token_path);
+		exit(21);
+	}
+	fseek(file,0,SEEK_END);
+	size_t flen=ftell(file);
+	fseek(file,0,SEEK_SET);
+	token_content=malloc(flen+1);
+	token_content[flen]=0;
+	fread(token_content, 1, flen, file);
+	fclose(file);
+}
+
 int _parse_args(int argc, char **argv) {
 	while(1) {
 		static struct option opts[]={
@@ -78,10 +102,14 @@ int _parse_args(int argc, char **argv) {
 			{"script", required_argument, 0, 'S'}, //7
 			{"version", no_argument, 0, 'v'}, //8
 			{"version-plain", no_argument, 0, 0}, //9
+			{"code", required_argument, 0, 'c'}, //10
+			{"password", required_argument, 0, 'p'}, //11
+			{"token", required_argument, 0, 't'}, //12
+			{"plain-token", required_argument, 0, 'T'}, //13
 			{0, 0, 0, 0}
 		};
 		int option_index;
-		int c=getopt_long(argc,argv,"hA:MvS:", opts, &option_index);
+		int c=getopt_long(argc,argv,"hA:MvS:c:p:t:T:", opts, &option_index);
 		if(c==-1)
 			break;
 		switch(c) {
@@ -126,6 +154,26 @@ int _parse_args(int argc, char **argv) {
 			size_t looa=strlen(optarg);
 			startup_script=malloc(looa+1);
 			memcpy(startup_script,optarg,looa+1);
+			break;
+		case 'c':
+			specified_server=1;
+			size_t server_code_buf_length=strlen(optarg)+1;
+			server_code=malloc(server_code_buf_length);
+			memcpy(server_code, optarg, server_code_buf_length);
+			break;
+		case 'p':
+			size_t server_password_buf_length=strlen(optarg)+1;
+			server_password=malloc(server_password_buf_length);
+			memcpy(server_password, optarg, server_password_buf_length);
+			break;
+		case 't':
+			custom_token=1;
+			read_token(optarg);
+			break;
+		case 'T':
+			size_t token_buf_length=strlen(optarg)+1;
+			token_content=malloc(token_buf_length);
+			memcpy(token_content, optarg, token_buf_length);
 			break;
 		case 'v':
 			print_version(1);

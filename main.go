@@ -100,7 +100,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	token := loadTokenPath()
 	var version string
 	if args.ShouldDisableHashCheck() {
 		version = "NO_HASH_CHECK"
@@ -110,36 +109,41 @@ func main() {
 			panic(err)
 		}
 	}
-	if _, err := os.Stat(token); os.IsNotExist(err) {
-		fbusername, err := getInputUserName()
-		if err != nil {
-			panic(err)
-		}
-		fbuntrim := fmt.Sprintf("%s", strings.TrimSuffix(fbusername, "\n"))
-		fbun := strings.TrimRight(fbuntrim, "\r\n")
-		fmt.Printf(I18n.T(I18n.EnterPasswordForFBUC))
-		fbpassword, err := term.ReadPassword(int(syscall.Stdin))
-		fmt.Printf("\n")
-		tokenstruct := &FBPlainToken{
-			EncryptToken: true,
-			Username:     fbun,
-			Password:     string(fbpassword),
-		}
-		token, err := json.Marshal(tokenstruct)
-		if err != nil {
-			fmt.Println("Failed to generate temp token")
-			fmt.Println(err)
-			return
-		}
-		runShellClient(string(token), version)
+	if !args.SpecifiedToken() {
+		token := loadTokenPath()
+		if _, err := os.Stat(token); os.IsNotExist(err) {
+			fbusername, err := getInputUserName()
+			if err != nil {
+				panic(err)
+			}
+			fbuntrim := fmt.Sprintf("%s", strings.TrimSuffix(fbusername, "\n"))
+			fbun := strings.TrimRight(fbuntrim, "\r\n")
+			fmt.Printf(I18n.T(I18n.EnterPasswordForFBUC))
+			fbpassword, err := term.ReadPassword(int(syscall.Stdin))
+			fmt.Printf("\n")
+			tokenstruct := &FBPlainToken{
+				EncryptToken: true,
+				Username:     fbun,
+				Password:     string(fbpassword),
+			}
+			token, err := json.Marshal(tokenstruct)
+			if err != nil {
+				fmt.Println("Failed to generate temp token")
+				fmt.Println(err)
+				return
+			}
+			runShellClient(string(token), version)
 
-	} else {
-		token, err := readToken(token)
-		if err != nil {
-			fmt.Println(err)
-			return
+		} else {
+			token, err := readToken(token)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			runShellClient(token, version)
 		}
-		runShellClient(token, version)
+	}else{
+		runShellClient(args.CustomTokenContent(), version)
 	}
 }
 
@@ -149,7 +153,14 @@ var successfullyConnectedToFB bool
 func runShellClient(token string, version string) {
 	autoRestartEnabled = false
 	successfullyConnectedToFB = false
-	code, serverPasswd, err := getRentalServerCode()
+	var code, serverPasswd string
+	var err error
+	if !args.SpecifiedServer() {
+		code, serverPasswd, err = getRentalServerCode()
+	}else{
+		code=args.ServerCode()
+		serverPasswd=args.ServerPassword()
+	}
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -265,7 +276,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	serverCode := fmt.Sprintf("%s", strings.TrimSuffix(code, "\n"))
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), serverCode)))
 	dialer := minecraft.Dialer{
-		ServerCode: strings.TrimRight(serverCode, "\r\n"),
+		ServerCode: serverCode, //strings.TrimRight(serverCode, "\r\n"),
 		Password:   serverPasswd,
 		Version:    version,
 		Token:      token,
@@ -836,7 +847,7 @@ func getRentalServerCode() (string, string, error) {
 	fmt.Printf(I18n.T(I18n.Enter_Rental_Server_Password))
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Printf("\n")
-	return code, string(bytePassword), err
+	return strings.TrimRight(code, "\r\n"), string(bytePassword), err
 }
 
 func readToken(path string) (string, error) {

@@ -11,6 +11,7 @@ require (
 	github.com/GeertJohan/go.rice v1.0.2 // indirect
 	github.com/Tnze/go-mc v1.17.0
 	github.com/andybalholm/brotli v1.0.3
+	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb // indirect
 	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9
 	github.com/cespare/xxhash v1.1.0
 	github.com/disintegration/imaging v1.6.2

@@ -22,6 +22,12 @@ extern char use_startup_script;
 extern char *get_fb_version(void);
 extern char *get_fb_plain_version(void);
 extern char *commit_hash(void);
+
+extern char specified_server;
+extern char *server_code;
+extern char *server_password;
+extern char custom_token;
+extern char *token_content;
 */
 import "C"
 
@@ -118,8 +124,35 @@ func NoPyRpc() bool {
 }
 
 func StartupScript() string {
-	if  int(C.use_startup_script)==0 {
+	if int(C.use_startup_script)==0 {
 		return ""
 	}
 	return C.GoString(C.startup_script)
+}
+
+func SpecifiedServer() bool {
+	return boolify(C.specified_server)
+}
+
+func ServerCode() string {
+	if int(C.specified_server)==0 {
+		return ""
+	}
+	return C.GoString(C.server_code)
+}
+
+func ServerPassword() string {
+	// No need to check as its default value is "".
+	return C.GoString(C.server_password)
+}
+
+func SpecifiedToken() bool {
+	return boolify(C.custom_token)
+}
+
+func CustomTokenContent() string {
+	if(int(C.custom_token)==0) {
+		return ""
+	}
+	return C.GoString(C.token_content)
 }
