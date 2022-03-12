@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
+	"net"
 	"os"
 	"path"
 	"path/filepath"
@@ -51,6 +53,123 @@ type FBPlainToken struct {
 //for implenting print version feature later
 //const FBVersion = "1.4.0"
 const FBCodeName = "Phoenix"
+
+// 添加开孔函数
+// FB 为 server端
+func forwardSend(srcConn net.Conn, dstConn *minecraft.Conn) {
+	buf := make([]byte, 0)
+	currentBytes := 0
+	requiredBytes := 0
+	is_fb_cmd := false
+	for {
+		if requiredBytes == 0 {
+			rbuf := make([]byte, 4-currentBytes)
+			nbytes, err := srcConn.Read(rbuf)
+			if err != nil || nbytes == 0 {
+				srcConn.Close()
+				fmt.Printf("Transfer: connection (proxy -> fb) closed, because cannot read first 4 bytes from proxy\n\t(err=%v)\n", err)
+				return
+			}
+			currentBytes += nbytes
+			buf = append(buf, rbuf...)
+			if currentBytes >= 4 {
+				requiredBytes = int(binary.LittleEndian.Uint32(buf[:4]))
+				if requiredBytes >= int(math.Pow(2, 30)) {
+					is_fb_cmd = true
+					requiredBytes %= int(math.Pow(2, 30))
+				}
+			}
+		}
+		if currentBytes < requiredBytes {
+			rbuf := make([]byte, requiredBytes-currentBytes)
+			nbytes, err := srcConn.Read(rbuf)
+			if err != nil || nbytes == 0 {
+				srcConn.Close()
+				fmt.Printf("Transfer: connection (proxy -> fb) closed, because cannot correctly read from proxy\n\t(err=%v)\n", err)
+				return
+			}
+			currentBytes += nbytes
+			buf = append(buf, rbuf...)
+		}
+		if currentBytes >= requiredBytes {
+			if is_fb_cmd {
+				fb_cmd_string := string(buf[4:requiredBytes])
+				fmt.Printf("fb cmd string: %v\n", fb_cmd_string)
+				function.Process(dstConn, fb_cmd_string)
+				is_fb_cmd = false
+			} else {
+				if dstConn.WritePacketBytes(buf[4:requiredBytes]) != nil {
+					srcConn.Close()
+					fmt.Print("Transfer: connection (proxy -> fb) closed, because fb -> mc forward fail\n")
+					return
+				}
+			}
+			// fmt.Printf("forward fb <- proxy %v\n", buf[4:requiredBytes])
+			buf = buf[requiredBytes:currentBytes]
+			currentBytes -= requiredBytes
+			requiredBytes = 0
+			is_fb_cmd = false
+		}
+	}
+}
+
+func StartTransferServer(conn *minecraft.Conn, transferPort string) func(data []byte) {
+	listener, err := net.Listen("tcp", transferPort)
+	if err != nil {
+		fmt.Printf("Transfer: listen fail\n\t(err=%v)\n", err)
+		return nil
+	}
+	fmt.Println("Transfer: server start successfully @ ", transferPort)
+	proxyConnMap := make(map[string]net.Conn)
+
+	// 使用一个协程等待连接
+	go func() {
+		for {
+			proxyConn, err := listener.Accept()
+			if err != nil {
+				fmt.Printf("Transfer: accept new connection fail\n\t(err=%v)\n", err)
+				continue
+			}
+			fmt.Printf("Transfer: accept new connection @ %v\n", proxyConn.RemoteAddr().String())
+			proxyConnMap[proxyConn.RemoteAddr().String()] = proxyConn
+			// 对于每个连接 使用一个协程处理 proxy -> fb -> mc 转发
+			go forwardSend(proxyConn, conn)
+		}
+	}()
+
+	// 定义单次的 mc -> fb -> proxy 转发函数
+	forwardRead := func(data []byte) {
+		dataLen := len(data) + 4
+		headerBytes := make([]byte, 4)
+		binary.LittleEndian.PutUint32(headerBytes, uint32(dataLen))
+		markedPacketBytes := append(headerBytes, data...)
+		for addr := range proxyConnMap {
+			proxyConn := proxyConnMap[addr]
+			currentBytes := 0
+			for currentBytes != dataLen {
+				writedBytes, err := proxyConn.Write(markedPacketBytes[currentBytes:dataLen])
+				if err != nil || writedBytes == 0 {
+					fmt.Printf("Transfer: connection (fb -> proxy) closed, because cannot correctly write to proxy\n\t(err=%v)\n", err)
+					delete(proxyConnMap, addr)
+					break
+				}
+				currentBytes += writedBytes
+			}
+		}
+	}
+	return forwardRead
+}
+
+type Robot struct {
+	Token        string `json:"token"`
+	Code         string `json:"server_number"`
+	ServerPasswd string `json:"server_passwd"`
+	TransferPort string `json:"transfer_port"`
+	IgnoreUpdate bool   `json:"ignore_update"`
+	AutoRestart  bool   `json:"auto_restart"`
+}
+
+var robotOverWrite *Robot
 
 func main() {
 	args.ParseArgs()
@@ -109,6 +228,20 @@ func main() {
 			panic(err)
 		}
 	}
+
+	jsonFile, err := os.Open("robot.json")
+	if err == nil {
+		defer jsonFile.Close()
+		fmt.Println("robot.json detected, activating dummy mode")
+		byteValue, _ := ioutil.ReadAll(jsonFile)
+		robotOverWrite = &Robot{}
+		json.Unmarshal([]byte(byteValue), robotOverWrite)
+		if robotOverWrite.IgnoreUpdate {
+			version = "NO_HASH_CHECK"
+		}
+		runShellClient(robotOverWrite.Token, version)
+	}
+
 	if !args.SpecifiedToken() {
 		token := loadTokenPath()
 		if _, err := os.Stat(token); os.IsNotExist(err) {
@@ -142,7 +275,7 @@ func main() {
 			}
 			runShellClient(token, version)
 		}
-	}else{
+	} else {
 		runShellClient(args.CustomTokenContent(), version)
 	}
 }
@@ -155,12 +288,19 @@ func runShellClient(token string, version string) {
 	successfullyConnectedToFB = false
 	var code, serverPasswd string
 	var err error
-	if !args.SpecifiedServer() {
-		code, serverPasswd, err = getRentalServerCode()
-	}else{
-		code=args.ServerCode()
-		serverPasswd=args.ServerPassword()
+	if robotOverWrite != nil {
+		autoRestartEnabled = robotOverWrite.AutoRestart
+		code = robotOverWrite.Code
+		serverPasswd = robotOverWrite.ServerPasswd
+	} else {
+		if !args.SpecifiedServer() {
+			code, serverPasswd, err = getRentalServerCode()
+		} else {
+			code = args.ServerCode()
+			serverPasswd = args.ServerPassword()
+		}
 	}
+
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -499,14 +639,22 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		}
 	}()
 
+	var forwardRecvFn func([]byte)
+	if robotOverWrite != nil {
+		forwardRecvFn = StartTransferServer(conn, robotOverWrite.TransferPort)
+	}
+
 	// A loop that reads packets from the connection until it is closed.
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
 		// a read timeout is set. You will generally want to return or break if this happens.
-		pk, err := conn.ReadPacket()
+		pk, data, err := conn.ReadPacketAndBytes()
 		hostBridgeGamma.HostPumpMcPacket(pk)
 		if err != nil {
 			panic(err)
+		}
+		if forwardRecvFn != nil {
+			forwardRecvFn(data)
 		}
 
 		switch p := pk.(type) {

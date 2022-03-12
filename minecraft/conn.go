@@ -10,18 +10,18 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
-	"phoenixbuilder/minecraft/internal"
-	"phoenixbuilder/minecraft/protocol"
-	"phoenixbuilder/minecraft/protocol/login"
-	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/minecraft/resource"
-	"phoenixbuilder/minecraft/text"
 	"go.uber.org/atomic"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 	"io"
 	"log"
 	"net"
+	"phoenixbuilder/minecraft/internal"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/login"
+	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/minecraft/resource"
+	"phoenixbuilder/minecraft/text"
 	"strings"
 	"sync"
 	"time"
@@ -124,7 +124,7 @@ type Conn struct {
 
 	disconnectMessage atomic.String
 
-	shieldID atomic.Int32
+	shieldID  atomic.Int32
 	DebugMode bool
 }
 
@@ -286,10 +286,23 @@ func (conn *Conn) DoSpawnContext(ctx context.Context) error {
 	}
 }
 
+func (conn *Conn) WritePacketBytes(data []byte) error {
+	select {
+	case <-conn.close:
+		return conn.closeErr("write packet")
+	default:
+	}
+	conn.sendMu.Lock()
+	defer conn.sendMu.Unlock()
+
+	conn.bufferedSend = append(conn.bufferedSend, append([]byte(nil), data...))
+	return nil
+}
+
 // WritePacket encodes the packet passed and writes it to the Conn. The encoded data is buffered until the
 // next 20th of a second, after which the data is flushed and sent over the connection.
 func (conn *Conn) WritePacket(pk packet.Packet) error {
-	if (conn.DebugMode) {
+	if conn.DebugMode {
 		return nil
 	}
 	select {
@@ -318,6 +331,35 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 
 	conn.bufferedSend = append(conn.bufferedSend, append([]byte(nil), buf.Bytes()...))
 	return nil
+}
+
+func (conn *Conn) ReadPacketAndBytes() (pk packet.Packet, data []byte, err error) {
+	if data, ok := conn.takeDeferredPacket(); ok {
+		// if data.h.PacketID != 67 {
+		// 	fmt.Println(data.h.PacketID)
+		// }
+
+		pk, err := data.decode(conn)
+		if err != nil {
+			conn.log.Println(err)
+			return conn.ReadPacketAndBytes()
+		}
+		return pk, data.full, nil
+	}
+
+	select {
+	case <-conn.close:
+		return nil, nil, conn.closeErr("read packet")
+	case <-conn.readDeadline:
+		return nil, nil, conn.wrap(context.DeadlineExceeded, "read packet")
+	case data := <-conn.packets:
+		pk, err := data.decode(conn)
+		if err != nil {
+			conn.log.Println(err)
+			return conn.ReadPacketAndBytes()
+		}
+		return pk, data.full, nil
+	}
 }
 
 // ReadPacket reads a packet from the Conn, depending on the packet ID that is found in front of the packet
@@ -422,7 +464,7 @@ func (conn *Conn) Flush() error {
 // Close closes the Conn and its underlying connection. Before closing, it also calls Flush() so that any
 // packets currently pending are sent out.
 func (conn *Conn) Close() error {
-	if (conn.DebugMode) {
+	if conn.DebugMode {
 		return nil
 	}
 	var err error
@@ -1093,7 +1135,7 @@ func (conn *Conn) handleStartGame(pk *packet.StartGame) error {
 		WorldGameMode:                pk.WorldGameMode,
 		ServerAuthoritativeInventory: pk.ServerAuthoritativeInventory,
 		Experiments:                  pk.Experiments,
-		ConnectTime:		      time.Now(),
+		ConnectTime:                  time.Now(),
 	}
 	for _, item := range pk.Items {
 		if item.Name == "minecraft:shield" {
