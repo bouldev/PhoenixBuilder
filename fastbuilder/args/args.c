@@ -162,6 +162,7 @@ int _parse_args(int argc, char **argv) {
 			memcpy(server_code, optarg, server_code_buf_length);
 			break;
 		case 'p':
+			specified_server=1;
 			size_t server_password_buf_length=strlen(optarg)+1;
 			server_password=malloc(server_password_buf_length);
 			memcpy(server_password, optarg, server_password_buf_length);
@@ -171,6 +172,7 @@ int _parse_args(int argc, char **argv) {
 			read_token(optarg);
 			break;
 		case 'T':
+			custom_token=1;
 			size_t token_buf_length=strlen(optarg)+1;
 			token_content=malloc(token_buf_length);
 			memcpy(token_content, optarg, token_buf_length);
