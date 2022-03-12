@@ -1,4 +1,4 @@
-.PHONY: all current current-v8 current-arm64-executable ios-executable ios-v8-executable ios-lib macos android-executable-v7 android-executable-64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64 windows-v8-executable-x86_64 windows-shared
+.PHONY: all current current-v8 current-arm64-executable ios-executable ios-v8-executable ios-lib macos android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64
 TARGETS:=build/ current current-v8
 PACKAGETARGETS:=
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
@@ -26,7 +26,7 @@ ifneq (${THEOS},)
 	PACKAGETARGETS:=${PACKAGETARGETS} package/ios
 endif
 ifneq ($(wildcard ${HOME}/android-ndk-r20b),)
-	TARGETS:=${TARGETS} android-v8-executable-64 android-executable-v7 android-executable-64 android-executable-x86_64 android-executable-x86
+	TARGETS:=${TARGETS} android-v8-executable-64 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86
 	PACKAGETARGETS:=${PACKAGETARGETS} package/android
 endif
 ifneq ($(wildcard /usr/bin/i686-w64-mingw32-gcc),)
@@ -46,7 +46,6 @@ SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go $(dir)
 CGO_DEF := "-DFB_VERSION=\"$(VERSION)\" -DFB_COMMIT=\"$(shell git log -1 --format=format:"%h")\" -DFB_COMMIT_LONG=\"$(shell git log -1 --format=format:"%H")\""
 
 all: ${TARGETS} build/hashes.json
-#all: build current ios-executable ios-lib macos android-executable-v7 android-executable-64 windows-executable
 current: build/phoenixbuilder
 current-v8: build/phoenixbuilder-v8
 current-arm64-executable: build/phoenixbuilder-aarch64
@@ -54,8 +53,8 @@ ios-executable: build/phoenixbuilder-ios-executable
 ios-v8-executable: build/phoenixbuilder-v8-ios-executable
 ios-lib: build/phoenixbuilder-ios-static.a
 macos: build/phoenixbuilder-macos
-android-executable-v7: build/phoenixbuilder-android-executable-armv7
-android-executable-64: build/phoenixbuilder-android-executable-arm64
+android-executable-armv7: build/phoenixbuilder-android-executable-armv7
+android-executable-arm64: build/phoenixbuilder-android-executable-arm64
 android-v8-executable-64: build/phoenixbuilder-v8-android-executable-arm64
 android-executable-x86_64: build/phoenixbuilder-android-executable-x86_64
 android-executable-x86: build/phoenixbuilder-android-executable-x86
