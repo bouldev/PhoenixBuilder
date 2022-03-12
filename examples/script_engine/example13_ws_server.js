@@ -1,22 +1,23 @@
 
 engine.setName("ws server")
 
-// 当收到新消息时，这个函数会被调用
-function onMessage(msgType, msg, sendFn, closeFn) {
-    engine.message("recv Msg: " + msgType + ": " + msg)
-    sendFn(1, "server_echo: " + msg)
-    engine.message("Server Send Successfully")
-}
-
-// 当有新连接时 这个函数会被调用
-function onConnect(sendFn, closeFn) {
-    engine.message("New Connection!")
-
-    // 通过这个函数可以发送数据
-    sendFn(1, "Hello Client!")
-    return function (msgType, msg) { onMessage(msgType, msg, sendFn, closeFn) }
-}
-
 // 可以通过 ws://localhost:8888/ws_test 连接
 // 即，与例6相同
-ws.serve(":8888", "/ws_test", onConnect)
+let server=new ws.Server("0.0.0.0:8888");
+let clientIdCounter=0;
+server.onconnection=(client)=> {
+	engine.message("A new connection established.");
+	engine.message(`The client requested path ${client.path}.`);
+	let clientId=clientIdCounter;
+	clientIdCounter++;
+	engine.message(`Let's name it client ${clientId}.`);
+	client.onmessage=(msg)=> {
+		engine.message(`Message from client ${clientId}: ${msg}`);
+		client.send(`ECHO/ ${msg}`);
+		engine.message("Echo sent.");
+	};
+	client.onclose=(msg)=> {
+		engine.message(`The connection w/ client ${clientId} is closed.`);
+	};
+}
+engine.message("Server is running at 0.0.0.0:8888");

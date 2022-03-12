@@ -58,11 +58,15 @@ func LoadScript(scriptPath string, hb bridge.HostBridge) (func(),error) {
 	ctx := v8.NewContext(iso, global)
 	script_engine.CtxFunctionInject(ctx)
 	go func() {
-		finalVal, err := ctx.RunScript(script, scriptPath)
+		_, err := ctx.RunScript(script, scriptPath)
 		if err != nil {
-			fmt.Printf("Script %s ran into a runtime error: %v\n",scriptPath,err.Error())
+			e := err.(*v8.JSError) // JavaScript errors will be returned as the JSError struct
+			fmt.Printf("Script %s ran into a runtime error, stack dump:\n", scriptPath)
+			fmt.Println(e.Message) // the message of the exception thrown
+			fmt.Println(e.Location) // the filename, line number and the column where the error occured
+			fmt.Println(e.StackTrace) // the full stack trace of the error, if available
 		}
-		fmt.Printf("Script %s Successfully Loaded, Additional info(%v)\n",scriptPath,finalVal)
+		//fmt.Printf("Script %s Successfully Loaded, Additional info(%v)\n",scriptPath,finalVal)
 	}()
 	return stopFunc,nil
 }

@@ -177,26 +177,33 @@ fs.writeFile(string path, string data)
 ```
 
 - websocket client
-```
+```javascript
 // 请参考 example06_websocket.js
 // address 为ws地址，当连接成功的时候 onNewMessage 函数会被调用
-ws.connect(string address,function onNewMessage) -> function sendFn
-// function onNewMessage(int msgType,string msg) {} 当收到新的消息时，该函数会被调用
-// function sendFn(int msgType,string msg) 可以使用该函数发送消息
-// msg 总是 string 类型
+// class ws
+let client=new ws(string address) -> Object ws
+// client.send
+// message: 信息
+// msgType (Optional): 消息类型
+client.send(String message, [Number msgType])
+// client.close
+client.close()
+// 指示是否已连接到服务器
+client.isConnecting (bool)
+// 指示连接是否已经关闭
+client.closed (bool)
+// 用户指定的回调
+client.onconnection (Object ws)
+client.onopen (Object ws)
+// 当client.onconnection已经指定时，client.onopen不再会被调用
+client.onclose (String error)
+client.onmessage (String content, int msgType)
+client.onerror (String error)
 ```
 
 - websocket server
 ```
-// 请参考 example13_ws_server.js
-// address 和 pattern 共同构成了 ws 地址，
-// 例如 address=":8888", pattern "/ws_test", 那么，可以通过 "ws://localhost:8888/ws_test" 访问
-// 当有新连接时, 函数 onNewConnection 被调用
-ws.serve(string address,string pattern,function onNewConnection)
-// function onConnect(sendFn,closeFn) -> function onNewMessageFn
-// function onNewMessage(int msgType,string msg) {} 当收到新的消息时，该函数会被调用
-// function sendFn(int msgType,string msg) 可以使用该函数发送消息
-// function closeFn() 可以使用该函数关闭端口
+
 ```
 
 ## 一些内置的 JavaScript库

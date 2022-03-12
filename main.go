@@ -701,6 +701,45 @@ func runClient(token string, version string, code string, serverPasswd string) {
 }
 
 func runDebugClient() {
+	hostBridgeGamma := &script_bridge.HostBridgeGamma{}
+	hostBridgeGamma.Init()
+	hostBridgeGamma.HostQueryExpose = map[string]func() string{
+		"user_name": func() string {
+			return configuration.RespondUser
+		},
+		"server_code": func() string {
+			return "debug"
+		},
+		"fb_version": func() string {
+			return ""
+		},
+		"fb_dir": func() string {
+			dir, _ := os.Getwd()
+			return dir
+		},
+	}
+	hostBridgeGamma.HostAutoRestartSetter = func(b bool) {
+		autoRestartEnabled = b
+	}
+	allScripts := map[string]func(){}
+	defer func() {
+		for _, fn := range allScripts {
+			fn()
+		}
+	}()
+
+	if args.StartupScript() == "" {
+		hostBridgeGamma.HostRemoveBlock()
+	} else {
+		stopFn, err := script_kickstarter.LoadScript(args.StartupScript(), hostBridgeGamma)
+		if err != nil {
+			fmt.Println("Cannot load Startup Script ", err)
+			hostBridgeGamma.HostRemoveBlock()
+		} else {
+			allScripts[args.StartupScript()] = stopFn
+			hostBridgeGamma.HostWaitScriptBlock()
+		}
+	}
 	serverCode := fmt.Sprintf("%s", strings.TrimSuffix("[DEBUG, NO SERVER]", "\n"))
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), serverCode)))
 
