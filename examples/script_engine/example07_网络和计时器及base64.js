@@ -21,8 +21,8 @@ setTimeout(function () {
 }, 1000)
 
 //  atob and btoa
-let base64encodedString = btoa("raw string")
-let recoveredString = atob(base64encodedString)
+base64encodedString = btoa("raw string")
+recoveredString = atob(base64encodedString)
 engine.message(base64encodedString)
 engine.message(recoveredString)
 

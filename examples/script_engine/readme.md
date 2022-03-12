@@ -19,8 +19,6 @@
 - 你不需要学习新的语言，如果你有前端或是 NodeJS 开发经验，相同的脚本在 FastBuilder.JS 中有完全一致的效果
 - 你无需研究该如何修改，编译，发布，部署你的脚本。你甚至只需打开手机上的文本编辑器，然后在 FastBuilder 中输入 script 你的脚本名 即可执行脚本
 
-![v8go](./gopher.jpg "logo of v8go")
-
 ## 如何启动?
 FastBuilder.JS 脚本既可以是一个本地文件，也可以是一个网址，FastBuilder 会自行尝试。
 

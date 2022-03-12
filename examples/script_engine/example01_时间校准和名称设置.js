@@ -1,5 +1,5 @@
 // 本脚演示了时间记分板的校正
-// 演示了 engine.setName engine.waitConnectionSync，engine.questionSync，engine.message，game.sendCommand 的功能
+// 演示了 engine.setName engine.waitConnectionSync，engine.questionSync，engine.message，game.oneShotCommand 的功能
 // 假设用户有一个记分板，记分板里有 year, month, day, hour, minute 四个项目
 // 需要与现实时间同步
 
@@ -14,16 +14,15 @@ engine.message("已经连接到服务器!")
 scoreBoardName = engine.questionSync("时间记分板的名字是?")
 
 // js: 计算时间
-let nowTime = new Date()
-let nowYear = nowTime.getFullYear()
-let nowMonth = nowTime.getMonth()
-let nowDay = nowTime.getDay()
-let nowHour = nowTime.getHours()
-let nowMinute = nowTime.getMinutes()
+nowTime = new Date()
+nowYear = nowTime.getFullYear()
+nowMonth = nowTime.getMonth()
+nowDay = nowTime.getDay()
+nowHour = nowTime.getHours()
+nowMinute = nowTime.getMinutes()
 
 // 发送指令
-// sendCommand不指定第二个参数时等同于oneShotCommand
-game.sendCommand("scoreboard objectives add " + scoreBoardName + " dummy 时间记分板")
+game.oneShotCommand("scoreboard objectives add " + scoreBoardName + " dummy 时间记分板")
 game.oneShotCommand("scoreboard players set year " + scoreBoardName + " " + nowYear)
 game.oneShotCommand("scoreboard players set month " + scoreBoardName + " " + nowMonth)
 game.oneShotCommand("scoreboard players set day " + scoreBoardName + " " + nowDay)
