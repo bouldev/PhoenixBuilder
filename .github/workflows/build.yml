@@ -134,4 +134,3 @@ jobs:
         echo "put fb-linux-binaries-v2.tar.gz">~/a
         sftp -i ~/fbkey -b ~/a root@$FBSERVER
         ssh -i ~/fbkey root@$FBSERVER "mkdir -p fbbinariesv2;mv fb-linux-binaries-v2.tar.gz fbbinariesv2/;cd fbbinariesv2;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rm -rf build;cd ~/cv4;node updateV2Hashes.js ../fbbinariesv2/hashes.json;rm -rf /var/www/prostorage/epsilon/gui;mv ../fbbinariesv2/* /var/www/prostorage/epsilon/"
-
