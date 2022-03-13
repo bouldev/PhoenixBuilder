@@ -19,7 +19,7 @@ function onPlayerListUpdate(pk) {
         playerName = playerInfo.Username
         engine.message("新玩家:" + playerName)
         // 值得注意的是，玩家刚上线时并不能看到消息，所以我们延迟 8 秒（8000ms）再显示
-        FB_setTimeout(function () {
+        setTimeout(function () {
             game.oneShotCommand("tellraw @a {\"rawtext\":[{\"text\":\"欢迎回来！ @" + playerName + "\"}]}")
             game.oneShotCommand("tellraw " + playerName + " {\"rawtext\":[{\"text\":\"试试在聊天栏输入 '菜单' ! \"}]}")
         }, 8000)
