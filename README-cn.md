@@ -84,7 +84,13 @@ FastBuilder Phoenix与其他程序的不同点在于，存在「客户端」与�
 - Linux x86_64 (推荐使用此平台): 
 
   ```shell
-  wget -O fastbuilder https://storage.fastbuilder.pro/epsilon/phoenixbuilder
+  wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder
+  chmod +x fastbuilder
+  ```
+
+- MacOS (除了下载链接不一样以外，后续所有操作都和 Linux 一致):
+  ```shell
+  wget -O fastbuilder https://storage.fastbuilder.pro/phoenixbuilder-macos
   chmod +x fastbuilder
   ```
 
