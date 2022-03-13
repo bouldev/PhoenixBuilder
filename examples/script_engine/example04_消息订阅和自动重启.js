@@ -5,7 +5,8 @@
 engine.setName("租赁服菜单")
 
 // 打开自动重启功能，在连接断开时会自动重连
-engine.autoRestart()
+// engine.autoRestart()
+// 请自己实现自动重启功能，由脚本控制host是不好的～
 
 // 当有新玩家时，一定会收到 IDPlayerList 数据包，现在我们从这个数据包中判断玩家是谁
 function onPlayerListUpdate(pk) {

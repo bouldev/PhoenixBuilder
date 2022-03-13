@@ -45,9 +45,6 @@ type HostBridgeGamma struct {
 
 	// path
 	Root string
-
-	// auto restart
-	HostAutoRestartSetter func(bool)
 }
 
 func (hb *HostBridgeGamma) Init() {
@@ -131,14 +128,16 @@ func (hb *HostBridgeGamma) HostSetSendCmdFunc(fn func(mcCmd string, waitResponse
 }
 
 func (hb *HostBridgeGamma) HostPumpMcPacket(pk packet.Packet) {
-	pkID := pk.ID()
-	cbs, ok := hb.vmCbs[pkID]
-	if !ok {
-		return
-	}
-	for _, cb := range cbs {
-		cb(pk)
-	}
+	go func() {
+		pkID := pk.ID()
+		cbs, ok := hb.vmCbs[pkID]
+		if !ok {
+			return
+		}
+		for _, cb := range cbs {
+			cb(pk)
+		}
+	} ()
 }
 
 func (hb *HostBridgeGamma) WaitConnect(t *Terminator) {
@@ -298,10 +297,6 @@ func (hb *HostBridgeGamma) SaveFile(p string, data string) error {
 	defer fp.Close()
 	_, err = fp.Write([]byte(data))
 	return err
-}
-
-func (hb *HostBridgeGamma) RequireAutoRestart() {
-	hb.HostAutoRestartSetter(true)
 }
 
 func (hb *HostBridgeGamma) GetBotPos() (float32,float32,float32){

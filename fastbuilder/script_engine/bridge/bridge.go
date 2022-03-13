@@ -71,9 +71,6 @@ type HostBridge interface {
 	SaveFile(path string, data string) error
 	GetAbsPath(path string) string
 
-	// AutoRestart
-	RequireAutoRestart()
-
 	// bot pos
 	GetBotPos() (float32,float32,float32)
 }
@@ -288,10 +285,6 @@ func (hb *HostBridgeBeta) SaveFile(p string, data string) error {
 	}
 	_, err = fp.Write([]byte(data))
 	return err
-}
-
-func (hb *HostBridgeBeta) RequireAutoRestart() {
-
 }
 
 func (hb *HostBridgeBeta) GetBotPos()(float32,float32,float32) {

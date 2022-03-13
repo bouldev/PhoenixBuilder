@@ -280,16 +280,13 @@ func main() {
 	}
 }
 
-var autoRestartEnabled bool
 var successfullyConnectedToFB bool
 
 func runShellClient(token string, version string) {
-	autoRestartEnabled = false
 	successfullyConnectedToFB = false
 	var code, serverPasswd string
 	var err error
 	if robotOverWrite != nil {
-		autoRestartEnabled = robotOverWrite.AutoRestart
 		code = robotOverWrite.Code
 		serverPasswd = robotOverWrite.ServerPasswd
 	} else {
@@ -305,12 +302,6 @@ func runShellClient(token string, version string) {
 		fmt.Println(err)
 		return
 	}
-	defer func() {
-		_ = recover()
-		if autoRestartEnabled {
-			dropInRestartLoop(token, version, code, serverPasswd)
-		}
-	}()
 	runClient(token, version, code, serverPasswd)
 }
 
@@ -360,9 +351,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			dir, _ := os.Getwd()
 			return dir
 		},
-	}
-	hostBridgeGamma.HostAutoRestartSetter = func(b bool) {
-		autoRestartEnabled = b
 	}
 	allScripts := map[string]func(){}
 	defer func() {
@@ -501,12 +489,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 		Enabled: false,
 	})
 	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				fmt.Println("go routine @ main.worldchat crashed ", r)
-			}
-		}()
 		if args.ShouldMuteWorldChat() {
 			return
 		}
@@ -536,12 +518,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	configuration.OneId = oneId
 	types.ForwardedBrokSender = fbtask.BrokSender
 	go func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				fmt.Println("go routine @ main.userinput crashed ", r)
-			}
-		}()
 		logger, closeFn := makeLogFile()
 		defer closeFn()
 		//reader:=bufio.NewReader(os.Stdin)
@@ -592,12 +568,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 			if cmd == "move" {
 				go func() {
-					defer func() {
-						r := recover()
-						if r != nil {
-							fmt.Println("go routine @ main.recvMsg.move crashed ", r)
-						}
-					}()
 					/*var counter int=0
 					var direction bool=false
 					for{
@@ -648,11 +618,12 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
 		// a read timeout is set. You will generally want to return or break if this happens.
+
 		pk, data, err := conn.ReadPacketAndBytes()
-		hostBridgeGamma.HostPumpMcPacket(pk)
 		if err != nil {
 			panic(err)
 		}
+		hostBridgeGamma.HostPumpMcPacket(pk)
 		if forwardRecvFn != nil {
 			forwardRecvFn(data)
 		}
@@ -876,9 +847,6 @@ func runDebugClient() {
 			dir, _ := os.Getwd()
 			return dir
 		},
-	}
-	hostBridgeGamma.HostAutoRestartSetter = func(b bool) {
-		autoRestartEnabled = b
 	}
 	allScripts := map[string]func(){}
 	defer func() {

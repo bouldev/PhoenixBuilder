@@ -227,16 +227,6 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 		panic(err)
 	}
 
-	// function fs.autoRestart() None
-	// 这里做了指数退避，几次重连失败就会放缓到1小时重连一次，见 main.go 170行
-	if err := engine.Set("autoRestart",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			hb.RequireAutoRestart()
-			return nil
-		})); err != nil {
-		panic(err)
-	}
-
 	game := v8go.NewObjectTemplate(iso)
 	global.Set("game", game)
 	// One shot command

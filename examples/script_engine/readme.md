@@ -104,11 +104,7 @@ engine.crash(string reason)
 ```
 
 - 启用自动重启
-```
-// 调用该函数后，FB将在发生致命错误后自动尝试重启
-// 为了避免给FB 服务器过大压力，连续重启失败则会自动降低重启频率
-engine.autoRestart()
-```
+请自己实现自动重启功能，由脚本控制host是不好的～
 
 - 等效于用户在fb中输入一条指令,例如 bdump, plot, task 等
 ```
