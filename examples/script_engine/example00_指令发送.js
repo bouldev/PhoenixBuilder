@@ -21,13 +21,18 @@ function onConnection() {
     // 如果服务器没有返回结果，脚本将被卡死!
     // 一些指令本身是有结果的，但是，在某些特殊情况下，
     // 不会收到结果，这也很危险
-    // 另外，必须使用 setTimeout 将同步的函数包住
-    // 避免在回调里回调，卡住脚本
+    // 另外，建议使用 setTimeout 将同步的函数包住
+    // 避免卡住脚本
     setTimeout(function () {
         engine.message("Sync")
         result2 = game.sendCommandSync("list")
         engine.message("Sync Result: " + JSON.stringify(result2))
     }, 1)
+
+    // 没有setTimeout的情况
+    engine.message("Sync (no setTimeout)")
+    result2 = game.sendCommandSync("list")
+    engine.message("Sync (no setTimeout) Result: " + JSON.stringify(result2))
 }
 
 engine.waitConnection(onConnection)
