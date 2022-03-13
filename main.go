@@ -237,6 +237,7 @@ func main() {
 		robotOverWrite = &Robot{}
 		json.Unmarshal([]byte(byteValue), robotOverWrite)
 		if robotOverWrite.IgnoreUpdate {
+			args.Set_disableHashCheck(true)
 			version = "NO_HASH_CHECK"
 		}
 		runShellClient(robotOverWrite.Token, version)
