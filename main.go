@@ -553,8 +553,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 			if strings.HasPrefix(cmd, "script") {
 				cmdArgs := strings.Split(cmd, " ")
-				scriptPath := cmdArgs[1]
 				if len(cmdArgs) > 1 {
+					scriptPath := cmdArgs[1]
 					if stopFn, ok := allScripts[scriptPath]; ok {
 						fmt.Println("Reload Script " + scriptPath)
 						stopFn()
@@ -565,6 +565,8 @@ func runClient(token string, version string, code string, serverPasswd string) {
 						fmt.Println("Cannot load Script ", err)
 					}
 					allScripts[scriptPath] = stopFn
+				} else {
+					fmt.Println("Script file not provided!")
 				}
 			}
 			if cmd == "move" {
