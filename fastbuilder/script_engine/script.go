@@ -1,10 +1,10 @@
 package script_engine
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"context"
 	"os"
 	"phoenixbuilder/fastbuilder/script_engine/built_in"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -355,7 +355,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 			if str, ok := hasStrIn(info, 0, "game.subscribePacket[packetType]"); !ok {
 				throwException("game.subscribePacket", str)
 			} else {
-				if errStr, cbFn := hasFuncIn(info, 1, "game.listenPacket[onPacketCb]"); cbFn == nil {
+				if errStr, cbFn := hasFuncIn(info, 1, "game.subscribePacket[onPacketCb]"); cbFn == nil {
 					throwException("game.subscribePacket", errStr)
 				} else {
 					deRegFn, err := hb.RegPacketCallBack(str, func(pk packet.Packet) {
@@ -588,19 +588,19 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 		})); err != nil {
 		panic(err)
 	}
-	newws:=v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		funcName:="new ws()"
-		if(!info.IsConstructCall) {
+	newws := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		funcName := "new ws()"
+		if !info.IsConstructCall {
 			throwException(funcName, "Cannot call constructor as function")
 			return nil
 		}
-		thisObject:=info.This()
-		if len(info.Args())==0 {
+		thisObject := info.This()
+		if len(info.Args()) == 0 {
 			throwException(funcName, "No arguments specified")
 			return nil
 		}
-		address:=info.Args()[0]
-		if(!address.IsString()) {
+		address := info.Args()[0]
+		if !address.IsString() {
 			throwException(funcName, "argument address should be a String value.")
 			return nil
 		}
@@ -609,23 +609,23 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 			ctx := info.Context()
 			conn, _, err := websocket.DefaultDialer.Dial(address.String(), nil)
 			if err != nil {
-				onerror_obj, _:=thisObject.Get("onerror")
-				if onerror_obj==nil {
+				onerror_obj, _ := thisObject.Get("onerror")
+				if onerror_obj == nil {
 					throwException(funcName, err.Error())
 					return
-				}else{
-					onerror, _:=onerror_obj.AsFunction()
-					if onerror==nil {
+				} else {
+					onerror, _ := onerror_obj.AsFunction()
+					if onerror == nil {
 						throwException(funcName, err.Error())
 						return
 					}
-					errorStr,_:=v8go.NewValue(iso, err.Error())
+					errorStr, _ := v8go.NewValue(iso, err.Error())
 					onerror.Call(ctx.Global(), errorStr)
 				}
 			}
 			closeFn := v8go.NewFunctionTemplate(iso, func(_ *v8go.FunctionCallbackInfo) *v8go.Value {
 				conn.Close()
-				thisObject.Set("closed",true)
+				thisObject.Set("closed", true)
 				/*onclosefunc, _:=thisObject.Get("onclose")
 				if onclosefunc == nil {
 					return nil
@@ -649,13 +649,13 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 					throwException("ws.send", "[data] should be string")
 					return nil
 				}
-				msgType:=1
-				if len(writeInfo.Args()) >=2 {
+				msgType := 1
+				if len(writeInfo.Args()) >= 2 {
 					if !writeInfo.Args()[1].IsNumber() {
 						throwException("ws.send", "non-number argument 1")
 						return nil
 					}
-					msgType=int(writeInfo.Args()[1].Number())
+					msgType = int(writeInfo.Args()[1].Number())
 				}
 				err := conn.WriteMessage(msgType, []byte(writeInfo.Args()[0].String()))
 				if err != nil {
@@ -663,32 +663,32 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 				}
 				return nil
 			})
-			thisObject.Set("send",jsWriteFn.GetFunction(ctx).Value)
-			thisObject.Set("close",closeFn.GetFunction(ctx).Value)
-			_onconn, _:=thisObject.Get("onconnection")
+			thisObject.Set("send", jsWriteFn.GetFunction(ctx).Value)
+			thisObject.Set("close", closeFn.GetFunction(ctx).Value)
+			_onconn, _ := thisObject.Get("onconnection")
 			if _onconn == nil {
-				_onconn, _=thisObject.Get("onopen")
+				_onconn, _ = thisObject.Get("onopen")
 			}
 			thisObject.Set("isConnecting", false)
 			if _onconn != nil {
-				onconn, _:=_onconn.AsFunction()
+				onconn, _ := _onconn.AsFunction()
 				onconn.Call(ctx.Global(), info.This())
 			}
-			
+
 			for {
 				msgType, data, err := conn.ReadMessage()
 				if t.Terminated() {
 					return
 				}
-				__onmessage ,_:=thisObject.Get("onmessage")
-				__onclose, _:=thisObject.Get("onclose")
+				__onmessage, _ := thisObject.Get("onmessage")
+				__onclose, _ := thisObject.Get("onclose")
 				var onmessage *v8go.Function
 				var onclose *v8go.Function
 				if __onmessage != nil {
-					onmessage, _=__onmessage.AsFunction()
+					onmessage, _ = __onmessage.AsFunction()
 				}
 				if __onclose != nil {
-					onclose, _=__onclose.AsFunction()
+					onclose, _ = __onclose.AsFunction()
 				}
 				if err != nil {
 					thisObject.Set("closed", true)
@@ -696,7 +696,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 						//throwException("ws Loop", fmt.Sprintf("Unhandled error, can be handled by setting ws.onerror: Error reading: %v",err))
 						return
 					}
-					eStr,_:=v8go.NewValue(iso, fmt.Sprintf("%v",err))
+					eStr, _ := v8go.NewValue(iso, fmt.Sprintf("%v", err))
 					onclose.Call(info.Context().Global(), eStr)
 					//cbFn.Call(getReceiver(info), v8go.Null(iso), v8go.Null(iso))
 					return
@@ -708,31 +708,31 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 				jsMsgData, err := v8go.NewValue(iso, string(data))
 				onmessage.Call(info.Context().Global(), jsMsgData, jsMsgType)
 			}
-		} ()
+		}()
 		return thisObject.Value
 	})
-	global.Set("ws",newws)
-	wsServer:=v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		funcName:="new ws.Server(address)"
-		if(!info.IsConstructCall) {
+	global.Set("ws", newws)
+	wsServer := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		funcName := "new ws.Server(address)"
+		if !info.IsConstructCall {
 			throwException(funcName, "Cannot call constructor as function")
 			return nil
 		}
-		args:=info.Args()
-		if len(args)==0 {
+		args := info.Args()
+		if len(args) == 0 {
 			throwException(funcName, "Argument address is required!")
 			return nil
 		}
-		if(!args[0].IsString()) {
+		if !args[0].IsString() {
 			throwException(funcName, "Arguments should be of type String.")
 			return nil
 		}
-		thisObject:=info.This()
-		ctx:=info.Context()
-		httpHandler:=&mutableHandler {
-			HTTPHandler: func (w http.ResponseWriter, r *http.Request) {
-				wsConn, err := (&websocket.Upgrader {
-					ReadBufferSize: 1024,
+		thisObject := info.This()
+		ctx := info.Context()
+		httpHandler := &mutableHandler{
+			HTTPHandler: func(w http.ResponseWriter, r *http.Request) {
+				wsConn, err := (&websocket.Upgrader{
+					ReadBufferSize:  1024,
 					WriteBufferSize: 1024,
 				}).Upgrade(w, r, nil)
 				if err != nil {
@@ -740,9 +740,9 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 					// So it's not an error that should be trapped.
 					return
 				}
-				clientObject,_:=v8go.NewObjectTemplate(iso).NewInstance(ctx)
+				clientObject, _ := v8go.NewObjectTemplate(iso).NewInstance(ctx)
 				clientObject.Set("path", r.URL.Path)
-				onConn, _:=thisObject.Get("onconnection")
+				onConn, _ := thisObject.Get("onconnection")
 				if onConn == nil {
 					// Maybe the script haven't get ready yet.
 					wsConn.Close()
@@ -751,35 +751,35 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 				onConnFn, _ := onConn.AsFunction()
 				if onConnFn == nil {
 					wsConn.Close()
-					throwException("ws.Server/onConnection",".onconnection isn't of type function.")
+					throwException("ws.Server/onConnection", ".onconnection isn't of type function.")
 					return
 				}
 				sendMessageFnTemplate := v8go.NewFunctionTemplate(iso, func(info_ *v8go.FunctionCallbackInfo) *v8go.Value {
-					iArgs:=info_.Args()
+					iArgs := info_.Args()
 					if len(iArgs) == 0 {
 						throwException("ws.Server/client.send(msg,msgType)", "No arguments specified.")
 						return nil
 					}
-					msgType:=1
-					if len(iArgs)>1 {
-						if(!iArgs[1].IsNumber()) {
+					msgType := 1
+					if len(iArgs) > 1 {
+						if !iArgs[1].IsNumber() {
 							throwException("ws.Server/client.send(msg,msgType)", "msgType: Number !")
 							return nil
 						}
-						msgTypeVal:=iArgs[1].Number()
-						msgType=int(msgTypeVal)
+						msgTypeVal := iArgs[1].Number()
+						msgType = int(msgTypeVal)
 					}
-					if(!iArgs[0].IsString()) {
-						throwException("ws.Server/client.send(msg,msgType)","msg: String !")
+					if !iArgs[0].IsString() {
+						throwException("ws.Server/client.send(msg,msgType)", "msg: String !")
 						return nil
 					}
 					err := wsConn.WriteMessage(msgType, []byte(iArgs[0].String()))
 					if err != nil {
-						throwException("ws.Server/client.send(...)", fmt.Sprintf("Failed to write: %v",err))
+						throwException("ws.Server/client.send(...)", fmt.Sprintf("Failed to write: %v", err))
 					}
 					return nil
 				})
-				terminateFT:=v8go.NewFunctionTemplate(iso, func(_ *v8go.FunctionCallbackInfo) *v8go.Value {
+				terminateFT := v8go.NewFunctionTemplate(iso, func(_ *v8go.FunctionCallbackInfo) *v8go.Value {
 					wsConn.Close()
 					clientObject.Set("closed", true)
 					return nil
@@ -787,22 +787,22 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 				clientObject.Set("send", sendMessageFnTemplate.GetFunction(ctx).Value)
 				clientObject.Set("isConnecting", false)
 				clientObject.Set("closed", false)
-				clientObject.Set("close",terminateFT.GetFunction(ctx).Value)
+				clientObject.Set("close", terminateFT.GetFunction(ctx).Value)
 				onConnFn.Call(ctx.Global(), clientObject)
 				for {
 					msgType, data, err := wsConn.ReadMessage()
 					if t.Terminated() {
 						return
 					}
-					__onmessage ,_:=clientObject.Get("onmessage")
-					__onclose, _:=clientObject.Get("onclose")
+					__onmessage, _ := clientObject.Get("onmessage")
+					__onclose, _ := clientObject.Get("onclose")
 					var onmessage *v8go.Function
 					var onclose *v8go.Function
 					if __onmessage != nil {
-						onmessage, _=__onmessage.AsFunction()
+						onmessage, _ = __onmessage.AsFunction()
 					}
 					if __onclose != nil {
-						onclose, _=__onclose.AsFunction()
+						onclose, _ = __onclose.AsFunction()
 					}
 					if err != nil {
 						clientObject.Set("closed", true)
@@ -810,7 +810,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 							//throwException("ws Loop", fmt.Sprintf("Unhandled error, can be handled by setting ws.onerror: Error reading: %v",err))
 							return
 						}
-						eStr,_:=v8go.NewValue(iso, fmt.Sprintf("%v",err))
+						eStr, _ := v8go.NewValue(iso, fmt.Sprintf("%v", err))
 						onclose.Call(ctx.Global(), eStr)
 						//cbFn.Call(getReceiver(info), v8go.Null(iso), v8go.Null(iso))
 						return
@@ -824,15 +824,15 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 				}
 			},
 		}
-		server:=http.Server {
-			Addr: args[0].String(),
+		server := http.Server{
+			Addr:    args[0].String(),
 			Handler: httpHandler,
 		}
-		shutdownServerFuncTemplate:=v8go.NewFunctionTemplate(iso, func(_ *v8go.FunctionCallbackInfo) *v8go.Value {
+		shutdownServerFuncTemplate := v8go.NewFunctionTemplate(iso, func(_ *v8go.FunctionCallbackInfo) *v8go.Value {
 			server.Shutdown(context.Background())
 			return nil
 		})
-		thisObject.Set("shutdown",shutdownServerFuncTemplate)
+		thisObject.Set("shutdown", shutdownServerFuncTemplate)
 		go func() {
 			server.ListenAndServe()
 			onServerShutdownObj, _ := thisObject.Get("onServerShutdown")
@@ -844,10 +844,10 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 				return
 			}
 			onServerShutdown.Call(info.Context().Global())
-		} ()
+		}()
 		return thisObject.Value
 	})
-	newws.Set("Server",wsServer,v8go.ReadOnly)
+	newws.Set("Server", wsServer, v8go.ReadOnly)
 
 	// fetch
 	if err := fetch.InjectTo(iso, global); err != nil {

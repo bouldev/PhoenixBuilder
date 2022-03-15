@@ -27,6 +27,7 @@ game.eval("delay set 100")
 //     }
 // })
 
+engine.message(JSON.stringify(consts))
 
 // consts 能查询的所有信息
 // 脚本内容的哈希值
@@ -37,8 +38,6 @@ engine.message(consts.script_path)
 engine.message(consts.engine_version)
 //用户名
 engine.message(consts.user_name)
-//用户FB Token的哈希值
-engine.message(consts.sha_token)
 //服务器代码
 engine.message(consts.server_code)
 //工作路径(一般情况下就是fb所在路径)

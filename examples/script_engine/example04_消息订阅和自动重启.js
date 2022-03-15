@@ -52,5 +52,13 @@ game.listenChat(function (name, msg) {
     }
 })
 
+// 当任何消息到来时，该函数都会被调用
+function onAnyPacket(pk){
+    engine.message(JSON.stringify(pk))
+}
+
+// 监听任何消息 (会有非常多的数据包)
+// game.subscribePacket("*", onAnyPacket)
+
 // 等待连接到 MC
 engine.waitConnectionSync()

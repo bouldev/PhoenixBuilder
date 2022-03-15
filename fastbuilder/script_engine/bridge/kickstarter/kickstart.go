@@ -5,6 +5,8 @@ package script_kickstarter
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -54,7 +56,9 @@ func LoadScript(scriptPath string, hb bridge.HostBridge) (func(), error) {
 		}
 	}
 
-	identifyStr := bridge.GetStringSha(script)
+	hasher := sha256.New()
+	hasher.Write([]byte(script))
+	identifyStr := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	stopFunc := script_engine.InitHostFns(iso, global, hb, scriptName, identifyStr, scriptPath)
 	ctx := v8.NewContext(iso, global)
 	script_engine.CtxFunctionInject(ctx)

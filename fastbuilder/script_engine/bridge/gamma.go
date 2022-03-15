@@ -137,7 +137,7 @@ func (hb *HostBridgeGamma) HostPumpMcPacket(pk packet.Packet) {
 		for _, cb := range cbs {
 			cb(pk)
 		}
-	} ()
+	}()
 }
 
 func (hb *HostBridgeGamma) WaitConnect(t *Terminator) {
@@ -192,21 +192,21 @@ func (hb *HostBridgeGamma) HostWaitScriptBlock() {
 	<-hb.hostBlock
 }
 
-func (hb *HostBridgeGamma) GetQueries() map[string]func()string {
+func (hb *HostBridgeGamma) GetQueries() map[string]func() string {
 	return hb.HostQueryExpose
 }
 
-func (hb *HostBridgeGamma) GetInput(hint string,t *Terminator,scriptName string) string{
+func (hb *HostBridgeGamma) GetInput(hint string, t *Terminator, scriptName string) string {
 	if t.isTerminated {
 		return ""
 	}
 	// if FB is not connected to MC, at this time
-	if !hb.IsConnected(){
+	if !hb.IsConnected() {
 		fmt.Printf("[%v]: %v", scriptName, hint)
-		userInputReader:=bufio.NewReader(os.Stdin)
-		l,_, _ :=userInputReader.ReadLine()
-		s:=strings.TrimSpace(string(l))
-		if t.isTerminated{
+		userInputReader := bufio.NewReader(os.Stdin)
+		l, _, _ := userInputReader.ReadLine()
+		s := strings.TrimSpace(string(l))
+		if t.isTerminated {
 			return ""
 		}
 		return s
@@ -221,32 +221,49 @@ func (hb *HostBridgeGamma) GetInput(hint string,t *Terminator,scriptName string)
 }
 
 func (hb *HostBridgeGamma) RegPacketCallBack(packetType string, onPacket func(packet.Packet), t *Terminator) (func(), error) {
-	packetID, ok := PacketNameMap[packetType]
-	if !ok {
-		return nil, fmt.Errorf("no such packet type " + packetType)
-	}
-	_c, ok := hb.vmCbsCount[packetID]
-	c := _c
-	if !ok {
-		hb.vmCbsCount[packetID] = 0
-		hb.vmCbs[packetID] = make(map[uint64]func(packet.Packet))
-		c = 0
-	}
-	c += 1
-	hb.vmCbsCount[packetID]++
-	hb.vmCbs[packetID][c] = func(p packet.Packet) {
-		if t.isTerminated {
-			return
+	regPacket := func(packetID uint32) (func(), error) {
+		_c, ok := hb.vmCbsCount[packetID]
+		c := _c
+		if !ok {
+			hb.vmCbsCount[packetID] = 0
+			hb.vmCbs[packetID] = make(map[uint64]func(packet.Packet))
+			c = 0
 		}
-		onPacket(p)
+		c += 1
+		hb.vmCbsCount[packetID]++
+		hb.vmCbs[packetID][c] = func(p packet.Packet) {
+			if t.isTerminated {
+				return
+			}
+			onPacket(p)
+		}
+		t.TerminateHook = append(t.TerminateHook, func() {
+			delete(hb.vmCbs[packetID], c)
+		})
+		return func() {
+			fmt.Println("DeReg called!")
+			delete(hb.vmCbs[packetID], c)
+		}, nil
 	}
-	t.TerminateHook = append(t.TerminateHook, func() {
-		delete(hb.vmCbs[packetID], c)
-	})
-	return func() {
-		fmt.Println("DeReg called!")
-		delete(hb.vmCbs[packetID], c)
-	}, nil
+	if packetType != "*" {
+		packetID, ok := PacketNameMap[packetType]
+		if !ok {
+			return nil, fmt.Errorf("no such packet type " + packetType)
+		}
+		return regPacket(packetID)
+	} else {
+		deRegFns := make([]func(), 0)
+		for _, packetID := range PacketNameMap {
+			deRegFn, _ := regPacket(packetID)
+			deRegFns = append(deRegFns, deRegFn)
+		}
+		return func() {
+			for _, fn := range deRegFns {
+				fn()
+			}
+		}, nil
+	}
+
 }
 
 func (hb *HostBridgeGamma) Query(info string) string {
@@ -299,6 +316,6 @@ func (hb *HostBridgeGamma) SaveFile(p string, data string) error {
 	return err
 }
 
-func (hb *HostBridgeGamma) GetBotPos() (float32,float32,float32){
-	return move.Position.X(),move.Position.Y(),move.Position.Z()
+func (hb *HostBridgeGamma) GetBotPos() (float32, float32, float32) {
+	return move.Position.X(), move.Position.Y(), move.Position.Z()
 }
