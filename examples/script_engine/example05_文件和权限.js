@@ -11,7 +11,7 @@ if (!success) {
     // 如果你的脚本必须要文件权限才能正常工作
     // 你可以使用该函数主动崩溃脚本
     engine.message("没有获得权限!")
-    FB_ScriptCrash("必须这个文件夹的权限才能工作")
+    engine.crash("必须这个文件夹的权限才能工作")
 } else {
     engine.message("成功获得了权限!")
     //获得一个文件的绝对路径
