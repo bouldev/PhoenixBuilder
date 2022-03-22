@@ -2,7 +2,7 @@
 // 假设一台websocket 服务器运行在地址 ws://localhost:8888/ws_test 上
 // 我们现在要与其通信
 
-engine.setName("ws client")
+engine.setName("ws client");
 
 // 当接收到新消息时，这个函数会被调用
 
@@ -11,7 +11,7 @@ engine.setName("ws client")
 let websocket=new ws("ws://localhost:8888/ws_test");
 websocket.onclose=()=> {
 	engine.message("Websocket connection closed.");
-}
+};
 websocket.onconnection=(connection)=> {
 	// For ws client, the [connection] is the same object with [websocket].
 	try {
@@ -36,4 +36,4 @@ function onNewMessage(message, type) {
 websocket.onmessage=onNewMessage;
 websocket.onerror=(err)=> {
 	engine.message(`Oops, error trapped: ${err}`);
-}
+};

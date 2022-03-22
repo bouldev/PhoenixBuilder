@@ -9,25 +9,25 @@
 // 当获得结果时，函数会被回调
 
 
-afterGettedUserInput = function (userInput) {
-    engine.message("成功获得了用户输入！" + userInput)
-}
+let afterGettedUserInput = function (userInput) {
+	engine.message("成功获得了用户输入！" + userInput);
+};
 
-afterGettedCmdResult = function (result) {
-    engine.message("成功获得了指令结果！" + result)
+let afterGettedCmdResult = function (result) {
+	engine.message("成功获得了指令结果！" + result);
 
-    // 当获得用户输入后，afterGettedUserInput会被回调
-    engine.question("随便输入一点什么", afterGettedUserInput)
-}
+	// 当获得用户输入后，afterGettedUserInput会被回调
+	engine.question("随便输入一点什么", afterGettedUserInput);
+};
 
-afterConnected = function () {
-    engine.message("成功连接到MC了！")
+let afterConnected = function () {
+	engine.message("成功连接到MC了！");
 
-    // 当获得指令结果后，afterGettedCmdResult会被回调
-    game.sendCommand("list", afterGettedCmdResult)
+	// 当获得指令结果后，afterGettedCmdResult会被回调
+	game.sendCommand("list", afterGettedCmdResult);
 }
 
 // 当连接到MC后，afterConnected会被回调
-engine.engine.waitConnection(afterConnected)
+engine.engine.waitConnection(afterConnected);
 
-engine.message("和engine.waitConnectionSync不同，即使没有连接到FB，我也会执行")
+engine.message("和engine.waitConnectionSync不同，即使没有连接到FB，我也会执行");
