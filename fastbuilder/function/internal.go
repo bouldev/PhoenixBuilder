@@ -13,8 +13,6 @@ import (
 	"phoenixbuilder/minecraft"
 	//"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/i18n"
-	"phoenixbuilder/fastbuilder/world_provider"
-	"phoenixbuilder/dragonfly/server/block/cube"
 )
 
 
@@ -23,7 +21,7 @@ func InitInternalFunctions() {
 	delayEnumId:=RegisterEnum("continuous, discrete, none",types.ParseDelayMode,types.DelayModeInvalid)
 	RegisterFunction(&Function {
 		Name: "exit",
-		OwnedKeywords: []string {"fbexit"},
+		OwnedKeywords: []string {"exit","fbexit"},
 		FunctionType:FunctionTypeSimple,
 		SFMinSliceLen: 1,
 		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
@@ -406,20 +404,6 @@ func InitInternalFunctions() {
 				return
 			}
 			command.Tellraw(conn, fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
-		},
-	})
-	RegisterFunction(&Function {
-		Name: "test",
-		OwnedKeywords: []string {"test"},
-		FunctionType:FunctionTypeSimple,
-		SFMinSliceLen: 1,
-		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
-			pos:=configuration.GlobalFullConfig().Main().Position
-			world_provider.NewWorld(conn)
-			blk:=world_provider.CurrentWorld.Block(cube.Pos{pos.X,pos.Y,pos.Z})
-			name, properties:=blk.EncodeBlock()
-			command.Tellraw(conn, fmt.Sprintf("Block ID: %s",name))
-			command.Tellraw(conn, fmt.Sprintf("NBT: %+v",properties))
 		},
 	})
 	RegisterFunction(&Function {

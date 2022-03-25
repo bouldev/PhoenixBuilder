@@ -23,7 +23,7 @@ import (
 	"phoenixbuilder/fastbuilder/move"
 	"phoenixbuilder/fastbuilder/plugin"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
-	"phoenixbuilder/fastbuilder/script_engine/bridge/kickstarter"
+	"phoenixbuilder/fastbuilder/script_engine/bridge/script_holder"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
@@ -41,6 +41,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pterm/pterm"
 	"golang.org/x/term"
+	
+	"phoenixbuilder/fastbuilder/readline"
 )
 
 type FBPlainToken struct {
@@ -54,8 +56,6 @@ type FBPlainToken struct {
 //const FBVersion = "1.4.0"
 const FBCodeName = "Phoenix"
 
-// 添加开孔函数
-// FB 为 server端
 func forwardSend(srcConn net.Conn, dstConn *minecraft.Conn) {
 	buf := make([]byte, 0)
 	currentBytes := 0
@@ -122,7 +122,6 @@ func StartTransferServer(conn *minecraft.Conn, transferPort string) func(data []
 	fmt.Println("Transfer: server start successfully @ ", transferPort)
 	proxyConnMap := make(map[string]net.Conn)
 
-	// 使用一个协程等待连接
 	go func() {
 		for {
 			proxyConn, err := listener.Accept()
@@ -132,12 +131,10 @@ func StartTransferServer(conn *minecraft.Conn, transferPort string) func(data []
 			}
 			fmt.Printf("Transfer: accept new connection @ %v\n", proxyConn.RemoteAddr().String())
 			proxyConnMap[proxyConn.RemoteAddr().String()] = proxyConn
-			// 对于每个连接 使用一个协程处理 proxy -> fb -> mc 转发
 			go forwardSend(proxyConn, conn)
 		}
 	}()
 
-	// 定义单次的 mc -> fb -> proxy 转发函数
 	forwardRead := func(data []byte) {
 		dataLen := len(data) + 4
 		headerBytes := make([]byte, 4)
@@ -180,16 +177,12 @@ func main() {
 
 	I18n.Init()
 
-	pterm.DefaultBox.Println(pterm.LightCyan(I18n.T(I18n.Copyright_Notice_Headline) +
-		I18n.T(I18n.Copyright_Notice_Line_1) +
-		I18n.T(I18n.Copyright_Notice_Line_2) +
-		I18n.T(I18n.Copyright_Notice_Line_3) +
-		"https://github.com/Sandertv/gophertunnel"))
-	pterm.Println(pterm.Yellow("ファスト　ビルダー"))
-	pterm.Println(pterm.Yellow("F A S T  B U I L D E R"))
+	pterm.DefaultBox.Println(pterm.LightCyan("https://github.com/LNSSPsd/PhoenixBuilder"))
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO, CMA2401PT"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
-	pterm.Println(pterm.Yellow("FastBuilder Phoenix " + args.GetFBVersion()))
+	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
+	
+	readline.InitReadline()
 
 	if I18n.ShouldDisplaySpecial() {
 		fmt.Printf("%s", I18n.T(I18n.Special_Startup))
@@ -353,23 +346,16 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			return dir
 		},
 	}
-	allScripts := map[string]func(){}
-	defer func() {
-		for _, fn := range allScripts {
-			fn()
-		}
-	}()
+	scriptHolder:=script_holder.InitScriptHolder(hostBridgeGamma)
+	defer scriptHolder.Destroy()
 
 	if args.StartupScript() == "" {
 		hostBridgeGamma.HostRemoveBlock()
 	} else {
-		stopFn, err := script_kickstarter.LoadScript(args.StartupScript(), hostBridgeGamma)
-		if err != nil {
-			fmt.Println("Cannot load Startup Script ", err)
-			hostBridgeGamma.HostRemoveBlock()
-		} else {
-			allScripts[args.StartupScript()] = stopFn
+		if scriptHolder.LoadScript(args.StartupScript(), hostBridgeGamma) {
 			hostBridgeGamma.HostWaitScriptBlock()
+		}else{
+			hostBridgeGamma.HostRemoveBlock()
 		}
 	}
 
@@ -519,15 +505,16 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	configuration.OneId = oneId
 	types.ForwardedBrokSender = fbtask.BrokSender
 	go func() {
-		logger, closeFn := makeLogFile()
-		defer closeFn()
+		//logger, closeFn := makeLogFile()
+		//defer closeFn()
 		//reader:=bufio.NewReader(os.Stdin)
 		for {
 			//cmd, _:=getInput()
 			//inp, _ := reader.ReadString('\n')
-			inp := hostBridgeGamma.HostUser2FBInputHijack()
-			logger.Println(inp)
-			cmd := strings.TrimRight(inp, "\r\n")
+			//inp := hostBridgeGamma.HostUser2FBInputHijack()
+			//logger.Println(inp)
+			//cmd := strings.TrimRight(inp, "\r\n")
+			cmd:=readline.Readline()
 			if len(cmd) == 0 {
 				continue
 			}
@@ -550,24 +537,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				menu.OpenMenu(conn)
 				fmt.Printf("OK\n")
 				continue
-			}
-			if strings.HasPrefix(cmd, "script") {
-				cmdArgs := strings.Split(cmd, " ")
-				if len(cmdArgs) > 1 {
-					scriptPath := cmdArgs[1]
-					if stopFn, ok := allScripts[scriptPath]; ok {
-						fmt.Println("Reload Script " + scriptPath)
-						stopFn()
-						delete(allScripts, scriptPath)
-					}
-					stopFn, err := script_kickstarter.LoadScript(scriptPath, hostBridgeGamma)
-					if err != nil {
-						fmt.Println("Cannot load Script ", err)
-					}
-					allScripts[scriptPath] = stopFn
-				} else {
-					fmt.Println("Script file not provided!")
-				}
 			}
 			if cmd == "move" {
 				go func() {
@@ -851,22 +820,16 @@ func runDebugClient() {
 			return dir
 		},
 	}
-	allScripts := map[string]func(){}
-	defer func() {
-		for _, fn := range allScripts {
-			fn()
-		}
-	}()
+	scriptHolder:=script_holder.InitScriptHolder(hostBridgeGamma)
+	//allScripts := map[string]func(){}
+	defer scriptHolder.Destroy()
 
 	if args.StartupScript() == "" {
 		hostBridgeGamma.HostRemoveBlock()
 	} else {
-		stopFn, err := script_kickstarter.LoadScript(args.StartupScript(), hostBridgeGamma)
-		if err != nil {
-			fmt.Println("Cannot load Startup Script ", err)
+		if scriptHolder.LoadScript(args.StartupScript(), hostBridgeGamma) {
 			hostBridgeGamma.HostRemoveBlock()
-		} else {
-			allScripts[args.StartupScript()] = stopFn
+		}else{
 			hostBridgeGamma.HostWaitScriptBlock()
 		}
 	}
@@ -909,11 +872,12 @@ func runDebugClient() {
 	configuration.ZeroId = zeroId
 	configuration.OneId = oneId
 	types.ForwardedBrokSender = fbtask.BrokSender
-	reader := bufio.NewReader(os.Stdin)
+	//reader := bufio.NewReader(os.Stdin)
 	for {
-		inp, _ := reader.ReadString('\n')
-		cmd := strings.TrimRight(inp, "\r\n")
+		//inp, _ := reader.ReadString('\n')
+		//cmd := strings.TrimRight(inp, "\r\n")
 		//cmd, _:=getInput()
+		cmd := readline.Readline()
 		if len(cmd) == 0 {
 			continue
 		}
