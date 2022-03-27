@@ -156,3 +156,16 @@ func CustomTokenContent() string {
 	}
 	return C.GoString(C.token_content)
 }
+
+var CustomSEConsts map[string]string = map[string]string {}
+var CustomSEUndefineConsts []string = []string {}
+
+//export custom_script_engine_const
+func custom_script_engine_const(key, val *C.char) {
+	CustomSEConsts[C.GoString(key)]=C.GoString(val)
+}
+
+//export do_suppress_se_const
+func do_suppress_se_const(key *C.char) {
+	CustomSEUndefineConsts=append(CustomSEUndefineConsts, C.GoString(key))
+}

@@ -17,6 +17,10 @@ char *server_password="";
 char custom_token=0;
 char *token_content;
 
+
+extern void custom_script_engine_const(const char *key, const char *val);
+extern void do_suppress_se_const(const char *key);
+
 void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
 	printf("\t--debug: Run in debug mode.\n");
@@ -26,6 +30,8 @@ void print_help(const char *self_name) {
 	printf("\t--no-pyrpc: Disable the PyRpcPacket interaction, the client's commands will be prevented from execution by netease's rental server.\n");
 #ifdef WITH_V8
 	printf("\t-S, --script=<*.js>: run a .js script at start\n");
+	printf("\t--script-engine-const key=value: Define a const value for script engine's \"consts\" const. Can be used to replace the default value. Specify multiple items by using this argument for multiple times.\n");
+	printf("\t--script-engine-suppress-const <key>: Undefine a const value for script engine's \"consts\" const. Specify multiple items by using this argument for multiple times.\n");
 #endif
 	printf("\t-c, --code=<server code>: Specify a server code.\n");
 	printf("\t-p, --password=<server password>: Specify the server specified by -c's password.\n");
@@ -106,6 +112,8 @@ int _parse_args(int argc, char **argv) {
 			{"password", required_argument, 0, 'p'}, //11
 			{"token", required_argument, 0, 't'}, //12
 			{"plain-token", required_argument, 0, 'T'}, //13
+			{"script-engine-const", required_argument, 0, 0}, //14
+			{"script-engine-suppress-const", required_argument, 0, 0}, //15
 			{0, 0, 0, 0}
 		};
 		int option_index;
@@ -131,6 +139,32 @@ int _parse_args(int argc, char **argv) {
 			case 9:
 				print_version(0);
 				return 0;
+			case 14:
+#ifndef WITH_V8
+				fprintf(stderr,"--script-engine-const argument isn't available: Non-v8-linked version.\n");
+				return 10;
+#endif
+				int break_switch_14=0;
+				for(char *ptr=optarg;*ptr!=0;ptr++) {
+					if(*ptr=='=') {
+						*ptr=0;
+						ptr++;
+						custom_script_engine_const(optarg, ptr);
+						break_switch_14=1;
+						break;
+					}
+				}
+				if(break_switch_14)break;
+				fprintf(stderr, "--script-engine-const: Format: key=val\n");
+				print_help(argv[0]);
+				return 1;
+			case 15:
+#ifndef WITH_V8
+				fprintf(stderr,"--script-engine-suppress-const argument isn't available: Non-v8-linked version.\n");
+				return 10;
+#endif
+				do_suppress_se_const(optarg);
+				break;
 			};
 			break;
 		case 'h':

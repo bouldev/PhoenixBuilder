@@ -332,7 +332,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	hostBridgeGamma := &script_bridge.HostBridgeGamma{}
 	hostBridgeGamma.Init()
 	hostBridgeGamma.HostQueryExpose = map[string]func() string{
-		"user_name": func() string {
+		"responduserDEPRECATED": func() string {
 			return configuration.RespondUser
 		},
 		"server_code": func() string {
@@ -345,6 +345,18 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			dir, _ := os.Getwd()
 			return dir
 		},
+		"uc_username": func() string {
+			return fbauth.UCUsername
+		},
+	}
+	for _, key := range args.CustomSEUndefineConsts {
+		_, found:=hostBridgeGamma.HostQueryExpose[key]
+		if found {
+			delete(hostBridgeGamma.HostQueryExpose,key)
+		}
+	}
+	for key,val := range args.CustomSEConsts {
+		hostBridgeGamma.HostQueryExpose[key]=func()string{return val}
 	}
 	scriptHolder:=script_holder.InitScriptHolder(hostBridgeGamma)
 	defer scriptHolder.Destroy()

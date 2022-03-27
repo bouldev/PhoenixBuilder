@@ -1,4 +1,4 @@
-// +build !windows
+// +build !windows,!android android,!arm
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -17,8 +17,6 @@ import (
 	"phoenixbuilder/fastbuilder/args"
 )
 
-//const authServer="wss://api.fastbuilder.pro:2053/"
-
 type Client struct {
 	privateKey *ecdsa.PrivateKey
 	rsaPublicKey *rsa.PublicKey
@@ -32,12 +30,14 @@ type Client struct {
 	closed bool
 }
 
+var UCUsername string = ""
+
 func CreateClient(world_chat_channel chan []string) *Client {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
 		panic(err)
 	}
-	salt := []byte("bushe nmsl wrnmb")
+	salt := []byte("2345678987654321")
 	authclient := &Client {
 		privateKey:privateKey,
 		salt:salt,
@@ -113,7 +113,7 @@ func CreateClient(world_chat_channel chan []string) *Client {
 	pub_str:=base64.StdEncoding.EncodeToString(pubb)
 	var inbuf bytes.Buffer
 	wr:=gzip.NewWriter(&inbuf)
-	wr.Write([]byte(`{"action":"enable_encryption","publicKey":"`+string(pub_str)+`"}`))
+	wr.Write([]byte(`{"action":"enable_encryption_v2","publicKey":"`+string(pub_str)+`"}`))
 	wr.Close()
 	cl.WriteMessage(websocket.BinaryMessage,inbuf.Bytes())
 	for {
@@ -180,6 +180,8 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 		}
 		return "",int(code),fmt.Errorf("%s",err)
 	}
+	uc_username, _ := resp["username"].(string)
+	UCUsername=uc_username
 	str,_:=resp["chainInfo"].(string)
 	return str,0,nil
 }
