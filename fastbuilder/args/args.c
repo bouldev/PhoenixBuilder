@@ -144,20 +144,22 @@ int _parse_args(int argc, char **argv) {
 				fprintf(stderr,"--script-engine-const argument isn't available: Non-v8-linked version.\n");
 				return 10;
 #endif
-				int break_switch_14=0;
-				for(char *ptr=optarg;*ptr!=0;ptr++) {
-					if(*ptr=='=') {
-						*ptr=0;
-						ptr++;
-						custom_script_engine_const(optarg, ptr);
-						break_switch_14=1;
-						break;
+				{
+					int break_switch_14=0;
+					for(char *ptr=optarg;*ptr!=0;ptr++) {
+						if(*ptr=='=') {
+							*ptr=0;
+							ptr++;
+							custom_script_engine_const(optarg, ptr);
+							break_switch_14=1;
+							break;
+						}
 					}
+					if(break_switch_14)break;
+					fprintf(stderr, "--script-engine-const: Format: key=val\n");
+					print_help(argv[0]);
+					return 1;
 				}
-				if(break_switch_14)break;
-				fprintf(stderr, "--script-engine-const: Format: key=val\n");
-				print_help(argv[0]);
-				return 1;
 			case 15:
 #ifndef WITH_V8
 				fprintf(stderr,"--script-engine-suppress-const argument isn't available: Non-v8-linked version.\n");
