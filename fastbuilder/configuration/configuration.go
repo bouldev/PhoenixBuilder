@@ -3,6 +3,7 @@ package configuration
 import (
 	"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/fastbuilder/environment"
 )
 
 const (
@@ -81,11 +82,12 @@ var UserToken string
 
 var globalFullConfig *FullConfig
 
-func GlobalFullConfig() *FullConfig {
-	if globalFullConfig == nil {
-		globalFullConfig = CreateFullConfig()
+func GlobalFullConfig(env *environment.PBEnvironment) *FullConfig {
+	if env.GlobalFullConfig == nil {
+		env.GlobalFullConfig = CreateFullConfig()
 	}
-	return globalFullConfig
+	ret:=env.GlobalFullConfig.(*FullConfig)
+	return ret
 }
 
 func (conf *FullConfig) Main() *types.MainConfig {

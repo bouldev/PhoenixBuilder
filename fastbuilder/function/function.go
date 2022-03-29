@@ -4,6 +4,7 @@ import (
 	"strings"
 	"fmt"
 	"strconv"
+	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/minecraft"
@@ -16,7 +17,7 @@ type Function struct {
 	FunctionType byte
 	SFMinSliceLen uint16
 	SFArgumentTypes []byte
-	FunctionContent interface{} // Regular/Simple: func(*minecraft.Conn,interface{})
+	FunctionContent interface{} // Regular/Simple: func(*environment.PBEnvironment,interface{})
 				    // Continue: map[string]*FunctionChainItem
 }
 
@@ -40,38 +41,49 @@ const (
 	SimpleFunctionArgumentEnum    = 4
 )
 
-var FunctionMap = make(map[string]*Function)
-
-func RegisterFunction(function *Function) {
-	for _, nm := range function.OwnedKeywords {
-		if _, ok := FunctionMap[nm]; !ok {
-			FunctionMap[nm]=function
-		}
-	}
-}
-
 type EnumInfo struct {
 	WantedValuesDescription string // "discrete, continuous, none"
 	Parser func(string)byte
 	InvalidValue byte
 }
 
-var SimpleFunctionEnums []*EnumInfo
-
-func RegisterEnum(desc string,parser func(string)byte,inv byte) int {
-	SimpleFunctionEnums=append(SimpleFunctionEnums,&EnumInfo{WantedValuesDescription:desc,InvalidValue:inv,Parser:parser})
-	return len(SimpleFunctionEnums)-1+SimpleFunctionArgumentEnum
+type FunctionHolder struct {
+	env *environment.PBEnvironment
+	FunctionMap map[string]*Function
+	SimpleFunctionEnums []*EnumInfo
 }
 
-func Process(conn *minecraft.Conn,msg string) {
+func NewFunctionHolder(env *environment.PBEnvironment) *FunctionHolder {
+	return &FunctionHolder {
+		env: env,
+		FunctionMap: map[string]*Function {},
+		SimpleFunctionEnums: []*EnumInfo {},
+	}
+}
+
+func (function_holder *FunctionHolder) RegisterFunction(function *Function) {
+	for _, nm := range function.OwnedKeywords {
+		if _, ok := function_holder.FunctionMap[nm]; !ok {
+			function_holder.FunctionMap[nm]=function
+		}
+	}
+}
+
+func (function_holder *FunctionHolder) RegisterEnum(desc string,parser func(string)byte,inv byte) int {
+	function_holder.SimpleFunctionEnums=append(function_holder.SimpleFunctionEnums,&EnumInfo{WantedValuesDescription:desc,InvalidValue:inv,Parser:parser})
+	return len(function_holder.SimpleFunctionEnums)-1+SimpleFunctionArgumentEnum
+}
+
+func (function_holder *FunctionHolder) Process(msg string) {
+	conn:=function_holder.env.Connection.(*minecraft.Conn)
 	slc:=strings.Split(msg, " ")
-	fun, ok := FunctionMap[slc[0]]
+	fun, ok := function_holder.FunctionMap[slc[0]]
 	if !ok {
 		return
 	}
 	if fun.FunctionType == FunctionTypeRegular {
-		cont, _:=fun.FunctionContent.(func(*minecraft.Conn,string))
-		cont(conn, msg)
+		cont, _:=fun.FunctionContent.(func(*environment.PBEnvironment,string))
+		cont(function_holder.env, msg)
 		return
 	}
 	if len(slc) < int(fun.SFMinSliceLen) {
@@ -132,12 +144,12 @@ func Process(conn *minecraft.Conn,msg string) {
 				break
 			}else{
 				eindex:=int(tp-SimpleFunctionArgumentEnum)
-				if eindex>=len(SimpleFunctionEnums) {
+				if eindex>=len(function_holder.SimpleFunctionEnums) {
 					command.Tellraw(conn, "Parser: Internal error, unregistered enum")
 					fmt.Printf("Internal error, unregistered enum %d\n",int(tp))
 					return
 				}
-				ei:=SimpleFunctionEnums[eindex]
+				ei:=function_holder.SimpleFunctionEnums[eindex]
 				itm:=ei.Parser(slc[ic])
 				if itm == ei.InvalidValue {
 					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.SimpleParser_InvEnum),ei.WantedValuesDescription))
@@ -147,13 +159,13 @@ func Process(conn *minecraft.Conn,msg string) {
 			}
 			ic++
 		}
-		cont, _:=cc.Content.(func(*minecraft.Conn,[]interface{}))
+		cont, _:=cc.Content.(func(*environment.PBEnvironment,[]interface{}))
 		if cont==nil {
 			cont,_:=cc.Content.(func(interface{},[]interface{}))
-			cont(conn, arguments)
+			cont(function_holder.env, arguments)
 			return
 		}
-		cont(conn, arguments)
+		cont(function_holder.env, arguments)
 		return
 	}
 }

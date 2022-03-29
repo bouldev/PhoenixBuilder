@@ -15,6 +15,7 @@ import (
 	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/args"
+	"phoenixbuilder/fastbuilder/environment"
 )
 
 type Client struct {
@@ -28,11 +29,11 @@ type Client struct {
 	serverResponse chan map[string]interface{}
 	
 	closed bool
+	
+	env *environment.PBEnvironment
 }
 
-var UCUsername string = ""
-
-func CreateClient(world_chat_channel chan []string) *Client {
+func CreateClient(env *environment.PBEnvironment) *Client {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
 		panic(err)
@@ -43,6 +44,7 @@ func CreateClient(world_chat_channel chan []string) *Client {
 		salt:salt,
 		serverResponse:make(chan map[string]interface{}),
 		closed:false,
+		env: env,
 	}
 	cl,_,err:=websocket.DefaultDialer.Dial(args.AuthServer(),nil)
 	if err != nil {
@@ -92,7 +94,7 @@ func CreateClient(world_chat_channel chan []string) *Client {
 				chat_msg,_:=message["msg"].(string)
 				chat_sender,_:=message["username"].(string)
 				select {
-				case world_chat_channel<-[]string{chat_sender,chat_msg}:
+				case env.WorldChatChannel<-[]string{chat_sender,chat_msg}:
 					continue
 				default:
 					continue
@@ -181,7 +183,7 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 		return "",int(code),fmt.Errorf("%s",err)
 	}
 	uc_username, _ := resp["username"].(string)
-	UCUsername=uc_username
+	client.env.FBUCUsername=uc_username
 	str,_:=resp["chainInfo"].(string)
 	return str,0,nil
 }

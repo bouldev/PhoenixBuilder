@@ -15,19 +15,19 @@ jobs:
         go-version: 1.16
     - name: Build PhoenixBuilder
       run: make current
-  gui-check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install libraries
-      run: |
-        sudo apt update
-        sudo apt install libgl1-mesa-dev xorg-dev -y
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.16
-    - name: Build GUI
-      run: |
-        cd fyne-gui
-        make current
+  #gui-check:
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #  - uses: actions/checkout@v2
+  #  - name: Install libraries
+  #    run: |
+  #      sudo apt update
+  #      sudo apt install libgl1-mesa-dev xorg-dev -y
+  #  - name: Set up Go
+  #    uses: actions/setup-go@v2
+  #    with:
+  #      go-version: 1.16
+  #  - name: Build GUI
+  #    run: |
+  #      cd fyne-gui
+  #      make current

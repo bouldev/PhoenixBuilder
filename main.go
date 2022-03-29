@@ -21,7 +21,6 @@ import (
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/menu"
 	"phoenixbuilder/fastbuilder/move"
-	"phoenixbuilder/fastbuilder/plugin"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/script_engine/bridge/script_holder"
 	"phoenixbuilder/fastbuilder/signalhandler"
@@ -43,6 +42,7 @@ import (
 	"golang.org/x/term"
 	
 	"phoenixbuilder/fastbuilder/readline"
+	"phoenixbuilder/fastbuilder/environment"
 )
 
 type FBPlainToken struct {
@@ -56,7 +56,8 @@ type FBPlainToken struct {
 //const FBVersion = "1.4.0"
 const FBCodeName = "Phoenix"
 
-func forwardSend(srcConn net.Conn, dstConn *minecraft.Conn) {
+func forwardSend(srcConn net.Conn, env *environment.PBEnvironment) {
+	dstConn:=env.Connection.(*minecraft.Conn)
 	buf := make([]byte, 0)
 	currentBytes := 0
 	requiredBytes := 0
@@ -95,7 +96,8 @@ func forwardSend(srcConn net.Conn, dstConn *minecraft.Conn) {
 			if is_fb_cmd {
 				fb_cmd_string := string(buf[4:requiredBytes])
 				fmt.Printf("fb cmd string: %v\n", fb_cmd_string)
-				function.Process(dstConn, fb_cmd_string)
+				fh:=env.FunctionHolder.(*function.FunctionHolder)
+				fh.Process(fb_cmd_string)
 				is_fb_cmd = false
 			} else {
 				if dstConn.WritePacketBytes(buf[4:requiredBytes]) != nil {
@@ -113,13 +115,13 @@ func forwardSend(srcConn net.Conn, dstConn *minecraft.Conn) {
 	}
 }
 
-func StartTransferServer(conn *minecraft.Conn, transferPort string) func(data []byte) {
+func StartTransferServer(env *environment.PBEnvironment, transferPort string) func(data []byte) {
 	listener, err := net.Listen("tcp", transferPort)
 	if err != nil {
 		fmt.Printf("Transfer: listen fail\n\t(err=%v)\n", err)
 		return nil
 	}
-	fmt.Println("Transfer: server start successfully @ ", transferPort)
+	fmt.Println("Transfer: listening on @ ", transferPort)
 	proxyConnMap := make(map[string]net.Conn)
 
 	go func() {
@@ -131,7 +133,7 @@ func StartTransferServer(conn *minecraft.Conn, transferPort string) func(data []
 			}
 			fmt.Printf("Transfer: accept new connection @ %v\n", proxyConn.RemoteAddr().String())
 			proxyConnMap[proxyConn.RemoteAddr().String()] = proxyConn
-			go forwardSend(proxyConn, conn)
+			go forwardSend(proxyConn, env)
 		}
 	}()
 
@@ -160,7 +162,7 @@ func StartTransferServer(conn *minecraft.Conn, transferPort string) func(data []
 type Robot struct {
 	Token        string `json:"token"`
 	Code         string `json:"server_number"`
-	ServerPasswd string `json:"server_passwd"`
+	ServerPasswd string `json:"server_passcode"`
 	TransferPort string `json:"transfer_port"`
 	IgnoreUpdate bool   `json:"ignore_update"`
 	AutoRestart  bool   `json:"auto_restart"`
@@ -205,7 +207,7 @@ func main() {
 		//os.Exit(rand.Int())
 	}()
 	if args.DebugMode() {
-		runDebugClient()
+		init_and_run_debug_client()
 		return
 	}
 	ex, err := os.Executable()
@@ -274,10 +276,7 @@ func main() {
 	}
 }
 
-var successfullyConnectedToFB bool
-
 func runShellClient(token string, version string) {
-	successfullyConnectedToFB = false
 	var code, serverPasswd string
 	var err error
 	if robotOverWrite != nil {
@@ -296,57 +295,33 @@ func runShellClient(token string, version string) {
 		fmt.Println(err)
 		return
 	}
-	runClient(token, version, code, serverPasswd)
+	init_and_run_client(token, version, code, serverPasswd)
 }
 
-func dropInRestartLoop(token string, version string, code string, serverPasswd string) {
-	failureCount := 1
-	for {
-		delayTime := 30 * ((2 << failureCount) / 2)
-		if delayTime > 2*60*60 {
-			delayTime = 2 * 60 * 60
-		}
-		fmt.Printf("FB will Restart after %v second, retry time=%v", delayTime, failureCount)
-		time.Sleep(time.Duration(delayTime) * time.Second)
-		recoverableRun(token, version, code, serverPasswd)
-		if successfullyConnectedToFB {
-			failureCount = 1
-		} else {
-			failureCount += 1
-		}
-	}
-}
-
-func recoverableRun(token string, version string, code string, serverPasswd string) {
-	defer func() {
-		r := recover()
-		if r != nil {
-			fmt.Println("FB Crashed, reason: ", r)
-		}
-	}()
-	successfullyConnectedToFB = false
-	runClient(token, version, code, serverPasswd)
-}
-
-func runClient(token string, version string, code string, serverPasswd string) {
+func create_environment() *environment.PBEnvironment {
+	env:=&environment.PBEnvironment{}
+	env.ActivateTaskStatus=make(chan bool)
+	env.TaskHolder=fbtask.NewTaskHolder()
+	functionHolder:=function.NewFunctionHolder(env)
+	env.FunctionHolder=functionHolder
 	hostBridgeGamma := &script_bridge.HostBridgeGamma{}
 	hostBridgeGamma.Init()
 	hostBridgeGamma.HostQueryExpose = map[string]func() string{
 		"responduserDEPRECATED": func() string {
-			return configuration.RespondUser
+			return env.RespondUser
 		},
 		"server_code": func() string {
-			return code
+			return env.LoginInfo.ServerCode
 		},
 		"fb_version": func() string {
-			return version
+			return env.LoginInfo.Version
 		},
 		"fb_dir": func() string {
 			dir, _ := os.Getwd()
 			return dir
 		},
 		"uc_username": func() string {
-			return fbauth.UCUsername
+			return env.FBUCUsername
 		},
 	}
 	for _, key := range args.CustomSEUndefineConsts {
@@ -358,28 +333,48 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	for key,val := range args.CustomSEConsts {
 		hostBridgeGamma.HostQueryExpose[key]=func()string{return val}
 	}
-	scriptHolder:=script_holder.InitScriptHolder(hostBridgeGamma)
-	defer scriptHolder.Destroy()
-
+	env.ScriptBridge=hostBridgeGamma
+	scriptHolder:=script_holder.InitScriptHolder(env)
+	env.ScriptHolder=scriptHolder
 	if args.StartupScript() == "" {
 		hostBridgeGamma.HostRemoveBlock()
 	} else {
-		if scriptHolder.LoadScript(args.StartupScript(), hostBridgeGamma) {
+		if scriptHolder.LoadScript(args.StartupScript(), env) {
 			hostBridgeGamma.HostWaitScriptBlock()
 		}else{
 			hostBridgeGamma.HostRemoveBlock()
 		}
 	}
+	return env
+}
 
-	worldchatchannel := make(chan []string)
-	client := fbauth.CreateClient(worldchatchannel)
+func init_and_run_debug_client() {
+	env:=create_environment()
+	env.IsDebug=true
+	
+	scriptHolder:=env.ScriptHolder.(*script_holder.ScriptHolder)
+	defer scriptHolder.Destroy()
+	
+	runClient(env)
+}
+
+func init_and_run_client(token string, version string, code string, server_password string) {
+	env:=create_environment()
+	env.LoginInfo=environment.LoginInfo {
+		Token: token,
+		Version: version,
+		ServerCode: code,
+		ServerPasscode: server_password,
+	}
+	
+	scriptHolder:=env.ScriptHolder.(*script_holder.ScriptHolder)
+	defer scriptHolder.Destroy()
+	
+	client:=fbauth.CreateClient(env)
+	env.FBAuthClient=client
 	if token[0] == '{' {
 		token = client.GetToken("", token)
 		if token == "" {
-			if IsUnderLib {
-				bridgeLoginFailed(I18n.T(I18n.FBUC_LoginFailed))
-				return
-			}
 			fmt.Println(I18n.T(I18n.FBUC_LoginFailed))
 			return
 		}
@@ -388,7 +383,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fmt.Println("Error creating token file: ", err)
 			fmt.Println("Error ignored.")
 		} else {
-			configuration.UserToken = token
+			env.LoginInfo.Token=token
 			_, err = fi.WriteString(token)
 			if err != nil {
 				fmt.Println("Error saving token: ", err)
@@ -397,43 +392,47 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			fi.Close()
 			fi = nil
 		}
-	} else {
-		configuration.UserToken = token
 	}
-	serverCode := fmt.Sprintf("%s", strings.TrimSuffix(code, "\n"))
-	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), serverCode)))
-	dialer := minecraft.Dialer{
-		ServerCode: serverCode, //strings.TrimRight(serverCode, "\r\n"),
-		Password:   serverPasswd,
-		Version:    version,
-		Token:      token,
-		Client:     client,
-	}
-	conn, err := dialer.Dial("raknet", "")
+	runClient(env)
+}
 
-	if err != nil {
-		if IsUnderLib {
-			bridgeLoginFailed(fmt.Sprintf("%v", err))
-			return
+func runClient(env *environment.PBEnvironment) {
+	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
+	var conn *minecraft.Conn
+	if env.IsDebug {
+		conn=&minecraft.Conn {
+			DebugMode: true,
+		}
+	}else{
+		fbauthclient:=env.FBAuthClient.(*fbauth.Client)
+		dialer := minecraft.Dialer{
+			ServerCode: env.LoginInfo.ServerCode, //strings.TrimRight(serverCode, "\r\n"),
+			Password:   env.LoginInfo.ServerPasscode,
+			Version:    env.LoginInfo.Version,
+			Token:      env.LoginInfo.Token,
+			Client:     fbauthclient,
+		}
+		cconn, err := dialer.Dial("raknet", "")
+
+		if err != nil {
+			pterm.Error.Println(err)
+			if runtime.GOOS == "windows" {
+				pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
+				_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
+			}
 			panic(err)
 		}
-		pterm.Error.Println(err)
-		if runtime.GOOS == "windows" {
-			pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
-			_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
-		}
-		panic(err)
-		os.Exit(6)
-		//panic(err)
+		conn=cconn
+		go func() {
+			user := fbauthclient.ShouldRespondUser()
+			env.RespondUser = user
+		} ()
+		env.WorldChatChannel=make(chan []string)
 	}
 	defer conn.Close()
-	if IsUnderLib {
-		bridgeConn = conn
-		bridgeInitFinished()
-	}
-	successfullyConnectedToFB = true
 
 	// jsVM
+	hostBridgeGamma:=env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
 		ud, _ := uuid.NewUUID()
 		chann := make(chan *packet.CommandOutput)
@@ -452,8 +451,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	defer hostBridgeGamma.HostConnectTerminate()
 
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
-	user := client.ShouldRespondUser()
-	configuration.RespondUser = user
 
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
 	if !args.NoPyRpc() {
@@ -492,16 +489,15 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			return
 		}
 		for {
-			csmsg := <-worldchatchannel
+			csmsg := <-env.WorldChatChannel
 			command.WorldChatTellraw(conn, csmsg[0], csmsg[1])
 		}
 	}()
+	env.Connection=conn
 
-	plugin.StartPluginSystem(conn)
-
-	function.InitInternalFunctions()
-	fbtask.InitTaskStatusDisplay(conn)
-	//world_provider.Init()
+	functionHolder:=env.FunctionHolder.(*function.FunctionHolder)
+	function.InitInternalFunctions(functionHolder)
+	fbtask.InitTaskStatusDisplay(env)
 	move.ConnectTime = conn.GameData().ConnectTime
 	move.Position = conn.GameData().PlayerPosition
 	move.Pitch = conn.GameData().Pitch
@@ -509,24 +505,17 @@ func runClient(token string, version string, code string, serverPasswd string) {
 	move.Connection = conn
 	move.RuntimeID = conn.GameData().EntityRuntimeID
 
-	signalhandler.Init(conn)
+	signalhandler.Install(conn)
 
 	zeroId, _ := uuid.NewUUID()
 	oneId, _ := uuid.NewUUID()
 	configuration.ZeroId = zeroId
 	configuration.OneId = oneId
-	types.ForwardedBrokSender = fbtask.BrokSender
+	taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+	types.ForwardedBrokSender = taskholder.BrokSender
 	go func() {
-		//logger, closeFn := makeLogFile()
-		//defer closeFn()
-		//reader:=bufio.NewReader(os.Stdin)
 		for {
-			//cmd, _:=getInput()
-			//inp, _ := reader.ReadString('\n')
-			//inp := hostBridgeGamma.HostUser2FBInputHijack()
-			//logger.Println(inp)
-			//cmd := strings.TrimRight(inp, "\r\n")
-			cmd:=readline.Readline()
+			cmd:=readline.Readline(env)
 			if len(cmd) == 0 {
 				continue
 			}
@@ -546,7 +535,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				fmt.Printf("%+v\n", resp)
 			}
 			if cmd == "menu" {
-				menu.OpenMenu(conn)
+				menu.OpenMenu(env)
 				fmt.Printf("OK\n")
 				continue
 			}
@@ -583,19 +572,22 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 			if cmd[0] == '>' && len(cmd) > 1 {
 				umsg := cmd[1:]
-				if !client.CanSendMessage() {
-					command.WorldChatTellraw(conn, "FastBuildeｒ", "Lost connection to the authentication server.")
-					break
+				if(env.FBAuthClient!=nil) {
+					fbcl:=env.FBAuthClient.(*fbauth.Client)
+					if !fbcl.CanSendMessage() {
+						command.WorldChatTellraw(conn, "FastBuildeｒ", "Lost connection to the authentication server.")
+						break
+					}
+					fbcl.WorldChat(umsg)
 				}
-				client.WorldChat(umsg)
 			}
-			function.Process(conn, cmd)
+			functionHolder.Process(cmd)
 		}
 	}()
 
 	var forwardRecvFn func([]byte)
 	if robotOverWrite != nil {
-		forwardRecvFn = StartTransferServer(conn, robotOverWrite.TransferPort)
+		forwardRecvFn = StartTransferServer(env, robotOverWrite.TransferPort)
 	}
 
 	// A loop that reads packets from the connection until it is closed.
@@ -635,7 +627,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				// See analyze/nemcfix/final.py for its python version
 				// and see analyze/ for how I did it.
 				tellraw(conn, "Welcome to FastBuilder!")
-				tellraw(conn, fmt.Sprintf("Operator: %s", user))
+				tellraw(conn, fmt.Sprintf("Operator: %s", env.RespondUser))
 				sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
 			} else if strings.Contains(string(p.Content), "check_server_contain_pet") {
 				//fmt.Printf("Checkpet!!\n")
@@ -668,6 +660,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				// 2021-12-22 10:51~11:55
 				// Thank netease for wasting my time again ;)
 				encData := p.Content[68 : len(p.Content)-1]
+				client:=env.FBAuthClient.(*fbauth.Client)
 				response := client.TransferData(string(encData), fmt.Sprintf("%d", conn.IdentityData().Uid))
 				conn.WritePacket(&packet.PyRpc{
 					Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xc, 0x53, 0x65, 0x74, 0x53, 0x74, 0x61, 0x72, 0x74, 0x54, 0x79, 0x70, 0x65, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4},
@@ -694,42 +687,16 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				}
 			}
 		case *packet.StructureTemplateDataResponse:
-			//fmt.Printf("RESPONSE %+v\n",p.StructureTemplate)
 			fbtask.ExportWaiter <- p.StructureTemplate
 			break
-		/*case *packet.InventoryContent:
-		for _, item := range p.Content {
-			fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
-		}
-		break*/
-		/*case *packet.InventorySlot:
-		fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
-				for _, item := range plugin.ChatEventListeners {
+				/*for _, item := range plugin.ChatEventListeners {
 					item(p.SourceName, p.Message)
-				}
-				if user == p.SourceName {
-					if p.Message[0] == '>' && len(p.Message) > 1 {
-						umsg := p.Message[1:]
-						if !client.CanSendMessage() {
-							command.WorldChatTellraw(conn, "FasｔBuildeｒ", "Lose connection to the authentication server.")
-							break
-						}
-						client.WorldChat(umsg)
-					}
-					break
-					pterm.Println(pterm.Yellow(fmt.Sprintf("<%s>", user)), pterm.LightCyan(p.Message))
-					if p.Message[0] == '>' {
-						//umsg:=p.Message[1:]
-						//
-					}
-					function.Process(conn, p.Message)
-					break
-				}
+				}*/
+				break
 			}
 		case *packet.CommandOutput:
-			//if p.SuccessCount > 0 {
 			if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
 				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
 				if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
@@ -739,7 +706,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 					tellraw(conn, I18n.T(I18n.InvalidPosition))
 					break
 				}
-				configuration.GlobalFullConfig().Main().Position = types.Position{
+				configuration.GlobalFullConfig(env).Main().Position = types.Position{
 					X: pos[0],
 					Y: pos[1],
 					Z: pos[2],
@@ -752,7 +719,7 @@ func runClient(token string, version string, code string, serverPasswd string) {
 					tellraw(conn, I18n.T(I18n.InvalidPosition))
 					break
 				}
-				configuration.GlobalFullConfig().Main().End = types.Position{
+				configuration.GlobalFullConfig(env).Main().End = types.Position{
 					X: pos[0],
 					Y: pos[1],
 					Z: pos[2],
@@ -760,7 +727,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
 				break
 			}
-			//}
 			pr, ok := command.UUIDMap.LoadAndDelete(p.CommandOrigin.UUID.String())
 			if ok {
 				pu := pr.(chan *packet.CommandOutput)
@@ -796,7 +762,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 				move.Target = p.Position
 			}
 		case *packet.CorrectPlayerMovePrediction:
-			//fmt.Printf("correct %v\n",time.Now())
 			move.MoveP += 10
 			if move.MoveP > 100 {
 				move.MoveP = 0
@@ -811,111 +776,6 @@ func runClient(token string, version string, code string, serverPasswd string) {
 			}
 		}
 	}
-
-}
-
-func runDebugClient() {
-	hostBridgeGamma := &script_bridge.HostBridgeGamma{}
-	hostBridgeGamma.Init()
-	hostBridgeGamma.HostQueryExpose = map[string]func() string{
-		"user_name": func() string {
-			return configuration.RespondUser
-		},
-		"server_code": func() string {
-			return "debug"
-		},
-		"fb_version": func() string {
-			return ""
-		},
-		"fb_dir": func() string {
-			dir, _ := os.Getwd()
-			return dir
-		},
-	}
-	scriptHolder:=script_holder.InitScriptHolder(hostBridgeGamma)
-	//allScripts := map[string]func(){}
-	defer scriptHolder.Destroy()
-
-	if args.StartupScript() == "" {
-		hostBridgeGamma.HostRemoveBlock()
-	} else {
-		if scriptHolder.LoadScript(args.StartupScript(), hostBridgeGamma) {
-			hostBridgeGamma.HostRemoveBlock()
-		}else{
-			hostBridgeGamma.HostWaitScriptBlock()
-		}
-	}
-	serverCode := fmt.Sprintf("%s", strings.TrimSuffix("[DEBUG, NO SERVER]", "\n"))
-	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), serverCode)))
-
-	conn := &minecraft.Conn{
-		DebugMode: true,
-	}
-	defer conn.Close()
-	if IsUnderLib {
-		bridgeConn = conn
-		bridgeInitFinished()
-	}
-	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
-	user := "DEBUG USER"
-	configuration.RespondUser = user
-	conn.WritePacket(&packet.PyRpc{
-		Content: []byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xc, 0x53, 0x79, 0x6e, 0x63, 0x55, 0x73, 0x69, 0x6e, 0x67, 0x4d, 0x6f, 0x64, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0x90, 0xc0},
-	})
-	conn.WritePacket(&packet.PyRpc{
-		Content: []byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xf, 0x53, 0x79, 0x6e, 0x63, 0x56, 0x69, 0x70, 0x53, 0x6b, 0x69, 0x6e, 0x55, 0x75, 0x69, 0x64, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc0, 0xc0},
-	})
-	conn.WritePacket(&packet.PyRpc{
-		Content: []byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0x1f, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x4c, 0x6f, 0x61, 0x64, 0x41, 0x64, 0x64, 0x6f, 0x6e, 0x73, 0x46, 0x69, 0x6e, 0x69, 0x73, 0x68, 0x65, 0x64, 0x46, 0x72, 0x6f, 0x6d, 0x47, 0x61, 0x63, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x90, 0xc0},
-	})
-	conn.WritePacket(&packet.PyRpc{
-		Content: []byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0x19, 0x61, 0x72, 0x65, 0x6e, 0x61, 0x47, 0x61, 0x6d, 0x65, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x46, 0x69, 0x6e, 0x69, 0x73, 0x68, 0x4c, 0x6f, 0x61, 0x64, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x90, 0xc0},
-	})
-
-	plugin.StartPluginSystem(conn)
-
-	function.InitInternalFunctions()
-	fbtask.InitTaskStatusDisplay(conn)
-
-	signalhandler.Init(conn)
-
-	zeroId, _ := uuid.NewUUID()
-	oneId, _ := uuid.NewUUID()
-	configuration.ZeroId = zeroId
-	configuration.OneId = oneId
-	types.ForwardedBrokSender = fbtask.BrokSender
-	//reader := bufio.NewReader(os.Stdin)
-	for {
-		//inp, _ := reader.ReadString('\n')
-		//cmd := strings.TrimRight(inp, "\r\n")
-		//cmd, _:=getInput()
-		cmd := readline.Readline()
-		if len(cmd) == 0 {
-			continue
-		}
-		if cmd[0] == '.' {
-			ud, _ := uuid.NewUUID()
-			chann := make(chan *packet.CommandOutput)
-			command.UUIDMap.Store(ud.String(), chann)
-			command.SendCommand(cmd[1:], ud, conn)
-			resp := <-chann
-			fmt.Printf("%+v\n", resp)
-		} else if cmd[0] == '!' {
-			ud, _ := uuid.NewUUID()
-			chann := make(chan *packet.CommandOutput)
-			command.UUIDMap.Store(ud.String(), chann)
-			command.SendWSCommand(cmd[1:], ud, conn)
-			resp := <-chann
-			fmt.Printf("%+v\n", resp)
-		}
-		if cmd == "menu" {
-			menu.OpenMenu(conn)
-			fmt.Printf("OK\n")
-			continue
-		}
-		function.Process(conn, cmd)
-	}
-
 }
 
 func getInput() (string, error) {

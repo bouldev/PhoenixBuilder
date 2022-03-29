@@ -14,6 +14,7 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/fastbuilder/environment"
 	"runtime"
 	"strings"
 	"sync"
@@ -38,6 +39,7 @@ type Task struct {
 	Type byte
 	AsyncInfo
 	Config *configuration.FullConfig
+	holder *TaskHolder
 }
 
 type AsyncInfo struct {
@@ -46,10 +48,21 @@ type AsyncInfo struct {
 	BeginTime time.Time
 }
 
-var TaskIdCounter *atomic.Int64 = atomic.NewInt64(0)
-var TaskMap sync.Map
-var BrokSender chan string = make(chan string)
-var ExtraDisplayStrings []string = []string{}
+type TaskHolder struct {
+	TaskIdCounter *atomic.Int64
+	TaskMap sync.Map
+	BrokSender chan string
+	ExtraDisplayStrings []string
+}
+
+func NewTaskHolder() *TaskHolder {
+	return &TaskHolder {
+		TaskIdCounter: atomic.NewInt64(0),
+		TaskMap: sync.Map {},
+		BrokSender: make(chan string),
+		ExtraDisplayStrings: []string {},
+	}
+}
 
 func GetStateDesc(st byte) string {
 	if st == 0 {
@@ -70,7 +83,7 @@ func GetStateDesc(st byte) string {
 
 func (task *Task) Finalize() {
 	task.State = TaskStateDied
-	TaskMap.Delete(task.TaskId)
+	task.holder.TaskMap.Delete(task.TaskId)
 }
 
 func (task *Task) Pause() {
@@ -130,33 +143,36 @@ func (task *Task) Break() {
 	task.Resume()
 }
 
-func FindTask(taskId int64) *Task {
-	t, _ := TaskMap.Load(taskId)
+func (holder *TaskHolder) FindTask(taskId int64) *Task {
+	t, _ := holder.TaskMap.Load(taskId)
 	ta, _ := t.(*Task)
 	return ta
 }
 
-func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
-	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig().Main())
+func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
+	holder:=env.TaskHolder.(*TaskHolder)
+	conn:=env.Connection.(*minecraft.Conn)
+	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
 		command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand),err))
 		return nil
 	}
-	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig().Delay())
+	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig(env).Delay())
 	dcfg := fcfg.Delay()
 	und, _ := uuid.NewUUID()
 	command.SendWSCommand("gamemode c", und, conn)
 	blockschannel := make(chan *types.Module, 10240)
 	task := &Task {
-		TaskId: TaskIdCounter.Add(1),
+		TaskId: holder.TaskIdCounter.Add(1),
 		CommandLine: commandLine,
 		OutputChannel: blockschannel,
 		State: TaskStateCalculating,
-		Type: configuration.GlobalFullConfig().Global().TaskCreationType,
+		Type: configuration.GlobalFullConfig(env).Global().TaskCreationType,
 		Config: fcfg,
+		holder: holder,
 	}
 	taskid := task.TaskId
-	TaskMap.Store(taskid, task)
+	holder.TaskMap.Store(taskid, task)
 	var asyncblockschannel chan *types.Module
 	if task.Type==types.TaskTypeAsync {
 		asyncblockschannel=blockschannel
@@ -359,49 +375,30 @@ func CreateTask(commandLine string, conn *minecraft.Conn) *Task {
 	return task
 }
 
-var ActivateTaskStatus chan bool=make(chan bool)
-
-func InitTaskStatusDisplay(conn *minecraft.Conn) {
+func InitTaskStatusDisplay(env *environment.PBEnvironment) {
+	conn:=env.Connection.(*minecraft.Conn)
+	holder:=env.TaskHolder.(*TaskHolder)
 	go func() {
-		defer func() {
-			r:=recover()
-			if r!=nil{
-				fmt.Println("go routine @ fastbuilder.task.task.BrokSender crashed ",r)
-			}
-		}()
 		for {
-			str:=<-BrokSender
+			str:=<-holder.BrokSender
 			command.Tellraw(conn,str)
 		}
 	} ()
 	ticker := time.NewTicker(500 * time.Millisecond)
 	go func() {
-		defer func() {
-			r:=recover()
-			if r!=nil{
-				fmt.Println("go routine @ fastbuilder.task.task.Ticker crashed ",r)
-			}
-		}()
 		for {
 			<-ticker.C
-			ActivateTaskStatus<-true
+			env.ActivateTaskStatus<-true
 		}
 	} ()
 	go func() {
-		defer func() {
-			r:=recover()
-			if r!=nil{
-				fmt.Println("go routine @ fastbuilder.task.task.ActivateTaskStatus crashed ",r)
-			}
-		}()
 		for {
-			<-ActivateTaskStatus
-			//<- ticker.C
-			if configuration.GlobalFullConfig().Global().TaskDisplayMode == types.TaskDisplayNo {
+			<-env.ActivateTaskStatus
+			if configuration.GlobalFullConfig(env).Global().TaskDisplayMode == types.TaskDisplayNo {
 				continue
 			}
 			var displayStrs []string
-			TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
+			holder.TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
 				tid, _:=_tid.(int64)
 				v, _:=_v.(*Task)
 
@@ -413,7 +410,7 @@ func InitTaskStatusDisplay(conn *minecraft.Conn) {
 				command.AdditionalTitleCb(addstr)
 				return true
 			})
-			displayStrs=append(displayStrs, ExtraDisplayStrings...)
+			displayStrs=append(displayStrs, holder.ExtraDisplayStrings...)
 			if len(displayStrs) == 0 {
 				continue
 			}

@@ -10,7 +10,7 @@ import (
 	"syscall"
 )
 
-func Init(conn *minecraft.Conn) {
+func Install(conn *minecraft.Conn) {
 	go func() {
 		readline.SelfTermination=make(chan bool)
 		<-readline.SelfTermination

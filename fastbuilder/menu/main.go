@@ -14,6 +14,7 @@ import (
 	"strings"
 	"runtime"
 	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/environment"
 )
 
 var OPRuntimeId uint64 = 0
@@ -99,7 +100,8 @@ func SetRootForCurPath() bool {
 	return false
 }
 
-func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
+func OpenSubMenu(sel int, env *environment.PBEnvironment) bool {
+	fh := env.FunctionHolder.(*function.FunctionHolder)
 	if(isInSelectionType==1){
 		if(sel==0) {
 			isInSelectionType=0
@@ -122,7 +124,7 @@ func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
 			if strictMode {
 				levelArr=append(levelArr,"-S")
 			}
-			function.Process(conn,strings.Join(levelArr, " "))
+			fh.Process(strings.Join(levelArr, " "))
 			return true
 		}
 		curSelArr=[]string{"< Back",fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_ExcludeCommandsOption),excludeCommands),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_InvalidateCommandsOption),invalidateCommands),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_StrictModeOption),strictMode),"OK >"}
@@ -139,7 +141,7 @@ func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
 			if excludeCommands {
 				levelArr=append(levelArr,"--excludecommands")
 			}
-			function.Process(conn,strings.Join(levelArr, " "))
+			fh.Process(strings.Join(levelArr, " "))
 			return true
 		}
 		curSelArr=[]string{I18n.T(I18n.Menu_BackButton),fmt.Sprintf("%s = %v",I18n.T(I18n.Menu_ExcludeCommandsOption),excludeCommands),"OK >"}
@@ -151,7 +153,7 @@ func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
 			levelArr=append(levelArr,fmt.Sprintf("\"%s\"",flpath))
 			curpath=[]string{}
 			if(levelArr[0]!="bdump"&&levelArr[0]!="export") {
-				function.Process(conn, strings.Join(levelArr, " "))
+				fh.Process(strings.Join(levelArr, " "))
 				return true
 			}
 			if(levelArr[0]=="bdump") {
@@ -180,10 +182,10 @@ func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
 	}
 	if(len(levelArr)==0) {
 		if(sel==0) {
-			function.Process(conn, "get")
+			fh.Process("get")
 			return true
 		}else if(sel==1) {
-			function.Process(conn, "get end")
+			fh.Process("get end")
 			return true
 		}else if(sel==2) {
 			levelArr=[]string { "acme", "-p" }
@@ -221,7 +223,7 @@ func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
 			LS()
 			return false
 		}else if(sel==7) {
-			function.Process(conn, "fbexit")
+			fh.Process("fbexit")
 			return true
 		}else if(sel==8) {
 			return true
@@ -230,7 +232,8 @@ func OpenSubMenu(sel int, conn *minecraft.Conn) bool {
 	return true
 }
 
-func OpenMenu(conn *minecraft.Conn) {
+func OpenMenu(env *environment.PBEnvironment) {
+	conn:=env.Connection.(*minecraft.Conn)
 	go func() {
 		curSelArr = SelectableCommands
 		curpath=[]string{}
@@ -239,7 +242,7 @@ func OpenMenu(conn *minecraft.Conn) {
 		if(OPRuntimeId==0) {
 			player:=configuration.RespondUser
 			lineUUID,_:=uuid.NewUUID()
-			lineChan:=make(chan *packet.CommandOutput) //　蓮(れん)ちゃん (
+			lineChan:=make(chan *packet.CommandOutput)
 			command.UUIDMap.Store(lineUUID.String(),lineChan)
 			command.SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~400 ~ ~",player,conn.IdentityData().DisplayName),lineUUID,conn)
 			<-lineChan
@@ -289,14 +292,15 @@ func OpenMenu(conn *minecraft.Conn) {
 				}
 			}
 			//cSessionArr[curSel]=fmt.Sprintf("§b>%s<§r", curSelArr[curSel])
-			fbtask.ExtraDisplayStrings=append([]string{fmt.Sprintf("Pitch: %v",LastOPPitch)},cSessionArr...)
-			fbtask.ActivateTaskStatus<-true
+			taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+			taskholder.ExtraDisplayStrings=append([]string{fmt.Sprintf("Pitch: %v",LastOPPitch)},cSessionArr...)
+			env.ActivateTaskStatus<-true
 			if(LastOPSneak&&!LastOPMouSneaked) {
 				//LastOPSneak=false
 				LastOPMouSneaked=true
-				quitmenu:=OpenSubMenu(curSel, conn)
+				quitmenu:=OpenSubMenu(curSel, env)
 				if(quitmenu) {
-					fbtask.ExtraDisplayStrings=[]string{}
+					taskholder.ExtraDisplayStrings=[]string{}
 					return
 				}
 				curSel=0

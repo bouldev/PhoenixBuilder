@@ -6,15 +6,17 @@ import (
 	"phoenixbuilder/fastbuilder/function"
 	"phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/script_engine/bridge/kickstarter"
+	"phoenixbuilder/fastbuilder/environment"
 )
 
 type ScriptHolder struct {
 	allScripts map[string]func()
 }
 
-func InitScriptHolder(hostbridge bridge.HostBridge) *ScriptHolder {
+func InitScriptHolder(env *environment.PBEnvironment) *ScriptHolder {
 	sh:=&ScriptHolder {}
-	function.RegisterFunction(&function.Function {
+	fh:=env.FunctionHolder.(*function.FunctionHolder)
+	fh.RegisterFunction(&function.Function {
 		Name: "script",
 		OwnedKeywords: []string {"script"},
 		FunctionType: function.FunctionTypeSimple,
@@ -22,7 +24,7 @@ func InitScriptHolder(hostbridge bridge.HostBridge) *ScriptHolder {
 		SFMinSliceLen: 1,
 		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
 			str:=args[0].(string)
-			sh.LoadScript(str, hostbridge)
+			sh.LoadScript(str, env)
 		},
 	})
 	return sh
@@ -34,9 +36,9 @@ func (sh *ScriptHolder) Destroy() {
 	}
 }
 
-func (sh *ScriptHolder) LoadScript(script_path string,hostbridge bridge.HostBridge) bool {
+func (sh *ScriptHolder) LoadScript(script_path string, env *environment.PBEnvironment) bool {
 	// TODO: Normalize script_path
-	
+	hostbridge:=env.ScriptBridge.(bridge.HostBridge)
 	stopCb, found := sh.allScripts[script_path]
 	if found {
 		fmt.Printf("Reloading script %s\n",script_path)

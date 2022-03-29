@@ -12,6 +12,7 @@ import (
 	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/fastbuilder/environment"
 	"runtime"
 	"strings"
 )
@@ -31,8 +32,9 @@ type SolidRet struct {
 
 var ExportWaiter chan map[string]interface{}
 
-func CreateExportTask(commandLine string, conn *minecraft.Conn) *Task {
-	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig().Main())
+func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task {
+	conn:=env.Connection.(*minecraft.Conn)
+	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
 		command.Tellraw(conn, fmt.Sprintf("Failed to parse command: %v",err))
 		return nil

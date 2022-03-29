@@ -26,20 +26,23 @@ import "C"
 
 import (
 	"phoenixbuilder/fastbuilder/function"
+	"phoenixbuilder/fastbuilder/environment"
 	"unsafe"
 )
 
 var SelfTermination chan bool
 
+var currentFunctionMap map[string]*function.Function
+
 //export GetFunctionList
 func GetFunctionList() **C.char {
-	functionList:=make([]*C.char, len(function.FunctionMap))
+	functionList:=make([]*C.char, len(currentFunctionMap))
 	funcListIdx:=0
-	for funcname, _ := range function.FunctionMap {
+	for funcname, _ := range currentFunctionMap {
 		functionList[funcListIdx]=C.CString(funcname)
 		funcListIdx++
 	}
-	return C.strengthenStringArray(&functionList[0],C.int(len(function.FunctionMap)))
+	return C.strengthenStringArray(&functionList[0],C.int(len(currentFunctionMap)))
 }
 
 //export teardown_self
@@ -60,7 +63,9 @@ func InitReadline() {
 	C.init_readline()
 }
 
-func Readline() string {
+func Readline(env *environment.PBEnvironment) string {
+	currentFunctionHolder:=env.FunctionHolder.(*function.FunctionHolder)
+	currentFunctionMap=currentFunctionHolder.FunctionMap
 	readline_cstr:=C.doReadline()
 	readline_gstr:=C.GoString(readline_cstr)
 	C.free(unsafe.Pointer(readline_cstr))

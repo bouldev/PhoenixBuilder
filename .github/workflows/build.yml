@@ -27,9 +27,9 @@ jobs:
       run: mv ${{ steps.setup-ndk.outputs.ndk-path }} ${HOME}/android-ndk-r20b
     - name: Install compilers
       run: |
-        sudo dpkg --add-architecture aarch64
+        sudo dpkg --add-architecture arm64
         sudo apt update
-        sudo apt install libreadline-dev:aarch64 libreadline-dev
+        sudo apt install libreadline-dev:arm64 libreadline-dev
         sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu libgl1-mesa-dev xorg-dev -y
     - name: Setup theos's dependencies
       run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 libplist-utils brotli
@@ -55,15 +55,21 @@ jobs:
         unzip -q master.zip -d $TMP
         mv $TMP/sdks-master/*.sdk $THEOS/sdks
         rm -r master.zip $TMP
-    - name: Clone macOS SDK
-      uses: actions/checkout@v2
-      with:
-        repository: 'phracker/MacOSX-SDKs'
-        path: 'macOS-sdks'
-    - name: Configure macOS SDK
+    - name: Download macOS SDK
       run: |
-        mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
-        rm -rf $GITHUB_WORKSPACE/macOS-sdks
+        curl -LO https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.0.sdk.tar.xz
+        tar -xzf MacOSX11.0.sdk.tar.gz
+        rm MacOSX11.0.sdk.tar.gz
+        mv MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
+    #- name: Clone macOS SDK
+    #  uses: actions/checkout@v2
+    #  with:
+    #    repository: 'phracker/MacOSX-SDKs'
+    #    path: 'macOS-sdks'
+    #- name: Configure macOS SDK
+    #  run: |
+    #    mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
+    #    rm -rf $GITHUB_WORKSPACE/macOS-sdks
     - name: Pre-Build & configure go-raknet
       run: |
         make current
@@ -79,20 +85,20 @@ jobs:
       run: |
         export THEOS=~/theos
         make package
-    - name: Build GUI applications
-      run: |
-        export THEOS=~/theos
-        cd fyne-gui
-        cd android_wrapper
-        go build
-        cd ..
-        make
-        node simpleappend.js
-        ls -lh build/>release.txt
-        mv release.txt build/release-list.txt
-        cp version build/version.txt
-        mv build ../build/gui
-        cd ..
+    #- name: Build GUI applications
+    #  run: |
+    #    export THEOS=~/theos
+    #    cd fyne-gui
+    #    cd android_wrapper
+    #    go build
+    #    cd ..
+    #    make
+    #    node simpleappend.js
+    #    ls -lh build/>release.txt
+    #    mv release.txt build/release-list.txt
+    #    cp version build/version.txt
+    #    mv build ../build/gui
+    #    cd ..
     - name: Pack binaries
       run: |
         mv release/*.deb build/

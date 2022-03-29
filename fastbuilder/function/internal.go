@@ -11,32 +11,34 @@ import (
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/minecraft"
-	//"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/environment"
 )
 
 
 
-func InitInternalFunctions() {
-	delayEnumId:=RegisterEnum("continuous, discrete, none",types.ParseDelayMode,types.DelayModeInvalid)
-	RegisterFunction(&Function {
+func InitInternalFunctions(fh *FunctionHolder) {
+	delayEnumId:=fh.RegisterEnum("continuous, discrete, none",types.ParseDelayMode,types.DelayModeInvalid)
+	fh.RegisterFunction(&Function {
 		Name: "exit",
 		OwnedKeywords: []string {"exit","fbexit"},
 		FunctionType:FunctionTypeSimple,
 		SFMinSliceLen: 1,
-		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
+		FunctionContent: func(env *environment.PBEnvironment,_ []interface{}) {
+			conn:=env.Connection.(*minecraft.Conn)
 			command.Tellraw(conn,I18n.T(I18n.QuitCorrectly))
 			bridge_fmt.Printf("%s\n",I18n.T(I18n.QuitCorrectly))
 			conn.Close()
 			os.Exit(0)
 		},
 	})
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "logout",
 		OwnedKeywords: []string { "logout" },
 		FunctionType: FunctionTypeSimple,
 		SFMinSliceLen: 1,
-		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
+		FunctionContent: func(env *environment.PBEnvironment,_ []interface{}) {
+			conn:=env.Connection.(*minecraft.Conn)
 			homedir, err := os.UserHomeDir()
 			if err != nil {
 				bridge_fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
@@ -57,37 +59,30 @@ func InitInternalFunctions() {
 			os.Exit(0)
 		},
 	})
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "reselect language",
 		OwnedKeywords: []string { "lang" },
 		FunctionType: FunctionTypeSimple,
 		SFMinSliceLen: 1,
-		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
+		FunctionContent: func(env *environment.PBEnvironment,_ []interface{}) {
+			conn:=env.Connection.(*minecraft.Conn)
 			command.Tellraw(conn, I18n.T(I18n.SelectLanguageOnConsole))
 			I18n.SelectLanguage()
 			I18n.UpdateLanguage()
 		},
 	})
-	RegisterFunction(&Function {
-		Name: "ingameping",
-		OwnedKeywords: []string {"ingameping"},
-		FunctionType:FunctionTypeSimple,
-		SFMinSliceLen: 1,
-		FunctionContent: func(conn *minecraft.Conn,_ []interface{}) {
-			command.SendSizukanaCommand("say Ingame pong",conn)
-		},
-	})
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "set",
 		OwnedKeywords: []string {"set"},
 		FunctionType:FunctionTypeSimple,
 		SFMinSliceLen:4,
 		SFArgumentTypes: []byte {SimpleFunctionArgumentInt,SimpleFunctionArgumentInt,SimpleFunctionArgumentInt},
-		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+		FunctionContent: func(env *environment.PBEnvironment,args []interface{}) {
+			conn:=env.Connection.(*minecraft.Conn)
 			X, _ := args[0].(int)
 			Y, _ := args[1].(int)
 			Z, _ := args[2].(int)
-			configuration.GlobalFullConfig().Main().Position=types.Position {
+			configuration.GlobalFullConfig(env).Main().Position=types.Position {
 				X: X,
 				Y: Y,
 				Z: Z,
@@ -95,25 +90,26 @@ func InitInternalFunctions() {
 			command.Tellraw(conn, fmt.Sprintf("%s: %d, %d, %d.",I18n.T(I18n.PositionSet),X,Y,Z))
 		},
 	})
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "setend",
 		OwnedKeywords: []string {"setend"},
 		FunctionType:FunctionTypeSimple,
 		SFMinSliceLen:4,
 		SFArgumentTypes: []byte {SimpleFunctionArgumentInt,SimpleFunctionArgumentInt,SimpleFunctionArgumentInt},
-		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+		FunctionContent: func(env *environment.PBEnvironment,args []interface{}) {
 			X, _ := args[0].(int)
 			Y, _ := args[1].(int)
 			Z, _ := args[2].(int)
-			configuration.GlobalFullConfig().Main().End=types.Position {
+			configuration.GlobalFullConfig(env).Main().End=types.Position {
 				X: X,
 				Y: Y,
 				Z: Z,
 			}
+			conn:=env.Connection.(*minecraft.Conn)
 			command.Tellraw(conn, fmt.Sprintf("%s: %d, %d, %d.",I18n.T(I18n.PositionSet_End),X,Y,Z))
 		},
 	})
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "delay",
 		OwnedKeywords: []string {"delay"},
 		FunctionType: FunctionTypeContinue,
@@ -122,13 +118,14 @@ func InitInternalFunctions() {
 			"set": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
-				Content: func(conn *minecraft.Conn, args []interface{}){
-					if configuration.GlobalFullConfig().Delay().DelayMode==types.DelayModeNone {
+				Content: func(env *environment.PBEnvironment, args []interface{}){
+					conn:=env.Connection.(*minecraft.Conn)
+					if configuration.GlobalFullConfig(env).Delay().DelayMode==types.DelayModeNone {
 						command.Tellraw(conn, I18n.T(I18n.DelaySetUnavailableUnderNoneMode))
 						return
 					}
 					ms, _:=args[0].(int)
-					configuration.GlobalFullConfig().Delay().Delay=int64(ms)
+					configuration.GlobalFullConfig(env).Delay().Delay=int64(ms)
 					command.Tellraw(conn, fmt.Sprintf("%s: %d", I18n.T(I18n.DelaySet), ms))
 				},
 			},
@@ -137,25 +134,27 @@ func InitInternalFunctions() {
 				Content: map[string]*FunctionChainItem {
 					"get": &FunctionChainItem {
 						FunctionType: FunctionTypeSimple,
-						Content: func(conn *minecraft.Conn, _ []interface{}){
-							command.Tellraw(conn, fmt.Sprintf("%s: %s.",I18n.T(I18n.CurrentDefaultDelayMode),types.StrDelayMode(configuration.GlobalFullConfig().Delay().DelayMode)))
+						Content: func(env *environment.PBEnvironment, _ []interface{}){
+							conn:=env.Connection.(*minecraft.Conn)
+							command.Tellraw(conn, fmt.Sprintf("%s: %s.",I18n.T(I18n.CurrentDefaultDelayMode),types.StrDelayMode(configuration.GlobalFullConfig(env).Delay().DelayMode)))
 						},
 					},
 					"set": &FunctionChainItem {
 						FunctionType: FunctionTypeSimple,
 						ArgumentTypes: []byte{byte(delayEnumId)},
-						Content: func(conn *minecraft.Conn, args []interface{}){
+						Content: func(env *environment.PBEnvironment, args []interface{}){
+							conn:=env.Connection.(*minecraft.Conn)
 							delaymode,_:=args[0].(byte)
-							configuration.GlobalFullConfig().Delay().DelayMode=delaymode
+							configuration.GlobalFullConfig(env).Delay().DelayMode=delaymode
 							command.Tellraw(conn,fmt.Sprintf("%s: %s",I18n.T(I18n.DelayModeSet),types.StrDelayMode(delaymode)))
 							if delaymode != types.DelayModeNone {
 								dl:=decideDelay(delaymode)
-								configuration.GlobalFullConfig().Delay().Delay=dl
+								configuration.GlobalFullConfig(env).Delay().Delay=dl
 								command.Tellraw(conn,fmt.Sprintf(I18n.T(I18n.DelayModeSet_DelayAuto),dl))
 							}
 							if delaymode==types.DelayModeDiscrete {
-								configuration.GlobalFullConfig().Delay().DelayThreshold=decideDelayThreshold()
-								command.Tellraw(conn,fmt.Sprintf(I18n.T(I18n.DelayModeSet_ThresholdAuto),configuration.GlobalFullConfig().Delay().DelayThreshold))
+								configuration.GlobalFullConfig(env).Delay().DelayThreshold=decideDelayThreshold()
+								command.Tellraw(conn,fmt.Sprintf(I18n.T(I18n.DelayModeSet_ThresholdAuto),configuration.GlobalFullConfig(env).Delay().DelayThreshold))
 							}
 						},
 					},
@@ -164,19 +163,20 @@ func InitInternalFunctions() {
 			"threshold": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
-				Content: func(conn *minecraft.Conn, args []interface{}){
-					if configuration.GlobalFullConfig().Delay().DelayMode != types.DelayModeDiscrete {
+				Content: func(env *environment.PBEnvironment, args []interface{}){
+					conn:=env.Connection.(*minecraft.Conn)
+					if configuration.GlobalFullConfig(env).Delay().DelayMode != types.DelayModeDiscrete {
 						command.Tellraw(conn, I18n.T(I18n.DelayThreshold_OnlyDiscrete))
 						return
 					}
 					thr, _ := args[0].(int)
-					configuration.GlobalFullConfig().Delay().DelayThreshold=thr
+					configuration.GlobalFullConfig(env).Delay().DelayThreshold=thr
 					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.DelayThreshold_Set), thr))
 				},
 			},
 		},
 	})
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "get-pos",
 		OwnedKeywords: []string {"get"},
 		FunctionType:FunctionTypeContinue,
@@ -185,37 +185,31 @@ func InitInternalFunctions() {
 			"": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte{},
-				Content: func(conn *minecraft.Conn,_ []interface{}) {
-					if(I18n.HasTranslationFor(I18n.Get_Warning)) {
-						command.Tellraw(conn, I18n.T(I18n.Get_Warning))
-					}
+				Content: func(env *environment.PBEnvironment,_ []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					command.SendSizukanaCommand("gamerule sendcommandfeedback true",conn)
 					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId,conn)
 				},
 			},
 			"begin": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
-				Content: func(conn *minecraft.Conn,_ []interface{}) {
-					if(I18n.HasTranslationFor(I18n.Get_Warning)) {
-						command.Tellraw(conn, I18n.T(I18n.Get_Warning))
-					}
+				Content: func(env *environment.PBEnvironment,_ []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					command.SendSizukanaCommand("gamerule sendcommandfeedback true",conn)
 					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId,conn)
 				},
 			},
 			"end": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
-				Content: func(conn *minecraft.Conn,_ []interface{}) {
-					if(I18n.HasTranslationFor(I18n.Get_Warning)) {
-						command.Tellraw(conn, I18n.T(I18n.Get_Warning))
-					}
+				Content: func(env *environment.PBEnvironment,_ []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					command.SendSizukanaCommand("gamerule sendcommandfeedback true",conn)
 					command.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.OneId,conn)
 				},
 			},
 		},
 	})
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "task",
 		OwnedKeywords: []string {"task"},
 		FunctionType: FunctionTypeContinue,
@@ -223,10 +217,12 @@ func InitInternalFunctions() {
 		FunctionContent: map[string]*FunctionChainItem {
 			"list": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
-				Content: func(conn *minecraft.Conn, _ []interface{}){
+				Content: func(env *environment.PBEnvironment,_ []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					total:=0
 					command.Tellraw(conn,I18n.T(I18n.CurrentTasks))
-					fbtask.TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
+					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+					taskholder.TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
 						tid,_:=_tid.(int64)
 						v,_:=_v.(*fbtask.Task)
 						dt:=-1
@@ -247,9 +243,11 @@ func InitInternalFunctions() {
 			"pause": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
-				Content: func(conn *minecraft.Conn,args []interface{}) {
+				Content: func(env *environment.PBEnvironment,args []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					tid, _ := args[0].(int)
-					task:=fbtask.FindTask(int64(tid))
+					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
 						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
@@ -261,9 +259,11 @@ func InitInternalFunctions() {
 			"resume": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
-				Content: func(conn *minecraft.Conn,args []interface{}) {
+				Content: func(env *environment.PBEnvironment,args []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					tid, _ := args[0].(int)
-					task:=fbtask.FindTask(int64(tid))
+					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
 						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
@@ -275,9 +275,11 @@ func InitInternalFunctions() {
 			"break": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
-				Content: func(conn *minecraft.Conn,args []interface{}) {
+				Content: func(env *environment.PBEnvironment,args []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					tid, _ := args[0].(int)
-					task:=fbtask.FindTask(int64(tid))
+					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
 						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
@@ -289,10 +291,12 @@ func InitInternalFunctions() {
 			"setdelay": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte {SimpleFunctionArgumentInt,SimpleFunctionArgumentInt},
-				Content: func(conn *minecraft.Conn,args []interface{}) {
+				Content: func(env *environment.PBEnvironment,args []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					tid, _ := args[0].(int)
 					del, _ := args[1].(int)
-					task:=fbtask.FindTask(int64(tid))
+					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
 						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
@@ -308,10 +312,12 @@ func InitInternalFunctions() {
 			"setdelaymode": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte {SimpleFunctionArgumentInt, byte(delayEnumId)},
-				Content: func(conn *minecraft.Conn,args []interface{}) {
+				Content: func(env *environment.PBEnvironment,args []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					tid, _ := args[0].(int)
 					delaymode, _ := args[1].(byte)
-					task:=fbtask.FindTask(int64(tid))
+					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
 						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
@@ -333,10 +339,12 @@ func InitInternalFunctions() {
 			"setdelaythreshold": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				ArgumentTypes: []byte {SimpleFunctionArgumentInt,SimpleFunctionArgumentInt},
-				Content: func(conn *minecraft.Conn,args []interface{}) {
+				Content: func(env *environment.PBEnvironment,args []interface{}) {
+					conn:=env.Connection.(*minecraft.Conn)
 					tid, _ := args[0].(int)
 					delayt, _ := args[1].(int)
-					task:=fbtask.FindTask(int64(tid))
+					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
 						command.Tellraw(conn, I18n.T(I18n.TaskNotFoundMessage))
 						return
@@ -351,68 +359,72 @@ func InitInternalFunctions() {
 			},
 		},
 	})
-	taskTypeEnumId:=RegisterEnum("async, sync",types.ParseTaskType,types.TaskTypeInvalid)
-	RegisterFunction(&Function {
+	taskTypeEnumId:=fh.RegisterEnum("async, sync",types.ParseTaskType,types.TaskTypeInvalid)
+	fh.RegisterFunction(&Function {
 		Name: "set task type",
 		OwnedKeywords: []string{"tasktype"},
 		FunctionType: FunctionTypeSimple,
 		SFMinSliceLen: 2,
 		SFArgumentTypes: []byte{byte(taskTypeEnumId)},
-		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+		FunctionContent: func(env *environment.PBEnvironment,args []interface{}) {
+			conn:=env.Connection.(*minecraft.Conn)
 			ev, _:=args[0].(byte)
-			configuration.GlobalFullConfig().Global().TaskCreationType=ev
+			configuration.GlobalFullConfig(env).Global().TaskCreationType=ev
 			command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskTypeSwitchedTo),types.MakeTaskType(ev)))
 		},
 	})
-	taskDMEnumId:=RegisterEnum("true, false",types.ParseTaskDisplayMode,types.TaskDisplayInvalid)
-	RegisterFunction(&Function {
+	taskDMEnumId:=fh.RegisterEnum("true, false",types.ParseTaskDisplayMode,types.TaskDisplayInvalid)
+	fh.RegisterFunction(&Function {
 		Name: "set progress title display type",
 		OwnedKeywords: []string{"progress"},
 		FunctionType: FunctionTypeSimple,
 		SFMinSliceLen: 2,
 		SFArgumentTypes: []byte{byte(taskDMEnumId)},
-		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+		FunctionContent: func(env *environment.PBEnvironment,args []interface{}) {
+			conn:=env.Connection.(*minecraft.Conn)
 			ev, _:=args[0].(byte)
-			configuration.GlobalFullConfig().Global().TaskDisplayMode=ev
+			configuration.GlobalFullConfig(env).Global().TaskDisplayMode=ev
 			command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskDisplayModeSet),types.MakeTaskDisplayMode(ev)))
 		},
 	})
-	// ippan
 	var builderMethods []string
 	for met,_ := range builder.Builder {
 		builderMethods=append(builderMethods,met)
 	}
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "ippanbrd",
 		OwnedKeywords: builderMethods,
 		FunctionType:FunctionTypeRegular,
-		FunctionContent: func(conn *minecraft.Conn,msg string){
-			task := fbtask.CreateTask(msg, conn)
+		FunctionContent: func(env *environment.PBEnvironment,msg string) {
+			conn:=env.Connection.(*minecraft.Conn)
+			task := fbtask.CreateTask(msg, env)
 			if task==nil {
 				return
 			}
 			command.Tellraw(conn, fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
 		},
 	})
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "export",
 		OwnedKeywords: []string{"export"},
 		FunctionType: FunctionTypeRegular,
-		FunctionContent: func(conn *minecraft.Conn,msg string){
-			task := fbtask.CreateExportTask(msg, conn)
+		FunctionContent: func(env *environment.PBEnvironment,msg string) {
+			conn:=env.Connection.(*minecraft.Conn)
+			task := fbtask.CreateExportTask(msg, env)
 			if task==nil {
 				return
 			}
 			command.Tellraw(conn, fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
 		},
 	})
-	RegisterFunction(&Function {
+	fh.RegisterFunction(&Function {
 		Name: "say",
 		OwnedKeywords: []string {"say"},
 		FunctionType:FunctionTypeSimple,
 		SFArgumentTypes: []byte { SimpleFunctionArgumentMessage },
 		SFMinSliceLen: 1,
-		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+		FunctionContent: func(env *environment.PBEnvironment,args []interface{}) {
+			conn:=env.Connection.(*minecraft.Conn)
 			str:=args[0].(string)
 			command.Tellraw(conn,str)
 		},
