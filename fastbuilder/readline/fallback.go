@@ -1,4 +1,4 @@
-// +build windows android,arm
+// +build windows android,arm no_readline
 
 package readline
 
