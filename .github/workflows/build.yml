@@ -17,29 +17,43 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.16
+    - name: Cache NDK
+      id: cache-ndk
+      uses: actions/cache@v3
+      with:
+        path: ~/android-ndk-r20b
     - name: Set up NDK
+      if: steps.cache-ndk.outputs.cache-hit != 'true'
       uses: nttld/setup-ndk@v1
       id: setup-ndk
       with:
         ndk-version: r20b
         add-to-path: false
     - name: Move NDK
+      if: steps.cache-ndk.outputs.cache-hit != 'true'
       run: mv ${{ steps.setup-ndk.outputs.ndk-path }} ${HOME}/android-ndk-r20b
     - name: Install compilers
       run: |
         sudo dpkg --add-architecture arm64
-        sudo apt update
+        sudo apt update | cat
         sudo apt install libreadline-dev:arm64 libreadline-dev
         sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu libgl1-mesa-dev xorg-dev -y
     - name: Setup theos's dependencies
       run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 libplist-utils brotli
+    - name: Cache theos and toolchain
+      id: cache-theos
+      uses: actions/cache@v3
+      with:
+        path: ~/theos
     - name: Clone theos
+      if: steps.cache-theos.outputs.cache-hit != 'true'
       uses: actions/checkout@v2
       with:
         submodules: 'recursive'
         repository: 'theos/theos'
         path: 'theos'
     - name: Setup theos
+      if: steps.cache-theos.outputs.cache-hit != 'true'
       run: |
         mv $GITHUB_WORKSPACE/theos ~/theos
         export THEOS=~/theos
@@ -56,6 +70,7 @@ jobs:
         mv $TMP/sdks-master/*.sdk $THEOS/sdks
         rm -r master.zip $TMP
     - name: Download macOS SDK
+      if: steps.cache-theos.outputs.cache-hit != 'true'
       run: |
         curl -LO https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.0.sdk.tar.xz
         tar -xzf MacOSX11.0.sdk.tar.gz
