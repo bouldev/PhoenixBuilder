@@ -21,6 +21,7 @@ jobs:
       id: cache-ndk
       uses: actions/cache@v3
       with:
+        key: android-ndk-r20b-cache
         path: ~/android-ndk-r20b
     - name: Set up NDK
       if: steps.cache-ndk.outputs.cache-hit != 'true'
@@ -44,6 +45,7 @@ jobs:
       id: cache-theos
       uses: actions/cache@v3
       with:
+        key: theos-with-ios-and-macos-sdk-plus-ios-toolchain-cache
         path: ~/theos
     - name: Clone theos
       if: steps.cache-theos.outputs.cache-hit != 'true'
