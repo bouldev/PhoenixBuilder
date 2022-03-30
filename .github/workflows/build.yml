@@ -38,7 +38,7 @@ jobs:
         sudo dpkg --add-architecture arm64
         sudo bash -c "echo deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal main >> /etc/apt/sources.list"
         sudo apt update | cat
-        sudo apt install libreadline-dev:arm64 libreadline-dev
+        sudo apt install libreadline-dev:arm64 libreadline-dev libreadline8:arm64 libncurses-dev:arm64
         sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu libgl1-mesa-dev xorg-dev -y
     - name: Setup theos's dependencies
       run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 libplist-utils brotli
