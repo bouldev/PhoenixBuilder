@@ -73,7 +73,7 @@ jobs:
       if: steps.cache-theos.outputs.cache-hit != 'true'
       run: |
         curl -LO https://github.com/phracker/MacOSX-SDKs/releases/download/11.3/MacOSX11.0.sdk.tar.xz
-        tar -xzf MacOSX11.0.sdk.tar.xz
+        tar -xJf MacOSX11.0.sdk.tar.xz
         rm MacOSX11.0.sdk.tar.xz
         mv MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
     #- name: Clone macOS SDK
