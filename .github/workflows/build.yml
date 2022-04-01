@@ -7,6 +7,8 @@ on:
       - "version"
       - "fyne-gui/version"
       - ".github/workflows/build.yml"
+  workflow_dispatch: {}
+    
 
 jobs:
   linux-build:
