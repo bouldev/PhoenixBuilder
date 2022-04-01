@@ -183,7 +183,9 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 		return "",int(code),fmt.Errorf("%s",err)
 	}
 	uc_username, _ := resp["username"].(string)
+	u_uid, _ := resp["uid"].(string)
 	client.env.FBUCUsername=uc_username
+	client.env.Uid=u_uid
 	str,_:=resp["chainInfo"].(string)
 	return str,0,nil
 }

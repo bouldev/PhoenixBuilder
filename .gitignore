@@ -80,3 +80,4 @@ private/
 .DS_Store
 android_pack
 cache
+analyze/

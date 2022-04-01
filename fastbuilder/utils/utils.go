@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
@@ -31,4 +32,9 @@ func GetHash(path string) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
+func GetMD5(i string) string {
+	sum:=md5.Sum([]byte(i))
+	return hex.EncodeToString(sum[:])
 }

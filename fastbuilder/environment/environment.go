@@ -23,4 +23,5 @@ type PBEnvironment struct {
 	Connection interface{}
 	TaskHolder interface{}
 	ActivateTaskStatus chan bool
+	Uid string
 }
