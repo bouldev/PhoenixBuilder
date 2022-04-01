@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"bufio"
 	"strings"
+	"phoenixbuilder/fastbuilder/environment"
 )
 
 var SelfTermination chan bool
@@ -25,7 +26,7 @@ func InitReadline() {
 	fmt.Printf("Warning: Feature readline is not compatible with platform Windows.\n")
 }
 
-func Readline() string {
+func Readline(env *environment.PBEnvironment) string {
 	reader := bufio.NewReader(os.Stdin)
 	inp, err := reader.ReadString('\n')
 	if err != nil {
