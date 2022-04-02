@@ -63,7 +63,7 @@ type PacketViolationWarningPacket struct {
 	Text string
 }
 
-func (pkt PacketViolationWarningPacket) Marshal() {
+func (pkt PacketViolationWarningPacket) Marshal() []byte {
 	return []byte(pkt.Text)
 }
 

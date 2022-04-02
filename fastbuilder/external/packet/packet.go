@@ -7,8 +7,16 @@ type Packet interface {
 	Name() string
 }
 
-func (pkt Packet) Serialize() []byte {
-	return append([]byte{pkt.ID()}, pkt.Serialize())
+func Serialize(pkt Packet) []byte {
+	return append([]byte{pkt.ID()}, pkt.Marshal()...)
+}
+
+type writableConnection interface {
+	SendFrame([]byte) error
+}
+
+func SerializeAndSend(pkt Packet, conn writableConnection) {
+	conn.SendFrame(Serialize(pkt))
 }
 
 func Deserialize(content []byte) (Packet, bool) {

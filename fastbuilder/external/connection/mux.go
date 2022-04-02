@@ -10,17 +10,17 @@ const (
 )
 
 type Mux struct {
-	baseChannel ReliableConnetion
-	SubChannels map[byte]ReliableConnetion
+	baseChannel ReliableConnection
+	SubChannels map[byte]ReliableConnection
 	rchan       map[byte]chan []byte
 	wsync       sync.Mutex
 	isClosed    bool
 }
 
-func NewMux(baseChannel ReliableConnetion) *Mux {
+func NewMux(baseChannel ReliableConnection) *Mux {
 	m := &Mux{
 		baseChannel: baseChannel,
-		SubChannels: make(map[byte]ReliableConnetion),
+		SubChannels: make(map[byte]ReliableConnection),
 		rchan:       make(map[byte]chan []byte),
 		wsync:       sync.Mutex{},
 		isClosed:    false,
@@ -52,7 +52,7 @@ func NewMux(baseChannel ReliableConnetion) *Mux {
 	return m
 }
 
-func (m *Mux) GetSubChannel(key byte) ReliableConnetion {
+func (m *Mux) GetSubChannel(key byte) ReliableConnection {
 	sc, ok := m.SubChannels[key]
 	if ok {
 		return sc
@@ -72,8 +72,10 @@ func (m *Mux) GetSubChannel(key byte) ReliableConnetion {
 type SubChannel struct {
 	idenficationKey byte
 	mux             *Mux
-	baseChannel     ReliableConnetion
+	baseChannel     ReliableConnection
 }
+
+func (_ *SubChannel) Close() {}
 
 func (sc *SubChannel) Init() error {
 	return nil

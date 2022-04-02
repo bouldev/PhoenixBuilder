@@ -1,53 +1,75 @@
-// +build do_not_build_this
-
 package external
 
 import (
-	script_engine_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
-	"crypto/elliptic"
-	"crypto/ecdsa"
-	"crypto/rand"
-	"strings"
-	"net"
+	"phoenixbuilder/fastbuilder/command"
+	"fmt"
 )
 
 type ExternalConnectionHandler struct {
 	listener *connection.KCPConnectionServerHandler
 	env *environment.PBEnvironment
+	PacketChannel chan []byte
 }
 
 func (handler *ExternalConnectionHandler) acceptConnection(conn connection.ReliableConnection) {
+	env:=handler.env
+	allAlive:=true
+	go func() {
+		for {
+			gamePacket:=<-handler.PacketChannel
+			if(!allAlive) {
+				return
+			}
+			packet.SerializeAndSend(packet.GamePacket {
+				Content: gamePacket,
+			}, conn)
+			select {
+			case handler.PacketChannel<-gamePacket:
+			default:
+			}
+			// Send the packet to the next receiver(connection)
+		}
+	} ()
 	go func() {
 		for {
 			rawPacket, err:=conn.RecvFrame()
-			if(err!=nil) {
+			if(err!=nil||!allAlive) {
+				allAlive=false
 				return
 			}
-			packet, canParse:=packet.Deserialize(rawPacket)
+			pkt, canParse:=packet.Deserialize(rawPacket)
 			if !canParse {
-				conn.SendFrame(packet.PacketViolationWarningPacket {
+				packet.SerializeAndSend(packet.PacketViolationWarningPacket {
 					Text: "Unparsable packet received!",
-				}.Serialize())
+				}, conn)
 			}
-			switch p:=packet.(type) {
+			switch p:=pkt.(type) {
 			case packet.PingPacket:
-				conn.SendFrame(packet.PongPacket{}.Serialize())
+				packet.SerializeAndSend(packet.PongPacket{},conn)
 			case packet.PongPacket:
 				break
 			case packet.ByePacket:
-				conn.SendFrame(packet.ByePacket{}.Serialize())
+				packet.SerializeAndSend(packet.ByePacket{},conn)
 			case packet.PacketViolationWarningPacket:
 				break
 			case packet.EvalPBCommandPacket:
 				fh:=handler.env.FunctionHolder.(*function.FunctionHolder)
 				fh.Process(p.Command)
 			case packet.GameCommandPacket:
-				gc:=handler.env.Connection.(*minecraft.Conn)
-				
+				cmdSender:=env.CommandSender.(command.CommandSender)
+				if(p.CommandType==packet.CommandTypeSettings) {
+					cmdSender.SendSizukanaCommand(p.Command)
+					break
+				}else if(p.CommandType==packet.CommandTypeNormal) {
+					cmdSender.SendWSCommand(p.Command,p.UUID)
+				}else{
+					cmdSender.SendCommand(p.Command,p.UUID)
+				}
+			}
 		}
 	} ()
 }
@@ -62,16 +84,21 @@ func (_ *ExternalConnectionHandler) downError(_ interface{}) {
 
 func ListenExt(env *environment.PBEnvironment, address string) {
 	handlerStruct:=&ExternalConnectionHandler {
-		listener: &connection.KCPConnectionServerHandler{}
+		listener: &connection.KCPConnectionServerHandler{},
+		PacketChannel: make(chan []byte),
 	}
+	env.ExternalConnectionHandler=handlerStruct
+	env.Destructors=append(env.Destructors,func() {
+		close(handlerStruct.PacketChannel)
+	})
 	listener:=handlerStruct.listener
 	err:=listener.Listen(address)
 	if(err!=nil) {
 		fmt.Printf("Failed to listen on address %s: %v\n",address,err)
 		return
 	}
-	listener.SetOnNewConnection(listener.acceptConnection)
-	listener.SetOnAcceptNetConnectionFail(listener.acceptConnectionFail)
-	listener.SetOnServerDown(listener.downError)
+	listener.SetOnNewConnection(handlerStruct.acceptConnection)
+	listener.SetOnAcceptNewConnectionFail(handlerStruct.acceptConnectionFail)
+	listener.SetOnServerDown(handlerStruct.downError)
 	fmt.Printf("Listening for external connection on address %s\n",address)
 }

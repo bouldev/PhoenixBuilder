@@ -25,4 +25,6 @@ type PBEnvironment struct {
 	TaskHolder interface{}
 	ActivateTaskStatus chan bool
 	Uid string
+	ExternalConnectionHandler interface{}
+	Destructors []func()
 }

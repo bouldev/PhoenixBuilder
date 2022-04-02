@@ -31,6 +31,7 @@ import (
 	"unsafe"
 )
 
+var isBootstrapped bool=false
 var SelfTermination chan bool
 
 var currentFunctionMap map[string]*function.Function
@@ -53,10 +54,16 @@ func teardown_self() {
 }
 
 func HardInterrupt() {
+	if(!isBootstrapped) {
+		return
+	}
 	C.do_interrupt()
 }
 
 func Interrupt() {
+	if(!isBootstrapped) {
+		return
+	}
 	C.do_sigint_interrupt()
 }
 
@@ -65,6 +72,9 @@ func InitReadline() {
 }
 
 func Readline(env *environment.PBEnvironment) string {
+	if(!isBootstrapped) {
+		isBootstrapped=true
+	}
 	currentFunctionHolder:=env.FunctionHolder.(*function.FunctionHolder)
 	currentFunctionMap=currentFunctionHolder.FunctionMap
 	readline_cstr:=C.doReadline()

@@ -16,6 +16,7 @@ char *server_code;
 char *server_password="";
 char custom_token=0;
 char *token_content;
+char *externalListenAddr="";
 
 
 extern void custom_script_engine_const(const char *key, const char *val);
@@ -25,7 +26,7 @@ void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
 	printf("\t--debug: Run in debug mode.\n");
 	printf("\t-A <url>, --auth-server=<url>: Use the specified authentication server, instead of the default one.\n");
-	printf("\t--no-hash-check: Disable the hash check.\n");
+	printf("\t--no-hash-check: Disable the hash check, so update notifications will be suppressed.\n");
 	printf("\t-M, --no-world-chat: Ignore world chat on client side.\n");
 	printf("\t--no-pyrpc: Disable the PyRpcPacket interaction, the client's commands will be prevented from execution by netease's rental server.\n");
 #ifdef WITH_V8
@@ -34,9 +35,10 @@ void print_help(const char *self_name) {
 	printf("\t--script-engine-suppress-const <key>: Undefine a const value for script engine's \"consts\" const. Specify multiple items by using this argument for multiple times.\n");
 #endif
 	printf("\t-c, --code=<server code>: Specify a server code.\n");
-	printf("\t-p, --password=<server password>: Specify the server specified by -c's password.\n");
+	printf("\t-p, --password=<server password>: Specify the password of the server specified by -c.\n");
 	printf("\t-t, --token=<path of FBToken>: Specify the path of FBToken, and quit if the file is unaccessible.\n");
 	printf("\t-T, --plain-token=<token>: Specify the token content.\n");
+	printf("\t-E, --listen-external: Listen on the specified address and wait for external controlling connection.\n\t\tExample: -E 0.0.0.0:5768 - listen on port 5768 and accept connections from anywhere,\n\t\t\t-E 127.0.0.1:5769 - listen on port 5769 and accept connections from localhost only.\n");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
@@ -114,6 +116,7 @@ int _parse_args(int argc, char **argv) {
 			{"plain-token", required_argument, 0, 'T'}, //13
 			{"script-engine-const", required_argument, 0, 0}, //14
 			{"script-engine-suppress-const", required_argument, 0, 0}, //15
+			{"listen-external", required_argument, 0, 'E'}, // 16
 			{0, 0, 0, 0}
 		};
 		int option_index;
@@ -212,6 +215,10 @@ int _parse_args(int argc, char **argv) {
 			size_t token_buf_length=strlen(optarg)+1;
 			token_content=malloc(token_buf_length);
 			memcpy(token_content, optarg, token_buf_length);
+			break;
+		case 'E':
+			externalListenAddr=malloc(strlen(optarg)+1);
+			memcpy(externalListenAddr, optarg, strlen(optarg)+1);
 			break;
 		case 'v':
 			print_version(1);

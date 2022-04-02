@@ -1,6 +1,6 @@
 package packet
 
-var PacketPool map[uint8]Packet=map[uint8]func()Packet {
+var PacketPool map[uint8]func()Packet=map[uint8]func()Packet {
 	1: func() Packet { return PingPacket{} },
 	2: func() Packet { return PongPacket{} },
 	3: func() Packet { return ByePacket{} },

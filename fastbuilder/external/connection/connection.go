@@ -5,11 +5,9 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"strings"
 
 	kcp "github.com/xtaci/kcp-go/v5"
 )
@@ -56,7 +54,7 @@ func (s *KCPConnectionServerHandler) Listen(address string) error {
 				}
 				continue
 			}
-			remoteDescription := proxyConn.RemoteAddr().String()
+			//remoteDescription := proxyConn.RemoteAddr().String()
 			//fmt.Printf("Transfer: accept new connection @ %v\n", remoteDescription)
 			baseConn := &StreamChannelWrapper{reader: proxyConn, writer: proxyConn}
 			connectionCloser:=func() {
@@ -130,6 +128,10 @@ type StreamChannelWrapper struct {
 }
 
 const MAX_STD_HEADER_LEN = 1 << 15
+
+func (_ *StreamChannelWrapper) Close() {
+	// Not exported
+}
 
 func (scw *StreamChannelWrapper) RecvFrame() ([]byte, error) {
 	// get length info
@@ -210,7 +212,7 @@ type EncryptedChannel struct {
 }
 
 func (i *EncryptedChannel) Close() {
-	e.isClosed=true
+	i.isClosed=true
 	i.closer()
 }
 
@@ -219,7 +221,7 @@ func (i *EncryptedChannel) initiateEncryptSession() error {
 	salt := make([]byte, 16)
 	rand.Read(salt)
 	encodedInitiatorPublicKey, _ := x509.MarshalPKIXPublicKey(&initiatorPrivateKey.PublicKey)
-	initPacket:=append(append([]byte{0x04},salt),encodedInitiatorPublicKey)
+	initPacket:=append(append([]byte{0x04},salt...),encodedInitiatorPublicKey...)
 	err := i.connection.SendFrame([]byte(initPacket))
 	if err != nil {
 		return err
@@ -255,7 +257,7 @@ func (r *EncryptedChannel) waitForEncryptSession() error {
 	}
 	responderPrivateKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	encodedResponderPublicKey, _ := x509.MarshalPKIXPublicKey(&responderPrivateKey.PublicKey)
-	err = r.connection.SendFrame(append([]byte{0x03},encodedResponderPublicKey))
+	err = r.connection.SendFrame(append([]byte{0x03},encodedResponderPublicKey...))
 	if err != nil {
 		return err
 	}
@@ -286,11 +288,11 @@ func (e *EncryptedChannel) Init() error {
 func (e *EncryptedChannel) SendFrame(data []byte) error {
 	encyptedData := data[:]
 	e.encryptor.Encrypt(encyptedData)
-	return e.connection.SendFrame(append([]byte{0x06},encyptedData))
+	return e.connection.SendFrame(append([]byte{0x06},encyptedData...))
 }
 
 func (e *EncryptedChannel) RecvFrame() ([]byte, error) {
-	encyptedData, err := e.connection.RecvFrame()
+	encryptedData, err := e.connection.RecvFrame()
 	if err != nil {
 		e.isClosed = true
 		return nil, err
@@ -299,6 +301,6 @@ func (e *EncryptedChannel) RecvFrame() ([]byte, error) {
 		e.Close()
 		return nil, fmt.Errorf("Data with unknown type %d incorrectly handled by EncryptedChannel.", encryptedData[0])
 	}
-	e.encryptor.Decrypt(encyptedData[1:])
-	return encyptedData, nil
+	e.encryptor.Decrypt(encryptedData[1:])
+	return encryptedData, nil
 }

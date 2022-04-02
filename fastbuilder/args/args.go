@@ -28,6 +28,7 @@ extern char *server_code;
 extern char *server_password;
 extern char custom_token;
 extern char *token_content;
+extern char *externalListenAddr;
 */
 import "C"
 
@@ -168,4 +169,8 @@ func custom_script_engine_const(key, val *C.char) {
 //export do_suppress_se_const
 func do_suppress_se_const(key *C.char) {
 	CustomSEUndefineConsts=append(CustomSEUndefineConsts, C.GoString(key))
+}
+
+func ExternalListenAddress() string {
+	return C.GoString(C.externalListenAddr)
 }

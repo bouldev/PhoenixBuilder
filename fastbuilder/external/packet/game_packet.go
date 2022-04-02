@@ -4,12 +4,12 @@ type GamePacket struct {
 	Content []byte
 }
 
-func (pkt GamePacket) Marshal() {
+func (pkt GamePacket) Marshal() []byte {
 	return pkt.Content
 }
 
 func (pkt GamePacket) Parse(cont []byte) bool {
-	pkt.Command=cont
+	pkt.Content=cont
 	return true
 }
 
