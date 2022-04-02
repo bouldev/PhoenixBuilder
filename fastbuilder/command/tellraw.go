@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/minecraft"
 	"time"
 	//"github.com/google/uuid"
 	"encoding/json"
@@ -34,17 +33,17 @@ func TellRawRequest(target types.Target, lines ...string) string {
 	return cmd
 }
 
-func Tellraw(conn *minecraft.Conn, lines ...string) error {
+func (sender CommandSender) Tellraw(content string) error {
 	//uuid1, _ := uuid.NewUUID()
-	bridge_fmt.Printf("%s\n", lines[0])
-	//return nil
-	msg := strings.Replace(lines[0], "schematic", "sc***atic", -1)
+	bridge_fmt.Printf("%s\n", content)
+	return nil
+	msg := strings.Replace(content, "schematic", "sc***atic", -1)
 	msg =  strings.Replace(msg, ".", "．", -1)
 	// Netease set .bdx, .schematic, .mcacblock, etc as blocked words
 	// So we should replace half-width points w/ full-width points to avoid being
 	// blocked
 	//return SendChat(fmt.Sprintf("§b%s",msg), conn)
-	return SendSizukanaCommand(TellRawRequest(types.AllPlayers, lines...), conn)
+	return sender.SendSizukanaCommand(TellRawRequest(types.AllPlayers, msg))
 }
 
 func RawTellRawRequest(target types.Target, line string) string {
@@ -59,8 +58,8 @@ func RawTellRawRequest(target types.Target, line string) string {
 	return cmd
 }
 
-func WorldChatTellraw(conn *minecraft.Conn, sender string, content string) error {
+func (cmd_sender CommandSender) WorldChatTellraw(sender string, content string) error {
 	bridge_fmt.Printf("W <%s> %s\n", sender, content)
 	str:=fmt.Sprintf("§eW §r<%s> %s",sender,content)
-	return SendSizukanaCommand(RawTellRawRequest(types.AllPlayers, str), conn)
+	return cmd_sender.SendSizukanaCommand(RawTellRawRequest(types.AllPlayers, str))
 }

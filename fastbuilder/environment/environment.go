@@ -20,6 +20,7 @@ type PBEnvironment struct {
 	FBAuthClient interface{}
 	GlobalFullConfig interface{}
 	RespondUser string
+	CommandSender interface{}
 	Connection interface{}
 	TaskHolder interface{}
 	ActivateTaskStatus chan bool

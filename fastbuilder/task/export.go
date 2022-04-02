@@ -10,7 +10,7 @@ import (
 	"phoenixbuilder/fastbuilder/parsing"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
-	"phoenixbuilder/minecraft"
+	//"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/fastbuilder/environment"
 	"runtime"
@@ -33,10 +33,10 @@ type SolidRet struct {
 var ExportWaiter chan map[string]interface{}
 
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task {
-	conn:=env.Connection.(*minecraft.Conn)
+	cmdsender:=env.CommandSender.(command.CommandSender)
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
-		command.Tellraw(conn, fmt.Sprintf("Failed to parse command: %v",err))
+		cmdsender.Tellraw(fmt.Sprintf("Failed to parse command: %v",err))
 		return nil
 	}
 	beginPos := cfg.Position
@@ -57,10 +57,10 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 		beginPos.Z=temp
 	}
 	if(world_provider.CurrentWorld!=nil) {
-		command.Tellraw(conn, "EXPORT >> World interaction interface is occupied, failing")
+		cmdsender.Tellraw("EXPORT >> World interaction interface is occupied, failing")
 		return nil
 	}
-	world_provider.NewWorld(conn)
+	world_provider.NewWorld(env)
 	go func() {
 		defer func() {
 			r:=recover()
@@ -68,7 +68,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 				fmt.Println("go routine @ fastbuilder.task export crashed ",r)
 			}
 		}()
-		command.Tellraw(conn, "EXPORT >> Exporting...")
+		cmdsender.Tellraw("EXPORT >> Exporting...")
 		V:=(endPos.X-beginPos.X+1)*(endPos.Y-beginPos.Y+1)*(endPos.Z-beginPos.Z+1)
 		blocks:=make([]*types.RuntimeModule,V)
 		counter:=0
@@ -180,17 +180,17 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 		if(strings.LastIndex(cfg.Path,".bdx")!=len(cfg.Path)-4||len(cfg.Path)<4) {
 			cfg.Path+=".bdx"
 		}
-		command.Tellraw(conn,"EXPORT >> Writing output file")
+		cmdsender.Tellraw("EXPORT >> Writing output file")
 		err, signerr:=out.WriteToFile(cfg.Path)
 		if(err!=nil){
-			command.Tellraw(conn,fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v",err))
+			cmdsender.Tellraw(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v",err))
 			return
 		}else if(signerr!=nil) {
-			command.Tellraw(conn,fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v",signerr))
+			cmdsender.Tellraw(fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v",signerr))
 		}else{
-			command.Tellraw(conn,fmt.Sprintf("EXPORT >> File signed successfully"))
+			cmdsender.Tellraw(fmt.Sprintf("EXPORT >> File signed successfully"))
 		}
-		command.Tellraw(conn, fmt.Sprintf("EXPORT >> Successfully exported your structure to %v",cfg.Path))
+		cmdsender.Tellraw(fmt.Sprintf("EXPORT >> Successfully exported your structure to %v",cfg.Path))
 		runtime.GC()
 	} ()
 	return nil

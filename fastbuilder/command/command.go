@@ -6,6 +6,7 @@ void freeRequestString(void*);
 */
 import "C"
 import "unsafe"
+import "phoenixbuilder/fastbuilder/environment"
 
 var AdditionalChatCb func(string) = func(_ string) {}
 var AdditionalTitleCb func(string) = func(_ string) {}
@@ -20,4 +21,15 @@ func FreeRequestString(str string) {
 
 func FreeRequestStringPtr(str *string) {
 	C.freeRequestString(unsafe.Pointer(str))
+}
+
+type CommandSender struct {
+	env *environment.PBEnvironment
+}
+
+func InitCommandSender(env *environment.PBEnvironment) CommandSender {
+	env.CommandSender=CommandSender {
+		env: env,
+	}
+	return env.CommandSender.(CommandSender)
 }

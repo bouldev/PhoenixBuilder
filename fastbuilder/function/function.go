@@ -7,7 +7,6 @@ import (
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/i18n"
-	"phoenixbuilder/minecraft"
 )
 
 type Function struct {
@@ -75,7 +74,7 @@ func (function_holder *FunctionHolder) RegisterEnum(desc string,parser func(stri
 }
 
 func (function_holder *FunctionHolder) Process(msg string) {
-	conn:=function_holder.env.Connection.(*minecraft.Conn)
+	cmdsender:=function_holder.env.CommandSender.(command.CommandSender)
 	slc:=strings.Split(msg, " ")
 	fun, ok := function_holder.FunctionMap[slc[0]]
 	if !ok {
@@ -87,7 +86,7 @@ func (function_holder *FunctionHolder) Process(msg string) {
 		return
 	}
 	if len(slc) < int(fun.SFMinSliceLen) {
-		command.Tellraw(conn, fmt.Sprintf("Parser: Simple function %s required at least %d arguments, but got %d.",fun.Name, fun.SFMinSliceLen, len(slc)))
+		cmdsender.Tellraw(fmt.Sprintf("Parser: Simple function %s required at least %d arguments, but got %d.",fun.Name, fun.SFMinSliceLen, len(slc)))
 		return
 	}
 	var arguments []interface{}
@@ -103,7 +102,7 @@ func (function_holder *FunctionHolder) Process(msg string) {
 				rf, _:=cc.Content.(map[string]*FunctionChainItem)
 				itm, got := rf[""]
 				if !got {
-					command.Tellraw(conn, I18n.T(I18n.SimpleParser_Too_few_args))
+					cmdsender.Tellraw(I18n.T(I18n.SimpleParser_Too_few_args))
 					return
 				}
 				cc=itm
@@ -112,7 +111,7 @@ func (function_holder *FunctionHolder) Process(msg string) {
 			rfc, _:=cc.Content.(map[string]*FunctionChainItem)
 			chainitem, got := rfc[slc[ic]]
 			if !got {
-				command.Tellraw(conn, I18n.T(I18n.SimpleParser_Invalid_decider))
+				cmdsender.Tellraw(I18n.T(I18n.SimpleParser_Invalid_decider))
 				return
 			}
 			cc=chainitem
@@ -120,20 +119,20 @@ func (function_holder *FunctionHolder) Process(msg string) {
 			continue
 		}
 		if len(cc.ArgumentTypes) > len(slc)-ic {
-			command.Tellraw(conn, I18n.T(I18n.SimpleParser_Too_few_args))
+			cmdsender.Tellraw(I18n.T(I18n.SimpleParser_Too_few_args))
 			return
 		}
 		for _, tp := range cc.ArgumentTypes {
 			if tp==SimpleFunctionArgumentString {
 				arguments=append(arguments,slc[ic])
 			}else if tp==SimpleFunctionArgumentDecider {
-				command.Tellraw(conn, "Parser: Internal error - argument type [decider] is preserved.")
+				cmdsender.Tellraw("Parser: Internal error - argument type [decider] is preserved.")
 				fmt.Println("Parser: Internal error - DO NOT REGISTER Decider ARGUMENT!")
 				return
 			}else if tp==SimpleFunctionArgumentInt {
 				parsedInt, err := strconv.Atoi(slc[ic])
 				if err != nil {
-					command.Tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.SimpleParser_Int_ParsingFailed), err))
+					cmdsender.Tellraw(fmt.Sprintf("%s: %v", I18n.T(I18n.SimpleParser_Int_ParsingFailed), err))
 					return
 				}
 				arguments=append(arguments,parsedInt)
@@ -145,14 +144,14 @@ func (function_holder *FunctionHolder) Process(msg string) {
 			}else{
 				eindex:=int(tp-SimpleFunctionArgumentEnum)
 				if eindex>=len(function_holder.SimpleFunctionEnums) {
-					command.Tellraw(conn, "Parser: Internal error, unregistered enum")
+					cmdsender.Tellraw("Parser: Internal error, unregistered enum")
 					fmt.Printf("Internal error, unregistered enum %d\n",int(tp))
 					return
 				}
 				ei:=function_holder.SimpleFunctionEnums[eindex]
 				itm:=ei.Parser(slc[ic])
 				if itm == ei.InvalidValue {
-					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.SimpleParser_InvEnum),ei.WantedValuesDescription))
+					cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.SimpleParser_InvEnum),ei.WantedValuesDescription))
 					return
 				}
 				arguments=append(arguments,itm)
@@ -162,6 +161,10 @@ func (function_holder *FunctionHolder) Process(msg string) {
 		cont, _:=cc.Content.(func(*environment.PBEnvironment,[]interface{}))
 		if cont==nil {
 			cont,_:=cc.Content.(func(interface{},[]interface{}))
+			if(cont==nil) {
+				fmt.Printf("Internal error: invalid type for function\n")
+				return
+			}
 			cont(function_holder.env, arguments)
 			return
 		}

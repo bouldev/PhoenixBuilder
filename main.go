@@ -431,26 +431,7 @@ func runClient(env *environment.PBEnvironment) {
 		env.WorldChatChannel=make(chan []string)
 	}
 	defer conn.Close()
-
-	// jsVM
-	hostBridgeGamma:=env.ScriptBridge.(*script_bridge.HostBridgeGamma)
-	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
-		ud, _ := uuid.NewUUID()
-		chann := make(chan *packet.CommandOutput)
-		if waitResponse {
-			command.UUIDMap.Store(ud.String(), chann)
-		}
-		command.SendCommand(mcCmd, ud, conn)
-		if waitResponse {
-			resp := <-chann
-			return resp
-		} else {
-			return nil
-		}
-	})
-	hostBridgeGamma.HostConnectEstablished()
-	defer hostBridgeGamma.HostConnectTerminate()
-
+	
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
@@ -485,17 +466,9 @@ func runClient(env *environment.PBEnvironment) {
 	conn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
 	})
-	go func() {
-		if args.ShouldMuteWorldChat() {
-			return
-		}
-		for {
-			csmsg := <-env.WorldChatChannel
-			command.WorldChatTellraw(conn, csmsg[0], csmsg[1])
-		}
-	}()
 	env.Connection=conn
 
+	commandSender:=command.InitCommandSender(env)
 	functionHolder:=env.FunctionHolder.(*function.FunctionHolder)
 	function.InitInternalFunctions(functionHolder)
 	fbtask.InitTaskStatusDisplay(env)
@@ -507,6 +480,34 @@ func runClient(env *environment.PBEnvironment) {
 	move.RuntimeID = conn.GameData().EntityRuntimeID
 
 	signalhandler.Install(conn)
+	
+	hostBridgeGamma:=env.ScriptBridge.(*script_bridge.HostBridgeGamma)
+	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
+		ud, _ := uuid.NewUUID()
+		chann := make(chan *packet.CommandOutput)
+		if waitResponse {
+			command.UUIDMap.Store(ud.String(), chann)
+		}
+		commandSender.SendCommand(mcCmd, ud)
+		if waitResponse {
+			resp := <-chann
+			return resp
+		} else {
+			return nil
+		}
+	})
+	hostBridgeGamma.HostConnectEstablished()
+	defer hostBridgeGamma.HostConnectTerminate()
+	
+	go func() {
+		if args.ShouldMuteWorldChat() {
+			return
+		}
+		for {
+			csmsg := <-env.WorldChatChannel
+			commandSender.WorldChatTellraw(csmsg[0], csmsg[1])
+		}
+	}()
 
 	zeroId, _ := uuid.NewUUID()
 	oneId, _ := uuid.NewUUID()
@@ -524,14 +525,14 @@ func runClient(env *environment.PBEnvironment) {
 				ud, _ := uuid.NewUUID()
 				chann := make(chan *packet.CommandOutput)
 				command.UUIDMap.Store(ud.String(), chann)
-				command.SendCommand(cmd[1:], ud, conn)
+				commandSender.SendCommand(cmd[1:], ud)
 				resp := <-chann
 				fmt.Printf("%+v\n", resp)
 			} else if cmd[0] == '!' {
 				ud, _ := uuid.NewUUID()
 				chann := make(chan *packet.CommandOutput)
 				command.UUIDMap.Store(ud.String(), chann)
-				command.SendWSCommand(cmd[1:], ud, conn)
+				commandSender.SendWSCommand(cmd[1:], ud)
 				resp := <-chann
 				fmt.Printf("%+v\n", resp)
 			}
@@ -576,7 +577,7 @@ func runClient(env *environment.PBEnvironment) {
 				if(env.FBAuthClient!=nil) {
 					fbcl:=env.FBAuthClient.(*fbauth.Client)
 					if !fbcl.CanSendMessage() {
-						command.WorldChatTellraw(conn, "FastBuildeｒ", "Lost connection to the authentication server.")
+						commandSender.WorldChatTellraw("FastBuildeｒ", "Lost connection to the authentication server.")
 						break
 					}
 					fbcl.WorldChat(umsg)
@@ -591,11 +592,7 @@ func runClient(env *environment.PBEnvironment) {
 		forwardRecvFn = StartTransferServer(env, robotOverWrite.TransferPort)
 	}
 
-	// A loop that reads packets from the connection until it is closed.
 	for {
-		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
-		// a read timeout is set. You will generally want to return or break if this happens.
-
 		pk, data, err := conn.ReadPacketAndBytes()
 		if err != nil {
 			panic(err)
@@ -627,9 +624,9 @@ func runClient(env *environment.PBEnvironment) {
 
 				// See analyze/nemcfix/final.py for its python version
 				// and see analyze/ for how I did it.
-				tellraw(conn, "Welcome to FastBuilder!")
-				tellraw(conn, fmt.Sprintf("Operator: %s", env.RespondUser))
-				sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
+				//tellraw(conn, "Welcome to FastBuilder!")
+				//tellraw(conn, fmt.Sprintf("Operator: %s", env.RespondUser))
+				//sendCommand("testforblock ~ ~ ~ air", zeroId, conn)
 			} else if strings.Contains(string(p.Content), "check_server_contain_pet") {
 				//fmt.Printf("Checkpet!!\n")
 
@@ -684,21 +681,6 @@ func runClient(env *environment.PBEnvironment) {
 				})
 			}
 			break
-		case *packet.SetCommandsEnabled:
-			if !p.Enabled {
-				sendChat(I18n.T(I18n.Notify_NeedOp), conn)
-			}
-		case *packet.GameRulesChanged:
-			for _, rule := range p.GameRules {
-				//fmt.Println(rule.Name, " ", rule.Value)
-				if rule.Name == "sendcommandfeedback" {
-					sendCommandFeedBack := rule.Value.(bool)
-					if !sendCommandFeedBack {
-						sendChat(I18n.T(I18n.Notify_TurnOnCmdFeedBack), conn)
-						//command.SendSizukanaCommand("gamerule sendcommandfeedback true", conn)
-					}
-				}
-			}
 		case *packet.StructureTemplateDataResponse:
 			fbtask.ExportWaiter <- p.StructureTemplate
 			break
@@ -716,7 +698,7 @@ func runClient(env *environment.PBEnvironment) {
 					configuration.IsOp = true
 				}
 				if len(pos) == 0 {
-					tellraw(conn, I18n.T(I18n.InvalidPosition))
+					commandSender.Tellraw(I18n.T(I18n.InvalidPosition))
 					break
 				}
 				configuration.GlobalFullConfig(env).Main().Position = types.Position{
@@ -724,12 +706,12 @@ func runClient(env *environment.PBEnvironment) {
 					Y: pos[1],
 					Z: pos[2],
 				}
-				tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+				commandSender.Tellraw(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
 				break
 			} else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
 				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
 				if len(pos) == 0 {
-					tellraw(conn, I18n.T(I18n.InvalidPosition))
+					commandSender.Tellraw(I18n.T(I18n.InvalidPosition))
 					break
 				}
 				configuration.GlobalFullConfig(env).Main().End = types.Position{
@@ -737,7 +719,7 @@ func runClient(env *environment.PBEnvironment) {
 					Y: pos[1],
 					Z: pos[2],
 				}
-				tellraw(conn, fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
+				commandSender.Tellraw(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
 				break
 			}
 			pr, ok := command.UUIDMap.LoadAndDelete(p.CommandOrigin.UUID.String())
@@ -824,36 +806,6 @@ func readToken(path string) (string, error) {
 		return "", err
 	}
 	return string(content), nil
-}
-
-func sendCommand(commands string, UUID uuid.UUID, conn *minecraft.Conn) error {
-	/*requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
-	origin := protocol.CommandOrigin{
-		Origin:         protocol.CommandOriginPlayer,
-		UUID:           UUID,
-		RequestID:      requestId.String(),
-		PlayerUniqueID: 0,
-	}
-	commandRequest := &packet.CommandRequest{
-		CommandLine:   command,
-		CommandOrigin: origin,
-		Internal:      false,
-		UnLimited:     false,
-	}
-	return conn.WritePacket(commandRequest)*/
-	return command.SendCommand(commands, UUID, conn)
-}
-
-func sendChat(content string, conn *minecraft.Conn) error {
-	return command.SendChat(content, conn)
-}
-
-func tellraw(conn *minecraft.Conn, lines ...string) error {
-	return command.Tellraw(conn, lines[0])
-	//fmt.Printf("%s\n",lines[0])
-	//return nil
-	//uuid1, _ := uuid.NewUUID()
-	//return sendCommand(command.TellRawRequest(types.AllPlayers, lines...), uuid1, conn)
 }
 
 func decideDelay(delaytype byte) int64 {

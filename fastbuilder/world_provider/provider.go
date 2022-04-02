@@ -6,6 +6,7 @@ import (
 	"phoenixbuilder/dragonfly/server/world"
 	"phoenixbuilder/dragonfly/server/world/chunk"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/minecraft"
 	"github.com/google/uuid"
@@ -18,13 +19,16 @@ var firstLoaded bool = false
 
 
 type OnlineWorldProvider struct {
+	env *environment.PBEnvironment
 	connection *minecraft.Conn
 	//nbtmap map[world.ChunkPos][]map[string]interface{}
 }
 
-func NewOnlineWorldProvider(conn *minecraft.Conn) *OnlineWorldProvider {
+func NewOnlineWorldProvider(env *environment.PBEnvironment) *OnlineWorldProvider {
+	conn:=env.Connection.(*minecraft.Conn)
 	return &OnlineWorldProvider {
 		connection: conn,
+		env: env,
 		//nbtmap: make(map[world.ChunkPos][]map[string]interface{}),
 	}
 }
@@ -49,9 +53,10 @@ func quickCache(pkt *packet.LevelChunk) {
 	ChunkCache[world.ChunkPos{pkt.ChunkX,pkt.ChunkZ}]=pkt
 }
 
-func wander(conn *minecraft.Conn, position world.ChunkPos) {
+func wander(env *environment.PBEnvironment, position world.ChunkPos) {
 	u_d, _ := uuid.NewUUID()
-	err:=command.SendWSCommand(fmt.Sprintf("tp %d 127 %d",position[0]*16+100000,1000000-position[1]*16+100000),u_d,conn)
+	cmdsender:=env.CommandSender.(command.CommandSender)
+	err:=cmdsender.SendWSCommand(fmt.Sprintf("tp %d 127 %d",position[0]*16+100000,1000000-position[1]*16+100000),u_d)
 	if(err!=nil) {
 		panic(fmt.Errorf("Connection closed: %+v",err))
 	}
@@ -62,7 +67,7 @@ func wander(conn *minecraft.Conn, position world.ChunkPos) {
 	
 	}
 	u_d, _ = uuid.NewUUID()
-	err=command.SendWSCommand(fmt.Sprintf("tp %d 127 %d",position[0]*16,position[1]*16),u_d,conn)
+	err=cmdsender.SendWSCommand(fmt.Sprintf("tp %d 127 %d",position[0]*16,position[1]*16),u_d)
 	if(err!=nil) {
 		panic(fmt.Errorf("[2]Connection closed: %+v",err))
 	}
@@ -87,7 +92,7 @@ func (p *OnlineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chunk
 	}
 	u_d, _ := uuid.NewUUID()
 	ChunkInput=make(chan *packet.LevelChunk,32)
-	err=command.SendWSCommand(fmt.Sprintf("tp %d 127 %d",position[0]*16,position[1]*16),u_d,p.connection)
+	err=p.env.CommandSender.(command.CommandSender).SendWSCommand(fmt.Sprintf("tp %d 127 %d",position[0]*16,position[1]*16),u_d)
 	if(err!=nil) {
 		panic(fmt.Errorf("[2]Connection closed: %+v",err))
 	}
@@ -104,7 +109,7 @@ func (p *OnlineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chunk
 			case <-time.After(2*time.Second):
 				runtime.GC()
 				fmt.Printf("Expected chunk %v didn't arrive, wandering around\n", position)
-				wander(p.connection, position)
+				wander(p.env, position)
 				continue
 			}
 		}else{

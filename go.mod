@@ -27,6 +27,7 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20210614181706-373ff5438452
 	github.com/sandertv/go-raknet v1.9.1
 	github.com/sirupsen/logrus v1.8.1
+	github.com/xtaci/kcp-go/v5 v5.6.1 // indirect
 	go.kuoruan.net/v8go-polyfills v0.5.0
 	go.uber.org/atomic v1.7.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect

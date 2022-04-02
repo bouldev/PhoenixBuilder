@@ -3,8 +3,6 @@ package command
 import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/minecraft"
-	//"github.com/google/uuid"
 	"encoding/json"
 	"strings"
 )
@@ -22,6 +20,6 @@ func TitleRequest(target types.Target, lines ...string) string {
 	return cmd
 }
 
-func Title(conn *minecraft.Conn, lines ...string) error {
-	return SendSizukanaCommand(TitleRequest(types.AllPlayers, lines...), conn)
+func (sender CommandSender) Title(lines ...string) error {
+	return sender.SendSizukanaCommand(TitleRequest(types.AllPlayers, lines...))
 }

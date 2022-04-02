@@ -2,21 +2,21 @@ package world_provider
 
 import (
 	"phoenixbuilder/dragonfly/server/world"
-	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/fastbuilder/environment"
 )
 
 var CurrentWorld *world.World = nil
 
-func Create(conn *minecraft.Conn) *world.World {
+func Create(env *environment.PBEnvironment) *world.World {
 	intw:=world.New(&StubLogger{},32)
-	intw.Provider(NewOnlineWorldProvider(conn))
+	intw.Provider(NewOnlineWorldProvider(env))
 	return intw
 }
 
-func NewWorld(conn *minecraft.Conn) {
+func NewWorld(env *environment.PBEnvironment) {
 	ChunkCache=make(map[world.ChunkPos]*packet.LevelChunk)
-	CurrentWorld=Create(conn)
+	CurrentWorld=Create(env)
 	firstLoaded=false
 }
 

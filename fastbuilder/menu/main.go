@@ -244,12 +244,12 @@ func OpenMenu(env *environment.PBEnvironment) {
 			lineUUID,_:=uuid.NewUUID()
 			lineChan:=make(chan *packet.CommandOutput)
 			command.UUIDMap.Store(lineUUID.String(),lineChan)
-			command.SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~400 ~ ~",player,conn.IdentityData().DisplayName),lineUUID,conn)
+			env.CommandSender.(command.CommandSender).SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~400 ~ ~",player,conn.IdentityData().DisplayName),lineUUID)
 			<-lineChan
 			close(lineChan)
 			OPRuntimeIdReceivedChannel=make(chan bool)
 			dispUUID,_:=uuid.NewUUID()
-			command.SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~ ~2 ~",player,conn.IdentityData().DisplayName),dispUUID,conn)
+			env.CommandSender.(command.CommandSender).SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~ ~2 ~",player,conn.IdentityData().DisplayName),dispUUID)
 			<-OPRuntimeIdReceivedChannel
 			close(OPRuntimeIdReceivedChannel)
 			OPRuntimeIdReceivedChannel=nil
@@ -258,7 +258,7 @@ func OpenMenu(env *environment.PBEnvironment) {
 		for {
 			player:=configuration.RespondUser
 			dispUUID,_:=uuid.NewUUID()
-			command.SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~ ~2 ~",player,conn.IdentityData().DisplayName),dispUUID,conn)
+			env.CommandSender.(command.CommandSender).SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~ ~2 ~",player,conn.IdentityData().DisplayName),dispUUID)
 			if(LastOPPitch<(-60)) {
 				curSel--
 				if(curSel<0) {

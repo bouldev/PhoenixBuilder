@@ -152,15 +152,16 @@ func (holder *TaskHolder) FindTask(taskId int64) *Task {
 func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	holder:=env.TaskHolder.(*TaskHolder)
 	conn:=env.Connection.(*minecraft.Conn)
+	cmdsender:=env.CommandSender.(command.CommandSender)
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
-		command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand),err))
+		cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand),err))
 		return nil
 	}
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig(env).Delay())
 	dcfg := fcfg.Delay()
 	und, _ := uuid.NewUUID()
-	command.SendWSCommand("gamemode c", und, conn)
+	cmdsender.SendWSCommand("gamemode c", und)
 	blockschannel := make(chan *types.Module, 10240)
 	task := &Task {
 		TaskId: holder.TaskIdCounter.Add(1),
@@ -179,12 +180,6 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 		blockschannel=make(chan *types.Module)
 		task.OutputChannel=blockschannel
 		go func() {
-			defer func() {
-				r:=recover()
-				if r!=nil{
-					fmt.Println("go routine @ fastbuilder.task.task.async crashed ",r)
-				}
-			}()
 			var blocks []*types.Module
 			for {
 				curblock, ok := <-asyncblockschannel
@@ -223,12 +218,6 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 		task.State=TaskStateRunning
 	}
 	go func() {
-		defer func() {
-			r:=recover()
-			if r!=nil{
-				fmt.Println("go routine @ fastbuilder.task.task.sendblock crashed ",r)
-			}
-		}()
 		isWindows:=false
 		if runtime.GOOS == "windows" {
 			isWindows=true
@@ -241,8 +230,8 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			isFastMode=true
 		}else{
 			//isFastMode=false
-			command.SendWSCommand("gamemode c", und, conn)
-			command.SendWSCommand("gamerule sendcommandfeedback true", und, conn)
+			cmdsender.SendWSCommand("gamemode c", und)
+			cmdsender.SendWSCommand("gamerule sendcommandfeedback true", und)
 		}
 		request:=command.AllocateRequestString()
 		for {
@@ -251,22 +240,22 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			curblock, ok := <-blockschannel
 			if !ok {
 				if blkscounter == 0 {
-					command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.Task_D_NothingGenerated),taskid))
+					cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.Task_D_NothingGenerated),taskid))
 					runtime.GC()
 					task.Finalize()
 					return
 				}
 				timeUsed := time.Now().Sub(t1)
-				command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.Task_Summary_1), taskid, blkscounter))
-				command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.Task_Summary_2), taskid, timeUsed.Seconds()))
-				command.Tellraw(conn, fmt.Sprintf(I18n.T(I18n.Task_Summary_3), taskid, float64(blkscounter)/timeUsed.Seconds()))
+				cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.Task_Summary_1), taskid, blkscounter))
+				cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.Task_Summary_2), taskid, timeUsed.Seconds()))
+				cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.Task_Summary_3), taskid, float64(blkscounter)/timeUsed.Seconds()))
 				runtime.GC()
 				task.Finalize()
 				return
 			}
 			if blkscounter%20 == 0 {
 				u_d, _ := uuid.NewUUID()
-				command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y,curblock.Point.Z),u_d, conn)
+				cmdsender.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y,curblock.Point.Z),u_d)
 				// SettingsCommand is unable to teleport the player.
 			}
 			blkscounter++
@@ -277,7 +266,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 						//<-time.After(time.Second)
 						wc:=make(chan bool)
 						command.BlockUpdateSubscribeMap.Store(protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)},wc)
-						command.SendSizukanaCommand(*request,conn)
+						cmdsender.SendSizukanaCommand(*request)
 						select {
 						case <-wc:
 							break
@@ -286,7 +275,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 						}
 						close(wc)
 					}else{
-						command.SendSizukanaCommand(*request,conn)
+						cmdsender.SendSizukanaCommand(*request)
 					}
 				}
 				cbdata:=curblock.CommandBlockData
@@ -297,7 +286,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					UUID:=uuid.New()
 					w:=make(chan *packet.CommandOutput)
 					command.UUIDMap.Store(UUID.String(), w)
-					command.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z), UUID, conn)
+					cmdsender.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z), UUID)
 					select {
 					case <-time.After(time.Second):
 						command.UUIDMap.Delete(UUID.String())
@@ -320,16 +309,16 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				})
 			}else if curblock.ChestSlot != nil {
 				command.ReplaceItemRequest(request, curblock, cfg)
-				command.SendSizukanaCommand(*request, conn)
+				cmdsender.SendSizukanaCommand(*request)
 			}else{
 				command.SetBlockRequest(request, curblock, cfg)
-				err := command.SendSizukanaCommand(*request, conn)
+				err := cmdsender.SendSizukanaCommand(*request)
 				if err != nil {
 					panic(err)
 				}
 			}/*else if curblock.Entity != nil {
 				//request := command.SummonRequest(curblock, cfg)
-				//err := command.SendSizukanaCommand(request, conn)
+				//err := cmdsender.SendSizukanaCommand(request)
 				//if err != nil {
 				//	panic(err)
 				//}
@@ -352,36 +341,29 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 		command.FreeRequestStringPtr(request)
 	} ()
 	go func() {
-		defer func() {
-			r:=recover()
-			if r!=nil{
-				fmt.Println("go routine @ fastbuilder.task.task.generator crashed ",r)
-			}
-		}()
 		if task.Type==types.TaskTypeAsync {
 			err := builder.Generate(cfg, asyncblockschannel)
 			close(asyncblockschannel)
 			if err != nil {
-				command.Tellraw(conn, fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
+				cmdsender.Tellraw(fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
 			}
 			return
 		}
 		err := builder.Generate(cfg, blockschannel)
 		close(blockschannel)
 		if err != nil {
-			command.Tellraw(conn, fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
+			cmdsender.Tellraw(fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
 		}
 	} ()
 	return task
 }
 
 func InitTaskStatusDisplay(env *environment.PBEnvironment) {
-	conn:=env.Connection.(*minecraft.Conn)
 	holder:=env.TaskHolder.(*TaskHolder)
 	go func() {
 		for {
 			str:=<-holder.BrokSender
-			command.Tellraw(conn,str)
+			env.CommandSender.(command.CommandSender).Tellraw(str)
 		}
 	} ()
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -414,7 +396,7 @@ func InitTaskStatusDisplay(env *environment.PBEnvironment) {
 			if len(displayStrs) == 0 {
 				continue
 			}
-			command.Title(conn,strings.Join(displayStrs,"\n"))
+			env.CommandSender.(command.CommandSender).Title(strings.Join(displayStrs,"\n"))
 		}
 	} ()
 }

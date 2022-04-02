@@ -2,7 +2,6 @@ package script_holder
 
 import (
 	"fmt"
-	"phoenixbuilder/minecraft"
 	"phoenixbuilder/fastbuilder/function"
 	"phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/script_engine/bridge/kickstarter"
@@ -22,7 +21,7 @@ func InitScriptHolder(env *environment.PBEnvironment) *ScriptHolder {
 		FunctionType: function.FunctionTypeSimple,
 		SFArgumentTypes: []byte { function.SimpleFunctionArgumentMessage },
 		SFMinSliceLen: 1,
-		FunctionContent: func(conn *minecraft.Conn,args []interface{}) {
+		FunctionContent: func(env *environment.PBEnvironment,args []interface{}) {
 			str:=args[0].(string)
 			sh.LoadScript(str, env)
 		},

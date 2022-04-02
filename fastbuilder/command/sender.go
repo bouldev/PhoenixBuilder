@@ -16,7 +16,12 @@ func ClearUUIDMap() {
 	UUIDMap=sync.Map{}
 }
 
-func SendCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
+func (sender CommandSender) getConn() *minecraft.Conn {
+	conn:=sender.env.Connection.(*minecraft.Conn)
+	return conn
+}
+
+func (sender CommandSender) SendCommand(command string, UUID uuid.UUID) error {
 	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
 	origin := protocol.CommandOrigin{
 		Origin:         protocol.CommandOriginPlayer,
@@ -30,10 +35,10 @@ func SendCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
 		Internal:      false,
 		UnLimited:     false,
 	}
-	return conn.WritePacket(commandRequest)
+	return sender.getConn().WritePacket(commandRequest)
 }
 
-func SendWSCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
+func (sender CommandSender) SendWSCommand(command string, UUID uuid.UUID) error {
 	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
 	origin := protocol.CommandOrigin{
 		Origin:         protocol.CommandOriginAutomationPlayer,
@@ -47,17 +52,18 @@ func SendWSCommand(command string, UUID uuid.UUID, conn *minecraft.Conn) error {
 		Internal:      false,
 		UnLimited:     false,
 	}
-	return conn.WritePacket(commandRequest)
+	return sender.getConn().WritePacket(commandRequest)
 }
 
-func SendSizukanaCommand(command string, conn *minecraft.Conn) error {
-	return conn.WritePacket(&packet.SettingsCommand{
+func (sender CommandSender) SendSizukanaCommand(command string) error {
+	return sender.getConn().WritePacket(&packet.SettingsCommand{
 		CommandLine: command,
 		SuppressOutput: true,
 	})
 }
 
-func SendChat(content string, conn *minecraft.Conn) error {
+func (sender CommandSender) SendChat(content string) error {
+	conn:=sender.getConn()
 	idd:=conn.IdentityData()
 	return conn.WritePacket(&packet.Text {
 		TextType: packet.TextTypeChat,
