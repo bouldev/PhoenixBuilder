@@ -1,4 +1,4 @@
-package fbauth
+package external
 
 import (
 	"crypto/aes"
