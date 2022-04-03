@@ -38,10 +38,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/pterm/pterm"
 	"golang.org/x/term"
-	
-	"phoenixbuilder/fastbuilder/readline"
+
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/external"
+	"phoenixbuilder/fastbuilder/readline"
 )
 
 func main() {
@@ -57,7 +57,7 @@ func main() {
 	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO, CMA2401PT"))
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
 	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
-	
+
 	readline.InitReadline()
 
 	if I18n.ShouldDisplaySpecial() {
@@ -111,10 +111,10 @@ func main() {
 			fmt.Printf(I18n.T(I18n.EnterPasswordForFBUC))
 			fbpassword, err := term.ReadPassword(int(syscall.Stdin))
 			fmt.Printf("\n")
-			tokenstruct := &map[string]interface{} {
+			tokenstruct := &map[string]interface{}{
 				"encrypt_token": true,
-				"username": fbun,
-				"password": string(fbpassword),
+				"username":      fbun,
+				"password":      string(fbpassword),
 			}
 			token, err := json.Marshal(tokenstruct)
 			if err != nil {
@@ -155,11 +155,11 @@ func runShellClient(token string, version string) {
 }
 
 func create_environment() *environment.PBEnvironment {
-	env:=&environment.PBEnvironment{}
-	env.ActivateTaskStatus=make(chan bool)
-	env.TaskHolder=fbtask.NewTaskHolder()
-	functionHolder:=function.NewFunctionHolder(env)
-	env.FunctionHolder=functionHolder
+	env := &environment.PBEnvironment{}
+	env.ActivateTaskStatus = make(chan bool)
+	env.TaskHolder = fbtask.NewTaskHolder()
+	functionHolder := function.NewFunctionHolder(env)
+	env.FunctionHolder = functionHolder
 	hostBridgeGamma := &script_bridge.HostBridgeGamma{}
 	hostBridgeGamma.Init()
 	hostBridgeGamma.HostQueryExpose = map[string]func() string{
@@ -181,23 +181,23 @@ func create_environment() *environment.PBEnvironment {
 		},
 	}
 	for _, key := range args.CustomSEUndefineConsts {
-		_, found:=hostBridgeGamma.HostQueryExpose[key]
+		_, found := hostBridgeGamma.HostQueryExpose[key]
 		if found {
-			delete(hostBridgeGamma.HostQueryExpose,key)
+			delete(hostBridgeGamma.HostQueryExpose, key)
 		}
 	}
-	for key,val := range args.CustomSEConsts {
-		hostBridgeGamma.HostQueryExpose[key]=func()string{return val}
+	for key, val := range args.CustomSEConsts {
+		hostBridgeGamma.HostQueryExpose[key] = func() string { return val }
 	}
-	env.ScriptBridge=hostBridgeGamma
-	scriptHolder:=script_holder.InitScriptHolder(env)
-	env.ScriptHolder=scriptHolder
+	env.ScriptBridge = hostBridgeGamma
+	scriptHolder := script_holder.InitScriptHolder(env)
+	env.ScriptHolder = scriptHolder
 	if args.StartupScript() == "" {
 		hostBridgeGamma.HostRemoveBlock()
 	} else {
 		if scriptHolder.LoadScript(args.StartupScript(), env) {
 			hostBridgeGamma.HostWaitScriptBlock()
-		}else{
+		} else {
 			hostBridgeGamma.HostRemoveBlock()
 		}
 	}
@@ -205,29 +205,29 @@ func create_environment() *environment.PBEnvironment {
 }
 
 func init_and_run_debug_client() {
-	env:=create_environment()
-	env.IsDebug=true
-	
-	scriptHolder:=env.ScriptHolder.(*script_holder.ScriptHolder)
+	env := create_environment()
+	env.IsDebug = true
+
+	scriptHolder := env.ScriptHolder.(*script_holder.ScriptHolder)
 	defer scriptHolder.Destroy()
-	
+
 	runClient(env)
 }
 
 func init_and_run_client(token string, version string, code string, server_password string) {
-	env:=create_environment()
-	env.LoginInfo=environment.LoginInfo {
-		Token: token,
-		Version: version,
-		ServerCode: code,
+	env := create_environment()
+	env.LoginInfo = environment.LoginInfo{
+		Token:          token,
+		Version:        version,
+		ServerCode:     code,
 		ServerPasscode: server_password,
 	}
-	
-	scriptHolder:=env.ScriptHolder.(*script_holder.ScriptHolder)
+
+	scriptHolder := env.ScriptHolder.(*script_holder.ScriptHolder)
 	defer scriptHolder.Destroy()
-	
-	client:=fbauth.CreateClient(env)
-	env.FBAuthClient=client
+
+	client := fbauth.CreateClient(env)
+	env.FBAuthClient = client
 	if token[0] == '{' {
 		token = client.GetToken("", token)
 		if token == "" {
@@ -239,7 +239,7 @@ func init_and_run_client(token string, version string, code string, server_passw
 			fmt.Println("Error creating token file: ", err)
 			fmt.Println("Error ignored.")
 		} else {
-			env.LoginInfo.Token=token
+			env.LoginInfo.Token = token
 			_, err = fi.WriteString(token)
 			if err != nil {
 				fmt.Println("Error saving token: ", err)
@@ -256,11 +256,11 @@ func runClient(env *environment.PBEnvironment) {
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
 	var conn *minecraft.Conn
 	if env.IsDebug {
-		conn=&minecraft.Conn {
+		conn = &minecraft.Conn{
 			DebugMode: true,
 		}
-	}else{
-		fbauthclient:=env.FBAuthClient.(*fbauth.Client)
+	} else {
+		fbauthclient := env.FBAuthClient.(*fbauth.Client)
 		dialer := minecraft.Dialer{
 			ServerCode: env.LoginInfo.ServerCode, //strings.TrimRight(serverCode, "\r\n"),
 			Password:   env.LoginInfo.ServerPasscode,
@@ -278,15 +278,15 @@ func runClient(env *environment.PBEnvironment) {
 			}
 			panic(err)
 		}
-		conn=cconn
+		conn = cconn
 		go func() {
 			user := fbauthclient.ShouldRespondUser()
 			env.RespondUser = user
-		} ()
-		env.WorldChatChannel=make(chan []string)
+		}()
+		env.WorldChatChannel = make(chan []string)
 	}
 	defer conn.Close()
-	
+
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
@@ -321,10 +321,10 @@ func runClient(env *environment.PBEnvironment) {
 	conn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
 	})
-	env.Connection=conn
+	env.Connection = conn
 
-	commandSender:=command.InitCommandSender(env)
-	functionHolder:=env.FunctionHolder.(*function.FunctionHolder)
+	commandSender := command.InitCommandSender(env)
+	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	function.InitInternalFunctions(functionHolder)
 	fbtask.InitTaskStatusDisplay(env)
 	move.ConnectTime = conn.GameData().ConnectTime
@@ -335,8 +335,8 @@ func runClient(env *environment.PBEnvironment) {
 	move.RuntimeID = conn.GameData().EntityRuntimeID
 
 	signalhandler.Install(conn)
-	
-	hostBridgeGamma:=env.ScriptBridge.(*script_bridge.HostBridgeGamma)
+
+	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
 		ud, _ := uuid.NewUUID()
 		chann := make(chan *packet.CommandOutput)
@@ -353,7 +353,7 @@ func runClient(env *environment.PBEnvironment) {
 	})
 	hostBridgeGamma.HostConnectEstablished()
 	defer hostBridgeGamma.HostConnectTerminate()
-	
+
 	go func() {
 		if args.ShouldMuteWorldChat() {
 			return
@@ -368,11 +368,11 @@ func runClient(env *environment.PBEnvironment) {
 	oneId, _ := uuid.NewUUID()
 	configuration.ZeroId = zeroId
 	configuration.OneId = oneId
-	taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
 	go func() {
 		for {
-			cmd:=readline.Readline(env)
+			cmd := readline.Readline(env)
 			if len(cmd) == 0 {
 				continue
 			}
@@ -429,8 +429,8 @@ func runClient(env *environment.PBEnvironment) {
 			}
 			if cmd[0] == '>' && len(cmd) > 1 {
 				umsg := cmd[1:]
-				if(env.FBAuthClient!=nil) {
-					fbcl:=env.FBAuthClient.(*fbauth.Client)
+				if env.FBAuthClient != nil {
+					fbcl := env.FBAuthClient.(*fbauth.Client)
 					if !fbcl.CanSendMessage() {
 						commandSender.WorldChatTellraw("FastBuildeｒ", "Lost connection to the authentication server.")
 						break
@@ -442,8 +442,8 @@ func runClient(env *environment.PBEnvironment) {
 		}
 	}()
 
-	if(args.ExternalListenAddress()!="") {
-		external.ListenExt(env,args.ExternalListenAddress())
+	if args.ExternalListenAddress() != "" {
+		external.ListenExt(env, args.ExternalListenAddress())
 	}
 
 	for {
@@ -452,9 +452,9 @@ func runClient(env *environment.PBEnvironment) {
 			panic(err)
 		}
 		hostBridgeGamma.HostPumpMcPacket(pk)
-		if(env.ExternalConnectionHandler!=nil) {
+		if env.ExternalConnectionHandler != nil {
 			select {
-			case env.ExternalConnectionHandler.(external.ExternalConnectionHandler).PacketChannel<-data:
+			case env.ExternalConnectionHandler.(*external.ExternalConnectionHandler).PacketChannel <- data:
 			default:
 			}
 		}
@@ -515,7 +515,7 @@ func runClient(env *environment.PBEnvironment) {
 				// 2021-12-22 10:51~11:55
 				// Thank netease for wasting my time again ;)
 				encData := p.Content[68 : len(p.Content)-1]
-				client:=env.FBAuthClient.(*fbauth.Client)
+				client := env.FBAuthClient.(*fbauth.Client)
 				response := client.TransferData(string(encData), fmt.Sprintf("%s", env.Uid))
 				conn.WritePacket(&packet.PyRpc{
 					Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xc, 0x53, 0x65, 0x74, 0x53, 0x74, 0x61, 0x72, 0x74, 0x54, 0x79, 0x70, 0x65, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4},
@@ -524,17 +524,17 @@ func runClient(env *environment.PBEnvironment) {
 						[]byte{0xc0},
 					}, []byte{}),
 				})
-			}else if strings.Contains(string(p.Content), "GetMCPCheckNum") {
-				firstArgLenB:=p.Content[69:71]
-				firstArgLen:=binary.BigEndian.Uint16(firstArgLenB)
-				secondArgLen:=uint16(p.Content[72+firstArgLen])
-				secondArg:=string(p.Content[73+firstArgLen:73+firstArgLen+secondArgLen])
-				valM:=utils.GetMD5(fmt.Sprintf("296<6puv?ol%sk",secondArg))
+			} else if strings.Contains(string(p.Content), "GetMCPCheckNum") {
+				firstArgLenB := p.Content[69:71]
+				firstArgLen := binary.BigEndian.Uint16(firstArgLenB)
+				secondArgLen := uint16(p.Content[72+firstArgLen])
+				secondArg := string(p.Content[73+firstArgLen : 73+firstArgLen+secondArgLen])
+				valM := utils.GetMD5(fmt.Sprintf("296<6puv?ol%sk", secondArg))
 				conn.WritePacket(&packet.PyRpc{
-					Content: bytes.Join([][]byte{[]byte{0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x93,0xc4,0xe,0x53,0x65,0x74,0x4d,0x43,0x50,0x43,0x68,0x65,0x63,0x6b,0x4e,0x75,0x6d,0x82,0xc4,0x8,0x5f,0x5f,0x74,0x79,0x70,0x65,0x5f,0x5f,0xc4,0x5,0x74,0x75,0x70,0x6c,0x65,0xc4,0x5,0x76,0x61,0x6c,0x75,0x65,0x91,0xc4,0x20},
-					[]byte(valM),
-					[]byte{0xc0},
-					},[]byte{}),
+					Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xe, 0x53, 0x65, 0x74, 0x4d, 0x43, 0x50, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x4e, 0x75, 0x6d, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4, 0x20},
+						[]byte(valM),
+						[]byte{0xc0},
+					}, []byte{}),
 				})
 			}
 			break
