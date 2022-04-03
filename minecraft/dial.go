@@ -44,11 +44,9 @@ type Dialer struct {
 	// object provided here is used, or a default one if left empty.
 	IdentityData login.IdentityData
 
-	// Phoenix Hash Version
-	Version string
-	// Phoenix Token
+	// FBUC Token
 	Token string
-	// Phoenix Auth Client
+	// FBUC Auth Client
 	Client *fbauth.Client
 	ServerCode string
 	Password string
@@ -120,7 +118,7 @@ func (d Dialer) DialContext(ctx context.Context, network, address string) (conn 
 	if d.ServerCode != "" {
 		data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 		pubKeyData := base64.StdEncoding.EncodeToString(data)
-		chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token, d.Version)
+		chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token)
 		chainAndAddr := strings.Split(chainAddr,"|")
 		bridge_fmt.Printf("Auth pass\n")
 		if err != nil {

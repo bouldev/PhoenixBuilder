@@ -26,7 +26,7 @@ void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
 	printf("\t--debug: Run in debug mode.\n");
 	printf("\t-A <url>, --auth-server=<url>: Use the specified authentication server, instead of the default one.\n");
-	printf("\t--no-hash-check: Disable the hash check, so update notifications will be suppressed.\n");
+	printf("\t--no-update-check: Suppress update notifications.\n");
 	printf("\t-M, --no-world-chat: Ignore world chat on client side.\n");
 	printf("\t--no-pyrpc: Disable the PyRpcPacket interaction, the client's commands will be prevented from execution by netease's rental server.\n");
 #ifdef WITH_V8
@@ -103,7 +103,7 @@ int _parse_args(int argc, char **argv) {
 			{"debug", no_argument, 0, 0}, // 0
 			{"help", no_argument, 0, 'h'}, // 1
 			{"auth-server", required_argument, 0, 'A'}, //2
-			{"no-hash-check", no_argument, 0, 0}, //3
+			{"no-update-check", no_argument, 0, 0}, //3
 			{"no-world-chat", no_argument, 0, 'M'}, //4
 			{"no-pyrpc", no_argument, 0, 0}, //5
 			{"no-nbt", no_argument, 0, 0}, //6

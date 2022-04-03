@@ -5,7 +5,6 @@ import "phoenixbuilder/fastbuilder/environment/interfaces"
 
 type LoginInfo struct {
 	Token string
-	Version string
 	ServerCode string
 	ServerPasscode string
 }

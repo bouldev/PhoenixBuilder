@@ -64,7 +64,6 @@ func main() {
 		fmt.Printf("%s", I18n.T(I18n.Special_Startup))
 	}
 
-	//if runtime.GOOS == "windows" {}
 	defer func() {
 		if err := recover(); err != nil {
 			readline.HardInterrupt()
@@ -79,23 +78,20 @@ func main() {
 			os.Exit(1)
 		}
 		os.Exit(0)
-		//os.Exit(rand.Int())
 	}()
 	if args.DebugMode() {
 		init_and_run_debug_client()
 		return
 	}
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	var version string
-	if args.ShouldDisableHashCheck() {
-		version = "NO_HASH_CHECK"
-	} else {
-		version, err = utils.GetHash(ex)
-		if err != nil {
-			panic(err)
+	if(!args.ShouldDisableHashCheck()) {
+		fmt.Printf("Checking update, please wait...")
+		hasUpdate, latestVersion:=utils.CheckUpdate(args.GetFBVersion())
+		fmt.Printf("OK\n")
+		if(hasUpdate) {
+			fmt.Printf("A newer version (%s) of PhoenixBuilder is available.\n",latestVersion)
+			fmt.Printf("Please update.\n")
+			// To ensure user won't ignore it directly, can be suppressed by command line argument.
+			os.Exit(0)
 		}
 	}
 
@@ -122,7 +118,7 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-			runShellClient(string(token), version)
+			runInteractiveClient(string(token))
 
 		} else {
 			token, err := readToken(token)
@@ -130,14 +126,14 @@ func main() {
 				fmt.Println(err)
 				return
 			}
-			runShellClient(token, version)
+			runInteractiveClient(token)
 		}
 	} else {
-		runShellClient(args.CustomTokenContent(), version)
+		runInteractiveClient(args.CustomTokenContent())
 	}
 }
 
-func runShellClient(token string, version string) {
+func runInteractiveClient(token string) {
 	var code, serverPasswd string
 	var err error
 	if !args.SpecifiedServer() {
@@ -151,7 +147,7 @@ func runShellClient(token string, version string) {
 		fmt.Println(err)
 		return
 	}
-	init_and_run_client(token, version, code, serverPasswd)
+	init_and_run_client(token, code, serverPasswd)
 }
 
 func create_environment() *environment.PBEnvironment {
@@ -170,7 +166,7 @@ func create_environment() *environment.PBEnvironment {
 			return env.LoginInfo.ServerCode
 		},
 		"fb_version": func() string {
-			return env.LoginInfo.Version
+			return args.GetFBVersion()
 		},
 		"fb_dir": func() string {
 			dir, _ := os.Getwd()
@@ -214,11 +210,10 @@ func init_and_run_debug_client() {
 	runClient(env)
 }
 
-func init_and_run_client(token string, version string, code string, server_password string) {
+func init_and_run_client(token string, code string, server_password string) {
 	env := create_environment()
 	env.LoginInfo = environment.LoginInfo{
 		Token:          token,
-		Version:        version,
 		ServerCode:     code,
 		ServerPasscode: server_password,
 	}
@@ -264,7 +259,6 @@ func runClient(env *environment.PBEnvironment) {
 		dialer := minecraft.Dialer{
 			ServerCode: env.LoginInfo.ServerCode, //strings.TrimRight(serverCode, "\r\n"),
 			Password:   env.LoginInfo.ServerPasscode,
-			Version:    env.LoginInfo.Version,
 			Token:      env.LoginInfo.Token,
 			Client:     fbauthclient,
 		}

@@ -6,8 +6,14 @@ import (
 	"encoding/hex"
 	"io"
 	"os"
+	"fmt"
+	"net/http"
 	"strconv"
+	"strings"
 )
+
+// int compareVersion(char *latestVersion,char *currentVersion);
+import "C"
 
 func SliceAtoi(sa []string) ([]int, error) {
 	si := make([]int, 0, len(sa))
@@ -37,4 +43,18 @@ func GetHash(path string) (string, error) {
 func GetMD5(i string) string {
 	sum:=md5.Sum([]byte(i))
 	return hex.EncodeToString(sum[:])
+}
+
+func CheckUpdate(currentVersion string) (bool, string) {
+	resp, err:=http.Get("https://storage.fastbuilder.pro/version")
+	if(err!=nil) {
+		fmt.Printf("Failed to check update!\nPlease check your network status.\n")
+		return false, ""
+	}
+	content, err:=io.ReadAll(resp.Body)
+	if(err!=nil) {
+		fmt.Printf("Failed to check update!\nPlease check your network status.\n")
+		return false, ""
+	}
+	return C.compareVersion(C.CString(string(content)),C.CString(currentVersion))!=0, strings.Replace(string(content),"\n","",1)
 }

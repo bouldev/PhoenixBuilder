@@ -153,19 +153,15 @@ type AuthRequest struct {
 	ServerPassword string `json:"serverPassword"`
 	Key string `json:"publicKey"`
 	FBToken string
-	FBVersion string
-	IGNOREUPDATE_PLEASEMAKESUREYOUKNOWWHATITMEANS bool
 }
 
-func (client *Client) Auth(serverCode string,serverPassword string,key string,fbtoken string,fbversion string) (string,int,error) {
+func (client *Client) Auth(serverCode string,serverPassword string,key string,fbtoken string) (string,int,error) {
 	authreq:=&AuthRequest {
 		Action:"phoenix::login",
 		ServerCode:serverCode,
 		ServerPassword:serverPassword,
 		Key:key,
 		FBToken:fbtoken,
-		FBVersion:fbversion,
-		IGNOREUPDATE_PLEASEMAKESUREYOUKNOWWHATITMEANS: args.ShouldDisableHashCheck(),
 	}
 	msg,err:=json.Marshal(authreq)
 	if err!=nil {
@@ -176,8 +172,8 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 	code,_:=resp["code"].(float64)
 	if code!=0 {
 		err,_:=resp["message"].(string)
-		trans,hasTrans:=resp["translation"].(float64)
-		if(hasTrans) {
+		trans,hasTranslation:=resp["translation"].(float64)
+		if(hasTranslation) {
 			err=I18n.T(uint16(trans))
 		}
 		return "",int(code),fmt.Errorf("%s",err)
