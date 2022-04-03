@@ -7,6 +7,7 @@ int compareVersion(char *latestVersion,char *currentVersion) {
 	latestVersionParts[0]=latestVersion;
 	for(char *p=latestVersion;*p!=0;p++) {
 		if(*p<'0'||*p>'9') {
+			if(vpi>=3)break;
 			*p=0;
 			latestVersionParts[vpi]=p+1;
 			vpi++;
@@ -20,6 +21,7 @@ int compareVersion(char *latestVersion,char *currentVersion) {
 	currentVersionParts[0]=latestVersion;
 	for(char *p=currentVersion;*p!=0;p++) {
 		if(*p<'0'||*p>'9') {
+			if(vpi>=3)break;
 			*p=0;
 			currentVersionParts[vpi]=p+1;
 			vpi++;
