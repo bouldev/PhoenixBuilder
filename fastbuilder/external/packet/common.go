@@ -14,7 +14,7 @@ func (_ PingPacket) Parse(_ []byte) bool {
 }
 
 func (_ PingPacket) ID() uint8 {
-	return 1
+	return IDPingPacket
 }
 
 func (_ PingPacket) Name() string {
@@ -33,7 +33,7 @@ func (_ PongPacket) Parse(_ []byte) bool {
 }
 
 func (_ PongPacket) ID() uint8 {
-	return 2
+	return IDPongPacket
 }
 
 func (_ PongPacket) Name() string {
@@ -52,7 +52,7 @@ func (_ ByePacket) Parse(_ []byte) bool {
 }
 
 func (_ ByePacket) ID() uint8 {
-	return 3
+	return IDByePacket
 }
 
 func (_ ByePacket) Name() string {
@@ -68,17 +68,14 @@ func (pkt PacketViolationWarningPacket) Marshal() []byte {
 }
 
 func (pkt PacketViolationWarningPacket) Parse(cont []byte) bool {
-	pkt.Text=string(cont)
+	pkt.Text = string(cont)
 	return true
 }
 
 func (_ PacketViolationWarningPacket) ID() uint8 {
-	return 4
+	return IDPacketViolationWarningPacket
 }
 
 func (_ PacketViolationWarningPacket) Name() string {
 	return "PacketViolationWarningPacket"
 }
-
-
-

@@ -9,12 +9,12 @@ func (pkt GamePacket) Marshal() []byte {
 }
 
 func (pkt GamePacket) Parse(cont []byte) bool {
-	pkt.Content=cont
+	pkt.Content = cont
 	return true
 }
 
 func (_ GamePacket) ID() uint8 {
-	return 7
+	return IDGamePacket
 }
 
 func (_ GamePacket) Name() string {

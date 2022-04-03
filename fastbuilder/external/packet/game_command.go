@@ -1,47 +1,50 @@
 package packet
 
-import "github.com/google/uuid"
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/google/uuid"
+)
 
 const (
-	CommandTypeNormal = 0
+	CommandTypeNormal    = 0
 	CommandTypeWebsocket = 1
-	CommandTypeSettings = 2 // w/ SuppressOutput=true
+	CommandTypeSettings  = 2 // w/ SuppressOutput=true
 )
 
 type GameCommandPacket struct {
-	UUID uuid.UUID
+	UUID        uuid.UUID
 	CommandType uint8
-	Command string
+	Command     string
 }
 
 func (pkt GameCommandPacket) Marshal() []byte {
-	adb:=[]byte{}
-	if(pkt.CommandType!=CommandTypeSettings) {
-		bb, _:=pkt.UUID.MarshalBinary()
-		adb=bb
+	adb := []byte{}
+	if pkt.CommandType != CommandTypeSettings {
+		bb, _ := pkt.UUID.MarshalBinary()
+		adb = bb
 	}
 	return bytes.Join([][]byte{
 		[]byte{pkt.CommandType},
 		adb,
 		[]byte(pkt.Command),
-	},[]byte{})
+	}, []byte{})
 }
 
 func (pkt GameCommandPacket) Parse(cont []byte) bool {
-	pkt.CommandType=cont[0]
-	if(pkt.CommandType!=CommandTypeSettings) {
-		err:=pkt.UUID.UnmarshalBinary(cont[1:17])
-		if(err!=nil) {
+	pkt.CommandType = cont[0]
+	if pkt.CommandType != CommandTypeSettings {
+		err := pkt.UUID.UnmarshalBinary(cont[1:17])
+		if err != nil {
 			return false
 		}
 	}
-	pkt.Command=string(cont[17:])
+	pkt.Command = string(cont[17:])
 	return true
 }
 
 func (_ GameCommandPacket) ID() uint8 {
-	return 6
+	return IDGameCommandPacket
 }
 
 func (_ GameCommandPacket) Name() string {
