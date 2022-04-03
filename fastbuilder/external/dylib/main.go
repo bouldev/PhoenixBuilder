@@ -268,18 +268,23 @@ func ReleaseConnByID(id int) {
 
 func main() {
 	//go build -o fb_conn.so -buildmode=c-shared main.go
-	client := NewClient("124.222.6.29:3456")
+	client := NewClient("localhost:3456")
 	if client != nil {
 		fmt.Println("Connect Success")
 	} else {
 		panic("Connection Fail")
 	}
-	//client.SendFBCmd("set 0 0 0")
+	client.SendFBCmd("set 0 0 0")
+
+	client.SendWSCmd("list")
+	client.SendMCCmd("say hello")
+	client.SendNoResponseMCCmd("time set day")
+
 	client.SendMCPacket(&mc_packet.SettingsCommand{
 		CommandLine:    "time set night",
 		SuppressOutput: true,
 	})
-	//client.SendWSCmd("list")
+
 	for {
 		gamePacket, err := client.RecvDecodedGamePacket()
 		if err != nil {
@@ -287,9 +292,4 @@ func main() {
 		}
 		fmt.Println(gamePacket)
 	}
-
-	//oldP := &packet.EvalPBCommandPacket{Command: "set 0 0 0"}
-	//newP := &packet.EvalPBCommandPacket{}
-	//newP.Parse(oldP.Marshal())
-	//println(newP)
 }
