@@ -18,7 +18,7 @@ type GameCommandPacket struct {
 	Command     string
 }
 
-func (pkt GameCommandPacket) Marshal() []byte {
+func (pkt *GameCommandPacket) Marshal() []byte {
 	adb := []byte{}
 	if pkt.CommandType != CommandTypeSettings {
 		bb, _ := pkt.UUID.MarshalBinary()
@@ -31,7 +31,7 @@ func (pkt GameCommandPacket) Marshal() []byte {
 	}, []byte{})
 }
 
-func (pkt GameCommandPacket) Parse(cont []byte) bool {
+func (pkt *GameCommandPacket) Parse(cont []byte) bool {
 	pkt.CommandType = cont[0]
 	if pkt.CommandType != CommandTypeSettings {
 		err := pkt.UUID.UnmarshalBinary(cont[1:17])
@@ -43,10 +43,10 @@ func (pkt GameCommandPacket) Parse(cont []byte) bool {
 	return true
 }
 
-func (_ GameCommandPacket) ID() uint8 {
+func (_ *GameCommandPacket) ID() uint8 {
 	return IDGameCommandPacket
 }
 
-func (_ GameCommandPacket) Name() string {
+func (_ *GameCommandPacket) Name() string {
 	return "GameCommandPacket"
 }
