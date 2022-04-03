@@ -123,7 +123,6 @@ jobs:
         ls -lh build/>release.txt
         mv release.txt build/release-list.txt
         cp version build/version.txt
-        tar -czf fb-linux-binaries-v2.tar.gz build/*
     - name: Generate index files for storage over github
       run: node index_generator.js build
     - name: Deploy to storage
