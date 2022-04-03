@@ -57,13 +57,13 @@ func (s *KCPConnectionServerHandler) Listen(address string) error {
 			//remoteDescription := proxyConn.RemoteAddr().String()
 			//fmt.Printf("Transfer: accept new connection @ %v\n", remoteDescription)
 			baseConn := &StreamChannelWrapper{reader: proxyConn, writer: proxyConn}
-			connectionCloser:=func() {
+			connectionCloser := func() {
 				proxyConn.Close()
 			}
 			encryptionConn := &EncryptedChannel{
 				connection: baseConn,
 				isInitator: false,
-				closer: connectionCloser,
+				closer:     connectionCloser,
 			}
 			if encryptionConn.Init() != nil {
 				//fmt.Printf("Transfer: encryption init fail\n")
@@ -208,11 +208,11 @@ type EncryptedChannel struct {
 	isInitator bool
 	encryptor  *EncryptionSession
 	isClosed   bool
-	closer func()
+	closer     func()
 }
 
 func (i *EncryptedChannel) Close() {
-	i.isClosed=true
+	i.isClosed = true
 	i.closer()
 }
 
@@ -221,7 +221,7 @@ func (i *EncryptedChannel) initiateEncryptSession() error {
 	salt := make([]byte, 16)
 	rand.Read(salt)
 	encodedInitiatorPublicKey, _ := x509.MarshalPKIXPublicKey(&initiatorPrivateKey.PublicKey)
-	initPacket:=append(append([]byte{0x04},salt...),encodedInitiatorPublicKey...)
+	initPacket := append(append([]byte{0x04}, salt...), encodedInitiatorPublicKey...)
 	err := i.connection.SendFrame([]byte(initPacket))
 	if err != nil {
 		return err
@@ -230,8 +230,8 @@ func (i *EncryptedChannel) initiateEncryptSession() error {
 	if err != nil {
 		return fmt.Errorf("cannot get public key from responder: %v", err)
 	}
-	if(data[0]!=0x03) {
-		return fmt.Errorf("Got unexpected command %d when establishing an encrypted session",data[0])
+	if data[0] != 0x03 {
+		return fmt.Errorf("Got unexpected command %d when establishing an encrypted session", data[0])
 	}
 	responderPubKeyData, err := x509.ParsePKIXPublicKey(data[1:])
 	if err != nil {
@@ -252,17 +252,17 @@ func (r *EncryptedChannel) waitForEncryptSession() error {
 	if err != nil {
 		return fmt.Errorf("cannot read data from Initiator: %v", err)
 	}
-	if(initiatorPubkeyAndSaltData[0]!=0x04) {
-		return fmt.Errorf("Unexcepted Packet ID %d received",initiatorPubkeyAndSaltData[0])
+	if initiatorPubkeyAndSaltData[0] != 0x04 {
+		return fmt.Errorf("Unexcepted Packet ID %d received", initiatorPubkeyAndSaltData[0])
 	}
 	responderPrivateKey, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	encodedResponderPublicKey, _ := x509.MarshalPKIXPublicKey(&responderPrivateKey.PublicKey)
-	err = r.connection.SendFrame(append([]byte{0x03},encodedResponderPublicKey...))
+	err = r.connection.SendFrame(append([]byte{0x03}, encodedResponderPublicKey...))
 	if err != nil {
 		return err
 	}
-	peerSalt:=initiatorPubkeyAndSaltData[1:17]
-	peerPublicKey:=initiatorPubkeyAndSaltData[17:]
+	peerSalt := initiatorPubkeyAndSaltData[1:17]
+	peerPublicKey := initiatorPubkeyAndSaltData[17:]
 	initiatorPublicKeyData, err := x509.ParsePKIXPublicKey(peerPublicKey)
 	if err != nil {
 		return fmt.Errorf("error parsing public key: %v", err)
@@ -288,7 +288,7 @@ func (e *EncryptedChannel) Init() error {
 func (e *EncryptedChannel) SendFrame(data []byte) error {
 	encyptedData := data[:]
 	e.encryptor.Encrypt(encyptedData)
-	return e.connection.SendFrame(append([]byte{0x06},encyptedData...))
+	return e.connection.SendFrame(append([]byte{0x06}, encyptedData...))
 }
 
 func (e *EncryptedChannel) RecvFrame() ([]byte, error) {
@@ -297,10 +297,10 @@ func (e *EncryptedChannel) RecvFrame() ([]byte, error) {
 		e.isClosed = true
 		return nil, err
 	}
-	if(encryptedData[0]!=0x06) {
+	if encryptedData[0] != 0x06 {
 		e.Close()
 		return nil, fmt.Errorf("Data with unknown type %d incorrectly handled by EncryptedChannel.", encryptedData[0])
 	}
 	e.encryptor.Decrypt(encryptedData[1:])
-	return encryptedData, nil
+	return encryptedData[1:], nil
 }
