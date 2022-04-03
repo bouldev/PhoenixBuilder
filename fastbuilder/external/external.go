@@ -5,6 +5,7 @@ import (
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
+	"phoenixbuilder/minecraft"
 )
 
 type ExternalConnectionHandler struct {
@@ -65,6 +66,8 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 				} else {
 					env.CommandSender.SendCommand(p.Command, p.UUID)
 				}
+			case *packet.GamePacket:
+				(env.Connection).(*minecraft.Conn).WritePacketBytes(p.Content)
 			}
 		}
 	}()
