@@ -20,6 +20,6 @@ func TitleRequest(target types.Target, lines ...string) string {
 	return cmd
 }
 
-func (sender CommandSender) Title(lines ...string) error {
+func (sender *CommandSender) Title(lines ...string) error {
 	return sender.SendSizukanaCommand(TitleRequest(types.AllPlayers, lines...))
 }

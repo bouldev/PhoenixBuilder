@@ -9,19 +9,24 @@ import (
 	"fmt"
 )
 
-var UUIDMap sync.Map//= make(map[string]func(*minecraft.Conn,*[]protocol.CommandOutputMessage))
-var BlockUpdateSubscribeMap sync.Map
-
-func ClearUUIDMap() {
-	UUIDMap=sync.Map{}
+func (sender *CommandSender) GetBlockUpdateSubscribeMap() *sync.Map {
+	return &sender.BlockUpdateSubscribeMap
 }
 
-func (sender CommandSender) getConn() *minecraft.Conn {
+func (sender *CommandSender) GetUUIDMap() *sync.Map {
+	return &sender.UUIDMap
+}
+
+func (sender *CommandSender) ClearUUIDMap() {
+	sender.UUIDMap=sync.Map{}
+}
+
+func (sender *CommandSender) getConn() *minecraft.Conn {
 	conn:=sender.env.Connection.(*minecraft.Conn)
 	return conn
 }
 
-func (sender CommandSender) SendCommand(command string, UUID uuid.UUID) error {
+func (sender *CommandSender) SendCommand(command string, UUID uuid.UUID) error {
 	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
 	origin := protocol.CommandOrigin{
 		Origin:         protocol.CommandOriginPlayer,
@@ -38,7 +43,7 @@ func (sender CommandSender) SendCommand(command string, UUID uuid.UUID) error {
 	return sender.getConn().WritePacket(commandRequest)
 }
 
-func (sender CommandSender) SendWSCommand(command string, UUID uuid.UUID) error {
+func (sender *CommandSender) SendWSCommand(command string, UUID uuid.UUID) error {
 	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
 	origin := protocol.CommandOrigin{
 		Origin:         protocol.CommandOriginAutomationPlayer,
@@ -55,14 +60,14 @@ func (sender CommandSender) SendWSCommand(command string, UUID uuid.UUID) error 
 	return sender.getConn().WritePacket(commandRequest)
 }
 
-func (sender CommandSender) SendSizukanaCommand(command string) error {
+func (sender *CommandSender) SendSizukanaCommand(command string) error {
 	return sender.getConn().WritePacket(&packet.SettingsCommand{
 		CommandLine: command,
 		SuppressOutput: true,
 	})
 }
 
-func (sender CommandSender) SendChat(content string) error {
+func (sender *CommandSender) SendChat(content string) error {
 	conn:=sender.getConn()
 	idd:=conn.IdentityData()
 	return conn.WritePacket(&packet.Text {

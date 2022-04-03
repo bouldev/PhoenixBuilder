@@ -4,12 +4,10 @@ import (
 	"time"
 	"fmt"
 	"phoenixbuilder/minecraft"
-	"phoenixbuilder/fastbuilder/command"
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/configuration"
-	"phoenixbuilder/fastbuilder/function"
 	"io/ioutil"
 	"strings"
 	"runtime"
@@ -101,7 +99,7 @@ func SetRootForCurPath() bool {
 }
 
 func OpenSubMenu(sel int, env *environment.PBEnvironment) bool {
-	fh := env.FunctionHolder.(*function.FunctionHolder)
+	fh := env.FunctionHolder
 	if(isInSelectionType==1){
 		if(sel==0) {
 			isInSelectionType=0
@@ -243,13 +241,13 @@ func OpenMenu(env *environment.PBEnvironment) {
 			player:=configuration.RespondUser
 			lineUUID,_:=uuid.NewUUID()
 			lineChan:=make(chan *packet.CommandOutput)
-			command.UUIDMap.Store(lineUUID.String(),lineChan)
-			env.CommandSender.(command.CommandSender).SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~400 ~ ~",player,conn.IdentityData().DisplayName),lineUUID)
+			(*env.CommandSender.GetUUIDMap()).Store(lineUUID.String(),lineChan)
+			env.CommandSender.SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~400 ~ ~",player,conn.IdentityData().DisplayName),lineUUID)
 			<-lineChan
 			close(lineChan)
 			OPRuntimeIdReceivedChannel=make(chan bool)
 			dispUUID,_:=uuid.NewUUID()
-			env.CommandSender.(command.CommandSender).SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~ ~2 ~",player,conn.IdentityData().DisplayName),dispUUID)
+			env.CommandSender.SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~ ~2 ~",player,conn.IdentityData().DisplayName),dispUUID)
 			<-OPRuntimeIdReceivedChannel
 			close(OPRuntimeIdReceivedChannel)
 			OPRuntimeIdReceivedChannel=nil
@@ -258,7 +256,7 @@ func OpenMenu(env *environment.PBEnvironment) {
 		for {
 			player:=configuration.RespondUser
 			dispUUID,_:=uuid.NewUUID()
-			env.CommandSender.(command.CommandSender).SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~ ~2 ~",player,conn.IdentityData().DisplayName),dispUUID)
+			env.CommandSender.SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~ ~2 ~",player,conn.IdentityData().DisplayName),dispUUID)
 			if(LastOPPitch<(-60)) {
 				curSel--
 				if(curSel<0) {

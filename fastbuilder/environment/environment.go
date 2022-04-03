@@ -1,6 +1,7 @@
 package environment
 
-// This package imports nothing to avoid import cycle.
+// This package imports only external packages to avoid import cycle.
+import "phoenixbuilder/fastbuilder/environment/interfaces"
 
 type LoginInfo struct {
 	Token string
@@ -14,13 +15,13 @@ type PBEnvironment struct {
 	IsDebug bool
 	ScriptBridge interface{}
 	ScriptHolder interface{}
-	FunctionHolder interface{}
+	FunctionHolder interfaces.FunctionHolder
 	FBUCUsername string
 	WorldChatChannel chan []string
 	FBAuthClient interface{}
 	GlobalFullConfig interface{}
 	RespondUser string
-	CommandSender interface{}
+	CommandSender interfaces.CommandSender
 	Connection interface{}
 	TaskHolder interface{}
 	ActivateTaskStatus chan bool

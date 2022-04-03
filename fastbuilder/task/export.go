@@ -5,7 +5,6 @@ import (
 	"phoenixbuilder/dragonfly/server/block/cube"
 	"phoenixbuilder/dragonfly/server/world"
 	"phoenixbuilder/fastbuilder/bdump"
-	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/parsing"
 	"phoenixbuilder/fastbuilder/types"
@@ -33,7 +32,7 @@ type SolidRet struct {
 var ExportWaiter chan map[string]interface{}
 
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task {
-	cmdsender:=env.CommandSender.(command.CommandSender)
+	cmdsender:=env.CommandSender
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
 		cmdsender.Tellraw(fmt.Sprintf("Failed to parse command: %v",err))
