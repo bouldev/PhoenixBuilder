@@ -2,7 +2,6 @@ package main
 
 import (
 	"C"
-	"bufio"
 	"bytes"
 	"fmt"
 	"github.com/google/uuid"
@@ -58,10 +57,13 @@ func (c *Client) SendFBCmd(cmd string) error {
 }
 
 func (c *Client) SendMCPacket(pk mc_packet.Packet) error {
-	var b bytes.Buffer
-	w := protocol.NewWriter(bufio.NewWriter(&b), 0)
+	b := &bytes.Buffer{}
+	w := protocol.NewWriter(b, 0)
+	hdr := pk.ID()
+	w.Varuint32(&hdr)
 	pk.Marshal(w)
-	return c.Send(&packet.GamePacket{Content: b.Bytes()})
+	p := &packet.GamePacket{Content: b.Bytes()}
+	return c.Send(p)
 }
 
 func (c *Client) sendMCCmd(CommandType byte, cmd string) (uuid.UUID, error) {
@@ -274,7 +276,7 @@ func main() {
 	}
 	//client.SendFBCmd("set 0 0 0")
 	client.SendMCPacket(&mc_packet.SettingsCommand{
-		CommandLine:    "tp @a @s",
+		CommandLine:    "time set night",
 		SuppressOutput: true,
 	})
 	//client.SendWSCmd("list")

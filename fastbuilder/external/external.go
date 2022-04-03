@@ -67,7 +67,7 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 					env.CommandSender.SendCommand(p.Command, p.UUID)
 				}
 			case *packet.GamePacket:
-				(env.Connection).(*minecraft.Conn).WritePacketBytes(p.Content)
+				(env.Connection).(*minecraft.Conn).Write(p.Content)
 			}
 		}
 	}()
