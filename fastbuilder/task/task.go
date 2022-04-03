@@ -152,7 +152,7 @@ func (holder *TaskHolder) FindTask(taskId int64) *Task {
 func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	holder:=env.TaskHolder.(*TaskHolder)
 	conn:=env.Connection.(*minecraft.Conn)
-	cmdsender:=env.CommandSender.(command.CommandSender)
+	cmdsender:=env.CommandSender
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
 		cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand),err))
@@ -265,13 +265,13 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					if !isFastMode {
 						//<-time.After(time.Second)
 						wc:=make(chan bool)
-						command.BlockUpdateSubscribeMap.Store(protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)},wc)
+						(*cmdsender.GetBlockUpdateSubscribeMap()).Store(protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)},wc)
 						cmdsender.SendSizukanaCommand(*request)
 						select {
 						case <-wc:
 							break
 						case <-time.After(time.Second*2):
-							command.BlockUpdateSubscribeMap.Delete(protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)})
+							(*cmdsender.GetBlockUpdateSubscribeMap()).Delete(protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)})
 						}
 						close(wc)
 					}else{
@@ -285,11 +285,11 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				if !isFastMode {
 					UUID:=uuid.New()
 					w:=make(chan *packet.CommandOutput)
-					command.UUIDMap.Store(UUID.String(), w)
+					(*cmdsender.GetUUIDMap()).Store(UUID.String(), w)
 					cmdsender.SendWSCommand(fmt.Sprintf("tp %d %d %d",curblock.Point.X,curblock.Point.Y+1,curblock.Point.Z), UUID)
 					select {
 					case <-time.After(time.Second):
-						command.UUIDMap.Delete(UUID.String())
+						(*cmdsender.GetUUIDMap()).Delete(UUID.String())
 						break
 					case <-w:
 					}
@@ -363,7 +363,7 @@ func InitTaskStatusDisplay(env *environment.PBEnvironment) {
 	go func() {
 		for {
 			str:=<-holder.BrokSender
-			env.CommandSender.(command.CommandSender).Tellraw(str)
+			env.CommandSender.Tellraw(str)
 		}
 	} ()
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -396,7 +396,7 @@ func InitTaskStatusDisplay(env *environment.PBEnvironment) {
 			if len(displayStrs) == 0 {
 				continue
 			}
-			env.CommandSender.(command.CommandSender).Title(strings.Join(displayStrs,"\n"))
+			env.CommandSender.Title(strings.Join(displayStrs,"\n"))
 		}
 	} ()
 }

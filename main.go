@@ -341,7 +341,7 @@ func runClient(env *environment.PBEnvironment) {
 		ud, _ := uuid.NewUUID()
 		chann := make(chan *packet.CommandOutput)
 		if waitResponse {
-			command.UUIDMap.Store(ud.String(), chann)
+			commandSender.UUIDMap.Store(ud.String(), chann)
 		}
 		commandSender.SendCommand(mcCmd, ud)
 		if waitResponse {
@@ -379,14 +379,14 @@ func runClient(env *environment.PBEnvironment) {
 			if cmd[0] == '.' {
 				ud, _ := uuid.NewUUID()
 				chann := make(chan *packet.CommandOutput)
-				command.UUIDMap.Store(ud.String(), chann)
+				commandSender.UUIDMap.Store(ud.String(), chann)
 				commandSender.SendCommand(cmd[1:], ud)
 				resp := <-chann
 				fmt.Printf("%+v\n", resp)
 			} else if cmd[0] == '!' {
 				ud, _ := uuid.NewUUID()
 				chann := make(chan *packet.CommandOutput)
-				command.UUIDMap.Store(ud.String(), chann)
+				commandSender.UUIDMap.Store(ud.String(), chann)
 				commandSender.SendWSCommand(cmd[1:], ud)
 				resp := <-chann
 				fmt.Printf("%+v\n", resp)
@@ -579,7 +579,7 @@ func runClient(env *environment.PBEnvironment) {
 				commandSender.Tellraw(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
 				break
 			}
-			pr, ok := command.UUIDMap.LoadAndDelete(p.CommandOrigin.UUID.String())
+			pr, ok := commandSender.UUIDMap.LoadAndDelete(p.CommandOrigin.UUID.String())
 			if ok {
 				pu := pr.(chan *packet.CommandOutput)
 				pu <- p
@@ -598,7 +598,7 @@ func runClient(env *environment.PBEnvironment) {
 				world_provider.DoCache(p)
 			}
 		case *packet.UpdateBlock:
-			channel, h := command.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
+			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
 			if h {
 				ch := channel.(chan bool)
 				ch <- true

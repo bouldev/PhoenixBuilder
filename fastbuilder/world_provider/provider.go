@@ -7,7 +7,6 @@ import (
 	"phoenixbuilder/dragonfly/server/world/chunk"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/fastbuilder/environment"
-	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/minecraft"
 	"github.com/google/uuid"
 	"runtime"
@@ -55,7 +54,7 @@ func quickCache(pkt *packet.LevelChunk) {
 
 func wander(env *environment.PBEnvironment, position world.ChunkPos) {
 	u_d, _ := uuid.NewUUID()
-	cmdsender:=env.CommandSender.(command.CommandSender)
+	cmdsender:=env.CommandSender
 	err:=cmdsender.SendWSCommand(fmt.Sprintf("tp %d 127 %d",position[0]*16+100000,1000000-position[1]*16+100000),u_d)
 	if(err!=nil) {
 		panic(fmt.Errorf("Connection closed: %+v",err))
@@ -92,7 +91,7 @@ func (p *OnlineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chunk
 	}
 	u_d, _ := uuid.NewUUID()
 	ChunkInput=make(chan *packet.LevelChunk,32)
-	err=p.env.CommandSender.(command.CommandSender).SendWSCommand(fmt.Sprintf("tp %d 127 %d",position[0]*16,position[1]*16),u_d)
+	err=p.env.CommandSender.SendWSCommand(fmt.Sprintf("tp %d 127 %d",position[0]*16,position[1]*16),u_d)
 	if(err!=nil) {
 		panic(fmt.Errorf("[2]Connection closed: %+v",err))
 	}

@@ -33,7 +33,7 @@ func TellRawRequest(target types.Target, lines ...string) string {
 	return cmd
 }
 
-func (sender CommandSender) Tellraw(content string) error {
+func (sender *CommandSender) Tellraw(content string) error {
 	//uuid1, _ := uuid.NewUUID()
 	bridge_fmt.Printf("%s\n", content)
 	return nil
@@ -58,7 +58,7 @@ func RawTellRawRequest(target types.Target, line string) string {
 	return cmd
 }
 
-func (cmd_sender CommandSender) WorldChatTellraw(sender string, content string) error {
+func (cmd_sender *CommandSender) WorldChatTellraw(sender string, content string) error {
 	bridge_fmt.Printf("W <%s> %s\n", sender, content)
 	str:=fmt.Sprintf("§eW §r<%s> %s",sender,content)
 	return cmd_sender.SendSizukanaCommand(RawTellRawRequest(types.AllPlayers, str))

@@ -4,8 +4,6 @@ import (
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/fastbuilder/environment"
-	"phoenixbuilder/fastbuilder/function"
-	"phoenixbuilder/fastbuilder/command"
 	"fmt"
 )
 
@@ -57,17 +55,15 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 			case packet.PacketViolationWarningPacket:
 				break
 			case packet.EvalPBCommandPacket:
-				fh:=handler.env.FunctionHolder.(*function.FunctionHolder)
-				fh.Process(p.Command)
+				handler.env.FunctionHolder.Process(p.Command)
 			case packet.GameCommandPacket:
-				cmdSender:=env.CommandSender.(command.CommandSender)
 				if(p.CommandType==packet.CommandTypeSettings) {
-					cmdSender.SendSizukanaCommand(p.Command)
+					env.CommandSender.SendSizukanaCommand(p.Command)
 					break
 				}else if(p.CommandType==packet.CommandTypeNormal) {
-					cmdSender.SendWSCommand(p.Command,p.UUID)
+					env.CommandSender.SendWSCommand(p.Command,p.UUID)
 				}else{
-					cmdSender.SendCommand(p.Command,p.UUID)
+					env.CommandSender.SendCommand(p.Command,p.UUID)
 				}
 			}
 		}

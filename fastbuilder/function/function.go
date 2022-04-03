@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"phoenixbuilder/fastbuilder/environment"
-	"phoenixbuilder/fastbuilder/command"
 	"phoenixbuilder/fastbuilder/i18n"
 )
 
@@ -74,7 +73,7 @@ func (function_holder *FunctionHolder) RegisterEnum(desc string,parser func(stri
 }
 
 func (function_holder *FunctionHolder) Process(msg string) {
-	cmdsender:=function_holder.env.CommandSender.(command.CommandSender)
+	cmdsender:=function_holder.env.CommandSender
 	slc:=strings.Split(msg, " ")
 	fun, ok := function_holder.FunctionMap[slc[0]]
 	if !ok {
