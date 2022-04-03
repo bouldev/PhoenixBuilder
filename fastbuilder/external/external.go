@@ -82,6 +82,7 @@ func ListenExt(env *environment.PBEnvironment, address string) {
 	handlerStruct := &ExternalConnectionHandler{
 		listener:      &connection.KCPConnectionServerHandler{},
 		PacketChannel: make(chan []byte),
+		env:           env,
 	}
 	env.ExternalConnectionHandler = handlerStruct
 	env.Destructors = append(env.Destructors, func() {
