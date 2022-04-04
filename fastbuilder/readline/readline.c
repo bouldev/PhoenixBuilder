@@ -83,9 +83,10 @@ void do_interrupt() {
 
 void init_readline() {
 	stifle_history(256);
-	rl_catch_signals=0;
 	rl_readline_name="PhoenixBuilder";
 	rl_attempted_completion_function=fb_readline_completion;
+	rl_catch_signals=0;
+	rl_catch_sigwinch=0;
 }
 
 void **readline_to_args() {

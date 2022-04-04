@@ -14,6 +14,7 @@ type ScriptHolder struct {
 
 func InitScriptHolder(env *environment.PBEnvironment) *ScriptHolder {
 	sh:=&ScriptHolder {}
+	fh.allScripts=map[string]func() {}
 	fh:=env.FunctionHolder.(*function.FunctionHolder)
 	fh.RegisterFunction(&function.Function {
 		Name: "script",
