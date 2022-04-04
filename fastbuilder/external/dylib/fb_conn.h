@@ -79,7 +79,7 @@ extern char* ReleaseConnByID(GoInt id);
 
 /* Return type for RecvGamePacket */
 struct RecvGamePacket_return {
-	char* r0; /* pktBytes */
+	GoSlice r0; /* pktBytes */
 	char* r1; /* err */
 };
 extern struct RecvGamePacket_return RecvGamePacket(GoInt connID);
@@ -107,10 +107,11 @@ struct GamePacketBytesAsIsJsonStr_return {
 	char* r1; /* err */
 };
 extern struct GamePacketBytesAsIsJsonStr_return GamePacketBytesAsIsJsonStr(char* pktBytes);
+extern char* CreatePacketInJsonStrByID(GoInt packetID);
 
 /* Return type for JsonStrAsIsGamePacketBytes */
 struct JsonStrAsIsGamePacketBytes_return {
-	char* r0; /* pktBytes */
+	GoSlice r0; /* pktBytes */
 	char* r1; /* err */
 };
 extern struct JsonStrAsIsGamePacketBytes_return JsonStrAsIsGamePacketBytes(GoInt packetID, char* jsonStr);

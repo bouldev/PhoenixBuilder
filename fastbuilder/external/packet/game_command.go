@@ -38,8 +38,11 @@ func (pkt *GameCommandPacket) Parse(cont []byte) bool {
 		if err != nil {
 			return false
 		}
+		pkt.Command = string(cont[17:])
+	} else {
+		pkt.Command = string(cont[1:])
 	}
-	pkt.Command = string(cont[17:])
+
 	return true
 }
 

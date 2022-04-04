@@ -223,12 +223,19 @@ func objAvailable(id int) (*Client, error) {
 	}
 }
 
+func toCErrStr(err error) *C.char {
+	if err == nil {
+		return C.CString("")
+	}
+	return C.CString(err.Error())
+}
+
 //export ConnectFB
 func ConnectFB(address *C.char) (connID int, err *C.char) {
 	str := C.GoString(address)
 	// fmt.Println(str)
 	client := NewClient(str)
-	if client != nil {
+	if client == nil {
 		return -1, C.CString("connect fail")
 	}
 	for i, c := range DontGCMe {
@@ -260,7 +267,7 @@ func ReleaseConnByID(id int) (err *C.char) {
 }
 
 //export RecvGamePacket
-func RecvGamePacket(connID int) (pktBytes *C.char, err *C.char) {
+func RecvGamePacket(connID int) (pktBytes []C.char, err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
 		return C.CString(""), C.CString(_err.Error())
@@ -270,60 +277,65 @@ func RecvGamePacket(connID int) (pktBytes *C.char, err *C.char) {
 		bs = []byte{}
 		ReleaseConnByID(connID)
 		return C.CString(""), C.CString(_err.Error())
-	} else {
-		bs = bs[1:]
 	}
-	return C.CString(string(bs)), C.CString("")
+	fmt.Println(bs)
+	// copy the data into the buffer, by converting it to a Go array
+	return []C.char{bs}, C.CString("")
 }
 
 //export SendGamePacketBytes
 func SendGamePacketBytes(connID int, content []byte) (err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
+		ReleaseConnByID(connID)
 		return C.CString(_err.Error())
 	}
 	_err = obj.Send(&packet.GamePacket{Content: content})
-	return C.CString(_err.Error())
+	return toCErrStr(_err)
 }
 
 //export SendFBCommand
 func SendFBCommand(connID int, cmd *C.char) (err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
+		ReleaseConnByID(connID)
 		return C.CString(_err.Error())
 	}
 	_err = obj.SendFBCmd(C.GoString(cmd))
-	return C.CString(_err.Error())
+	return toCErrStr(_err)
 }
 
 //export SendWSCommand
 func SendWSCommand(connID int, cmd *C.char) (uuid *C.char, err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
+		ReleaseConnByID(connID)
 		return C.CString(""), C.CString(_err.Error())
 	}
 	uid, _err := obj.SendWSCmd(C.GoString(cmd))
-	return C.CString(uid.String()), C.CString(_err.Error())
+	return C.CString(uid.String()), toCErrStr(_err)
 }
 
 //export SendMCCommand
 func SendMCCommand(connID int, cmd *C.char) (uuid *C.char, err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
+		ReleaseConnByID(connID)
 		return C.CString(""), C.CString(_err.Error())
 	}
 	uid, _err := obj.SendMCCmd(C.GoString(cmd))
-	return C.CString(uid.String()), C.CString(_err.Error())
+	return C.CString(uid.String()), toCErrStr(_err)
 }
 
 //export SendNoResponseCommand
 func SendNoResponseCommand(connID int, cmd *C.char) (err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
+		ReleaseConnByID(connID)
 		return C.CString(_err.Error())
 	}
 	_err = obj.SendNoResponseMCCmd(C.GoString(cmd))
-	return C.CString(_err.Error())
+	return toCErrStr(_err)
 }
 
 //export GamePacketBytesAsIsJsonStr
@@ -335,22 +347,32 @@ func GamePacketBytesAsIsJsonStr(pktBytes *C.char) (jsonStr *C.char, err *C.char)
 	if _err != nil {
 		return C.CString(""), C.CString(_err.Error())
 	}
-	return C.CString(string(marshal)), C.CString(_err.Error())
+	return C.CString(string(marshal)), toCErrStr(_err)
+}
+
+//export CreatePacketInJsonStrByID
+func CreatePacketInJsonStrByID(packetID int) (jsonStr *C.char) {
+	pk := TypePool[uint32(packetID)]()
+	marshal, _err := json.Marshal(pk)
+	if _err != nil {
+		return C.CString(_err.Error())
+	}
+	return C.CString(string(marshal))
 }
 
 //export JsonStrAsIsGamePacketBytes
-func JsonStrAsIsGamePacketBytes(packetID int, jsonStr *C.char) (pktBytes *C.char, err *C.char) {
+func JsonStrAsIsGamePacketBytes(packetID int, jsonStr *C.char) (pktBytes []byte, err *C.char) {
 	pk := TypePool[uint32(packetID)]()
 	_err := json.Unmarshal([]byte(C.GoString(jsonStr)), &pk)
 	if _err != nil {
-		return C.CString(""), C.CString(_err.Error())
+		return []byte{}, C.CString(_err.Error())
 	}
 	b := &bytes.Buffer{}
 	w := protocol.NewWriter(b, 0)
 	hdr := pk.ID()
 	w.Varuint32(&hdr)
 	pk.Marshal(w)
-	return C.CString(string(b.Bytes())), C.CString("")
+	return b.Bytes(), C.CString("")
 }
 
 func main() {
