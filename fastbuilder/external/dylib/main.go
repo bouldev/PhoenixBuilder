@@ -267,7 +267,7 @@ func ReleaseConnByID(id int) (err *C.char) {
 }
 
 //export RecvGamePacket
-func RecvGamePacket(connID int) (pktBytes []C.char, err *C.char) {
+func RecvGamePacket(connID int) (pktBytes *C.char, err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
 		return C.CString(""), C.CString(_err.Error())
