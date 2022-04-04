@@ -3,6 +3,7 @@ package main
 import (
 	"C"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/external/connection"
@@ -14,6 +15,7 @@ import (
 
 var ErrSendOnClosedConnection = fmt.Errorf("send on closed connection")
 var ErrRecvOnClosedConnection = fmt.Errorf("recv on closed connection")
+var TypePool mc_packet.Pool
 
 type Client struct {
 	conn         connection.ReliableConnection
@@ -22,7 +24,6 @@ type Client struct {
 	closed       bool
 	pongDeadline time.Time
 	gamePackets  chan []byte
-	mcTypePool   mc_packet.Pool
 }
 
 func (c *Client) SendFrame(f []byte) error {
@@ -109,7 +110,7 @@ func (c *Client) RecvDecodedGamePacket() (mc_packet.Packet, error) {
 	if err != nil {
 		return nil, err
 	}
-	pk := c.mcTypePool[uint32(mcPkt[0])]()
+	pk := TypePool[uint32(mcPkt[0])]()
 	pk.Unmarshal(protocol.NewReader(bytes.NewReader(mcPkt[1:]), 0))
 	return pk, nil
 }
@@ -155,7 +156,7 @@ func (c *Client) routine() {
 				c.Close()
 				break
 			}
-			c.Send(&packet.PingPacket{})
+			go func() { c.Send(&packet.PingPacket{}) }()
 			//fmt.Println("Ping")
 		case rawPacket := <-rc:
 			pkt, canParse := packet.Deserialize(rawPacket)
@@ -200,7 +201,9 @@ func NewClient(address string) *Client {
 			closed:       false,
 			pongDeadline: time.Now().Add(3 * time.Second),
 			gamePackets:  make(chan []byte, 1024),
-			mcTypePool:   mc_packet.NewPool(),
+		}
+		if TypePool == nil {
+			TypePool = mc_packet.NewPool()
 		}
 		go c.routine()
 		return c
@@ -209,87 +212,147 @@ func NewClient(address string) *Client {
 
 var DontGCMe []*Client
 
-func getConnID(client *Client) int {
-	for i, c := range DontGCMe {
-		if c == nil {
-			DontGCMe[i] = client
-			return i
-		}
+func objAvailable(id int) (*Client, error) {
+	if id < 0 || id >= len(DontGCMe) {
+		return nil, fmt.Errorf("id %v out of range %v\n", id, len(DontGCMe))
 	}
-	i := len(DontGCMe)
-	DontGCMe = append(DontGCMe, client)
-	return i
+	if c := DontGCMe[id]; c == nil {
+		return nil, fmt.Errorf("id %v has been released", id)
+	} else {
+		return c, nil
+	}
 }
 
 //export ConnectFB
-func ConnectFB(address *C.char) int {
+func ConnectFB(address *C.char) (connID int, err *C.char) {
 	str := C.GoString(address)
 	// fmt.Println(str)
 	client := NewClient(str)
 	if client != nil {
-		fmt.Printf("Connect to %v fail\n", str)
-		return -1
+		return -1, C.CString("connect fail")
 	}
-	return getConnID(client)
+	for i, c := range DontGCMe {
+		if c == nil {
+			DontGCMe[i] = client
+			return i, C.CString("")
+		}
+	}
+	i := len(DontGCMe)
+	DontGCMe = append(DontGCMe, client)
+	return i, C.CString("")
 }
 
 //export ReleaseConnByID
-func ReleaseConnByID(id int) {
-	if id >= len(DontGCMe) {
-		fmt.Printf("id %v out of range %v\n", id, len(DontGCMe))
-		return
-	}
-	conn := DontGCMe[id]
-	if conn != nil {
-		conn.Close()
+func ReleaseConnByID(id int) (err *C.char) {
+	if _, _err := objAvailable(id); _err != nil {
+		return C.CString(_err.Error())
+	} else {
 		DontGCMe[id] = nil
 	}
 	for {
 		if len(DontGCMe) != 0 && DontGCMe[len(DontGCMe)-1] == nil {
 			DontGCMe = DontGCMe[0 : len(DontGCMe)-1]
+		} else {
+			break
 		}
 	}
+	return C.CString("")
 }
 
-//
-////export RecvFrame
-//func RecvFrame(connID int) *C.char {
-//	bs, err := DontGCMe[connID].RecvFrame()
-//	// fmt.Println(bs, err)
-//	if err != nil {
-//		// fmt.Println(err)
-//		bs = []byte{}
-//		ReleaseConnByID(connID)
-//	} else {
-//		bs = bs[1:]
-//	}
-//	return C.CString(string(bs))
-//}
+//export RecvGamePacket
+func RecvGamePacket(connID int) (pktBytes *C.char, err *C.char) {
+	obj, _err := objAvailable(connID)
+	if _err != nil {
+		return C.CString(""), C.CString(_err.Error())
+	}
+	bs, _err := obj.RecvGamePacket()
+	if _err != nil {
+		bs = []byte{}
+		ReleaseConnByID(connID)
+		return C.CString(""), C.CString(_err.Error())
+	} else {
+		bs = bs[1:]
+	}
+	return C.CString(string(bs)), C.CString("")
+}
+
+//export SendGamePacketBytes
+func SendGamePacketBytes(connID int, content []byte) (err *C.char) {
+	obj, _err := objAvailable(connID)
+	if _err != nil {
+		return C.CString(_err.Error())
+	}
+	_err = obj.Send(&packet.GamePacket{Content: content})
+	return C.CString(_err.Error())
+}
+
+//export SendFBCommand
+func SendFBCommand(connID int, cmd *C.char) (err *C.char) {
+	obj, _err := objAvailable(connID)
+	if _err != nil {
+		return C.CString(_err.Error())
+	}
+	_err = obj.SendFBCmd(C.GoString(cmd))
+	return C.CString(_err.Error())
+}
+
+//export SendWSCommand
+func SendWSCommand(connID int, cmd *C.char) (uuid *C.char, err *C.char) {
+	obj, _err := objAvailable(connID)
+	if _err != nil {
+		return C.CString(""), C.CString(_err.Error())
+	}
+	uid, _err := obj.SendWSCmd(C.GoString(cmd))
+	return C.CString(uid.String()), C.CString(_err.Error())
+}
+
+//export SendMCCommand
+func SendMCCommand(connID int, cmd *C.char) (uuid *C.char, err *C.char) {
+	obj, _err := objAvailable(connID)
+	if _err != nil {
+		return C.CString(""), C.CString(_err.Error())
+	}
+	uid, _err := obj.SendMCCmd(C.GoString(cmd))
+	return C.CString(uid.String()), C.CString(_err.Error())
+}
+
+//export SendNoResponseCommand
+func SendNoResponseCommand(connID int, cmd *C.char) (err *C.char) {
+	obj, _err := objAvailable(connID)
+	if _err != nil {
+		return C.CString(_err.Error())
+	}
+	_err = obj.SendNoResponseMCCmd(C.GoString(cmd))
+	return C.CString(_err.Error())
+}
+
+//export GamePacketBytesAsIsJsonStr
+func GamePacketBytesAsIsJsonStr(pktBytes *C.char) (jsonStr *C.char, err *C.char) {
+	mcPkt := []byte(C.GoString(pktBytes))
+	pk := TypePool[uint32(mcPkt[0])]()
+	pk.Unmarshal(protocol.NewReader(bytes.NewReader(mcPkt[1:]), 0))
+	marshal, _err := json.Marshal(pk)
+	if _err != nil {
+		return C.CString(""), C.CString(_err.Error())
+	}
+	return C.CString(string(marshal)), C.CString(_err.Error())
+}
+
+//export JsonStrAsIsGamePacketBytes
+func JsonStrAsIsGamePacketBytes(packetID int, jsonStr *C.char) (pktBytes *C.char, err *C.char) {
+	pk := TypePool[uint32(packetID)]()
+	_err := json.Unmarshal([]byte(C.GoString(jsonStr)), &pk)
+	if _err != nil {
+		return C.CString(""), C.CString(_err.Error())
+	}
+	b := &bytes.Buffer{}
+	w := protocol.NewWriter(b, 0)
+	hdr := pk.ID()
+	w.Varuint32(&hdr)
+	pk.Marshal(w)
+	return C.CString(string(b.Bytes())), C.CString("")
+}
 
 func main() {
 	//go build -o fb_conn.so -buildmode=c-shared main.go
-	client := NewClient("localhost:3456")
-	if client != nil {
-		fmt.Println("Connect Success")
-	} else {
-		panic("Connection Fail")
-	}
-	client.SendFBCmd("set 0 0 0")
-
-	client.SendWSCmd("list")
-	client.SendMCCmd("say hello")
-	client.SendNoResponseMCCmd("time set day")
-
-	client.SendMCPacket(&mc_packet.SettingsCommand{
-		CommandLine:    "time set night",
-		SuppressOutput: true,
-	})
-
-	for {
-		gamePacket, err := client.RecvDecodedGamePacket()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(gamePacket)
-	}
 }
