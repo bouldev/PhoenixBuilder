@@ -11,13 +11,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/minecraft/protocol"
 	mc_packet "phoenixbuilder/minecraft/protocol/packet"
 	"time"
 	"unsafe"
+
+	"github.com/google/uuid"
 )
 
 var ErrSendOnClosedConnection = fmt.Errorf("send on closed connection")
@@ -384,5 +385,8 @@ func JsonStrAsIsGamePacketBytes(packetID int, jsonStr *C.char) (pktBytes *C.char
 }
 
 func main() {
-	//go build -o fb_conn.so -buildmode=c-shared main.go
+	//Windows: go build -o fbconn.dll -buildmode=c-shared main.go
+	//Linux: go build -o libfbconn.so -buildmode=c-shared main.go
+	//Macos: go build -o fbconn.dylib -buildmode=c-shared main.go
+	//将生成的文件 (fbconn.dll 或 libfbconn.so 或 fbconn.dylib) 放在 conn.py 同一个目录下
 }

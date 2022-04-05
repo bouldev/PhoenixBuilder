@@ -53,9 +53,7 @@ class JsonStrAsIsGamePacketBytes_return(ctypes.Structure):
                 ("err", GoString)]
 
 
-def InitLib(lib_path: str):
-    LIB = ctypes.cdll.LoadLibrary(lib_path)
-
+def InitLib(LIB):
     # struct ConnectFB_return ConnectFB(char* address);
     LIB.ConnectFB.argtypes = [GoString]
     LIB.ConnectFB.restype = ConnectFB_return
@@ -147,10 +145,21 @@ def check_err(r):
 
 
 dirname, _ = os.path.split(__file__)
-libpath = os.path.join(dirname, "fb_conn.so")
-assert os.path.exists(libpath), f"dylib file: {libpath} not exist"
-LIB = InitLib(libpath)
-
+dirname=os.path.abspath(dirname)
+import platform
+if platform.uname()[0] == "Windows":
+    libpath = "fbconn.dll"
+    libpath = os.path.join(dirname, libpath)
+    LIB = ctypes.cdll.LoadLibrary(libpath)
+elif platform.uname()[0] == "Linux":
+    libpath = "libfbconn.so"
+    libpath = os.path.join(dirname, libpath)
+    LIB = ctypes.CDLL(libpath)
+else:
+    libpath = "fbconn.dylib"
+    libpath = os.path.join(dirname, libpath)
+    LIB = ctypes.CDLL(libpath)
+LIB=InitLib(LIB)
 
 def ConnectFB(address: str) -> int:
     r = LIB.ConnectFB(to_GoString(address))
@@ -170,7 +179,6 @@ def RecvGamePacket(connID: int) -> bytes:
     return bs
 
 
-# not tested
 def SendGamePacketBytes(connID: int, content: bytes) -> None:
     inp = to_GoByteSlice(content)
     r = LIB.SendGamePacketBytes(connID, inp)
@@ -221,6 +229,9 @@ def JsonStrAsIsGamePacketBytes(packetID: int,jsonStr:str) -> bytes:
 def inspectPacketID(packet:bytes):
     return packet[0]
 
+IDTime=10
+IDPlayerMove=19
+
 if __name__ == '__main__':
     # 首先启动 FB: fastbuilder --listen-external 0.0.0.0:3456
 
@@ -244,18 +255,37 @@ if __name__ == '__main__':
     bs=b'\t\x01\x00\x062401PT\x0f\xe4\xbd\xa0\xe5\xa5\xbd\xef\xbc\x8c\xe4\xb8\x96\xe7\x95\x8c\x00\x00\x02\x08PlayerId\t-12345678'
     SendGamePacketBytes(connID,bs)
 
+    # 示例：Json形式的数据包转为游戏数据包 （警告！效率低下！）
+    # 和处理无关，仅仅是说可以这么构造数据包
+    #构造完的数据包可以
+    asIsbytesPkt=JsonStrAsIsGamePacketBytes(
+        IDTime,
+        json.dumps({"Time":6769000})
+    )
+    # 很多数据包服务器都不处理，所以发了也没有效果甚至会被踢下线
+    # 服务器能接受的只有 指令，移动，动作 等少数数据包
+    # SendGamePacketBytes(connID,asIsbytesPkt)
+
     while True:
         # 接收游戏数据包
         bytesPkt = RecvGamePacket(connID)
-        print(bytesPkt)
+        
+        # 获得数据包的类型
+        packetType=inspectPacketID(bytesPkt)
+        print("packet type: ",packetType,end="\t")
 
-        # 解析数据包格式并转为json字符串（警告！效率低下！）
-        jsonPkt=GamePacketBytesAsIsJsonStr(bytesPkt)
-        print(jsonPkt)
+        # 处理两种数据包的示例,你可以自己选择要处理哪些数据包
+        if packetType==IDTime:
+            # 解析数据包格式并转为json字符串（警告！效率低下！）
+            jsonPkt=GamePacketBytesAsIsJsonStr(bytesPkt)
+            # 获得需要的信息
+            time=json.loads(jsonPkt)["Time"]
+            print(f"game time {time}")
 
-        # 将Json形式的数据包转为游戏数据包（警告！效率低下！）
-        asIsbytesPkt=JsonStrAsIsGamePacketBytes(
-            inspectPacketID(bytesPkt),
-            jsonPkt
-        )
-        print(asIsbytesPkt)
+        elif packetType==IDPlayerMove:
+            jsonPkt=GamePacketBytesAsIsJsonStr(bytesPkt)
+            jsonPkt=json.loads(jsonPkt)
+            print(f"player {jsonPkt['EntityRuntimeID']} move to {jsonPkt['Position']} rx={jsonPkt['Yaw']} ry={jsonPkt['Pitch']}")
+        else:
+            jsonPkt=GamePacketBytesAsIsJsonStr(bytesPkt)
+            print("ignore, data is: ",jsonPkt)
