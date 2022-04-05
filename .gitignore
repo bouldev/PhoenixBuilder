@@ -81,3 +81,4 @@ private/
 android_pack
 cache
 analyze/
+.vscode

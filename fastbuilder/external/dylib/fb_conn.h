@@ -19,6 +19,13 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 /* Start of preamble from import "C" comments.  */
 
 
+#line 3 "main.go"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#line 1 "cgo-generated-wrapper"
 
 
 /* End of preamble from import "C" comments.  */
@@ -68,6 +75,7 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
+extern void FreeMem(void* address);
 
 /* Return type for ConnectFB */
 struct ConnectFB_return {
@@ -79,8 +87,9 @@ extern char* ReleaseConnByID(GoInt id);
 
 /* Return type for RecvGamePacket */
 struct RecvGamePacket_return {
-	GoSlice r0; /* pktBytes */
-	char* r1; /* err */
+	char* r0; /* pktBytes */
+	GoInt r1; /* l */
+	char* r2; /* err */
 };
 extern struct RecvGamePacket_return RecvGamePacket(GoInt connID);
 extern char* SendGamePacketBytes(GoInt connID, GoSlice content);
@@ -106,13 +115,13 @@ struct GamePacketBytesAsIsJsonStr_return {
 	char* r0; /* jsonStr */
 	char* r1; /* err */
 };
-extern struct GamePacketBytesAsIsJsonStr_return GamePacketBytesAsIsJsonStr(char* pktBytes);
-extern char* CreatePacketInJsonStrByID(GoInt packetID);
+extern struct GamePacketBytesAsIsJsonStr_return GamePacketBytesAsIsJsonStr(GoSlice pktBytes);
 
 /* Return type for JsonStrAsIsGamePacketBytes */
 struct JsonStrAsIsGamePacketBytes_return {
-	GoSlice r0; /* pktBytes */
-	char* r1; /* err */
+	char* r0; /* pktBytes */
+	GoInt r1; /* l */
+	char* r2; /* err */
 };
 extern struct JsonStrAsIsGamePacketBytes_return JsonStrAsIsGamePacketBytes(GoInt packetID, char* jsonStr);
 

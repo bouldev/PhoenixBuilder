@@ -1,7 +1,13 @@
 package main
 
+/*
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+*/
+import "C"
+
 import (
-	"C"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -11,6 +17,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	mc_packet "phoenixbuilder/minecraft/protocol/packet"
 	"time"
+	"unsafe"
 )
 
 var ErrSendOnClosedConnection = fmt.Errorf("send on closed connection")
@@ -225,9 +232,14 @@ func objAvailable(id int) (*Client, error) {
 
 func toCErrStr(err error) *C.char {
 	if err == nil {
-		return C.CString("")
+		return nil
 	}
 	return C.CString(err.Error())
+}
+
+//export FreeMem
+func FreeMem(address unsafe.Pointer) {
+	C.free(address)
 }
 
 //export ConnectFB
@@ -241,12 +253,12 @@ func ConnectFB(address *C.char) (connID int, err *C.char) {
 	for i, c := range DontGCMe {
 		if c == nil {
 			DontGCMe[i] = client
-			return i, C.CString("")
+			return i, nil
 		}
 	}
 	i := len(DontGCMe)
 	DontGCMe = append(DontGCMe, client)
-	return i, C.CString("")
+	return i, nil
 }
 
 //export ReleaseConnByID
@@ -263,24 +275,29 @@ func ReleaseConnByID(id int) (err *C.char) {
 			break
 		}
 	}
-	return C.CString("")
+	return nil
+}
+
+func bytesToCharArr(goByteSlice []byte) *C.char {
+	ptr := C.malloc(C.size_t(len(goByteSlice)))
+	C.memmove(ptr, (unsafe.Pointer)(&goByteSlice[0]), C.size_t(len(goByteSlice)))
+	return (*C.char)(ptr)
 }
 
 //export RecvGamePacket
-func RecvGamePacket(connID int) (pktBytes *C.char, err *C.char) {
+func RecvGamePacket(connID int) (pktBytes *C.char, l int, err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
-		return C.CString(""), C.CString(_err.Error())
+		return nil, 0, C.CString(_err.Error())
 	}
 	bs, _err := obj.RecvGamePacket()
 	if _err != nil {
 		bs = []byte{}
 		ReleaseConnByID(connID)
-		return C.CString(""), C.CString(_err.Error())
+		return nil, 0, C.CString(_err.Error())
 	}
-	fmt.Println(bs)
-	// copy the data into the buffer, by converting it to a Go array
-	return []C.char{bs}, C.CString("")
+	//fmt.Println(bs)
+	return bytesToCharArr(bs), len(bs), nil
 }
 
 //export SendGamePacketBytes
@@ -310,7 +327,7 @@ func SendWSCommand(connID int, cmd *C.char) (uuid *C.char, err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
 		ReleaseConnByID(connID)
-		return C.CString(""), C.CString(_err.Error())
+		return nil, C.CString(_err.Error())
 	}
 	uid, _err := obj.SendWSCmd(C.GoString(cmd))
 	return C.CString(uid.String()), toCErrStr(_err)
@@ -321,7 +338,7 @@ func SendMCCommand(connID int, cmd *C.char) (uuid *C.char, err *C.char) {
 	obj, _err := objAvailable(connID)
 	if _err != nil {
 		ReleaseConnByID(connID)
-		return C.CString(""), C.CString(_err.Error())
+		return nil, C.CString(_err.Error())
 	}
 	uid, _err := obj.SendMCCmd(C.GoString(cmd))
 	return C.CString(uid.String()), toCErrStr(_err)
@@ -339,40 +356,31 @@ func SendNoResponseCommand(connID int, cmd *C.char) (err *C.char) {
 }
 
 //export GamePacketBytesAsIsJsonStr
-func GamePacketBytesAsIsJsonStr(pktBytes *C.char) (jsonStr *C.char, err *C.char) {
-	mcPkt := []byte(C.GoString(pktBytes))
-	pk := TypePool[uint32(mcPkt[0])]()
-	pk.Unmarshal(protocol.NewReader(bytes.NewReader(mcPkt[1:]), 0))
+func GamePacketBytesAsIsJsonStr(pktBytes []byte) (jsonStr *C.char, err *C.char) {
+	pk := TypePool[uint32(pktBytes[0])]()
+	pk.Unmarshal(protocol.NewReader(bytes.NewReader(pktBytes[1:]), 0))
 	marshal, _err := json.Marshal(pk)
 	if _err != nil {
-		return C.CString(""), C.CString(_err.Error())
+		return nil, C.CString(_err.Error())
 	}
 	return C.CString(string(marshal)), toCErrStr(_err)
 }
 
-//export CreatePacketInJsonStrByID
-func CreatePacketInJsonStrByID(packetID int) (jsonStr *C.char) {
-	pk := TypePool[uint32(packetID)]()
-	marshal, _err := json.Marshal(pk)
-	if _err != nil {
-		return C.CString(_err.Error())
-	}
-	return C.CString(string(marshal))
-}
-
 //export JsonStrAsIsGamePacketBytes
-func JsonStrAsIsGamePacketBytes(packetID int, jsonStr *C.char) (pktBytes []byte, err *C.char) {
+func JsonStrAsIsGamePacketBytes(packetID int, jsonStr *C.char) (pktBytes *C.char, l int, err *C.char) {
 	pk := TypePool[uint32(packetID)]()
 	_err := json.Unmarshal([]byte(C.GoString(jsonStr)), &pk)
 	if _err != nil {
-		return []byte{}, C.CString(_err.Error())
+		return nil, 0, C.CString(_err.Error())
 	}
 	b := &bytes.Buffer{}
 	w := protocol.NewWriter(b, 0)
 	hdr := pk.ID()
 	w.Varuint32(&hdr)
 	pk.Marshal(w)
-	return b.Bytes(), C.CString("")
+	bs := b.Bytes()
+	l = len(bs)
+	return bytesToCharArr(bs), l, nil
 }
 
 func main() {
