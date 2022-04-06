@@ -31,10 +31,10 @@ BDump v3 文件的后缀名为`.bdx`，且文件头为`BD@`, 这就表明此类�
 
 * {整型}(int)：即全体整数集，可包含正整数、0、负整数
 * {无符号整型}（亦称非负整型）(unsigned int)：即全体非负整数集，可包含正整数和0
-* `单字`（亦称字符）(char)：一个1字节长的{整型}值
-* `无符号单字`（亦称无符号字符或非负字符）(unsigned char)：一个1字节长的{无符号整型}值
-* `短整`(short)：一个2字节长的{整型}值
-* `无符号短整`（亦称非负短整）(unsigned short)：一个2字节长的{无符号整型}值
+* `char`(单字)（亦称字符）：一个1字节长的{整型}值
+* `unsigned char`(无符号单字)（亦称无符号字符或非负字符）：一个1字节长的{无符号整型}值
+* `short`(短整)：一个2字节长的{整型}值
+* `unsigned short`(无符号短整（亦称非负短整）)：一个2字节长的{无符号整型}值
 * `int32_t`：4字节长的{整型}数据
 * `uint32_t`：4字节长的{无符号整型}数据
 * `char *`：以`\0`(UTF-8编码)结尾的字符串
@@ -43,10 +43,10 @@ BDump v3 文件的后缀名为`.bdx`，且文件头为`BD@`, 这就表明此类�
 * `布尔`(bool)：1字节长的布尔(亦称逻辑)数据，仅可为真(true, 1)或假(false, 0)
 
 
-# ***============================= TO BE TRANSLATED 敬候佳音 =============================***
 
+# ====美好的事物总是后一步到来 TO BE TRANSLATED OF THIS TABLE====
 
-| ID编号            | Internal name                              | 描述                                                    | 参数                                                    |
+| ID                | 内部名                                      | 描述                                                    | 参数                                                    |
 | ----------------- | ------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | 1                 | `addToBlockPalette`                        | Add a specific block name to the palette, and the id of the block is sorted in the term of the command called, e.g. the id of the first time calling the command is `0`, and the id of the second time is `1`. The maximum number of types of blocks is `65536`. | `char *blockName`                                            |
 | 2                 | `addX`                                     | **(DEPRECATED)** Add `x` to the brush position's `X`, and reset the value of `Y` and `Z` to `0`. This method is deprecated since the difference between the real function of the command and what it's name say it should do. Though it's deprecated, you still need to implement it's parsing since there's still `bdx` files containing this command. | `unsigned short x`                                           |
@@ -89,9 +89,9 @@ BDump v3 文件的后缀名为`.bdx`，且文件头为`BD@`, 这就表明此类�
 | 88, `'X'`, `0x58` | `end`                                      | Stop reading. Note that though the general end is "XE" (2 bytes long), but a 'X' (1 byte long) character is enough. | -                                                            |
 | 90, `0x5A`        | `isSigned`                                 | A command that functions a little different with other commands, its argument is the previous byte of it, would only appear in the end of the file. Please do not use it unless you know how to use since an invalid signature would prevent PhoenixBuilder from constructing your structure. See paragraph `Signing` for details. | `unsigned char signatureSize`                                |
 
-The list above is all the commands of the bdump v4 till 2022-1-29.
+此表为 bdump v4 到 2022/1/29 为止的全部指令。
 
-For the `struct ChestData` data format:
+对于 `struct ChestData` 数据结构，应当如下：
 
 ```
 struct ChestData {
@@ -102,90 +102,95 @@ struct ChestData {
 }
 ```
 
-(Contents below are not updated currently, but they should work correctly.)
+（以下部分目前未被更新，但理应正常运作）
 
-Let's see how to make a `bdx` file using these commands.
+*\[译注：这可跟我一点毛线关系都没有啊，原文都是这样写的昂\]*
 
-If we want to place a TNT block at `{3,5,6}`(**relative**), and a repeating command block with command `kill @e[type=tnt]` and name `Kill TNT!` that doesn't need redstone to be activated at `{3,6,6}`, then a glass block at `{114514,15,1919810}` and a iron block at `{114514,15,1919800}`, the uncompressed bdx file might be:
+下面是一些 `bdx` 文件的例子。
+
+假设我们是一个熊孩子，来放置一个TNT在 `{3,5,6}`(**相对坐标**) 上，顺带地再放一个循环指令方块，里面写着 `kill @e[type=tnt]` 还加了悬浮字 `Kill TNT!` ，且始终启用，放在 `{3,6,6}` 上，再顺手一点，我们放一块恶臭的玻璃在 `{114514,15,1919810}` 上，一块恶臭的铁块在 `{114514,15,1919800}` 上。好了，那么未被压缩的 BDX 文件应为如下：
 
 `BDX\0DEMO\0\x01tnt\0\x1C\x03\x01repeating_command_block\0\x01glass\0\x01iron_block\0\x1E\x06\x1D\x05\x07\0\0\0\0\x10\x1B\0\x01\0\0\x01kill @e[type=tnt]\0Kill TNT!\0\0\0\0\0\0\x01\x01\0\0\x1D\x09\x19\0\x1D\x4B\x3C\x15\0\x01\xBF\x4F\x07\0\x02\0\0\x1E\xF6\x07\0\x03\0\0XE`
 
-The pseudo assembly code form of this file is:
+下面是伪代码形式的指令表达法，便于我们观察此结构具体的运作模式。
 
 ```assembly
 author 'DEMO\0'
-addToBlockPalette 'tnt\0' ; ID: 0
-addSmallX 3 ; brushPosition: {3,0,0}
-addToBlockPalette 'repeating_command_block\0' ; ID: 1
-addToBlockPalette 'glass\0' ; ID: 2
-addToBlockPalette 'iron_block\0' ; ID: 3
-addSmallZ 6 ; brushPosition: {3,0,6}
-addSmallY 5 ; brushPosition: {3,5,6}
-placeBlock (int16_t)0, (int16_t)0 ; TNT Block will be put at {3,5,6}
-NewYadd ; *Y++, brushPosition: {3,6,6}
-placeCommandBlockWithData (int16_t)1, (int16_t)0, 1, 'kill @e[type=tnt]\0', 'Kill TNT!\0', '\0', (int32_t)0, 1, 1, 0, 0 ; A command block will be put at {3,6,6}
-addSmallY 9 ; brushPosition: {3,15,6}
-addBigZ 1919804 ; 1919810: 00 1D 4B 3C = 01d4b3ch, brushPosition: {3,15,1919810}
-addBigX 114511 ; 114511: 00 01 BF 4F = 01bf4fh, brushPosition: {114514,15,1919810}
-placeBlock (int16_t)2,(int16_t)0 ; A glass block will be put at {114514,15,1919810}
-addSmallZ -10 ; -10: F6 = 0f6h, brushPosition: {114514,15,1919800}
-placeBlock (int16_t)3,(int16_t)0 ; A iron block will be put at {114514,15,1919800}
+addToBlockPalette 'tnt\0' ; 方块ID: 0
+addSmallX 3 ; 画笔位置: {3,0,0}
+addToBlockPalette 'repeating_command_block\0' ; 方块ID: 1
+addToBlockPalette 'glass\0' ; 方块ID: 2
+addToBlockPalette 'iron_block\0' ; 方块ID: 3
+addSmallZ 6 ; 画笔位置: {3,0,6}
+addSmallY 5 ; 画笔位置: {3,5,6}
+placeBlock (int16_t)0, (int16_t)0 ; TNT将会被放在 {3,5,6}
+NewYadd ; *Y++, 画笔位置: {3,6,6}
+placeCommandBlockWithData (int16_t)1, (int16_t)0, 1, 'kill @e[type=tnt]\0', 'Kill TNT!\0', '\0', (int32_t)0, 1, 1, 0, 0 ; 指令方块将会被放在 {3,6,6}
+addSmallY 9 ; 画笔位置: {3,15,6}
+addBigZ 1919804 ; 1919810: 00 1D 4B 3C = 01d4b3ch, 画笔位置: {3,15,1919810}
+addBigX 114511 ; 114511: 00 01 BF 4F = 01bf4fh, 画笔位置: {114514,15,1919810}
+placeBlock (int16_t)2,(int16_t)0 ; 玻璃将会被放在 {114514,15,1919810}
+addSmallZ -10 ; -10: F6 = 0f6h, 画笔位置: {114514,15,1919800}
+placeBlock (int16_t)3,(int16_t)0 ; 铁块 将会被放在 {114514,15,1919800}
 end
 db 'E'
 ```
 
-## Signing
+## 签名
 
-*FastBuilder Phoenix* 0.3.5 implemented a bdump file signing system in order to identify the file's **real** publisher. Though using the PGP to sign is a good and secure way, we've chosen a signing method that highly depends on our authentication server since it's meaningless to implement the PGP signing just for an online program that can connect to the server anytime.
+*FastBuilder Phoenix* 0.3.5 实现了一个 bdump 文件签名系统，用以辨认文件**真正的**发布者。虽然使用 PGP 进行签名是一种良好且安全的方式，但我们选择了一种高度依赖于我们的身份验证服务器的签名方法，因为仅仅为可以随时连接到服务器的在线程序实现PGP签名毫无意义。
 
-Note that a signature isn't required for a `bdx` file unless the user sets a `-S`(strict) flag. If you implemented the signing process, you should make sure that it works correctly since a `bdx` file with an incorrect signature won't be able to be processed by *FastBuilder Phoenix*.
 
-### API
+请注意， `bdx` 文件可不必被签名，除非用户打开了 `-S`（严格）开关。但这并不妨碍你去给他签名，如果你为了签名而签名的话，则应确保其正常工作，因为签名不正确的 `bdx` 文件是无法被 *FastBuilder Phoenix* 处理的。
 
-First let's learn the APIs of `bdx` file signing. We've implemented two apis to finish the signing process.
+### 应用程序接口(API)
 
-The host of those APIs is `uc.fastbuilder.pro` and HTTPS is required.
+先让我们看看这 `bdx` 文件的签名接口叭。通过以下两个过程，我们就可以轻易签名了。
 
-#### Signing
+请使用 `HTTPS` 链接来连接我们接口的主机 `uc.fastbuilder.pro` 。
 
-* Request:
+#### 签名过程
+
+* 发送请求(Request)：
 
     ```http
     POST /signbdx.web HTTP/1.1
     Host: uc.fastbuilder.pro
     User-Agent: MyApplication/0.1
     
-    {"hash": "<The hash of your uncompressed bdx content without the end command 'X'.>","token": "<Your FastBuilder Token>"}
+    {"hash": "<未压缩的，且不含结束指令'X'的bdx文件的哈希值>","token": "<你的FastBuilder密钥(Token)>"}
     ```
 
-* Response:
+* 返回应答(Response)：
 
   ```http
   HTTP/1.1 200 OK
   Content-Type: application/json
   
-  {"success":true,"sign":"<Base64 of signature>",message:""}
+  {"success":true,"sign":"<签名的Base64值>",message:""}
   ```
 
-#### Verifying
+#### 验证过程
 
-* Request:
+* 发送请求(Request)：
 
     ```http
     POST /verifybdx.web HTTP/1.1
     Host: uc.fastbuilder.pro
     User-Agent: MyApplication/0.1
     
-    {"hash": "<The hash of your uncompressed bdx content without the end command 'X'.>","sign": "<The signature's base64 value>"}
+    {"hash": "<未压缩的，且不含结束指令'X'的bdx文件的哈希值>","sign": "<签名的Base64值>"}
     ```
 
-* Response:
+* 返回应答(Response)：
 
   ```http
   HTTP/1.1 200 OK
   Content-Type: application/json
   
-  {"success":true,"corrupted":false,"username":"The person who signed the file",message:""}
+  {"success":true,"corrupted":false,"username":"<签名人>",message:""}
   ```
 
-After requesting the signing api, the base64 value of the signature should be decompressed and written to the compressed part of file, then the signature length and `isSigned` flag.
+在请求签名接口之后，签名的 base64 值应该被解压缩并写入文件的已压缩部分，接着是签名长度和`isSigned`标志。
+
+*\[我不理解……我不知道这句话怎么翻译……所以我就……直译了；各位，给你们看一下原话： *`After requesting the signing api, the base64 value of the signature should be decompressed and written to the compressed part of file, then the signature length and isSigned flag.`* \]*
