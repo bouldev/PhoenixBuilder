@@ -1,7 +1,6 @@
 package uqHolder
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/gob"
 	"encoding/json"
@@ -10,11 +9,12 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"time"
 
+	"github.com/andybalholm/brotli"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"
 )
 
-var Version = [3]byte{0, 0, 1}
+var Version = [3]byte{0, 0, 2}
 
 type Player struct {
 	UUID                    uuid.UUID
@@ -94,7 +94,7 @@ type UQHolder struct {
 	GameRules           map[string]*GameRule
 	InventoryContent    map[uint32][]protocol.ItemInstance
 	PlayerHotBar        packet.PlayerHotBar
-	AvailableCommands   packet.AvailableCommands
+	// AvailableCommands   packet.AvailableCommands
 	BotOnGround         bool
 	BotHealth           int32
 	CommandRelatedEnums []*packet.UpdateSoftEnum
@@ -131,10 +131,12 @@ func (uq *UQHolder) UpdateTick(tick uint64) {
 
 func (uq *UQHolder) Marshal() []byte {
 	buf := bytes.NewBuffer([]byte{Version[0], Version[1], Version[2]})
-	err := gob.NewEncoder(buf).Encode(uq)
+	compressor := brotli.NewWriter(buf)
+	err := gob.NewEncoder(compressor).Encode(uq)
 	if err != nil {
 		panic(err)
 	}
+	compressor.Close()
 	return buf.Bytes()
 }
 
@@ -159,8 +161,8 @@ func (uq *UQHolder) UnMarshal(bs []byte) error {
 		return err
 	}
 	buf := bytes.NewBuffer(bs[3:])
-	bufio.NewReader(buf)
-	err := gob.NewDecoder(buf).Decode(uq)
+	decompressor := brotli.NewReader(buf)
+	err := gob.NewDecoder(decompressor).Decode(uq)
 	if err != nil {
 		return err
 	}
@@ -257,7 +259,8 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		uq.InventoryContent[p.WindowID] = p.Content
 
 	case *packet.AvailableCommands:
-		uq.AvailableCommands = *p
+		// too large
+		// uq.AvailableCommands = *p
 
 	case *packet.SetActorData:
 		e := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
