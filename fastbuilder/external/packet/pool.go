@@ -8,6 +8,8 @@ const (
 	IDEvalPBCommandPacket
 	IDGameCommandPacket
 	IDGamePacket
+	IDUQHolderRequestPacket
+	IDUQHolderResponsePacket
 )
 
 var PacketPool map[uint8]func() Packet = map[uint8]func() Packet{
@@ -18,4 +20,6 @@ var PacketPool map[uint8]func() Packet = map[uint8]func() Packet{
 	IDEvalPBCommandPacket:          func() Packet { return &EvalPBCommandPacket{} },
 	IDGameCommandPacket:            func() Packet { return &GameCommandPacket{} },
 	IDGamePacket:                   func() Packet { return &GamePacket{} },
+	IDUQHolderRequestPacket:        func() Packet { return &UQHolderRequestPacket{} },
+	IDUQHolderResponsePacket:       func() Packet { return &UQHolderResponsePacket{} },
 }

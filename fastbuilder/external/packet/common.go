@@ -79,3 +79,45 @@ func (_ *PacketViolationWarningPacket) ID() uint8 {
 func (_ *PacketViolationWarningPacket) Name() string {
 	return "PacketViolationWarningPacket"
 }
+
+type UQHolderRequestPacket struct {
+	QueryString []byte
+}
+
+func (pkt *UQHolderRequestPacket) Marshal() []byte {
+	return pkt.QueryString
+}
+
+func (pkt *UQHolderRequestPacket) Parse(cont []byte) bool {
+	pkt.QueryString = cont
+	return true
+}
+
+func (_ *UQHolderRequestPacket) ID() uint8 {
+	return IDUQHolderRequestPacket
+}
+
+func (_ *UQHolderRequestPacket) Name() string {
+	return "UQHolderRequestPacket"
+}
+
+type UQHolderResponsePacket struct {
+	Content []byte
+}
+
+func (pkt *UQHolderResponsePacket) Marshal() []byte {
+	return pkt.Content
+}
+
+func (pkt *UQHolderResponsePacket) Parse(cont []byte) bool {
+	pkt.Content = cont
+	return true
+}
+
+func (_ *UQHolderResponsePacket) ID() uint8 {
+	return IDUQHolderResponsePacket
+}
+
+func (_ *UQHolderResponsePacket) Name() string {
+	return "UQHolderResponsePacket"
+}

@@ -5,6 +5,7 @@ import (
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
+	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft"
 )
 
@@ -68,6 +69,12 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 				}
 			case *packet.GamePacket:
 				(env.Connection).(*minecraft.Conn).Write(p.Content)
+			case *packet.UQHolderRequestPacket:
+				//q:=string(p.QueryString)
+				//if q=="*"
+				packet.SerializeAndSend(&packet.UQHolderResponsePacket{
+					Content: (env.UQHolder).(*uqHolder.UQHolder).Marshal(),
+				}, conn)
 			}
 		}
 	}()

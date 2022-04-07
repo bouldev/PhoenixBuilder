@@ -7,9 +7,9 @@ import (
 	"crypto/x509"
 	"encoding/binary"
 	"fmt"
-	"io"
-
 	kcp "github.com/xtaci/kcp-go/v5"
+	"io"
+	"sync"
 )
 
 // not stream, but ensure a frame is send/recv
@@ -56,7 +56,7 @@ func (s *KCPConnectionServerHandler) Listen(address string) error {
 			}
 			//remoteDescription := proxyConn.RemoteAddr().String()
 			//fmt.Printf("Transfer: accept new connection @ %v\n", remoteDescription)
-			baseConn := &StreamChannelWrapper{reader: proxyConn, writer: proxyConn}
+			baseConn := &StreamChannelWrapper{reader: proxyConn, writer: proxyConn, writeLock: sync.Mutex{}}
 			connectionCloser := func() {
 				proxyConn.Close()
 			}
@@ -92,7 +92,7 @@ func KCPDial(address string) (ReliableConnection, error) {
 	if err != nil {
 		return nil, err
 	}
-	baseConn := &StreamChannelWrapper{reader: conn, writer: conn}
+	baseConn := &StreamChannelWrapper{reader: conn, writer: conn, writeLock: sync.Mutex{}}
 	encryptedConn := &EncryptedChannel{
 		connection: baseConn,
 		isInitator: true,
@@ -122,9 +122,10 @@ func (brw *ByteReaderWrapper) ReadByte() (byte, error) {
 }
 
 type StreamChannelWrapper struct {
-	reader   io.Reader
-	writer   io.Writer
-	isClosed bool
+	reader    io.Reader
+	writer    io.Writer
+	isClosed  bool
+	writeLock sync.Mutex
 }
 
 const MAX_STD_HEADER_LEN = 1 << 15
@@ -171,6 +172,8 @@ func (scw *StreamChannelWrapper) RecvFrame() ([]byte, error) {
 }
 
 func (scw *StreamChannelWrapper) SendFrame(data []byte) error {
+	scw.writeLock.Lock()
+	defer scw.writeLock.Unlock()
 	length := len(data)
 	headerBytes := make([]byte, binary.MaxVarintLen64+2) // 2 is the length of short(std) head
 	headerBytesLen := 0

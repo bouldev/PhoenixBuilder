@@ -1,6 +1,9 @@
 package uqHolder
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol"
@@ -10,6 +13,8 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"
 )
+
+var Version = [3]byte{0, 0, 1}
 
 type Player struct {
 	UUID                    uuid.UUID
@@ -24,7 +29,8 @@ type Player struct {
 	OPPermissionLevel       uint32
 	CustomStoredPermissions uint32
 	// only when the player can be seen by bot
-	Entity *Entity
+	EntityRuntimeID uint64
+	Entity          *Entity
 	// PlayerUniqueID is a unique identifier of the player. It appears it is not required to fill this field
 	// out with a correct value. Simply writing 0 seems to work.
 	PlayerUniqueID int64
@@ -69,6 +75,7 @@ type GameRule struct {
 	Value                 interface{}
 }
 type UQHolder struct {
+	VERSION             string
 	BotRuntimeID        uint64
 	CompressThreshold   uint16
 	CurrentTick         uint64
@@ -76,7 +83,7 @@ type UQHolder struct {
 	playersByUUID       map[[16]byte]*Player
 	PlayersByEntityID   map[int64]*Player
 	EntitiesByRuntimeID map[uint64]*Entity
-	EntitiesByUniqueID  map[int64]*Entity
+	entitiesByUniqueID  map[int64]*Entity
 	Time                int32
 	DayTime             int32
 	DayTimePercent      float32
@@ -95,6 +102,7 @@ type UQHolder struct {
 
 func NewUQHolder(BotRuntimeID uint64) *UQHolder {
 	uq := &UQHolder{
+		VERSION:             fmt.Sprintf("%d.%d.%d", Version[0], Version[1], Version[2]),
 		BotRuntimeID:        BotRuntimeID,
 		InventorySlot:       map[uint32]protocol.ItemInstance{},
 		playersByUUID:       map[[16]byte]*Player{},
@@ -102,7 +110,7 @@ func NewUQHolder(BotRuntimeID uint64) *UQHolder {
 		WorldSpawnPosition:  map[int32]protocol.BlockPos{},
 		BotSpawnPosition:    map[int32]protocol.BlockPos{},
 		EntitiesByRuntimeID: map[uint64]*Entity{},
-		EntitiesByUniqueID:  map[int64]*Entity{},
+		entitiesByUniqueID:  map[int64]*Entity{},
 		GameRules:           map[string]*GameRule{},
 		InventoryContent:    map[uint32][]protocol.ItemInstance{},
 		CommandRelatedEnums: make([]*packet.UpdateSoftEnum, 0),
@@ -119,6 +127,55 @@ func NewUQHolder(BotRuntimeID uint64) *UQHolder {
 
 func (uq *UQHolder) UpdateTick(tick uint64) {
 	uq.CurrentTick = tick
+}
+
+func (uq *UQHolder) Marshal() []byte {
+	buf := bytes.NewBuffer([]byte{Version[0], Version[1], Version[2]})
+	err := gob.NewEncoder(buf).Encode(uq)
+	if err != nil {
+		panic(err)
+	}
+	return buf.Bytes()
+}
+
+func IsCapable(bs []byte) error {
+	if len(bs) < 3 {
+		return fmt.Errorf("version length error")
+	}
+	if bs[0] != Version[0] {
+		return fmt.Errorf("version MAJOR mismatch (local=%v,remote=%v)", Version[0], bs[0])
+	}
+	if bs[1] != Version[1] {
+		return fmt.Errorf("version MINOR mismatch (local=%v,remote=%v)", Version[1], bs[1])
+	}
+	if bs[2] != Version[2] {
+		return fmt.Errorf("version Patch mismatch (local=%v,remote=%v)", Version[2], bs[2])
+	}
+	return nil
+}
+
+func (uq *UQHolder) UnMarshal(bs []byte) error {
+	if err := IsCapable(bs); err != nil {
+		return err
+	}
+	buf := bytes.NewBuffer(bs[3:])
+	bufio.NewReader(buf)
+	err := gob.NewDecoder(buf).Decode(uq)
+	if err != nil {
+		return err
+	}
+	for _, entity := range uq.EntitiesByRuntimeID {
+		uq.entitiesByUniqueID[entity.UniqueID] = entity
+	}
+	for _, player := range uq.PlayersByEntityID {
+		uq.playersByUUID[player.UUID] = player
+		if player.EntityRuntimeID != 0 {
+			if e, ok := uq.EntitiesByRuntimeID[player.EntityRuntimeID]; ok {
+				player.Entity = e
+			}
+		}
+	}
+	return nil
 }
 
 func (uq *UQHolder) GetEntityByRuntimeID(EntityRuntimeID uint64) *Entity {
@@ -265,7 +322,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
 		entity.IsPlayer = false
 		entity.UniqueID = p.EntityUniqueID
-		uq.EntitiesByUniqueID[p.EntityUniqueID] = entity
+		uq.entitiesByUniqueID[p.EntityUniqueID] = entity
 		entity.EntityType = p.EntityType
 		entity.LastUpdateTick = uq.CurrentTick
 		entity.LastPosInfo.LastUpdateTick = uq.CurrentTick
@@ -279,13 +336,13 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		entity.EntityLinks = p.EntityLinks
 
 	case *packet.RemoveActor:
-		if entity, ok := uq.EntitiesByUniqueID[p.EntityUniqueID]; ok {
+		if entity, ok := uq.entitiesByUniqueID[p.EntityUniqueID]; ok {
 			rtID := entity.RuntimeID
 			if !entity.IsPlayer {
 				if _, ok := uq.EntitiesByRuntimeID[rtID]; ok {
 					delete(uq.EntitiesByRuntimeID, rtID)
 				}
-				delete(uq.EntitiesByUniqueID, p.EntityUniqueID)
+				delete(uq.entitiesByUniqueID, p.EntityUniqueID)
 			}
 		}
 	case *packet.MoveActorDelta:
