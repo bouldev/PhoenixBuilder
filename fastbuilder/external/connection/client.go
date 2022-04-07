@@ -109,7 +109,11 @@ func (c *Client) RecvDecodedGamePacket() (pk mc_packet.Packet, err error) {
 	if err != nil {
 		return nil, err
 	}
-	pk = TypePool[uint32(mcPkt[0])]()
+	pkFn, hasK := TypePool[uint32(mcPkt[0])]
+	if !hasK {
+		return nil, fmt.Errorf("cannot decode packet %v", mcPkt[0])
+	}
+	pk = pkFn()
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
@@ -126,6 +130,7 @@ func (c *Client) RequestUQHolder(request string) (*uqHolder.UQHolder, error) {
 		return nil, err
 	}
 	cont := <-c.uqHolderWaitChan
+	fmt.Println(len(cont))
 	uq := uqHolder.NewUQHolder(0)
 	if err = uq.UnMarshal(cont); err != nil {
 		return nil, err
@@ -146,6 +151,10 @@ func (c *Client) Close() {
 		c.closed = true
 		fmt.Println("Closed")
 	}
+}
+
+func (c *Client) IsClosed() bool {
+	return c.closed
 }
 
 func (c *Client) routine() {
@@ -173,7 +182,7 @@ func (c *Client) routine() {
 			if time.Now().After(c.pongDeadline) {
 				fmt.Println("Deadline Exceed!")
 				c.Close()
-				break
+				return
 			}
 			go func() { c.Send(&packet.PingPacket{}) }()
 			//fmt.Println("Ping")
@@ -217,11 +226,12 @@ func NewClient(address string) *Client {
 			return nil
 		}
 		c := &Client{
-			conn:         conn,
-			close:        make(chan struct{}),
-			closed:       false,
-			pongDeadline: time.Now().Add(3 * time.Second),
-			gamePackets:  make(chan []byte, 1024),
+			conn:             conn,
+			close:            make(chan struct{}),
+			closed:           false,
+			pongDeadline:     time.Now().Add(3 * time.Second),
+			gamePackets:      make(chan []byte, 1024),
+			uqHolderWaitChan: make(chan []byte),
 		}
 		if TypePool == nil {
 			TypePool = mc_packet.NewPool()
