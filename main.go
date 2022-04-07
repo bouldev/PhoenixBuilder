@@ -83,12 +83,12 @@ func main() {
 		init_and_run_debug_client()
 		return
 	}
-	if(!args.ShouldDisableHashCheck()) {
+	if !args.ShouldDisableHashCheck() {
 		fmt.Printf("Checking update, please wait...")
-		hasUpdate, latestVersion:=utils.CheckUpdate(args.GetFBVersion())
+		hasUpdate, latestVersion := utils.CheckUpdate(args.GetFBVersion())
 		fmt.Printf("OK\n")
-		if(hasUpdate) {
-			fmt.Printf("A newer version (%s) of PhoenixBuilder is available.\n",latestVersion)
+		if hasUpdate {
+			fmt.Printf("A newer version (%s) of PhoenixBuilder is available.\n", latestVersion)
 			fmt.Printf("Please update.\n")
 			// To ensure user won't ignore it directly, can be suppressed by command line argument.
 			os.Exit(0)
@@ -440,10 +440,37 @@ func runClient(env *environment.PBEnvironment) {
 		external.ListenExt(env, args.ExternalListenAddress())
 	}
 
+	var captureFp *os.File
+	if captureOutputFileName := args.CaptureOutputFile(); captureOutputFileName != "" {
+		if fp, err := os.OpenFile(captureOutputFileName, os.O_CREATE|os.O_WRONLY, 0755); err != nil {
+			panic(err)
+		} else {
+			captureFp = fp
+			fmt.Println("Capture On: FastBuilder > ", captureOutputFileName)
+		}
+	}
+	defer func() {
+		if captureFp != nil {
+			captureFp.Close()
+		}
+	}()
+
 	for {
 		pk, data, err := conn.ReadPacketAndBytes()
 		if err != nil {
 			panic(err)
+		}
+		if captureFp != nil {
+			buf := make([]byte, 4)
+			binary.LittleEndian.PutUint32(buf, uint32(len(data)))
+			_, err := captureFp.Write(buf)
+			if err != nil {
+				panic("dump to capture file (len hdr) fail " + err.Error())
+			}
+			_, err = captureFp.Write(data)
+			if err != nil {
+				panic("dump to capture file fail " + err.Error())
+			}
 		}
 		hostBridgeGamma.HostPumpMcPacket(pk)
 		if env.ExternalConnectionHandler != nil {

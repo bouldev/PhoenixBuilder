@@ -353,7 +353,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		//		if len(jsonStr) < 300 {
 		//			fmt.Println(pk.ID(), " : ", jsonStr)
 		//		} else {
-		//			fmt.Println(pk.ID(), " : ", jsonStr[:120])
+		//			fmt.Println(pk.ID(), " : ", jsonStr[:300])
 		//		}
 		//	}
 	}
@@ -387,6 +387,9 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 //		return
 //	}
 //	for _, pktByte := range cachedBytes {
+//      if len(pktByte)==0 {
+//			continue
+//		}
 //		pkt := safeDecode(pktByte)
 //		if pkt != nil {
 //			holder.Update(pkt)

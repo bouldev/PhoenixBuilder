@@ -17,7 +17,7 @@ char *server_password="";
 char custom_token=0;
 char *token_content;
 char *externalListenAddr="";
-
+char *capture_output_file="";
 
 extern void custom_script_engine_const(const char *key, const char *val);
 extern void do_suppress_se_const(const char *key);
@@ -39,6 +39,7 @@ void print_help(const char *self_name) {
 	printf("\t-t, --token=<path of FBToken>: Specify the path of FBToken, and quit if the file is unaccessible.\n");
 	printf("\t-T, --plain-token=<token>: Specify the token content.\n");
 	printf("\t-E, --listen-external: Listen on the specified address and wait for external controlling connection.\n\t\tExample: -E 0.0.0.0:5768 - listen on port 5768 and accept connections from anywhere,\n\t\t\t-E 127.0.0.1:5769 - listen on port 5769 and accept connections from localhost only.\n");
+	printf("\t-C, --capture=<*.bin>: Capture minecraft packet and dump to target file\n");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
@@ -117,6 +118,7 @@ int _parse_args(int argc, char **argv) {
 			{"script-engine-const", required_argument, 0, 0}, //14
 			{"script-engine-suppress-const", required_argument, 0, 0}, //15
 			{"listen-external", required_argument, 0, 'E'}, // 16
+			{"capture", required_argument, 0, 'C'}, // 17
 			{0, 0, 0, 0}
 		};
 		int option_index;
@@ -220,6 +222,10 @@ int _parse_args(int argc, char **argv) {
 			externalListenAddr=malloc(strlen(optarg)+1);
 			memcpy(externalListenAddr, optarg, strlen(optarg)+1);
 			break;
+        case 'C':
+            capture_output_file=malloc(strlen(optarg)+1);
+            memcpy(capture_output_file, optarg, strlen(optarg)+1);
+            break;
 		case 'v':
 			print_version(1);
 			return 0;

@@ -29,40 +29,41 @@ extern char *server_password;
 extern char custom_token;
 extern char *token_content;
 extern char *externalListenAddr;
+extern char *capture_output_file;
 */
 import "C"
 
 func charify(val bool) C.char {
-	if(val) {
+	if val {
 		return C.char(1)
-	}else{
+	} else {
 		return C.char(0)
 	}
 }
 
 func Set_args_isDebugMode(val bool) {
-	C.args_isDebugMode=charify(val)
+	C.args_isDebugMode = charify(val)
 }
 
 func Do_replace_authserver(val string) {
-	if(boolify(C.replaced_auth_server)) {
+	if boolify(C.replaced_auth_server) {
 		C.free(unsafe.Pointer(C.newAuthServer))
-	}else{
-		C.replaced_auth_server=C.char(1)
+	} else {
+		C.replaced_auth_server = C.char(1)
 	}
-	C.newAuthServer=C.CString(val)
+	C.newAuthServer = C.CString(val)
 }
 
 func Set_disableHashCheck(val bool) {
-	C.args_disableHashCheck=charify(val)
+	C.args_disableHashCheck = charify(val)
 }
 
 func Set_muteWorldChat(val bool) {
-	C.args_muteWorldChat=charify(val)
+	C.args_muteWorldChat = charify(val)
 }
 
 func Set_noPyRpc(val bool) {
-	C.args_noPyRpc=charify(val);
+	C.args_noPyRpc = charify(val)
 }
 
 func GetFBVersion() string {
@@ -78,31 +79,31 @@ func GetFBCommitHash() string {
 }
 
 func ParseArgs() {
-	argv:=make([]*C.char, len(os.Args))
-	for i, v:=range os.Args {
-		cstr:=C.CString(v)
+	argv := make([]*C.char, len(os.Args))
+	for i, v := range os.Args {
+		cstr := C.CString(v)
 		defer C.free(unsafe.Pointer(cstr))
-		argv[i]=cstr
+		argv[i] = cstr
 	}
-	C.parse_args(C.int(len(os.Args)),&argv[0])
+	C.parse_args(C.int(len(os.Args)), &argv[0])
 }
 
 func boolify(v C.char) bool {
-	if int(v)==0 {
+	if int(v) == 0 {
 		return false
 	}
 	return true
 }
 
 func DebugMode() bool {
-	if int(C.args_isDebugMode)==0 {
+	if int(C.args_isDebugMode) == 0 {
 		return false
 	}
 	return true
 }
 
 func AuthServer() string {
-	if int(C.replaced_auth_server)==0 {
+	if int(C.replaced_auth_server) == 0 {
 		return "wss://api.fastbuilder.pro:2053/"
 	}
 	return C.GoString(C.newAuthServer)
@@ -113,7 +114,7 @@ func ShouldDisableHashCheck() bool {
 }
 
 func SetShouldDisableHashCheck() {
-	C.args_disableHashCheck=C.char(1)
+	C.args_disableHashCheck = C.char(1)
 }
 
 func ShouldMuteWorldChat() bool {
@@ -125,7 +126,7 @@ func NoPyRpc() bool {
 }
 
 func StartupScript() string {
-	if int(C.use_startup_script)==0 {
+	if int(C.use_startup_script) == 0 {
 		return ""
 	}
 	return C.GoString(C.startup_script)
@@ -136,7 +137,7 @@ func SpecifiedServer() bool {
 }
 
 func ServerCode() string {
-	if int(C.specified_server)==0 {
+	if int(C.specified_server) == 0 {
 		return ""
 	}
 	return C.GoString(C.server_code)
@@ -152,25 +153,29 @@ func SpecifiedToken() bool {
 }
 
 func CustomTokenContent() string {
-	if(int(C.custom_token)==0) {
+	if int(C.custom_token) == 0 {
 		return ""
 	}
 	return C.GoString(C.token_content)
 }
 
-var CustomSEConsts map[string]string = map[string]string {}
-var CustomSEUndefineConsts []string = []string {}
+var CustomSEConsts map[string]string = map[string]string{}
+var CustomSEUndefineConsts []string = []string{}
 
 //export custom_script_engine_const
 func custom_script_engine_const(key, val *C.char) {
-	CustomSEConsts[C.GoString(key)]=C.GoString(val)
+	CustomSEConsts[C.GoString(key)] = C.GoString(val)
 }
 
 //export do_suppress_se_const
 func do_suppress_se_const(key *C.char) {
-	CustomSEUndefineConsts=append(CustomSEUndefineConsts, C.GoString(key))
+	CustomSEUndefineConsts = append(CustomSEUndefineConsts, C.GoString(key))
 }
 
 func ExternalListenAddress() string {
 	return C.GoString(C.externalListenAddr)
+}
+
+func CaptureOutputFile() string {
+	return C.GoString(C.capture_output_file)
 }
