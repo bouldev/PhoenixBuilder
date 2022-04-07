@@ -481,7 +481,8 @@ func runClient(env *environment.PBEnvironment) {
 		hostBridgeGamma.HostQueryExpose["uqHolder"] = func() string {
 			marshal, err := json.Marshal(env.UQHolder.(*uqHolder.UQHolder))
 			if err != nil {
-				return err.Error()
+				marshalErr, _ := json.Marshal(map[string]string{"err": err.Error()})
+				return string(marshalErr)
 			}
 			return string(marshal)
 		}

@@ -4,10 +4,10 @@
 engine.setName("FB信息和通用指令");
 
 // 等待连接到 MC
-engine.waitConnectionSync();
+// engine.waitConnectionSync();
 
-// 通用fb功能，相当于用户在fb中输入了这条指令
-game.eval("delay set 100");
+// // 通用fb功能，相当于用户在fb中输入了这条指令
+// game.eval("delay set 100");
 
 // // 通过consts 查询信息
 // let userName = consts.user_name
@@ -37,7 +37,7 @@ engine.message(consts.script_path);
 // JS解释器实现
 engine.message(consts.engine_version);
 //用户名
-engine.message(consts.user_name);
+// engine.message(consts.user_name);
 //服务器代码
 engine.message(consts.server_code);
 //工作路径(一般情况下就是fb所在路径)
@@ -45,4 +45,9 @@ engine.message(consts.fb_dir);
 //FB 版本信息
 engine.message(consts.fb_version);
 // uqHolder
-engine.message(game.uqHolder());
+let currentStatus = game.uqHolder()
+// CommandRelatedEnums, InventoryContent 和 AvailableCommands 的信息过于丰富，屏幕显示不下，有兴趣的话自己研究
+currentStatus["CommandRelatedEnums"] = {}
+currentStatus["AvailableCommands"] = {}
+currentStatus["InventoryContent"] = {}
+engine.message(JSON.stringify(currentStatus));

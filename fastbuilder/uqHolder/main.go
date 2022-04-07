@@ -3,11 +3,12 @@ package uqHolder
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/google/uuid"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"time"
+
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/google/uuid"
 )
 
 type Player struct {
@@ -72,7 +73,7 @@ type UQHolder struct {
 	CompressThreshold   uint16
 	CurrentTick         uint64
 	InventorySlot       map[uint32]protocol.ItemInstance
-	PlayersByUUID       map[[16]byte]*Player
+	playersByUUID       map[[16]byte]*Player
 	PlayersByEntityID   map[int64]*Player
 	EntitiesByRuntimeID map[uint64]*Entity
 	EntitiesByUniqueID  map[int64]*Entity
@@ -96,7 +97,7 @@ func NewUQHolder(BotRuntimeID uint64) *UQHolder {
 	uq := &UQHolder{
 		BotRuntimeID:        BotRuntimeID,
 		InventorySlot:       map[uint32]protocol.ItemInstance{},
-		PlayersByUUID:       map[[16]byte]*Player{},
+		playersByUUID:       map[[16]byte]*Player{},
 		PlayersByEntityID:   map[int64]*Player{},
 		WorldSpawnPosition:  map[int32]protocol.BlockPos{},
 		BotSpawnPosition:    map[int32]protocol.BlockPos{},
@@ -160,12 +161,12 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 					BuildPlatform:  e.BuildPlatform,
 					SkinID:         e.Skin.SkinID,
 				}
-				uq.PlayersByUUID[e.UUID] = player
+				uq.playersByUUID[e.UUID] = player
 				uq.PlayersByEntityID[e.EntityUniqueID] = player
 			}
 		} else {
 			for _, e := range p.Entries {
-				delete(uq.PlayersByUUID, e.UUID)
+				delete(uq.playersByUUID, e.UUID)
 			}
 		}
 	case *packet.AdventureSettings:
