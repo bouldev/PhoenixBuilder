@@ -51,3 +51,17 @@ currentStatus["CommandRelatedEnums"] = {}
 currentStatus["AvailableCommands"] = {}
 currentStatus["InventoryContent"] = {}
 engine.message(JSON.stringify(currentStatus));
+
+players=currentStatus["PlayersByEntityID"]
+for (const playerUID in players) {
+    
+    player=players[playerUID]
+
+    // 在视野内的玩家有 Entity 属性,但是机器人本身反而没有这个属性
+    if (player.Entity!==null){
+        // 删除 Attributes 信息，因为内容太多了
+        player.Entity.Attributes={}
+    }
+    
+    engine.message(JSON.stringify(player));
+}
