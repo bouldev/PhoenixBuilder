@@ -343,7 +343,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	case *packet.PlayStatus:
 	// no need to support
 	case *packet.PyRpc:
-		// not handled
+		//not handled
 		//default:
 		//	marshal, err := json.Marshal(pk)
 		//	if err != nil {
@@ -371,17 +371,20 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 //		panic(err)
 //	}
 //	holder := NewUQHolder(0)
+//	paddingByte := []byte{}
 //	safeDecode := func(pktByte []byte) (pkt packet.Packet) {
+//		pktID := uint32(pktByte[0])
 //		defer func() {
-//			pktID := uint32(pktByte[0])
 //			if r := recover(); r != nil {
-//				fmt.Println(pktID, "decode fail")
+//				fmt.Println(pktID, "decode fail ", pkt)
 //			}
 //			return
 //		}()
-//		pk := TypePool[uint32(pktByte[0])]()
-//		pk.Unmarshal(protocol.NewReader(bytes.NewReader(pktByte[1:]), 0))
-//		return pk
+//		pkt = TypePool[pktID]()
+//		pkt.Unmarshal(protocol.NewReader(bytes.NewReader(
+//			bytes.Join([][]byte{pktByte[1:], paddingByte}, []byte{}),
+//		), 0))
+//		return
 //	}
 //	for _, pktByte := range cachedBytes {
 //		pkt := safeDecode(pktByte)

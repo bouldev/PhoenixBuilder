@@ -113,12 +113,17 @@ func (c *Client) RecvGamePacket() ([]byte, error) {
 	}
 }
 
-func (c *Client) RecvDecodedGamePacket() (mc_packet.Packet, error) {
+func (c *Client) RecvDecodedGamePacket() (pk mc_packet.Packet, err error) {
 	mcPkt, err := c.RecvGamePacket()
 	if err != nil {
 		return nil, err
 	}
-	pk := TypePool[uint32(mcPkt[0])]()
+	pk = TypePool[uint32(mcPkt[0])]()
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
 	pk.Unmarshal(protocol.NewReader(bytes.NewReader(mcPkt[1:]), 0))
 	return pk, nil
 }
@@ -356,10 +361,22 @@ func SendNoResponseCommand(connID int, cmd *C.char) (err *C.char) {
 	return toCErrStr(_err)
 }
 
+func safeDecode(pktByte []byte) (pkt mc_packet.Packet) {
+	pktID := uint32(pktByte[0])
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println(pktID, "decode fail")
+		}
+		return
+	}()
+	pkt = TypePool[pktID]()
+	pkt.Unmarshal(protocol.NewReader(bytes.NewReader(pktByte[1:]), 0))
+	return
+}
+
 //export GamePacketBytesAsIsJsonStr
 func GamePacketBytesAsIsJsonStr(pktBytes []byte) (jsonStr *C.char, err *C.char) {
-	pk := TypePool[uint32(pktBytes[0])]()
-	pk.Unmarshal(protocol.NewReader(bytes.NewReader(pktBytes[1:]), 0))
+	pk := safeDecode(pktBytes)
 	marshal, _err := json.Marshal(pk)
 	if _err != nil {
 		return nil, C.CString(_err.Error())
