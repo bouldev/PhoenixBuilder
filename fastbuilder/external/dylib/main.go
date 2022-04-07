@@ -8,8 +8,8 @@ package main
 import "C"
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
-	"gopkg.in/square/go-jose.v2/json"
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/minecraft/protocol"
