@@ -257,6 +257,13 @@ func runClient(env *environment.PBEnvironment) {
 			DebugMode: true,
 		}
 	} else {
+		connDeadline := time.NewTimer(time.Minute * 3)
+		go func() {
+			<-connDeadline.C
+			if env.Connection == nil {
+				panic("connection not established after very long time")
+			}
+		}()
 		fbauthclient := env.FBAuthClient.(*fbauth.Client)
 		dialer := minecraft.Dialer{
 			ServerCode: env.LoginInfo.ServerCode, //strings.TrimRight(serverCode, "\r\n"),
