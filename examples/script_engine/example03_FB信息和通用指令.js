@@ -44,3 +44,5 @@ engine.message(consts.server_code);
 engine.message(consts.fb_dir);
 //FB 版本信息
 engine.message(consts.fb_version);
+// uqHolder
+engine.message(game.uqHolder());

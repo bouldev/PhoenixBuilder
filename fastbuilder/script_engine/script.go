@@ -458,6 +458,19 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 		panic(err)
 	}
 
+	if err := game.Set("uqHolder",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			jsonVal := hb.GetQueries()["uqHolder"]()
+			value, err := v8go.JSONParse(info.Context(), jsonVal)
+			if err != nil {
+				return throwException("game.uqHolder", err.Error())
+			} else {
+				return value
+			}
+		})); err != nil {
+		panic(err)
+	}
+
 	if err := fs.Set("requestFilePermission",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 			if hint, ok := hasStrIn(info, 1, "fs.requestFilePermission[hint]"); !ok {
