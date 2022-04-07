@@ -1,4 +1,4 @@
-package main
+package uqHolder
 
 import (
 	"encoding/json"
@@ -138,6 +138,12 @@ func (uq *UQHolder) GetEntityByRuntimeID(EntityRuntimeID uint64) *Entity {
 }
 
 func (uq *UQHolder) Update(pk packet.Packet) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			fmt.Println("UQHolder Update Error: ", r)
+		}
+	}()
 	switch p := pk.(type) {
 	case *packet.NetworkSettings:
 		uq.CompressThreshold = p.CompressionThreshold

@@ -4,27 +4,28 @@ package environment
 import "phoenixbuilder/fastbuilder/environment/interfaces"
 
 type LoginInfo struct {
-	Token string
-	ServerCode string
+	Token          string
+	ServerCode     string
 	ServerPasscode string
 }
 
 type PBEnvironment struct {
 	LoginInfo
-	IsDebug bool
-	ScriptBridge interface{}
-	ScriptHolder interface{}
-	FunctionHolder interfaces.FunctionHolder
-	FBUCUsername string
-	WorldChatChannel chan []string
-	FBAuthClient interface{}
-	GlobalFullConfig interface{}
-	RespondUser string
-	CommandSender interfaces.CommandSender
-	Connection interface{}
-	TaskHolder interface{}
-	ActivateTaskStatus chan bool
-	Uid string
+	IsDebug                   bool
+	ScriptBridge              interface{}
+	ScriptHolder              interface{}
+	FunctionHolder            interfaces.FunctionHolder
+	FBUCUsername              string
+	WorldChatChannel          chan []string
+	FBAuthClient              interface{}
+	GlobalFullConfig          interface{}
+	RespondUser               string
+	CommandSender             interfaces.CommandSender
+	Connection                interface{}
+	UQHolder                  interface{}
+	TaskHolder                interface{}
+	ActivateTaskStatus        chan bool
+	Uid                       string
 	ExternalConnectionHandler interface{}
-	Destructors []func()
+	Destructors               []func()
 }

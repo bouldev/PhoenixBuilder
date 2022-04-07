@@ -92,9 +92,9 @@ build/phoenixbuilder-macos-arm64: build/ ${SRCS_GO}
 build/phoenixbuilder-macos: build/ build/phoenixbuilder-macos-x86_64 build/phoenixbuilder-macos-arm64 ${SRCS_GO}
 	${LIPO} -create build/phoenixbuilder-macos-x86_64 build/phoenixbuilder-macos-arm64 -output build/phoenixbuilder-macos
 build/phoenixbuilder-v8-macos-x86_64: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=`pwd`/archs/macos.sh CXX=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-x86_64
+	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=`pwd`/archs/macos.sh CXX=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8-macos-x86_64
 build/phoenixbuilder-v8-macos-arm64: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=`pwd`/archs/macos.sh CXX=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-arm64
+	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=`pwd`/archs/macos.sh CXX=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8-macos-arm64
 build/phoenixbuilder-v8-macos: build/ build/phoenixbuilder-v8-macos-x86_64 build/phoenixbuilder-v8-macos-arm64 ${SRCS_GO}
 	${LIPO} -create build/phoenixbuilder-v8-macos-x86_64 build/phoenixbuilder-v8-macos-arm64 -output build/phoenixbuilder-v8-macos
 build/phoenixbuilder-android-executable-armv7: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang ${SRCS_GO}

@@ -24,6 +24,7 @@ import (
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/minecraft"
@@ -152,6 +153,7 @@ func runInteractiveClient(token string) {
 
 func create_environment() *environment.PBEnvironment {
 	env := &environment.PBEnvironment{}
+	env.UQHolder = nil
 	env.ActivateTaskStatus = make(chan bool)
 	env.TaskHolder = fbtask.NewTaskHolder()
 	functionHolder := function.NewFunctionHolder(env)
@@ -316,6 +318,8 @@ func runClient(env *environment.PBEnvironment) {
 		Enabled: false,
 	})
 	env.Connection = conn
+	env.UQHolder = uqHolder.NewUQHolder(conn.GameData().EntityRuntimeID)
+	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = uint64(time.Now().Sub(conn.GameData().ConnectTime).Milliseconds()) / 50
 
 	commandSender := command.InitCommandSender(env)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
@@ -472,7 +476,15 @@ func runClient(env *environment.PBEnvironment) {
 				panic("dump to capture file fail " + err.Error())
 			}
 		}
+		env.UQHolder.(*uqHolder.UQHolder).Update(pk)
 		hostBridgeGamma.HostPumpMcPacket(pk)
+		hostBridgeGamma.HostQueryExpose["uqHolder"] = func() string {
+			marshal, err := json.Marshal(env.UQHolder.(*uqHolder.UQHolder))
+			if err != nil {
+				return err.Error()
+			}
+			return string(marshal)
+		}
 		if env.ExternalConnectionHandler != nil {
 			select {
 			case env.ExternalConnectionHandler.(*external.ExternalConnectionHandler).PacketChannel <- data:
