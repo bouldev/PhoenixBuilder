@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"time"
@@ -14,11 +15,14 @@ import (
 	"github.com/google/uuid"
 )
 
-var Version = [3]byte{0, 0, 2}
+var Version = [3]byte{0, 0, 3}
 
 type Player struct {
-	UUID                    uuid.UUID
-	EntityUniqueID          int64
+	UUID           uuid.UUID
+	EntityUniqueID int64
+	//GameModeAfterChange     int32
+	LoginTime               time.Time
+	LoginTick               uint64
 	Username                string
 	PlatformChatID          string
 	BuildPlatform           int32
@@ -75,51 +79,63 @@ type GameRule struct {
 	Value                 interface{}
 }
 type UQHolder struct {
-	VERSION             string
-	BotRuntimeID        uint64
-	CompressThreshold   uint16
-	CurrentTick         uint64
-	InventorySlot       map[uint32]protocol.ItemInstance
-	playersByUUID       map[[16]byte]*Player
-	PlayersByEntityID   map[int64]*Player
-	EntitiesByRuntimeID map[uint64]*Entity
-	entitiesByUniqueID  map[int64]*Entity
-	Time                int32
-	DayTime             int32
-	DayTimePercent      float32
-	WorldSpawnPosition  map[int32]protocol.BlockPos
-	BotSpawnPosition    map[int32]protocol.BlockPos
-	Difficulty          uint32
-	CommandsEnabled     bool
-	GameRules           map[string]*GameRule
-	InventoryContent    map[uint32][]protocol.ItemInstance
-	PlayerHotBar        packet.PlayerHotBar
+	VERSION                    string
+	ConnectTime                time.Time
+	WorldName                  string
+	BotRandomID                int64
+	BotUniqueID                int64
+	BotRuntimeID               uint64
+	CompressThreshold          uint16
+	CurrentTick                uint64
+	WorldGameMode              int32
+	WorldDifficulty            uint32
+	InventorySlot              map[uint32]protocol.ItemInstance
+	playersByUUID              map[[16]byte]*Player
+	PlayersByEntityID          map[int64]*Player
+	EntitiesByRuntimeID        map[uint64]*Entity
+	entitiesByUniqueID         map[int64]*Entity
+	Time                       int32
+	DayTime                    int32
+	DayTimePercent             float32
+	OnConnectWoldSpawnPosition protocol.BlockPos
+	WorldSpawnPosition         map[int32]protocol.BlockPos
+	BotSpawnPosition           map[int32]protocol.BlockPos
+	CommandsEnabled            bool
+	GameRules                  map[string]*GameRule
+	InventoryContent           map[uint32][]protocol.ItemInstance
+	PlayerHotBar               packet.PlayerHotBar
 	// AvailableCommands   packet.AvailableCommands
-	BotOnGround         bool
-	BotHealth           int32
-	CommandRelatedEnums []*packet.UpdateSoftEnum
+	BotOnGround           bool
+	BotHealth             int32
+	CommandRelatedEnums   []*packet.UpdateSoftEnum
+	displayUnknownPackets bool
 }
 
 func NewUQHolder(BotRuntimeID uint64) *UQHolder {
 	uq := &UQHolder{
-		VERSION:             fmt.Sprintf("%d.%d.%d", Version[0], Version[1], Version[2]),
-		BotRuntimeID:        BotRuntimeID,
-		InventorySlot:       map[uint32]protocol.ItemInstance{},
-		playersByUUID:       map[[16]byte]*Player{},
-		PlayersByEntityID:   map[int64]*Player{},
-		WorldSpawnPosition:  map[int32]protocol.BlockPos{},
-		BotSpawnPosition:    map[int32]protocol.BlockPos{},
-		EntitiesByRuntimeID: map[uint64]*Entity{},
-		entitiesByUniqueID:  map[int64]*Entity{},
-		GameRules:           map[string]*GameRule{},
-		InventoryContent:    map[uint32][]protocol.ItemInstance{},
-		CommandRelatedEnums: make([]*packet.UpdateSoftEnum, 0),
+		VERSION:               fmt.Sprintf("%d.%d.%d", Version[0], Version[1], Version[2]),
+		BotRuntimeID:          BotRuntimeID,
+		InventorySlot:         map[uint32]protocol.ItemInstance{},
+		playersByUUID:         map[[16]byte]*Player{},
+		PlayersByEntityID:     map[int64]*Player{},
+		WorldSpawnPosition:    map[int32]protocol.BlockPos{},
+		BotSpawnPosition:      map[int32]protocol.BlockPos{},
+		EntitiesByRuntimeID:   map[uint64]*Entity{},
+		entitiesByUniqueID:    map[int64]*Entity{},
+		GameRules:             map[string]*GameRule{},
+		InventoryContent:      map[uint32][]protocol.ItemInstance{},
+		CommandRelatedEnums:   make([]*packet.UpdateSoftEnum, 0),
+		displayUnknownPackets: false,
 	}
 	go func() {
 		t := time.NewTicker(50 * time.Millisecond)
+		gcTime := uint64(20 * 60 * 10)
 		for {
 			<-t.C
 			uq.CurrentTick++
+			if uq.CurrentTick%gcTime == gcTime-1 {
+				uq.gc((uq.CurrentTick + 10) - gcTime)
+			}
 		}
 	}()
 	return uq
@@ -127,6 +143,41 @@ func NewUQHolder(BotRuntimeID uint64) *UQHolder {
 
 func (uq *UQHolder) UpdateTick(tick uint64) {
 	uq.CurrentTick = tick
+}
+
+func (uq *UQHolder) DisplayUnKnownPackets(b bool) {
+	uq.displayUnknownPackets = b
+}
+
+func (uq *UQHolder) gc(deadline uint64) {
+	//fmt.Println("gc")
+	for _, p := range uq.playersByUUID {
+		if p.Entity != nil && p.EntityRuntimeID != 0 {
+			if e, hask := uq.EntitiesByRuntimeID[p.EntityRuntimeID]; hask && e.LastUpdateTick < deadline {
+				if _, hasK := uq.entitiesByUniqueID[e.UniqueID]; hasK {
+					delete(uq.entitiesByUniqueID, e.UniqueID)
+				}
+				delete(uq.EntitiesByRuntimeID, p.EntityRuntimeID)
+			}
+			p.Entity = nil
+			p.EntityRuntimeID = 0
+			p.EntityUniqueID = 0
+		}
+	}
+	gcEID := make([]uint64, 0)
+	for rtid, e := range uq.EntitiesByRuntimeID {
+		if e.LastUpdateTick < deadline {
+			gcEID = append(gcEID, rtid)
+		}
+	}
+	for _, rtid := range gcEID {
+		if e, hask := uq.EntitiesByRuntimeID[rtid]; hask && e.LastUpdateTick < deadline {
+			if _, hasK := uq.entitiesByUniqueID[e.UniqueID]; hasK {
+				delete(uq.entitiesByUniqueID, e.UniqueID)
+			}
+			delete(uq.EntitiesByRuntimeID, rtid)
+		}
+	}
 }
 
 func (uq *UQHolder) Marshal() []byte {
@@ -197,6 +248,18 @@ func (uq *UQHolder) GetEntityByRuntimeID(EntityRuntimeID uint64) *Entity {
 	return e
 }
 
+func (uq *UQHolder) UpdateFromConn(conn *minecraft.Conn) {
+	gd := conn.GameData()
+	uq.BotUniqueID = gd.EntityUniqueID
+	uq.ConnectTime = gd.ConnectTime
+	uq.WorldName = gd.WorldName
+	uq.WorldGameMode = gd.WorldGameMode
+	uq.WorldDifficulty = uint32(gd.Difficulty)
+	uq.OnConnectWoldSpawnPosition = gd.WorldSpawn
+	cd := conn.ClientData()
+	uq.BotRandomID = cd.ClientRandomID
+}
+
 func (uq *UQHolder) Update(pk packet.Packet) {
 	defer func() {
 		r := recover()
@@ -219,13 +282,27 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 					PlatformChatID: e.PlatformChatID,
 					BuildPlatform:  e.BuildPlatform,
 					SkinID:         e.Skin.SkinID,
+					LoginTime:      time.Now(),
+					LoginTick:      uq.CurrentTick,
 				}
 				uq.playersByUUID[e.UUID] = player
 				uq.PlayersByEntityID[e.EntityUniqueID] = player
 			}
 		} else {
 			for _, e := range p.Entries {
-				delete(uq.playersByUUID, e.UUID)
+				if p, ok := uq.playersByUUID[e.UUID]; ok {
+					if p.Entity != nil && p.EntityRuntimeID != 0 {
+						if e, hask := uq.EntitiesByRuntimeID[p.EntityRuntimeID]; hask {
+							if _, hasK := uq.entitiesByUniqueID[e.UniqueID]; hasK {
+								delete(uq.entitiesByUniqueID, e.UniqueID)
+							}
+							delete(uq.EntitiesByRuntimeID, p.EntityRuntimeID)
+						}
+						p.Entity = nil
+					}
+					delete(uq.PlayersByEntityID, p.EntityUniqueID)
+					delete(uq.playersByUUID, e.UUID)
+				}
 			}
 		}
 	case *packet.AdventureSettings:
@@ -239,8 +316,6 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		uq.Time = p.Time
 		uq.DayTime = p.Time % 24000
 		uq.DayTimePercent = float32(uq.DayTime) / 24000.0
-	case *packet.SetDifficulty:
-		uq.Difficulty = p.Difficulty
 	case *packet.SetCommandsEnabled:
 		uq.CommandsEnabled = p.Enabled
 	case *packet.UpdateAttributes:
@@ -267,7 +342,6 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		e.LastUpdateTick = p.Tick
 		e.Metadata = p.EntityMetadata
 		uq.UpdateTick(p.Tick)
-
 	case *packet.MovePlayer:
 		if p.EntityRuntimeID == uq.BotRuntimeID {
 			uq.BotOnGround = p.OnGround
@@ -390,6 +464,19 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 			uq.BotSpawnPosition[p.Dimension] = p.Position // not sure
 			uq.WorldSpawnPosition[p.Dimension] = p.SpawnPosition
 		}
+	case *packet.SetDefaultGameType:
+		uq.WorldGameMode = p.GameType
+	case *packet.SetDifficulty:
+		uq.WorldDifficulty = p.Difficulty
+	//case *packet.UpdatePlayerGameType:
+	// some thing error
+	//fmt.Println("mode UpdatePlayerGameType")
+	//for _, player := range uq.PlayersByEntityID {
+	//	if player.PlayerUniqueID == p.PlayerUniqueID {
+	//		player.GameModeAfterChange = p.GameType
+	//		fmt.Println("mode changed")
+	//	}
+	//}
 	// meaning not clear
 	case *packet.PlayerHotBar:
 		uq.PlayerHotBar = *p
@@ -406,23 +493,33 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	case *packet.ChunkRadiusUpdated:
 	case *packet.LevelSoundEvent:
 	case *packet.Animate:
+	case *packet.ItemComponent:
+	case *packet.CreativeContent:
+	case *packet.UpdateBlock:
+	case *packet.BlockActorData:
+	case *packet.PlayerFog:
+	case *packet.Text:
+	case *packet.AddItemActor:
 	// no need to support
 	case *packet.PlayStatus:
 	// no need to support
 	case *packet.PyRpc:
-		//not handled
-		//default:
-		//	marshal, err := json.Marshal(pk)
-		//	if err != nil {
-		//		println(err)
-		//	} else {
-		//		jsonStr := string(marshal)
-		//		if len(jsonStr) < 300 {
-		//			fmt.Println(pk.ID(), " : ", jsonStr)
-		//		} else {
-		//			fmt.Println(pk.ID(), " : ", jsonStr[:300])
-		//		}
-		//	}
+	//not handled
+	default:
+		if !uq.displayUnknownPackets {
+			break
+		}
+		marshal, err := json.Marshal(pk)
+		if err != nil {
+			println(err)
+		} else {
+			jsonStr := string(marshal)
+			if len(jsonStr) < 300 {
+				fmt.Println(pk.ID(), " : ", jsonStr)
+			} else {
+				fmt.Println(pk.ID(), " : ", jsonStr[:300])
+			}
+		}
 	}
 }
 

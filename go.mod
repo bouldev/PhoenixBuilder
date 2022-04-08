@@ -2,7 +2,10 @@ module phoenixbuilder
 
 go 1.18
 
-require rogchap.com/v8go v0.7.0
+require (
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	rogchap.com/v8go v0.7.0
+)
 
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect

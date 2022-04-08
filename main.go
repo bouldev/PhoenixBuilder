@@ -484,6 +484,7 @@ func runClient(env *environment.PBEnvironment) {
 			}
 		}
 		env.UQHolder.(*uqHolder.UQHolder).Update(pk)
+		env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 		hostBridgeGamma.HostPumpMcPacket(pk)
 		hostBridgeGamma.HostQueryExpose["uqHolder"] = func() string {
 			marshal, err := json.Marshal(env.UQHolder.(*uqHolder.UQHolder))
