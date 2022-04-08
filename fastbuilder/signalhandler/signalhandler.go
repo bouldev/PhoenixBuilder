@@ -7,11 +7,15 @@ import (
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/fastbuilder/readline"
+	"phoenixbuilder/fastbuilder/args"
 	"syscall"
 )
 
 func Install(conn *minecraft.Conn) {
 	go func() {
+		if(args.NoReadline()) {
+			return
+		}
 		readline.SelfTermination=make(chan bool)
 		<-readline.SelfTermination
 		readline.HardInterrupt()
@@ -20,6 +24,9 @@ func Install(conn *minecraft.Conn) {
 		os.Exit(0)
 	} ()
 	go func() {
+		if(args.NoReadline()) {
+			return
+		}
 		for {
 			sigintchannel:=make(chan os.Signal)
 			signal.Notify(sigintchannel, os.Interrupt) // ^C
@@ -31,6 +38,9 @@ func Install(conn *minecraft.Conn) {
 		signalchannel:=make(chan os.Signal)
 		signal.Notify(signalchannel, syscall.SIGTERM)
 		signal.Notify(signalchannel, syscall.SIGQUIT) // ^\
+		if(args.NoReadline()) {
+			signal.Notify(signalchannel, os.Interrupt)
+		}
 		<-signalchannel
 		readline.HardInterrupt()
 		conn.Close()

@@ -16,7 +16,7 @@ function onConnection() {
 		});
 	})
 
-	engine.message("sendCommnadSync");
+	engine.message("sendCommandSync");
 	//  发送一条指令，需要它的结果（强烈不建议）
 	// 如果服务器没有返回结果，脚本将被卡死!
 	// 一些指令本身是有结果的，但是，在某些特殊情况下，

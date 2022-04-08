@@ -17,7 +17,14 @@ char *server_password="";
 char custom_token=0;
 char *token_content;
 char *externalListenAddr="";
+<<<<<<< HEAD
 char *capture_output_file="";
+=======
+char args_no_readline=0;
+char *pack_scripts="";
+char *pack_scripts_out="";
+
+>>>>>>> f168b46 (Sandbox & script bundle)
 
 extern void custom_script_engine_const(const char *key, const char *val);
 extern void do_suppress_se_const(const char *key);
@@ -39,7 +46,10 @@ void print_help(const char *self_name) {
 	printf("\t-t, --token=<path of FBToken>: Specify the path of FBToken, and quit if the file is unaccessible.\n");
 	printf("\t-T, --plain-token=<token>: Specify the token content.\n");
 	printf("\t-E, --listen-external: Listen on the specified address and wait for external controlling connection.\n\t\tExample: -E 0.0.0.0:5768 - listen on port 5768 and accept connections from anywhere,\n\t\t\t-E 127.0.0.1:5769 - listen on port 5769 and accept connections from localhost only.\n");
-	printf("\t-C, --capture=<*.bin>: Capture minecraft packet and dump to target file\n");
+	printf("\t--capture=<*.bin>: Capture minecraft packet and dump to target file\n");
+	printf("\t--no-readline: Suppress user input.\n");
+	printf("\t--pack-scripts <manifest path>: Create a script package.\n");
+	printf("\t--pack-scripts-to <path>: Specify the path for the output script package.\n");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
@@ -98,6 +108,12 @@ void read_token(char *token_path) {
 	fclose(file);
 }
 
+void quickcopy(char **target_ptr) {
+	size_t length=strlen(optarg)+1;
+	*target_ptr=malloc(length);
+	memcpy(*target_ptr, optarg, length);
+}
+
 int _parse_args(int argc, char **argv) {
 	while(1) {
 		static struct option opts[]={
@@ -118,7 +134,10 @@ int _parse_args(int argc, char **argv) {
 			{"script-engine-const", required_argument, 0, 0}, //14
 			{"script-engine-suppress-const", required_argument, 0, 0}, //15
 			{"listen-external", required_argument, 0, 'E'}, // 16
-			{"capture", required_argument, 0, 'C'}, // 17
+			{"no-readline", no_argument, 0, 0}, //17
+			{"pack-scripts", required_argument, 0, 0}, //18
+			{"pack-scripts-to", required_argument, 0, 0}, //19
+			{"capture", required_argument, 0, 0}, // 20
 			{0, 0, 0, 0}
 		};
 		int option_index;
@@ -172,6 +191,18 @@ int _parse_args(int argc, char **argv) {
 #endif
 				do_suppress_se_const(optarg);
 				break;
+			case 17:
+				args_no_readline=1;
+				break;
+			case 18:
+				quickcopy(&pack_scripts);
+				break;
+			case 19:
+				quickcopy(&pack_scripts_out);
+				break;
+			case 20:
+				quickcopy(&capture_output_file);
+				break;
 			};
 			break;
 		case 'h':
@@ -179,9 +210,7 @@ int _parse_args(int argc, char **argv) {
 			return 0;
 		case 'A':
 			replaced_auth_server=1;
-			size_t loo=strlen(optarg);
-			newAuthServer=malloc(loo+1);
-			memcpy(newAuthServer,optarg,loo+1);
+			quickcopy(&newAuthServer);
 			break;
 		case 'M':
 			args_muteWorldChat=1;
@@ -192,21 +221,15 @@ int _parse_args(int argc, char **argv) {
 			return 10;
 #endif
 			use_startup_script=1;
-			size_t looa=strlen(optarg);
-			startup_script=malloc(looa+1);
-			memcpy(startup_script,optarg,looa+1);
+			quickcopy(&startup_script);
 			break;
 		case 'c':
 			specified_server=1;
-			size_t server_code_buf_length=strlen(optarg)+1;
-			server_code=malloc(server_code_buf_length);
-			memcpy(server_code, optarg, server_code_buf_length);
+			quickcopy(&server_code);
 			break;
 		case 'p':
 			specified_server=1;
-			size_t server_password_buf_length=strlen(optarg)+1;
-			server_password=malloc(server_password_buf_length);
-			memcpy(server_password, optarg, server_password_buf_length);
+			quickcopy(&server_password);
 			break;
 		case 't':
 			custom_token=1;
@@ -214,18 +237,11 @@ int _parse_args(int argc, char **argv) {
 			break;
 		case 'T':
 			custom_token=1;
-			size_t token_buf_length=strlen(optarg)+1;
-			token_content=malloc(token_buf_length);
-			memcpy(token_content, optarg, token_buf_length);
+			quickcopy(&token_content);
 			break;
 		case 'E':
-			externalListenAddr=malloc(strlen(optarg)+1);
-			memcpy(externalListenAddr, optarg, strlen(optarg)+1);
+			quickcopy(&externalListenAddr);
 			break;
-        case 'C':
-            capture_output_file=malloc(strlen(optarg)+1);
-            memcpy(capture_output_file, optarg, strlen(optarg)+1);
-            break;
 		case 'v':
 			print_version(1);
 			return 0;

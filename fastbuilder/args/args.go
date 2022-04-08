@@ -29,7 +29,13 @@ extern char *server_password;
 extern char custom_token;
 extern char *token_content;
 extern char *externalListenAddr;
+<<<<<<< HEAD
 extern char *capture_output_file;
+=======
+extern char args_no_readline;
+extern char *pack_scripts;
+extern char *pack_scripts_out;
+>>>>>>> f168b46 (Sandbox & script bundle)
 */
 import "C"
 
@@ -176,6 +182,19 @@ func ExternalListenAddress() string {
 	return C.GoString(C.externalListenAddr)
 }
 
+
 func CaptureOutputFile() string {
 	return C.GoString(C.capture_output_file)
+}
+
+func NoReadline() bool {
+	return boolify(C.args_no_readline)
+}
+
+func PackScripts() string {
+	return C.GoString(C.pack_scripts)
+}
+
+func PackScriptsOut() string {
+	return C.GoString(C.pack_scripts_out)
 }

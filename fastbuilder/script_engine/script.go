@@ -17,10 +17,15 @@ import (
 	"go.kuoruan.net/v8go-polyfills/url"
 	"phoenixbuilder/fastbuilder/script_engine/bridge"
 	"rogchap.com/v8go"
+	
+	"regexp"
+	"io/ioutil"
+	"path/filepath"
+	"errors"
 )
 
 // jsEngine.hostBridge.api
-const JSVERSION = "[script_engine@v8].gamma.6"
+const JSVERSION = "[script_engine@v8].gamma.7"
 
 func AllowPath(path string) bool {
 	if strings.Contains(path, "fbtoken") {
@@ -65,12 +70,12 @@ func getReceiver(info *v8go.FunctionCallbackInfo) *v8go.Object {
 	return info.Context().Global()
 }
 
-func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostBridge, _scriptName string, identifyStr string, scriptPath string) func() {
+func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostBridge, _scriptName string, identifyStr string, scriptPath string, bundle *ScriptPackage) func() {
 	scriptName := _scriptName
-	permission := LoadPermission(hb, identifyStr)
-	updatePermission := func() {
+	//permission := LoadPermission(hb, identifyStr)
+	/*updatePermission := func() {
 		SavePermission(hb, identifyStr, permission)
-	}
+	}*/
 
 	throwException := func(funcName string, str string) *v8go.Value {
 		value, _ := v8go.NewValue(iso, "Script crashed at ["+funcName+"] due to "+str)
@@ -110,12 +115,60 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 	engine := v8go.NewObjectTemplate(iso)
 	global.Set("engine", engine)
 	// function engine.setName(scriptName string)
+	global.Set("printf",v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		args:=info.Args()
+		if(len(args)==0) {
+			// Same to printf("");
+			fmt.Printf("[%s] ",scriptName)
+			return nil
+		}
+		things:=make([]interface{},len(args)-1)
+		for i, v:=range args[1:] {
+			things[i]=v.String()
+		}
+		fmt.Printf(fmt.Sprintf("[%s] %s",scriptName,args[0].String()),things...)
+		return nil
+	}))
+	global.Set("sprintf",v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		args:=info.Args()
+		if(len(args)==0) {
+			// Same to sprintf("");
+			val,_ := v8go.NewValue(iso, "")
+			return val
+		}
+		things:=make([]interface{},len(args)-1)
+		for i, v:=range args[1:] {
+			things[i]=v.String()
+		}
+		val, _:=v8go.NewValue(iso, fmt.Sprintf(args[0].String(),things...))
+		return val
+	}))
+	internalNameSet=false
+	
 	if err := engine.Set("setName",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if(internalNameSet) {
+				throwException("engine.setName","Changing name dynamically for a package is not allowed")
+				return nil
+			}
 			if str, ok := hasStrIn(info, 0, "engine.setName[scriptName]"); !ok {
 				throwException("engine.setName: No arguments assigned", str)
 			} else {
 				hb.Println("Script \""+scriptName+"\" is naming itself as \""+str+"\"", t, scriptName)
+				scriptName = str
+			}
+			return nil
+		}),
+	); err != nil {
+		panic(err)
+	}
+	
+	if err := engine.Set("setNameInternal",
+		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			if str, ok := hasStrIn(info, 0, "engine.setNameInternal[scriptName]"); !ok {
+				throwException("engine.setNameInternal: No arguments assigned", str)
+			} else {
+				internalNameSet=true
 				scriptName = str
 			}
 			return nil
@@ -160,57 +213,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 	}
 
 	// function engine.message(msg string) None
-	if err := engine.Set("message",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str, ok := hasStrIn(info, 0, "engine.message[msg]"); !ok {
-				throwException("engine.message", str)
-			} else {
-				hb.Println(str, t, scriptName)
-			}
-			return nil
-		}),
-	); err != nil {
-		panic(err)
-	}
-
-	// function engine.questionSync(hint string) string
-	if err := engine.Set("questionSync",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str, ok := hasStrIn(info, 0, "engine.questionSync[hint]"); !ok {
-				throwException("engine.questionSync", str)
-			} else {
-				userInput := hb.GetInput(str, t, scriptName)
-				value, _ := v8go.NewValue(iso, userInput)
-				return value
-			}
-			return nil
-		}),
-	); err != nil {
-		panic(err)
-	}
-
-	// function question(hint,cb) None
-	if err := engine.Set("question",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str, ok := hasStrIn(info, 0, "engine.question[hint,cb]"); !ok {
-				throwException("engine.question", str)
-			} else {
-				if errStr, cbFn := hasFuncIn(info, 1, "engine.question[hint,cb]"); cbFn == nil {
-					throwException("engine.question", errStr)
-				} else {
-					go func() {
-						userInput := hb.GetInput(str, t, scriptName)
-						value, _ := v8go.NewValue(iso, userInput)
-						cbFn.Call(getReceiver(info), value)
-					}()
-				}
-
-			}
-			return nil
-		}),
-	); err != nil {
-		panic(err)
-	}
+	// Implemented in built-in js
 
 	// function engine.crash(string reason) None
 	if err := engine.Set("crash",
@@ -428,179 +431,361 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 	); err != nil {
 		panic(err)
 	}
+	containerPath:=""
 
 	consts := v8go.NewObjectTemplate(iso)
-	s256v, _ := v8go.NewValue(iso, identifyStr)
-	consts.Set("script_sha256", s256v)
-	consts.Set("script_path", scriptPath)
+	//s256v, _ := v8go.NewValue(iso, identifyStr)
+	//consts.Set("script_sha256", s256v)
 	consts.Set("engine_version", JSVERSION)
-	//consts.Set("user_name","Not implemented")
 	for k, v := range hb.GetQueries() {
 		val, _ := v8go.NewValue(iso, v())
 		consts.Set(k, val)
 	}
+	if(bundle!=nil) {
+		bundleObj:=v8go.NewObjectTemplate(iso)
+		bundleObj.Set("identifier", bundle.Identifier)
+		bundleObj.Set("name", bundle.Name)
+		bundleObj.Set("description", bundle.Description)
+		bundleObj.Set("author", bundle.Author)
+		bundleObj.Set("version", bundle.Version)
+		bundleObj.Set("manifest", bundle.Manifest)
+		bundleObj.Set("related_information", bundle.RelatedInformation)
+		bundleObj.Set("entrypoint", bundle.EntryPoint)
+		bundleContentObj:=v8go.NewObjectTemplate(iso)
+		for n, v:=range bundle.Datas {
+			bundleContentObj.Set(n,v)
+		}
+		for n, v:=range bundle.Scripts {
+			csn:=string(n)
+			csv:=v
+			externalScriptObj:=v8go.NewObjectTemplate(iso)
+			externalScriptObj.Set("run", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+				newContext:=v8go.NewContext(iso, global)
+				// Share the same `global`.
+				nconsts,_:=newContext.Global().Get("consts")
+				nconstso,_:=nconsts.AsObject()
+				nbundle,_:=nconstso.Get("bundle")
+				nbundleo,_:=nbundle.AsObject()
+				nbundleo.Set("currentScript", csn)
+				nbundleo.Set("fromRequire", true)
+				nfs,_:=newContext.Global().Get("fs")
+				nfso,_:=nfs.AsObject()
+				nfso.Set("containerPath", containerPath)
+				CtxFunctionInject(newContext)
+				_, err:=csv.Run(newContext)
+				if(err!=nil) {
+					je:=err.(*v8go.JSError)
+					throwException("runScript",fmt.Sprintf("Uncaught Error in script '%s': %s\nLocation: %s\nStack: %s",n,je.Message,je.Location,je.StackTrace))
+					return nil
+				}
+				n_mdl,err:=newContext.Global().Get("module")
+				if(err!=nil) {
+					return nil
+				}
+				n_mdl_obj,err:=n_mdl.AsObject()
+				if(err!=nil) {
+					return nil
+				}
+				n_exp,err:=n_mdl_obj.Get("exports")
+				if(err!=nil) {
+					return nil
+				}
+				return n_exp
+			}))
+			bundleContentObj.Set(n,externalScriptObj)
+		}
+		bundleObj.Set("content",bundleContentObj)
+		consts.Set("bundle", bundleObj)
+	}
 	global.Set("consts", consts)
+	
+	module:=v8go.NewObjectTemplate(iso)
+	module.Set("exports", v8go.NewObjectTemplate(iso))
+	global.Set("module", module)
 
 	fs := v8go.NewObjectTemplate(iso)
 	global.Set("fs", fs)
+	
+	fs.Set("containerPath", "")
 
-	if err := fs.Set("getAbsPath",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str, ok := hasStrIn(info, 0, "fs.getAbsPath[path]"); !ok {
-				throwException("fs.getAbsPath", str)
-			} else {
-				absPath := hb.GetAbsPath(str)
-				value, _ := v8go.NewValue(iso, absPath)
-				return value
-			}
+	fs.Set("requireContainer", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		if(len(containerPath)!=0) {
+			throwException("fs.requireContainer", "Requesting a container, but a container for the script is already created.")
 			return nil
-		})); err != nil {
-		panic(err)
-	}
-
-	if err := game.Set("uqHolder",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			jsonVal := hb.GetQueries()["uqHolder"]()
-			value, err := v8go.JSONParse(info.Context(), jsonVal)
-			if err != nil {
-				return throwException("game.uqHolder", err.Error())
-			} else {
-				return value
-			}
-		})); err != nil {
-		panic(err)
-	}
-
-	if err := fs.Set("requestFilePermission",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if hint, ok := hasStrIn(info, 1, "fs.requestFilePermission[hint]"); !ok {
-				throwException("fs.requestFilePermission", hint)
+		}
+		if(len(info.Args())==0) {
+			throwException("fs.requireContainer", "No arguments provided")
+			return nil
+		}
+		containerNameValue:=info.Args()[0]
+		if(!containerNameValue.IsString()) {
+			throwException("fs.requireContainer", "Container name should be a string, for example, com.user.myscript")
+			return nil
+		}
+		containerName:=containerNameValue.String()
+		if(len(containerName)>32||len(containerName)<4) {
+			throwException("fs.requireContainer", "Container name is too long or too short")
+			return nil
+		}
+		containerExpection:=regexp.MustCompile("^([A-Za-z0-9_-]|\\.)*$")
+		if(!containerExpection.MatchString(containerName)) {
+			throwException("fs.requireContainer", "Invalid container name! Container name should be in this format: com.user.myscript")
+			return nil
+		}
+		homedir, _:=os.UserHomeDir()
+		containerPath=filepath.Join(homedir, fmt.Sprintf(".config/fastbuilder/containers/%s", containerName)) + "/"
+		os.MkdirAll(containerPath, 0700)
+		containerpv,_:=v8go.NewValue(iso, containerPath)
+		info.This().Set("containerPath",containerPath)
+		return containerpv
+	}))
+	
+	fs.Set("exists", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		if(len(containerPath)==0) {
+			throwException("fs.exists", "File operation without a container created")
+			return nil
+		}
+		if(len(info.Args())==0) {
+			throwException("fs.exists", "No arguments provided")
+			return nil
+		}
+		pathv:=info.Args()[0]
+		if(!pathv.IsString()) {
+			throwException("fs.exists", "Argument \"path\" must be a string.")
+			return nil
+		}
+		path:=filepath.Clean(pathv.String())
+		if(path[0]!='/') {
+			path=fmt.Sprintf("%s%s",containerPath,path)
+		}else{
+			if(path[0:len(containerPath)]!=containerPath) {
+				throwException("fs.exists", "Trying to control filesystem out of container")
+>>>>>>> f168b46 (Sandbox & script bundle)
 				return nil
-			} else {
-				if dir, ok := hasStrIn(info, 0, "fs.requestFilePermission[hint]"); !ok {
-					throwException("fs.requestFilePermission", dir)
-					return nil
-				} else {
-					dir = hb.GetAbsPath(dir) + string(os.PathSeparator)
-					if !AllowPath(dir) {
-						throwException("fs.requestFilePermission", "The script is breaking out sandbox, aborting.")
-						t.Terminate()
-						return nil
-					}
-					permissionKey := "VisitDir:" + dir
-					if hasPermission, ok := permission[permissionKey]; ok && hasPermission {
-						value, _ := v8go.NewValue(iso, true)
-						return value
-					} else {
-						for {
-							warning := "Script[" + scriptName + "][" + _scriptName + "]wants to access the contents of directory " + dir + ".\n" +
-								"Reason " + hint + "\n" +
-								"(Warning: The script will gain the ability of REMOVING, MODIFYING, CREATING any file in this directory.)\n" +
-								"Allow the access? Give an answer[y/N]:"
-							choose := hb.GetInput(warning, t, scriptName)
-							if choose == "Y" || choose == "y" {
-								value, _ := v8go.NewValue(iso, true)
-								permission[permissionKey] = true
-								updatePermission()
-								return value
-							} else {
-								value, _ := v8go.NewValue(iso, false)
-								return value
-							}
-							//hb.Println("无效输入，请输入[是/否/Y/y/N/n]其中之一",t,scriptName)
-						}
-					}
-				}
 			}
+		}
+		_, err:=os.Stat(path)
+		r:=false
+		if(!errors.Is(err, os.ErrNotExist)) {
+			r=true
+		}
+		rv,_:=v8go.NewValue(iso,r)
+		return rv
+	}))
+	
+	fs.Set("isDir", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		if(len(containerPath)==0) {
+			throwException("fs.isDir", "File operation without a container created")
 			return nil
-		}),
-	); err != nil {
-		panic(err)
-	}
-
-	// function fs.readFile(path string) string
-	// if permission is not granted or read fail, "" is returned
-	if err := fs.Set("readFile",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if str, ok := hasStrIn(info, 0, "fs.readFile[path]"); !ok {
-				throwException("fs.readFile", str)
-			} else {
-				p := hb.GetAbsPath(str)
-				hasPermission := false
-				for permissionName, _ := range permission {
-					if strings.HasPrefix(permissionName, "VisitDir:") {
-						if strings.HasPrefix(p, permissionName[len("VisitDir:"):]) {
-							hasPermission = true
-							break
-						}
-					}
-				}
-				if !hasPermission {
-					throwException("fs.readFile", "The script is trying to access an external path (without permission), aborting.")
-					t.Terminate()
-					return nil
-				}
-				if !AllowPath(p) {
-					throwException("fs.readFile", "The script is trying to access an external path (without permission), aborting.")
-					t.Terminate()
-					return nil
-				}
-				data, err := hb.LoadFile(p)
-				if err != nil {
-					value, _ := v8go.NewValue(iso, "")
-					return value
-				}
-				value, _ := v8go.NewValue(iso, data)
-				return value
+		}
+		if(len(info.Args())==0) {
+			throwException("fs.isDir", "No arguments provided")
+			return nil
+		}
+		pathv:=info.Args()[0]
+		if(!pathv.IsString()) {
+			throwException("fs.isDir", "Argument \"path\" must be a string.")
+			return nil
+		}
+		path:=filepath.Clean(pathv.String())
+		if(path[0]!='/') {
+			path=fmt.Sprintf("%s%s",containerPath,path)
+		}else{
+			if(path[0:len(containerPath)]!=containerPath) {
+				throwException("fs.isDir", "Trying to control filesystem out of container")
+				return nil
 			}
-			return nil
-		}),
-	); err != nil {
-		panic(err)
-	}
-
-	// function fs.writeFile(path string,data string) isSuccess
-	if err := fs.Set("writeFile",
-		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if p, ok := hasStrIn(info, 0, "fs.writeFile[path]"); !ok {
-				throwException("fs.writeFile", p)
-			} else {
-				if data, ok := hasStrIn(info, 1, "fs.writeFile[data]"); !ok {
-					throwException("fs.writeFile", data)
-				} else {
-					p := hb.GetAbsPath(p)
-					hasPermission := false
-					for permissionName, _ := range permission {
-						if strings.HasPrefix(permissionName, "VisitDir:") {
-							if strings.HasPrefix(p, permissionName[len("VisitDir:"):]) {
-								hasPermission = true
-								break
-							}
-						}
-					}
-					if !hasPermission {
-						throwException("fs.writeFile", "The script is trying to access an external path (without permission), aborting.")
-						t.Terminate()
-						return nil
-					}
-					if !AllowPath(p) {
-						throwException("fs.writeFile", "The script is trying to access an external path (without permission), aborting.")
-						t.Terminate()
-						return nil
-					}
-					err := hb.SaveFile(p, data)
-					if err != nil {
-						value, _ := v8go.NewValue(iso, false)
-						return value
-					}
-					value, _ := v8go.NewValue(iso, true)
-					return value
-				}
+		}
+		st, err:=os.Stat(path)
+		r:=false
+		if(err==nil) {
+			if(st.IsDir()) {
+				r=true
 			}
+		}
+		rv,_:=v8go.NewValue(iso,r)
+		return rv
+	}))
+	
+	fs.Set("mkdir", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		if(containerPath=="") {
+			throwException("fs.mkdir", "Container not created")
 			return nil
-		})); err != nil {
-		panic(err)
-	}
+		}
+		if(len(info.Args())==0) {
+			throwException("fs.mkdir", "No arguments provided")
+			return nil
+		}
+		pathv:=info.Args()[0]
+		if(!pathv.IsString()) {
+			throwException("fs.mkdir", "Argument \"path\" must be a string.")
+			return nil
+		}
+		path:=filepath.Clean(pathv.String())
+		if(path[0]!='/') {
+			path=fmt.Sprintf("%s%s",containerPath,path)
+		}else{
+			if(path[0:len(containerPath)]!=containerPath) {
+				throwException("fs.mkdir", "Trying to control filesystem out of container")
+				return nil
+			}
+		}
+		err:=os.MkdirAll(containerPath, 0700)
+		if(err!=nil) {
+			throwException("fs.mkdir", fmt.Sprintf("Failed to perform operation: %v",err))
+		}
+		return nil
+	}))
+	
+	fs.Set("rename", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		if(containerPath=="") {
+			throwException("fs.rename", "Container not created")
+			return nil
+		}
+		if(len(info.Args())<2) {
+			throwException("fs.rename", "Required 2 arguments")
+			return nil
+		}
+		pathv:=info.Args()[0]
+		npathv:=info.Args()[1]
+		if(!pathv.IsString()) {
+			throwException("fs.rename", "Argument \"oldpath\" must be a string.")
+			return nil
+		}
+		if(!npathv.IsString()) {
+			throwException("fs.rename", "Argument \"newpath\" must be a string.")
+			return nil
+		}
+		path:=filepath.Clean(pathv.String())
+		npath:=filepath.Clean(npathv.String())
+		if(path[0]!='/') {
+			path=fmt.Sprintf("%s%s",containerPath,path)
+		}else{
+			if(path[0:len(containerPath)]!=containerPath) {
+				throwException("fs.rename", "Trying to control filesystem out of container")
+				return nil
+			}
+			if(path==containerPath) {
+				throwException("fs.rename", "Controlling container is not allowed")
+				return nil
+			}
+		}
+		if(npath[0]!='/') {
+			npath=fmt.Sprintf("%s%s",containerPath,npath)
+		}else{
+			if(npath[0:len(containerPath)]!=containerPath) {
+				throwException("fs.rename", "Trying to control filesystem out of container")
+				return nil
+			}
+			if(npath==containerPath) {
+				throwException("fs.rename", "Controlling container is not allowed")
+				return nil
+			}
+		}
+		err:=os.Rename(path,npath)
+		if(err!=nil) {
+			throwException("fs.rename", fmt.Sprintf("Failed to perform operation: %v",err))
+		}
+		return nil
+	}))
+	
+	fs.Set("remove", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		if(containerPath=="") {
+			throwException("fs.remove", "Container not created")
+			return nil
+		}
+		if(len(info.Args())==0) {
+			throwException("fs.remove", "No arguments provided")
+			return nil
+		}
+		pathv:=info.Args()[0]
+		if(!pathv.IsString()) {
+			throwException("fs.remove", "Argument \"path\" must be a string.")
+			return nil
+		}
+		path:=filepath.Clean(pathv.String())
+		if(path[0]!='/') {
+			path=fmt.Sprintf("%s%s",containerPath,path)
+		}else{
+			if(path[0:len(containerPath)]!=containerPath) {
+				throwException("fs.remove", "Trying to control filesystem out of container")
+				return nil
+			}
+			if(path==containerPath) {
+				throwException("fs.remove", "Removing container is not allowed")
+				return nil
+			}
+		}
+		err:=os.RemoveAll(containerPath)
+		if(err!=nil) {
+			throwException("fs.remove", fmt.Sprintf("Failed to perform operation: %v",err))
+		}
+		return nil
+	}))
+	
+	fs.Set("readFile", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		if(len(containerPath)==0) {
+			throwException("fs.readFile", "File operation without a container created")
+			return nil
+		}
+		if(len(info.Args())==0) {
+			throwException("fs.readFile", "No arguments provided")
+			return nil
+		}
+		pathv:=info.Args()[0]
+		if(!pathv.IsString()) {
+			throwException("fs.readFile", "Argument \"path\" must be a string.")
+			return nil
+		}
+		path:=filepath.Clean(pathv.String())
+		if(path[0]!='/') {
+			path=fmt.Sprintf("%s%s",containerPath,path)
+		}else{
+			if(path[0:len(containerPath)]!=containerPath) {
+				throwException("fs.mkdir", "Trying to control filesystem out of container")
+				return nil
+			}
+		}
+		filecontent, err := ioutil.ReadFile(path)
+		if(err!=nil) {
+			throwException("fs.readFile", fmt.Sprintf("Failed to read target file: %v", err))
+			return nil
+		}
+		fin, _ := v8go.NewValue(iso, string(filecontent))
+		return fin
+	}))
+	
+	fs.Set("writeFile", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		if(len(containerPath)==0) {
+			throwException("fs.writeFile", "File operation without a container created")
+		}
+		if(len(info.Args())<2) {
+			throwException("fs.writeFile", "Required 2 arguments")
+			return nil
+		}
+		pathv:=info.Args()[0]
+		content:=info.Args()[1]
+		if(!pathv.IsString()) {
+			throwException("fs.writeFile", "Argument \"path\" must be a string.")
+			return nil
+		}
+		path:=filepath.Clean(pathv.String())
+		if(path[0]!='/') {
+			path=fmt.Sprintf("%s%s",containerPath,path)
+		}else{
+			if(path[0:len(containerPath)]!=containerPath) {
+				throwException("fs.writeFile", "Trying to control filesystem out of container")
+				return nil
+			}
+		}
+		err:=ioutil.WriteFile(path,[]byte(content.String()), 0700)
+		if(err!=nil) {
+			throwException("fs.writeFile", fmt.Sprintf("Failed to write target file: %v", err))
+			return nil
+		}
+		return nil
+	}))
+	
 	newws := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 		funcName := "new ws()"
 		if !info.IsConstructCall {
@@ -875,66 +1060,6 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 		panic(err)
 	}
 
-	// now we use built-in js, see built_in folder
-	// encryption encryption.aesEncrypt(text, key)
-	//encryption:=v8go.NewObjectTemplate(iso)
-	//global.Set("encryption", encryption)
-	//if err := encryption.Set("aesEncrypt",
-	//	v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-	//		if text, ok := hasStrIn(info, 0, "encryption.aesEncrypt[text]"); !ok {
-	//			throwException("encryption.aesEncrypt", text)
-	//		} else {
-	//			if key, ok := hasStrIn(info, 1, "encryption.aesEncrypt[key]"); !ok {
-	//				throwException("encryption.aesEncrypt", key)
-	//			} else {
-	//				encryptOut,iv,err := aesEncrypt(text,key)
-	//				if err!=nil{
-	//					throwException("encryption.aesEncrypt",err.Error())
-	//					return nil
-	//				}else{
-	//					result:=v8go.NewObjectTemplate(iso)
-	//					jsEncryptOut, _ := v8go.NewValue(iso, encryptOut)
-	//					jsIV, _ := v8go.NewValue(iso, iv)
-	//					result.Set("cipherText",jsEncryptOut)
-	//					result.Set("iv",jsIV)
-	//					obj,_:=result.NewInstance(info.Context())
-	//					return obj.Value
-	//				}
-	//			}
-	//		}
-	//		return nil
-	//	}),
-	//); err != nil {
-	//	panic(err)
-	//}
-	//if err := encryption.Set("aesDecrypt",
-	//	v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-	//		if text, ok := hasStrIn(info, 0, "encryption.aesDecrypt[text]"); !ok {
-	//			throwException("encryption.aesDecrypt", text)
-	//		} else {
-	//			if key, ok := hasStrIn(info, 1, "encryption.aesDecrypt[key]"); !ok {
-	//				throwException("encryption.aesDecrypt", key)
-	//			} else {
-	//				if iv, ok := hasStrIn(info, 2, "encryption.aesDecrypt[iv]"); !ok {
-	//					throwException("encryption.aesDecrypt", key)
-	//				} else{
-	//					decryptOut,err := aesDecrypt(text,key,iv)
-	//					if err!=nil{
-	//						throwException("encryption.aesDecrypt",err.Error())
-	//						return nil
-	//					}else{
-	//						value, _ := v8go.NewValue(iso, decryptOut)
-	//						return value
-	//					}
-	//				}
-	//			}
-	//		}
-	//		return nil
-	//	}),
-	//); err != nil {
-	//	panic(err)
-	//}
-
 	return func() {
 		t.Terminate()
 	}
@@ -947,6 +1072,11 @@ func CtxFunctionInject(ctx *v8go.Context) {
 	}
 	_, err := ctx.RunScript(built_in.GetbuiltIn(), "built_in")
 	if err != nil {
+		e := err.(*v8go.JSError)
+		fmt.Printf("Builtin Script ran into a runtime error, stack dump:\n")
+		fmt.Printf("%s\n", e.Message)
+		fmt.Printf("%s\n", e.Location)
+		fmt.Printf("%s\n", e.StackTrace)
 		panic(err)
 	}
 }

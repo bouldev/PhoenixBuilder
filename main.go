@@ -7,9 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/command"
@@ -47,6 +45,9 @@ import (
 
 func main() {
 	args.ParseArgs()
+	if(len(args.PackScripts())!=0) {
+		os.Exit(script_bridge.MakePackage(args.PackScripts(),args.PackScriptsOut()))
+	}
 	pterm.Error.Prefix = pterm.Prefix{
 		Text:  "ERROR",
 		Style: pterm.NewStyle(pterm.BgBlack, pterm.FgRed),
@@ -59,7 +60,9 @@ func main() {
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
 	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
 
-	readline.InitReadline()
+	if(!args.NoReadline()) {
+		readline.InitReadline()
+	}
 
 	if I18n.ShouldDisplaySpecial() {
 		fmt.Printf("%s", I18n.T(I18n.Special_Startup))
@@ -67,7 +70,9 @@ func main() {
 
 	defer func() {
 		if err := recover(); err != nil {
-			readline.HardInterrupt()
+			if(!args.NoReadline()) {
+				readline.HardInterrupt()
+			}
 			debug.PrintStack()
 			pterm.Error.Println(I18n.T(I18n.Crashed_Tip))
 			pterm.Error.Println(I18n.T(I18n.Crashed_StackDump_And_Error))
@@ -170,10 +175,6 @@ func create_environment() *environment.PBEnvironment {
 		"fb_version": func() string {
 			return args.GetFBVersion()
 		},
-		"fb_dir": func() string {
-			dir, _ := os.Getwd()
-			return dir
-		},
 		"uc_username": func() string {
 			return env.FBUCUsername
 		},
@@ -190,7 +191,7 @@ func create_environment() *environment.PBEnvironment {
 	env.ScriptBridge = hostBridgeGamma
 	scriptHolder := script_holder.InitScriptHolder(env)
 	env.ScriptHolder = scriptHolder
-	if args.StartupScript() == "" {
+	/*if args.StartupScript() == "" {
 		hostBridgeGamma.HostRemoveBlock()
 	} else {
 		if scriptHolder.LoadScript(args.StartupScript(), env) {
@@ -198,7 +199,9 @@ func create_environment() *environment.PBEnvironment {
 		} else {
 			hostBridgeGamma.HostRemoveBlock()
 		}
-	}
+	}*/
+	scriptHolder.LoadScript(args.StartupScript(), env)
+	hostBridgeGamma.HostRemoveBlock()
 	return env
 }
 
@@ -376,6 +379,9 @@ func runClient(env *environment.PBEnvironment) {
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
 	go func() {
+		if(args.NoReadline()) {
+			return
+		}
 		for {
 			cmd := readline.Readline(env)
 			if len(cmd) == 0 {
@@ -706,22 +712,6 @@ func readToken(path string) (string, error) {
 	return string(content), nil
 }
 
-func decideDelay(delaytype byte) int64 {
-	// Will add system check later,so don't merge into other functions.
-	if delaytype == types.DelayModeContinuous {
-		return 1000
-	} else if delaytype == types.DelayModeDiscrete {
-		return 15
-	} else {
-		return 0
-	}
-}
-
-func decideDelayThreshold() int {
-	// Will add system check later,so don't merge into other functions.
-	return 20000
-}
-
 func loadTokenPath() string {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
@@ -729,18 +719,8 @@ func loadTokenPath() string {
 		homedir = "."
 	}
 	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
-	os.MkdirAll(fbconfigdir, 0755)
+	os.MkdirAll(fbconfigdir, 0700)
 	token := filepath.Join(fbconfigdir, "fbtoken")
 	return token
 }
 
-func makeLogFile() (*log.Logger, func()) {
-	homedir, err := os.UserHomeDir()
-	fileName := path.Join(homedir, ".config/fastbuilder/history.log")
-	logFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
-	if err != nil && os.IsNotExist(err) {
-		fmt.Printf("Cannot create or append Log file %v (%v)\n", fileName, err)
-		return log.New(os.Stdout, "", log.Ldate|log.Ltime), func() {}
-	}
-	return log.New(logFile, "", log.Ldate|log.Ltime), func() { logFile.Close() }
-}

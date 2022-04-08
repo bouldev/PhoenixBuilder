@@ -13,6 +13,7 @@ type ExternalConnectionHandler struct {
 	listener      *connection.KCPConnectionServerHandler
 	env           *environment.PBEnvironment
 	PacketChannel chan []byte
+	ContinueChannel chan interface{}
 }
 
 func (handler *ExternalConnectionHandler) acceptConnection(conn connection.ReliableConnection) {
@@ -29,9 +30,15 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 			}, conn)
 			select {
 			case handler.PacketChannel <- gamePacket:
+				<-handler.ContinueChannel
 			default:
 			}
 			// Send the packet to the next receiver(connection)
+			
+			select {
+			case handler.ContinueChannel <- true:
+			default:
+			}
 		}
 	}()
 	go func() {
@@ -90,13 +97,15 @@ func (_ *ExternalConnectionHandler) downError(_ interface{}) {
 
 func ListenExt(env *environment.PBEnvironment, address string) {
 	handlerStruct := &ExternalConnectionHandler{
-		listener:      &connection.KCPConnectionServerHandler{},
-		PacketChannel: make(chan []byte),
-		env:           env,
+		listener:        &connection.KCPConnectionServerHandler{},
+		PacketChannel:   make(chan []byte),
+		ContinueChannel: make(chan interface{}),
+		env:             env,
 	}
 	env.ExternalConnectionHandler = handlerStruct
 	env.Destructors = append(env.Destructors, func() {
 		close(handlerStruct.PacketChannel)
+		close(handlerStruct.ContinueChannel)
 	})
 	listener := handlerStruct.listener
 	err := listener.Listen(address)

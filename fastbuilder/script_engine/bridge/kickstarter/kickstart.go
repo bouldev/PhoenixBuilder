@@ -5,11 +5,12 @@ package script_kickstarter
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/base64"
+	//"crypto/sha256"
+	//"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"path/filepath"
 	"net/http"
 	"net/url"
 	"os"
@@ -22,48 +23,79 @@ import (
 )
 
 func LoadScript(scriptPath string, hb bridge.HostBridge) (func(), error) {
-	iso := v8.NewIsolate()
-	global := v8.NewObjectTemplate(iso)
 	scriptPath = strings.TrimSpace(scriptPath)
 	if scriptPath == "" {
 		return nil, fmt.Errorf("Empty script path!")
 	}
 	fmt.Printf("Loading script: %s\n", scriptPath)
 	fmt.Printf("JS engine vesion: %v\n", script_engine.JSVERSION)
-	var script string
+	var script *v8.UnboundScript
 	var scriptName string
+	
+	iso:=v8.NewIsolate()
 
-	file, fileErr := os.OpenFile(scriptPath, os.O_RDONLY, 0755)
-	if fileErr == nil {
-		_, scriptName = path.Split(scriptPath)
-		scriptData, err := ioutil.ReadAll(file)
-		if err != nil {
+	var bundle *script_engine.ScriptPackage
+	if(filepath.Ext(scriptPath)==".scb") {
+		bundleVar,err:=script_engine.LoadPackage(iso, scriptPath)
+		if(err!=nil) {
 			return nil, err
 		}
-		script = string(scriptData)
-	} else {
-		urlPath, err := url.ParseRequestURI(scriptPath)
-		if err == nil {
-			scriptName = urlPath.Path
-			fmt.Printf("It seems to be a url, try loading it...\n")
-			result, err := obtainPageContent(scriptPath, 30*time.Second)
+		bundle=bundleVar
+	}else if(filepath.Ext(scriptPath)==".json") {
+		bundleVar,err:=script_engine.LoadDebugPackage(iso, scriptPath)
+		if(err!=nil) {
+			return nil, err
+		}
+		bundle=bundleVar
+	}
+	
+	global:=v8.NewObjectTemplate(iso)
+	stopFunc := script_engine.InitHostFns(iso, global, hb, scriptName, "", scriptPath, bundle)
+	ctx := v8.NewContext(iso, global)
+	script_engine.CtxFunctionInject(ctx)
+	
+	if(bundle==nil) {
+		file, fileErr := os.OpenFile(scriptPath, os.O_RDONLY, 0755)
+		if fileErr == nil {
+			_, scriptName = path.Split(scriptPath)
+			scriptData, err := ioutil.ReadAll(file)
 			if err != nil {
 				return nil, err
 			}
-			script = string(result)
+			script,err = iso.CompileUnboundScript(string(scriptData), scriptPath, v8.CompileOptions{})
+			if(err!=nil) {
+				return nil, err
+			}
 		} else {
-			return nil, fmt.Errorf("script %v \nis neither a valid file %v,\nnor a valid url %v", scriptPath, fileErr, err)
+			urlPath, err := url.ParseRequestURI(scriptPath)
+			if err == nil {
+				scriptName = urlPath.Path
+				fmt.Printf("It seems to be a url, try loading it...\n")
+				result, err := obtainPageContent(scriptPath, 30*time.Second)
+				if err != nil {
+					return nil, err
+				}
+				script,err = iso.CompileUnboundScript(string(result), scriptName, v8.CompileOptions{})
+				if(err!=nil) {
+					return nil, err
+				}
+			} else {
+				return nil, fmt.Errorf("script %v \nis neither a valid file %v,\nnor a valid url %v", scriptPath, fileErr, err)
+			}
 		}
+	}else{
+		bundleScript, gotScript := bundle.Scripts[bundle.EntryPoint]
+		if(!gotScript) {
+			return nil, fmt.Errorf("manifest.json: entrypoint field is invalid")
+		}
+		script=bundleScript
 	}
 
-	hasher := sha256.New()
-	hasher.Write([]byte(script))
-	identifyStr := base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	stopFunc := script_engine.InitHostFns(iso, global, hb, scriptName, identifyStr, scriptPath)
-	ctx := v8.NewContext(iso, global)
-	script_engine.CtxFunctionInject(ctx)
+	//hasher := sha256.New()
+	//hasher.Write([]byte(script))
+	//identifyStr := ""//base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	go func() {
-		_, err := ctx.RunScript(script, scriptPath)
+		_, err := script.Run(ctx)//ctx.RunScript(script, scriptPath)
 		if err != nil {
 			e := err.(*v8.JSError) // JavaScript errors will be returned as the JSError struct
 			fmt.Printf("Script %s ran into a runtime error, stack dump:\n", scriptPath)

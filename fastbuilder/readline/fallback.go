@@ -23,7 +23,7 @@ func Interrupt() {
 }
 
 func InitReadline() {
-	fmt.Printf("Warning: Feature readline is not compatible with platform Windows.\n")
+	fmt.Printf("Warning: Feature readline is not compatible with current platform.\n")
 }
 
 func Readline(env *environment.PBEnvironment) string {
