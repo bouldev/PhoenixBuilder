@@ -29,13 +29,10 @@ extern char *server_password;
 extern char custom_token;
 extern char *token_content;
 extern char *externalListenAddr;
-<<<<<<< HEAD
 extern char *capture_output_file;
-=======
 extern char args_no_readline;
 extern char *pack_scripts;
 extern char *pack_scripts_out;
->>>>>>> f168b46 (Sandbox & script bundle)
 */
 import "C"
 
