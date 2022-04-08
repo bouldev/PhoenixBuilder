@@ -465,7 +465,7 @@ func runClient(env *environment.PBEnvironment) {
 			captureFp.Close()
 		}
 	}()
-
+	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	for {
 		pk, data, err := conn.ReadPacketAndBytes()
 		if err != nil {
@@ -484,7 +484,6 @@ func runClient(env *environment.PBEnvironment) {
 			}
 		}
 		env.UQHolder.(*uqHolder.UQHolder).Update(pk)
-		env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 		hostBridgeGamma.HostPumpMcPacket(pk)
 		hostBridgeGamma.HostQueryExpose["uqHolder"] = func() string {
 			marshal, err := json.Marshal(env.UQHolder.(*uqHolder.UQHolder))
