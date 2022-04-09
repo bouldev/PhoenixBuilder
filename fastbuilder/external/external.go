@@ -7,38 +7,36 @@ import (
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft"
+	"time"
 )
 
 type ExternalConnectionHandler struct {
-	listener      *connection.KCPConnectionServerHandler
-	env           *environment.PBEnvironment
-	PacketChannel chan []byte
-	ContinueChannel chan interface{}
+	listener              *connection.KCPConnectionServerHandler
+	env                   *environment.PBEnvironment
+	PacketChannel         chan []byte
+	DistributeChannel     chan []byte
+	LeaveConsumerChannel  chan int
+	NewConsumerChannel    chan int
+	AcceptConsumerChannel chan interface{}
 }
 
 func (handler *ExternalConnectionHandler) acceptConnection(conn connection.ReliableConnection) {
 	env := handler.env
 	allAlive := true
+	handler.NewConsumerChannel <- (1)
+	<-handler.AcceptConsumerChannel
+	pingDeadline := time.Now().Add(time.Second * 3)
+	bufferChan := make(chan []byte, 1024)
 	go func() {
 		for {
-			gamePacket := <-handler.PacketChannel
+			gamePacket := <-bufferChan
 			if !allAlive {
 				return
 			}
+			// fmt.Println("send: ", gamePacket[0])
 			packet.SerializeAndSend(&packet.GamePacket{
 				Content: gamePacket,
 			}, conn)
-			select {
-			case handler.PacketChannel <- gamePacket:
-				<-handler.ContinueChannel
-			default:
-			}
-			// Send the packet to the next receiver(connection)
-			
-			select {
-			case handler.ContinueChannel <- true:
-			default:
-			}
 		}
 	}()
 	go func() {
@@ -56,6 +54,7 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 			}
 			switch p := pkt.(type) {
 			case *packet.PingPacket:
+				pingDeadline = time.Now().Add(time.Second * 3)
 				packet.SerializeAndSend(&packet.PongPacket{}, conn)
 			case *packet.PongPacket:
 				break
@@ -85,6 +84,23 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 			}
 		}
 	}()
+	go func() {
+		for {
+			// fmt.Println("buffering, now", len(bufferChan))
+			pkt := <-handler.DistributeChannel
+			if len(bufferChan) > 512 || pingDeadline.Before(time.Now()) {
+				// fmt.Println("kick client")
+				allAlive = false
+			}
+			if !allAlive {
+				// fmt.Println("notify consumer leave")
+				handler.LeaveConsumerChannel <- (-1)
+				return
+			}
+			bufferChan <- pkt
+			handler.LeaveConsumerChannel <- 0
+		}
+	}()
 }
 
 func (_ *ExternalConnectionHandler) acceptConnectionFail(err error) {
@@ -95,17 +111,50 @@ func (_ *ExternalConnectionHandler) downError(_ interface{}) {
 	fmt.Printf("ERROR: External connection handler's server stopped unexpectedly.\n")
 }
 
+func (e *ExternalConnectionHandler) epoll() {
+	consumers := 0
+	for {
+		select {
+		case <-e.NewConsumerChannel:
+			consumers++
+			e.AcceptConsumerChannel <- true
+			// fmt.Println("consumers come, current: ", consumers)
+		case packet := <-e.PacketChannel:
+			if consumers > 0 {
+				for i := 0; i < consumers; i++ {
+					// fmt.Println("distributing...")
+					e.DistributeChannel <- packet
+				}
+				consumerChange := 0
+				for i := 0; i < consumers; i++ {
+					// s := <-e.LeaveConsumerChannel
+					// fmt.Println("recv consumer", i, " status ", s)
+					consumerChange += <-e.LeaveConsumerChannel
+				}
+				consumers += consumerChange
+				// if consumerChange != 0 {
+				// 	fmt.Println("consumers leave, current: ", consumers)
+				// }
+			}
+		}
+	}
+}
+
 func ListenExt(env *environment.PBEnvironment, address string) {
 	handlerStruct := &ExternalConnectionHandler{
-		listener:        &connection.KCPConnectionServerHandler{},
-		PacketChannel:   make(chan []byte),
-		ContinueChannel: make(chan interface{}),
-		env:             env,
+		listener:              &connection.KCPConnectionServerHandler{},
+		PacketChannel:         make(chan []byte, 0),
+		DistributeChannel:     make(chan []byte),
+		LeaveConsumerChannel:  make(chan int, 0),
+		NewConsumerChannel:    make(chan int, 0),
+		AcceptConsumerChannel: make(chan interface{}, 0),
+		env:                   env,
 	}
+	go handlerStruct.epoll()
 	env.ExternalConnectionHandler = handlerStruct
 	env.Destructors = append(env.Destructors, func() {
 		close(handlerStruct.PacketChannel)
-		close(handlerStruct.ContinueChannel)
+		close(handlerStruct.LeaveConsumerChannel)
 	})
 	listener := handlerStruct.listener
 	err := listener.Listen(address)

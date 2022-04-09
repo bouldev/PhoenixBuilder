@@ -45,8 +45,8 @@ import (
 
 func main() {
 	args.ParseArgs()
-	if(len(args.PackScripts())!=0) {
-		os.Exit(script_bridge.MakePackage(args.PackScripts(),args.PackScriptsOut()))
+	if len(args.PackScripts()) != 0 {
+		os.Exit(script_bridge.MakePackage(args.PackScripts(), args.PackScriptsOut()))
 	}
 	pterm.Error.Prefix = pterm.Prefix{
 		Text:  "ERROR",
@@ -60,7 +60,7 @@ func main() {
 	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
 	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
 
-	if(!args.NoReadline()) {
+	if !args.NoReadline() {
 		readline.InitReadline()
 	}
 
@@ -70,7 +70,7 @@ func main() {
 
 	defer func() {
 		if err := recover(); err != nil {
-			if(!args.NoReadline()) {
+			if !args.NoReadline() {
 				readline.HardInterrupt()
 			}
 			debug.PrintStack()
@@ -379,7 +379,7 @@ func runClient(env *environment.PBEnvironment) {
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
 	go func() {
-		if(args.NoReadline()) {
+		if args.NoReadline() {
 			return
 		}
 		for {
@@ -500,10 +500,7 @@ func runClient(env *environment.PBEnvironment) {
 			return string(marshal)
 		}
 		if env.ExternalConnectionHandler != nil {
-			select {
-			case env.ExternalConnectionHandler.(*external.ExternalConnectionHandler).PacketChannel <- data:
-			default:
-			}
+			env.ExternalConnectionHandler.(*external.ExternalConnectionHandler).PacketChannel <- data
 		}
 
 		switch p := pk.(type) {
@@ -723,4 +720,3 @@ func loadTokenPath() string {
 	token := filepath.Join(fbconfigdir, "fbtoken")
 	return token
 }
-
