@@ -17,14 +17,10 @@ char *server_password="";
 char custom_token=0;
 char *token_content;
 char *externalListenAddr="";
-<<<<<<< HEAD
 char *capture_output_file="";
-=======
 char args_no_readline=0;
 char *pack_scripts="";
 char *pack_scripts_out="";
-
->>>>>>> f168b46 (Sandbox & script bundle)
 
 extern void custom_script_engine_const(const char *key, const char *val);
 extern void do_suppress_se_const(const char *key);
