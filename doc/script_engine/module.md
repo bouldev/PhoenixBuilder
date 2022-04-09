@@ -14,4 +14,5 @@ console.log(v);
 ```
 
 ## `module.require(name)`
+`name` `<string>` The name for the required script.
 Require a script in the same bundle. Will be `undefined` if not running in a bundle.

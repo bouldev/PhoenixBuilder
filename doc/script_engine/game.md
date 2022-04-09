@@ -1,7 +1,8 @@
 # Game
 
 ## `game.eval(command)`
-* `command` [<string>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#string_type) PhoenixBuilder's command
+* `command` `<string>` PhoenixBuilder's command
+
 `game.eval()` executes a PhoenixBuilder's command.
 ```
 game.eval("get");
@@ -9,22 +10,25 @@ game.eval("round -r 10");
 ```
 
 ## `game.oneShotCommand(command)`
-* `command` [<string>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#string_type)
+* `command` `<string>`
+
 `game.oneShotCommand()` executes a Minecraft command without waiting for response.
 ```
 game.oneShotCommand("kill @a");
 ```
 
 ## `game.sendCommandSync(command)`
-* `command` [<string>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#string_type)
-* Returns: [<Object>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)
+* `command` `<string>`
+* Returns: `<Object>`
+
 Executes `command` in game and wait until receiving the response.
 ** Warning: For commands without a response, this command will lead your script into a deadlock. **
 
 ## `game.sendCommand(command[, callback])`
-* `command` [<string>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#string_type)
-* `callback` [<Function>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function)
-** `response` [<Object>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object)
+* `command` `<string>`
+* `callback` `<Function>`
+** `response` `<Object>`
+
 `game.sendCommand()` executes `command` and call `callback` once the response is received.
 Same as [game.oneShotCommand](game.md#gameoneshotcommandcommand) when `callback` is not assigned.
 
@@ -33,6 +37,7 @@ Same as [game.oneShotCommand](game.md#gameoneshotcommandcommand) when `callback`
 ** `x` `<Number>`
 ** `y` `<Number>`
 ** `z` `<Number>`
+
 Get the current position of the bot.
 
 ## `game.subscribePacket(packetType, callback)`

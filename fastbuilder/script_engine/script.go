@@ -560,7 +560,6 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 		}else{
 			if(path[0:len(containerPath)]!=containerPath) {
 				throwException("fs.exists", "Trying to control filesystem out of container")
->>>>>>> f168b46 (Sandbox & script bundle)
 				return nil
 			}
 		}

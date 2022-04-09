@@ -1,8 +1,9 @@
 # Console
 
 ## `console.log([data][, ...args])`
-* `format` [<any>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Data_types)
-* `...args` [<any>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Data_types)
+* `data` `<any>`
+* `...args` `<any>`
+
 Prints formatted message to `stdout` **with newline**
 ```
 const count = 5;

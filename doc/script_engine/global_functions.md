@@ -1,8 +1,9 @@
 # Global Functions
 
 ## `printf([format][, ...args])`
-* `format` [<any>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Data_types)
-* `...args` [<any>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Data_types)
+* `format` `<any>`
+* `...args` `<any>`
+
 Prints formatted message to `stdout` **without a newline**.
 ```
 const count = 5;
@@ -11,9 +12,9 @@ printf("count: %d\n", count);
 ```
 <!-- Partially copied from the documentation of Node.JS -->
 ## `sprintf([format][, ...args])`
-* `format` [<any>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Data_types)
-* `...args` [<any>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Data_types)
-* Returns: [<string>](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#string_type) The formatted string.
+* `format` `<any>`
+* `...args` `<any>`
+* Returns: `<string>` The formatted string.
 ```
 let str=sprintf("val: %s","2");
 // str = "val: 2"
