@@ -143,7 +143,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 		val, _:=v8go.NewValue(iso, fmt.Sprintf(args[0].String(),things...))
 		return val
 	}))
-	internalNameSet=false
+	internalNameSet:=false
 	
 	if err := engine.Set("setName",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {

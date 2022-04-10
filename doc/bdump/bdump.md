@@ -179,4 +179,4 @@ The host of those APIs is `uc.fastbuilder.pro` and HTTPS is required.
   {"success":true,"corrupted":false,"username":"<The person who signed the file>",message:""}
   ```
 
-After requesting the signing api, the base64 value of the signature should be decompressed and written to the compressed part of file, then the signature length and `isSigned` flag.
+Note: After requesting the signing api, the base64 value of the signature should be decoded and written to the compressed part of the file, with the signature length and `isSigned` flag followed.
