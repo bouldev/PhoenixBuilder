@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/google/uuid"
+	"io"
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
@@ -104,6 +105,32 @@ func (c *Client) RecvGamePacket() ([]byte, error) {
 	}
 }
 
+type NoEOFByteReader struct {
+	s []byte
+	i int
+}
+
+func (nbr *NoEOFByteReader) Read(b []byte) (n int, err error) {
+	if len(b) == 0 {
+		return 0, nil
+	}
+	if nbr.i >= len(nbr.s) {
+		return 0, io.EOF
+	}
+	n = copy(b, nbr.s[nbr.i:])
+	nbr.i += n
+	return
+}
+
+func (nbr *NoEOFByteReader) ReadByte() (b byte, err error) {
+	if nbr.i >= len(nbr.s) {
+		return 0, io.EOF
+	}
+	b = nbr.s[nbr.i]
+	nbr.i++
+	return b, nil
+}
+
 func (c *Client) RecvDecodedGamePacket() (pk mc_packet.Packet, err error) {
 	mcPkt, err := c.RecvGamePacket()
 	if err != nil {
@@ -117,9 +144,11 @@ func (c *Client) RecvDecodedGamePacket() (pk mc_packet.Packet, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
+			//bytes.NewReader().Read()
+			pk.Unmarshal(protocol.NewReader(&NoEOFByteReader{s: mcPkt[1:]}, 0))
 		}
 	}()
-	pk.Unmarshal(protocol.NewReader(bytes.NewReader(mcPkt[1:]), 0))
+	pk.Unmarshal(protocol.NewReader(&NoEOFByteReader{s: mcPkt[1:]}, 0))
 	return pk, nil
 }
 
@@ -177,6 +206,7 @@ func (c *Client) routine() {
 		}
 	}()
 	for {
+		c.pongDeadline = time.Now().Add(3 * time.Second)
 		select {
 		case <-t.C:
 			if time.Now().After(c.pongDeadline) {

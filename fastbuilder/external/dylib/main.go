@@ -196,8 +196,8 @@ func JsonStrAsIsGamePacketBytes(packetID int, jsonStr *C.char) (pktBytes *C.char
 }
 
 func main() {
-	//Windows: go build -o fbconn.dll -buildmode=c-shared main.go
-	//Linux: go build -o libfbconn.so -buildmode=c-shared main.go
-	//Macos: go build -o fbconn.dylib -buildmode=c-shared main.go
+	//Windows: go build  -tags fbconn -o fbconn.dll -buildmode=c-shared main.go
+	//Linux: go build -tags fbconn -o libfbconn.so -buildmode=c-shared main.go
+	//Macos: go build -tags fbconn -o fbconn.dylib -buildmode=c-shared main.go
 	//将生成的文件 (fbconn.dll 或 libfbconn.so 或 fbconn.dylib) 放在 conn.py 同一个目录下
 }

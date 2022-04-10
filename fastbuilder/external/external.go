@@ -52,6 +52,7 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 					Text: "Unparsable packet received!",
 				}, conn)
 			}
+			pingDeadline = time.Now().Add(time.Second * 3)
 			switch p := pkt.(type) {
 			case *packet.PingPacket:
 				pingDeadline = time.Now().Add(time.Second * 3)

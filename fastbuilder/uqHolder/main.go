@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"time"
@@ -248,17 +247,17 @@ func (uq *UQHolder) GetEntityByRuntimeID(EntityRuntimeID uint64) *Entity {
 	return e
 }
 
-func (uq *UQHolder) UpdateFromConn(conn *minecraft.Conn) {
-	gd := conn.GameData()
-	uq.BotUniqueID = gd.EntityUniqueID
-	uq.ConnectTime = gd.ConnectTime
-	uq.WorldName = gd.WorldName
-	uq.WorldGameMode = gd.WorldGameMode
-	uq.WorldDifficulty = uint32(gd.Difficulty)
-	uq.OnConnectWoldSpawnPosition = gd.WorldSpawn
-	cd := conn.ClientData()
-	uq.BotRandomID = cd.ClientRandomID
-}
+//func (uq *UQHolder) UpdateFromConn(conn *minecraft.Conn) {
+//	gd := conn.GameData()
+//	uq.BotUniqueID = gd.EntityUniqueID
+//	uq.ConnectTime = gd.ConnectTime
+//	uq.WorldName = gd.WorldName
+//	uq.WorldGameMode = gd.WorldGameMode
+//	uq.WorldDifficulty = uint32(gd.Difficulty)
+//	uq.OnConnectWoldSpawnPosition = gd.WorldSpawn
+//	cd := conn.ClientData()
+//	uq.BotRandomID = cd.ClientRandomID
+//}
 
 func (uq *UQHolder) Update(pk packet.Packet) {
 	defer func() {
