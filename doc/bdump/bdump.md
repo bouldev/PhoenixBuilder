@@ -6,7 +6,7 @@ By writing the ids that represent each blocks in a specific order is a workable 
 
 ## Basic File Structure
 
-BDump v3 file's extension is `.bdx`, and the general header of it is `BD@`, which stands for that the file was compressed with brotli compression algorithm (official compress quality is 6). Note that there's also a header `BDZ` that stands for the file was compressed with gzip compression algorithm, which is no longer supported by FastBuilder Phoenix today since it has been deprecated for a long time and it's hard to find this type's file again. We define such kind of header as "compression header"  and the content after it is compressed with the compression algorithm it indicates.
+BDump v3 file's extension is `.bdx`, and the general header of it is `BD@`, which stands for that the file was compressed with brotli compression algorithm (the compress quality phoenixbuilder uses is 6). Note that there's also a header `BDZ` that stands for the file was compressed with gzip compression algorithm, which is no longer supported by PhoenixBuilder today since it has been deprecated for a long time and it's hard to find this type's file again. We define such kind of header as "compression header"  and the content after it is compressed with the compression algorithm it indicates.
 
 > Tip: BDump v2's extension is `.bdp` and the header is `BDMPS\0\x02\0`.
 
@@ -127,9 +127,9 @@ db 'E'
 
 ## Signing
 
-*FastBuilder Phoenix* 0.3.5 implemented a bdump file signing system in order to identify the file's **real** publisher. Though using the PGP to sign is a good and secure way, we've chosen a signing method that highly depends on our authentication server since it's meaningless to implement the PGP signing just for an online program that can connect to the server anytime.
+*PhoenixBuilder* 0.3.5 implemented a bdump file signing system in order to identify the file's **real** publisher. Though using the PGP to sign is a good and secure way, we've chosen a signing method that highly depends on our authentication server since it's meaningless to implement the PGP signing just for an online program that can connect to the server anytime.
 
-Note that a signature isn't required for a `bdx` file unless the user sets a `-S`(strict) flag. If you implemented the signing process, you should make sure that it works correctly since a `bdx` file with an incorrect signature won't be able to be processed by *FastBuilder Phoenix*.
+Note that a signature isn't required for a `bdx` file unless the user sets a `-S`(strict) flag. If you implemented the signing process, you should make sure that it works correctly since a `bdx` file with an incorrect signature won't be able to be processed by *PhoenixBuilder*.
 
 ### API
 
