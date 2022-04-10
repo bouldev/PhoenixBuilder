@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/minecraft/protocol"
@@ -155,6 +156,31 @@ func SendNoResponseCommand(connID int, cmd *C.char) (err *C.char) {
 	return toCErrStr(_err)
 }
 
+type NoEOFByteReader struct {
+	s []byte
+	i int
+}
+
+func (nbr *NoEOFByteReader) Read(b []byte) (n int, err error) {
+	if len(b) == 0 {
+		return 0, nil
+	}
+	if nbr.i >= len(nbr.s) {
+		return 0, io.EOF
+	}
+	n = copy(b, nbr.s[nbr.i:])
+	nbr.i += n
+	return
+}
+
+func (nbr *NoEOFByteReader) ReadByte() (b byte, err error) {
+	if nbr.i >= len(nbr.s) {
+		return 0, io.EOF
+	}
+	b = nbr.s[nbr.i]
+	nbr.i++
+	return b, nil
+}
 func safeDecode(pktByte []byte) (pkt mc_packet.Packet) {
 	pktID := uint32(pktByte[0])
 	defer func() {
@@ -164,7 +190,7 @@ func safeDecode(pktByte []byte) (pkt mc_packet.Packet) {
 		return
 	}()
 	pkt = connection.TypePool[pktID]()
-	pkt.Unmarshal(protocol.NewReader(bytes.NewReader(pktByte[1:]), 0))
+	pkt.Unmarshal(protocol.NewReader(&NoEOFByteReader{s: pktByte[1:]}, 0))
 	return
 }
 

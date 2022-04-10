@@ -27,16 +27,56 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 	<-handler.AcceptConsumerChannel
 	pingDeadline := time.Now().Add(time.Second * 3)
 	bufferChan := make(chan []byte, 1024)
+	clientPacketChan := make(chan []byte, 1024)
 	go func() {
 		for {
-			gamePacket := <-bufferChan
-			if !allAlive {
-				return
+			select {
+			case clientPackets := <-clientPacketChan:
+				pkt, canParse := packet.Deserialize(clientPackets)
+				if !canParse {
+					packet.SerializeAndSend(&packet.PacketViolationWarningPacket{
+						Text: "Unparsable packet received!",
+					}, conn)
+				}
+				switch p := pkt.(type) {
+				case *packet.PingPacket:
+					pingDeadline = time.Now().Add(time.Second * 3)
+					packet.SerializeAndSend(&packet.PongPacket{}, conn)
+				case *packet.PongPacket:
+					break
+				case *packet.ByePacket:
+					packet.SerializeAndSend(&packet.ByePacket{}, conn)
+				case *packet.PacketViolationWarningPacket:
+					break
+				case *packet.EvalPBCommandPacket:
+					handler.env.FunctionHolder.Process(p.Command)
+				case *packet.GameCommandPacket:
+					if p.CommandType == packet.CommandTypeSettings {
+						env.CommandSender.SendSizukanaCommand(p.Command)
+						break
+					} else if p.CommandType == packet.CommandTypeNormal {
+						env.CommandSender.SendWSCommand(p.Command, p.UUID)
+					} else {
+						env.CommandSender.SendCommand(p.Command, p.UUID)
+					}
+				case *packet.GamePacket:
+					(env.Connection).(*minecraft.Conn).Write(p.Content)
+				case *packet.UQHolderRequestPacket:
+					//q:=string(p.QueryString)
+					//if q=="*"
+					packet.SerializeAndSend(&packet.UQHolderResponsePacket{
+						Content: (env.UQHolder).(*uqHolder.UQHolder).Marshal(),
+					}, conn)
+				}
+			case gamePacket := <-bufferChan:
+				if !allAlive {
+					return
+				}
+				// fmt.Println("send: ", gamePacket[0])
+				packet.SerializeAndSend(&packet.GamePacket{
+					Content: gamePacket,
+				}, conn)
 			}
-			// fmt.Println("send: ", gamePacket[0])
-			packet.SerializeAndSend(&packet.GamePacket{
-				Content: gamePacket,
-			}, conn)
 		}
 	}()
 	go func() {
@@ -46,43 +86,7 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 				allAlive = false
 				return
 			}
-			pkt, canParse := packet.Deserialize(rawPacket)
-			if !canParse {
-				packet.SerializeAndSend(&packet.PacketViolationWarningPacket{
-					Text: "Unparsable packet received!",
-				}, conn)
-			}
-			pingDeadline = time.Now().Add(time.Second * 3)
-			switch p := pkt.(type) {
-			case *packet.PingPacket:
-				pingDeadline = time.Now().Add(time.Second * 3)
-				packet.SerializeAndSend(&packet.PongPacket{}, conn)
-			case *packet.PongPacket:
-				break
-			case *packet.ByePacket:
-				packet.SerializeAndSend(&packet.ByePacket{}, conn)
-			case *packet.PacketViolationWarningPacket:
-				break
-			case *packet.EvalPBCommandPacket:
-				handler.env.FunctionHolder.Process(p.Command)
-			case *packet.GameCommandPacket:
-				if p.CommandType == packet.CommandTypeSettings {
-					env.CommandSender.SendSizukanaCommand(p.Command)
-					break
-				} else if p.CommandType == packet.CommandTypeNormal {
-					env.CommandSender.SendWSCommand(p.Command, p.UUID)
-				} else {
-					env.CommandSender.SendCommand(p.Command, p.UUID)
-				}
-			case *packet.GamePacket:
-				(env.Connection).(*minecraft.Conn).Write(p.Content)
-			case *packet.UQHolderRequestPacket:
-				//q:=string(p.QueryString)
-				//if q=="*"
-				packet.SerializeAndSend(&packet.UQHolderResponsePacket{
-					Content: (env.UQHolder).(*uqHolder.UQHolder).Marshal(),
-				}, conn)
-			}
+			clientPacketChan <- rawPacket
 		}
 	}()
 	go func() {

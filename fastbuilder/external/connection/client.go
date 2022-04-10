@@ -219,6 +219,7 @@ func (c *Client) routine() {
 		case rawPacket := <-rc:
 			pkt, canParse := packet.Deserialize(rawPacket)
 			if !canParse {
+				fmt.Println(rawPacket)
 				fmt.Println("Unparsable packet received!")
 				c.Close()
 				break
