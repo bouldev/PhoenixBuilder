@@ -247,6 +247,14 @@ func (uq *UQHolder) GetEntityByRuntimeID(EntityRuntimeID uint64) *Entity {
 	return e
 }
 
+func (uq *UQHolder) GetPlayersByUUID(ud uuid.UUID) *Player {
+	if p, ok := uq.playersByUUID[ud]; ok {
+		return p
+	} else {
+		return nil
+	}
+}
+
 //func (uq *UQHolder) UpdateFromConn(conn *minecraft.Conn) {
 //	gd := conn.GameData()
 //	uq.BotUniqueID = gd.EntityUniqueID

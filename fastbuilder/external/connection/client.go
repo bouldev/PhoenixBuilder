@@ -206,7 +206,6 @@ func (c *Client) routine() {
 		}
 	}()
 	for {
-		c.pongDeadline = time.Now().Add(3 * time.Second)
 		select {
 		case <-t.C:
 			if time.Now().After(c.pongDeadline) {
@@ -217,6 +216,7 @@ func (c *Client) routine() {
 			go func() { c.Send(&packet.PingPacket{}) }()
 			//fmt.Println("Ping")
 		case rawPacket := <-rc:
+			c.pongDeadline = time.Now().Add(5 * time.Second)
 			pkt, canParse := packet.Deserialize(rawPacket)
 			if !canParse {
 				fmt.Println(rawPacket)

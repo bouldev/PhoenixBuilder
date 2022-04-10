@@ -25,13 +25,14 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 	allAlive := true
 	handler.NewConsumerChannel <- (1)
 	<-handler.AcceptConsumerChannel
-	pingDeadline := time.Now().Add(time.Second * 3)
-	bufferChan := make(chan []byte, 1024)
+	pingDeadline := time.Now().Add(time.Second * 5)
+	bufferChan := make(chan []byte, 10240)
 	clientPacketChan := make(chan []byte, 1024)
 	go func() {
 		for {
 			select {
 			case clientPackets := <-clientPacketChan:
+				pingDeadline = time.Now().Add(time.Second * 5)
 				pkt, canParse := packet.Deserialize(clientPackets)
 				if !canParse {
 					packet.SerializeAndSend(&packet.PacketViolationWarningPacket{
@@ -40,7 +41,7 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 				}
 				switch p := pkt.(type) {
 				case *packet.PingPacket:
-					pingDeadline = time.Now().Add(time.Second * 3)
+					pingDeadline = time.Now().Add(time.Second * 5)
 					packet.SerializeAndSend(&packet.PongPacket{}, conn)
 				case *packet.PongPacket:
 					break
@@ -93,7 +94,7 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 		for {
 			// fmt.Println("buffering, now", len(bufferChan))
 			pkt := <-handler.DistributeChannel
-			if len(bufferChan) > 512 || pingDeadline.Before(time.Now()) {
+			if len(bufferChan) > 5120 || pingDeadline.Before(time.Now()) {
 				// fmt.Println("kick client")
 				allAlive = false
 			}
