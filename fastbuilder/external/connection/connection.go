@@ -7,9 +7,10 @@ import (
 	"crypto/x509"
 	"encoding/binary"
 	"fmt"
-	kcp "github.com/xtaci/kcp-go/v5"
 	"io"
 	"sync"
+
+	kcp "github.com/xtaci/kcp-go/v5"
 )
 
 // not stream, but ensure a frame is send/recv
@@ -29,14 +30,20 @@ type ReliableConnectionServerHandler interface {
 // KCP Server and Client
 
 type KCPConnectionServerHandler struct {
-	onAcceptNewConnectonFail func(error)
-	onNewConnection          func(ReliableConnection)
-	OnNewKCPConnection       func(*kcp.UDPSession)
-	onServerDown             func(interface{})
+	onAcceptNewConnectionFail func(error)
+	onNewConnection           func(ReliableConnection)
+	OnNewKCPConnection        func(*kcp.UDPSession)
+	onServerDown              func(interface{})
 }
 
+const (
+	DATA_SHARDS   = 10
+	PARITY_SHARDS = 3
+	ENCRYPTION_ON = false
+)
+
 func (s *KCPConnectionServerHandler) Listen(address string) error {
-	listener, err := kcp.ListenWithOptions(address, nil, 10, 3)
+	listener, err := kcp.ListenWithOptions(address, nil, DATA_SHARDS, PARITY_SHARDS)
 	if err != nil {
 		return fmt.Errorf("udp: listen fail (err=%v)", err)
 	}
@@ -49,28 +56,31 @@ func (s *KCPConnectionServerHandler) Listen(address string) error {
 			proxyConn, err := listener.AcceptKCP()
 			if err != nil {
 				fmt.Printf("Transfer: accept new connection fail\n\t(err=%v)\n", err)
-				if s.onAcceptNewConnectonFail != nil {
-					s.onAcceptNewConnectonFail(err)
+				if s.onAcceptNewConnectionFail != nil {
+					s.onAcceptNewConnectionFail(err)
 				}
 				continue
 			}
 			//remoteDescription := proxyConn.RemoteAddr().String()
 			//fmt.Printf("Transfer: accept new connection @ %v\n", remoteDescription)
-			baseConn := &StreamChannelWrapper{reader: proxyConn, writer: proxyConn, writeLock: sync.Mutex{}}
+			var chann ReliableConnection
+			chann = &StreamChannelWrapper{reader: proxyConn, writer: proxyConn, writeLock: sync.Mutex{}}
 			connectionCloser := func() {
 				proxyConn.Close()
 			}
-			encryptionConn := &EncryptedChannel{
-				connection: baseConn,
-				isInitator: false,
-				closer:     connectionCloser,
+			if ENCRYPTION_ON {
+				encryptionConn := &EncryptedChannel{
+					connection: chann,
+					isInitator: false,
+					closer:     connectionCloser,
+				}
+				if encryptionConn.Init() != nil {
+					//fmt.Printf("Transfer: encryption init fail\n")
+					s.onAcceptNewConnectionFail(fmt.Errorf("encryption init fail: %v", err))
+					continue
+				}
 			}
-			if encryptionConn.Init() != nil {
-				//fmt.Printf("Transfer: encryption init fail\n")
-				s.onAcceptNewConnectonFail(fmt.Errorf("encryption init fail: %v", err))
-				continue
-			}
-			s.onNewConnection(encryptionConn)
+			s.onNewConnection(chann)
 		}
 
 	}()
@@ -81,26 +91,30 @@ func (s *KCPConnectionServerHandler) SetOnNewConnection(fn func(ReliableConnecti
 	s.onNewConnection = fn
 }
 func (s *KCPConnectionServerHandler) SetOnAcceptNewConnectionFail(fn func(error)) {
-	s.onAcceptNewConnectonFail = fn
+	s.onAcceptNewConnectionFail = fn
 }
 func (s *KCPConnectionServerHandler) SetOnServerDown(fn func(r interface{})) {
 	s.onServerDown = fn
 }
 
 func KCPDial(address string) (ReliableConnection, error) {
-	conn, err := kcp.DialWithOptions(address, nil, 10, 3)
+	conn, err := kcp.DialWithOptions(address, nil, DATA_SHARDS, PARITY_SHARDS)
 	if err != nil {
 		return nil, err
 	}
-	baseConn := &StreamChannelWrapper{reader: conn, writer: conn, writeLock: sync.Mutex{}}
-	encryptedConn := &EncryptedChannel{
-		connection: baseConn,
-		isInitator: true,
+	var chann ReliableConnection
+	chann = &StreamChannelWrapper{reader: conn, writer: conn, writeLock: sync.Mutex{}}
+	if ENCRYPTION_ON {
+		encryptedConn := &EncryptedChannel{
+			connection: chann,
+			isInitator: true,
+		}
+		if err := encryptedConn.Init(); err != nil {
+			return nil, err
+		}
+		chann = encryptedConn
 	}
-	if err := encryptedConn.Init(); err != nil {
-		return nil, err
-	}
-	return encryptedConn, nil
+	return chann, nil
 }
 
 // Frame -> Stream -> Frame

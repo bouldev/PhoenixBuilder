@@ -26,31 +26,38 @@ type Client struct {
 	uqHolderWaitChan chan []byte
 }
 
+//func (c *Client) SendFrame(f []byte) error {
+//	if c.closed {
+//		return ErrSendOnClosedConnection
+//	}
+//
+//	complete := make(chan struct{})
+//	go func() {
+//		err := c.conn.SendFrame(f)
+//		if err != nil {
+//			c.Close()
+//		}
+//		close(complete)
+//	}()
+//	select {
+//	case <-complete:
+//		if c.closed {
+//			fmt.Println("Connection Closed")
+//			return fmt.Errorf("connection Close")
+//		}
+//		return nil
+//	case <-time.After(1 * time.Second):
+//		fmt.Println("Send Timeout")
+//		c.Close()
+//		return fmt.Errorf("send Timeout")
+//	}
+//}
+
 func (c *Client) SendFrame(f []byte) error {
 	if c.closed {
 		return ErrSendOnClosedConnection
 	}
-
-	complete := make(chan struct{})
-	go func() {
-		err := c.conn.SendFrame(f)
-		if err != nil {
-			c.Close()
-		}
-		close(complete)
-	}()
-	select {
-	case <-complete:
-		if c.closed {
-			fmt.Println("Connection Closed")
-			return fmt.Errorf("connection Close")
-		}
-		return nil
-	case <-time.After(1 * time.Second):
-		fmt.Println("Send Timeout")
-		c.Close()
-		return fmt.Errorf("send Timeout")
-	}
+	return c.conn.SendFrame(f)
 }
 
 func (c *Client) SendFBCmd(cmd string) error {
@@ -166,6 +173,13 @@ func (c *Client) RequestUQHolder(request string) (*uqHolder.UQHolder, error) {
 	} else {
 		return uq, nil
 	}
+}
+
+func (c *Client) ReducePacket(pktID uint8, dropBy uint8) error {
+	return c.Send(&packet.GamePacketReducePacket{
+		PacketID: pktID,
+		DropBy:   dropBy,
+	})
 }
 
 func (c *Client) Close() {

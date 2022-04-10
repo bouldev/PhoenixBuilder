@@ -28,6 +28,12 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 	pingDeadline := time.Now().Add(time.Second * 5)
 	bufferChan := make(chan []byte, 10240)
 	clientPacketChan := make(chan []byte, 1024)
+	skipMap := make(map[uint8]uint8)
+	hitMap := make(map[uint8]uint8)
+	setSkip := func(ID uint8, possib uint8) {
+		skipMap[ID] = possib
+		hitMap[ID] = 0
+	}
 	go func() {
 		for {
 			select {
@@ -62,6 +68,8 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 					}
 				case *packet.GamePacket:
 					(env.Connection).(*minecraft.Conn).Write(p.Content)
+				case *packet.GamePacketReducePacket:
+					setSkip(p.PacketID, p.DropBy)
 				case *packet.UQHolderRequestPacket:
 					//q:=string(p.QueryString)
 					//if q=="*"
@@ -91,9 +99,28 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 		}
 	}()
 	go func() {
+		//packetCount := 0
+		//startTime := time.Now()
 		for {
 			// fmt.Println("buffering, now", len(bufferChan))
+			//packetCount++
+			//if packetCount%200 == 0 {
+			//	fmt.Println(float32(packetCount) / float32(time.Now().Sub(startTime).Seconds()))
+			//	fmt.Println(len(bufferChan))
+			//	packetCount = 0
+			//	startTime = time.Now()
+			//}
 			pkt := <-handler.DistributeChannel
+			pktID := pkt[0]
+			if t, hasK := skipMap[pktID]; hasK {
+				hitMap[pktID]++
+				if hitMap[pktID] == t {
+					hitMap[pktID] = 0
+				} else {
+					handler.LeaveConsumerChannel <- 0
+					continue
+				}
+			}
 			if len(bufferChan) > 5120 || pingDeadline.Before(time.Now()) {
 				// fmt.Println("kick client")
 				allAlive = false
@@ -149,8 +176,8 @@ func (e *ExternalConnectionHandler) epoll() {
 func ListenExt(env *environment.PBEnvironment, address string) {
 	handlerStruct := &ExternalConnectionHandler{
 		listener:              &connection.KCPConnectionServerHandler{},
-		PacketChannel:         make(chan []byte, 0),
-		DistributeChannel:     make(chan []byte),
+		PacketChannel:         make(chan []byte, 1024),
+		DistributeChannel:     make(chan []byte, 1024),
 		LeaveConsumerChannel:  make(chan int, 0),
 		NewConsumerChannel:    make(chan int, 0),
 		AcceptConsumerChannel: make(chan interface{}, 0),

@@ -2,7 +2,6 @@ package uqHolder
 
 import (
 	"bytes"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol"
@@ -182,7 +181,7 @@ func (uq *UQHolder) gc(deadline uint64) {
 func (uq *UQHolder) Marshal() []byte {
 	buf := bytes.NewBuffer([]byte{Version[0], Version[1], Version[2]})
 	compressor := brotli.NewWriter(buf)
-	err := gob.NewEncoder(compressor).Encode(uq)
+	err := json.NewEncoder(compressor).Encode(uq)
 	if err != nil {
 		panic(err)
 	}
@@ -212,7 +211,7 @@ func (uq *UQHolder) UnMarshal(bs []byte) error {
 	}
 	buf := bytes.NewBuffer(bs[3:])
 	decompressor := brotli.NewReader(buf)
-	err := gob.NewDecoder(decompressor).Decode(uq)
+	err := json.NewDecoder(decompressor).Decode(uq)
 	if err != nil {
 		return err
 	}
