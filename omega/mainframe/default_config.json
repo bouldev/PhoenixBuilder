@@ -1,0 +1,211 @@
+{
+    "name": "Omega",
+    "version": "0.0.1",
+    "components_config": [
+        {
+            "name": "Menu",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Core",
+            "usage": "提供后台命令显示和游戏命令显示",
+            "configs": {
+                "backend_triggers": ["?","菜单","menu", "Menu", "？"],
+                "game_triggers": ["菜单","menu", "Menu", "?", "？"],
+                "hint_on_unknown_cmd": "§lOmega System: 抱歉，我没明白你的意思, 以下是菜单",
+                "menu_head": "§b§l==========================Omega System==========================",
+                "bot_tag": "omg",
+                "menu_format": "[i]:输入 [systemTrigger] [defaultTrigger] 以 [usage]",
+                "multiple_trigger_menu_format": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] [argumentHint] §f§r以 [usage] (或者[systemTrigger] [allTriggers])",
+                "wisper_hint": "§f可以使用 /w @a[tag=omg] 来秘密通信，比如 /w @a[tag=omg] ?",
+                "menu_tail": "§b§l==============================END===============================",
+                "open_menu_on_unknown_cmd": true,
+                "continue_asking": true
+            }
+        },
+        {
+            "name": "CmdSender",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Core",
+            "usage": "从后台发送MC指令",
+            "configs": {
+                "trigger": "/"
+            }
+        },
+        {
+            "name": "NoSQLDBUtil",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Core",
+            "usage": "导出或导出数据库到可读的文本文件"
+        },
+        {
+            "name": "NameRecord",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Core",
+            "usage": "记录玩家用户名变更",
+            "configs": {
+                "file_name": "改名历史.json"
+            }
+        },
+        {
+            "name": "ChatLogger",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "记录游戏内的聊天信息"
+        },
+        {
+            "name": "Banner",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "在系统启动后，在游戏中显示提示",
+            "configs": {
+                "cmds": [
+                    ["@a","§6§l * Omega System Online"]
+                ]
+            }
+        },
+        {
+            "name": "Bonjour",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "在玩家进入游戏后，显示一行欢迎/提示信息，并记录玩家游戏时间",
+            "configs": {
+                "login_delay": 10,
+                "login_cmds": [
+                    "/tellraw @a {\"rawtext\":[{\"text\":\"§6§l@[target_player] 欢迎回来\"}]}",
+                    "/tellraw [target_player]  {\"rawtext\":[{\"text\":\"§6§l试试在聊天栏输入 omg\"}]}"
+                ],
+                "logout_cmds": [
+                    "/tellraw @a {\"rawtext\":[{\"text\":\"§a§lBye~ @[target_player]\"}]}"
+                ]
+            }
+        },
+        {
+            "name": "FeedBack",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "允许玩家给腐竹留言反馈",
+            "configs": {
+                "response": "/tellraw [player] {\"rawtext\":[{\"text\":\"§6§l你的反馈[msg],已收到,感谢反馈\"}]}",
+                "file_name": "反馈.log",
+                "triggers": ["反馈","feedback"],
+                "hint_on_empty": "打算反馈些什么呢? 请输入喔:"
+            }
+        },
+        {
+            "name": "Memo",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "允许玩家间留言",
+            "configs": {
+                "hint_on_empty_player": "打算给谁留言呢? 请输入喔:",
+                "hint_on_empty_msg":"打算留言什么呢? 请输入喔:",
+                "response": "/tellraw [src_player] {\"rawtext\":[{\"text\":\"§6§l你的留言[msg],已收到,将在[dst_player]上线时传达\"}]}",
+                "file_name": "留言.json",
+                "log_file": "留言.log",
+                "triggers": ["留言","memo"],
+                "login_delay": 15
+            }
+        },
+        {
+            "name": "PlayerTP",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "允许玩家间互相传送",
+            "configs": {
+                "triggers": ["传送","传送到","tpa"],
+                "hint_on_no_target": "§6§l玩家互传需要指定目标玩家，打算传送到谁那里去呢?",
+                "hint_on_no_player": "§4§l没有找到你说的玩家，可选的玩家如下:",
+                "hint_on_request_permission":"§6§l[src]希望传送到你这里，是否同意?",
+                "hint_on_req_too_frequent": "§a§l你请求的太频繁了，请一分钟之后再试",
+                "hint_on_req_sent": "§a§l已将传送请求发送给[dst]了",
+                "hint_on_target_busy": "§a§l对方正在忙碌，请稍后再尝试请求",
+                "hint_on_refuse": "§4§l对方[dst]拒绝了你的请求",
+                "cool_down_second": 60
+            }
+        },
+        {
+            "name": "BackToHQ",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "返回主城",
+            "configs": {
+                "triggers": ["回城","main"],
+                "to_anchor": "tp [player] [bot]",
+                "to_hq": "tp [player] 0 252 0"
+            }
+        },
+        {
+            "name": "SetSpawnPoint",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "设置重生点",
+            "configs": {
+                "triggers": ["重生点","setsp"],
+                "hint_on_success": "§6§l重生点已成功设置",
+                "hint_on_unknown_failure": "§4§l重生点设置失败,可能是离原有重生点太近",
+                "hint_on_failure": "§4§l重生点设置失败,冒险模式下不可设置重生点",
+                "cmd": "execute @a[name=[player],m=!a] ~~~ spawnpoint @s ~~~"
+            }
+        },
+        {
+            "name": "Respawn",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "设置重生点",
+            "configs": {
+                "triggers": ["kill","重生"],
+                "cmds_after_normal_user_spawned": [
+                    "gamemode a [player]",
+                    "/tellraw [player] {\"rawtext\":[{\"text\":\"§6§l你已重生，模式变更为冒险\"}]}"
+                ],
+                "cmds_to_kill_creative_user": [
+                    "gamemode c [player]",
+                    "/tellraw [player] {\"rawtext\":[{\"text\":\"§6§l你已重生，模式已恢复\"}]}"
+                ]
+            }
+        },
+        {
+            "name": "AboutMe",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "显示关于我自己到信息",
+            "configs": {
+                "triggers": ["me","我","关于我"],
+                "cmd": "玩家:[player], 所有tags:[tags], [tag<op>], [tag<会长>], 在线时间:[score<time>]",
+                "tags_replacement": {
+                    "tag": ["有该tag时显示","无该tag时显示"],
+                    "op": ["是OP","不是OP"],
+                    "会长": ["是会长","不是会长"]
+                }
+            }
+        }
+    ],
+    "trigger": {
+        "default_tigger": "omg",
+        "trigger_words": [
+            "Omega",
+            "omega",
+            "omg",
+            "ome",
+            "欧米茄",
+            "欧米伽",
+            "."
+        ],
+        "allow_no_space": true,
+        "remove_suffix_color": true,
+        "allow_wisper": true
+    }
+}
