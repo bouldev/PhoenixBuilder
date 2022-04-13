@@ -109,6 +109,7 @@ struct SendMCCommand_return {
 };
 extern struct SendMCCommand_return SendMCCommand(GoInt connID, char* cmd);
 extern char* SendNoResponseCommand(GoInt connID, char* cmd);
+extern char* ReducePacket(GoInt connID, GoUint8 pktID, GoUint8 rate);
 
 /* Return type for GamePacketBytesAsIsJsonStr */
 struct GamePacketBytesAsIsJsonStr_return {

@@ -156,6 +156,17 @@ func SendNoResponseCommand(connID int, cmd *C.char) (err *C.char) {
 	return toCErrStr(_err)
 }
 
+//export ReducePacket
+func ReducePacket(connID int, pktID byte, rate byte) (err *C.char) {
+	obj, _err := objAvailable(connID)
+	if _err != nil {
+		ReleaseConnByID(connID)
+		return C.CString(_err.Error())
+	}
+	_err = obj.ReducePacket(pktID, rate)
+	return toCErrStr(_err)
+}
+
 type NoEOFByteReader struct {
 	s []byte
 	i int

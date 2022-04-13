@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"strings"
 	"time"
 
 	"github.com/andybalholm/brotli"
@@ -226,6 +227,8 @@ func (uq *UQHolder) UnMarshal(bs []byte) error {
 			}
 		}
 	}
+	//botName := uq.GetBotName()
+	//fmt.Println(botName)
 	return nil
 }
 
@@ -266,6 +269,40 @@ func (uq *UQHolder) GetPlayersByUUID(ud uuid.UUID) *Player {
 //	uq.BotRandomID = cd.ClientRandomID
 //}
 
+func GetStringContents(s string) []string {
+	_s := strings.Split(s, " ")
+	for i, c := range _s {
+		_s[i] = strings.TrimSpace(c)
+	}
+	ss := make([]string, 0, len(_s))
+	for _, c := range _s {
+		if c != "" {
+			ss = append(ss, c)
+		}
+	}
+	return ss
+}
+func ToPlainName(name string) string {
+	if strings.Contains(name, ">") {
+		strings.ReplaceAll(name, ">", " ")
+		strings.ReplaceAll(name, "<", " ")
+	}
+	if name != "" {
+		names := GetStringContents(name)
+		name = names[len(names)-1]
+	}
+	return name
+}
+
+func (uq *UQHolder) GetBotName() string {
+	uid := uq.BotUniqueID
+	if p, hasK := uq.PlayersByEntityID[uid]; hasK {
+		return p.Username
+	} else {
+		return ""
+	}
+}
+
 func (uq *UQHolder) Update(pk packet.Packet) {
 	defer func() {
 		r := recover()
@@ -284,7 +321,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 				player := &Player{
 					UUID:           e.UUID,
 					EntityUniqueID: e.EntityUniqueID,
-					Username:       e.Username,
+					Username:       ToPlainName(e.Username),
 					PlatformChatID: e.PlatformChatID,
 					BuildPlatform:  e.BuildPlatform,
 					SkinID:         e.Skin.SkinID,

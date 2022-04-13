@@ -152,7 +152,7 @@ func (c *Client) RecvDecodedGamePacket() (pk mc_packet.Packet, err error) {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
 			//bytes.NewReader().Read()
-			pk.Unmarshal(protocol.NewReader(&NoEOFByteReader{s: mcPkt[1:]}, 0))
+			//pk.Unmarshal(protocol.NewReader(&NoEOFByteReader{s: mcPkt[1:]}, 0))
 		}
 	}()
 	pk.Unmarshal(protocol.NewReader(&NoEOFByteReader{s: mcPkt[1:]}, 0))
@@ -166,7 +166,7 @@ func (c *Client) RequestUQHolder(request string) (*uqHolder.UQHolder, error) {
 		return nil, err
 	}
 	cont := <-c.uqHolderWaitChan
-	fmt.Println(len(cont))
+	//fmt.Println(len(cont))
 	uq := uqHolder.NewUQHolder(0)
 	if err = uq.UnMarshal(cont); err != nil {
 		return nil, err
@@ -257,7 +257,7 @@ func (c *Client) routine() {
 func NewClient(address string) *Client {
 	retChan := make(chan ReliableConnection)
 	go func() {
-		conn, err := KCPDial(address)
+		conn, err := ClientDial(address)
 		if err != nil {
 			retChan <- nil
 		}

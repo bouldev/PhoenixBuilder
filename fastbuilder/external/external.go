@@ -2,6 +2,7 @@ package external
 
 import (
 	"fmt"
+	"io"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
@@ -11,7 +12,7 @@ import (
 )
 
 type ExternalConnectionHandler struct {
-	listener              *connection.KCPConnectionServerHandler
+	listener              *connection.ConnectionServerHandler
 	env                   *environment.PBEnvironment
 	PacketChannel         chan []byte
 	DistributeChannel     chan []byte
@@ -19,14 +20,38 @@ type ExternalConnectionHandler struct {
 	NewConsumerChannel    chan int
 	AcceptConsumerChannel chan interface{}
 }
+type NoEOFByteReader struct {
+	s []byte
+	i int
+}
 
+func (nbr *NoEOFByteReader) Read(b []byte) (n int, err error) {
+	if len(b) == 0 {
+		return 0, nil
+	}
+	if nbr.i >= len(nbr.s) {
+		return 0, io.EOF
+	}
+	n = copy(b, nbr.s[nbr.i:])
+	nbr.i += n
+	return
+}
+
+func (nbr *NoEOFByteReader) ReadByte() (b byte, err error) {
+	if nbr.i >= len(nbr.s) {
+		return 0, io.EOF
+	}
+	b = nbr.s[nbr.i]
+	nbr.i++
+	return b, nil
+}
 func (handler *ExternalConnectionHandler) acceptConnection(conn connection.ReliableConnection) {
 	env := handler.env
 	allAlive := true
 	handler.NewConsumerChannel <- (1)
 	<-handler.AcceptConsumerChannel
 	pingDeadline := time.Now().Add(time.Second * 5)
-	bufferChan := make(chan []byte, 10240)
+	bufferChan := make(chan []byte, 1024*8)
 	clientPacketChan := make(chan []byte, 1024)
 	skipMap := make(map[uint8]uint8)
 	hitMap := make(map[uint8]uint8)
@@ -102,7 +127,7 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 		//packetCount := 0
 		//startTime := time.Now()
 		for {
-			// fmt.Println("buffering, now", len(bufferChan))
+			//fmt.Println("buffering, now", len(bufferChan))
 			//packetCount++
 			//if packetCount%200 == 0 {
 			//	fmt.Println(float32(packetCount) / float32(time.Now().Sub(startTime).Seconds()))
@@ -121,7 +146,7 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 					continue
 				}
 			}
-			if len(bufferChan) > 5120 || pingDeadline.Before(time.Now()) {
+			if len(bufferChan) > 1024*7 || pingDeadline.Before(time.Now()) {
 				// fmt.Println("kick client")
 				allAlive = false
 			}
@@ -146,17 +171,26 @@ func (_ *ExternalConnectionHandler) downError(_ interface{}) {
 
 func (e *ExternalConnectionHandler) epoll() {
 	consumers := 0
+	//TypePool := mc_packet.NewPool()
+
 	for {
 		select {
 		case <-e.NewConsumerChannel:
 			consumers++
 			e.AcceptConsumerChannel <- true
 			// fmt.Println("consumers come, current: ", consumers)
-		case packet := <-e.PacketChannel:
+		case pkt := <-e.PacketChannel:
+			//pkFn, hasK := TypePool[uint32(pkt[0])]
+			//
+			//if !hasK {
+			//	panic(fmt.Errorf("cannot decode packet %v", pkt[0]))
+			//}
+			//pk := pkFn()
+			//pk.Unmarshal(protocol.NewReader(&NoEOFByteReader{s: pkt[1:]}, 0))
 			if consumers > 0 {
 				for i := 0; i < consumers; i++ {
 					// fmt.Println("distributing...")
-					e.DistributeChannel <- packet
+					e.DistributeChannel <- pkt
 				}
 				consumerChange := 0
 				for i := 0; i < consumers; i++ {
@@ -175,7 +209,7 @@ func (e *ExternalConnectionHandler) epoll() {
 
 func ListenExt(env *environment.PBEnvironment, address string) {
 	handlerStruct := &ExternalConnectionHandler{
-		listener:              &connection.KCPConnectionServerHandler{},
+		listener:              &connection.ConnectionServerHandler{},
 		PacketChannel:         make(chan []byte, 1024),
 		DistributeChannel:     make(chan []byte, 1024),
 		LeaveConsumerChannel:  make(chan int, 0),

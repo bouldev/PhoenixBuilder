@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"net"
 	"sync"
 
 	kcp "github.com/xtaci/kcp-go/v5"
@@ -27,9 +28,7 @@ type ReliableConnectionServerHandler interface {
 	SetOnServerDown(func(interface{}))
 }
 
-// KCP Server and Client
-
-type KCPConnectionServerHandler struct {
+type ConnectionServerHandler struct {
 	onAcceptNewConnectionFail func(error)
 	onNewConnection           func(ReliableConnection)
 	OnNewKCPConnection        func(*kcp.UDPSession)
@@ -42,18 +41,20 @@ const (
 	ENCRYPTION_ON = false
 )
 
-func (s *KCPConnectionServerHandler) Listen(address string) error {
-	listener, err := kcp.ListenWithOptions(address, nil, DATA_SHARDS, PARITY_SHARDS)
+func (s *ConnectionServerHandler) Listen(address string) error {
+	//listener, err := kcp.ListenWithOptions(address, nil, DATA_SHARDS, PARITY_SHARDS)
+	listener, err := net.Listen("tcp", address)
 	if err != nil {
-		return fmt.Errorf("udp: listen fail (err=%v)", err)
+		return fmt.Errorf("listen fail (err=%v)", err)
 	}
+	fmt.Println("listen @ address", err)
 	go func() {
 		defer func() {
 			r := recover()
 			s.onServerDown(r)
 		}()
 		for {
-			proxyConn, err := listener.AcceptKCP()
+			proxyConn, err := listener.Accept()
 			if err != nil {
 				fmt.Printf("Transfer: accept new connection fail\n\t(err=%v)\n", err)
 				if s.onAcceptNewConnectionFail != nil {
@@ -61,8 +62,8 @@ func (s *KCPConnectionServerHandler) Listen(address string) error {
 				}
 				continue
 			}
-			//remoteDescription := proxyConn.RemoteAddr().String()
-			//fmt.Printf("Transfer: accept new connection @ %v\n", remoteDescription)
+			remoteDescription := proxyConn.RemoteAddr().String()
+			fmt.Printf("Transfer: accept new connection @ %v\n", remoteDescription)
 			var chann ReliableConnection
 			chann = &StreamChannelWrapper{reader: proxyConn, writer: proxyConn, writeLock: sync.Mutex{}}
 			connectionCloser := func() {
@@ -87,18 +88,19 @@ func (s *KCPConnectionServerHandler) Listen(address string) error {
 	return nil
 }
 
-func (s *KCPConnectionServerHandler) SetOnNewConnection(fn func(ReliableConnection)) {
+func (s *ConnectionServerHandler) SetOnNewConnection(fn func(ReliableConnection)) {
 	s.onNewConnection = fn
 }
-func (s *KCPConnectionServerHandler) SetOnAcceptNewConnectionFail(fn func(error)) {
+func (s *ConnectionServerHandler) SetOnAcceptNewConnectionFail(fn func(error)) {
 	s.onAcceptNewConnectionFail = fn
 }
-func (s *KCPConnectionServerHandler) SetOnServerDown(fn func(r interface{})) {
+func (s *ConnectionServerHandler) SetOnServerDown(fn func(r interface{})) {
 	s.onServerDown = fn
 }
 
-func KCPDial(address string) (ReliableConnection, error) {
-	conn, err := kcp.DialWithOptions(address, nil, DATA_SHARDS, PARITY_SHARDS)
+func ClientDial(address string) (ReliableConnection, error) {
+	//conn, err := kcp.DialWithOptions(address, nil, DATA_SHARDS, PARITY_SHARDS)
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return nil, err
 	}
