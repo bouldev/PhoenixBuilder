@@ -8,8 +8,10 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
+	"phoenixbuilder/omega/utils"
 	"strings"
 	"sync"
+	"time"
 )
 
 type PlayerKitOmega struct {
@@ -20,6 +22,7 @@ type PlayerKitOmega struct {
 	persistStorage       map[string][]byte
 	violatedStorage      map[string]interface{}
 	OnParamMsg           func(chat *defines.GameChat) (catch bool)
+	playerUQ             *uqHolder.Player
 }
 
 func (p *PlayerKitOmega) SetOnParamMsg(f func(chat *defines.GameChat) (catch bool)) error {
@@ -36,18 +39,62 @@ func (p *PlayerKitOmega) GetOnParamMsg() func(chat *defines.GameChat) (catch boo
 	return f
 }
 
-func (p *PlayerKitOmega) GetPersistStorage(k string) []byte {
-	//TODO implement me
-	panic("implement me")
+func (p *PlayerKitOmega) GetPersistStorage(k string) string {
+	return p.ctrl.playerStorageDB.Get("." + p.name + k)
 }
 
 func (p *PlayerKitOmega) GetViolatedStorage() map[string]interface{} {
 	return p.violatedStorage
 }
 
-func (p *PlayerKitOmega) CommitPersistStorageChange(k string, v []byte) {
-	//TODO implement me
-	panic("implement me")
+func (p *PlayerKitOmega) CommitPersistStorageChange(k string, v string) {
+	if v == "" {
+		p.ctrl.playerStorageDB.Delete("." + p.name + k)
+		return
+	}
+	p.ctrl.playerStorageDB.Commit("."+p.name+k, v)
+}
+
+// not tested
+func (p *PlayerKitOmega) preparePrePlayerStorage() {
+	uq := p.GetRelatedUQ()
+	if uq != nil {
+		ud := uq.UUID.String()
+		currentNameKey := fmt.Sprintf(".%v.current_name.name", ud)
+		currentTimeKey := fmt.Sprintf(".%v.current_name.time", ud)
+		nameHistoryKey := fmt.Sprintf(".%v.current_name.history", ud)
+		currentTime := utils.TimeToString(time.Now())
+		record := p.ctrl.playerNameDB.Get(currentNameKey)
+		if record == "" {
+			m, _ := json.Marshal([][]string{
+				[]string{currentTime, p.name},
+			})
+			p.ctrl.playerNameDB.Commit(nameHistoryKey, string(m))
+		} else if record != p.name {
+			oldName := record
+			newName := p.name
+			records := p.ctrl.playerNameDB.Get(nameHistoryKey)
+			var his [][]string
+			err := json.Unmarshal([]byte(records), &his)
+			if err != nil {
+				fmt.Println(err)
+			}
+			his = append(his, []string{currentTime, newName})
+			m, _ := json.Marshal([][]string{
+				[]string{currentTime, newName},
+			})
+			p.ctrl.playerNameDB.Commit(nameHistoryKey, string(m))
+			p.ctrl.playerStorageDB.IterWithPrefix(func(key string, v string) (stop bool) {
+				newKey := strings.Replace(key, oldName, newName, 1)
+				p.ctrl.playerStorageDB.Commit(newKey, v)
+				p.ctrl.playerStorageDB.Delete(key)
+				return false
+			}, "."+oldName)
+		}
+		p.ctrl.playerNameDB.Commit(currentNameKey, p.name)
+		p.ctrl.playerNameDB.Commit(currentTimeKey, currentTime)
+		p.CommitPersistStorageChange(".last_login_time", currentTime)
+	}
 }
 
 func newPlayerKitOmega(uq *uqHolder.UQHolder, ctrl *GameCtrl, name string) *PlayerKitOmega {
@@ -64,6 +111,7 @@ func newPlayerKitOmega(uq *uqHolder.UQHolder, ctrl *GameCtrl, name string) *Play
 		violatedStorage:      map[string]interface{}{},
 		OnParamMsg:           nil,
 	}
+	player.preparePrePlayerStorage()
 	ctrl.perPlayerStorage[name] = player
 	return player
 }
@@ -85,8 +133,12 @@ func (p *PlayerKitOmega) SubTitle(msg string) {
 }
 
 func (p *PlayerKitOmega) GetRelatedUQ() *uqHolder.Player {
+	if p.playerUQ != nil {
+		return p.playerUQ
+	}
 	for _, player := range p.uq.PlayersByEntityID {
 		if player.Username == p.name {
+			p.playerUQ = player
 			return player
 		}
 	}
@@ -103,8 +155,8 @@ type GameCtrl struct {
 	uuidLock            sync.Mutex
 	uq                  *uqHolder.UQHolder
 	perPlayerStorage    map[string]*PlayerKitOmega
-	//playerNameDB        defines.NoSqlDB
-	//playerStorageDB     defines.NoSqlDB
+	playerNameDB        defines.NoSqlDB
+	playerStorageDB     defines.NoSqlDB
 }
 
 func (g *GameCtrl) GetPlayerKit(name string) defines.PlayerKit {
@@ -273,8 +325,8 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		NeedFeedBackPackets: make([]packet.Packet, 0),
 		uq:                  o.uqHolder,
 		perPlayerStorage:    make(map[string]*PlayerKitOmega),
-		//playerNameDB:        o.GetNoSqlDB("playerNameDB"),
-		//playerStorageDB:     o.GetNoSqlDB("playerStorageDB"),
+		playerNameDB:        o.GetNoSqlDB("playerNameDB"),
+		playerStorageDB:     o.GetNoSqlDB("playerStorageDB"),
 	}
 	c.toExpectedFeedBackStatus()
 	return c

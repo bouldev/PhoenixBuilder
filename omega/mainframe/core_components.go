@@ -285,8 +285,9 @@ func (o *NoSQLDBUtil) text2db(cmds []string) {
 	}
 	src := bufio.NewReader(file)
 	for {
-		if line, _, err := src.ReadLine(); err == nil {
-			objs := strings.Split(string(line), "\t")
+		if _line, _, err := src.ReadLine(); err == nil {
+			line := strings.TrimSpace(string(_line))
+			objs := strings.Split(line, "\t")
 			key := objs[0]
 			value := strings.Join(objs[1:], "\t")
 			db.Commit(key, value)
@@ -326,7 +327,7 @@ func (o *NoSQLDBUtil) db2text(cmds []string) {
 			fmt.Println(err)
 			return false
 		}
-		buf.WriteString(key + "\t" + string(ma))
+		buf.WriteString(key + "\t" + string(ma) + "\n")
 		return false
 	})
 	buf.Flush()

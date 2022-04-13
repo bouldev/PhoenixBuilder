@@ -105,8 +105,8 @@ type PlayerKit interface {
 	GetRelatedUQ() *uqHolder.Player
 
 	GetViolatedStorage() map[string]interface{}
-	GetPersistStorage(k string) []byte
-	CommitPersistStorageChange(k string, v []byte)
+	GetPersistStorage(k string) string
+	CommitPersistStorageChange(k string, v string)
 
 	SetOnParamMsg(func(chat *GameChat) (catch bool)) error
 	GetOnParamMsg() func(chat *GameChat) (catch bool)
