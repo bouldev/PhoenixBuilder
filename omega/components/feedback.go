@@ -11,10 +11,10 @@ import (
 type FeedBack struct {
 	*BasicComponent
 	logger      defines.LineDst
-	Response    string   `json:"response"`
-	FileName    string   `json:"file_name"`
-	Triggers    []string `json:"triggers"`
-	HintOnEmpty string   `json:"hint_on_empty"`
+	Response    string   `json:"反馈记录成功时提示"`
+	FileName    string   `json:"反馈记录文件"`
+	Triggers    []string `json:"触发词"`
+	HintOnEmpty string   `json:"没有输入信息时提示"`
 }
 
 func (me *FeedBack) record(chat *defines.GameChat) bool {

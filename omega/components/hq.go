@@ -9,9 +9,9 @@ import (
 
 type BackToHQ struct {
 	*BasicComponent
-	Triggers []string `json:"triggers"`
-	ToAnchor string   `json:"to_anchor"`
-	ToHQ     string   `json:"to_hq"`
+	Triggers []string `json:"触发词"`
+	ToAnchor string   `json:"世界锚点"`
+	ToHQ     string   `json:"主城锚点"`
 }
 
 func (o *BackToHQ) Init(cfg *defines.ComponentConfig) {

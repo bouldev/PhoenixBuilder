@@ -16,12 +16,12 @@ type Entry struct {
 
 type Portal struct {
 	*BasicComponent
-	FileName      string   `json:"file_name"`
-	SaveTrigger   []string `json:"save_trigger"`
-	RemoveTrigger []string `json:"remove_trigger"`
-	LoadTrigger   []string `json:"load_trigger"`
-	ListTrigger   []string `json:"list_trigger"`
-	Selector      string   `json:"selector"`
+	FileName      string   `json:"存档点记录文件名"`
+	SaveTrigger   []string `json:"保存存档点触发词"`
+	RemoveTrigger []string `json:"删除存档点触发词"`
+	LoadTrigger   []string `json:"返回存档点触发词"`
+	ListTrigger   []string `json:"列出存档点触发词"`
+	Selector      string   `json:"条件选择器"`
 	positions     map[string]map[string]*Entry
 }
 

@@ -12,9 +12,9 @@ import (
 
 type Bonjour struct {
 	*BasicComponent
-	Delay      int      `json:"login_delay" yaml:"login_delay"`
-	LoginCmds  []string `json:"login_cmds" yaml:"login_cmds"`
-	LogoutCmds []string `json:"logout_cmds" yaml:"logout_cmds"`
+	Delay      int      `json:"登录时延迟发送" yaml:"登录时延迟发送"`
+	LoginCmds  []string `json:"登录时发送指令" yaml:"登录时发送指令"`
+	LogoutCmds []string `json:"登出时发送指令" yaml:"登出时发送指令"`
 	logger     defines.LineDst
 }
 

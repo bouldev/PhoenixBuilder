@@ -11,9 +11,9 @@ import (
 
 type AboutMe struct {
 	*BasicComponent
-	Triggers []string            `json:"triggers"`
-	Cmd      string              `json:"cmd"`
-	Tags     map[string][]string `json:"tags_replacement"`
+	Triggers []string            `json:"触发词"`
+	Cmd      string              `json:"显示信息模版"`
+	Tags     map[string][]string `json:"标签替换"`
 }
 
 func (o *AboutMe) Init(cfg *defines.ComponentConfig) {

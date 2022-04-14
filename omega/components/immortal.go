@@ -12,8 +12,8 @@ import (
 
 type Immortal struct {
 	*BasicComponent
-	Hint          string `json:"hint"`
-	AskForRespawn bool   `json:"ask_for_respawn"`
+	Hint          string `json:"提示信息"`
+	AskForRespawn bool   `json:"询问是否返回死亡点"`
 }
 
 func (b *Immortal) Init(cfg *defines.ComponentConfig) {

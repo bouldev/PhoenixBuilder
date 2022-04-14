@@ -8,7 +8,7 @@ import (
 
 type Banner struct {
 	*BasicComponent
-	Cmds [][]string `json:"cmds" yaml:"cmds"`
+	Cmds [][]string `json:"启动时信息显示" yaml:"启动时信息显示"`
 }
 
 func (b *Banner) Init(cfg *defines.ComponentConfig) {

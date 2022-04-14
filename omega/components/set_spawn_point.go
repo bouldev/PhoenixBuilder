@@ -10,11 +10,11 @@ import (
 
 type SetSpawnPoint struct {
 	*BasicComponent
-	Triggers             []string `json:"triggers"`
-	HintOnSuccess        string   `json:"hint_on_success"`
-	HintOnFailure        string   `json:"hint_on_failure"`
-	HintOnUnknownFailure string   `json:"hint_on_unknown_failure"`
-	Cmd                  string   `json:"cmd"`
+	Triggers             []string `json:"触发词"`
+	HintOnSuccess        string   `json:"设置成功时的提示"`
+	HintOnFailure        string   `json:"设置失败时的提示"`
+	HintOnUnknownFailure string   `json:"出现未知错误时的提示"`
+	Cmd                  string   `json:"设置方式"`
 }
 
 func (o *SetSpawnPoint) Init(cfg *defines.ComponentConfig) {

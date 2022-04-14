@@ -13,13 +13,13 @@ import (
 type Memo struct {
 	*BasicComponent
 	logger            defines.LineDst
-	HintOnEmptyPlayer string   `json:"hint_on_empty_player"`
-	HintOnEmptyMsg    string   `json:"hint_on_empty_msg"`
-	Response          string   `json:"response"`
-	FileName          string   `json:"file_name"`
-	LogFile           string   `json:"log_file"`
-	Triggers          []string `json:"triggers"`
-	LoginDelay        int      `json:"login_delay"`
+	HintOnEmptyPlayer string   `json:"没有指定玩家时提示"`
+	HintOnEmptyMsg    string   `json:"没有输入信息时提示"`
+	Response          string   `json:"留言成功时提示"`
+	FileName          string   `json:"留言记录文件"`
+	LogFile           string   `json:"日志文件"`
+	Triggers          []string `json:"触发词"`
+	LoginDelay        int      `json:"登录时延迟发送"`
 	Memos             map[string][]string
 }
 

@@ -9,17 +9,17 @@
             "source": "Core",
             "usage": "提供后台命令显示和游戏命令显示",
             "configs": {
-                "backend_triggers": ["?","菜单","menu", "Menu", "？"],
-                "game_triggers": ["菜单","menu", "Menu", "?", "？"],
-                "hint_on_unknown_cmd": "§lOmega System: 抱歉，我没明白你的意思, 以下是菜单",
-                "menu_head": "§b§l==========================Omega System==========================",
-                "bot_tag": "omg",
-                "menu_format": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] §f§r以 [usage]",
-                "multiple_trigger_menu_format": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] [argumentHint] §f§r以 [usage] (或者[systemTrigger] [allTriggers])",
-                "wisper_hint": "§f可以使用 /w @a[tag=omg] 来秘密通信，比如 /w @a[tag=omg] ?",
-                "menu_tail": "§b§l==============================END===============================",
-                "open_menu_on_unknown_cmd": true,
-                "continue_asking": true
+                "后台菜单触发词": ["?","菜单","menu", "Menu", "？"],
+                "游戏菜单触发词": ["菜单","menu", "Menu", "?", "？"],
+                "无法理解指令时提示": "§lOmega System: 抱歉，我没明白你的意思, 以下是菜单",
+                "菜单标题": "§b§l==========================Omega System==========================",
+                "机器人标签": "omg",
+                "菜单显示格式": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] §f§r以 [usage]",
+                "多个触发词的菜单显示格式": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] [argumentHint] §f§r以 [usage] (或者[systemTrigger] [allTriggers])",
+                "悄悄话菜单提示": "§f可以使用 /w @a[tag=omg] 来秘密通信，比如 /w @a[tag=omg] ?",
+                "菜单末尾": "§b§l==============================END===============================",
+                "在遇到未知指令时打开菜单": true,
+                "菜单打开后是否继续询问操作": true
             }
         },
         {
@@ -29,8 +29,8 @@
             "source": "Core",
             "usage": "从后台发送MC指令",
             "configs": {
-                "player_trigger": "/",
-                "websocket_trigger": "!"
+                "以玩家身份发送信息的前缀": "/",
+                "以Websocket身份发送信息的前缀": "!"
             }
         },
         {
@@ -47,7 +47,7 @@
             "source": "Core",
             "usage": "记录玩家用户名变更",
             "configs": {
-                "file_name": "改名历史.json"
+                "改名历史记录文件": "改名历史.json"
             }
         },
         {
@@ -64,7 +64,7 @@
             "source": "Built-In",
             "usage": "在系统启动后，在游戏中显示提示",
             "configs": {
-                "cmds": [
+                "启动时信息显示": [
                     ["@a","§6§l * Omega System Online"]
                 ]
             }
@@ -76,12 +76,12 @@
             "source": "Built-In",
             "usage": "在玩家进入游戏后，显示一行欢迎/提示信息，并记录玩家游戏时间",
             "configs": {
-                "login_delay": 10,
-                "login_cmds": [
+                "登录时延迟发送": 10,
+                "登录时发送指令": [
                     "/tellraw @a {\"rawtext\":[{\"text\":\"§6§l@[target_player] 欢迎回来\"}]}",
                     "/tellraw [target_player]  {\"rawtext\":[{\"text\":\"§6§l试试在聊天栏输入 omg\"}]}"
                 ],
-                "logout_cmds": [
+                "登出时发送指令": [
                     "/tellraw @a {\"rawtext\":[{\"text\":\"§a§lBye~ @[target_player]\"}]}"
                 ]
             }
@@ -93,10 +93,10 @@
             "source": "Built-In",
             "usage": "允许玩家给腐竹留言反馈",
             "configs": {
-                "response": "/tellraw [player] {\"rawtext\":[{\"text\":\"§6§l你的反馈[msg],已收到,感谢反馈\"}]}",
-                "file_name": "反馈.log",
-                "triggers": ["反馈","feedback"],
-                "hint_on_empty": "打算反馈些什么呢? 请输入喔:"
+                "反馈记录成功时提示": "/tellraw [player] {\"rawtext\":[{\"text\":\"§6§l你的反馈[msg],已收到,感谢反馈\"}]}",
+                "反馈记录文件": "反馈.log",
+                "触发词": ["反馈","feedback"],
+                "没有输入信息时提示": "打算反馈些什么呢? 请输入喔:"
             }
         },
         {
@@ -106,13 +106,13 @@
             "source": "Built-In",
             "usage": "允许玩家间留言",
             "configs": {
-                "hint_on_empty_player": "打算给谁留言呢? 请输入喔:",
-                "hint_on_empty_msg":"打算留言什么呢? 请输入喔:",
-                "response": "/tellraw [src_player] {\"rawtext\":[{\"text\":\"§6§l你的留言[msg],已收到,将在[dst_player]上线时传达\"}]}",
-                "file_name": "留言.json",
-                "log_file": "留言.log",
-                "triggers": ["留言","memo"],
-                "login_delay": 15
+                "没有指定玩家时提示": "打算给谁留言呢? 请输入喔:",
+                "没有输入信息时提示":"打算留言什么呢? 请输入喔:",
+                "留言成功时提示": "/tellraw [src_player] {\"rawtext\":[{\"text\":\"§6§l你的留言[msg],已收到,将在[dst_player]上线时传达\"}]}",
+                "留言记录文件": "留言.json",
+                "日志文件": "留言.log",
+                "触发词": ["留言","memo"],
+                "登录时延迟发送": 15
             }
         },
         {
@@ -122,15 +122,15 @@
             "source": "Built-In",
             "usage": "允许玩家间互相传送",
             "configs": {
-                "triggers": ["传送","传送到","tpa"],
-                "hint_on_no_target": "§6§l玩家互传需要指定目标玩家，打算传送到谁那里去呢?",
-                "hint_on_no_player": "§4§l没有找到你说的玩家，可选的玩家如下:",
-                "hint_on_request_permission":"§6§l[src]希望传送到你这里，是否同意?",
-                "hint_on_req_too_frequent": "§a§l你请求的太频繁了，请一分钟之后再试",
-                "hint_on_req_sent": "§a§l已将传送请求发送给[dst]了",
-                "hint_on_target_busy": "§a§l对方正在忙碌，请稍后再尝试请求",
-                "hint_on_refuse": "§4§l对方[dst]拒绝了你的请求",
-                "cool_down_second": 60
+                "触发词": ["传送","传送到","tpa"],
+                "没有指定玩家时提示": "§6§l玩家互传需要指定目标玩家，打算传送到谁那里去呢?",
+                "没有对应玩家时提示": "§4§l没有找到你说的玩家，可选的玩家如下:",
+                "询问是否同意传送":"§6§l[src]希望传送到你这里，是否同意?",
+                "请求过于频繁时提示": "§a§l你请求的太频繁了，请一分钟之后再试",
+                "请求发送时提示": "§a§l已将传送请求发送给[dst]了",
+                "目标玩家忙碌时提示": "§a§l对方正在忙碌，请稍后再尝试请求",
+                "目标玩家拒绝时提示": "§4§l对方[dst]拒绝了你的请求",
+                "请求冷却时间": 60
             }
         },
         {
@@ -140,9 +140,9 @@
             "source": "Built-In",
             "usage": "返回主城",
             "configs": {
-                "triggers": ["回城","main"],
-                "to_anchor": "tp [player] [bot]",
-                "to_hq": "tp [player] 0 252 0"
+                "触发词": ["回城","main"],
+                "世界锚点": "tp [player] [bot]",
+                "主城锚点": "tp [player] 0 252 0"
             }
         },
         {
@@ -152,11 +152,11 @@
             "source": "Built-In",
             "usage": "设置重生点",
             "configs": {
-                "triggers": ["重生点","setsp"],
-                "hint_on_success": "§6§l重生点已成功设置",
-                "hint_on_unknown_failure": "§4§l重生点设置失败,可能是离原有重生点太近",
-                "hint_on_failure": "§4§l重生点设置失败,冒险模式下不可设置重生点",
-                "cmd": "execute @a[name=[player],m=!a] ~~~ spawnpoint @s ~~~"
+                "触发词": ["重生点","setsp"],
+                "设置成功时的提示": "§6§l重生点已成功设置",
+                "出现未知错误时的提示": "§4§l重生点设置失败,可能是离原有重生点太近",
+                "设置失败时的提示": "§4§l重生点设置失败,冒险模式下不可设置重生点",
+                "设置方式": "execute @a[name=[player],m=!a] ~~~ spawnpoint @s ~~~"
             }
         },
         {
@@ -166,12 +166,12 @@
             "source": "Built-In",
             "usage": "设置重生点",
             "configs": {
-                "triggers": ["kill","重生"],
-                "cmds_after_normal_user_spawned": [
+                "触发词": ["kill","重生"],
+                "非创造玩家重生后执行的指令": [
                     "gamemode a [player]",
                     "/tellraw [player] {\"rawtext\":[{\"text\":\"§6§l你已重生，模式变更为冒险\"}]}"
                 ],
-                "cmds_to_kill_creative_user": [
+                "创造玩家重生后执行的指令": [
                     "gamemode c [player]",
                     "/tellraw [player] {\"rawtext\":[{\"text\":\"§6§l你已重生，模式已恢复\"}]}"
                 ]
@@ -184,10 +184,10 @@
             "source": "Built-In",
             "usage": "显示关于我自己到信息",
             "configs": {
-                "triggers": ["me","我","关于我"],
-                "cmd": "玩家:[player], 所有tags:[tags], [tag<op>], [tag<会长>], 在线时间:[score<time>]",
-                "tags_replacement": {
-                    "tag": ["有该tag时显示","无该tag时显示"],
+                "触发词": ["me","我","关于我"],
+                "显示信息模版": "玩家:[player], 所有tags:[tags], [tag<op>], [tag<会长>], 在线时间:[score<time>]",
+                "标签替换": {
+                    "某个tag": ["有该tag时显示","无该tag时显示"],
                     "op": ["是OP","不是OP"],
                     "会长": ["是会长","不是会长"]
                 }
@@ -200,12 +200,12 @@
             "source": "Built-In",
             "usage": "允许玩家记录/回到存档点",
             "configs": {
-                "file_name": "存档点.json",
-                "save_trigger": ["保存","记忆","save"],
-                "load_trigger": ["前往","加载","回到","回","load"],
-                "list_trigger": ["所有地点","地点","allpos"],
-                "remove_trigger": ["移除","remove"],
-                "selector": "@a[name=[player],tag=!banTP]"
+                "存档点记录文件名": "存档点.json",
+                "保存存档点触发词": ["保存","记忆","save"],
+                "返回存档点触发词": ["前往","加载","回到","回","load"],
+                "列出存档点触发词": ["所有地点","地点","allpos"],
+                "删除存档点触发词": ["移除","remove"],
+                "条件选择器": "@a[name=[player],tag=!banTP]"
             }
         },
         {
@@ -215,8 +215,8 @@
             "source": "Built-In",
             "usage": "允许玩家返回死亡点",
             "configs": {
-                "hint": "你 [player] 逝于 [dead_pos]，要重返那里么?",
-                "ask_for_respawn": true
+                "提示信息": "你 [player] 逝于 [dead_pos]，要重返那里么?",
+                "询问是否返回死亡点": true
             }
         },
         {
@@ -226,9 +226,9 @@
             "source": "Built-In",
             "usage": "由机器人代替已经不能使用的指令完成踢人任务",
             "configs": {
-                "selector": "@a[tag=cheat]",
-                "check_duration_second": 3,
-                "actions": [
+                "选择器": "@a[tag=cheat]",
+                "检查周期": 3,
+                "制裁": [
                     "/tellraw @a {\"rawtext\":[{\"text\":\"作弊玩家[player]已被踢出\"}]}",
                     "kick [player]"
                 ]

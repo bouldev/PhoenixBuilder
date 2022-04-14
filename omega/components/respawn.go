@@ -11,10 +11,10 @@ import (
 
 type Respawn struct {
 	*BasicComponent
-	Triggers                   []string `json:"triggers"`
-	CmdsAfterNormalUserSpawned []string `json:"cmds_after_normal_user_spawned"`
-	CmdsToKillCreativeUser     []string `json:"cmds_to_kill_creative_user"`
-	DefaultImmediateRespawn    bool     `json:"default_immediate_respawn"`
+	Triggers                   []string `json:"触发词"`
+	CmdsAfterNormalUserSpawned []string `json:"非创造玩家重生后执行的指令"`
+	CmdsToKillCreativeUser     []string `json:"创造玩家重生后执行的指令"`
+	DefaultImmediateRespawn    bool
 }
 
 func (o *Respawn) Init(cfg *defines.ComponentConfig) {

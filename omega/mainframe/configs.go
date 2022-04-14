@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pterm/pterm"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path"
 	"phoenixbuilder/omega/defines"
@@ -85,13 +84,13 @@ func (c *OmegaConfig) QueryConfig(topic string) interface{} {
 }
 
 func (o *Omega) writeBackConfig() {
-	configFile := path.Join(o.storageRoot, "config.yaml")
+	configFile := path.Join(o.storageRoot, "config.json")
 	//fmt.Println("Updating Config File" + configFile)
 	if fp, err := os.OpenFile(configFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644); err != nil {
 		panic(err)
 	} else {
-		encoder := yaml.NewEncoder(fp)
-		//encoder.SetIndent("", "\t")
+		encoder := json.NewEncoder(fp)
+		encoder.SetIndent("", "\t")
 		err := encoder.Encode(o.fullConfig)
 		if err != nil {
 			panic(err)

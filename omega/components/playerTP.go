@@ -10,15 +10,15 @@ import (
 
 type PlayerTP struct {
 	*BasicComponent
-	Triggers             []string `json:"triggers"`
-	HintOnNoTarget       string   `json:"hint_on_no_target"`
-	HintOnNoPlayer       string   `json:"hint_on_no_player"`
-	HintOnReq            string   `json:"hint_on_request_permission"`
-	HintOnReqTooFrequent string   `json:"hint_on_req_too_frequent"`
-	HintOnReqSent        string   `json:"hint_on_req_sent"`
-	HintOnTargetBusy     string   `json:"hint_on_target_busy"`
-	HintOnRefuse         string   `json:"hint_on_refuse"`
-	CoolDownSecond       int      `json:"cool_down_second"`
+	Triggers             []string `json:"触发词"`
+	HintOnNoTarget       string   `json:"没有指定玩家时提示"`
+	HintOnNoPlayer       string   `json:"没有对应玩家时提示"`
+	HintOnReq            string   `json:"询问是否同意传送"`
+	HintOnReqTooFrequent string   `json:"请求过于频繁时提示"`
+	HintOnReqSent        string   `json:"请求发送时提示"`
+	HintOnTargetBusy     string   `json:"目标玩家忙碌时提示"`
+	HintOnRefuse         string   `json:"目标玩家拒绝时提示"`
+	CoolDownSecond       int      `json:"请求冷却时间"`
 	lastRequestTime      map[string]time.Time
 }
 

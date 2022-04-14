@@ -34,17 +34,17 @@ func (c *BaseCoreComponent) SetSystem(omega interface{}) {
 
 type Menu struct {
 	*BaseCoreComponent
-	BackendTriggers                []string `json:"backend_triggers" yaml:"backend_triggers"`
-	GameTriggers                   []string `json:"game_triggers" yaml:"game_triggers"`
-	HintOnUnknownCmd               string   `json:"hint_on_unknown_cmd" yaml:"hint_on_unknown_cmd"`
-	MenuHead                       string   `json:"menu_head" yaml:"menu_head"`
-	BotTag                         string   `json:"bot_tag" yaml:"bot_tag"`
-	MenuFormat                     string   `json:"menu_format" yaml:"menu_format"`
-	MenuFormatWithMultipleTriggers string   `json:"multiple_trigger_menu_format" yaml:"menu_format_with_multiple_triggers"`
-	WisperHint                     string   `json:"wisper_hint" yaml:"wisper_hint"`
-	MenuTail                       string   `json:"menu_tail" yaml:"menu_tail"`
-	OpenMenuOnUnknownCmd           bool     `json:"open_menu_on_unknown_cmd" yaml:"open_menu_on_unknown_cmd"`
-	ContinueAsking                 bool     `json:"continue_asking"`
+	BackendTriggers                []string `json:"后台菜单触发词" yaml:"后台菜单触发词"`
+	GameTriggers                   []string `json:"游戏菜单触发词" yaml:"游戏菜单触发词"`
+	HintOnUnknownCmd               string   `json:"无法理解指令时提示" yaml:"无法理解指令时提示"`
+	MenuHead                       string   `json:"菜单标题" yaml:"菜单标题"`
+	BotTag                         string   `json:"机器人标签" yaml:"机器人标签"`
+	MenuFormat                     string   `json:"菜单显示格式" yaml:"菜单显示格式"`
+	MenuFormatWithMultipleTriggers string   `json:"多个触发词的菜单显示格式" yaml:"多个触发词的菜单显示格式"`
+	WisperHint                     string   `json:"悄悄话菜单提示" yaml:"悄悄话菜单提示"`
+	MenuTail                       string   `json:"菜单末尾" yaml:"菜单末尾"`
+	OpenMenuOnUnknownCmd           bool     `json:"在遇到未知指令时打开菜单" yaml:"在遇到未知指令时打开菜单"`
+	ContinueAsking                 bool     `json:"菜单打开后是否继续询问操作"`
 }
 
 func (m *Menu) popup() {
@@ -223,8 +223,8 @@ func (m *Menu) Inject(frame defines.MainFrame) {
 
 type CmdSender struct {
 	*BaseCoreComponent
-	PlayerTrigger    string `json:"player_trigger"`
-	WebsocketTrigger string `json:"websocket_trigger"`
+	PlayerTrigger    string `json:"以玩家身份发送信息的前缀"`
+	WebsocketTrigger string `json:"以Websocket身份发送信息的前缀"`
 }
 
 func (c *CmdSender) send(cmds []string, ws bool) {
@@ -423,7 +423,7 @@ type nameEntry struct {
 type NameRecord struct {
 	*BaseCoreComponent
 	Records  map[string]nameEntry
-	FileName string `json:"file_name"`
+	FileName string `json:"改名历史记录文件"`
 }
 
 func (o *NameRecord) Init(cfg *defines.ComponentConfig) {
