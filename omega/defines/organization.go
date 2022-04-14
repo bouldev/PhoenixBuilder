@@ -130,6 +130,7 @@ type GameListener interface {
 	AppendLoginInfoCallback(cb func(entry protocol.PlayerListEntry))
 	AppendLogoutInfoCallback(cb func(entry protocol.PlayerListEntry))
 	Throw(chat *GameChat)
+	GetTriggerWord() string
 }
 
 // 安全事件发送和处理，比如某插件发现有玩家在恶意修改设置

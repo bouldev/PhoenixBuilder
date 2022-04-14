@@ -96,6 +96,9 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 	)
 	return c
 }
+func (o *Reactor) GetTriggerWord() string {
+	return o.o.fullConfig.Trigger.DefaultTigger
+}
 
 func (o *Omega) GetGameListener() defines.GameListener {
 	return o.Reactor

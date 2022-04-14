@@ -273,7 +273,7 @@ func (o *Portal) Inject(frame defines.MainFrame) {
 			Triggers:     o.LoadTrigger,
 			ArgumentHint: "[地点名]",
 			FinalTrigger: false,
-			Usage:        "前往指定的地点，这个地点必须是公共的或者被你保存过",
+			Usage:        "前往指定的地点",
 		},
 		OptionalOnTriggerFn: o.tp,
 	})

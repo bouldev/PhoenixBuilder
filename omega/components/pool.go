@@ -67,5 +67,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"Kick": func() defines.Component {
 			return &Kick{BasicComponent: &BasicComponent{}}
 		},
+		"Shop": func() defines.Component {
+			return &Shop{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

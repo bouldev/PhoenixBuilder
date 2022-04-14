@@ -233,6 +233,19 @@
                     "kick [player]"
                 ]
             }
+        },
+        {
+            "name": "Shop",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "商店",
+            "configs": {
+                "商品清单文件":"商品.json",
+                "触发词": ["购买","买","shop","buy"],
+                "展示模版": "[i]: §6§l[name] §f§r售价:[price][currency_name]",
+                "一次只能购买一个时的展示模版": "[i]: §6§l[name] §f§r[price][currency_name]一个"
+            }
         }
     ],
     "trigger": {
