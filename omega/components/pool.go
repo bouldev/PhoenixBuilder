@@ -64,5 +64,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"Immortal": func() defines.Component {
 			return &Immortal{BasicComponent: &BasicComponent{}}
 		},
+		"Kick": func() defines.Component {
+			return &Kick{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

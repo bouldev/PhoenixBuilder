@@ -218,6 +218,21 @@
                 "hint": "你 [player] 逝于 [dead_pos]，要重返那里么?",
                 "ask_for_respawn": true
             }
+        },
+        {
+            "name": "Kick",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "由机器人代替已经不能使用的指令完成踢人任务",
+            "configs": {
+                "selector": "@a[tag=cheat]",
+                "check_duration_second": 3,
+                "actions": [
+                    "/tellraw @a {\"rawtext\":[{\"text\":\"作弊玩家[player]已被踢出\"}]}",
+                    "kick [player]"
+                ]
+            }
         }
     ],
     "trigger": {
