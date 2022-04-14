@@ -14,7 +14,7 @@
                 "hint_on_unknown_cmd": "§lOmega System: 抱歉，我没明白你的意思, 以下是菜单",
                 "menu_head": "§b§l==========================Omega System==========================",
                 "bot_tag": "omg",
-                "menu_format": "[i]:输入 [systemTrigger] [defaultTrigger] 以 [usage]",
+                "menu_format": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] §f§r以 [usage]",
                 "multiple_trigger_menu_format": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] [argumentHint] §f§r以 [usage] (或者[systemTrigger] [allTriggers])",
                 "wisper_hint": "§f可以使用 /w @a[tag=omg] 来秘密通信，比如 /w @a[tag=omg] ?",
                 "menu_tail": "§b§l==============================END===============================",
@@ -29,7 +29,8 @@
             "source": "Core",
             "usage": "从后台发送MC指令",
             "configs": {
-                "trigger": "/"
+                "player_trigger": "/",
+                "websocket_trigger": "!"
             }
         },
         {
@@ -190,6 +191,21 @@
                     "op": ["是OP","不是OP"],
                     "会长": ["是会长","不是会长"]
                 }
+            }
+        },
+        {
+            "name": "Portal",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "允许玩家记录/回到存档点",
+            "configs": {
+                "file_name": "存档点.json",
+                "save_trigger": ["保存","记忆","save"],
+                "load_trigger": ["前往","加载","回到","回","load"],
+                "list_trigger": ["所有地点","地点","allpos"],
+                "remove_trigger": ["移除","remove"],
+                "selector": "@a[name=[player],tag=!banTP]"
             }
         }
     ],

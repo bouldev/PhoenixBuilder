@@ -136,6 +136,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat) bool {
 		if len(e.Triggers) > 1 {
 			tmp = multipleFmt
 		}
+		//fmt.Println(tmp)
 		entry := utils.FormateByRepalcment(tmp, map[string]interface{}{
 			"[i]":              i,
 			"[systemTrigger]":  systemTrigger,
@@ -144,6 +145,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat) bool {
 			"[allTriggers]":    "[" + strings.Join(e.Triggers, "/") + "]",
 			"[argumentHint]":   e.ArgumentHint,
 		})
+		//fmt.Println(entry)
 		pk.Say(entry)
 	}
 	pk.Say(fmt.Sprintf(m.WisperHint))
@@ -221,25 +223,28 @@ func (m *Menu) Inject(frame defines.MainFrame) {
 
 type CmdSender struct {
 	*BaseCoreComponent
-	Trigger string `json:"trigger"`
+	PlayerTrigger    string `json:"player_trigger"`
+	WebsocketTrigger string `json:"websocket_trigger"`
 }
 
-func (c *CmdSender) send(cmds []string) {
+func (c *CmdSender) send(cmds []string, ws bool) {
 	cmd := strings.Join(cmds, " ")
-	c.mainFrame.GetGameControl().SendCmdAndInvokeOnResponse(
-		cmd,
-		func(output *packet.CommandOutput) {
-			terMsg := pterm.Info.Sprintf("/%v\n", cmd)
-			for _, msg := range output.OutputMessages {
-				if msg.Success {
-					terMsg += pterm.Success.Sprintf("Msg: %v Params: %v\n", msg.Message, msg.Parameters)
-				} else {
-					terMsg += pterm.Error.Sprintf("Msg: %v Params: %v\n", msg.Message, msg.Parameters)
-				}
+	onFeedBack := func(output *packet.CommandOutput) {
+		terMsg := pterm.Info.Sprintf("/%v\n", cmd)
+		for _, msg := range output.OutputMessages {
+			if msg.Success {
+				terMsg += pterm.Success.Sprintf("Msg: %v Params: %v\n", msg.Message, msg.Parameters)
+			} else {
+				terMsg += pterm.Error.Sprintf("Msg: %v Params: %v\n", msg.Message, msg.Parameters)
 			}
-			c.mainFrame.GetBackendDisplay().Write(terMsg)
-		},
-	)
+		}
+		c.mainFrame.GetBackendDisplay().Write(terMsg)
+	}
+	if ws {
+		c.mainFrame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, onFeedBack)
+	} else {
+		c.mainFrame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(cmd, onFeedBack)
+	}
 }
 
 func (c *CmdSender) Init(cfg *defines.ComponentConfig) {
@@ -253,11 +258,21 @@ func (c *CmdSender) Inject(frame defines.MainFrame) {
 	c.mainFrame = frame
 	frame.SetBackendMenuEntry(&defines.BackendMenuEntry{
 		MenuEntry: defines.MenuEntry{
-			Triggers: []string{c.Trigger},
-			Usage:    fmt.Sprintf("发送指令，如果有可能性，显示结果， 例如 %vlist", c.Trigger),
+			Triggers: []string{c.WebsocketTrigger},
+			Usage:    fmt.Sprintf("以 webscoket 身份发送指令，如果有可能性，显示结果， 例如 %vlist", c.WebsocketTrigger),
 		},
 		OptionalOnTriggerFn: func(cmds []string) (stop bool) {
-			c.send(cmds)
+			c.send(cmds, true)
+			return true
+		},
+	})
+	frame.SetBackendMenuEntry(&defines.BackendMenuEntry{
+		MenuEntry: defines.MenuEntry{
+			Triggers: []string{c.PlayerTrigger},
+			Usage:    fmt.Sprintf("以玩家身份发送指令，临时打开命令返回以显示结果， 例如 %vlist", c.PlayerTrigger),
+		},
+		OptionalOnTriggerFn: func(cmds []string) (stop bool) {
+			c.send(cmds, false)
 			return true
 		},
 	})
@@ -473,7 +488,7 @@ func (o *NameRecord) Activate() {
 func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 	return map[string]func() defines.CoreComponent{
 		"Menu":        func() defines.CoreComponent { return &Menu{BaseCoreComponent: &BaseCoreComponent{}} },
-		"CmdSender":   func() defines.CoreComponent { return &CmdSender{&BaseCoreComponent{}, "/"} },
+		"CmdSender":   func() defines.CoreComponent { return &CmdSender{BaseCoreComponent: &BaseCoreComponent{}} },
 		"NoSQLDBUtil": func() defines.CoreComponent { return &NoSQLDBUtil{&BaseCoreComponent{}} },
 		"NameRecord":  func() defines.CoreComponent { return &NameRecord{BaseCoreComponent: &BaseCoreComponent{}} },
 	}

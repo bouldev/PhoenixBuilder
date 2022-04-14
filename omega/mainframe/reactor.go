@@ -101,6 +101,34 @@ func (o *Omega) GetGameListener() defines.GameListener {
 	return o.Reactor
 }
 
+func (r *Reactor) Throw(chat *defines.GameChat) {
+	o := r.o
+	flag := true
+	catchForParams := false
+	if player := o.GetGameControl().GetPlayerKit(chat.Name); player != nil {
+		if paramCb := player.GetOnParamMsg(); paramCb != nil {
+			catchForParams = paramCb(chat)
+		}
+	}
+	if catchForParams {
+		return
+	}
+	for _, interceptor := range r.GameChatInterceptors {
+		if stop := interceptor(chat); stop {
+			flag = false
+			return
+		}
+	}
+	chat.FallBack = true
+	if flag && chat.FrameWorkTriggered {
+		for _, interceptor := range r.GameChatFinalInterceptors {
+			if stop := interceptor(chat); stop {
+				return
+			}
+		}
+	}
+}
+
 func (r *Reactor) React(pkt packet.Packet) {
 	o := r.o
 	if pkt == nil {
@@ -113,29 +141,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 		if p.TextType == packet.TextTypeWhisper && o.fullConfig.Trigger.AllowWisper {
 			chat.FrameWorkTriggered = true
 		}
-		flag := true
-		catchForParams := false
-		if player := o.GetGameControl().GetPlayerKit(chat.Name); player != nil {
-			if paramCb := player.GetOnParamMsg(); paramCb != nil {
-				catchForParams = paramCb(chat)
-			}
-		}
-		if catchForParams {
-			break
-		}
-		for _, interceptor := range r.GameChatInterceptors {
-			if stop := interceptor(chat); stop {
-				flag = false
-				break
-			}
-		}
-		if flag && chat.FrameWorkTriggered {
-			for _, interceptor := range r.GameChatFinalInterceptors {
-				if stop := interceptor(chat); stop {
-					break
-				}
-			}
-		}
+		r.Throw(chat)
 	case *packet.GameRulesChanged:
 		for _, rule := range p.GameRules {
 			o.backendLogger.Write(fmt.Sprintf("game rule update %v => %v", rule.Name, rule.Value))

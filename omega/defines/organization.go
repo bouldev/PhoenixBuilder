@@ -29,6 +29,7 @@ type GameChat struct {
 	Msg                []string
 	Type               byte
 	FrameWorkTriggered bool
+	FallBack           bool
 	Aux                interface{}
 }
 
@@ -91,6 +92,7 @@ type GameControl interface {
 	SubTitleTo(target string, msg string)
 	SendCmd(cmd string)
 	SendCmdAndInvokeOnResponse(string, func(output *packet.CommandOutput))
+	SendCmdAndInvokeOnResponseWithFeedback(string, func(output *packet.CommandOutput))
 	SendMCPacket(packet.Packet)
 	GetPlayerKit(name string) PlayerKit
 	GetPlayerKitByUUID(ud uuid.UUID) PlayerKit
@@ -110,6 +112,11 @@ type PlayerKit interface {
 
 	SetOnParamMsg(func(chat *GameChat) (catch bool)) error
 	GetOnParamMsg() func(chat *GameChat) (catch bool)
+
+	HasPermission(key string) bool
+	SetPermission(key string, b bool)
+
+	GetPos(string) chan []int
 }
 
 // 与游戏的交互接口，如何捕获和处理游戏的数据包和消息
@@ -122,6 +129,7 @@ type GameListener interface {
 	AppendOnFirstSeePlayerCallback(cb func(string))
 	AppendLoginInfoCallback(cb func(entry protocol.PlayerListEntry))
 	AppendLogoutInfoCallback(cb func(entry protocol.PlayerListEntry))
+	Throw(chat *GameChat)
 }
 
 // 安全事件发送和处理，比如某插件发现有玩家在恶意修改设置

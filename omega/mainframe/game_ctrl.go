@@ -9,20 +9,77 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
 type PlayerKitOmega struct {
-	uq                   *uqHolder.UQHolder
-	ctrl                 *GameCtrl
-	name                 string
-	persistStorageCached map[string]bool
-	persistStorage       map[string][]byte
-	violatedStorage      map[string]interface{}
-	OnParamMsg           func(chat *defines.GameChat) (catch bool)
-	playerUQ             *uqHolder.Player
+	uq              *uqHolder.UQHolder
+	ctrl            *GameCtrl
+	name            string
+	persistStorage  map[string]string
+	violatedStorage map[string]interface{}
+	OnParamMsg      func(chat *defines.GameChat) (catch bool)
+	playerUQ        *uqHolder.Player
+	Permission      map[string]bool
+}
+
+func (p *PlayerKitOmega) HasPermission(key string) bool {
+	if auth, hasK := p.Permission[key]; hasK && auth {
+		return true
+	}
+	return false
+}
+
+func (p *PlayerKitOmega) GetPos(selector string) chan []int {
+	s := utils.FormateByRepalcment(selector, map[string]interface{}{
+		"[player]": p.name,
+	})
+	c := make(chan []int)
+	sent := false
+	send := func(d []int) {
+		if sent {
+			return
+		}
+		sent = true
+		c <- d
+	}
+	p.ctrl.SendCmdAndInvokeOnResponseWithFeedback("execute "+s+" ~~~ tp @s ~~~", func(output *packet.CommandOutput) {
+		fmt.Println(output)
+		if output.SuccessCount > 0 && len(output.OutputMessages) > 0 {
+			if len(output.OutputMessages[0].Parameters) == 4 {
+				params := output.OutputMessages[0].Parameters[1:]
+				X, err := strconv.ParseFloat(params[0], 32)
+				if err != nil {
+					send(nil)
+					return
+				}
+				Y, err := strconv.ParseFloat(params[1], 32)
+				if err != nil {
+					send(nil)
+					return
+				}
+				Z, err := strconv.ParseFloat(params[2], 32)
+				if err != nil {
+					send(nil)
+					return
+				}
+				send([]int{int(X), int(Y), int(Z)})
+			}
+		}
+		send(nil)
+	})
+	go func() {
+		<-time.NewTicker(time.Second * 3).C
+		send(nil)
+	}()
+	return c
+}
+
+func (p *PlayerKitOmega) SetPermission(key string, b bool) {
+	p.Permission[key] = b
 }
 
 func (p *PlayerKitOmega) SetOnParamMsg(f func(chat *defines.GameChat) (catch bool)) error {
@@ -40,7 +97,11 @@ func (p *PlayerKitOmega) GetOnParamMsg() func(chat *defines.GameChat) (catch boo
 }
 
 func (p *PlayerKitOmega) GetPersistStorage(k string) string {
-	return p.ctrl.playerStorageDB.Get("." + p.name + k)
+	if val, hasK := p.persistStorage[k]; !hasK {
+		return ""
+	} else {
+		return val
+	}
 }
 
 func (p *PlayerKitOmega) GetViolatedStorage() map[string]interface{} {
@@ -48,10 +109,15 @@ func (p *PlayerKitOmega) GetViolatedStorage() map[string]interface{} {
 }
 
 func (p *PlayerKitOmega) CommitPersistStorageChange(k string, v string) {
+	if _, hasK := p.persistStorage[k]; !hasK {
+		return
+	}
 	if v == "" {
+		delete(p.persistStorage, k)
 		p.ctrl.playerStorageDB.Delete("." + p.name + k)
 		return
 	}
+	p.persistStorage[k] = v
 	p.ctrl.playerStorageDB.Commit("."+p.name+k, v)
 }
 
@@ -95,6 +161,14 @@ func (p *PlayerKitOmega) preparePrePlayerStorage() {
 		p.ctrl.playerNameDB.Commit(currentTimeKey, currentTime)
 		p.CommitPersistStorageChange(".last_login_time", currentTime)
 	}
+	p.ctrl.playerStorageDB.IterWithPrefix(func(key string, v string) (stop bool) {
+		p.persistStorage[key] = v
+		return false
+	}, "."+p.name)
+	if p.ctrl.PlayerPermission[p.name] == nil {
+		p.ctrl.PlayerPermission[p.name] = map[string]bool{}
+	}
+	p.Permission = p.ctrl.PlayerPermission[p.name]
 }
 
 func newPlayerKitOmega(uq *uqHolder.UQHolder, ctrl *GameCtrl, name string) *PlayerKitOmega {
@@ -103,13 +177,12 @@ func newPlayerKitOmega(uq *uqHolder.UQHolder, ctrl *GameCtrl, name string) *Play
 		return pko
 	}
 	player := &PlayerKitOmega{
-		uq:                   uq,
-		ctrl:                 ctrl,
-		name:                 name,
-		persistStorageCached: map[string]bool{},
-		persistStorage:       map[string][]byte{},
-		violatedStorage:      map[string]interface{}{},
-		OnParamMsg:           nil,
+		uq:              uq,
+		ctrl:            ctrl,
+		name:            name,
+		persistStorage:  map[string]string{},
+		violatedStorage: map[string]interface{}{},
+		OnParamMsg:      nil,
 	}
 	player.preparePrePlayerStorage()
 	ctrl.perPlayerStorage[name] = player
@@ -157,6 +230,7 @@ type GameCtrl struct {
 	perPlayerStorage    map[string]*PlayerKitOmega
 	playerNameDB        defines.NoSqlDB
 	playerStorageDB     defines.NoSqlDB
+	PlayerPermission    map[string]map[string]bool
 }
 
 func (g *GameCtrl) GetPlayerKit(name string) defines.PlayerKit {
@@ -171,6 +245,23 @@ func (g *GameCtrl) GetPlayerKitByUUID(ud uuid.UUID) defines.PlayerKit {
 	return newPlayerKitOmega(g.uq, g, player.Username)
 }
 
+func (g *GameCtrl) SendCmdAndInvokeOnResponseWithFeedback(cmd string, cb func(*packet.CommandOutput)) {
+	if !g.CurrentCmdFeedBack && !g.CmdFeedBackOnSent {
+		g.turnOnFeedBack()
+	}
+	ud, _ := uuid.NewUUID()
+	g.uuidLock.Lock()
+	g.uuidMaps[ud.String()] = cb
+	g.uuidLock.Unlock()
+	pkt := g.packCmdWithUUID(cmd, ud, false)
+	if g.CurrentCmdFeedBack {
+		g.WriteFn(pkt)
+	} else {
+		g.NeedFeedBackPackets = append(g.NeedFeedBackPackets)
+	}
+	g.WriteFn(pkt)
+}
+
 func (g *GameCtrl) SendCmdAndInvokeOnResponse(cmd string, cb func(*packet.CommandOutput)) {
 	//if !g.CurrentCmdFeedBack && !g.CmdFeedBackOnSent {
 	//	g.turnOnFeedBack()
@@ -179,7 +270,7 @@ func (g *GameCtrl) SendCmdAndInvokeOnResponse(cmd string, cb func(*packet.Comman
 	g.uuidLock.Lock()
 	g.uuidMaps[ud.String()] = cb
 	g.uuidLock.Unlock()
-	pkt := g.packCmdWithUUID(cmd, ud)
+	pkt := g.packCmdWithUUID(cmd, ud, true)
 	//if g.CurrentCmdFeedBack {
 	//	g.WriteFn(pkt)
 	//} else {
@@ -226,13 +317,16 @@ func (g *GameCtrl) SubTitleTo(target string, line string) {
 	g.SendCmd(fmt.Sprintf("titleraw %v subtitle %v", target, content))
 }
 
-func (g *GameCtrl) packCmdWithUUID(cmd string, ud uuid.UUID) *packet.CommandRequest {
+func (g *GameCtrl) packCmdWithUUID(cmd string, ud uuid.UUID, ws bool) *packet.CommandRequest {
 	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
 	origin := protocol.CommandOrigin{
 		Origin:         protocol.CommandOriginAutomationPlayer,
 		UUID:           ud,
 		RequestID:      requestId.String(),
 		PlayerUniqueID: 0,
+	}
+	if !ws {
+		origin.Origin = protocol.CommandOriginPlayer
 	}
 	commandRequest := &packet.CommandRequest{
 		CommandLine:   cmd,
@@ -246,7 +340,7 @@ func (g *GameCtrl) packCmdWithUUID(cmd string, ud uuid.UUID) *packet.CommandRequ
 
 func (g *GameCtrl) SendCmd(cmd string) {
 	ud, _ := uuid.NewUUID()
-	g.WriteFn(g.packCmdWithUUID(cmd, ud))
+	g.WriteFn(g.packCmdWithUUID(cmd, ud, true))
 }
 
 // onCommandFeedbackOnCmds is called by reactor to send commands by that need feedback
@@ -254,11 +348,11 @@ func (g *GameCtrl) onCommandFeedbackOn() {
 	fmt.Println("recv sendcommandfeedback ture")
 	g.CurrentCmdFeedBack = true
 	g.CmdFeedBackOnSent = false
-	//pkts := g.NeedFeedBackPackets
-	//g.NeedFeedBackPackets = make([]packet.Packet, 0)
-	//for _, p := range pkts {
-	//	g.SendMCPacket(p)
-	//}
+	pkts := g.NeedFeedBackPackets
+	g.NeedFeedBackPackets = make([]packet.Packet, 0)
+	for _, p := range pkts {
+		g.SendMCPacket(p)
+	}
 	if !g.ExpectedCmdFeedBack {
 		g.turnOffFeedBack()
 	}
@@ -328,6 +422,17 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		playerNameDB:        o.GetNoSqlDB("playerNameDB"),
 		playerStorageDB:     o.GetNoSqlDB("playerStorageDB"),
 	}
+	err := o.GetJsonData("playerPermission.json", &c.PlayerPermission)
+	if err != nil {
+		panic(err)
+	}
+	if c.PlayerPermission == nil {
+		c.PlayerPermission = map[string]map[string]bool{}
+	}
+	o.CloseFns = append(o.CloseFns, func() error {
+		fmt.Println("正在保存 playerPermission.json")
+		return o.WriteJsonData("playerPermission.json", c.PlayerPermission)
+	})
 	c.toExpectedFeedBackStatus()
 	return c
 }
