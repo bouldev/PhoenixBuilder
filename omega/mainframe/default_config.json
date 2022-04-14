@@ -207,6 +207,17 @@
                 "remove_trigger": ["移除","remove"],
                 "selector": "@a[name=[player],tag=!banTP]"
             }
+        },
+        {
+            "name": "Immortal",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "允许玩家返回死亡点",
+            "configs": {
+                "hint": "你 [player] 逝于 [dead_pos]，要重返那里么?",
+                "ask_for_respawn": true
+            }
         }
     ],
     "trigger": {

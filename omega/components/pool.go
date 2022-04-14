@@ -61,5 +61,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"Portal": func() defines.Component {
 			return &Portal{BasicComponent: &BasicComponent{}}
 		},
+		"Immortal": func() defines.Component {
+			return &Immortal{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
