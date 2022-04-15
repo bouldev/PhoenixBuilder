@@ -4,18 +4,18 @@
     "货币记分板指令名": "coin",
     "商品": [
       {
-        "商品显示名": "一个苹果",
+        "商品显示名": "苹果",
         "价格": 3,
         "给予模版": [
-          "give [player] apple 1",
-          "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 苹果是你的了\"}]}"
+          "give [player] apple [count][currency]",
+          "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 苹果是你的了, 共计[totalPrice], 你的钱[moneyHas]->[moneyLeft][currency]([currencyCMD])\"}]}"
         ]
       },
       {
-        "商品显示名": "石头x64",
+        "商品显示名": "石头",
         "价格": 1,
         "给予模版": [
-          "give [player] stone 64"
+          "give [player] stone [count]"
         ]
       }
     ]
@@ -51,6 +51,7 @@
       {
         "商品显示名": "^_^",
         "价格": 1000,
+        "一次只能买一件": true,
         "给予模版": [
           "/tellraw @a {\"rawtext\":[{\"text\":\"240 爱你喔\"}]}"
         ]
