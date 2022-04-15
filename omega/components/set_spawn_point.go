@@ -28,26 +28,26 @@ func (o *SetSpawnPoint) set(chat *defines.GameChat) bool {
 	cmd := utils.FormateByRepalcment(o.Cmd, map[string]interface{}{
 		"[player]": chat.Name,
 	})
-	o.frame.GetBackendDisplay().Write(cmd)
-	o.frame.GetGameControl().SendCmdAndInvokeOnResponse(
+	o.Frame.GetBackendDisplay().Write(cmd)
+	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(
 		fmt.Sprintf(cmd), func(output *packet.CommandOutput) {
 			if output.SuccessCount != 0 {
-				o.frame.GetBackendDisplay().Write(fmt.Sprintf("success %v", output))
-				o.frame.GetGameControl().SayTo(chat.Name, o.HintOnSuccess)
+				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("success %v", output))
+				o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnSuccess)
 			} else {
 				if len(output.OutputMessages) > 0 && output.OutputMessages[0].Message != "commands.generic.noTargetMatch" {
-					o.frame.GetGameControl().SayTo(chat.Name, o.HintOnUnknownFailure)
+					o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnUnknownFailure)
 				} else {
-					o.frame.GetGameControl().SayTo(chat.Name, o.HintOnFailure)
+					o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnFailure)
 				}
-				o.frame.GetBackendDisplay().Write(fmt.Sprintf("failure %v", output))
+				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("failure %v", output))
 			}
 		})
 	return true
 }
 
 func (o *SetSpawnPoint) Inject(frame defines.MainFrame) {
-	o.frame = frame
+	o.Frame = frame
 	frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,

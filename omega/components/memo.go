@@ -26,7 +26,7 @@ type Memo struct {
 func (me *Memo) send(playerName string) {
 	if msgs, hasK := me.Memos[playerName]; hasK {
 		if len(msgs) > 0 {
-			if player := me.frame.GetGameControl().GetPlayerKit(playerName); player != nil {
+			if player := me.Frame.GetGameControl().GetPlayerKit(playerName); player != nil {
 				player.Title("有新留言")
 				player.SubTitle("查看聊天栏")
 				for _, m := range msgs {
@@ -51,14 +51,14 @@ func (me *Memo) save(chat *defines.GameChat) bool {
 		"[msg]":        msg,
 	})
 
-	me.frame.GetGameControl().SendCmd(m)
+	me.Frame.GetGameControl().SendCmd(m)
 	if _, hasK := me.Memos[dstPlayer]; !hasK {
 		me.Memos[dstPlayer] = make([]string, 0)
 	}
 	me.Memos[dstPlayer] = append(me.Memos[dstPlayer],
 		fmt.Sprintf("你有一条来自 %v 的留言: %v", chat.Name, msg),
 	)
-	for _, p := range me.frame.GetUQHolder().PlayersByEntityID {
+	for _, p := range me.Frame.GetUQHolder().PlayersByEntityID {
 		if p.Username == dstPlayer {
 			me.send(dstPlayer)
 		}
@@ -68,24 +68,24 @@ func (me *Memo) save(chat *defines.GameChat) bool {
 
 func (me *Memo) askForMsg(chat *defines.GameChat) {
 	dstPlayer := chat.Msg[0]
-	if player := me.frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
+	if player := me.Frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
 		if player.SetOnParamMsg(func(c *defines.GameChat) bool {
 			c.Msg = utils.InsertHead[string](dstPlayer, c.Msg)
 			me.save(c)
 			return true
 		}) == nil {
-			me.frame.GetGameControl().SayTo(chat.Name, me.HintOnEmptyMsg)
+			me.Frame.GetGameControl().SayTo(chat.Name, me.HintOnEmptyMsg)
 		}
 	}
 }
 
 func (me *Memo) askForPlayer(chat *defines.GameChat) {
-	if player := me.frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
+	if player := me.Frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
 		if player.SetOnParamMsg(func(c *defines.GameChat) bool {
 			me.record(c)
 			return true
 		}) == nil {
-			me.frame.GetGameControl().SayTo(chat.Name, me.HintOnEmptyPlayer)
+			me.Frame.GetGameControl().SayTo(chat.Name, me.HintOnEmptyPlayer)
 		}
 	}
 }
@@ -113,12 +113,12 @@ func (me *Memo) Init(cfg *defines.ComponentConfig) {
 }
 
 func (me *Memo) Inject(frame defines.MainFrame) {
-	me.frame = frame
+	me.Frame = frame
 	me.logger = &utils.MultipleLogger{Loggers: []defines.LineDst{
-		me.frame.GetLogger(me.LogFile),
-		me.frame.GetBackendDisplay(),
+		me.Frame.GetLogger(me.LogFile),
+		me.Frame.GetBackendDisplay(),
 	}}
-	me.frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
+	me.Frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
 		name := utils.ToPlainName(entry.Username)
 		if _, hasK := me.Memos[name]; hasK {
 			timer := time.NewTimer(time.Duration(me.LoginDelay) * time.Second)
@@ -128,7 +128,7 @@ func (me *Memo) Inject(frame defines.MainFrame) {
 			}()
 		}
 	})
-	me.frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
+	me.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     me.Triggers,
 			ArgumentHint: "[玩家] [消息]",
@@ -146,5 +146,5 @@ func (me *Memo) Inject(frame defines.MainFrame) {
 
 func (me *Memo) Stop() error {
 	fmt.Printf("正在保存 %v\n", me.FileName)
-	return me.frame.WriteJsonData(me.FileName, me.Memos)
+	return me.Frame.WriteJsonData(me.FileName, me.Memos)
 }

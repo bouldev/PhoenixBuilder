@@ -20,12 +20,12 @@ type FeedBack struct {
 func (me *FeedBack) record(chat *defines.GameChat) bool {
 	msg := strings.Join(chat.Msg, "")
 	if msg == "" {
-		if player := me.frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
+		if player := me.Frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
 			if player.SetOnParamMsg(func(c *defines.GameChat) bool {
 				me.record(c)
 				return true
 			}) == nil {
-				me.frame.GetGameControl().SayTo(chat.Name, me.HintOnEmpty)
+				me.Frame.GetGameControl().SayTo(chat.Name, me.HintOnEmpty)
 			}
 		}
 		return true
@@ -35,7 +35,7 @@ func (me *FeedBack) record(chat *defines.GameChat) bool {
 		"[player]": chat.Name,
 		"[msg]":    msg,
 	})
-	me.frame.GetGameControl().SendCmd(m)
+	me.Frame.GetGameControl().SendCmd(m)
 	return true
 }
 
@@ -47,13 +47,13 @@ func (me *FeedBack) Init(cfg *defines.ComponentConfig) {
 }
 
 func (me *FeedBack) Inject(frame defines.MainFrame) {
-	me.frame = frame
+	me.Frame = frame
 
 	me.logger = &utils.MultipleLogger{Loggers: []defines.LineDst{
-		me.frame.GetLogger(me.FileName),
-		me.frame.GetBackendDisplay(),
+		me.Frame.GetLogger(me.FileName),
+		me.Frame.GetBackendDisplay(),
 	}}
-	me.frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
+	me.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     me.Triggers,
 			ArgumentHint: "[反馈]",

@@ -27,13 +27,13 @@ func (o *AboutMe) Init(cfg *defines.ComponentConfig) {
 }
 
 func (o *AboutMe) show(chat *defines.GameChat) bool {
-	//if player := o.frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
+	//if player := o.Frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
 	//
 	//}
 	hasTags := map[string]bool{}
 	allTags := []string{}
 	scores := map[string]string{}
-	o.frame.GetGameControl().SendCmdAndInvokeOnResponse("tag "+chat.Name+" list", func(output *packet.CommandOutput) {
+	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("tag "+chat.Name+" list", func(output *packet.CommandOutput) {
 		if output.SuccessCount > 0 {
 			for _, t := range strings.Split(output.OutputMessages[0].Parameters[2], ", ") {
 				_t := utils.RemoveFormate(t)
@@ -41,7 +41,7 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 				allTags = append(allTags, _t)
 			}
 		}
-		o.frame.GetGameControl().SendCmdAndInvokeOnResponse("scoreboard players list "+chat.Name, func(output *packet.CommandOutput) {
+		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("scoreboard players list "+chat.Name, func(output *packet.CommandOutput) {
 			if output.SuccessCount > 0 {
 				for _, p := range output.OutputMessages[1:] {
 					if len(p.Parameters) == 3 {
@@ -66,14 +66,14 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 				mappings[fmt.Sprintf("[score<%v>]", s)] = n
 			}
 			cmd := utils.FormateByRepalcment(o.Cmd, mappings)
-			o.frame.GetGameControl().SayTo(chat.Name, cmd)
+			o.Frame.GetGameControl().SayTo(chat.Name, cmd)
 		})
 	})
 	return true
 }
 
 func (o *AboutMe) Inject(frame defines.MainFrame) {
-	o.frame = frame
+	o.Frame = frame
 	frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,

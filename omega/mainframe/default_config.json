@@ -246,6 +246,24 @@
                 "展示模版": "[i]: §6§l[name] §f§r售价:[price][currency_name]",
                 "一次只能购买一个时的展示模版": "[i]: §6§l[name] §f§r[price][currency_name]一个"
             }
+        },
+        {
+            "name": "QGroupLink",
+            "disabled": false,
+            "version": "0.0.1",
+            "source": "Built-In",
+            "usage": "群服互通",
+            "configs": {
+                "CQHTTP正向Websocket代理地址": "127.0.0.1:6700",
+                "游戏消息格式化模版": "[player]: [msg]",
+                "Q群消息格式化模版": "[groupName]:[QQUserName]:[msg]",
+                "游戏内可以听到QQ消息的玩家的选择器": "@a",
+                "不要转发机器人的消息": true,
+                "只转发聊天消息": true,
+                "链接的Q群": {
+                    "CMA": 958915720
+                }
+            }
         }
     ],
     "trigger": {

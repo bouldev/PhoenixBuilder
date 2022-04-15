@@ -1,25 +1,28 @@
 package components
 
-import "phoenixbuilder/omega/defines"
+import (
+	"phoenixbuilder/omega/components/qqGroupLink"
+	"phoenixbuilder/omega/defines"
+)
 
 type BasicComponent struct {
-	cfg      *defines.ComponentConfig
-	frame    defines.MainFrame
-	ctrl     defines.GameControl
-	listener defines.GameListener
+	Config   *defines.ComponentConfig
+	Frame    defines.MainFrame
+	Ctrl     defines.GameControl
+	Listener defines.GameListener
 }
 
 func (bc *BasicComponent) Init(cfg *defines.ComponentConfig) {
-	bc.cfg = cfg
+	bc.Config = cfg
 }
 
 func (bc *BasicComponent) Inject(frame defines.MainFrame) {
-	bc.frame = frame
-	bc.listener = frame.GetGameListener()
+	bc.Frame = frame
+	bc.Listener = frame.GetGameListener()
 }
 
 func (bc *BasicComponent) Activate() {
-	bc.ctrl = bc.frame.GetGameControl()
+	bc.Ctrl = bc.Frame.GetGameControl()
 }
 
 func (bc *BasicComponent) Stop() error {
@@ -69,6 +72,9 @@ func GetComponentsPool() map[string]func() defines.Component {
 		},
 		"Shop": func() defines.Component {
 			return &Shop{BasicComponent: &BasicComponent{}}
+		},
+		"QGroupLink": func() defines.Component {
+			return &qqGroupLink.QGroupLink{}
 		},
 	}
 }

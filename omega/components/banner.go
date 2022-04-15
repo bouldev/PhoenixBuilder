@@ -26,6 +26,6 @@ func (b *Banner) Init(cfg *defines.ComponentConfig) {
 
 func (b *Banner) Activate() {
 	for _, cmd := range b.Cmds {
-		b.frame.GetGameControl().SayTo(cmd[0], cmd[1])
+		b.Frame.GetGameControl().SayTo(cmd[0], cmd[1])
 	}
 }

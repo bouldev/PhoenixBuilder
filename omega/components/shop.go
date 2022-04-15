@@ -58,10 +58,10 @@ func (o *Shop) askForItemList(chat *defines.GameChat) {
 	}
 	hint, resolver := utils.GenStringListHintResolverWithIndex(groupNames)
 
-	if o.frame.GetGameControl().SetOnParamMsg(chat.Name, func(newChat *defines.GameChat) (catch bool) {
+	if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(newChat *defines.GameChat) (catch bool) {
 		i, err := resolver(newChat.Msg)
 		if err != nil {
-			o.frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("无法处理你的要求，因为"+err.Error()))
+			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("无法处理你的要求，因为"+err.Error()))
 			return true
 		}
 		groupName := groupNames[i]
@@ -80,13 +80,13 @@ func (o *Shop) askForItemList(chat *defines.GameChat) {
 				"[currency_name]": cn,
 				"[name]":          g.Name,
 			})
-			o.frame.GetGameControl().SayTo(chat.Name, cmd)
+			o.Frame.GetGameControl().SayTo(chat.Name, cmd)
 		}
 		itemHint, itemResolver := utils.GenStringListHintResolverWithIndex(availableGoods)
-		if o.frame.GetGameControl().SetOnParamMsg(chat.Name, func(itemChat *defines.GameChat) (catch bool) {
+		if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(itemChat *defines.GameChat) (catch bool) {
 			itemI, err := itemResolver(itemChat.Msg)
 			if err != nil {
-				o.frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("无法处理你的要求，因为"+err.Error()))
+				o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("无法处理你的要求，因为"+err.Error()))
 				return true
 			}
 			goodName := availableGoods[itemI]
@@ -94,13 +94,13 @@ func (o *Shop) askForItemList(chat *defines.GameChat) {
 			o.tryBuy(itemChat)
 			return true
 		}) == nil {
-			o.frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("想购买的话，请输入 %v %v [物品名或序号] [数量] 喔！\n物品信息可选有"+itemHint,
-				o.frame.GetGameListener().GetTriggerWord(), o.Triggers[0]))
+			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("想购买的话，请输入 %v %v [物品名或序号] [数量] 喔！\n物品信息可选有"+itemHint,
+				o.Frame.GetGameListener().GetTriggerWord(), o.Triggers[0]))
 		}
 
 		return true
 	}) == nil {
-		o.frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§6§l这是已有的商品分类，你想确认一下哪一类呢?\n"+hint+", 请输入喔:"))
+		o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§6§l这是已有的商品分类，你想确认一下哪一类呢?\n"+hint+", 请输入喔:"))
 	}
 }
 
@@ -110,23 +110,23 @@ func (o *Shop) startBuy(player string, count int, good PlainGood) {
 		count = 1
 	}
 	totalPrice := count * good.Price
-	o.frame.GetGameControl().SendCmdAndInvokeOnResponse(
+	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(
 		fmt.Sprintf("scoreboard players add %v %v 0", player, good.CurrencyCmd), func(output *packet.CommandOutput) {
 			//fmt.Println(output)
 			if output.SuccessCount == 0 || len(output.OutputMessages) == 0 || len(output.OutputMessages[0].Parameters) != 4 {
-				o.frame.GetBackendDisplay().Write(fmt.Sprintf("购买时发现玩家没有记分板%v %v", good.CurrencyName, output))
-				o.frame.GetGameControl().SayTo(player, "似乎没有相关记分板，或者你这个记分板没有分数")
+				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("购买时发现玩家没有记分板%v %v", good.CurrencyName, output))
+				o.Frame.GetGameControl().SayTo(player, "似乎没有相关记分板，或者你这个记分板没有分数")
 				return
 			}
 			hasMoney, err := strconv.Atoi(output.OutputMessages[0].Parameters[3])
 			if err != nil {
-				o.frame.GetBackendDisplay().Write(fmt.Sprintf("购买时解析出错 %v", err))
-				o.frame.GetGameControl().SayTo(player, "出于未知原因，无法完成购买")
+				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("购买时解析出错 %v", err))
+				o.Frame.GetGameControl().SayTo(player, "出于未知原因，无法完成购买")
 				return
 			}
 			if hasMoney > totalPrice {
-				o.frame.GetBackendDisplay().Write(fmt.Sprintf("玩家 %v 花费 %v / %v 购买了 %v * %v", player, totalPrice, hasMoney, good.Name, count))
-				o.frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players remove %v %v %v", player, good.CurrencyCmd, totalPrice))
+				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("玩家 %v 花费 %v / %v 购买了 %v * %v", player, totalPrice, hasMoney, good.Name, count))
+				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players remove %v %v %v", player, good.CurrencyCmd, totalPrice))
 				for _, t := range good.Cmds {
 					c := utils.FormateByRepalcment(t, map[string]interface{}{
 						"[player]":      player,
@@ -137,10 +137,10 @@ func (o *Shop) startBuy(player string, count int, good PlainGood) {
 						"[currency]":    good.CurrencyName,
 						"[currencyCMD]": good.CurrencyCmd,
 					})
-					o.frame.GetGameControl().SendCmd(c)
+					o.Frame.GetGameControl().SendCmd(c)
 				}
 			} else {
-				o.frame.GetGameControl().SayTo(player, "很遗憾,你钱不够")
+				o.Frame.GetGameControl().SayTo(player, "很遗憾,你钱不够")
 			}
 		},
 	)
@@ -154,13 +154,13 @@ func (o *Shop) tryBuy(chat *defines.GameChat) {
 	count := chat.Msg[1]
 	good, hasK := o.PlainItems[item]
 	if !hasK {
-		o.frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§4§l似乎没有这个商品"))
+		o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§4§l似乎没有这个商品"))
 		o.askForItemList(chat)
 		return
 	}
 	atoi, err := strconv.Atoi(count)
 	if err != nil || atoi <= 0 {
-		o.frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§4§l输入的数量无效，必须是一个正整数"))
+		o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§4§l输入的数量无效，必须是一个正整数"))
 		return
 	}
 	o.startBuy(chat.Name, atoi, good)
@@ -182,24 +182,24 @@ func (o *Shop) guide(chat *defines.GameChat) bool {
 }
 
 func (o *Shop) Inject(frame defines.MainFrame) {
-	o.frame = frame
-	relpath := o.frame.GetRelativeFileName(o.FileName)
+	o.Frame = frame
+	relpath := o.Frame.GetRelativeFileName(o.FileName)
 	if !utils.IsFile(relpath) {
 		absPath, err := filepath.Abs(relpath)
 		if err != nil {
 			panic(err)
 		}
 		pterm.Warning.Printf("没有检测到商品清单文件,将在 %v 下展开默认商品清单\n(绝对路径为 %v)\n", relpath, absPath)
-		err = o.frame.WriteFileData(o.FileName, defaultGoods)
+		err = o.Frame.WriteFileData(o.FileName, defaultGoods)
 		if err != nil {
 			panic(err)
 		}
 	}
-	err := o.frame.GetJsonData(o.FileName, &o.Goods)
+	err := o.Frame.GetJsonData(o.FileName, &o.Goods)
 	if err != nil {
 		panic(err)
 	}
-	o.frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
+	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
 			ArgumentHint: "[物品] [数量]",
@@ -220,7 +220,7 @@ func (o *Shop) Inject(frame defines.MainFrame) {
 			}
 		}
 	}
-	o.frame.GetBackendDisplay().Write(fmt.Sprintf("%v 商品已加载", len(o.PlainItems)))
+	o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 商品已加载", len(o.PlainItems)))
 }
 
 func (o *Shop) Activate() {

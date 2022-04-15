@@ -42,7 +42,7 @@ func (o *Portal) getPlayerPositions(name string) map[string]*Entry {
 }
 
 func (o *Portal) list(chat *defines.GameChat) bool {
-	pk := o.frame.GetGameControl().GetPlayerKit(chat.Name)
+	pk := o.Frame.GetGameControl().GetPlayerKit(chat.Name)
 	pk.Say(" §l所有可以前往/加载的地点:")
 	for n, p := range o.positions["*"] {
 		pk.Say(fmt.Sprintf("  公共: §l§6%v §f§r(位于 %v)", n, p.Pos))
@@ -55,7 +55,7 @@ func (o *Portal) list(chat *defines.GameChat) bool {
 	if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
 		if !chat.FrameWorkTriggered {
 			chat.FrameWorkTriggered = true
-			o.frame.GetGameListener().Throw(chat)
+			o.Frame.GetGameListener().Throw(chat)
 			return true
 		}
 		return false
@@ -68,15 +68,15 @@ func (o *Portal) list(chat *defines.GameChat) bool {
 func (o *Portal) doTP(name string, pos string) bool {
 	ps := o.getPlayerPositions(name)
 	goPS := func(n string, p *Entry) bool {
-		o.frame.GetBackendDisplay().Write(fmt.Sprintf("%v 前往地点 %v: %v", name, n, p))
+		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 前往地点 %v: %v", name, n, p))
 		s := utils.FormateByRepalcment(o.Selector, map[string]interface{}{
 			"[player]": name,
 		})
-		o.frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("tp %v %v %v %v", s, p.Pos[0], p.Pos[1], p.Pos[2]), func(output *packet.CommandOutput) {
+		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("tp %v %v %v %v", s, p.Pos[0], p.Pos[1], p.Pos[2]), func(output *packet.CommandOutput) {
 			if output.SuccessCount != 0 {
-				o.frame.GetGameControl().SayTo(name, "§6传送成功")
+				o.Frame.GetGameControl().SayTo(name, "§6传送成功")
 			} else {
-				o.frame.GetGameControl().SayTo(name, "§4传送失败")
+				o.Frame.GetGameControl().SayTo(name, "§4传送失败")
 			}
 		})
 		return true
@@ -95,12 +95,12 @@ func (o *Portal) doTP(name string, pos string) bool {
 			}
 		}
 	}
-	o.frame.GetGameControl().SayTo(name, "前往失败，因为没有那个地点")
+	o.Frame.GetGameControl().SayTo(name, "前往失败，因为没有那个地点")
 	return false
 }
 
 func (o *Portal) tp(chat *defines.GameChat) bool {
-	pk := o.frame.GetGameControl().GetPlayerKit(chat.Name)
+	pk := o.Frame.GetGameControl().GetPlayerKit(chat.Name)
 	if len(chat.Msg) > 0 {
 		pos := chat.Msg[0]
 		if o.doTP(chat.Name, pos) {
@@ -135,18 +135,18 @@ func (o *Portal) doRemove(name string, pos string) bool {
 	ps := o.getPlayerPositions(name)
 	for n, _ := range ps {
 		if n == pos {
-			o.frame.GetBackendDisplay().Write(fmt.Sprintf("%v 移除了地点 %v: %v", name, n, ps[n]))
-			o.frame.GetGameControl().SayTo(name, "已移除")
+			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 移除了地点 %v: %v", name, n, ps[n]))
+			o.Frame.GetGameControl().SayTo(name, "已移除")
 			delete(ps, n)
 			return true
 		}
 	}
-	o.frame.GetGameControl().SayTo(name, "移除失败，因为没有那个地点")
+	o.Frame.GetGameControl().SayTo(name, "移除失败，因为没有那个地点")
 	return false
 }
 
 func (o *Portal) doAdd(name string, posName string) {
-	pk := o.frame.GetGameControl().GetPlayerKit(name)
+	pk := o.Frame.GetGameControl().GetPlayerKit(name)
 	go func() {
 		pos := <-pk.GetPos(o.Selector)
 		if pos == nil {
@@ -166,13 +166,13 @@ func (o *Portal) doAdd(name string, posName string) {
 				},
 			}
 		}
-		o.frame.GetBackendDisplay().Write(fmt.Sprintf("%v 添加了地点 %v: %v", name, posName, o.positions[name][posName]))
+		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 添加了地点 %v: %v", name, posName, o.positions[name][posName]))
 		pk.Say("添加成功")
 	}()
 }
 
 func (o *Portal) add(chat *defines.GameChat) bool {
-	pk := o.frame.GetGameControl().GetPlayerKit(chat.Name)
+	pk := o.Frame.GetGameControl().GetPlayerKit(chat.Name)
 	if len(chat.Msg) > 0 {
 		pos := chat.Msg[0]
 		o.doAdd(chat.Name, pos)
@@ -191,7 +191,7 @@ func (o *Portal) add(chat *defines.GameChat) bool {
 }
 
 func (o *Portal) remove(chat *defines.GameChat) bool {
-	pk := o.frame.GetGameControl().GetPlayerKit(chat.Name)
+	pk := o.Frame.GetGameControl().GetPlayerKit(chat.Name)
 	if len(chat.Msg) > 0 {
 		pos := chat.Msg[0]
 		if o.doRemove(chat.Name, pos) {
@@ -221,11 +221,11 @@ func (o *Portal) remove(chat *defines.GameChat) bool {
 
 func (o *Portal) Stop() error {
 	fmt.Println("正在保存 " + o.FileName)
-	return o.frame.WriteJsonData(o.FileName, &o.positions)
+	return o.Frame.WriteJsonData(o.FileName, &o.positions)
 }
 
 func (o *Portal) Inject(frame defines.MainFrame) {
-	o.frame = frame
+	o.Frame = frame
 	err := frame.GetJsonData(o.FileName, &o.positions)
 	if err != nil {
 		panic(err)

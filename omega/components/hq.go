@@ -22,23 +22,23 @@ func (o *BackToHQ) Init(cfg *defines.ComponentConfig) {
 }
 
 func (o *BackToHQ) back(chat *defines.GameChat) bool {
-	o.frame.GetGameControl().SendCmdAndInvokeOnResponse(
+	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(
 		utils.FormateByRepalcment(o.ToAnchor, map[string]interface{}{
 			"[player]": chat.Name,
-			"[bot]":    o.frame.GetUQHolder().GetBotName(),
+			"[bot]":    o.Frame.GetUQHolder().GetBotName(),
 		}), func(output *packet.CommandOutput) {
-			o.frame.GetGameControl().SendCmd(
+			o.Frame.GetGameControl().SendCmd(
 				utils.FormateByRepalcment(o.ToHQ, map[string]interface{}{
 					"[player]": chat.Name,
-					"[bot]":    o.frame.GetUQHolder().GetBotName(),
+					"[bot]":    o.Frame.GetUQHolder().GetBotName(),
 				}))
 		})
 	return true
 }
 
 func (o *BackToHQ) Inject(frame defines.MainFrame) {
-	o.frame = frame
-	o.frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
+	o.Frame = frame
+	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
 			ArgumentHint: "",

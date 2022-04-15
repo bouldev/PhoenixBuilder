@@ -36,24 +36,24 @@ func (o *PlayerTP) requestTp(src, dst string) {
 		"[dst]": dst,
 	})
 	hint, ynResolver := utils.GenYesNoResolver()
-	if o.frame.GetGameControl().SetOnParamMsg(dst, func(chat *defines.GameChat) (catch bool) {
+	if o.Frame.GetGameControl().SetOnParamMsg(dst, func(chat *defines.GameChat) (catch bool) {
 		result, err := ynResolver(chat.Msg)
 		if err != nil {
-			o.frame.GetGameControl().SayTo(chat.Name, "抱歉，我不明白你的意思，因为输入"+err.Error())
+			o.Frame.GetGameControl().SayTo(chat.Name, "抱歉，我不明白你的意思，因为输入"+err.Error())
 			return true
 		}
 		if result {
-			o.frame.GetGameControl().SendCmd(fmt.Sprintf("tp %v %v", src, dst))
-			o.frame.GetBackendDisplay().Write(fmt.Sprintf("accept tp %v -> %v", src, dst))
-			o.frame.GetGameControl().SayTo(src, "传送开始")
-			o.frame.GetGameControl().SayTo(dst, "传送开始")
+			o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp %v %v", src, dst))
+			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("accept tp %v -> %v", src, dst))
+			o.Frame.GetGameControl().SayTo(src, "传送开始")
+			o.Frame.GetGameControl().SayTo(dst, "传送开始")
 		} else {
 			m := utils.FormateByRepalcment(o.HintOnRefuse, map[string]interface{}{
 				"[src]": src,
 				"[dst]": dst,
 			})
-			o.frame.GetBackendDisplay().Write(fmt.Sprintf("reject tp %v -> %v", src, dst))
-			o.frame.GetGameControl().SayTo(src, m)
+			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("reject tp %v -> %v", src, dst))
+			o.Frame.GetGameControl().SayTo(src, m)
 		}
 		return true
 	}) == nil {
@@ -61,27 +61,27 @@ func (o *PlayerTP) requestTp(src, dst string) {
 			"[src]": src,
 			"[dst]": dst,
 		})
-		o.frame.GetGameControl().SayTo(src, sendMsg)
-		o.frame.GetGameControl().SayTo(dst, reqMsg)
-		o.frame.GetGameControl().SayTo(dst, hint)
-		o.frame.GetBackendDisplay().Write(fmt.Sprintf("request tp %v -> %v", src, dst))
+		o.Frame.GetGameControl().SayTo(src, sendMsg)
+		o.Frame.GetGameControl().SayTo(dst, reqMsg)
+		o.Frame.GetGameControl().SayTo(dst, hint)
+		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("request tp %v -> %v", src, dst))
 		o.lastRequestTime[src] = time.Now()
 	} else {
-		o.frame.GetGameControl().SayTo(src, o.HintOnTargetBusy)
+		o.Frame.GetGameControl().SayTo(src, o.HintOnTargetBusy)
 	}
 }
 
 func (o *PlayerTP) check(chat *defines.GameChat) bool {
 	if t, hask := o.lastRequestTime[chat.Name]; hask {
 		if time.Now().Sub(t).Seconds() < float64(o.CoolDownSecond) {
-			o.frame.GetGameControl().SayTo(chat.Name, o.HintOnReqTooFrequent)
+			o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnReqTooFrequent)
 			return true
 		}
 	}
 	noTarget := len(chat.Msg) == 0
 	var availablePlayers []string
 	flag := false
-	for _, p := range o.frame.GetUQHolder().PlayersByEntityID {
+	for _, p := range o.Frame.GetUQHolder().PlayersByEntityID {
 		availablePlayers = append(availablePlayers, p.Username)
 		if !noTarget && chat.Msg[0] == p.Username {
 			flag = true
@@ -92,29 +92,29 @@ func (o *PlayerTP) check(chat *defines.GameChat) bool {
 		return true
 	}
 	if noTarget {
-		o.frame.GetGameControl().SayTo(chat.Name, o.HintOnNoTarget)
+		o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnNoTarget)
 	} else {
-		o.frame.GetGameControl().SayTo(chat.Name, o.HintOnNoPlayer)
+		o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnNoPlayer)
 	}
 	hint, resolver := utils.GenStringListHintResolverWithIndex(availablePlayers)
-	if o.frame.GetGameControl().SetOnParamMsg(chat.Name,
+	if o.Frame.GetGameControl().SetOnParamMsg(chat.Name,
 		func(chat *defines.GameChat) (catch bool) {
 			i, err := resolver(chat.Msg)
 			if err != nil {
-				o.frame.GetGameControl().SayTo(chat.Name, "无法传送，因为输入"+err.Error())
+				o.Frame.GetGameControl().SayTo(chat.Name, "无法传送，因为输入"+err.Error())
 				return true
 			}
 			o.requestTp(chat.Name, availablePlayers[i])
 			return true
 		}) == nil {
-		o.frame.GetGameControl().SayTo(chat.Name, "可选项有: "+hint+" 请输入喔:")
+		o.Frame.GetGameControl().SayTo(chat.Name, "可选项有: "+hint+" 请输入喔:")
 	}
 	return true
 }
 
 func (o *PlayerTP) Inject(frame defines.MainFrame) {
-	o.frame = frame
-	o.frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
+	o.Frame = frame
+	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
 			ArgumentHint: "[玩家名]",

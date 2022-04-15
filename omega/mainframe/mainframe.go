@@ -275,6 +275,54 @@ func (o *Omega) RegOnAlertHandler(cb func(info string)) {
 	o.redAlertHandlers = append(o.redAlertHandlers, cb)
 }
 
+func (o *Omega) loadComponents() (success bool) {
+	success = false
+	defer func() {
+		r := recover()
+		if r != nil {
+			success = false
+			pterm.Error.Printf("组件配置文件不正确，因此 Omega 系统拒绝启动，具体错误如下:\n%v\n", r)
+		}
+	}()
+	total := len(o.fullConfig.ComponentsConfig)
+	for i, cfg := range o.fullConfig.ComponentsConfig {
+		I := i + 1
+		Name := cfg.Name
+		Version := cfg.Version
+		Source := cfg.Source
+		if cfg.Disabled {
+			o.backendLogger.Write(fmt.Sprintf("\t跳过加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
+			continue
+		}
+		o.backendLogger.Write(fmt.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
+		var component defines.Component
+		if Source == "Core" {
+			pool := getCoreComponentsPool()
+			if componentFn, hasK := pool[Name]; !hasK {
+				o.backendLogger.Write("没有找到核心组件: " + Name)
+				panic("没有找到核心组件: " + Name)
+			} else {
+				_component := componentFn()
+				_component.SetSystem(o)
+				component = _component
+			}
+		} else if Source == "Built-In" {
+			pool := components.GetComponentsPool()
+			if componentFn, hasK := pool[Name]; !hasK {
+				o.backendLogger.Write("没有找到内置组件: " + Name)
+				panic("没有找到内置组件: " + Name)
+			} else {
+				component = componentFn()
+			}
+		}
+
+		component.Init(cfg)
+		component.Inject(NewBox(o, Name))
+		o.Components = append(o.Components, component)
+	}
+	return true
+}
+
 func (o *Omega) Activate(adaptor defines.ConnectionAdaptor) {
 	fmt.Println("开始预处理任务")
 	o.postProcess()
@@ -297,45 +345,10 @@ func (o *Omega) Activate(adaptor defines.ConnectionAdaptor) {
 	}
 	o.backendLogger.Write("日志系统已可用,正在激活主框架...")
 	o.backendLogger.Write("加载组件中...")
-	{
-		total := len(o.fullConfig.ComponentsConfig)
-		for i, cfg := range o.fullConfig.ComponentsConfig {
-			I := i + 1
-			Name := cfg.Name
-			Version := cfg.Version
-			Source := cfg.Source
-			if cfg.Disabled {
-				o.backendLogger.Write(fmt.Sprintf("\t跳过加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
-				continue
-			}
-			o.backendLogger.Write(fmt.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
-			var component defines.Component
-			if Source == "Core" {
-				pool := getCoreComponentsPool()
-				if componentFn, hasK := pool[Name]; !hasK {
-					o.backendLogger.Write("没有找到核心组件: " + Name)
-					panic("没有找到核心组件: " + Name)
-				} else {
-					_component := componentFn()
-					_component.SetSystem(o)
-					component = _component
-				}
-			} else if Source == "Built-In" {
-				pool := components.GetComponentsPool()
-				if componentFn, hasK := pool[Name]; !hasK {
-					o.backendLogger.Write("没有找到内置组件: " + Name)
-					panic("没有找到内置组件: " + Name)
-				} else {
-					component = componentFn()
-				}
-			}
-
-			component.Init(cfg)
-			component.Inject(NewBox(o, Name))
-			o.Components = append(o.Components, component)
-		}
+	if o.loadComponents() == false {
+		o.Stop()
+		return
 	}
-
 	o.backendLogger.Write("组件全部加载&配置完成, 正在将更新后的配置写回配置文件...")
 	o.writeBackConfig()
 	o.configStageComplete()

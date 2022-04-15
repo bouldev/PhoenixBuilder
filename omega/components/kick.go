@@ -32,7 +32,7 @@ func (o *Kick) kick(name string) {
 		c := utils.FormateByRepalcment(a, map[string]interface{}{
 			"[player]": name,
 		})
-		o.frame.GetGameControl().SendCmd(c)
+		o.Frame.GetGameControl().SendCmd(c)
 	}
 }
 
@@ -40,14 +40,14 @@ func (o *Kick) Activate() {
 	t := time.NewTicker(time.Second * time.Duration(o.Duration))
 	for {
 		<-t.C
-		o.frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("/testfor %v", o.Selector), func(output *packet.CommandOutput) {
+		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("/testfor %v", o.Selector), func(output *packet.CommandOutput) {
 			if output.SuccessCount > 0 && len(output.OutputMessages) > 0 {
 				ban := &Banned{Victim: []string{}}
 				err := json.Unmarshal([]byte(output.DataSet), &ban)
 				if err != nil {
-					o.frame.GetBackendDisplay().Write(fmt.Sprintf("fail to get kick info " + err.Error()))
+					o.Frame.GetBackendDisplay().Write(fmt.Sprintf("fail to get kick info " + err.Error()))
 				} else {
-					o.frame.GetBackendDisplay().Write(fmt.Sprintf("try to kick %v", ban.Victim))
+					o.Frame.GetBackendDisplay().Write(fmt.Sprintf("try to kick %v", ban.Victim))
 					for _, v := range ban.Victim {
 						o.kick(v)
 					}
@@ -58,5 +58,5 @@ func (o *Kick) Activate() {
 }
 
 func (o *Kick) Inject(frame defines.MainFrame) {
-	o.frame = frame
+	o.Frame = frame
 }

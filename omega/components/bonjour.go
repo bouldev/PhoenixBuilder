@@ -27,12 +27,12 @@ func (b *Bonjour) Init(cfg *defines.ComponentConfig) {
 
 func (b *Bonjour) Inject(frame defines.MainFrame) {
 	b.BasicComponent.Inject(frame)
-	b.listener.AppendLoginInfoCallback(b.onLogin)
-	b.listener.AppendLogoutInfoCallback(b.onLogout)
+	b.Listener.AppendLoginInfoCallback(b.onLogin)
+	b.Listener.AppendLogoutInfoCallback(b.onLogout)
 	b.logger = &utils.MultipleLogger{
 		Loggers: []defines.LineDst{
-			b.frame.GetBackendDisplay(),
-			b.frame.GetLogger("login_out.log"),
+			b.Frame.GetBackendDisplay(),
+			b.Frame.GetLogger("login_out.log"),
 		},
 	}
 }
@@ -40,8 +40,8 @@ func (b *Bonjour) Inject(frame defines.MainFrame) {
 func (b *Bonjour) Activate() {
 	b.BasicComponent.Activate()
 	existingPlayers := make([]string, 0)
-	for _, p := range b.frame.GetUQHolder().PlayersByEntityID {
-		b.ctrl.GetPlayerKit(p.Username).GetViolatedStorage()["login_time"] = time.Now()
+	for _, p := range b.Frame.GetUQHolder().PlayersByEntityID {
+		b.Ctrl.GetPlayerKit(p.Username).GetViolatedStorage()["login_time"] = time.Now()
 		existingPlayers = append(existingPlayers, p.Username)
 	}
 	b.logger.Write(fmt.Sprintf("当前已经在线玩家: %v", existingPlayers))
@@ -51,20 +51,20 @@ func (b *Bonjour) onLogin(entry protocol.PlayerListEntry) {
 	//fmt.Println(entry)
 	b.logger.Write(fmt.Sprintf("登入  %v %v", entry.Username, entry.UUID.String()))
 	name := utils.ToPlainName(entry.Username)
-	b.ctrl.GetPlayerKit(entry.Username).GetViolatedStorage()["login_time"] = time.Now()
+	b.Ctrl.GetPlayerKit(entry.Username).GetViolatedStorage()["login_time"] = time.Now()
 	go func() {
 		t := time.NewTimer(time.Duration(b.Delay) * time.Second)
 		<-t.C
 		for _, cmd := range b.LoginCmds {
 			s := strings.ReplaceAll(cmd, "[target_player]", name)
-			b.ctrl.SendCmd(s)
+			b.Ctrl.SendCmd(s)
 		}
 	}()
 }
 
 func (b *Bonjour) onLogout(entry protocol.PlayerListEntry) {
 	//fmt.Println(entry)
-	player := b.ctrl.GetPlayerKitByUUID(entry.UUID)
+	player := b.Ctrl.GetPlayerKitByUUID(entry.UUID)
 	if player == nil {
 		b.logger.Write(fmt.Sprintf("登出 (name not found) %v %v", entry, entry.UUID.String()))
 		return
@@ -75,6 +75,6 @@ func (b *Bonjour) onLogout(entry protocol.PlayerListEntry) {
 
 	for _, cmd := range b.LogoutCmds {
 		s := strings.ReplaceAll(cmd, "[target_player]", name)
-		b.ctrl.SendCmd(s)
+		b.Ctrl.SendCmd(s)
 	}
 }
