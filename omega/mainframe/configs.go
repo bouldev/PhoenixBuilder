@@ -14,20 +14,19 @@ import (
 const Version = "0.0.1"
 
 type TriggerConfig struct {
-	DefaultTigger     string   `yaml:"default_tigger" json:"default_tigger"`
-	TriggerWords      []string `yaml:"system_trigger_words" json:"trigger_words"`
-	AllowNoSpace      bool     `yaml:"allow_no_space" json:"allow_no_space"`
-	RemoveSuffixColor bool     `yaml:"remove_suffix_color" json:"remove_suffix_color"`
-	AllowWisper       bool     `yaml:"allow_wisper" json:"allow_wisper"`
+	DefaultTigger     string   `yaml:"默认触发词" json:"默认触发词"`
+	TriggerWords      []string `yaml:"允许的触发词" json:"允许的触发词"`
+	AllowNoSpace      bool     `yaml:"允许关键词之间没有空格" json:"允许关键词之间没有空格"`
+	RemoveSuffixColor bool     `yaml:"去除花哨的用户名" json:"去除花哨的用户名"`
+	AllowWisper       bool     `yaml:"允许悄悄话唤醒" json:"允许悄悄话唤醒"`
 }
 
 type OmegaConfig struct {
-	Name             string                     `yaml:"name" json:"name,omitempty"`
-	Version          string                     `yaml:"version" json:"version,omitempty"`
-	ComponentsConfig []*defines.ComponentConfig `yaml:"components" json:"components_config,omitempty"`
-	//configByName             map[string]*defines.ComponentConfig
-	Trigger                  *TriggerConfig `yaml:"trigger" json:"trigger,omitempty"`
-	CommandFeedBackByDefault bool           `yaml:"expeted_commandfeedback" json:"command_feed_back_by_default,omitempty"`
+	Name                     string                     `yaml:"name" json:"name,omitempty"`
+	Version                  string                     `yaml:"version" json:"version,omitempty"`
+	ComponentsConfig         []*defines.ComponentConfig `yaml:"组件配置" json:"组件配置"`
+	Trigger                  *TriggerConfig             `yaml:"触发词" json:"触发词"`
+	CommandFeedBackByDefault bool                       `yaml:"默认情况下是否有commandfeedback" json:"默认情况下是否有commandfeedback,omitempty"`
 }
 
 //go:embed default_config.json

@@ -1,7 +1,7 @@
 {
     "name": "Omega",
     "version": "0.0.1",
-    "components_config": [
+    "组件配置": [
         {
             "name": "Menu",
             "disabled": false,
@@ -266,9 +266,9 @@
             }
         }
     ],
-    "trigger": {
-        "default_tigger": "omg",
-        "trigger_words": [
+    "触发词": {
+        "默认触发词": "omg",
+        "允许的触发词": [
             "Omega",
             "omega",
             "omg",
@@ -277,8 +277,9 @@
             "欧米伽",
             "."
         ],
-        "allow_no_space": true,
-        "remove_suffix_color": true,
-        "allow_wisper": true
-    }
+        "允许关键词之间没有空格": true,
+        "去除花哨的用户名": true,
+        "允许悄悄话唤醒": true
+    },
+    "默认情况下是否有commandfeedback": false
 }
