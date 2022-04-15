@@ -4,15 +4,17 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
-	"github.com/pterm/pterm"
 	"net/http"
 	"net/url"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
+	"github.com/pterm/pterm"
 )
 
 //type Group struct {
@@ -182,9 +184,13 @@ func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
 	if cq.Frame.GetUQHolder().GetBotName() == chat.Name && cq.NoBotMsg {
 		return false
 	}
+	if chat.FrameWorkTriggered {
+		return false
+	}
+	msgText := strings.Join(chat.Msg, " ")
 	msg := utils.FormateByRepalcment(cq.GameMessageFormat, map[string]interface{}{
 		"[player]": chat.Name,
-		"[msg]":    chat.Msg,
+		"[msg]":    msgText,
 	})
 	cq.Frame.GetBackendDisplay().Write("MC->QQ: " + msg)
 	cq.sendQQMessage(msg)

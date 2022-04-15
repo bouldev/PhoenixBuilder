@@ -14,9 +14,14 @@ type ChatLogger struct {
 
 func (cl *ChatLogger) Inject(frame defines.MainFrame) {
 	cl.Frame = frame
-	cl.logger = cl.Frame.GetLogger("chat.log")
+	cl.logger = cl.Frame.GetLogger("聊天记录.log")
 	cl.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDText, func(p packet.Packet) {
 		pk := p.(*packet.Text)
-		cl.logger.Write(fmt.Sprintf("[%v] %v:%v (%v)", pk.TextType, pk.SourceName, strings.TrimSpace(pk.Message), pk.Parameters))
+		msg := strings.TrimSpace(pk.Message)
+		msg = fmt.Sprintf("[%v] %v:%v", pk.TextType, pk.SourceName, msg)
+		if len(pk.Parameters) != 0 {
+			msg += " (" + strings.Join(pk.Parameters, ", ") + ")"
+		}
+		cl.logger.Write(msg)
 	})
 }

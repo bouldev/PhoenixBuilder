@@ -106,7 +106,7 @@ func GetMessageData(data []byte) (IMessage, error) {
 		return nil, err
 	}
 	msgType := msg["message_type"].(string)
-	fmt.Println(msgType)
+	// fmt.Println(msgType)
 	switch msgType {
 	case "private":
 		return PrivateMessage{}.Unmarshal(data)

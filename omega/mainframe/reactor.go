@@ -147,7 +147,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 		r.Throw(chat)
 	case *packet.GameRulesChanged:
 		for _, rule := range p.GameRules {
-			o.backendLogger.Write(fmt.Sprintf("game rule update %v => %v", rule.Name, rule.Value))
+			// o.backendLogger.Write(fmt.Sprintf("game rule update %v => %v", rule.Name, rule.Value))
 			if rule.Name == "sendcommandfeedback" {
 				if rule.Value == true {
 					o.GameCtrl.onCommandFeedbackOn()
@@ -156,7 +156,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 				}
 			}
 		}
-		fmt.Println(p)
+		// fmt.Println(p)
 	case *packet.PlayerList:
 		if p.ActionType == packet.PlayerListActionAdd {
 			for _, e := range p.Entries {

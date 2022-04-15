@@ -3,7 +3,6 @@ package mainframe
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type PlayerKitOmega struct {
@@ -47,7 +48,7 @@ func (p *PlayerKitOmega) GetPos(selector string) chan []int {
 		c <- d
 	}
 	p.ctrl.SendCmdAndInvokeOnResponseWithFeedback("execute "+s+" ~~~ tp @s ~~~", func(output *packet.CommandOutput) {
-		fmt.Println(output)
+		// fmt.Println(output)
 		if output.SuccessCount > 0 && len(output.OutputMessages) > 0 {
 			if len(output.OutputMessages[0].Parameters) == 4 {
 				params := output.OutputMessages[0].Parameters[1:]
@@ -345,7 +346,7 @@ func (g *GameCtrl) SendCmd(cmd string) {
 
 // onCommandFeedbackOnCmds is called by reactor to send commands by that need feedback
 func (g *GameCtrl) onCommandFeedbackOn() {
-	fmt.Println("recv sendcommandfeedback ture")
+	// fmt.Println("recv sendcommandfeedback ture")
 	g.CurrentCmdFeedBack = true
 	g.CmdFeedBackOnSent = false
 	pkts := g.NeedFeedBackPackets

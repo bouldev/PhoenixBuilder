@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/pterm/pterm"
 	"io/ioutil"
 	"os"
 	"path"
@@ -14,6 +13,8 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
+
+	"github.com/pterm/pterm"
 )
 
 type Omega struct {
@@ -330,7 +331,7 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	o.uqHolder = adaptor.GetInitUQHolderCopy()
 	o.backendLogger = &BackEndLogger{
 		loggers: []defines.LineDst{
-			o.GetLogger("backend.log"),
+			o.GetLogger("后台信息.log"),
 			utils.NewIONormalLogger(os.Stdout),
 		},
 	}

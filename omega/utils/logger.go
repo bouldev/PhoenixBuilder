@@ -24,7 +24,7 @@ type LogLineWrapper struct {
 }
 
 func (w *LogLineWrapper) Write(data string) {
-	w.log.Println(data)
+	w.log.Print(data)
 }
 
 func (w *LogLineWrapper) Close() error {
