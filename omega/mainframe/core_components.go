@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/pterm/pterm"
 	"os"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -12,6 +11,8 @@ import (
 	"phoenixbuilder/omega/utils"
 	"strings"
 	"time"
+
+	"github.com/pterm/pterm"
 )
 
 type BaseCoreComponent struct {
@@ -126,6 +127,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat) bool {
 			return true
 		}
 	}
+	pk.Say("Omega · Async Rental Server Auxiliary · System · Author: §l2401PT")
 	pk.Say(fmt.Sprintf(m.MenuHead))
 	systemTrigger := m.mainFrame.QueryConfig("DefaultTigger").(string)
 	menuFmt := m.MenuFormat

@@ -286,6 +286,12 @@ func (o *Omega) loadComponents() (success bool) {
 		}
 	}()
 	total := len(o.fullConfig.ComponentsConfig)
+	coreComponentsLoaded := map[string]bool{}
+	corePool := getCoreComponentsPool()
+	builtInPool := components.GetComponentsPool()
+	for n, _ := range corePool {
+		coreComponentsLoaded[n] = false
+	}
 	for i, cfg := range o.fullConfig.ComponentsConfig {
 		I := i + 1
 		Name := cfg.Name
@@ -298,28 +304,31 @@ func (o *Omega) loadComponents() (success bool) {
 		o.backendLogger.Write(fmt.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
 		var component defines.Component
 		if Source == "Core" {
-			pool := getCoreComponentsPool()
-			if componentFn, hasK := pool[Name]; !hasK {
+			if componentFn, hasK := corePool[Name]; !hasK {
 				o.backendLogger.Write("没有找到核心组件: " + Name)
 				panic("没有找到核心组件: " + Name)
 			} else {
+				coreComponentsLoaded[Name] = true
 				_component := componentFn()
 				_component.SetSystem(o)
 				component = _component
 			}
 		} else if Source == "Built-In" {
-			pool := components.GetComponentsPool()
-			if componentFn, hasK := pool[Name]; !hasK {
+			if componentFn, hasK := builtInPool[Name]; !hasK {
 				o.backendLogger.Write("没有找到内置组件: " + Name)
 				panic("没有找到内置组件: " + Name)
 			} else {
 				component = componentFn()
 			}
 		}
-
 		component.Init(cfg)
 		component.Inject(NewBox(o, Name))
 		o.Components = append(o.Components, component)
+	}
+	for n, l := range coreComponentsLoaded {
+		if !l {
+			panic(fmt.Errorf("核心组件 (Core) 必须被加载, 但是 %v 被配置为不加载", n))
+		}
 	}
 	return true
 }
