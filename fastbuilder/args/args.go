@@ -33,6 +33,8 @@ extern char *capture_output_file;
 extern char args_no_readline;
 extern char *pack_scripts;
 extern char *pack_scripts_out;
+
+extern char enable_omega_system;
 */
 import "C"
 
@@ -116,6 +118,10 @@ func ShouldDisableHashCheck() bool {
 	return boolify(C.args_disableHashCheck)
 }
 
+func ShouldEnableOmegaSystem() bool {
+	return boolify(C.enable_omega_system)
+}
+
 func SetShouldDisableHashCheck() {
 	C.args_disableHashCheck = C.char(1)
 }
@@ -178,7 +184,6 @@ func do_suppress_se_const(key *C.char) {
 func ExternalListenAddress() string {
 	return C.GoString(C.externalListenAddr)
 }
-
 
 func CaptureOutputFile() string {
 	return C.GoString(C.capture_output_file)

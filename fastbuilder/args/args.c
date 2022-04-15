@@ -21,6 +21,7 @@ char *capture_output_file="";
 char args_no_readline=0;
 char *pack_scripts="";
 char *pack_scripts_out="";
+char enable_omega_system=0;
 
 extern void custom_script_engine_const(const char *key, const char *val);
 extern void do_suppress_se_const(const char *key);
@@ -46,6 +47,8 @@ void print_help(const char *self_name) {
 	printf("\t--no-readline: Suppress user input.\n");
 	printf("\t--pack-scripts <manifest path>: Create a script package.\n");
 	printf("\t--pack-scripts-to <path>: Specify the path for the output script package.\n");
+	printf("\n");
+	printf("\t-O, --omega_system: Enable Omega System.\n");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
@@ -134,10 +137,11 @@ int _parse_args(int argc, char **argv) {
 			{"pack-scripts", required_argument, 0, 0}, //18
 			{"pack-scripts-to", required_argument, 0, 0}, //19
 			{"capture", required_argument, 0, 0}, // 20
+			{"omega_system", no_argument, 0, 'O'}, //21
 			{0, 0, 0, 0}
 		};
 		int option_index;
-		int c=getopt_long(argc,argv,"hA:MvS:c:p:t:T:", opts, &option_index);
+		int c=getopt_long(argc,argv,"hA:MvS:c:p:t:T:O", opts, &option_index);
 		if(c==-1)
 			break;
 		switch(c) {
@@ -241,6 +245,9 @@ int _parse_args(int argc, char **argv) {
 		case 'v':
 			print_version(1);
 			return 0;
+		case 'O':
+		    enable_omega_system=1;
+		    break;
 		default:
 			print_help(argv[0]);
 			return 1;

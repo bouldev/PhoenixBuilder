@@ -413,7 +413,7 @@ func newGameCtrl(o *Omega) *GameCtrl {
 	c := &GameCtrl{
 		WriteFn:             o.adaptor.Write,
 		ExpectedCmdFeedBack: o.fullConfig.CommandFeedBackByDefault,
-		CurrentCmdFeedBack:  o.uqHolder.GameRules["sendcommandfeedback"].Value.(bool),
+		CurrentCmdFeedBack:  false,
 		uuidLock:            sync.Mutex{},
 		uuidMaps:            make(map[string]func(output *packet.CommandOutput)),
 		NeedFeedBackPackets: make([]packet.Packet, 0),

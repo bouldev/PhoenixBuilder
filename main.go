@@ -28,6 +28,7 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/cli/embed"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -292,6 +293,10 @@ func runClient(env *environment.PBEnvironment) {
 		env.WorldChatChannel = make(chan []string)
 	}
 	defer conn.Close()
+	defer func() {
+		env.Stop()
+		env.WaitStopped()
+	}()
 
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 
@@ -331,6 +336,11 @@ func runClient(env *environment.PBEnvironment) {
 	env.UQHolder = uqHolder.NewUQHolder(conn.GameData().EntityRuntimeID)
 	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = uint64(time.Now().Sub(conn.GameData().ConnectTime).Milliseconds()) / 50
 
+	if args.ShouldEnableOmegaSystem() {
+		fmt.Println("Omega System Enabled!")
+		embed.EnableOmegaSystem(env)
+	}
+
 	commandSender := command.InitCommandSender(env)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	function.InitInternalFunctions(functionHolder)
@@ -342,7 +352,7 @@ func runClient(env *environment.PBEnvironment) {
 	move.Connection = conn
 	move.RuntimeID = conn.GameData().EntityRuntimeID
 
-	signalhandler.Install(conn)
+	signalhandler.Install(conn, env)
 
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
@@ -385,6 +395,10 @@ func runClient(env *environment.PBEnvironment) {
 		for {
 			cmd := readline.Readline(env)
 			if len(cmd) == 0 {
+				continue
+			}
+			if env.OmegaAdaptorHolder != nil && !strings.Contains(cmd, "exit") {
+				env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedBackendCommand(cmd)
 				continue
 			}
 			if cmd[0] == '.' {
@@ -488,6 +502,10 @@ func runClient(env *environment.PBEnvironment) {
 			if err != nil {
 				panic("dump to capture file fail " + err.Error())
 			}
+		}
+		if env.OmegaAdaptorHolder != nil {
+			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacket(pk)
+			continue
 		}
 		env.UQHolder.(*uqHolder.UQHolder).Update(pk)
 		hostBridgeGamma.HostPumpMcPacket(pk)

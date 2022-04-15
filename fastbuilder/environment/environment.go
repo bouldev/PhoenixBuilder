@@ -1,7 +1,9 @@
 package environment
 
 // This package imports only external packages to avoid import cycle.
-import "phoenixbuilder/fastbuilder/environment/interfaces"
+import (
+	"phoenixbuilder/fastbuilder/environment/interfaces"
+)
 
 type LoginInfo struct {
 	Token          string
@@ -24,8 +26,31 @@ type PBEnvironment struct {
 	Connection                interface{}
 	UQHolder                  interface{}
 	TaskHolder                interface{}
+	OmegaHolder               interface{}
+	OmegaAdaptorHolder        interface{}
 	ActivateTaskStatus        chan bool
 	Uid                       string
 	ExternalConnectionHandler interface{}
 	Destructors               []func()
+	isStopping                bool
+	stoppedWaiter             chan struct{}
+}
+
+func (env *PBEnvironment) Stop() {
+	if env.isStopping {
+		return
+	}
+	//fmt.Println("stopping")
+	env.stoppedWaiter = make(chan struct{})
+	env.isStopping = true
+	for _, fn := range env.Destructors {
+		fn()
+	}
+	//fmt.Println("stopped")
+	close(env.stoppedWaiter)
+}
+
+func (env *PBEnvironment) WaitStopped() {
+	//fmt.Println("waitting stopped")
+	<-env.stoppedWaiter
 }

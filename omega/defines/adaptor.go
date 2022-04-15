@@ -21,13 +21,14 @@ type ConnectionAdaptor interface {
 
 // System 描述了可以通过哪些接口控制这个租赁服框架
 // 事实上，配置主要是通过 SetRoot 文件夹下的配置文件实现的，所以这些接口很简单
-// 顺序 .SetRoot(root string) -> Activate(ConnectionAdaptor) -> 连接断开时 -> Stop
+// 顺序 .SetRoot(root string) -> Bootstrap(ConnectionAdaptor) -> Activate() -> 连接断开时 -> Stop
 // 请勿尝试 recover 其中的错误，如果发生崩溃，应该整个重启
 type System interface {
 	FullyStopped() chan struct{}
 	Stop() error
 	SetRoot(root string)
-	Activate(ConnectionAdaptor)
+	Bootstrap(ConnectionAdaptor)
+	Activate()
 }
 
 // ComponentConfig 描述了 插件 的配置内容，必须保证可被 yaml 正确处理

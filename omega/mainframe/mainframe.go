@@ -323,7 +323,7 @@ func (o *Omega) loadComponents() (success bool) {
 	return true
 }
 
-func (o *Omega) Activate(adaptor defines.ConnectionAdaptor) {
+func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	fmt.Println("开始预处理任务")
 	o.postProcess()
 	o.adaptor = adaptor
@@ -370,6 +370,29 @@ func (o *Omega) Activate(adaptor defines.ConnectionAdaptor) {
 			cb(p.Username)
 		}
 	}
+	{
+		logo := GetLogo(LOGO_BOTH)
+		//banner := []string{
+		//	"┌───────────────────────────────────────────────────────────────────────┐",
+		//	"|   ██████  ███    ███ ███████  ██████   █████      ███    ██  ██████   |",
+		//	"|  ██    ██ ████  ████ ██      ██       ██   ██     ████   ██ ██        |",
+		//	"|  ██    ██ ██ ████ ██ █████   ██   ███ ███████     ██ ██  ██ ██   ███  |",
+		//	"|  ██    ██ ██  ██  ██ ██      ██    ██ ██   ██     ██  ██ ██ ██    ██  |",
+		//	"|   ██████  ██      ██ ███████  ██████  ██   ██     ██   ████  ██████   |",
+		//	"└───────────────────────────────────────────────────────────────────────┘",
+		//}
+		fmt.Println(strings.Join(logo, "\n"))
+	}
+	pterm.Success.Println("OMEGA_ng 等待指令")
+	pterm.Success.Println("输入 ? 以获得帮助")
+}
+func (o *Omega) Activate() {
+	defer func(o *Omega) {
+		err := o.Stop()
+		if err != nil {
+
+		}
+	}(o)
 	go func() {
 		for {
 			pkt := o.adaptor.Read()
@@ -397,21 +420,6 @@ func (o *Omega) Activate(adaptor defines.ConnectionAdaptor) {
 			}
 		}
 	}()
-	{
-		logo := GetLogo(LOGO_BOTH)
-		//banner := []string{
-		//	"┌───────────────────────────────────────────────────────────────────────┐",
-		//	"|   ██████  ███    ███ ███████  ██████   █████      ███    ██  ██████   |",
-		//	"|  ██    ██ ████  ████ ██      ██       ██   ██     ████   ██ ██        |",
-		//	"|  ██    ██ ██ ████ ██ █████   ██   ███ ███████     ██ ██  ██ ██   ███  |",
-		//	"|  ██    ██ ██  ██  ██ ██      ██    ██ ██   ██     ██  ██ ██ ██    ██  |",
-		//	"|   ██████  ██      ██ ███████  ██████  ██   ██     ██   ████  ██████   |",
-		//	"└───────────────────────────────────────────────────────────────────────┘",
-		//}
-		fmt.Println(strings.Join(logo, "\n"))
-	}
-	pterm.Success.Println("OMEGA_ng 等待指令")
-	pterm.Success.Println("输入 ? 以获得帮助")
 	for {
 		backendInputChan := o.adaptor.GetBackendCommandFeeder()
 		select {
