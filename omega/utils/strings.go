@@ -6,7 +6,7 @@ import (
 )
 
 func GetStringContents(s string) []string {
-	_s := strings.Split(s, " ")
+	_s := strings.Split(RemoveFormate(s), " ")
 	for i, c := range _s {
 		_s[i] = strings.TrimSpace(c)
 	}
@@ -97,8 +97,8 @@ func FormateByRepalcment(tmp string, replacements map[string]interface{}) string
 
 func ToPlainName(name string) string {
 	if strings.Contains(name, ">") {
-		strings.ReplaceAll(name, ">", " ")
-		strings.ReplaceAll(name, "<", " ")
+		name = strings.ReplaceAll(name, ">", " ")
+		name = strings.ReplaceAll(name, "<", " ")
 	}
 	if name != "" {
 		names := GetStringContents(name)

@@ -112,7 +112,7 @@ func (o *Omega) genMap() {
 
 func (o *Omega) readConfig() {
 	configFile := path.Join(o.storageRoot, "config.json")
-	if !utils.IsFile(configFile) || true {
+	if !utils.IsFile(configFile) {
 		fmt.Println("未发现配置文件，展开默认配置文件")
 		if fp, err := os.OpenFile(configFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644); err != nil {
 			panic(err)
