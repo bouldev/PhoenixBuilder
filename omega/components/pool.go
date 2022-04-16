@@ -76,5 +76,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"QGroupLink": func() defines.Component {
 			return &qqGroupLink.QGroupLink{}
 		},
+		"Recycle": func() defines.Component {
+			return &Recycle{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

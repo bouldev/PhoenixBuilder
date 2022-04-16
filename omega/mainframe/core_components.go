@@ -128,6 +128,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat) bool {
 		}
 	}
 	pk.Say("Omega · Async Rental Server Auxiliary · System · Author: §l2401PT")
+	pk.Say("基于 PhoenixBuilder, 原型来自 CMA 服务器的 Omega 系统，此处感谢 CMA 的小伙伴们")
 	pk.Say(fmt.Sprintf(m.MenuHead))
 	systemTrigger := m.mainFrame.QueryConfig("DefaultTigger").(string)
 	menuFmt := m.MenuFormat

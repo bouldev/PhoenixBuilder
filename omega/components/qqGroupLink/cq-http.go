@@ -31,6 +31,7 @@ type QGroupLink struct {
 	Selector          string           `json:"游戏内可以听到QQ消息的玩家的选择器"`
 	NoBotMsg          bool             `json:"不要转发机器人的消息"`
 	ChatOnly          bool             `json:"只转发聊天消息"`
+	MuteIgnored       bool             `json:"屏蔽其他群的消息"`
 	upgrader          *websocket.Upgrader
 	conn              *websocket.Conn
 	connectLock       chan int
@@ -170,7 +171,10 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 			return
 		}
 	}
-	pterm.Warning.Sprintln("来自群 %v 的消息: %v 被忽略（因为配置中没有指明需要转发该群消息到游戏）", gid, msgText)
+	if !cq.MuteIgnored {
+		pterm.Warning.Sprintln("来自群 %v 的消息: %v 被忽略（因为配置中没有指明需要转发该群消息到游戏）", gid, msgText)
+	}
+
 }
 
 func (cq *QGroupLink) sendQQMessage(msg string) {

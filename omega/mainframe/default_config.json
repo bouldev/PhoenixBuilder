@@ -192,6 +192,19 @@
       }
     },
     {
+      "name": "Recycle",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Built-In",
+      "usage": "物品回收，但是不只是 回收物品而已",
+      "configs": {
+        "回收清单文件": "回收.json",
+        "最后回收记录文件": "最后回收.json",
+        "触发词": ["回收", "recycle"],
+        "展示模版": "[i]: §6§l[name] §f[description] §f§r回收价:[price][currency_name], 现在最多还能回收 [maxRecycle]"
+      }
+    },
+    {
       "name": "Portal",
       "disabled": false,
       "version": "0.0.1",
@@ -237,7 +250,7 @@
       "disabled": false,
       "version": "0.0.1",
       "source": "Built-In",
-      "usage": "商店",
+      "usage": "商店，但是不只是购买 物品而已",
       "configs": {
         "商品清单文件": "商品.json",
         "触发词": ["购买", "买", "shop", "buy"],
@@ -258,6 +271,7 @@
         "游戏内可以听到QQ消息的玩家的选择器": "@a",
         "不要转发机器人的消息": true,
         "只转发聊天消息": true,
+        "屏蔽其他群的消息": false,
         "链接的Q群": {
           "CMA": 958915720
         }

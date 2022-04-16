@@ -4,12 +4,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/pterm/pterm"
 	"path/filepath"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strconv"
+
+	"github.com/pterm/pterm"
 )
 
 type Good struct {
@@ -159,7 +160,7 @@ func (o *Shop) tryBuy(chat *defines.GameChat) {
 		return
 	}
 	atoi, err := strconv.Atoi(count)
-	if err != nil || atoi <= 0 {
+	if err != nil || atoi <= 1 {
 		o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§4§l输入的数量无效，必须是一个正整数"))
 		return
 	}

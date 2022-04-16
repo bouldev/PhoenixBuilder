@@ -1,0 +1,26 @@
+[
+  {
+    "选项名": "羊毛",
+    "附加说明": "什么颜色的都可",
+    "货币名": "金币",
+    "价格": 10,
+    "每天最多回收": 100,
+    "清除模版": "clear [player] wool -1 [count]",
+    "收益指令": [
+      "scoreboard player add [player] coin [totalPrice]",
+      "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 实际回收了 [realCount] 个羊毛, 共计 [totalPrice] 金币, 现在最多还能回收 [leftCount] 个羊毛\"}]}"
+    ]
+  },
+  {
+    "选项名": "书",
+    "附加说明": "书中自有黄金屋",
+    "货币名": "金锭",
+    "价格": 1,
+    "每天最多回收": 240,
+    "清除模版": "clear [player] book -1 [count]",
+    "收益指令": [
+      "give [player] gold_nugget [totalPrice]",
+      "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 实际回收了 [realCount] 本书, 所以给你 [totalPrice] 金币,书中自有黄金屋，祝你玩的愉快～\"}]}"
+    ]
+  }
+]
