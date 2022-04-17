@@ -2,6 +2,7 @@ package embed
 
 import (
 	"phoenixbuilder/fastbuilder/environment"
+	"phoenixbuilder/fastbuilder/function"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft"
 	mc_packet "phoenixbuilder/minecraft/protocol/packet"
@@ -43,6 +44,10 @@ func (rc *EmbeddedAdaptor) GetInitUQHolderCopy() *uqHolder.UQHolder {
 
 func (rc *EmbeddedAdaptor) Write(pkt mc_packet.Packet) {
 	rc.env.Connection.(*minecraft.Conn).WritePacket(pkt)
+}
+
+func (rc *EmbeddedAdaptor) FBEval(cmd string) {
+	rc.env.FunctionHolder.(*function.FunctionHolder).Process(cmd)
 }
 
 func EnableOmegaSystem(env *environment.PBEnvironment) *EmbeddedAdaptor {

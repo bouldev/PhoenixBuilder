@@ -16,6 +16,7 @@ type Bonjour struct {
 	LoginCmds  []string `json:"登录时发送指令" yaml:"登录时发送指令"`
 	LogoutCmds []string `json:"登出时发送指令" yaml:"登出时发送指令"`
 	logger     defines.LineDst
+	newCome    bool
 }
 
 func (b *Bonjour) Init(cfg *defines.ComponentConfig) {
@@ -45,9 +46,17 @@ func (b *Bonjour) Activate() {
 		existingPlayers = append(existingPlayers, p.Username)
 	}
 	b.logger.Write(fmt.Sprintf("当前已经在线玩家: %v", existingPlayers))
+	go func() {
+		time.Sleep(20)
+		b.newCome = true
+	}()
+
 }
 
 func (b *Bonjour) onLogin(entry protocol.PlayerListEntry) {
+	if !b.newCome {
+		return
+	}
 	//fmt.Println(entry)
 	b.logger.Write(fmt.Sprintf("登入  %v %v", entry.Username, entry.UUID.String()))
 	name := utils.ToPlainName(entry.Username)

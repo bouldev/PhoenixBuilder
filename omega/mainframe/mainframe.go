@@ -451,6 +451,10 @@ func (o *Omega) Activate() {
 				continue
 			}
 			o.backendLogger.Write(pterm.Warning.Sprintf("没有组件可以处理该指令: %v (%v), 输入?获得帮助", cmd, cmds))
+			o.backendLogger.Write(pterm.Warning.Sprintf("尝试调用 FB 指令"))
+			go func() {
+				o.adaptor.FBEval(cmd)
+			}()
 		case <-o.stopC:
 			o.backendLogger.Write(pterm.Warning.Sprintln("后台指令分派器已退出"))
 			return

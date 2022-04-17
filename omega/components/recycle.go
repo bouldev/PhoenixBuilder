@@ -24,7 +24,9 @@ type Option struct {
 
 type LimitRecord struct {
 	StrTime    string `json:"时间"`
-	CountsLeft int    `json:"剩余次数"`
+	cached     bool
+	time       time.Time
+	CountsLeft int `json:"剩余次数"`
 }
 
 type Recycle struct {
@@ -62,6 +64,9 @@ func (o *Recycle) getCountsLeft(name string, option string) (time.Time, int) {
 	if _, ok := o.PlayerRecycleRecord[name][option]; !ok {
 		return time.Now().Add(-time.Hour * time.Duration(24*2)), 0
 	}
+	if o.PlayerRecycleRecord[name][option].cached {
+		return o.PlayerRecycleRecord[name][option].time, o.PlayerRecycleRecord[name][option].CountsLeft
+	}
 	t, err := time.Parse("2006-01-02 15:04:05", o.PlayerRecycleRecord[name][option].StrTime)
 	if err != nil {
 		o.PlayerRecycleRecord[name][option] = LimitRecord{
@@ -75,6 +80,9 @@ func (o *Recycle) getCountsLeft(name string, option string) (time.Time, int) {
 
 func (o *Recycle) computeMaxRecycleCount(name string, option string, maxCount int) int {
 	t, count := o.getCountsLeft(name, option)
+	if count < 0 {
+		count = 0
+	}
 	factor := time.Now().Sub(t).Seconds() / float64(time.Hour.Seconds()*24)
 	recCount := float64(maxCount) * factor
 	allowCount := int(recCount) + count
@@ -93,6 +101,8 @@ func (o *Recycle) setCountsLeft(name string, option string, counts int) {
 	}
 	o.PlayerRecycleRecord[name][option] = LimitRecord{
 		StrTime:    time.Now().Format("2006-01-02 15:04:05"),
+		time:       time.Now(),
+		cached:     true,
 		CountsLeft: counts,
 	}
 }
@@ -205,12 +215,15 @@ func (o *Recycle) startRecycle(name string, option Option, amount int) {
 }
 
 func (o *Recycle) onRecycleSuccess(name string, option Option, realCount int) {
+	//o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 回收 %v * %v 收益 %v (%v->%v)"))
 	maxC := o.computeMaxRecycleCount(name, option.Name, option.MaxRecyclePerDay)
 	Cleft := maxC - realCount
 	if Cleft < 0 {
 		Cleft = 0
 	}
+	o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 回收 %v * %v 收益 %v (%v->%v)", name, realCount, option.Name, realCount*option.Price, maxC, Cleft))
 	o.setCountsLeft(name, option.Name, Cleft)
+	o.Frame.GetGameControl().SayTo(name, "回收成功")
 	for _, t := range option.RewardCmds {
 		c := utils.FormateByRepalcment(t, map[string]interface{}{
 			"[player]":     name,
@@ -219,6 +232,7 @@ func (o *Recycle) onRecycleSuccess(name string, option Option, realCount int) {
 			"[leftCount]":  Cleft,
 			"[price]":      option.Price,
 		})
+		fmt.Println(c)
 		o.Frame.GetGameControl().SendCmd(c)
 	}
 }

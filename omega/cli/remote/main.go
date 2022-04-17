@@ -27,6 +27,10 @@ func (rca *RemoteCliAdaptor) GetBackendCommandFeeder() chan string {
 	return rca.BackendCmdFeeder
 }
 
+func (rca *RemoteCliAdaptor) FBEval(cmd string) {
+	rca.conn.SendFBCmd(cmd)
+}
+
 func (rca *RemoteCliAdaptor) pumpInput() {
 	reader := bufio.NewReader(os.Stdin)
 	for {

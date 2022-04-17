@@ -79,5 +79,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"Recycle": func() defines.Component {
 			return &Recycle{BasicComponent: &BasicComponent{}}
 		},
+		"FakeOP": func() defines.Component {
+			return &FakeOp{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

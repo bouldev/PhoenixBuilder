@@ -17,6 +17,7 @@ type ConnectionAdaptor interface {
 	Write(packet.Packet)
 	GetInitUQHolderCopy() *uqHolder.UQHolder
 	GetBackendCommandFeeder() chan string
+	FBEval(cmd string)
 }
 
 // System 描述了可以通过哪些接口控制这个租赁服框架

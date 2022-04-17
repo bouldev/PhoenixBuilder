@@ -276,6 +276,16 @@
           "CMA": 958915720
         }
       }
+    },
+    {
+      "name": "FakeOP",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Built-In",
+      "usage": "允许玩家具备一部分OP权限",
+      "configs": {
+        "授权文件":"伪OP权限.json"
+      }
     }
   ],
   "触发词": {
