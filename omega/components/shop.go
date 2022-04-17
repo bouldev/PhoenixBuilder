@@ -60,7 +60,11 @@ func (o *Shop) askForItemList(chat *defines.GameChat) {
 	hint, resolver := utils.GenStringListHintResolverWithIndex(groupNames)
 
 	if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(newChat *defines.GameChat) (catch bool) {
-		i, err := resolver(newChat.Msg)
+		i, cancel, err := resolver(newChat.Msg)
+		if cancel {
+			o.Frame.GetGameControl().GetPlayerKit(chat.Name).Say("已取消")
+			return true
+		}
 		if err != nil {
 			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("无法处理你的要求，因为"+err.Error()))
 			return true
@@ -85,7 +89,11 @@ func (o *Shop) askForItemList(chat *defines.GameChat) {
 		}
 		itemHint, itemResolver := utils.GenStringListHintResolverWithIndex(availableGoods)
 		if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(itemChat *defines.GameChat) (catch bool) {
-			itemI, err := itemResolver(itemChat.Msg)
+			itemI, cancel, err := itemResolver(itemChat.Msg)
+			if cancel {
+				o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+				return true
+			}
 			if err != nil {
 				o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("无法处理你的要求，因为"+err.Error()))
 				return true

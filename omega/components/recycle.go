@@ -130,7 +130,11 @@ func (o *Recycle) popMenu(name string) {
 	}
 	hint, resolver := utils.GenStringListHintResolverWithIndex(availableOptions)
 	if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
-		i, err := resolver(chat.Msg)
+		i, cancel, err := resolver(chat.Msg)
+		if cancel {
+			pk.Say("已取消")
+			return true
+		}
 		if err != nil {
 			pk.Say(fmt.Sprintf("无法理解你的选择，因为 %v", err))
 			return true
@@ -179,7 +183,11 @@ func (o *Recycle) askForAmount(name string, option Option) {
 	}
 	hint, resolver := utils.GenIntRangeResolver(1, maxC)
 	if o.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
-		amount, err := resolver(chat.Msg)
+		amount, cancel, err := resolver(chat.Msg)
+		if cancel {
+			o.Frame.GetGameControl().GetPlayerKit(name).Say("已取消")
+			return true
+		}
 		if err != nil {
 			o.Frame.GetGameControl().GetPlayerKit(name).Say("输入的数量无效，因为 " + err.Error())
 			return true

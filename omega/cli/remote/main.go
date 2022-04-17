@@ -72,6 +72,7 @@ func main() {
 	// make connection
 	// 这里以远程连接的方式工作
 	// 但是，理论上，移植到 fb 内嵌只需要实现 adaptor 声明的 interface 即可
+	conn := connection.NewClient("localhost:3456")
 	if conn != nil {
 		fmt.Println("Connect Success")
 	} else {

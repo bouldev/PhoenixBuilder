@@ -118,7 +118,11 @@ func (o *Portal) tp(chat *defines.GameChat) bool {
 	}
 	hint, resolver := utils.GenStringListHintResolverWithIndex(names)
 	if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
-		i, err := resolver(chat.Msg)
+		i, cancel, err := resolver(chat.Msg)
+		if cancel {
+			pk.Say(fmt.Sprintf("已取消"))
+			return true
+		}
 		if err != nil {
 			pk.Say(fmt.Sprintf("无法前往你说的地点，因为输入%v", err))
 			return true
@@ -206,7 +210,11 @@ func (o *Portal) remove(chat *defines.GameChat) bool {
 	}
 	hint, resolver := utils.GenStringListHintResolverWithIndex(names)
 	if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
-		i, err := resolver(chat.Msg)
+		i, cancel, err := resolver(chat.Msg)
+		if cancel {
+			pk.Say(fmt.Sprintf("已取消"))
+			return true
+		}
 		if err != nil {
 			pk.Say(fmt.Sprintf("无法移除你说的地点，因为输入%v", err))
 			return true

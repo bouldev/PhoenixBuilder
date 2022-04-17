@@ -14,7 +14,7 @@
         "无法理解指令时提示": "§lOmega System: 抱歉，我没明白你的意思, 以下是菜单",
         "菜单标题": "§b§l==========================Omega System==========================",
         "机器人标签": "omg",
-        "菜单显示格式": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] §f§r以 [usage]",
+        "菜单显示格式": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] [argumentHint] §f§r以 [usage]",
         "多个触发词的菜单显示格式": "[i]:输入 §l§6[systemTrigger] [defaultTrigger] [argumentHint] §f§r以 [usage] (或者[systemTrigger] [allTriggers])",
         "悄悄话菜单提示": "§f可以使用 /w @a[tag=omg] 来秘密通信，比如 /w @a[tag=omg] ?",
         "菜单末尾": "§b§l==============================END===============================",

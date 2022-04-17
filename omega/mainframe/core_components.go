@@ -164,7 +164,11 @@ func (m *Menu) popGameMenu(chat *defines.GameChat) bool {
 			}
 			hint, resolver := utils.GenStringListHintResolverWithIndex(available)
 			if player.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
-				if i, err := resolver(chat.Msg); err == nil {
+				if i, cancel, err := resolver(chat.Msg); err == nil {
+					if cancel {
+						player.Say("已取消")
+						return true
+					}
 					chat.Msg = chat.Msg[1:]
 					return actions[i](chat)
 				} else {

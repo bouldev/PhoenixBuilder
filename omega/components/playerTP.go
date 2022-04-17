@@ -99,7 +99,11 @@ func (o *PlayerTP) check(chat *defines.GameChat) bool {
 	hint, resolver := utils.GenStringListHintResolverWithIndex(availablePlayers)
 	if o.Frame.GetGameControl().SetOnParamMsg(chat.Name,
 		func(chat *defines.GameChat) (catch bool) {
-			i, err := resolver(chat.Msg)
+			i, cancel, err := resolver(chat.Msg)
+			if cancel {
+				o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+				return true
+			}
 			if err != nil {
 				o.Frame.GetGameControl().SayTo(chat.Name, "无法传送，因为输入"+err.Error())
 				return true

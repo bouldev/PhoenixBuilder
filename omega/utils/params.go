@@ -7,29 +7,32 @@ import (
 	"strings"
 )
 
-func GenStringListHintResolver(available []string) (string, func(params []string) (int, error)) {
-	hint := "[ " + strings.Join(available, ", ") + "] 之一"
-	resolver := func(params []string) (int, error) {
+func GenStringListHintResolver(available []string) (string, func(params []string) (selection int, cancel bool, err error)) {
+	hint := "[ " + strings.Join(available, ", ") + ", 取消] 之一"
+	resolver := func(params []string) (int, bool, error) {
 		if len(params) == 0 {
-			return 0, fmt.Errorf("为空")
+			return 0, false, fmt.Errorf("为空")
 		}
 		p := params[0]
+		if p == "取消" {
+			return 0, true, nil
+		}
 		for i, _p := range available {
 			if _p == p {
-				return i, nil
+				return i, false, nil
 			}
 		}
-		return 0, fmt.Errorf("不在选项范围内")
+		return 0, false, fmt.Errorf("不在选项范围内")
 	}
 	return hint, resolver
 }
 
-func GenStringListHintResolverWithIndex(_available []string) (string, func(params []string) (int, error)) {
+func GenStringListHintResolverWithIndex(_available []string) (string, func(params []string) (selection int, cancel bool, err error)) {
 	raw_available := make([]string, len(_available))
 	available := make([]string, len(_available))
 	if len(_available) == 0 {
-		return "[没有可选项]", func(params []string) (int, error) {
-			return 0, fmt.Errorf("[没有可选项]")
+		return "[没有可选项]", func(params []string) (int, bool, error) {
+			return 0, false, fmt.Errorf("[没有可选项]")
 		}
 	}
 	for i, m := range _available {
@@ -38,39 +41,52 @@ func GenStringListHintResolverWithIndex(_available []string) (string, func(param
 	}
 	intHint, intResolver := GenIntRangeResolver(1, len(available))
 
-	hint := "[ " + strings.Join(available, ", ") + "] 之一,或者" + intHint
-	resolver := func(params []string) (int, error) {
+	hint := "[ " + strings.Join(available, ", ") + ", 取消] 之一,或者" + intHint
+	resolver := func(params []string) (int, bool, error) {
 		if len(params) == 0 {
-			return 0, fmt.Errorf("为空")
+			return 0, false, fmt.Errorf("为空")
 		}
 		p := params[0]
+		if p == "取消" {
+			return 0, true, nil
+		}
 		for i, _p := range raw_available {
 			if _p == p {
-				return i, nil
+				return i, false, nil
 			}
 		}
-		resolver, err := intResolver(params)
-		if err != nil {
-			return 0, fmt.Errorf("不在可选范围内")
+
+		resolver, cancel, err := intResolver(params)
+		if cancel {
+			return 0, true, nil
 		}
-		return resolver - 1, nil
+		if err != nil {
+			return 0, false, fmt.Errorf("不在可选范围内")
+		}
+		return resolver - 1, false, nil
 	}
 	return hint, resolver
 }
 
-func GenIntRangeResolver(min int, max int) (string, func(params []string) (int, error)) {
+func GenIntRangeResolver(min int, max int) (string, func(params []string) (selection int, cancel bool, err error)) {
 	re := regexp.MustCompile("^[-]?[0-9]+")
 	hint := fmt.Sprintf("%v~%v之间的整数", min, max)
-	resolver := func(params []string) (int, error) {
+	resolver := func(params []string) (int, bool, error) {
+		if len(params) == 0 {
+			return 0, false, fmt.Errorf("为空")
+		}
 		val := re.FindAllString(params[0], 1)
+		if params[0] == "取消" {
+			return 0, true, nil
+		}
 		if len(val) == 1 {
 			v, _ := strconv.Atoi(val[0])
 			if v >= min && v <= max {
-				return v, nil
+				return v, false, nil
 			}
-			return 0, fmt.Errorf("不在范围中")
+			return 0, false, fmt.Errorf("不在范围中")
 		} else {
-			return 0, fmt.Errorf("不是一个有效的数")
+			return 0, false, fmt.Errorf("不是一个有效的数")
 		}
 	}
 	return hint, resolver
