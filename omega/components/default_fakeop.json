@@ -11,18 +11,17 @@
       "execute [player] ~~~ give @s [args]"
     ]
   },
-  "HIM": {
+
+  "*": {
     "tp": [
-      "tell [player] actionbar 激活伪 tp 指令，限制为只能 tp 自己",
       "tell [player] 实际指令为: tp @s [args]",
       "execute [player] ~~~ tp @s [args]"
-    ]
-  },
-  "*": {
-    "clear": [
-      "tell [player] actionbar 符号 * 代表所有人都可以使用的伪op指令，这里演示了只能对自己使用的clear指令",
-      "tell [player] 实际指令为: clear @s [args]",
-      "execute [player] ~~~ clear @s [args]"
+    ],
+    "kill": [
+      "kill [player]"
+    ],
+    "give": [
+      "execute [player] ~~~ give @s stone 64"
     ]
   }
 }

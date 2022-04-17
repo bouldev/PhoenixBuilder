@@ -110,7 +110,9 @@ func (r *Reactor) Throw(chat *defines.GameChat) {
 	catchForParams := false
 	if player := o.GetGameControl().GetPlayerKit(chat.Name); player != nil {
 		if paramCb := player.GetOnParamMsg(); paramCb != nil {
-			catchForParams = paramCb(chat)
+			if !chat.FrameWorkTriggered {
+				catchForParams = paramCb(chat)
+			}
 		}
 	}
 	if catchForParams {

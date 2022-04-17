@@ -162,7 +162,7 @@
       "disabled": false,
       "version": "0.0.1",
       "source": "Built-In",
-      "usage": "设置重生点",
+      "usage": "重生",
       "configs": {
         "触发词": ["kill", "重生"],
         "非创造玩家重生后执行的指令": [
@@ -285,6 +285,41 @@
       "usage": "允许玩家具备一部分OP权限",
       "configs": {
         "授权文件":"伪OP权限.json"
+      }
+    },
+    {
+      "name": "SimpleCmd",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Built-In",
+      "usage": "显示一个自定义的菜单项",
+      "configs": {
+        "触发词": ["give_stone"],
+        "总是触发": false,
+        "参数描述": "[数量]",
+        "功能描述": "给指定数量的石头",
+        "触发时执行指令": [
+          "give [player] stone [args]",
+          "tell [player] 已经给你 [args] 个石头了",
+          "tell [player] 后面的指令可以继续加"
+        ]
+      }
+    },
+    {
+      "name": "SimpleCmd",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Built-In",
+      "usage": "显示一个自定义的菜单项",
+      "configs": {
+        "触发词": ["give_sand"],
+        "总是触发": false,
+        "参数描述": "[数量]",
+        "功能描述": "给指定数量的沙子",
+        "触发时执行指令": [
+          "give [player] sand [args]",
+          "tell [player] 已经给你 [args] 个沙子了"
+        ]
       }
     }
   ],
