@@ -72,14 +72,24 @@ func (b *Bonjour) onLogin(entry protocol.PlayerListEntry) {
 }
 
 func (b *Bonjour) onLogout(entry protocol.PlayerListEntry) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			fmt.Println(r)
+		}
+	}()
 	//fmt.Println(entry)
 	player := b.Ctrl.GetPlayerKitByUUID(entry.UUID)
 	if player == nil {
 		b.logger.Write(fmt.Sprintf("登出 (name not found) %v %v", entry, entry.UUID.String()))
 		return
 	}
-	playTime := time.Now().Sub(player.GetViolatedStorage()["login_time"].(time.Time)).Minutes()
-	b.logger.Write(fmt.Sprintf("logout %v %v (%.1fm)", player.GetRelatedUQ().Username, entry.UUID.String(), playTime))
+	if loginTime, hasK := player.GetViolatedStorage()["login_time"]; hasK && loginTime != nil {
+		playTime := time.Now().Sub(loginTime.(time.Time)).Minutes()
+		b.logger.Write(fmt.Sprintf("logout %v %v (%.1fm)", player.GetRelatedUQ().Username, entry.UUID.String(), playTime))
+	} else {
+		b.logger.Write(fmt.Sprintf("logout %v %v (login not recorded)", player.GetRelatedUQ().Username, entry.UUID.String()))
+	}
 	name := utils.ToPlainName(player.GetRelatedUQ().Username)
 
 	for _, cmd := range b.LogoutCmds {
