@@ -17,11 +17,11 @@ import (
 	"go.kuoruan.net/v8go-polyfills/url"
 	"phoenixbuilder/fastbuilder/script_engine/bridge"
 	"rogchap.com/v8go"
-	
-	"regexp"
+
+	"errors"
 	"io/ioutil"
 	"path/filepath"
-	"errors"
+	"regexp"
 )
 
 // jsEngine.hostBridge.api
@@ -115,40 +115,40 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 	engine := v8go.NewObjectTemplate(iso)
 	global.Set("engine", engine)
 	// function engine.setName(scriptName string)
-	global.Set("printf",v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		args:=info.Args()
-		if(len(args)==0) {
+	global.Set("printf", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		args := info.Args()
+		if len(args) == 0 {
 			// Same to printf("");
-			fmt.Printf("[%s] ",scriptName)
+			fmt.Printf("[%s] ", scriptName)
 			return nil
 		}
-		things:=make([]interface{},len(args)-1)
-		for i, v:=range args[1:] {
-			things[i]=v.String()
+		things := make([]interface{}, len(args)-1)
+		for i, v := range args[1:] {
+			things[i] = v.String()
 		}
-		fmt.Printf(fmt.Sprintf("[%s] %s",scriptName,args[0].String()),things...)
+		fmt.Printf(fmt.Sprintf("[%s] %s", scriptName, args[0].String()), things...)
 		return nil
 	}))
-	global.Set("sprintf",v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		args:=info.Args()
-		if(len(args)==0) {
+	global.Set("sprintf", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+		args := info.Args()
+		if len(args) == 0 {
 			// Same to sprintf("");
-			val,_ := v8go.NewValue(iso, "")
+			val, _ := v8go.NewValue(iso, "")
 			return val
 		}
-		things:=make([]interface{},len(args)-1)
-		for i, v:=range args[1:] {
-			things[i]=v.String()
+		things := make([]interface{}, len(args)-1)
+		for i, v := range args[1:] {
+			things[i] = v.String()
 		}
-		val, _:=v8go.NewValue(iso, fmt.Sprintf(args[0].String(),things...))
+		val, _ := v8go.NewValue(iso, fmt.Sprintf(args[0].String(), things...))
 		return val
 	}))
-	internalNameSet:=false
-	
+	internalNameSet := false
+
 	if err := engine.Set("setName",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			if(internalNameSet) {
-				throwException("engine.setName","Changing name dynamically for a package is not allowed")
+			if internalNameSet {
+				throwException("engine.setName", "Changing name dynamically for a package is not allowed")
 				return nil
 			}
 			if str, ok := hasStrIn(info, 0, "engine.setName[scriptName]"); !ok {
@@ -162,13 +162,13 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 	); err != nil {
 		panic(err)
 	}
-	
+
 	if err := engine.Set("setNameInternal",
 		v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 			if str, ok := hasStrIn(info, 0, "engine.setNameInternal[scriptName]"); !ok {
 				throwException("engine.setNameInternal: No arguments assigned", str)
 			} else {
-				internalNameSet=true
+				internalNameSet = true
 				scriptName = str
 			}
 			return nil
@@ -431,7 +431,7 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 	); err != nil {
 		panic(err)
 	}
-	containerPath:=""
+	containerPath := ""
 
 	consts := v8go.NewObjectTemplate(iso)
 	//s256v, _ := v8go.NewValue(iso, identifyStr)
@@ -441,8 +441,8 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 		val, _ := v8go.NewValue(iso, v())
 		consts.Set(k, val)
 	}
-	if(bundle!=nil) {
-		bundleObj:=v8go.NewObjectTemplate(iso)
+	if bundle != nil {
+		bundleObj := v8go.NewObjectTemplate(iso)
 		bundleObj.Set("identifier", bundle.Identifier)
 		bundleObj.Set("name", bundle.Name)
 		bundleObj.Set("description", bundle.Description)
@@ -451,340 +451,340 @@ func InitHostFns(iso *v8go.Isolate, global *v8go.ObjectTemplate, hb bridge.HostB
 		bundleObj.Set("manifest", bundle.Manifest)
 		bundleObj.Set("related_information", bundle.RelatedInformation)
 		bundleObj.Set("entrypoint", bundle.EntryPoint)
-		bundleContentObj:=v8go.NewObjectTemplate(iso)
-		for n, v:=range bundle.Datas {
-			bundleContentObj.Set(n,v)
+		bundleContentObj := v8go.NewObjectTemplate(iso)
+		for n, v := range bundle.Datas {
+			bundleContentObj.Set(n, v)
 		}
-		for n, v:=range bundle.Scripts {
-			csn:=string(n)
-			csv:=v
-			externalScriptObj:=v8go.NewObjectTemplate(iso)
+		for n, v := range bundle.Scripts {
+			csn := string(n)
+			csv := v
+			externalScriptObj := v8go.NewObjectTemplate(iso)
 			externalScriptObj.Set("run", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-				newContext:=v8go.NewContext(iso, global)
+				newContext := v8go.NewContext(iso, global)
 				// Share the same `global`.
-				nconsts,_:=newContext.Global().Get("consts")
-				nconstso,_:=nconsts.AsObject()
-				nbundle,_:=nconstso.Get("bundle")
-				nbundleo,_:=nbundle.AsObject()
+				nconsts, _ := newContext.Global().Get("consts")
+				nconstso, _ := nconsts.AsObject()
+				nbundle, _ := nconstso.Get("bundle")
+				nbundleo, _ := nbundle.AsObject()
 				nbundleo.Set("currentScript", csn)
 				nbundleo.Set("fromRequire", true)
-				nfs,_:=newContext.Global().Get("fs")
-				nfso,_:=nfs.AsObject()
+				nfs, _ := newContext.Global().Get("fs")
+				nfso, _ := nfs.AsObject()
 				nfso.Set("containerPath", containerPath)
 				CtxFunctionInject(newContext)
-				_, err:=csv.Run(newContext)
-				if(err!=nil) {
-					je:=err.(*v8go.JSError)
-					throwException("runScript",fmt.Sprintf("Uncaught Error in script '%s': %s\nLocation: %s\nStack: %s",n,je.Message,je.Location,je.StackTrace))
+				_, err := csv.Run(newContext)
+				if err != nil {
+					je := err.(*v8go.JSError)
+					throwException("runScript", fmt.Sprintf("Uncaught Error in script '%s': %s\nLocation: %s\nStack: %s", n, je.Message, je.Location, je.StackTrace))
 					return nil
 				}
-				n_mdl,err:=newContext.Global().Get("module")
-				if(err!=nil) {
+				n_mdl, err := newContext.Global().Get("module")
+				if err != nil {
 					return nil
 				}
-				n_mdl_obj,err:=n_mdl.AsObject()
-				if(err!=nil) {
+				n_mdl_obj, err := n_mdl.AsObject()
+				if err != nil {
 					return nil
 				}
-				n_exp,err:=n_mdl_obj.Get("exports")
-				if(err!=nil) {
+				n_exp, err := n_mdl_obj.Get("exports")
+				if err != nil {
 					return nil
 				}
 				return n_exp
 			}))
-			bundleContentObj.Set(n,externalScriptObj)
+			bundleContentObj.Set(n, externalScriptObj)
 		}
-		bundleObj.Set("content",bundleContentObj)
+		bundleObj.Set("content", bundleContentObj)
 		consts.Set("bundle", bundleObj)
 	}
 	global.Set("consts", consts)
-	
-	module:=v8go.NewObjectTemplate(iso)
+
+	module := v8go.NewObjectTemplate(iso)
 	module.Set("exports", v8go.NewObjectTemplate(iso))
 	global.Set("module", module)
 
 	fs := v8go.NewObjectTemplate(iso)
 	global.Set("fs", fs)
-	
+
 	fs.Set("containerPath", "")
 
 	fs.Set("requireContainer", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		if(len(containerPath)!=0) {
+		if len(containerPath) != 0 {
 			throwException("fs.requireContainer", "Requesting a container, but a container for the script is already created.")
 			return nil
 		}
-		if(len(info.Args())==0) {
+		if len(info.Args()) == 0 {
 			throwException("fs.requireContainer", "No arguments provided")
 			return nil
 		}
-		containerNameValue:=info.Args()[0]
-		if(!containerNameValue.IsString()) {
+		containerNameValue := info.Args()[0]
+		if !containerNameValue.IsString() {
 			throwException("fs.requireContainer", "Container name should be a string, for example, com.user.myscript")
 			return nil
 		}
-		containerName:=containerNameValue.String()
-		if(len(containerName)>32||len(containerName)<4) {
+		containerName := containerNameValue.String()
+		if len(containerName) > 32 || len(containerName) < 4 {
 			throwException("fs.requireContainer", "Container name is too long or too short")
 			return nil
 		}
-		containerExpection:=regexp.MustCompile("^([A-Za-z0-9_-]|\\.)*$")
-		if(!containerExpection.MatchString(containerName)) {
+		containerExpection := regexp.MustCompile("^([A-Za-z0-9_-]|\\.)*$")
+		if !containerExpection.MatchString(containerName) {
 			throwException("fs.requireContainer", "Invalid container name! Container name should be in this format: com.user.myscript")
 			return nil
 		}
-		homedir, _:=os.UserHomeDir()
-		containerPath=filepath.Join(homedir, fmt.Sprintf(".config/fastbuilder/containers/%s", containerName)) + "/"
+		homedir, _ := os.UserHomeDir()
+		containerPath = filepath.Join(homedir, fmt.Sprintf(".config/fastbuilder/containers/%s", containerName)) + "/"
 		os.MkdirAll(containerPath, 0700)
-		containerpv,_:=v8go.NewValue(iso, containerPath)
-		info.This().Set("containerPath",containerPath)
+		containerpv, _ := v8go.NewValue(iso, containerPath)
+		info.This().Set("containerPath", containerPath)
 		return containerpv
 	}))
-	
+
 	fs.Set("exists", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		if(len(containerPath)==0) {
+		if len(containerPath) == 0 {
 			throwException("fs.exists", "File operation without a container created")
 			return nil
 		}
-		if(len(info.Args())==0) {
+		if len(info.Args()) == 0 {
 			throwException("fs.exists", "No arguments provided")
 			return nil
 		}
-		pathv:=info.Args()[0]
-		if(!pathv.IsString()) {
+		pathv := info.Args()[0]
+		if !pathv.IsString() {
 			throwException("fs.exists", "Argument \"path\" must be a string.")
 			return nil
 		}
-		path:=filepath.Clean(pathv.String())
-		if(path[0]!='/') {
-			path=fmt.Sprintf("%s%s",containerPath,path)
-		}else{
-			if(path[0:len(containerPath)]!=containerPath) {
+		path := filepath.Clean(pathv.String())
+		if path[0] != '/' {
+			path = fmt.Sprintf("%s%s", containerPath, path)
+		} else {
+			if path[0:len(containerPath)] != containerPath {
 				throwException("fs.exists", "Trying to control filesystem out of container")
 				return nil
 			}
 		}
-		_, err:=os.Stat(path)
-		r:=false
-		if(!errors.Is(err, os.ErrNotExist)) {
-			r=true
+		_, err := os.Stat(path)
+		r := false
+		if !errors.Is(err, os.ErrNotExist) {
+			r = true
 		}
-		rv,_:=v8go.NewValue(iso,r)
+		rv, _ := v8go.NewValue(iso, r)
 		return rv
 	}))
-	
+
 	fs.Set("isDir", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		if(len(containerPath)==0) {
+		if len(containerPath) == 0 {
 			throwException("fs.isDir", "File operation without a container created")
 			return nil
 		}
-		if(len(info.Args())==0) {
+		if len(info.Args()) == 0 {
 			throwException("fs.isDir", "No arguments provided")
 			return nil
 		}
-		pathv:=info.Args()[0]
-		if(!pathv.IsString()) {
+		pathv := info.Args()[0]
+		if !pathv.IsString() {
 			throwException("fs.isDir", "Argument \"path\" must be a string.")
 			return nil
 		}
-		path:=filepath.Clean(pathv.String())
-		if(path[0]!='/') {
-			path=fmt.Sprintf("%s%s",containerPath,path)
-		}else{
-			if(path[0:len(containerPath)]!=containerPath) {
+		path := filepath.Clean(pathv.String())
+		if path[0] != '/' {
+			path = fmt.Sprintf("%s%s", containerPath, path)
+		} else {
+			if path[0:len(containerPath)] != containerPath {
 				throwException("fs.isDir", "Trying to control filesystem out of container")
 				return nil
 			}
 		}
-		st, err:=os.Stat(path)
-		r:=false
-		if(err==nil) {
-			if(st.IsDir()) {
-				r=true
+		st, err := os.Stat(path)
+		r := false
+		if err == nil {
+			if st.IsDir() {
+				r = true
 			}
 		}
-		rv,_:=v8go.NewValue(iso,r)
+		rv, _ := v8go.NewValue(iso, r)
 		return rv
 	}))
-	
+
 	fs.Set("mkdir", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		if(containerPath=="") {
+		if containerPath == "" {
 			throwException("fs.mkdir", "Container not created")
 			return nil
 		}
-		if(len(info.Args())==0) {
+		if len(info.Args()) == 0 {
 			throwException("fs.mkdir", "No arguments provided")
 			return nil
 		}
-		pathv:=info.Args()[0]
-		if(!pathv.IsString()) {
+		pathv := info.Args()[0]
+		if !pathv.IsString() {
 			throwException("fs.mkdir", "Argument \"path\" must be a string.")
 			return nil
 		}
-		path:=filepath.Clean(pathv.String())
-		if(path[0]!='/') {
-			path=fmt.Sprintf("%s%s",containerPath,path)
-		}else{
-			if(path[0:len(containerPath)]!=containerPath) {
+		path := filepath.Clean(pathv.String())
+		if path[0] != '/' {
+			path = fmt.Sprintf("%s%s", containerPath, path)
+		} else {
+			if path[0:len(containerPath)] != containerPath {
 				throwException("fs.mkdir", "Trying to control filesystem out of container")
 				return nil
 			}
 		}
-		err:=os.MkdirAll(containerPath, 0700)
-		if(err!=nil) {
-			throwException("fs.mkdir", fmt.Sprintf("Failed to perform operation: %v",err))
+		err := os.MkdirAll(path, 0700)
+		if err != nil {
+			throwException("fs.mkdir", fmt.Sprintf("Failed to perform operation: %v", err))
 		}
 		return nil
 	}))
-	
+
 	fs.Set("rename", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		if(containerPath=="") {
+		if containerPath == "" {
 			throwException("fs.rename", "Container not created")
 			return nil
 		}
-		if(len(info.Args())<2) {
+		if len(info.Args()) < 2 {
 			throwException("fs.rename", "Required 2 arguments")
 			return nil
 		}
-		pathv:=info.Args()[0]
-		npathv:=info.Args()[1]
-		if(!pathv.IsString()) {
+		pathv := info.Args()[0]
+		npathv := info.Args()[1]
+		if !pathv.IsString() {
 			throwException("fs.rename", "Argument \"oldpath\" must be a string.")
 			return nil
 		}
-		if(!npathv.IsString()) {
+		if !npathv.IsString() {
 			throwException("fs.rename", "Argument \"newpath\" must be a string.")
 			return nil
 		}
-		path:=filepath.Clean(pathv.String())
-		npath:=filepath.Clean(npathv.String())
-		if(path[0]!='/') {
-			path=fmt.Sprintf("%s%s",containerPath,path)
-		}else{
-			if(path[0:len(containerPath)]!=containerPath) {
+		path := filepath.Clean(pathv.String())
+		npath := filepath.Clean(npathv.String())
+		if path[0] != '/' {
+			path = fmt.Sprintf("%s%s", containerPath, path)
+		} else {
+			if path[0:len(containerPath)] != containerPath {
 				throwException("fs.rename", "Trying to control filesystem out of container")
 				return nil
 			}
-			if(path==containerPath) {
+			if path == containerPath {
 				throwException("fs.rename", "Controlling container is not allowed")
 				return nil
 			}
 		}
-		if(npath[0]!='/') {
-			npath=fmt.Sprintf("%s%s",containerPath,npath)
-		}else{
-			if(npath[0:len(containerPath)]!=containerPath) {
+		if npath[0] != '/' {
+			npath = fmt.Sprintf("%s%s", containerPath, npath)
+		} else {
+			if npath[0:len(containerPath)] != containerPath {
 				throwException("fs.rename", "Trying to control filesystem out of container")
 				return nil
 			}
-			if(npath==containerPath) {
+			if npath == containerPath {
 				throwException("fs.rename", "Controlling container is not allowed")
 				return nil
 			}
 		}
-		err:=os.Rename(path,npath)
-		if(err!=nil) {
-			throwException("fs.rename", fmt.Sprintf("Failed to perform operation: %v",err))
+		err := os.Rename(path, npath)
+		if err != nil {
+			throwException("fs.rename", fmt.Sprintf("Failed to perform operation: %v", err))
 		}
 		return nil
 	}))
-	
+
 	fs.Set("remove", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		if(containerPath=="") {
+		if containerPath == "" {
 			throwException("fs.remove", "Container not created")
 			return nil
 		}
-		if(len(info.Args())==0) {
+		if len(info.Args()) == 0 {
 			throwException("fs.remove", "No arguments provided")
 			return nil
 		}
-		pathv:=info.Args()[0]
-		if(!pathv.IsString()) {
+		pathv := info.Args()[0]
+		if !pathv.IsString() {
 			throwException("fs.remove", "Argument \"path\" must be a string.")
 			return nil
 		}
-		path:=filepath.Clean(pathv.String())
-		if(path[0]!='/') {
-			path=fmt.Sprintf("%s%s",containerPath,path)
-		}else{
-			if(path[0:len(containerPath)]!=containerPath) {
+		path := filepath.Clean(pathv.String())
+		if path[0] != '/' {
+			path = fmt.Sprintf("%s%s", containerPath, path)
+		} else {
+			if path[0:len(containerPath)] != containerPath {
 				throwException("fs.remove", "Trying to control filesystem out of container")
 				return nil
 			}
-			if(path==containerPath) {
+			if path == containerPath {
 				throwException("fs.remove", "Removing container is not allowed")
 				return nil
 			}
 		}
-		err:=os.RemoveAll(containerPath)
-		if(err!=nil) {
-			throwException("fs.remove", fmt.Sprintf("Failed to perform operation: %v",err))
+		err := os.RemoveAll(containerPath)
+		if err != nil {
+			throwException("fs.remove", fmt.Sprintf("Failed to perform operation: %v", err))
 		}
 		return nil
 	}))
-	
+
 	fs.Set("readFile", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		if(len(containerPath)==0) {
+		if len(containerPath) == 0 {
 			throwException("fs.readFile", "File operation without a container created")
 			return nil
 		}
-		if(len(info.Args())==0) {
+		if len(info.Args()) == 0 {
 			throwException("fs.readFile", "No arguments provided")
 			return nil
 		}
-		pathv:=info.Args()[0]
-		if(!pathv.IsString()) {
+		pathv := info.Args()[0]
+		if !pathv.IsString() {
 			throwException("fs.readFile", "Argument \"path\" must be a string.")
 			return nil
 		}
-		path:=filepath.Clean(pathv.String())
-		if(path[0]!='/') {
-			path=fmt.Sprintf("%s%s",containerPath,path)
-		}else{
-			if(path[0:len(containerPath)]!=containerPath) {
+		path := filepath.Clean(pathv.String())
+		if path[0] != '/' {
+			path = fmt.Sprintf("%s%s", containerPath, path)
+		} else {
+			if path[0:len(containerPath)] != containerPath {
 				throwException("fs.mkdir", "Trying to control filesystem out of container")
 				return nil
 			}
 		}
 		filecontent, err := ioutil.ReadFile(path)
-		if(err!=nil) {
+		if err != nil {
 			throwException("fs.readFile", fmt.Sprintf("Failed to read target file: %v", err))
 			return nil
 		}
 		fin, _ := v8go.NewValue(iso, string(filecontent))
 		return fin
 	}))
-	
+
 	fs.Set("writeFile", v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-		if(len(containerPath)==0) {
+		if len(containerPath) == 0 {
 			throwException("fs.writeFile", "File operation without a container created")
 		}
-		if(len(info.Args())<2) {
+		if len(info.Args()) < 2 {
 			throwException("fs.writeFile", "Required 2 arguments")
 			return nil
 		}
-		pathv:=info.Args()[0]
-		content:=info.Args()[1]
-		if(!pathv.IsString()) {
+		pathv := info.Args()[0]
+		content := info.Args()[1]
+		if !pathv.IsString() {
 			throwException("fs.writeFile", "Argument \"path\" must be a string.")
 			return nil
 		}
-		path:=filepath.Clean(pathv.String())
-		if(path[0]!='/') {
-			path=fmt.Sprintf("%s%s",containerPath,path)
-		}else{
-			if(path[0:len(containerPath)]!=containerPath) {
+		path := filepath.Clean(pathv.String())
+		if path[0] != '/' {
+			path = fmt.Sprintf("%s%s", containerPath, path)
+		} else {
+			if path[0:len(containerPath)] != containerPath {
 				throwException("fs.writeFile", "Trying to control filesystem out of container")
 				return nil
 			}
 		}
-		err:=ioutil.WriteFile(path,[]byte(content.String()), 0700)
-		if(err!=nil) {
+		err := ioutil.WriteFile(path, []byte(content.String()), 0700)
+		if err != nil {
 			throwException("fs.writeFile", fmt.Sprintf("Failed to write target file: %v", err))
 			return nil
 		}
 		return nil
 	}))
-	
+
 	newws := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
 		funcName := "new ws()"
 		if !info.IsConstructCall {
