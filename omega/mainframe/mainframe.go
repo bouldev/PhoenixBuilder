@@ -359,8 +359,8 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 		o.Stop()
 		return
 	}
-	o.backendLogger.Write("组件全部加载&配置完成, 正在将更新后的配置写回配置文件...")
-	o.writeBackConfig()
+	//o.backendLogger.Write("组件全部加载&配置完成, 正在将更新后的配置写回配置文件...")
+	//o.writeBackConfig()
 	o.configStageComplete()
 	o.backendLogger.Write("启用 Game Ctrl 模块")
 	o.GameCtrl = newGameCtrl(o)
