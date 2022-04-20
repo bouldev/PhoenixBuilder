@@ -288,6 +288,55 @@
       }
     },
     {
+      "name": "Schedule",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Built-In",
+      "usage":"周期性的执行某个任务",
+      "configs":{
+        "任务": "清扫掉落物",
+        "周期": 3600,
+        "动作": [
+          {
+            "指令": "/tellraw @a {\"rawtext\":[{\"text\":\"10秒后清扫掉落物\"}]}",
+            "执行后延迟": 9
+          },
+          {
+            "指令": "/tellraw @a {\"rawtext\":[{\"text\":\"1秒后清扫掉落物\"}]}",
+            "执行后延迟": 1
+          },
+          {
+            "指令": "kill @e[type=item,name=\"\"]",
+            "执行后延迟": 1,
+            "结果记录": "成功次数"
+          },
+          {
+            "指令": "/tellraw @a {\"rawtext\":[{\"text\":\"掉落物清扫完成\"}]}",
+            "执行后延迟": 1
+          }
+        ]
+      }
+    },
+    {
+      "name": "Schedule",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Built-In",
+      "usage":"周期性的执行某个任务",
+      "configs":{
+        "任务": "记录玩家敏感记分板变化",
+        "周期": 3600,
+        "结果记录文件": "玩家记分板扫描结果",
+        "动作": [
+          {
+            "指令": "scoreboard players add @a money 0",
+            "执行后延迟": 1,
+            "结果记录": "完整结果"
+          }
+        ]
+      }
+    },
+    {
       "name": "SimpleCmd",
       "disabled": false,
       "version": "0.0.1",
@@ -320,6 +369,32 @@
           "give [player] sand [args]",
           "tell [player] 已经给你 [args] 个沙子了"
         ]
+      }
+    },
+    {
+      "name": "TimeSync",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Built-In",
+      "usage": "现实时间和记分板时间校准",
+      "configs": {
+        "时区偏移(秒)": 0,
+        "现实时间同步": {
+          "启用现实时间同步": true,
+          "同步指令发送周期": 90,
+          "月相同步": true
+        },
+        "记分板校准": {
+          "启用记分板校准": true,
+          "校准指令发送周期": 3600,
+          "校准指令": [
+            "tell 2401PT 时间记分板将校准为 [year]/[month]/[day] [24h]([12h]):[min]:[second]",
+            "scoreboard players set 日期 time [day]",
+            "scoreboard players set 小时 time [24h]",
+            "scoreboard players set 分 time [min]",
+            "scoreboard players set 秒 time [second]"
+          ]
+        }
       }
     }
   ],

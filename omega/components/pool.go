@@ -85,5 +85,11 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"SimpleCmd": func() defines.Component {
 			return &SimpleCmd{BasicComponent: &BasicComponent{}}
 		},
+		"Schedule": func() defines.Component {
+			return &Schedule{BasicComponent: &BasicComponent{}}
+		},
+		"TimeSync": func() defines.Component {
+			return &TimeSync{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

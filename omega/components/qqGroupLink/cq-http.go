@@ -167,6 +167,7 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 				"[msg]":        msgText,
 			})
 			cq.Frame.GetBackendDisplay().Write("QQ->MC: " + m)
+			m = strings.Replace(m, "[Error]:", "", 1)
 			cq.Frame.GetGameControl().SayTo(cq.Selector, m)
 			return
 		}
