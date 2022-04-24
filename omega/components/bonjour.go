@@ -6,15 +6,14 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
-	"strings"
 	"time"
 )
 
 type Bonjour struct {
 	*BasicComponent
-	Delay      int      `json:"登录时延迟发送" yaml:"登录时延迟发送"`
-	LoginCmds  []string `json:"登录时发送指令" yaml:"登录时发送指令"`
-	LogoutCmds []string `json:"登出时发送指令" yaml:"登出时发送指令"`
+	Delay      int           `json:"登录时延迟发送" yaml:"登录时延迟发送"`
+	loginCmds  []defines.Cmd `json:"登录时发送指令" yaml:"登录时发送指令"`
+	logoutCmds []defines.Cmd `json:"登出时发送指令" yaml:"登出时发送指令"`
 	logger     defines.LineDst
 	newCome    bool
 }
@@ -22,6 +21,13 @@ type Bonjour struct {
 func (b *Bonjour) Init(cfg *defines.ComponentConfig) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, b); err != nil {
+		panic(err)
+	}
+	var err error
+	if b.loginCmds, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"登录时发送指令"}); err != nil {
+		panic(err)
+	}
+	if b.logoutCmds, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"登出时发送指令"}); err != nil {
 		panic(err)
 	}
 }
@@ -47,7 +53,7 @@ func (b *Bonjour) Activate() {
 	}
 	b.logger.Write(fmt.Sprintf("当前已经在线玩家: %v", existingPlayers))
 	go func() {
-		time.Sleep(20)
+		time.Sleep(10)
 		b.newCome = true
 	}()
 
@@ -64,10 +70,11 @@ func (b *Bonjour) onLogin(entry protocol.PlayerListEntry) {
 	go func() {
 		t := time.NewTimer(time.Duration(b.Delay) * time.Second)
 		<-t.C
-		for _, cmd := range b.LoginCmds {
-			s := strings.ReplaceAll(cmd, "[target_player]", name)
-			b.Ctrl.SendCmd(s)
-		}
+		//for _, cmd := range b.LoginCmds {
+		//	s := strings.ReplaceAll(cmd, "[target_player]", name)
+		//	b.Ctrl.SendCmd(s)
+		//}
+		go utils.LaunchCmdsArray(b.Frame.GetGameControl(), b.loginCmds, map[string]interface{}{"[target_player]": name}, b.Frame.GetBackendDisplay())
 	}()
 }
 
@@ -92,8 +99,9 @@ func (b *Bonjour) onLogout(entry protocol.PlayerListEntry) {
 	}
 	name := utils.ToPlainName(player.GetRelatedUQ().Username)
 
-	for _, cmd := range b.LogoutCmds {
-		s := strings.ReplaceAll(cmd, "[target_player]", name)
-		b.Ctrl.SendCmd(s)
-	}
+	//for _, cmd := range b.LogoutCmds {
+	//	s := strings.ReplaceAll(cmd, "[target_player]", name)
+	//	b.Ctrl.SendCmd(s)
+	//}
+	go utils.LaunchCmdsArray(b.Frame.GetGameControl(), b.loginCmds, map[string]interface{}{"[target_player]": name}, b.Frame.GetBackendDisplay())
 }

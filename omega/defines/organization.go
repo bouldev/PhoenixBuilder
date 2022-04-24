@@ -40,6 +40,15 @@ type MenuEntry struct {
 	Usage        string
 }
 
+type Cmd struct {
+	Cmd         string  `json:"指令"`
+	SleepBefore float32 `json:"执行前延迟"`
+	Sleep       float32 `json:"执行后延迟"`
+	Record      string  `json:"结果记录"`
+	As          string  `json:"身份"`
+	Note        string  `json:"备注"`
+}
+
 type GameMenuEntry struct {
 	MenuEntry
 	OptionalOnTriggerFn func(chat *GameChat) (stop bool)
