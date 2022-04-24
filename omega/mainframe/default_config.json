@@ -410,11 +410,11 @@
           "启用记分板校准": true,
           "校准指令发送周期": 3600,
           "校准指令": [
-            "tell 2401PT 时间记分板将校准为 [year]/[month]/[day] [24h]([12h]):[min]:[second]",
+            "tell 2401PT 时间记分板将校准为 [year]/[month]/[day] [h24]([h12]):[min]:[sec]",
             "scoreboard players set 日期 time [day]",
             "scoreboard players set 小时 time [24h]",
             "scoreboard players set 分 time [min]",
-            "scoreboard players set 秒 time [second]"
+            "scoreboard players set 秒 time [sec]"
           ]
         }
       }
