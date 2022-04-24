@@ -82,6 +82,6 @@ android_pack
 cache
 analyze/
 .vscode
-#omega
+omega
 omega_storage
 docker
