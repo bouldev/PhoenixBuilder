@@ -412,7 +412,7 @@
           "校准指令": [
             "tell 2401PT 时间记分板将校准为 [year]/[month]/[day] [h24]([h12]):[min]:[sec]",
             "scoreboard players set 日期 time [day]",
-            "scoreboard players set 小时 time [24h]",
+            "scoreboard players set 小时 time [h24]",
             "scoreboard players set 分 time [min]",
             "scoreboard players set 秒 time [sec]"
           ]
