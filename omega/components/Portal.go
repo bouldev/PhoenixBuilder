@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type Entry struct {
+type PortalEntry struct {
 	Time string `json:"time"`
 	Pos  []int  `json:"pos"`
 }
@@ -22,7 +22,7 @@ type Portal struct {
 	LoadTrigger   []string `json:"返回存档点触发词"`
 	ListTrigger   []string `json:"列出存档点触发词"`
 	Selector      string   `json:"条件选择器"`
-	positions     map[string]map[string]*Entry
+	positions     map[string]map[string]*PortalEntry
 }
 
 func (o *Portal) Init(cfg *defines.ComponentConfig) {
@@ -32,11 +32,11 @@ func (o *Portal) Init(cfg *defines.ComponentConfig) {
 	}
 }
 
-func (o *Portal) getPlayerPositions(name string) map[string]*Entry {
+func (o *Portal) getPlayerPositions(name string) map[string]*PortalEntry {
 	if ps, hasK := o.positions[name]; hasK {
 		return ps
 	} else {
-		o.positions[name] = map[string]*Entry{}
+		o.positions[name] = map[string]*PortalEntry{}
 		return o.positions[name]
 	}
 }
@@ -67,7 +67,7 @@ func (o *Portal) list(chat *defines.GameChat) bool {
 
 func (o *Portal) doTP(name string, pos string) bool {
 	ps := o.getPlayerPositions(name)
-	goPS := func(n string, p *Entry) bool {
+	goPS := func(n string, p *PortalEntry) bool {
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 前往地点 %v: %v", name, n, p))
 		s := utils.FormateByRepalcment(o.Selector, map[string]interface{}{
 			"[player]": name,
@@ -158,13 +158,13 @@ func (o *Portal) doAdd(name string, posName string) {
 			return
 		}
 		if ps, hasK := o.positions[name]; hasK {
-			ps[posName] = &Entry{
+			ps[posName] = &PortalEntry{
 				Time: utils.TimeToString(time.Now()),
 				Pos:  pos,
 			}
 		} else {
-			o.positions[name] = map[string]*Entry{
-				posName: &Entry{
+			o.positions[name] = map[string]*PortalEntry{
+				posName: &PortalEntry{
 					Time: utils.TimeToString(time.Now()),
 					Pos:  pos,
 				},
@@ -239,10 +239,10 @@ func (o *Portal) Inject(frame defines.MainFrame) {
 		panic(err)
 	}
 	if o.positions == nil {
-		o.positions = map[string]map[string]*Entry{}
+		o.positions = map[string]map[string]*PortalEntry{}
 	}
 	if _, hasK := o.positions["*"]; !hasK {
-		o.positions["*"] = map[string]*Entry{
+		o.positions["*"] = map[string]*PortalEntry{
 			"主城": {
 				Time: utils.TimeToString(time.Now()),
 				Pos:  []int{0, 252, 0},

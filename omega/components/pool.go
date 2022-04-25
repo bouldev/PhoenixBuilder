@@ -94,5 +94,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"MoneyTransfer": func() defines.Component {
 			return &MoneyTransfer{BasicComponent: &BasicComponent{}}
 		},
+		"StructureBackup": func() defines.Component {
+			return &StructureBackup{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
