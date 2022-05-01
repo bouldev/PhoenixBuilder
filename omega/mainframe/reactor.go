@@ -136,6 +136,7 @@ func (r *Reactor) Throw(chat *defines.GameChat) {
 
 func (r *Reactor) React(pkt packet.Packet) {
 	o := r.o
+	pktID := pkt.ID()
 	if pkt == nil {
 		return
 	}
@@ -173,7 +174,6 @@ func (r *Reactor) React(pkt packet.Packet) {
 	for _, cb := range r.OnAnyPacketCallBack {
 		cb(pkt)
 	}
-	pktID := pkt.ID()
 	if cbs, ok := r.OnTypedPacketCallBacks[pktID]; ok {
 		for _, cb := range cbs {
 			cb(pkt)

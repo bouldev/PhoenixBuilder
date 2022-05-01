@@ -201,7 +201,9 @@ func create_environment() *environment.PBEnvironment {
 			hostBridgeGamma.HostRemoveBlock()
 		}
 	}*/
-	scriptHolder.LoadScript(args.StartupScript(), env)
+	if args.StartupScript() != "" {
+		scriptHolder.LoadScript(args.StartupScript(), env)
+	}
 	hostBridgeGamma.HostRemoveBlock()
 	return env
 }

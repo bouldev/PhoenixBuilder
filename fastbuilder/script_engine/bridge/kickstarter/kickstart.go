@@ -10,11 +10,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"path/filepath"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"phoenixbuilder/fastbuilder/script_engine"
 	"phoenixbuilder/fastbuilder/script_engine/bridge"
 	v8 "rogchap.com/v8go"
@@ -31,30 +31,30 @@ func LoadScript(scriptPath string, hb bridge.HostBridge) (func(), error) {
 	fmt.Printf("JS engine vesion: %v\n", script_engine.JSVERSION)
 	var script *v8.UnboundScript
 	var scriptName string
-	
-	iso:=v8.NewIsolate()
+
+	iso := v8.NewIsolate()
 
 	var bundle *script_engine.ScriptPackage
-	if(filepath.Ext(scriptPath)==".scb") {
-		bundleVar,err:=script_engine.LoadPackage(iso, scriptPath)
-		if(err!=nil) {
+	if filepath.Ext(scriptPath) == ".scb" {
+		bundleVar, err := script_engine.LoadPackage(iso, scriptPath)
+		if err != nil {
 			return nil, err
 		}
-		bundle=bundleVar
-	}else if(filepath.Ext(scriptPath)==".json") {
-		bundleVar,err:=script_engine.LoadDebugPackage(iso, scriptPath)
-		if(err!=nil) {
+		bundle = bundleVar
+	} else if filepath.Ext(scriptPath) == ".json" {
+		bundleVar, err := script_engine.LoadDebugPackage(iso, scriptPath)
+		if err != nil {
 			return nil, err
 		}
-		bundle=bundleVar
+		bundle = bundleVar
 	}
-	
-	global:=v8.NewObjectTemplate(iso)
+
+	global := v8.NewObjectTemplate(iso)
 	stopFunc := script_engine.InitHostFns(iso, global, hb, scriptName, "", scriptPath, bundle)
 	ctx := v8.NewContext(iso, global)
 	script_engine.CtxFunctionInject(ctx)
-	
-	if(bundle==nil) {
+
+	if bundle == nil {
 		file, fileErr := os.OpenFile(scriptPath, os.O_RDONLY, 0755)
 		if fileErr == nil {
 			_, scriptName = path.Split(scriptPath)
@@ -62,8 +62,8 @@ func LoadScript(scriptPath string, hb bridge.HostBridge) (func(), error) {
 			if err != nil {
 				return nil, err
 			}
-			script,err = iso.CompileUnboundScript(string(scriptData), scriptPath, v8.CompileOptions{})
-			if(err!=nil) {
+			script, err = iso.CompileUnboundScript(string(scriptData), scriptPath, v8.CompileOptions{})
+			if err != nil {
 				return nil, err
 			}
 		} else {
@@ -75,27 +75,27 @@ func LoadScript(scriptPath string, hb bridge.HostBridge) (func(), error) {
 				if err != nil {
 					return nil, err
 				}
-				script,err = iso.CompileUnboundScript(string(result), scriptName, v8.CompileOptions{})
-				if(err!=nil) {
+				script, err = iso.CompileUnboundScript(string(result), scriptName, v8.CompileOptions{})
+				if err != nil {
 					return nil, err
 				}
 			} else {
 				return nil, fmt.Errorf("script %v \nis neither a valid file %v,\nnor a valid url %v", scriptPath, fileErr, err)
 			}
 		}
-	}else{
+	} else {
 		bundleScript, gotScript := bundle.Scripts[bundle.EntryPoint]
-		if(!gotScript) {
+		if !gotScript {
 			return nil, fmt.Errorf("manifest.json: entrypoint field is invalid")
 		}
-		script=bundleScript
+		script = bundleScript
 	}
 
 	//hasher := sha256.New()
 	//hasher.Write([]byte(script))
 	//identifyStr := ""//base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	go func() {
-		_, err := script.Run(ctx)//ctx.RunScript(script, scriptPath)
+		_, err := script.Run(ctx) //ctx.RunScript(script, scriptPath)
 		if err != nil {
 			e := err.(*v8.JSError) // JavaScript errors will be returned as the JSError struct
 			fmt.Printf("Script %s ran into a runtime error, stack dump:\n", scriptPath)
@@ -127,4 +127,8 @@ func obtainPageContent(pageUrl string, timeout time.Duration) ([]byte, error) {
 		}
 	}
 	return result.Bytes(), nil
+}
+
+func HasScriptSupport() bool {
+	return true
 }

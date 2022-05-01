@@ -97,5 +97,11 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"StructureBackup": func() defines.Component {
 			return &StructureBackup{BasicComponent: &BasicComponent{}}
 		},
+		"Crash": func() defines.Component {
+			return &Crash{BasicComponent: &BasicComponent{}}
+		},
+		"IntrusionDetectSystem": func() defines.Component {
+			return &IntrusionDetectSystem{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
