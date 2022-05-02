@@ -34,7 +34,7 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 	allTags := []string{}
 	scores := map[string]string{}
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("tag "+chat.Name+" list", func(output *packet.CommandOutput) {
-		if output.SuccessCount > 0 {
+		if output.SuccessCount > 0 && len(output.OutputMessages) > 0 && len(output.OutputMessages[0].Parameters) > 2 {
 			for _, t := range strings.Split(output.OutputMessages[0].Parameters[2], ", ") {
 				_t := utils.RemoveFormate(t)
 				hasTags[_t] = true

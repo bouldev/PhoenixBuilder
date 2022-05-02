@@ -510,6 +510,48 @@
           }
         ]
       }
+    },
+    {
+      "name": "WhoAreYou",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Built-In",
+      "usage": "违禁昵称检测",
+      "configs": {
+        "添加标签": "坏昵称",
+        "反制":[
+          "say 发现昵称异常玩家，已添加标签 [tag]",
+          "say 很遗憾无法踢出他",
+          "say 玩家名是 [player], 可惜这句也发不出去",
+          "clear @a[tag=[tag]]"
+        ],
+        "登入检查延迟": 20,
+        "定时重新扫描": 120
+      }
+    },
+    {
+      "name": "ContainerScan",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Built-In",
+      "usage": "异常容器(32k)扫描-反制",
+      "configs": {
+        "启用32容器检测": true,
+        "32k物品附魔等级阈值": 100,
+        "32k容器反制": [
+          {
+            "备注": "记录附件玩家位置",
+            "身份": "Player",
+            "结果记录": "完整结果",
+            "指令": "execute [player,x=[x],y=[y],z=[z],r=128] ~~~ tp @s ~~~"
+          },
+          {
+            "备注": "清除容器",
+            "结果记录": "完整结果",
+            "指令": "setblock [x] [y] [z] bedrock"
+          }
+        ]
+      }
     }
   ],
   "触发词": {
