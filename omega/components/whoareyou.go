@@ -44,10 +44,10 @@ func (o *WhoAreYou) Inject(frame defines.MainFrame) {
 }
 
 func (o *WhoAreYou) onLogin(entry protocol.PlayerListEntry) {
-	fmt.Println("新登入")
+	//fmt.Println("新登入")
 	go func() {
 		<-time.NewTimer(time.Second * time.Duration(o.Delay)).C
-		fmt.Println("登入时扫描")
+		//fmt.Println("登入时扫描")
 		o.scan()
 	}()
 
@@ -61,13 +61,14 @@ func (o *WhoAreYou) handleCheckResult(name string) {
 }
 
 func (o *WhoAreYou) Activate() {
-	fmt.Println("激活时扫描")
+	//fmt.Println("激活时扫描")
 	go func() {
+		<-time.NewTimer(time.Second * time.Duration(o.Delay) * 2).C
 		o.scan()
 		t := time.NewTicker(time.Duration(o.Schedule) * time.Second)
 		for {
 			<-t.C
-			fmt.Println("定时扫描")
+			//fmt.Println("定时扫描")
 			o.scan()
 		}
 	}()
@@ -76,7 +77,7 @@ func (o *WhoAreYou) Activate() {
 
 func (o *WhoAreYou) scan() {
 	if o.onScan {
-		fmt.Println("跳过扫描")
+		//fmt.Println("跳过扫描")
 		return
 	}
 	o.onScan = true
