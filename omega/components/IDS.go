@@ -2,6 +2,7 @@ package components
 
 import (
 	"encoding/json"
+	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
@@ -78,6 +79,7 @@ func (o *IntrusionDetectSystem) onSeeMobItem(pk *packet.MobEquipment) {
 					playerName = p.Username
 				}
 			}
+			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("发现 32k 玩家 %v", playerName))
 			marshal, _ := json.Marshal(pk)
 			o.Frame.GetBackendDisplay().Write(string(marshal))
 			utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.k32Response, map[string]interface{}{
@@ -99,6 +101,7 @@ func (o *IntrusionDetectSystem) onSeePlayer(pk *packet.AddPlayer) {
 			}
 		})
 		if has32K {
+			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("发现 32k 玩家 %v", pk.Username))
 			marshal, _ := json.Marshal(pk)
 			o.Frame.GetBackendDisplay().Write(string(marshal))
 			utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.k32Response, map[string]interface{}{

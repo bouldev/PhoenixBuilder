@@ -90,17 +90,28 @@ func (o *WhoAreYou) scan() {
 		allName = append(allName, player.Username)
 	}
 	go func() {
-		<-time.NewTimer(time.Second / 10).C
-		cmd("tag @a remove " + o.checkRngMark2)
 		for _, name := range allName {
+			cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
 			cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
 		}
-		<-time.NewTimer(time.Second / 10).C
+		<-time.NewTimer(time.Second / 5).C
+		cmd("tag @a remove " + o.checkRngMark2)
+		for _, name := range allName {
+			cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
+			cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
+		}
+		<-time.NewTimer(time.Second / 5).C
+		for _, name := range allName {
+			cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
+			cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
+		}
 		illegal_names := []string{}
 		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("testfor @a[tag="+o.checkTag+",tag="+o.checkRngMark1+",tag=!"+o.checkRngMark2+"]", func(output *packet.CommandOutput) {
 			if output.SuccessCount < 1 {
 				o.onScan = false
 				cmd("tag @a remove " + o.checkRngMark1)
+				cmd("tag @a remove " + o.checkRngMark2)
+				cmd("tag @a remove " + o.checkTag)
 				return
 			}
 			for _, msg := range output.OutputMessages {
@@ -114,6 +125,8 @@ func (o *WhoAreYou) scan() {
 				o.handleCheckResult(name)
 			}
 			cmd("tag @a remove " + o.checkRngMark1)
+			cmd("tag @a remove " + o.checkRngMark2)
+			cmd("tag @a remove " + o.checkTag)
 			o.onScan = false
 		})
 	}()
