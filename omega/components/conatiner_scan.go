@@ -2,6 +2,7 @@ package components
 
 import (
 	"encoding/json"
+	"fmt"
 	"phoenixbuilder/dragonfly/server/world/chunk"
 	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -37,7 +38,7 @@ func (o *ContainerScan) checkNbt(x, y, z int, nbt map[string]interface{}, getStr
 		}
 	})
 	if has32K {
-		o.Frame.GetBackendDisplay().Write(getStr())
+		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("位于 %v %v %v 的32k方块:"+getStr(), x, y, z))
 		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.k32Response, map[string]interface{}{
 			"[x]": x,
 			"[y]": y,
@@ -55,7 +56,7 @@ func (o *ContainerScan) onLevelChunk(pk *packet.LevelChunk) {
 		for pos, nbt := range decode.BlockNBT() {
 			x, y, z := pos.X(), pos.Y(), pos.Z()
 			o.checkNbt(int(x), int(y), int(z), nbt, func() string {
-				marshal, _ := json.Marshal(pk)
+				marshal, _ := json.Marshal(nbt)
 				return string(marshal)
 			})
 		}
@@ -67,7 +68,7 @@ func (o *ContainerScan) onBlockActorData(pk *packet.BlockActorData) {
 		nbt := pk.NBTData
 		x, y, z := pk.Position.X(), pk.Position.Y(), pk.Position.Z()
 		o.checkNbt(int(x), int(y), int(z), nbt, func() string {
-			marshal, _ := json.Marshal(pk)
+			marshal, _ := json.Marshal(nbt)
 			return string(marshal)
 		})
 	}
