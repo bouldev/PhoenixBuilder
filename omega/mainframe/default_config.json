@@ -551,6 +551,17 @@
           }
         ]
       }
+    },
+    {
+      "name": "KeepAlive",
+      "disabled": false,
+      "version": "0.0.1",
+      "source": "Core",
+      "usage": "检测Omega是否假死",
+      "configs": {
+        "检测周期": 30,
+        "最大延迟": 3
+      }
     }
   ],
   "触发词": {

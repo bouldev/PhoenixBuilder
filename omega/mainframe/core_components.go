@@ -429,7 +429,7 @@ type nameEntry struct {
 
 type NameRecord struct {
 	*BaseCoreComponent
-	Records  map[string]nameEntry
+	Records  map[string]*nameEntry
 	FileName string `json:"改名历史记录文件"`
 }
 
@@ -454,7 +454,7 @@ func (o *NameRecord) update(name, uuid string) {
 			player.NameRecord = append(player.NameRecord, updateString)
 		}
 	} else {
-		o.Records[uuid] = nameEntry{
+		o.Records[uuid] = &nameEntry{
 			CurrentName:    name,
 			LastUpdateTime: newTime,
 			NameRecord: []string{
@@ -471,7 +471,7 @@ func (o *NameRecord) Stop() error {
 
 func (o *NameRecord) Inject(frame defines.MainFrame) {
 	o.mainFrame = frame
-	o.Records = map[string]nameEntry{}
+	o.Records = map[string]*nameEntry{}
 	err := frame.GetJsonData(o.FileName, &o.Records)
 	if err != nil {
 		panic(err)
@@ -492,11 +492,66 @@ func (o *NameRecord) Activate() {
 	}
 }
 
+type KeepAlive struct {
+	*BaseCoreComponent
+	Schedule int `json:"检测周期"`
+	Delay    int `json:"最大延迟"`
+	replay   bool
+}
+
+func (o *KeepAlive) Init(cfg *defines.ComponentConfig) {
+	o.BaseCoreComponent.Init(cfg)
+	m, _ := json.Marshal(cfg.Configs)
+	if err := json.Unmarshal(m, o); err != nil {
+		panic(err)
+	}
+}
+
+func (o *KeepAlive) Inject(frame defines.MainFrame) {
+	o.mainFrame = frame
+	o.mainFrame.GetGameListener().SetGameChatInterceptor(func(chat *defines.GameChat) (stop bool) {
+		if len(chat.Msg) > 0 && chat.Msg[0] == "alive" {
+			o.replay = true
+			return true
+		}
+		return false
+	})
+}
+
+func (o *KeepAlive) Activate() {
+	o.BaseCoreComponent.Activate()
+	t := time.NewTicker(time.Second * time.Duration(o.Schedule))
+	go func() {
+		for {
+			<-t.C
+			o.replay = false
+			o.mainFrame.GetGameControl().SendCmdAndInvokeOnResponse("w @s alive", func(output *packet.CommandOutput) {
+				o.replay = true
+			})
+			<-time.NewTimer(time.Second * time.Duration(o.Delay)).C
+			if o.replay == false {
+				o.mainFrame.GetBackendDisplay().Write("连接检查失败，疑似Omega假死，准备退出...")
+				o.omega.Stop()
+				fmt.Println("3秒后退出")
+				<-time.NewTimer(time.Second * 3).C
+				panic("Omega 假死，已退出...\n" +
+					"可以配合如下启动指令使 Omega 系统自动循环重启 (注意，延迟不得小于30秒，否则可能被封号)\n" +
+					"对于windows系统： \n" +
+					"for /l %i in (0,0,1) do @fastbuilder-windows.exe --omega_system -c 租赁服号 & @TIMEOUT /T 30 /NOBREAK\n" +
+					"对于其他系统：\n" +
+					"while true; ./fastbuilder -c 租赁服号 --omega_system; sleep 30; done\n")
+			}
+		}
+	}()
+
+}
+
 func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 	return map[string]func() defines.CoreComponent{
 		"Menu":        func() defines.CoreComponent { return &Menu{BaseCoreComponent: &BaseCoreComponent{}} },
 		"CmdSender":   func() defines.CoreComponent { return &CmdSender{BaseCoreComponent: &BaseCoreComponent{}} },
 		"NoSQLDBUtil": func() defines.CoreComponent { return &NoSQLDBUtil{&BaseCoreComponent{}} },
 		"NameRecord":  func() defines.CoreComponent { return &NameRecord{BaseCoreComponent: &BaseCoreComponent{}} },
+		"KeepAlive":   func() defines.CoreComponent { return &KeepAlive{BaseCoreComponent: &BaseCoreComponent{}} },
 	}
 }
