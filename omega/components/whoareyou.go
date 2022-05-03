@@ -119,6 +119,10 @@ func (o *WhoAreYou) scan() {
 					illegal_names = append(illegal_names, msg.Parameters[0])
 				}
 			}
+			for _, name := range allName {
+				cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
+				cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
+			}
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("发现违规昵称: %v,添加tag: @a[tag=%v]", illegal_names, o.Tag))
 			cmd(fmt.Sprintf("tag @a[tag="+o.checkTag+",tag="+o.checkRngMark1+",tag=!"+o.checkRngMark2+"] add %v", o.Tag))
 			for _, name := range illegal_names {
