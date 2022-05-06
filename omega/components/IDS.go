@@ -119,8 +119,11 @@ func (o *IntrusionDetectSystem) Activate() {
 				<-t.C
 				//fmt.Println("巡逻")
 				o.Frame.GetGameControl().SendCmd("effect @s invisibility 60 1 true")
-				o.Frame.GetGameControl().SendCmd("tp @s @r ")
-				o.Frame.GetGameControl().SendCmd("tp @s ~ 255 ~")
+				pos := <-o.Frame.GetGameControl().GetPlayerKit(o.Frame.GetUQHolder().GetBotName()).GetPos("@r[rm=10]")
+				if pos != nil && len(pos) == 3 {
+					// o.Frame.GetGameControl().SendCmd("tp @s @r ")
+					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @s %v 255 %v", pos[0], pos[2]))
+				}
 			}
 		}()
 	}

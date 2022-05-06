@@ -89,6 +89,7 @@ func (o *WhoAreYou) scan() {
 	for _, player := range o.Frame.GetUQHolder().PlayersByEntityID {
 		allName = append(allName, player.Username)
 	}
+	cmd("tag @s remove " + o.checkTag)
 	go func() {
 		for _, name := range allName {
 			cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
@@ -100,11 +101,13 @@ func (o *WhoAreYou) scan() {
 			cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
 			cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
 		}
+		cmd("tag @s remove " + o.checkTag)
 		<-time.NewTimer(time.Second / 5).C
 		for _, name := range allName {
 			cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
 			cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
 		}
+		cmd("tag @s remove " + o.checkTag)
 		illegal_names := []string{}
 		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("testfor @a[tag="+o.checkTag+",tag="+o.checkRngMark1+",tag=!"+o.checkRngMark2+"]", func(output *packet.CommandOutput) {
 			if output.SuccessCount < 1 {
