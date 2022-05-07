@@ -110,8 +110,7 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &ContainerScan{BasicComponent: &BasicComponent{}}
 		},
 		"OpCheck": func() defines.Component {
-			return nil
-			//return &OpCheck{BasicComponent: &BasicComponent{}}
+			return &OpCheck{BasicComponent: &BasicComponent{}}
 		},
 	}
 }

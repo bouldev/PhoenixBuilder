@@ -390,6 +390,15 @@ func runClient(env *environment.PBEnvironment) {
 	configuration.OneId = oneId
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
+	var captureFp *os.File
+	if captureOutputFileName := args.CaptureOutputFile(); captureOutputFileName != "" {
+		if fp, err := os.OpenFile(captureOutputFileName, os.O_CREATE|os.O_WRONLY, 0755); err != nil {
+			panic(err)
+		} else {
+			captureFp = fp
+			fmt.Println("Capture On: FastBuilder > ", captureOutputFileName)
+		}
+	}
 	go func() {
 		if args.NoReadline() {
 			return
@@ -402,6 +411,13 @@ func runClient(env *environment.PBEnvironment) {
 			if env.OmegaAdaptorHolder != nil && !strings.Contains(cmd, "exit") {
 				env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedBackendCommand(cmd)
 				continue
+			}
+			if strings.TrimSpace(cmd) == "capture close" {
+				if captureFp != nil {
+					captureFp.Close()
+					captureFp = nil
+					fmt.Println("Capture Closed")
+				}
 			}
 			if cmd[0] == '.' {
 				ud, _ := uuid.NewUUID()
@@ -472,21 +488,6 @@ func runClient(env *environment.PBEnvironment) {
 	if args.ExternalListenAddress() != "" {
 		external.ListenExt(env, args.ExternalListenAddress())
 	}
-
-	var captureFp *os.File
-	if captureOutputFileName := args.CaptureOutputFile(); captureOutputFileName != "" {
-		if fp, err := os.OpenFile(captureOutputFileName, os.O_CREATE|os.O_WRONLY, 0755); err != nil {
-			panic(err)
-		} else {
-			captureFp = fp
-			fmt.Println("Capture On: FastBuilder > ", captureOutputFileName)
-		}
-	}
-	defer func() {
-		if captureFp != nil {
-			captureFp.Close()
-		}
-	}()
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	for {
 		pk, data, err := conn.ReadPacketAndBytes()
