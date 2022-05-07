@@ -85,7 +85,7 @@ func main() {
 			TimeStamp: time.Now().Unix(),
 		})
 	}
-	provider, err := mcdb.New("/mnt/c/Users/dai/AppData/Local/Packages/Microsoft.MinecraftUWP_8wekyb3d8bbwe/LocalState/games/com.mojang/minecraftWorlds/test_out", opt.FlateCompression)
+	provider, err := mcdb.New("test_out", opt.FlateCompression)
 	if err != nil {
 		panic(err)
 	}
