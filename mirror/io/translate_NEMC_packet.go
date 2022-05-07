@@ -9,12 +9,12 @@ import (
 )
 
 func NEMCPacketToChunkData(p *packet.LevelChunk) (cd *mirror.ChunkData) {
-	c, nbts, err := chunk.NEMCNetworkDecode(p.RawPayload, int(p.SubChunkCount))
+	c, nbt, err := chunk.NEMCNetworkDecode(p.RawPayload[:], int(p.SubChunkCount))
 	if err != nil {
 		return nil
 	}
 	cd = &mirror.ChunkData{
-		Chunk: c, BlockNbts: nbts,
+		Chunk: c, BlockNbts: nbt,
 		ChunkPos:  define.ChunkPos{p.ChunkX, p.ChunkZ},
 		TimeStamp: time.Now().Unix(),
 	}

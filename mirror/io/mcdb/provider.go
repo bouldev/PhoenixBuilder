@@ -269,6 +269,7 @@ func (p *Provider) saveAuxInfo() (err error) {
 
 // Close closes the provider, saving any file that might need to be saved, such as the level.dat.
 func (p *Provider) Close() error {
+	p.saveAuxInfo()
 	return p.db.Close()
 }
 

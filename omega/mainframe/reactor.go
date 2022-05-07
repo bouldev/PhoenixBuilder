@@ -2,8 +2,14 @@ package mainframe
 
 import (
 	"fmt"
+	"github.com/df-mc/goleveldb/leveldb/opt"
+	"github.com/pterm/pterm"
+	"path"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/io"
+	"phoenixbuilder/mirror/io/mcdb"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
@@ -170,6 +176,16 @@ func (r *Reactor) React(pkt packet.Packet) {
 		}
 	case *packet.CommandOutput:
 		o.GameCtrl.onNewCommandFeedBack(p)
+	case *packet.LevelChunk:
+		chunkData := io.NEMCPacketToChunkData(p)
+		if chunkData == nil {
+			break
+		}
+		if err := r.CurrentWorld.Write(chunkData); err != nil {
+			o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
+		} else {
+			//fmt.Println("saving chunk @ ", p.ChunkX<<4, p.ChunkZ<<4)
+		}
 	}
 	for _, cb := range r.OnAnyPacketCallBack {
 		cb(pkt)
@@ -189,10 +205,27 @@ type Reactor struct {
 	GameChatInterceptors      []func(chat *defines.GameChat) (stop bool)
 	GameChatFinalInterceptors []func(chat *defines.GameChat) (stop bool)
 	OnFirstSeePlayerCallback  []func(string)
+	CurrentWorld              mirror.ChunkProvider
 }
 
 func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
 	o.OnFirstSeePlayerCallback = append(o.OnFirstSeePlayerCallback, cb)
+}
+
+func (o *Reactor) onBootstrap() {
+	worldDir := path.Join(o.o.GetWorldsDir(), "current")
+	provider, err := mcdb.New(worldDir, opt.FlateCompression)
+	provider.D.LevelName = "MirrorWorld"
+	if err != nil {
+		panic("创建镜像存档(" + worldDir + ")时出现错误,请尝试重启或移除文件夹" + err.Error())
+	} else {
+		o.o.GetBackendDisplay().Write(pterm.Success.Sprint("镜像存档@" + worldDir))
+	}
+	o.CurrentWorld = provider
+	o.o.CloseFns = append(o.o.CloseFns, func() error {
+		fmt.Println("正在关闭反射世界")
+		return provider.Close()
+	})
 }
 
 func newReactor(o *Omega) *Reactor {

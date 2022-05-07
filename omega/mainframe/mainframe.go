@@ -106,6 +106,17 @@ func (o *Omega) postProcess() {
 			panic(err)
 		}
 	}
+	worldsDir := o.GetPath("worlds")
+	if !utils.IsDir(worldsDir) {
+		fmt.Println("创建镜像存档文件夹: " + worldsDir)
+		if err := utils.MakeDirP(worldsDir); err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (o *Omega) GetWorldsDir() string {
+	return path.Join(o.storageRoot, "worlds")
 }
 
 func (o *Omega) GetAllConfigs() []*defines.ComponentConfig {
@@ -355,6 +366,7 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	}
 	o.backendLogger.Write("日志系统已可用,正在激活主框架...")
 	o.backendLogger.Write("加载组件中...")
+	o.Reactor.onBootstrap()
 	if o.loadComponents() == false {
 		o.Stop()
 		return
