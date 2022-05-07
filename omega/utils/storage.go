@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/util"
 	"os"
+
+	"github.com/df-mc/goleveldb/leveldb"
+	"github.com/df-mc/goleveldb/leveldb/util"
 )
 
 func MakeDirP(path string) error {

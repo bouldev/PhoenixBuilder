@@ -6,6 +6,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -111,4 +112,15 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 			time.Sleep(time.Duration(a.Sleep * float32(time.Second)))
 		}
 	}
+}
+
+func GetPlayerList(ctrl defines.GameControl, selector string, onResult func([]string)) {
+	ctrl.SendCmdAndInvokeOnResponse("testfor "+selector, func(output *packet.CommandOutput) {
+		if output.SuccessCount > 0 && len(output.OutputMessages) > 0 && len(output.OutputMessages[0].Parameters) > 0 {
+			players := strings.Split(output.OutputMessages[0].Parameters[0], ", ")
+			onResult(players)
+			return
+		}
+		onResult([]string{})
+	})
 }

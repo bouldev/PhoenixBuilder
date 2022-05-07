@@ -117,13 +117,15 @@ func (o *IntrusionDetectSystem) Activate() {
 			for {
 				t := time.NewTimer(time.Second * time.Duration(o.Patrol))
 				<-t.C
-				//fmt.Println("巡逻")
-				o.Frame.GetGameControl().SendCmd("effect @s invisibility 60 1 true")
-				pos := <-o.Frame.GetGameControl().GetPlayerKit(o.Frame.GetUQHolder().GetBotName()).GetPos("@r[rm=10]")
-				if pos != nil && len(pos) == 3 {
-					// o.Frame.GetGameControl().SendCmd("tp @s @r ")
-					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @s %v 255 %v", pos[0], pos[2]))
-				}
+				utils.GetPlayerList(o.Frame.GetGameControl(), "@r[rm=3]", func(players []string) {
+					if len(players) > 0 {
+						player := players[0]
+						o.Frame.GetBackendDisplay().Write("尝试扫描玩家: " + player)
+						o.Frame.GetGameControl().SendCmd("effect @s invisibility 60 1 true")
+						o.Frame.GetGameControl().SendCmd("tp @s " + player)
+						o.Frame.GetGameControl().SendCmd("tp @s ~ 256 ~")
+					}
+				})
 			}
 		}()
 	}
