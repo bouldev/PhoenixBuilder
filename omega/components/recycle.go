@@ -4,12 +4,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/pterm/pterm"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strconv"
 	"time"
+
+	"github.com/pterm/pterm"
 )
 
 type Option struct {
@@ -79,6 +80,9 @@ func (o *Recycle) getCountsLeft(name string, option string) (time.Time, int) {
 }
 
 func (o *Recycle) computeMaxRecycleCount(name string, option string, maxCount int) int {
+	if maxCount == 0 {
+		return 999
+	}
 	t, count := o.getCountsLeft(name, option)
 	if count < 0 {
 		count = 0
@@ -116,6 +120,10 @@ func (o *Recycle) popMenu(name string) {
 	pk := o.Frame.GetGameControl().GetPlayerKit(name)
 	availableOptions := []string{}
 	for i, e := range o.Options {
+		leftStr := "无限制"
+		if e.MaxRecyclePerDay != 0 {
+			leftStr = fmt.Sprintf("%v", o.computeMaxRecycleCount(name, e.Name, e.MaxRecyclePerDay))
+		}
 		I := i + 1
 		m := utils.FormateByRepalcment(o.Format, map[string]interface{}{
 			"[i]":             I,
@@ -123,7 +131,7 @@ func (o *Recycle) popMenu(name string) {
 			"[description]":   e.Description,
 			"[price]":         e.Price,
 			"[currency_name]": e.CurrencyName,
-			"[maxRecycle]":    o.computeMaxRecycleCount(name, e.Name, e.MaxRecyclePerDay),
+			"[maxRecycle]":    leftStr,
 		})
 		availableOptions = append(availableOptions, e.Name)
 		pk.Say(m)
@@ -154,7 +162,12 @@ func (o *Recycle) popMenu(name string) {
 }
 
 func (o *Recycle) tryHandleAmount(name string, option Option, amount string) {
-	maxC := o.computeMaxRecycleCount(name, option.Name, option.MaxRecyclePerDay)
+	maxC := 0
+	if option.MaxRecyclePerDay != 0 {
+		maxC = o.computeMaxRecycleCount(name, option.Name, option.MaxRecyclePerDay)
+	} else {
+		maxC = 999
+	}
 	if maxC == 0 {
 		o.Frame.GetGameControl().GetPlayerKit(name).Say("已经不能再回收了，明天再来吧")
 		return
@@ -176,10 +189,15 @@ func (o *Recycle) tryHandleAmount(name string, option Option, amount string) {
 }
 
 func (o *Recycle) askForAmount(name string, option Option) {
-	maxC := o.computeMaxRecycleCount(name, option.Name, option.MaxRecyclePerDay)
-	if maxC == 0 {
-		o.Frame.GetGameControl().GetPlayerKit(name).Say("已经不能再回收了，明天再来吧")
-		return
+	maxC := 0
+	if option.MaxRecyclePerDay != 0 {
+		maxC = o.computeMaxRecycleCount(name, option.Name, option.MaxRecyclePerDay)
+		if maxC == 0 {
+			o.Frame.GetGameControl().GetPlayerKit(name).Say("已经不能再回收了，明天再来吧")
+			return
+		}
+	} else {
+		maxC = 999
 	}
 	hint, resolver := utils.GenIntRangeResolver(1, maxC)
 	if o.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
@@ -224,20 +242,27 @@ func (o *Recycle) startRecycle(name string, option Option, amount int) {
 
 func (o *Recycle) onRecycleSuccess(name string, option Option, realCount int) {
 	//o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 回收 %v * %v 收益 %v (%v->%v)"))
-	maxC := o.computeMaxRecycleCount(name, option.Name, option.MaxRecyclePerDay)
-	Cleft := maxC - realCount
-	if Cleft < 0 {
-		Cleft = 0
+	leftStr := "无限制"
+	if option.MaxRecyclePerDay != 0 {
+		maxC := o.computeMaxRecycleCount(name, option.Name, option.MaxRecyclePerDay)
+		Cleft := maxC - realCount
+		if Cleft < 0 {
+			Cleft = 0
+		}
+		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 回收 %v * %v 收益 %v (%v->%v)", name, realCount, option.Name, realCount*option.Price, maxC, Cleft))
+		o.setCountsLeft(name, option.Name, Cleft)
+		leftStr = fmt.Sprintf("%v", Cleft)
+	} else {
+		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 回收 %v * %v 收益 %v", name, realCount, option.Name, realCount*option.Price))
 	}
-	o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 回收 %v * %v 收益 %v (%v->%v)", name, realCount, option.Name, realCount*option.Price, maxC, Cleft))
-	o.setCountsLeft(name, option.Name, Cleft)
+
 	o.Frame.GetGameControl().SayTo(name, "回收成功")
 	for _, t := range option.RewardCmds {
 		c := utils.FormateByRepalcment(t, map[string]interface{}{
 			"[player]":     name,
 			"[realCount]":  realCount,
 			"[totalPrice]": realCount * option.Price,
-			"[leftCount]":  Cleft,
+			"[leftCount]":  leftStr,
 			"[price]":      option.Price,
 		})
 		fmt.Println(c)

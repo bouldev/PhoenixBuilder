@@ -5,6 +5,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
+	"time"
 )
 
 type BackToHQ struct {
@@ -27,11 +28,15 @@ func (o *BackToHQ) back(chat *defines.GameChat) bool {
 			"[player]": chat.Name,
 			"[bot]":    o.Frame.GetUQHolder().GetBotName(),
 		}), func(output *packet.CommandOutput) {
-			o.Frame.GetGameControl().SendCmd(
-				utils.FormateByRepalcment(o.ToHQ, map[string]interface{}{
-					"[player]": chat.Name,
-					"[bot]":    o.Frame.GetUQHolder().GetBotName(),
-				}))
+			go func() {
+				<-time.NewTimer(time.Second / 20).C
+				o.Frame.GetGameControl().SendCmd(
+					utils.FormateByRepalcment(o.ToHQ, map[string]interface{}{
+						"[player]": chat.Name,
+						"[bot]":    o.Frame.GetUQHolder().GetBotName(),
+					}),
+				)
+			}()
 		})
 	return true
 }

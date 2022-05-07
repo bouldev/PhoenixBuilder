@@ -12,6 +12,18 @@
     ]
   },
   {
+    "选项名": "glass",
+    "附加说明": "玻璃，每天最多回收设为0时数量无限制",
+    "货币名": "金币",
+    "价格": 10,
+    "每天最多回收": 0,
+    "清除模版": "clear [player] glass -1 [count]",
+    "收益指令": [
+      "scoreboard player add [player] coin [totalPrice]",
+      "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 实际回收了 [realCount] 个玻璃, 共计 [totalPrice] 金币\"}]}"
+    ]
+  },
+  {
     "选项名": "书",
     "附加说明": "书中自有黄金屋",
     "货币名": "金锭",
