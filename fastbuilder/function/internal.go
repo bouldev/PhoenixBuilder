@@ -396,6 +396,18 @@ func InitInternalFunctions(fh *FunctionHolder) {
 		},
 	})
 	fh.RegisterFunction(&Function {
+		Name: "export(legacy)",
+		OwnedKeywords: []string{"lexport"},
+		FunctionType: FunctionTypeRegular,
+		FunctionContent: func(env *environment.PBEnvironment,msg string) {
+			task := fbtask.CreateLegacyExportTask(msg, env)
+			if task==nil {
+				return
+			}
+			env.CommandSender.Tellraw(fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
+		},
+	})
+	fh.RegisterFunction(&Function {
 		Name: "say",
 		OwnedKeywords: []string {"say"},
 		FunctionType:FunctionTypeSimple,
