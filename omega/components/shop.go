@@ -4,13 +4,10 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strconv"
-
-	"github.com/pterm/pterm"
 )
 
 type Good struct {
@@ -34,11 +31,10 @@ type PlainGood struct {
 
 type Shop struct {
 	*BasicComponent
-	FileName   string   `json:"商品清单文件"`
-	Triggers   []string `json:"触发词"`
-	Format     string   `json:"展示模版"`
-	FormatOnce string   `json:"一次只能购买一个时的展示模版"`
-	Goods      map[string]GoodsGroup
+	Goods      map[string]GoodsGroup `json:"商品清单文件"`
+	Triggers   []string              `json:"触发词"`
+	Format     string                `json:"展示模版"`
+	FormatOnce string                `json:"一次只能购买一个时的展示模版"`
 	PlainItems map[string]PlainGood
 }
 
@@ -48,9 +44,6 @@ func (o *Shop) Init(cfg *defines.ComponentConfig) {
 		panic(err)
 	}
 }
-
-//go:embed default_goods.json
-var defaultGoods []byte
 
 func (o *Shop) askForItemList(chat *defines.GameChat) {
 	groupNames := []string{}
@@ -192,22 +185,6 @@ func (o *Shop) guide(chat *defines.GameChat) bool {
 
 func (o *Shop) Inject(frame defines.MainFrame) {
 	o.Frame = frame
-	relpath := o.Frame.GetRelativeFileName(o.FileName)
-	if !utils.IsFile(relpath) {
-		absPath, err := filepath.Abs(relpath)
-		if err != nil {
-			panic(err)
-		}
-		pterm.Warning.Printf("没有检测到商品清单文件,将在 %v 下展开默认商品清单\n(绝对路径为 %v)\n", relpath, absPath)
-		err = o.Frame.WriteFileData(o.FileName, defaultGoods)
-		if err != nil {
-			panic(err)
-		}
-	}
-	err := o.Frame.GetJsonData(o.FileName, &o.Goods)
-	if err != nil {
-		panic(err)
-	}
 	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,

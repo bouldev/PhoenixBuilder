@@ -31,85 +31,85 @@ func (bc *BasicComponent) Stop() error {
 
 func GetComponentsPool() map[string]func() defines.Component {
 	return map[string]func() defines.Component{
-		"Bonjour": func() defines.Component {
+		"入服欢迎": func() defines.Component {
 			return &Bonjour{BasicComponent: &BasicComponent{}}
 		},
-		"ChatLogger": func() defines.Component {
+		"聊天记录": func() defines.Component {
 			return &ChatLogger{BasicComponent: &BasicComponent{}}
 		},
-		"Banner": func() defines.Component {
+		"系统上线提示": func() defines.Component {
 			return &Banner{BasicComponent: &BasicComponent{}}
 		},
-		"FeedBack": func() defines.Component {
+		"反馈信息": func() defines.Component {
 			return &FeedBack{BasicComponent: &BasicComponent{}}
 		},
-		"Memo": func() defines.Component {
+		"玩家留言": func() defines.Component {
 			return &Memo{BasicComponent: &BasicComponent{}}
 		},
-		"PlayerTP": func() defines.Component {
+		"玩家互传": func() defines.Component {
 			return &PlayerTP{BasicComponent: &BasicComponent{}}
 		},
-		"BackToHQ": func() defines.Component {
+		"返回主城": func() defines.Component {
 			return &BackToHQ{BasicComponent: &BasicComponent{}}
 		},
-		"SetSpawnPoint": func() defines.Component {
+		"设置重生点": func() defines.Component {
 			return &SetSpawnPoint{BasicComponent: &BasicComponent{}}
 		},
-		"Respawn": func() defines.Component {
+		"玩家自杀": func() defines.Component {
 			return &Respawn{BasicComponent: &BasicComponent{}}
 		},
-		"AboutMe": func() defines.Component {
+		"玩家信息": func() defines.Component {
 			return &AboutMe{BasicComponent: &BasicComponent{}}
 		},
-		"Portal": func() defines.Component {
+		"自定义传送点": func() defines.Component {
 			return &Portal{BasicComponent: &BasicComponent{}}
 		},
-		"Immortal": func() defines.Component {
+		"返回死亡点": func() defines.Component {
 			return &Immortal{BasicComponent: &BasicComponent{}}
 		},
-		"Kick": func() defines.Component {
+		"踢人": func() defines.Component {
 			return &Kick{BasicComponent: &BasicComponent{}}
 		},
-		"Shop": func() defines.Component {
+		"商店": func() defines.Component {
 			return &Shop{BasicComponent: &BasicComponent{}}
 		},
-		"QGroupLink": func() defines.Component {
+		"群服互通": func() defines.Component {
 			return &qqGroupLink.QGroupLink{}
 		},
-		"Recycle": func() defines.Component {
+		"物品回收": func() defines.Component {
 			return &Recycle{BasicComponent: &BasicComponent{}}
 		},
-		"FakeOP": func() defines.Component {
+		"OP权限模拟": func() defines.Component {
 			return &FakeOp{BasicComponent: &BasicComponent{}}
 		},
-		"SimpleCmd": func() defines.Component {
+		"简单自定义指令": func() defines.Component {
 			return &SimpleCmd{BasicComponent: &BasicComponent{}}
 		},
-		"Schedule": func() defines.Component {
+		"计划任务": func() defines.Component {
 			return &Schedule{BasicComponent: &BasicComponent{}}
 		},
-		"TimeSync": func() defines.Component {
+		"时间同步": func() defines.Component {
 			return &TimeSync{BasicComponent: &BasicComponent{}}
 		},
-		"MoneyTransfer": func() defines.Component {
+		"玩家转账": func() defines.Component {
 			return &MoneyTransfer{BasicComponent: &BasicComponent{}}
 		},
-		"StructureBackup": func() defines.Component {
+		"自助建筑备份": func() defines.Component {
 			return &StructureBackup{BasicComponent: &BasicComponent{}}
 		},
-		"Crash": func() defines.Component {
+		"同步退出": func() defines.Component {
 			return &Crash{BasicComponent: &BasicComponent{}}
 		},
-		"IntrusionDetectSystem": func() defines.Component {
+		"手持32k检测": func() defines.Component {
 			return &IntrusionDetectSystem{BasicComponent: &BasicComponent{}}
 		},
-		"WhoAreYou": func() defines.Component {
+		"违规昵称检测": func() defines.Component {
 			return &WhoAreYou{BasicComponent: &BasicComponent{}}
 		},
-		"ContainerScan": func() defines.Component {
+		"32k方块检测": func() defines.Component {
 			return &ContainerScan{BasicComponent: &BasicComponent{}}
 		},
-		"OpCheck": func() defines.Component {
+		"管理员检测": func() defines.Component {
 			return &OpCheck{BasicComponent: &BasicComponent{}}
 		},
 	}

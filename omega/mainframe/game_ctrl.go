@@ -413,7 +413,7 @@ func (g *GameCtrl) SetOnParamMsg(name string, cb func(chat *defines.GameChat) (c
 func newGameCtrl(o *Omega) *GameCtrl {
 	c := &GameCtrl{
 		WriteFn:             o.adaptor.Write,
-		ExpectedCmdFeedBack: o.fullConfig.CommandFeedBackByDefault,
+		ExpectedCmdFeedBack: o.OmegaConfig.CommandFeedBackByDefault,
 		CurrentCmdFeedBack:  false,
 		uuidLock:            sync.Mutex{},
 		uuidMaps:            make(map[string]func(output *packet.CommandOutput)),

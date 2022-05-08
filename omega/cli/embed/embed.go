@@ -57,7 +57,6 @@ func EnableOmegaSystem(env *environment.PBEnvironment) *EmbeddedAdaptor {
 		PacketFeeder:     make(chan mc_packet.Packet, 1024),
 	}
 	omega := mainframe.NewOmega()
-	omega.SetRoot("omega_storage")
 	omega.Bootstrap(ea)
 	env.OmegaHolder = omega
 	env.OmegaAdaptorHolder = ea

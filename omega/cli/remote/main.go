@@ -104,7 +104,6 @@ func main() {
 	mainFrame = mainframe.NewOmega()
 
 	// configuration
-	mainFrame.SetRoot("omega_storage")
 	stop := func() {
 		mainFrame.Stop()
 		os.Exit(0)

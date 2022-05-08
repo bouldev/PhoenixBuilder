@@ -83,8 +83,8 @@ func (m *Menu) popup() {
 	(&pterm.PrefixPrinter{Prefix: me}).Println(pterm.BgGray.Sprint(pterm.Bold.Sprintf("exit ")) + "关闭系统")
 	pterm.NewStyle(pterm.BgDarkGray, pterm.FgLightWhite, pterm.Bold).
 		Println(toWidth("游戏菜单", 124))
-	triggerWords := m.mainFrame.QueryConfig("TriggerWords").([]string)
-	defaultTrigger := m.mainFrame.QueryConfig("DefaultTigger").(string)
+	triggerWords := m.omega.OmegaConfig.Trigger.TriggerWords
+	defaultTrigger := m.omega.OmegaConfig.Trigger.DefaultTigger
 
 	if len(triggerWords) == 0 {
 		pterm.Error.Println("没有触发词")
@@ -130,7 +130,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat) bool {
 	pk.Say("Omega · Async Rental Server Auxiliary · System · Author: §l2401PT")
 	pk.Say("基于 PhoenixBuilder, 原型来自 CMA 服务器的 Omega 系统，此处感谢 CMA 的小伙伴们")
 	pk.Say(fmt.Sprintf(m.MenuHead))
-	systemTrigger := m.mainFrame.QueryConfig("DefaultTigger").(string)
+	systemTrigger := m.omega.OmegaConfig.Trigger.DefaultTigger
 	menuFmt := m.MenuFormat
 	multipleFmt := m.MenuFormatWithMultipleTriggers
 	for _i, e := range m.omega.Reactor.GameMenuEntries {
@@ -548,10 +548,10 @@ func (o *KeepAlive) Activate() {
 
 func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 	return map[string]func() defines.CoreComponent{
-		"Menu":        func() defines.CoreComponent { return &Menu{BaseCoreComponent: &BaseCoreComponent{}} },
-		"CmdSender":   func() defines.CoreComponent { return &CmdSender{BaseCoreComponent: &BaseCoreComponent{}} },
-		"NoSQLDBUtil": func() defines.CoreComponent { return &NoSQLDBUtil{&BaseCoreComponent{}} },
-		"NameRecord":  func() defines.CoreComponent { return &NameRecord{BaseCoreComponent: &BaseCoreComponent{}} },
-		"KeepAlive":   func() defines.CoreComponent { return &KeepAlive{BaseCoreComponent: &BaseCoreComponent{}} },
+		"菜单显示":      func() defines.CoreComponent { return &Menu{BaseCoreComponent: &BaseCoreComponent{}} },
+		"指令发送":      func() defines.CoreComponent { return &CmdSender{BaseCoreComponent: &BaseCoreComponent{}} },
+		"数据库导入导出工具": func() defines.CoreComponent { return &NoSQLDBUtil{&BaseCoreComponent{}} },
+		"改名记录":      func() defines.CoreComponent { return &NameRecord{BaseCoreComponent: &BaseCoreComponent{}} },
+		"假死检测":      func() defines.CoreComponent { return &KeepAlive{BaseCoreComponent: &BaseCoreComponent{}} },
 	}
 }

@@ -21,25 +21,39 @@ type ConnectionAdaptor interface {
 }
 
 // System 描述了可以通过哪些接口控制这个租赁服框架
-// 事实上，配置主要是通过 SetRoot 文件夹下的配置文件实现的，所以这些接口很简单
-// 顺序 .SetRoot(root string) -> Bootstrap(ConnectionAdaptor) -> Activate() -> 连接断开时 -> Stop
+// 事实上，配置主要是通过配置文件实现的，所以这些接口很简单
+// 顺序 .Bootstrap(ConnectionAdaptor) -> Activate() -> 连接断开时 -> Stop
 // 请勿尝试 recover 其中的错误，如果发生崩溃，应该整个重启
 type System interface {
 	FullyStopped() chan struct{}
 	Stop() error
-	SetRoot(root string)
 	Bootstrap(ConnectionAdaptor)
 	Activate()
 }
 
+type TriggerConfig struct {
+	DefaultTigger     string   `yaml:"默认触发词" json:"默认触发词"`
+	TriggerWords      []string `yaml:"允许的触发词" json:"允许的触发词"`
+	AllowNoSpace      bool     `yaml:"允许关键词之间没有空格" json:"允许关键词之间没有空格"`
+	RemoveSuffixColor bool     `yaml:"去除花哨的用户名" json:"去除花哨的用户名"`
+	AllowWisper       bool     `yaml:"允许悄悄话唤醒" json:"允许悄悄话唤醒"`
+}
+
+type OmegaConfig struct {
+	Name                     string         `yaml:"系统名" json:"name,omitempty"`
+	Version                  string         `yaml:"版本" json:"version,omitempty"`
+	Trigger                  *TriggerConfig `yaml:"触发词" json:"触发词"`
+	CommandFeedBackByDefault bool           `yaml:"默认情况下是否有commandfeedback" json:"默认情况下是否有commandfeedback,omitempty"`
+}
+
 // ComponentConfig 描述了 插件 的配置内容，必须保证可被 yaml 正确处理
 type ComponentConfig struct {
-	Name        string                 `yaml:"name" json:"name"`
-	Description string                 `yaml:"description" json:"description"`
-	Disabled    bool                   `yaml:"disabled" json:"disabled"`
-	Version     string                 `yaml:"version" json:"version"`
-	Source      string                 `yaml:"source" json:"source"`
-	Configs     map[string]interface{} `yaml:"configs" json:"configs"`
+	Name        string                 `json:"名称"`
+	Description string                 `json:"描述"`
+	Disabled    bool                   `json:"是否禁用"`
+	Version     string                 `json:"版本"`
+	Source      string                 `json:"来源"`
+	Configs     map[string]interface{} `json:"配置"`
 }
 
 // Component 描述了插件应该具有的接口

@@ -1,10 +1,11 @@
 package defines
 
 import (
-	"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+
+	"github.com/google/uuid"
 )
 
 type LineSource interface {
@@ -69,7 +70,7 @@ type CtxProvider interface {
 // ConfigProvider 是帮助一个插件获得和修改别的插件的接口
 // 如果仅仅需要自己的配置，这是不必要的
 type ConfigProvider interface {
-	QueryConfig(name string) interface{}
+	GetOmegaConfig() *OmegaConfig
 	GetAllConfigs() []*ComponentConfig
 }
 

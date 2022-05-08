@@ -2,8 +2,6 @@ package mainframe
 
 import (
 	"fmt"
-	"github.com/df-mc/goleveldb/leveldb/opt"
-	"github.com/pterm/pterm"
 	"path"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -13,6 +11,9 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
+
+	"github.com/df-mc/goleveldb/leveldb/opt"
+	"github.com/pterm/pterm"
 )
 
 func (o *Reactor) SetGameMenuEntry(entry *defines.GameMenuEntry) {
@@ -33,8 +34,8 @@ func (o *Reactor) gameMenuEntryToStdInterceptor(entry *defines.GameMenuEntry) fu
 		if !chat.FrameWorkTriggered {
 			return false
 		}
-		if trig, reducedCmds := utils.CanTrigger(chat.Msg, entry.Triggers, o.o.fullConfig.Trigger.AllowNoSpace,
-			o.o.fullConfig.Trigger.RemoveSuffixColor); trig {
+		if trig, reducedCmds := utils.CanTrigger(chat.Msg, entry.Triggers, o.o.OmegaConfig.Trigger.AllowNoSpace,
+			o.o.OmegaConfig.Trigger.RemoveSuffixColor); trig {
 			_c := chat
 			_c.Msg = reducedCmds
 			return entry.OptionalOnTriggerFn(_c)
@@ -96,14 +97,14 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 	}
 	c.FrameWorkTriggered, c.Msg = utils.CanTrigger(
 		msgs,
-		o.fullConfig.Trigger.TriggerWords,
-		o.fullConfig.Trigger.AllowNoSpace,
-		o.fullConfig.Trigger.RemoveSuffixColor,
+		o.OmegaConfig.Trigger.TriggerWords,
+		o.OmegaConfig.Trigger.AllowNoSpace,
+		o.OmegaConfig.Trigger.RemoveSuffixColor,
 	)
 	return c
 }
 func (o *Reactor) GetTriggerWord() string {
-	return o.o.fullConfig.Trigger.DefaultTigger
+	return o.o.OmegaConfig.Trigger.DefaultTigger
 }
 
 func (o *Omega) GetGameListener() defines.GameListener {
@@ -150,7 +151,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.Text:
 		o.backendLogger.Write(fmt.Sprintf("%v(%v):%v", p.SourceName, p.TextType, p.Message))
 		chat := o.convertTextPacket(p)
-		if p.TextType == packet.TextTypeWhisper && o.fullConfig.Trigger.AllowWisper {
+		if p.TextType == packet.TextTypeWhisper && o.OmegaConfig.Trigger.AllowWisper {
 			chat.FrameWorkTriggered = true
 		}
 		r.Throw(chat)

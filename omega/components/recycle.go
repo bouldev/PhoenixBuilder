@@ -9,8 +9,6 @@ import (
 	"phoenixbuilder/omega/utils"
 	"strconv"
 	"time"
-
-	"github.com/pterm/pterm"
 )
 
 type Option struct {
@@ -32,11 +30,10 @@ type LimitRecord struct {
 
 type Recycle struct {
 	*BasicComponent
-	FileName            string   `json:"回收清单文件"`
 	RecordFileName      string   `json:"最后回收记录文件"`
 	Triggers            []string `json:"触发词"`
 	Format              string   `json:"展示模版"`
-	Options             []Option
+	Options             []Option `json:"回收清单文件"`
 	PlayerRecycleRecord map[string]map[string]LimitRecord
 }
 
@@ -47,15 +44,12 @@ func (o *Recycle) Init(cfg *defines.ComponentConfig) {
 	}
 }
 
-//go:embed default_recycle.json
-var defaultRecycleFile []byte
-
-func (o *Recycle) putDefaultFile() {
-	if !utils.IsFile(o.Frame.GetRelativeFileName(o.FileName)) {
-		pterm.Warning.Printf("没有检测到回收清单文件,将在 %v 下展开默认回收清单\n", o.Frame.GetRelativeFileName(o.FileName))
-		o.Frame.WriteFileData(o.FileName, defaultRecycleFile)
-	}
-}
+// func (o *Recycle) putDefaultFile() {
+// 	if !utils.IsFile(o.Frame.GetRelativeFileName(o.FileName)) {
+// 		pterm.Warning.Printf("没有检测到回收清单文件,将在 %v 下展开默认回收清单\n", o.Frame.GetRelativeFileName(o.FileName))
+// 		o.Frame.WriteFileData(o.FileName, defaultRecycleFile)
+// 	}
+// }
 
 func (o *Recycle) getCountsLeft(name string, option string) (time.Time, int) {
 	if _, ok := o.PlayerRecycleRecord[name]; !ok {
@@ -294,12 +288,12 @@ func (o *Recycle) dispatch(chat *defines.GameChat) bool {
 
 func (o *Recycle) Inject(frame defines.MainFrame) {
 	o.Frame = frame
-	o.putDefaultFile()
-	o.Options = []Option{}
-	err := o.Frame.GetJsonData(o.FileName, &o.Options)
-	if err != nil {
-		panic(err)
-	}
+	// o.putDefaultFile()
+	// o.Options = []Option{}
+	// err := o.Frame.GetJsonData(o.FileName, &o.Options)
+	// if err != nil {
+	// 	panic(err)
+	// }
 	o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 回收项目已加载", len(o.Options)))
 	o.PlayerRecycleRecord = map[string]map[string]LimitRecord{}
 	o.Frame.GetJsonData(o.RecordFileName, &o.PlayerRecycleRecord)
