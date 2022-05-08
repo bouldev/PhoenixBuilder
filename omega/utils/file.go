@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"syscall"
 )
 
 func WriteJsonData(fname string, data interface{}) error {
@@ -68,10 +67,10 @@ func CopyDirectory(scrDir, dest string) error {
 			return err
 		}
 
-		stat, ok := fileInfo.Sys().(*syscall.Stat_t)
-		if !ok {
-			return fmt.Errorf("failed to get raw syscall.Stat_t data for '%s'", sourcePath)
-		}
+		// stat, ok := fileInfo.Sys().(*syscall.Stat_t)
+		// if !ok {
+		// 	return fmt.Errorf("failed to get raw syscall.Stat_t data for '%s'", sourcePath)
+		// }
 
 		switch fileInfo.Mode() & os.ModeType {
 		case os.ModeDir:
@@ -91,9 +90,9 @@ func CopyDirectory(scrDir, dest string) error {
 			}
 		}
 
-		if err := os.Lchown(destPath, int(stat.Uid), int(stat.Gid)); err != nil {
-			return err
-		}
+		// if err := os.Lchown(destPath, int(stat.Uid), int(stat.Gid)); err != nil {
+		// 	return err
+		// }
 
 		isSymlink := entry.Mode()&os.ModeSymlink != 0
 		if !isSymlink {

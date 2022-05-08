@@ -2,6 +2,7 @@ package mainframe
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -178,14 +179,16 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.CommandOutput:
 		o.GameCtrl.onNewCommandFeedBack(p)
 	case *packet.LevelChunk:
-		chunkData := io.NEMCPacketToChunkData(p)
-		if chunkData == nil {
-			break
-		}
-		if err := r.CurrentWorld.Write(chunkData); err != nil {
-			o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
-		} else {
-			//fmt.Println("saving chunk @ ", p.ChunkX<<4, p.ChunkZ<<4)
+		if r.CurrentWorld != nil {
+			chunkData := io.NEMCPacketToChunkData(p)
+			if chunkData == nil {
+				break
+			}
+			if err := r.CurrentWorld.Write(chunkData); err != nil {
+				o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
+			} else {
+				//fmt.Println("saving chunk @ ", p.ChunkX<<4, p.ChunkZ<<4)
+			}
 		}
 	}
 	for _, cb := range r.OnAnyPacketCallBack {
@@ -216,16 +219,34 @@ func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
 func (o *Reactor) onBootstrap() {
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	provider, err := mcdb.New(worldDir, opt.FlateCompression)
-	provider.D.LevelName = "MirrorWorld"
 	if err != nil {
-		panic("创建镜像存档(" + worldDir + ")时出现错误,请尝试重启或移除文件夹" + err.Error())
+		pterm.Error.Println("创建镜像存档(" + worldDir + ")时出现错误,正在尝试移除文件夹, 错误为" + err.Error())
+		if err = os.Rename(worldDir, path.Join(o.o.GetWorldsDir(), "损坏的存档")); err != nil {
+			pterm.Error.Println("移除失败，错误为" + err.Error())
+			//panic(err)
+		}
+		if provider, err = mcdb.New(worldDir, opt.FlateCompression); err != nil {
+			pterm.Error.Println("修复也失败了，错误为" + err.Error())
+			//panic(err)
+		}
+		if provider == nil {
+			for i := 0; i < 10; i++ {
+				pterm.Error.Println("将在没有存档相关功能的情况下运行!")
+			}
+		}
 	} else {
 		o.o.GetBackendDisplay().Write(pterm.Success.Sprint("镜像存档@" + worldDir))
+	}
+	if provider != nil {
+		provider.D.LevelName = "MirrorWorld"
 	}
 	o.CurrentWorld = provider
 	o.o.CloseFns = append(o.o.CloseFns, func() error {
 		fmt.Println("正在关闭反射世界")
-		return provider.Close()
+		if provider != nil {
+			return provider.Close()
+		}
+		return nil
 	})
 }
 
