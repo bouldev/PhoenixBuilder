@@ -18,6 +18,7 @@ func WriteJsonData(fname string, data interface{}) error {
 	}
 	enc := json.NewEncoder(file)
 	enc.SetIndent("", "\t")
+	enc.SetEscapeHTML(false)
 	err = enc.Encode(data)
 	if err != nil {
 		return err

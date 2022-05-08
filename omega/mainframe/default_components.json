@@ -107,7 +107,7 @@
                                                     "商品显示名": "苹果",
                                                     "给予模版": [
                                                             "give [player] apple [count][currency]",
-                                                            "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 苹果是你的了, 共计[totalPrice], 你的钱[moneyHas]-\u003e[moneyLeft][currency]([currencyCMD])\"}]}"
+                                                            "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 苹果是你的了, 共计[totalPrice], 你的钱[moneyHas]->[moneyLeft][currency]([currencyCMD])\"}]}"
                                                     ]
                                             },
                                             {
@@ -177,11 +177,11 @@
                             },
                             {
                                     "备注": "通告",
-                                    "指令": "/tellraw @a {\"rawtext\":[{\"text\":\"[player] 持有(附魔等级\u003e100)的物品，踢出\"}]}"
+                                    "指令": "/tellraw @a {\"rawtext\":[{\"text\":\"[player] 持有(附魔等级>100)的物品，踢出\"}]}"
                             },
                             {
                                     "备注": "踢人",
-                                    "指令": "kick [player] 持有(附魔等级\u003e100)的物品，踢出",
+                                    "指令": "kick [player] 持有(附魔等级>100)的物品，踢出",
                                     "结果记录": "完整结果"
                             }
                     ],
@@ -294,7 +294,7 @@
                             {
                                     "价格": 10,
                                     "收益指令": [
-                                            "scoreboard player add [player] coin [totalPrice]",
+                                            "scoreboard players add [player] coin [totalPrice]",
                                             "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 实际回收了 [realCount] 个羊毛, 共计 [totalPrice] 金币, 现在最多还能回收 [leftCount] 个羊毛\"}]}"
                                     ],
                                     "每天最多回收": 100,
@@ -306,7 +306,7 @@
                             {
                                     "价格": 10,
                                     "收益指令": [
-                                            "scoreboard player add [player] coin [totalPrice]",
+                                            "scoreboard players add [player] coin [totalPrice]",
                                             "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 实际回收了 [realCount] 个玻璃, 共计 [totalPrice] 金币\"}]}"
                                     ],
                                     "每天最多回收": 0,
@@ -365,7 +365,7 @@
             "版本": "0.0.1",
             "来源": "Built-In",
             "配置": {
-                    "显示信息模版": "玩家:[player], 所有tags:[tags], [tag\u003cop\u003e], [tag\u003c会长\u003e], 在线时间:[score\u003ctime\u003e]",
+                    "显示信息模版": "玩家:[player], 所有tags:[tags], [tag<op>], [tag<会长>], 在线时间:[score<time>]",
                     "标签替换": {
                             "op": [
                                     "是OP",
