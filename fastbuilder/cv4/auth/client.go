@@ -183,6 +183,10 @@ func (client *Client) Auth(serverCode string,serverPassword string,key string,fb
 	client.env.FBUCUsername=uc_username
 	client.env.Uid=u_uid
 	str,_:=resp["chainInfo"].(string)
+	signingKey:=resp["privateSigningKey"].(string)
+	keyProve:=resp["prove"].(string)
+	client.env.LocalKey=signingKey
+	client.env.LocalCert=keyProve
 	return str,0,nil
 }
 

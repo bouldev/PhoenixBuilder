@@ -127,7 +127,7 @@ db 'E'
 
 ## Signing
 
-*PhoenixBuilder* 0.3.5 implemented a bdump file signing system in order to identify the file's **real** publisher. Though using the PGP to sign is a good and secure way, we've chosen a signing method that highly depends on our authentication server since it's meaningless to implement the PGP signing just for an online program that can connect to the server anytime.
+*PhoenixBuilder* 0.3.5 implemented a bdump file signing system in order to identify the file's **real** publisher.
 
 Note that a signature isn't required for a `bdx` file unless the user sets a `-S`(strict) flag. If you implemented the signing process, you should make sure that it works correctly since a `bdx` file with an incorrect signature won't be able to be processed by *PhoenixBuilder*.
 
