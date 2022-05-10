@@ -63,6 +63,10 @@ type ChunkWriter interface {
 // GetWithDeadline(pos ChunkPos, deadline time.Time) 若在 deadline 前无法获得数据，那么应该返回 nil
 type ChunkReader interface {
 	Get(ChunkPos define.ChunkPos) (data *ChunkData)
+}
+
+// ChunkRequester 在指定deadline时间之前获得目标区块
+type ChunkRequester interface {
 	GetWithDeadline(pos define.ChunkPos, deadline time.Time) (data *ChunkData)
 }
 
@@ -70,15 +74,6 @@ type ChunkReader interface {
 type ChunkProvider interface {
 	ChunkReader
 	ChunkWriter
-}
-
-// 可以读写区块，但是容量有限制
-// 因此每次写之后都必须检查因超过限制被 Drop 的部分
-// 例如，区块容量 4096 块区块, 当达到该限制时，Drop 出 2048 区块以释放空间
-// 若每次Wirte后未检查容量限制，应该在容量不足时 panic
-type ChunkCacher interface {
-	ChunkProvider
-	GetDroppedChunks() []*ChunkData
 }
 
 type WorldDumper interface {
@@ -92,7 +87,7 @@ type WorldFeeder interface {
 // ChunkCacher 和 ChunkProvider 构成 MirrorWorld 的存储体系
 // offset 描述 Offset Pos (Outside Pos-Inside Pos)
 type MirrorWorld interface {
-	SetChunkCacher(cacher ChunkCacher)
+	SetChunkRequester(requester ChunkRequester)
 	SetChunkProvider(provier ChunkProvider)
 	SetOffSet(offset define.Pos)
 	GetDumper() WorldDumper

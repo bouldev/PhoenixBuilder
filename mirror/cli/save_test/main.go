@@ -54,6 +54,9 @@ func ReadDumpPackets(fileName string) (chunkPackets []*ChunkPacket) {
 			continue
 		}
 		pos += 4
+		if pos+dataLen > len(data) {
+			break
+		}
 		pktByte := data[pos : pos+dataLen]
 		pos += dataLen
 		if pktByte[0] != packet.IDLevelChunk {

@@ -4,8 +4,11 @@ import (
 	_ "embed"
 	"encoding/json"
 	"path"
+	"path/filepath"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
+
+	"github.com/pterm/pterm"
 )
 
 const Version = "0.0.2"
@@ -17,6 +20,17 @@ var defaultConfigBytes []byte
 var defaultComponentsBytes []byte
 
 func (o *Omega) readConfig() {
+	defer func() {
+		r := recover()
+		if r != nil {
+			pterm.Error.Println("配置文件有问题", r)
+			pterm.Error.Println("错误的修改了配置文件或者使用windows记事本打开配置文件都可能导致这种错误")
+			pterm.Warning.Println("但是，不用担心，你总是可以通过删除故障的配置文件使Omega恢复工作！")
+			fullp, _ := filepath.Abs(path.Join(o.storageRoot, "配置"))
+			pterm.Warning.Printfln("配置文件应该位于", fullp, "文件夹中")
+			panic("请修正配置文件")
+		}
+	}()
 	root := o.storageRoot
 	if !utils.IsDir(root) {
 		utils.MakeDirP(root)
@@ -42,7 +56,51 @@ func (o *Omega) readConfig() {
 		if err := utils.DeployComponentConfigs(componentConfigs, root); err != nil {
 			panic(err)
 		}
+	} else {
+		availableComponentConfigs := []*defines.ComponentConfig{}
+		newComponentConfigs := []*defines.ComponentConfig{}
+		groupedConfigs := map[string][]*defines.ComponentConfig{}
+		if err := json.Unmarshal(defaultComponentsBytes, &availableComponentConfigs); err != nil {
+			panic(err)
+		}
+		for _, c := range availableComponentConfigs {
+			if groupedConfigs[c.Name] == nil {
+				groupedConfigs[c.Name] = []*defines.ComponentConfig{c}
+			} else {
+				groupedConfigs[c.Name] = append(groupedConfigs[c.Name], c)
+			}
+		}
+		for _, c := range componentConfigs {
+			if groupedConfigs[c.Name] != nil {
+				delete(groupedConfigs, c.Name)
+			}
+		}
+		for _, group := range groupedConfigs {
+			for _, c := range group {
+				if c.Source == "Core" {
+					pterm.Success.Println("有新核心组件 " + c.Name + " 可用，已自动加入配置并[关闭]")
+					c.Disabled = false
+				} else if c.Source == "Built-In" {
+					pterm.Success.Println("有新内置组件 " + c.Name + " 可用，已自动加入配置并[启用]，请前往 omega_storage/配置/" + c.Name + " 打开")
+					c.Disabled = true
+				}
+				newComponentConfigs = append(newComponentConfigs, c)
+			}
+		}
+		if err := utils.DeployComponentConfigs(newComponentConfigs, root); err != nil {
+			panic(err)
+		}
+		if len(newComponentConfigs) > 0 {
+			pterm.Warning.Println("组件已变更...将重新加载")
+			componentConfigs = utils.CollectComponentConfigs(root)
+		}
 	}
 	o.OmegaConfig = omegaConfig
 	o.ComponentConfigs = componentConfigs
+	for _, c := range o.ComponentConfigs {
+		if c.Source == "Core" && c.Disabled {
+			c.Disabled = false
+			pterm.Error.Printfln("核心组件 %v 不可被禁用，现在已经打开了", c.Name)
+		}
+	}
 }

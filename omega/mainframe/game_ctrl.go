@@ -97,80 +97,80 @@ func (p *PlayerKitOmega) GetOnParamMsg() func(chat *defines.GameChat) (catch boo
 	return f
 }
 
-func (p *PlayerKitOmega) GetPersistStorage(k string) string {
-	if val, hasK := p.persistStorage[k]; !hasK {
-		return ""
-	} else {
-		return val
-	}
-}
+//func (p *PlayerKitOmega) GetPersistStorage(k string) string {
+//	if val, hasK := p.persistStorage[k]; !hasK {
+//		return ""
+//	} else {
+//		return val
+//	}
+//}
 
 func (p *PlayerKitOmega) GetViolatedStorage() map[string]interface{} {
 	return p.violatedStorage
 }
 
-func (p *PlayerKitOmega) CommitPersistStorageChange(k string, v string) {
-	if _, hasK := p.persistStorage[k]; !hasK {
-		return
-	}
-	if v == "" {
-		delete(p.persistStorage, k)
-		p.ctrl.playerStorageDB.Delete("." + p.name + k)
-		return
-	}
-	p.persistStorage[k] = v
-	p.ctrl.playerStorageDB.Commit("."+p.name+k, v)
-}
-
-// not tested
-func (p *PlayerKitOmega) preparePrePlayerStorage() {
-	uq := p.GetRelatedUQ()
-	if uq != nil {
-		ud := uq.UUID.String()
-		currentNameKey := fmt.Sprintf(".%v.current_name.name", ud)
-		currentTimeKey := fmt.Sprintf(".%v.current_name.time", ud)
-		nameHistoryKey := fmt.Sprintf(".%v.current_name.history", ud)
-		currentTime := utils.TimeToString(time.Now())
-		record := p.ctrl.playerNameDB.Get(currentNameKey)
-		if record == "" {
-			m, _ := json.Marshal([][]string{
-				[]string{currentTime, p.name},
-			})
-			p.ctrl.playerNameDB.Commit(nameHistoryKey, string(m))
-		} else if record != p.name {
-			oldName := record
-			newName := p.name
-			records := p.ctrl.playerNameDB.Get(nameHistoryKey)
-			var his [][]string
-			err := json.Unmarshal([]byte(records), &his)
-			if err != nil {
-				fmt.Println(err)
-			}
-			his = append(his, []string{currentTime, newName})
-			m, _ := json.Marshal([][]string{
-				[]string{currentTime, newName},
-			})
-			p.ctrl.playerNameDB.Commit(nameHistoryKey, string(m))
-			p.ctrl.playerStorageDB.IterWithPrefix(func(key string, v string) (stop bool) {
-				newKey := strings.Replace(key, oldName, newName, 1)
-				p.ctrl.playerStorageDB.Commit(newKey, v)
-				p.ctrl.playerStorageDB.Delete(key)
-				return false
-			}, "."+oldName)
-		}
-		p.ctrl.playerNameDB.Commit(currentNameKey, p.name)
-		p.ctrl.playerNameDB.Commit(currentTimeKey, currentTime)
-		p.CommitPersistStorageChange(".last_login_time", currentTime)
-	}
-	p.ctrl.playerStorageDB.IterWithPrefix(func(key string, v string) (stop bool) {
-		p.persistStorage[key] = v
-		return false
-	}, "."+p.name)
-	if p.ctrl.PlayerPermission[p.name] == nil {
-		p.ctrl.PlayerPermission[p.name] = map[string]bool{}
-	}
-	p.Permission = p.ctrl.PlayerPermission[p.name]
-}
+//func (p *PlayerKitOmega) CommitPersistStorageChange(k string, v string) {
+//	if _, hasK := p.persistStorage[k]; !hasK {
+//		return
+//	}
+//	if v == "" {
+//		delete(p.persistStorage, k)
+//		p.ctrl.playerStorageDB.Delete("." + p.name + k)
+//		return
+//	}
+//	p.persistStorage[k] = v
+//	p.ctrl.playerStorageDB.Commit("."+p.name+k, v)
+//}
+//
+//// not tested
+//func (p *PlayerKitOmega) preparePrePlayerStorage() {
+//	uq := p.GetRelatedUQ()
+//	if uq != nil {
+//		ud := uq.UUID.String()
+//		currentNameKey := fmt.Sprintf(".%v.current_name.name", ud)
+//		currentTimeKey := fmt.Sprintf(".%v.current_name.time", ud)
+//		nameHistoryKey := fmt.Sprintf(".%v.current_name.history", ud)
+//		currentTime := utils.TimeToString(time.Now())
+//		record := p.ctrl.playerNameDB.Get(currentNameKey)
+//		if record == "" {
+//			m, _ := json.Marshal([][]string{
+//				[]string{currentTime, p.name},
+//			})
+//			p.ctrl.playerNameDB.Commit(nameHistoryKey, string(m))
+//		} else if record != p.name {
+//			oldName := record
+//			newName := p.name
+//			records := p.ctrl.playerNameDB.Get(nameHistoryKey)
+//			var his [][]string
+//			err := json.Unmarshal([]byte(records), &his)
+//			if err != nil {
+//				fmt.Println(err)
+//			}
+//			his = append(his, []string{currentTime, newName})
+//			m, _ := json.Marshal([][]string{
+//				[]string{currentTime, newName},
+//			})
+//			p.ctrl.playerNameDB.Commit(nameHistoryKey, string(m))
+//			p.ctrl.playerStorageDB.IterWithPrefix(func(key string, v string) (stop bool) {
+//				newKey := strings.Replace(key, oldName, newName, 1)
+//				p.ctrl.playerStorageDB.Commit(newKey, v)
+//				p.ctrl.playerStorageDB.Delete(key)
+//				return false
+//			}, "."+oldName)
+//		}
+//		p.ctrl.playerNameDB.Commit(currentNameKey, p.name)
+//		p.ctrl.playerNameDB.Commit(currentTimeKey, currentTime)
+//		p.CommitPersistStorageChange(".last_login_time", currentTime)
+//	}
+//	p.ctrl.playerStorageDB.IterWithPrefix(func(key string, v string) (stop bool) {
+//		p.persistStorage[key] = v
+//		return false
+//	}, "."+p.name)
+//	if p.ctrl.PlayerPermission[p.name] == nil {
+//		p.ctrl.PlayerPermission[p.name] = map[string]bool{}
+//	}
+//	p.Permission = p.ctrl.PlayerPermission[p.name]
+//}
 
 func newPlayerKitOmega(uq *uqHolder.UQHolder, ctrl *GameCtrl, name string) *PlayerKitOmega {
 	pko, k := ctrl.perPlayerStorage[name]
@@ -178,14 +178,14 @@ func newPlayerKitOmega(uq *uqHolder.UQHolder, ctrl *GameCtrl, name string) *Play
 		return pko
 	}
 	player := &PlayerKitOmega{
-		uq:              uq,
-		ctrl:            ctrl,
-		name:            name,
-		persistStorage:  map[string]string{},
+		uq:   uq,
+		ctrl: ctrl,
+		name: name,
+		//persistStorage:  map[string]string{},
 		violatedStorage: map[string]interface{}{},
 		OnParamMsg:      nil,
 	}
-	player.preparePrePlayerStorage()
+	//player.preparePrePlayerStorage()
 	ctrl.perPlayerStorage[name] = player
 	return player
 }
@@ -229,9 +229,9 @@ type GameCtrl struct {
 	uuidLock            sync.Mutex
 	uq                  *uqHolder.UQHolder
 	perPlayerStorage    map[string]*PlayerKitOmega
-	playerNameDB        defines.NoSqlDB
-	playerStorageDB     defines.NoSqlDB
-	PlayerPermission    map[string]map[string]bool
+	//playerNameDB        defines.NoSqlDB
+	//playerStorageDB     defines.NoSqlDB
+	PlayerPermission map[string]map[string]bool
 }
 
 func (g *GameCtrl) GetPlayerKit(name string) defines.PlayerKit {
@@ -420,8 +420,8 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		NeedFeedBackPackets: make([]packet.Packet, 0),
 		uq:                  o.uqHolder,
 		perPlayerStorage:    make(map[string]*PlayerKitOmega),
-		playerNameDB:        o.GetNoSqlDB("playerNameDB"),
-		playerStorageDB:     o.GetNoSqlDB("playerStorageDB"),
+		//playerNameDB:        o.GetNoSqlDB("playerNameDB"),
+		//playerStorageDB:     o.GetNoSqlDB("playerStorageDB"),
 	}
 	err := o.GetJsonData("playerPermission.json", &c.PlayerPermission)
 	if err != nil {

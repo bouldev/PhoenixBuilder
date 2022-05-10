@@ -179,7 +179,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.CommandOutput:
 		o.GameCtrl.onNewCommandFeedBack(p)
 	case *packet.LevelChunk:
-		if r.CurrentWorld != nil {
+		if r.MirrorAvailable {
 			chunkData := io.NEMCPacketToChunkData(p)
 			if chunkData == nil {
 				break
@@ -210,6 +210,7 @@ type Reactor struct {
 	GameChatFinalInterceptors []func(chat *defines.GameChat) (stop bool)
 	OnFirstSeePlayerCallback  []func(string)
 	CurrentWorld              mirror.ChunkProvider
+	MirrorAvailable           bool
 }
 
 func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
@@ -239,8 +240,12 @@ func (o *Reactor) onBootstrap() {
 	}
 	if provider != nil {
 		provider.D.LevelName = "MirrorWorld"
+		o.CurrentWorld = provider
+		o.MirrorAvailable = true
+	} else {
+		o.MirrorAvailable = false
 	}
-	o.CurrentWorld = provider
+
 	o.o.CloseFns = append(o.o.CloseFns, func() error {
 		fmt.Println("正在关闭反射世界")
 		if provider != nil {

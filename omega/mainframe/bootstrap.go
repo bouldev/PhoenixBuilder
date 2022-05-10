@@ -15,17 +15,17 @@ import (
 func (o *Omega) bootstrapDirs() {
 	o.storageRoot = "omega_storage"
 	// android
-	if utils.IsDir("/sdcard/omega_storage") {
-		o.storageRoot = "/sdcard/omega_storage"
+	if utils.IsDir("/sdcard/Download/omega_storage") {
+		o.storageRoot = "/sdcard/Download/omega_storage"
 	} else {
 		if utils.IsDir("/sdcard") {
-			if err := utils.MakeDirP("/sdcard/omega_storage"); err == nil {
-				o.storageRoot = "/sdcard/omega_storage"
+			if err := utils.MakeDirP("/sdcard/Download/omega_storage"); err == nil {
+				o.storageRoot = "/sdcard/Download/omega_storage"
 			}
 		}
 	}
 	if o.storageRoot == "/sdcard/omega_storage" {
-		fmt.Println("您似乎在使用安卓手机，Omega的配置和数据将被保存到 /sdcard/omega_storage")
+		fmt.Println("您似乎在使用安卓手机，Omega的配置和数据将被保存到 /sdcard/Download/omega_storage")
 	}
 	if !utils.IsDir(o.storageRoot) {
 		fmt.Println("创建数据文件夹 " + o.storageRoot)
@@ -74,29 +74,29 @@ func (o *Omega) bootstrapComponents() (success bool) {
 		}
 	}()
 	total := len(o.ComponentConfigs)
-	coreComponentsLoaded := map[string]bool{}
+	// coreComponentsLoaded := map[string]bool{}
 	corePool := getCoreComponentsPool()
 	builtInPool := components.GetComponentsPool()
-	for n, _ := range corePool {
-		coreComponentsLoaded[n] = false
-	}
+	// for n, _ := range corePool {
+	// 	coreComponentsLoaded[n] = false
+	// }
 	for i, cfg := range o.ComponentConfigs {
 		I := i + 1
 		Name := cfg.Name
 		Version := cfg.Version
 		Source := cfg.Source
 		if cfg.Disabled {
-			o.backendLogger.Write(fmt.Sprintf("\t跳过加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
+			o.backendLogger.Write(pterm.Warning.Sprintf("\t跳过加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
 			continue
 		}
-		o.backendLogger.Write(fmt.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
+		o.backendLogger.Write(pterm.Success.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
 		var component defines.Component
 		if Source == "Core" {
 			if componentFn, hasK := corePool[Name]; !hasK {
 				o.backendLogger.Write("没有找到核心组件: " + Name)
 				panic("没有找到核心组件: " + Name)
 			} else {
-				coreComponentsLoaded[Name] = true
+				// coreComponentsLoaded[Name] = true
 				_component := componentFn()
 				_component.SetSystem(o)
 				component = _component
@@ -113,11 +113,11 @@ func (o *Omega) bootstrapComponents() (success bool) {
 		component.Inject(NewBox(o, Name))
 		o.Components = append(o.Components, component)
 	}
-	for n, l := range coreComponentsLoaded {
-		if !l {
-			panic(fmt.Errorf("核心组件 (Core) 必须被加载, 但是 %v 被配置为不加载", n))
-		}
-	}
+	// for n, l := range coreComponentsLoaded {
+	// 	if !l {
+	// 		panic(fmt.Errorf("核心组件 (Core) 必须被加载, 但是 %v 被配置为不加载", n))
+	// 	}
+	// }
 	return true
 }
 

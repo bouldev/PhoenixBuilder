@@ -66,6 +66,7 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 				mappings[fmt.Sprintf("[score<%v>]", s)] = n
 			}
 			cmd := utils.FormateByRepalcment(o.Cmd, mappings)
+			o.Frame.GetBackendDisplay().Write("玩家信息: " + cmd)
 			o.Frame.GetGameControl().SayTo(chat.Name, cmd)
 		})
 	})

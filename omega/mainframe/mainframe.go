@@ -37,7 +37,7 @@ type Omega struct {
 	BackendMenuEntries  []*defines.BackendMenuEntry
 	BackendInterceptors []func(cmds []string) (stop bool)
 
-	OpenedDBs map[string]*utils.LevelDBWrapper
+	//OpenedDBs map[string]*utils.LevelDBWrapper
 
 	GameCtrl *GameCtrl
 	Reactor  *Reactor
@@ -54,9 +54,9 @@ func NewOmega() *Omega {
 		BackendMenuEntries:  make([]*defines.BackendMenuEntry, 0),
 		BackendInterceptors: make([]func(cmds []string) (stop bool), 0),
 		redAlertHandlers:    make([]func(info string), 0),
-		OpenedDBs:           make(map[string]*utils.LevelDBWrapper),
-		stopC:               make(chan struct{}),
-		fullyStopped:        make(chan struct{}),
+		//OpenedDBs:           make(map[string]*utils.LevelDBWrapper),
+		stopC:        make(chan struct{}),
+		fullyStopped: make(chan struct{}),
 	}
 	o.Reactor = newReactor(o)
 	return o
@@ -127,15 +127,15 @@ func (o *Omega) GetJsonData(topic string, ptr interface{}) error {
 	return nil
 }
 
-func (o *Omega) GetNoSqlDB(topic string) defines.NoSqlDB {
-	if db, hasK := o.OpenedDBs[topic]; hasK {
-		return db
-	}
-	db := utils.GetLevelDB(o.GetPath("noSQL", topic))
-	o.OpenedDBs[topic] = db
-	o.CloseFns = append(o.CloseFns, db.Close)
-	return db
-}
+//func (o *Omega) GetNoSqlDB(topic string) defines.NoSqlDB {
+//	if db, hasK := o.OpenedDBs[topic]; hasK {
+//		return db
+//	}
+//	db := utils.GetLevelDB(o.GetPath("noSQL", topic))
+//	o.OpenedDBs[topic] = db
+//	o.CloseFns = append(o.CloseFns, db.Close)
+//	return db
+//}
 
 func (o *Omega) FullyStopped() chan struct{} {
 	return o.fullyStopped

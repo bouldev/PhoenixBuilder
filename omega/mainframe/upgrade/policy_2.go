@@ -2,6 +2,7 @@ package upgrade
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 	"phoenixbuilder/omega/defines"
@@ -106,7 +107,7 @@ func policy_2_upgrade_config(fullConfig *OmegaConfig, root string) {
 		if addFile != "" {
 			addConfigPath := path.Join(root, "data", Cfg[addFile].(string))
 			if fp, err := os.OpenFile(addConfigPath, os.O_RDONLY, 0644); err != nil {
-				panic("位于 " + addConfigPath + " 的配置文件有问题: " + err.Error())
+				fmt.Println("位于 " + addConfigPath + " 的配置文件有问题,跳过: " + err.Error())
 			} else {
 				var configData interface{}
 				err := json.NewDecoder(fp).Decode(&configData)

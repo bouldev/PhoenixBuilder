@@ -77,7 +77,7 @@ type ConfigProvider interface {
 // 框架帮忙提供的储存机制，目的在于共享而非沙箱隔离
 type StorageAndLogProvider interface {
 	GetLogger(topic string) LineDst
-	GetNoSqlDB(topic string) NoSqlDB
+	//GetNoSqlDB(topic string) NoSqlDB
 	GetRelativeFileName(topic string) string
 	GetFileData(topic string) ([]byte, error)
 	GetJsonData(topic string, data interface{}) error
@@ -118,8 +118,8 @@ type PlayerKit interface {
 	GetRelatedUQ() *uqHolder.Player
 
 	GetViolatedStorage() map[string]interface{}
-	GetPersistStorage(k string) string
-	CommitPersistStorageChange(k string, v string)
+	//GetPersistStorage(k string) string
+	//CommitPersistStorageChange(k string, v string)
 
 	SetOnParamMsg(func(chat *GameChat) (catch bool)) error
 	GetOnParamMsg() func(chat *GameChat) (catch bool)

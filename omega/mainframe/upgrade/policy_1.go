@@ -8,7 +8,7 @@ import (
 	"github.com/pterm/pterm"
 )
 
-var android_store_path = "/sdcard/omega_storage"
+var android_store_path = "/sdcard/Download/omega_storage"
 
 func Policy_1() string {
 	if abs1, err := filepath.Abs(android_store_path); err != nil {
