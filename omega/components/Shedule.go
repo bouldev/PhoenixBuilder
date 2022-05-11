@@ -6,16 +6,19 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"time"
+
+	"github.com/pterm/pterm"
 )
 
 type Schedule struct {
 	*BasicComponent
-	Name     string        `json:"任务"`
-	Duration int           `json:"周期"`
-	actions  []defines.Cmd `json:"动作"`
-	LogFile  string        `json:"结果记录文件"`
-	logger   defines.LineDst
-	stopC    chan struct{}
+	Name            string        `json:"任务"`
+	Duration        int           `json:"周期"`
+	StartTimeInReal string        `json:"第一次启动的现实时间"`
+	actions         []defines.Cmd `json:"动作"`
+	LogFile         string        `json:"结果记录文件"`
+	logger          defines.LineDst
+	stopC           chan struct{}
 }
 
 func (o *Schedule) Init(cfg *defines.ComponentConfig) {
@@ -61,7 +64,22 @@ func (o *Schedule) Stop() error {
 }
 
 func (o *Schedule) launchTask() {
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.actions, map[string]interface{}{}, o.logger)
+	nowTime := time.Now()
+	year := nowTime.Year()
+	month := int(nowTime.Month())
+	day := nowTime.Day()
+	h24 := nowTime.Hour()
+	min := nowTime.Minute()
+	sec := nowTime.Second()
+	replacement := map[string]interface{}{
+		"[year]":  year,
+		"[month]": fmt.Sprintf("%02d", month),
+		"[day]":   fmt.Sprintf("%02d", day),
+		"[h24]":   fmt.Sprintf("%02d", h24),
+		"[min]":   fmt.Sprintf("%02d", min),
+		"[sec]":   fmt.Sprintf("%02d", sec),
+	}
+	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.actions, replacement, o.logger)
 	//for _, _a := range o.Actions {
 	//	a := _a
 	//	cmd := utils.FormateByRepalcment(a.Cmd, map[string]interface{}{})
@@ -80,7 +98,57 @@ func (o *Schedule) launchTask() {
 	//}
 }
 
-func (o *Schedule) Activate() {
+func (o *Schedule) TryOffset(offset time.Duration) (time.Duration, bool) {
+	nt := time.Now()
+	nowTime := nt.Add(offset)
+	year := nowTime.Year()
+	month := int(nowTime.Month())
+	day := nowTime.Day()
+	h24 := nowTime.Hour()
+	min := nowTime.Minute()
+	sec := nowTime.Second()
+	replacement := map[string]interface{}{
+		"[year]":  year,
+		"[month]": fmt.Sprintf("%02d", month),
+		"[day]":   fmt.Sprintf("%02d", day),
+		"[h24]":   fmt.Sprintf("%02d", h24),
+		"[min]":   fmt.Sprintf("%02d", min),
+		"[sec]":   fmt.Sprintf("%02d", sec),
+	}
+	markedTime := utils.FormateByRepalcment(o.StartTimeInReal, replacement)
+	// fmt.Println(markedTime)
+	timeZone, _ := time.LoadLocation("Asia/Shanghai")
+	if baseT, err := time.ParseInLocation("2006-01-02 15:04:05", markedTime, timeZone); err != nil {
+		panic(fmt.Sprintf("第一次启动的现实时间 %v 格式不正确，\n"+
+			"应该类似 [year]-[month]-[day] [h24]:04:05   (在最近一小时的 4分5秒第一次启动)\n"+
+			"或者类似 [year]-[month]-[day] 00:04:05 (在最近一天的 凌晨4分5秒第一次启动),%v\n", o.StartTimeInReal, err))
+	} else {
+		if baseT.After(nt) {
+			return baseT.Sub(nt), true
+		}
+	}
+	return 0, false
+}
+
+func (o *Schedule) GetRealStartTime() time.Duration {
+	offset := []time.Duration{
+		0, time.Second, time.Minute, time.Hour,
+		time.Now().AddDate(0, 0, 1).Sub(time.Now()),
+		time.Now().AddDate(0, 1, 1).Sub(time.Now()),
+		time.Now().AddDate(1, 0, 0).Sub(time.Now()),
+	}
+	for _, off := range offset {
+		if d, success := o.TryOffset(off); success {
+			return d
+		}
+	}
+	panic(fmt.Sprintf("第一次启动的现实时间 %v 格式不正确，\n"+
+		"应该类似 [year]-[month]-[day] [h24]:04:05   (在最近一小时的 4分5秒第一次启动)\n"+
+		"或者类似 [year]-[month]-[day] 00:04:05 (在最近一天的 凌晨4分5秒第一次启动)\n", o.StartTimeInReal))
+
+}
+
+func (o *Schedule) doTick() {
 	o.launchTask()
 	if o.Duration == 0 {
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("计划任务 %v 已退出, 因为周期为 0", o.Name))
@@ -95,5 +163,26 @@ func (o *Schedule) Activate() {
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("计划任务 %v 已退出", o.Name))
 			return
 		}
+	}
+}
+
+func (o *Schedule) Activate() {
+	if o.StartTimeInReal != "" {
+		go func() {
+			d := o.GetRealStartTime()
+			startTimeStr := time.Now().Add(d).Format("2006-01-02 15:04:05")
+			o.Frame.GetBackendDisplay().Write(pterm.Info.Sprintf(
+				"计划任务 %v 将于 %d 秒后 (%v) 第一次执行，随后每隔 %v 秒执行一次",
+				o.Name, int(d.Seconds()), startTimeStr, o.Duration,
+			))
+			time.Sleep(d)
+			o.Frame.GetBackendDisplay().Write(pterm.Info.Sprintf(
+				"计划任务 %v 于 %v 第一次执行，随后每隔 %v 秒执行一次 (下一次时间为 %v)",
+				o.Name, time.Now().Format("2006-01-02 15:04:05"), o.Duration, time.Now().Add(time.Duration(o.Duration)).Format("2006-01-02 15:04:05"),
+			))
+			o.doTick()
+		}()
+	} else {
+		o.doTick()
 	}
 }

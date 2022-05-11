@@ -216,14 +216,14 @@ func (m *Menu) Inject(frame defines.MainFrame) {
 			return true
 		},
 	})
-	//frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
-	//	MenuEntry: defines.MenuEntry{
-	//		Triggers:     m.GameTriggers,
-	//		Usage:        "打开菜单",
-	//		FinalTrigger: true,
-	//	},
-	//	OptionalOnTriggerFn: m.popGameMenu,
-	//})
+	frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
+		MenuEntry: defines.MenuEntry{
+			Triggers:     m.GameTriggers,
+			Usage:        "打开菜单",
+			FinalTrigger: true,
+		},
+		OptionalOnTriggerFn: m.popGameMenu,
+	})
 }
 
 type CmdSender struct {

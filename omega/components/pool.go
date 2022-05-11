@@ -112,5 +112,11 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"管理员检测": func() defines.Component {
 			return &OpCheck{BasicComponent: &BasicComponent{}}
 		},
+		"发言频率限制": func() defines.Component {
+			return &ShutUp{BasicComponent: &BasicComponent{}}
+		},
+		"计分板UID追踪": func() defines.Component {
+			return &UIDTracking{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

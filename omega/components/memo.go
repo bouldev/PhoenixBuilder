@@ -21,6 +21,7 @@ type Memo struct {
 	Triggers          []string `json:"触发词"`
 	LoginDelay        int      `json:"登录时延迟发送"`
 	Memos             map[string][]string
+	Usage             string `json:"提示信息"`
 }
 
 func (me *Memo) send(playerName string) {
@@ -128,11 +129,14 @@ func (me *Memo) Inject(frame defines.MainFrame) {
 			}()
 		}
 	})
+	if me.Usage == "" {
+		me.Usage = "给某个玩家留言，将在上线时转达留言"
+	}
 	me.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     me.Triggers,
 			ArgumentHint: "[玩家] [消息]",
-			Usage:        "给某个玩家留言，将在上线时转达留言",
+			Usage:        me.Usage,
 			FinalTrigger: false,
 		},
 		OptionalOnTriggerFn: me.record,

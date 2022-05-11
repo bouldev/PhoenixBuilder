@@ -96,11 +96,34 @@ func (o *Omega) readConfig() {
 		}
 	}
 	o.OmegaConfig = omegaConfig
-	o.ComponentConfigs = componentConfigs
-	for _, c := range o.ComponentConfigs {
+
+	for _, c := range componentConfigs {
 		if c.Source == "Core" && c.Disabled {
 			c.Disabled = false
 			pterm.Error.Printfln("核心组件 %v 不可被禁用，现在已经打开了", c.Name)
 		}
 	}
+	preferredOrder := map[string]int{
+		"假死检测": 0,
+		"返回主城": 1,
+	}
+	groupedOrder := make([][]*defines.ComponentConfig, len(preferredOrder)+1)
+	for i := range groupedOrder {
+		groupedOrder[i] = make([]*defines.ComponentConfig, 0)
+	}
+	defaultI := len(preferredOrder)
+	for _, c := range componentConfigs {
+		if gi, hask := preferredOrder[c.Name]; hask {
+			groupedOrder[gi] = append(groupedOrder[gi], c)
+		} else {
+			groupedOrder[defaultI] = append(groupedOrder[defaultI], c)
+		}
+	}
+	reorderedConfig := []*defines.ComponentConfig{}
+	for _, group := range groupedOrder {
+		for _, c := range group {
+			reorderedConfig = append(reorderedConfig, c)
+		}
+	}
+	o.ComponentConfigs = reorderedConfig
 }

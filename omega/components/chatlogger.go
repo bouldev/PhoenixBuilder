@@ -18,6 +18,10 @@ func (cl *ChatLogger) Inject(frame defines.MainFrame) {
 	cl.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDText, func(p packet.Packet) {
 		pk := p.(*packet.Text)
 		msg := strings.TrimSpace(pk.Message)
+		_l := len(msg)
+		if _l > 200 {
+			msg = msg[:200] + fmt.Sprintf("...[还有%v字]", _l-200)
+		}
 		msg = fmt.Sprintf("[%v] %v:%v", pk.TextType, pk.SourceName, msg)
 		if len(pk.Parameters) != 0 {
 			msg += " (" + strings.Join(pk.Parameters, ", ") + ")"

@@ -14,6 +14,7 @@ type AboutMe struct {
 	Triggers []string            `json:"触发词"`
 	Cmd      string              `json:"显示信息模版"`
 	Tags     map[string][]string `json:"标签替换"`
+	Usage    string              `json:"提示信息"`
 }
 
 func (o *AboutMe) Init(cfg *defines.ComponentConfig) {
@@ -75,12 +76,15 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 
 func (o *AboutMe) Inject(frame defines.MainFrame) {
 	o.Frame = frame
+	if o.Usage == "" {
+		o.Usage = "显示有关我的信息"
+	}
 	frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
 			ArgumentHint: "",
 			FinalTrigger: false,
-			Usage:        "显示有关我的信息",
+			Usage:        o.Usage,
 		},
 		OptionalOnTriggerFn: o.show,
 	})

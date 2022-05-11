@@ -22,6 +22,7 @@ type MoneyTransfer struct {
 	Triggers        []string    `json:"触发词"`
 	DefaultCurrency *Currency   `json:"默认货币"`
 	AllCurrency     []*Currency `json:"可转账货币"`
+	Usage           string      `json:"提示信息"`
 }
 
 func (o *MoneyTransfer) Init(cfg *defines.ComponentConfig) {
@@ -200,12 +201,15 @@ func (o *MoneyTransfer) check(chat *defines.GameChat) bool {
 
 func (o *MoneyTransfer) Inject(frame defines.MainFrame) {
 	o.Frame = frame
+	if o.Usage == "" {
+		o.Usage = "给目标玩家转账，可以被转账的货币包括"
+	}
 	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
 			ArgumentHint: "[玩家名] [数量]",
 			FinalTrigger: false,
-			Usage:        "给目标玩家转账，可以被转账的货币包括" + o.getCurrencyName(),
+			Usage:        o.Usage + o.getCurrencyName(),
 		},
 		OptionalOnTriggerFn: o.check,
 	})

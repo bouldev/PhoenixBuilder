@@ -14,6 +14,7 @@ type FeedBack struct {
 	Response    string   `json:"反馈记录成功时提示"`
 	FileName    string   `json:"反馈记录文件"`
 	Triggers    []string `json:"触发词"`
+	Usage       string   `json:"提示信息"`
 	HintOnEmpty string   `json:"没有输入信息时提示"`
 }
 
@@ -44,6 +45,9 @@ func (me *FeedBack) Init(cfg *defines.ComponentConfig) {
 	if err := json.Unmarshal(m, me); err != nil {
 		panic(err)
 	}
+	if me.Usage == "" {
+		me.Usage = "给腐竹反馈信息"
+	}
 }
 
 func (me *FeedBack) Inject(frame defines.MainFrame) {
@@ -57,7 +61,7 @@ func (me *FeedBack) Inject(frame defines.MainFrame) {
 		MenuEntry: defines.MenuEntry{
 			Triggers:     me.Triggers,
 			ArgumentHint: "[反馈]",
-			Usage:        "给腐竹反馈信息",
+			Usage:        me.Usage,
 			FinalTrigger: false,
 		},
 		OptionalOnTriggerFn: me.record,

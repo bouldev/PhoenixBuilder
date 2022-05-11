@@ -15,6 +15,7 @@ type Respawn struct {
 	CmdsAfterNormalUserSpawned []string `json:"非创造玩家重生后执行的指令"`
 	CmdsToKillCreativeUser     []string `json:"创造玩家重生后执行的指令"`
 	DefaultImmediateRespawn    bool
+	Usage                      string `json:"提示信息"`
 }
 
 func (o *Respawn) Init(cfg *defines.ComponentConfig) {
@@ -98,12 +99,15 @@ func (o *Respawn) respawn(chat *defines.GameChat) bool {
 
 func (o *Respawn) Inject(frame defines.MainFrame) {
 	o.Frame = frame
+	if o.Usage == "" {
+		o.Usage = "返回重生点"
+	}
 	frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
 			ArgumentHint: "",
 			FinalTrigger: false,
-			Usage:        "返回重生点",
+			Usage:        o.Usage,
 		},
 		OptionalOnTriggerFn: o.respawn,
 	})
