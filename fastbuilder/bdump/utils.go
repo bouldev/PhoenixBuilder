@@ -1,6 +1,10 @@
 package bdump
 
 import (
+	"crypto"
+	"crypto/rsa"
+	"crypto/rand"
+	"crypto/x509"
 	"crypto/sha256"
 	"net/http"
 	"encoding/hex"
@@ -9,7 +13,9 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"encoding/base64"
+	"encoding/binary"
 	"strings"
+	"bytes"
 )
 
 const signBDXURL=`https://uc.fastbuilder.pro/signbdx.web`
@@ -100,3 +106,73 @@ func VerifyBDX(filecontent []byte, sign []byte) (bool, string, error) {
 	un, _:=rb["username"].(string)
 	return false,un,nil
 }
+
+// SignBDXNew(fileContent)
+// []byte - sign
+// error  - err
+func SignBDXNew(filecontent []byte, privateKeyString string, cert string) ([]byte, error) {
+	buf:=bytes.NewBuffer([]byte{})
+	privateKey, err:=x509.ParsePKCS1PrivateKey([]byte(privateKeyString))
+	if(err!=nil) {
+		return nil, err
+	}
+	signContent, err:=privateKey.Sign(rand.Reader,filecontent,crypto.SHA256)
+	if(err!=nil) {
+		return nil, err
+	}
+	buf.Write([]byte{0x00,0x8B})
+	{
+		certLenIndicator:=make([]byte, 2)
+		binary.LittleEndian.PutUint16(certLenIndicator,uint16(len(cert)))
+		buf.Write(certLenIndicator)
+	}
+	buf.Write([]byte(cert))
+	buf.Write(signContent)
+	return buf.Bytes(), nil
+}
+
+const constantServerKey="-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEAzOoZfky1sYQXkTXWuYqf7HZ+tDSLyyuYOvyqt/dO4xahyNqvXcL5\n1A+eNFhsk6S5u84RuwsUk7oeNDpg/I0hbiRuJwCxFPJKNxDdj5Q5P5O0NTLR0TAT\nNBP7AjX6+XtNB/J6cV3fPcduqBbN4NjkNZxP4I1lgbupIR2lMKU9lXEn58nFSqSZ\nvG4BZfYLKUiu89IHaZOG5wgyDwwQrejxqkLUftmXibUO4s4gf8qAiLp3ukeIPYRj\nwGhGNlUfdU0foCxf2QwAoBV2xREL8/Sx1AIvmoVUg1SqCiIVMvbBkDoFfkzPZCgC\nLtmbkmqZJnpoBVHcBhBdUYsfyM6QwtWBNQIDAQAB\n-----END RSA PUBLIC KEY-----"
+
+// bool corrupted
+// string username
+// error error
+func VerifyBDXNew(filecontent []byte, sign []byte) (bool, string, error) {
+	if(sign[0]!=0||sign[1]!=0x8B) {
+		panic("Not a valid 2nd generation signature format");
+		return false, "", fmt.Errorf("Not a valid 2nd generation signature format");
+	}
+	reader:=bytes.NewReader(sign[2:])
+	certLenIndicator:=make([]byte, 2)
+	reader.Read(certLenIndicator)
+	certLen:=int(binary.LittleEndian.Uint16(certLenIndicator))
+	certPartBuf:=make([]byte, certLen)
+	reader.Read(certPartBuf)
+	certPart:=string(certPartBuf)
+	firstSplit:=strings.Split(certPart, "/")
+	if(len(firstSplit)!=2) {
+		return true, "", nil
+	}
+	csk, _ := x509.ParsePKCS1PublicKey([]byte(constantServerKey))
+	signature, _ := hex.DecodeString(firstSplit[1])
+	sum1:=sha256.Sum256([]byte(firstSplit[0]))
+	err:=rsa.VerifyPKCS1v15(csk, crypto.SHA256, sum1[:], signature)
+	if(err!=nil) {
+		return true, "", nil
+	}
+	firstPart:=firstSplit[0]
+	fpContent:=strings.Split(firstPart,"|")
+	publicKey, err:=x509.ParsePKCS1PublicKey([]byte(fpContent[0]))
+	if(err!=nil) {
+		return true, "", nil
+	}
+	signatureLen:=reader.Len()
+	signature=make([]byte, signatureLen)
+	reader.Read(signature)
+	sum1=sha256.Sum256(filecontent)
+	err=rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, sum1[:], signature)
+	if(err!=nil) {
+		return true, "", nil
+	}
+	return false, fpContent[1], nil
+}
+
