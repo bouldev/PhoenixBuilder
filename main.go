@@ -660,7 +660,9 @@ func runClient(env *environment.PBEnvironment) {
 			if world_provider.ChunkInput != nil {
 				world_provider.ChunkInput <- p
 			} else {
-				world_provider.DoCache(p)
+				if !args.ShouldEnableOmegaSystem() {
+					world_provider.DoCache(p)
+				}
 			}
 		case *packet.UpdateBlock:
 			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
