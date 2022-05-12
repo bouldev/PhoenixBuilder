@@ -1,35 +1,38 @@
 package fbauth
+
 import (
-	"crypto/rand"
-	"crypto/rsa"
+	"bytes"
+	"compress/gzip"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"encoding/json"
-	"github.com/gorilla/websocket"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
-	"compress/gzip"
-	"bytes"
-	"io"
+	"encoding/json"
 	"fmt"
+	"io"
 	"phoenixbuilder/bridge/bridge_fmt"
-	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/environment"
+	I18n "phoenixbuilder/fastbuilder/i18n"
+
+	"github.com/gorilla/websocket"
+	"github.com/pterm/pterm"
 )
 
 type Client struct {
-	privateKey *ecdsa.PrivateKey
+	privateKey   *ecdsa.PrivateKey
 	rsaPublicKey *rsa.PublicKey
-	
-	salt []byte
+
+	salt   []byte
 	client *websocket.Conn
-	
-	encryptor *encryptionSession
+
+	encryptor      *encryptionSession
 	serverResponse chan map[string]interface{}
-	
+
 	closed bool
-	
+
 	env *environment.PBEnvironment
 }
 
@@ -39,26 +42,26 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 		panic(err)
 	}
 	salt := []byte("2345678987654321")
-	authclient := &Client {
-		privateKey:privateKey,
-		salt:salt,
-		serverResponse:make(chan map[string]interface{}),
-		closed:false,
-		env: env,
+	authclient := &Client{
+		privateKey:     privateKey,
+		salt:           salt,
+		serverResponse: make(chan map[string]interface{}),
+		closed:         false,
+		env:            env,
 	}
-	cl,_,err:=websocket.DefaultDialer.Dial(args.AuthServer(),nil)
+	cl, _, err := websocket.DefaultDialer.Dial(args.AuthServer(), nil)
 	if err != nil {
 		panic(err)
 	}
-	authclient.client=cl
+	authclient.client = cl
 	encrypted := make(chan struct{})
 	go func() {
 		defer func() {
-			authclient.closed=true
+			authclient.closed = true
 		}()
 		//defer panic("Core feature works incorrectly")
 		for {
-			_, msg, err:=cl.ReadMessage()
+			_, msg, err := cl.ReadMessage()
 			if err != nil {
 				break
 			}
@@ -66,58 +69,58 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 			var outbuf bytes.Buffer
 			var inbuf bytes.Buffer
 			inbuf.Write(msg)
-			reader,_:=gzip.NewReader(&inbuf)
+			reader, _ := gzip.NewReader(&inbuf)
 			reader.Close()
-			io.Copy(&outbuf,reader)
-			msg=outbuf.Bytes()
-			if authclient.encryptor!= nil {
+			io.Copy(&outbuf, reader)
+			msg = outbuf.Bytes()
+			if authclient.encryptor != nil {
 				authclient.encryptor.decrypt(msg)
 			}
-			json.Unmarshal(msg,&message)
-			msgaction,_:=message["action"].(string)
-			if msgaction=="encryption" {
-				spub:=new(ecdsa.PublicKey)
-				keyb64,_:=message["publicKey"].(string)
-				keydata, _:=base64.StdEncoding.DecodeString(keyb64)
-				spp,_:=x509.ParsePKIXPublicKey(keydata)
-				ek,_ := spp.(*ecdsa.PublicKey)
-				*spub=*ek
-				authclient.encryptor=&encryptionSession {
-					serverPrivateKey:privateKey,
-					clientPublicKey:spub,
-					salt:authclient.salt,
+			json.Unmarshal(msg, &message)
+			msgaction, _ := message["action"].(string)
+			if msgaction == "encryption" {
+				spub := new(ecdsa.PublicKey)
+				keyb64, _ := message["publicKey"].(string)
+				keydata, _ := base64.StdEncoding.DecodeString(keyb64)
+				spp, _ := x509.ParsePKIXPublicKey(keydata)
+				ek, _ := spp.(*ecdsa.PublicKey)
+				*spub = *ek
+				authclient.encryptor = &encryptionSession{
+					serverPrivateKey: privateKey,
+					clientPublicKey:  spub,
+					salt:             authclient.salt,
 				}
 				authclient.encryptor.init()
 				close(encrypted)
 				continue
-			}else if msgaction=="world_chat" {
-				chat_msg,_:=message["msg"].(string)
-				chat_sender,_:=message["username"].(string)
+			} else if msgaction == "world_chat" {
+				chat_msg, _ := message["msg"].(string)
+				chat_sender, _ := message["username"].(string)
 				select {
-				case env.WorldChatChannel<-[]string{chat_sender,chat_msg}:
+				case env.WorldChatChannel <- []string{chat_sender, chat_msg}:
 					continue
 				default:
 					continue
 				}
 			}
-			select{
-			case authclient.serverResponse<-message:
+			select {
+			case authclient.serverResponse <- message:
 				continue
 			default:
 				continue
 			}
 		}
 	}()
-	pubb,err:=x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err!=nil {
+	pubb, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
 		panic(err)
 	}
-	pub_str:=base64.StdEncoding.EncodeToString(pubb)
+	pub_str := base64.StdEncoding.EncodeToString(pubb)
 	var inbuf bytes.Buffer
-	wr:=gzip.NewWriter(&inbuf)
-	wr.Write([]byte(`{"action":"enable_encryption_v2","publicKey":"`+string(pub_str)+`"}`))
+	wr := gzip.NewWriter(&inbuf)
+	wr.Write([]byte(`{"action":"enable_encryption_v2","publicKey":"` + string(pub_str) + `"}`))
 	wr.Close()
-	cl.WriteMessage(websocket.BinaryMessage,inbuf.Bytes())
+	cl.WriteMessage(websocket.BinaryMessage, inbuf.Bytes())
 	for {
 		select {
 		case <-encrypted:
@@ -128,11 +131,11 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 }
 
 func (client *Client) CanSendMessage() bool {
-	return client.encryptor!=nil&&!client.closed
+	return client.encryptor != nil && !client.closed
 }
 
-func (client *Client) SendMessage(data[] byte){
-	if client.encryptor==nil {
+func (client *Client) SendMessage(data []byte) {
+	if client.encryptor == nil {
 		panic("早すぎる")
 	}
 	if client.closed {
@@ -141,53 +144,57 @@ func (client *Client) SendMessage(data[] byte){
 	}
 	client.encryptor.encrypt(data)
 	var inbuf bytes.Buffer
-	wr:=gzip.NewWriter(&inbuf)
+	wr := gzip.NewWriter(&inbuf)
 	wr.Write(data)
 	wr.Close()
-	client.client.WriteMessage(websocket.BinaryMessage,inbuf.Bytes())
+	client.client.WriteMessage(websocket.BinaryMessage, inbuf.Bytes())
 }
 
 type AuthRequest struct {
-	Action string `json:"action"`
-	ServerCode string `json:"serverCode"`
+	Action         string `json:"action"`
+	ServerCode     string `json:"serverCode"`
 	ServerPassword string `json:"serverPassword"`
-	Key string `json:"publicKey"`
-	FBToken string
+	Key            string `json:"publicKey"`
+	FBToken        string
 }
 
-func (client *Client) Auth(serverCode string,serverPassword string,key string,fbtoken string) (string,int,error) {
-	authreq:=&AuthRequest {
-		Action:"phoenix::login",
-		ServerCode:serverCode,
-		ServerPassword:serverPassword,
-		Key:key,
-		FBToken:fbtoken,
+func (client *Client) Auth(serverCode string, serverPassword string, key string, fbtoken string) (string, int, error) {
+	authreq := &AuthRequest{
+		Action:         "phoenix::login",
+		ServerCode:     serverCode,
+		ServerPassword: serverPassword,
+		Key:            key,
+		FBToken:        fbtoken,
 	}
-	msg,err:=json.Marshal(authreq)
-	if err!=nil {
+	msg, err := json.Marshal(authreq)
+	if err != nil {
 		panic("Failed to encode json")
 	}
 	client.SendMessage(msg)
-	resp,_:=<-client.serverResponse
-	code,_:=resp["code"].(float64)
-	if code!=0 {
-		err,_:=resp["message"].(string)
-		trans,hasTranslation:=resp["translation"].(float64)
-		if(hasTranslation) {
-			err=I18n.T(uint16(trans))
+	resp, _ := <-client.serverResponse
+	code, _ := resp["code"].(float64)
+	if code != 0 {
+		err, _ := resp["message"].(string)
+		trans, hasTranslation := resp["translation"].(float64)
+		if hasTranslation {
+			err = I18n.T(uint16(trans))
 		}
-		return "",int(code),fmt.Errorf("%s",err)
+		return "", int(code), fmt.Errorf("%s", err)
 	}
 	uc_username, _ := resp["username"].(string)
 	u_uid, _ := resp["uid"].(string)
-	client.env.FBUCUsername=uc_username
-	client.env.Uid=u_uid
-	str,_:=resp["chainInfo"].(string)
-	signingKey:=resp["privateSigningKey"].(string)
-	keyProve:=resp["prove"].(string)
-	client.env.LocalKey=signingKey
-	client.env.LocalCert=keyProve
-	return str,0,nil
+	client.env.FBUCUsername = uc_username
+	client.env.Uid = u_uid
+	str, _ := resp["chainInfo"].(string)
+	if signingKey, success := resp["privateSigningKey"].(string); success {
+		client.env.LocalKey = signingKey
+		pterm.Error.Println("fail to fetch privateSigningKey from server")
+	}
+	if keyProve, success := resp["prove"].(string); success {
+		client.env.LocalCert = keyProve
+		pterm.Error.Println("fail to fetch keyProve from server")
+	}
+	return str, 0, nil
 }
 
 type RespondRequest struct {
@@ -195,19 +202,19 @@ type RespondRequest struct {
 }
 
 func (client *Client) ShouldRespondUser() string {
-	rspreq:=&RespondRequest {
-		Action:"phoenix::get-user",
+	rspreq := &RespondRequest{
+		Action: "phoenix::get-user",
 	}
-	msg,err:=json.Marshal(rspreq)
-	if err!=nil {
+	msg, err := json.Marshal(rspreq)
+	if err != nil {
 		panic("Failed to encode json")
 		//return true
 		//Torrekie 22/07/21 13.12: Don't understand why this, but LNSSPsd let me made this edit
 		return ""
 	}
 	client.SendMessage(msg)
-	resp,_:=<-client.serverResponse
-	code,_:=resp["code"].(float64)
+	resp, _ := <-client.serverResponse
+	code, _ := resp["code"].(float64)
 	if code != 0 {
 		//This should never happen
 		bridge_fmt.Println("UNK_1")
@@ -216,76 +223,76 @@ func (client *Client) ShouldRespondUser() string {
 		//Torrekie 22/07/21 13.12: and this
 		return ""
 	}
-	shouldRespond,_:=resp["username"].(string)
+	shouldRespond, _ := resp["username"].(string)
 	return shouldRespond
 }
 
 type FTokenRequest struct {
-	Action string `json:"action"`
+	Action   string `json:"action"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-func (client *Client) GetToken(username string,password string) string {
-	rspreq:=&FTokenRequest {
-		Action:"phoenix::get-token",
-		Username:username,
-		Password:password,
+func (client *Client) GetToken(username string, password string) string {
+	rspreq := &FTokenRequest{
+		Action:   "phoenix::get-token",
+		Username: username,
+		Password: password,
 	}
-	msg,err:=json.Marshal(rspreq)
-	if err!=nil {
+	msg, err := json.Marshal(rspreq)
+	if err != nil {
 		panic("Failed to encode json")
 	}
 	client.SendMessage(msg)
-	resp,_:=<-client.serverResponse
-	code,_:=resp["code"].(float64)
+	resp, _ := <-client.serverResponse
+	code, _ := resp["code"].(float64)
 	if code != 0 {
 		return ""
 	}
-	usertoken,_:=resp["token"].(string)
+	usertoken, _ := resp["token"].(string)
 	return usertoken
 }
 
 type FEncRequest struct {
-	Action string `json:"action"`
+	Action  string `json:"action"`
 	Content string `json:"content"`
-	Uid string `json:"uid"`
+	Uid     string `json:"uid"`
 }
 
 func (client *Client) TransferData(content string, uid string) string {
-	rspreq:=&FEncRequest {
-		Action:"phoenix::transfer-data",
+	rspreq := &FEncRequest{
+		Action:  "phoenix::transfer-data",
 		Content: content,
-		Uid: uid,
+		Uid:     uid,
 	}
-	msg,err:=json.Marshal(rspreq)
-	if err!=nil {
+	msg, err := json.Marshal(rspreq)
+	if err != nil {
 		panic("Failed to encode json")
 	}
 	client.SendMessage(msg)
-	resp,_:=<-client.serverResponse
-	code,_:=resp["code"].(float64)
+	resp, _ := <-client.serverResponse
+	code, _ := resp["code"].(float64)
 	if code != 0 {
 		panic("Failed to transfer start type")
 	}
-	data,_:=resp["data"].(string)
+	data, _ := resp["data"].(string)
 	return data
 }
 
 type WorldChatRequest struct {
 	Category string `json:"category"`
-	Action string `json:"action"`
-	Message string `json:"message"`
+	Action   string `json:"action"`
+	Message  string `json:"message"`
 }
 
 func (client *Client) WorldChat(message string) {
-	req:=&WorldChatRequest {
+	req := &WorldChatRequest{
 		Category: "gaming",
 		Action:   "world_chat",
 		Message:  message,
 	}
-	msg, err:=json.Marshal(req)
-	if(err!=nil) {
+	msg, err := json.Marshal(req)
+	if err != nil {
 		panic("Failed to encode json 254")
 	}
 	client.SendMessage(msg)
