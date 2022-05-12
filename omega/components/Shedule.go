@@ -117,16 +117,28 @@ func (o *Schedule) TryOffset(offset time.Duration) (time.Duration, bool) {
 	}
 	markedTime := utils.FormateByRepalcment(o.StartTimeInReal, replacement)
 	// fmt.Println(markedTime)
-	timeZone, _ := time.LoadLocation("Asia/Shanghai")
-	if baseT, err := time.ParseInLocation("2006-01-02 15:04:05", markedTime, timeZone); err != nil {
-		panic(fmt.Sprintf("第一次启动的现实时间 %v 格式不正确，\n"+
-			"应该类似 [year]-[month]-[day] [h24]:04:05   (在最近一小时的 4分5秒第一次启动)\n"+
-			"或者类似 [year]-[month]-[day] 00:04:05 (在最近一天的 凌晨4分5秒第一次启动),%v\n", o.StartTimeInReal, err))
+	if timeZone, err := time.LoadLocation("Asia/Shanghai"); err == nil {
+		if baseT, err := time.ParseInLocation("2006-01-02 15:04:05", markedTime, timeZone); err != nil {
+			panic(fmt.Sprintf("第一次启动的现实时间 %v 格式不正确，\n"+
+				"应该类似 [year]-[month]-[day] [h24]:04:05   (在最近一小时的 4分5秒第一次启动)\n"+
+				"或者类似 [year]-[month]-[day] 00:04:05 (在最近一天的 凌晨4分5秒第一次启动),%v\n", o.StartTimeInReal, err))
+		} else {
+			if baseT.After(nt) {
+				return baseT.Sub(nt), true
+			}
+		}
 	} else {
-		if baseT.After(nt) {
-			return baseT.Sub(nt), true
+		if baseT, err := time.Parse("2006-01-02 15:04:05", markedTime); err != nil {
+			panic(fmt.Sprintf("第一次启动的现实时间 %v 格式不正确，\n"+
+				"应该类似 [year]-[month]-[day] [h24]:04:05   (在最近一小时的 4分5秒第一次启动)\n"+
+				"或者类似 [year]-[month]-[day] 00:04:05 (在最近一天的 凌晨4分5秒第一次启动),%v\n", o.StartTimeInReal, err))
+		} else {
+			if baseT.After(nt) {
+				return baseT.Sub(nt), true
+			}
 		}
 	}
+
 	return 0, false
 }
 
