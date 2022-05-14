@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
@@ -420,16 +421,12 @@ func (o *NoSQLDBUtil) Inject(frame defines.MainFrame) {
 	//})
 }
 
-type nameEntry struct {
-	CurrentName    string   `json:"current_name"`
-	LastUpdateTime string   `json:"last_update_time"`
-	NameRecord     []string `json:"history"`
-}
-
 type NameRecord struct {
 	*BaseCoreComponent
-	Records  map[string]*nameEntry
-	FileName string `json:"改名历史记录文件"`
+	Records           map[string]*collaborate.TYPE_NameEntry
+	searchableByName  map[string]*collaborate.TYPE_PossibleNames
+	searchableEntries map[string]*collaborate.TYPE_PossibleNames
+	FileName          string `json:"改名历史记录文件"`
 }
 
 func (o *NameRecord) Init(cfg *defines.ComponentConfig) {
@@ -437,6 +434,14 @@ func (o *NameRecord) Init(cfg *defines.ComponentConfig) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)
+	}
+	o.searchableEntries = make(map[string]*collaborate.TYPE_PossibleNames)
+	o.searchableByName = make(map[string]*collaborate.TYPE_PossibleNames)
+	for k, e := range o.Records {
+		pn := &collaborate.TYPE_PossibleNames{Entry: e}
+		pn.GenSearchAbleString()
+		o.searchableEntries[k] = pn
+		o.searchableByName[pn.Entry.CurrentName] = pn
 	}
 }
 
@@ -453,7 +458,7 @@ func (o *NameRecord) update(name, uuid string) {
 			player.NameRecord = append(player.NameRecord, updateString)
 		}
 	} else {
-		o.Records[uuid] = &nameEntry{
+		o.Records[uuid] = &collaborate.TYPE_NameEntry{
 			CurrentName:    name,
 			LastUpdateTime: newTime,
 			NameRecord: []string{
@@ -461,6 +466,11 @@ func (o *NameRecord) update(name, uuid string) {
 			},
 		}
 	}
+	e := o.Records[uuid]
+	pn := &collaborate.TYPE_PossibleNames{Entry: e}
+	pn.GenSearchAbleString()
+	o.searchableEntries[name] = pn
+	o.searchableByName[name] = pn
 }
 
 func (o *NameRecord) Stop() error {
@@ -468,9 +478,25 @@ func (o *NameRecord) Stop() error {
 	return o.mainFrame.WriteJsonData(o.FileName, o.Records)
 }
 
+func (o *NameRecord) GetPossibleName(name string, maxC int) (names []*collaborate.TYPE_PossibleNames) {
+	names = make([]*collaborate.TYPE_PossibleNames, 0, maxC)
+	if entry, hasK := o.searchableByName[name]; hasK {
+		names = append(names, entry)
+	}
+	for _, p := range o.searchableEntries {
+		if strings.Contains(p.SearchableString, name) {
+			names = append(names, p)
+			if len(names) == maxC {
+				return
+			}
+		}
+	}
+	return
+}
+
 func (o *NameRecord) Inject(frame defines.MainFrame) {
 	o.mainFrame = frame
-	o.Records = map[string]*nameEntry{}
+	o.Records = map[string]*collaborate.TYPE_NameEntry{}
 	err := frame.GetJsonData(o.FileName, &o.Records)
 	if err != nil {
 		panic(err)
@@ -480,6 +506,9 @@ func (o *NameRecord) Inject(frame defines.MainFrame) {
 		name = utils.ToPlainName(name)
 		o.update(name, ud.String())
 	})
+	var fn collaborate.FUNC_GetPossibleName
+	fn = o.GetPossibleName
+	(*o.mainFrame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME] = fn
 }
 
 func (o *NameRecord) Activate() {

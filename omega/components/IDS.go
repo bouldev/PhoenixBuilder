@@ -120,7 +120,7 @@ func (o *IntrusionDetectSystem) Activate() {
 				utils.GetPlayerList(o.Frame.GetGameControl(), "@r[rm=3]", func(players []string) {
 					if len(players) > 0 {
 						player := players[0]
-						o.Frame.GetBackendDisplay().Write("尝试扫描玩家: " + player)
+						// o.Frame.GetBackendDisplay().Write("尝试扫描玩家: " + player)
 						o.Frame.GetGameControl().SendCmd("effect @s invisibility 60 1 true")
 						o.Frame.GetGameControl().SendCmd("tp @s " + player)
 						o.Frame.GetGameControl().SendCmd("tp @s ~ 256 ~")

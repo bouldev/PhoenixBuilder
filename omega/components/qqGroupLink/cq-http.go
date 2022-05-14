@@ -86,9 +86,7 @@ func (cq *QGroupLink) sendRoutine() {
 	<-cq.initLock
 	lastSend := ""
 	for {
-		for lastSend == "" {
-			lastSend = <-cq.sendChan
-		}
+		lastSend = <-cq.sendChan
 		echo, _ := uuid.NewUUID()
 		for _, gid := range cq.Groups {
 			qmsg := QMessage{
@@ -111,8 +109,6 @@ func (cq *QGroupLink) sendRoutine() {
 					cq.connect()
 				}
 				<-cq.initLock
-			} else {
-				lastSend = <-cq.sendChan
 			}
 		}
 	}

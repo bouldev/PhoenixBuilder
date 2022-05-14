@@ -26,7 +26,7 @@ type Omega struct {
 	storageRoot string
 
 	uqHolder *uqHolder.UQHolder
-	ctx      map[string]interface{}
+	ctx      *map[string]interface{}
 
 	backendLogger    defines.LineDst
 	redAlertLogger   defines.LineDst
@@ -48,9 +48,9 @@ type Omega struct {
 
 func NewOmega() *Omega {
 	o := &Omega{
-		pktsChan:            make(chan packet.Packet, 1024),
-		CloseFns:            make([]func() error, 0),
-		ctx:                 make(map[string]interface{}),
+		pktsChan: make(chan packet.Packet, 1024),
+		CloseFns: make([]func() error, 0),
+		// ctx:                 make(map[string]interface{}),
 		BackendMenuEntries:  make([]*defines.BackendMenuEntry, 0),
 		BackendInterceptors: make([]func(cmds []string) (stop bool), 0),
 		redAlertHandlers:    make([]func(info string), 0),
@@ -59,10 +59,11 @@ func NewOmega() *Omega {
 		fullyStopped: make(chan struct{}),
 	}
 	o.Reactor = newReactor(o)
+	o.ctx = &map[string]interface{}{}
 	return o
 }
 
-func (o *Omega) GetContext() map[string]interface{} {
+func (o *Omega) GetContext() *map[string]interface{} {
 	return o.ctx
 }
 

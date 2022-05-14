@@ -52,7 +52,7 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 				}
 			}
 			mappings := map[string]interface{}{
-				"[tags]":   "[" + strings.Join(allTags, ", ") + "]",
+				"[tags]":   strings.Join(allTags, ", "),
 				"[player]": chat.Name,
 			}
 			for tagName, replacement := range o.Tags {

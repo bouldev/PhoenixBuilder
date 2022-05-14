@@ -3,6 +3,7 @@ package mainframe
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"path"
 	"path/filepath"
 	"phoenixbuilder/omega/defines"
@@ -23,12 +24,12 @@ func (o *Omega) readConfig() {
 	defer func() {
 		r := recover()
 		if r != nil {
-			pterm.Error.Println("配置文件有问题", r)
+			pterm.Error.Printfln("配置文件有问题 %v", r)
 			pterm.Error.Println("错误的修改了配置文件或者使用windows记事本打开配置文件都可能导致这种错误")
 			pterm.Warning.Println("但是，不用担心，你总是可以通过删除故障的配置文件使Omega恢复工作！")
 			fullp, _ := filepath.Abs(path.Join(o.storageRoot, "配置"))
 			pterm.Warning.Printfln("配置文件应该位于", fullp, "文件夹中")
-			panic("请修正配置文件")
+			panic(fmt.Sprintf("请修正配置文件(%v)", r))
 		}
 	}()
 	root := o.storageRoot
@@ -78,10 +79,10 @@ func (o *Omega) readConfig() {
 		for _, group := range groupedConfigs {
 			for _, c := range group {
 				if c.Source == "Core" {
-					pterm.Success.Println("有新核心组件 " + c.Name + " 可用，已自动加入配置并[关闭]")
+					pterm.Success.Println("有新核心组件 " + c.Name + " 可用，已自动加入配置并[启用]")
 					c.Disabled = false
 				} else if c.Source == "Built-In" {
-					pterm.Success.Println("有新内置组件 " + c.Name + " 可用，已自动加入配置并[启用]，请前往 omega_storage/配置/" + c.Name + " 打开")
+					pterm.Success.Println("有新内置组件 " + c.Name + " 可用，已自动加入配置并[关闭]，请前往 omega_storage/配置/" + c.Name + " 打开")
 					c.Disabled = true
 				}
 				newComponentConfigs = append(newComponentConfigs, c)
@@ -106,6 +107,7 @@ func (o *Omega) readConfig() {
 	preferredOrder := map[string]int{
 		"假死检测": 0,
 		"返回主城": 1,
+		"改名记录": 2,
 	}
 	groupedOrder := make([][]*defines.ComponentConfig, len(preferredOrder)+1)
 	for i := range groupedOrder {

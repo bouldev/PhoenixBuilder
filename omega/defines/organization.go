@@ -63,7 +63,7 @@ type BackendMenuEntry struct {
 // CtxProvider 旨在帮助插件发现别的插件主动暴露的接口 GetContext()
 // GetUQHolder() 可以获得框架代为维持的信息
 type CtxProvider interface {
-	GetContext() map[string]interface{}
+	GetContext() *map[string]interface{}
 	GetUQHolder() *uqHolder.UQHolder
 }
 

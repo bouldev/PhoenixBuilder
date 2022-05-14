@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
@@ -22,6 +23,7 @@ type Memo struct {
 	LoginDelay        int      `json:"登录时延迟发送"`
 	Memos             map[string][]string
 	Usage             string `json:"提示信息"`
+	PlayerSearcher    collaborate.FUNC_GetPossibleName
 }
 
 func (me *Memo) send(playerName string) {
@@ -91,6 +93,10 @@ func (me *Memo) askForPlayer(chat *defines.GameChat) {
 	}
 }
 
+func (me *Memo) isValidName(name string) {
+
+}
+
 func (me *Memo) record(chat *defines.GameChat) bool {
 	if len(chat.Msg) >= 2 {
 		return me.save(chat)
@@ -146,6 +152,7 @@ func (me *Memo) Inject(frame defines.MainFrame) {
 	if err != nil {
 		panic(err)
 	}
+	me.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)
 }
 
 func (me *Memo) Stop() error {
