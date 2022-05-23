@@ -437,12 +437,6 @@ func (o *NameRecord) Init(cfg *defines.ComponentConfig) {
 	}
 	o.searchableEntries = make(map[string]*collaborate.TYPE_PossibleNames)
 	o.searchableByName = make(map[string]*collaborate.TYPE_PossibleNames)
-	for k, e := range o.Records {
-		pn := &collaborate.TYPE_PossibleNames{Entry: e}
-		pn.GenSearchAbleString()
-		o.searchableEntries[k] = pn
-		o.searchableByName[pn.Entry.CurrentName] = pn
-	}
 }
 
 func (o *NameRecord) update(name, uuid string) {
@@ -469,7 +463,7 @@ func (o *NameRecord) update(name, uuid string) {
 	e := o.Records[uuid]
 	pn := &collaborate.TYPE_PossibleNames{Entry: e}
 	pn.GenSearchAbleString()
-	o.searchableEntries[name] = pn
+	o.searchableEntries[uuid] = pn
 	o.searchableByName[name] = pn
 }
 
@@ -480,10 +474,18 @@ func (o *NameRecord) Stop() error {
 
 func (o *NameRecord) GetPossibleName(name string, maxC int) (names []*collaborate.TYPE_PossibleNames) {
 	names = make([]*collaborate.TYPE_PossibleNames, 0, maxC)
+	var exactName *collaborate.TYPE_PossibleNames
+	exactName = nil
 	if entry, hasK := o.searchableByName[name]; hasK {
+		exactName = entry
 		names = append(names, entry)
 	}
+	//fmt.Println("exactly match ", names)
 	for _, p := range o.searchableEntries {
+		//fmt.Println(p.SearchableString)
+		if exactName != nil && exactName.Entry.CurrentName == p.Entry.CurrentName {
+			continue
+		}
 		if strings.Contains(p.SearchableString, name) {
 			names = append(names, p)
 			if len(names) == maxC {
@@ -500,6 +502,12 @@ func (o *NameRecord) Inject(frame defines.MainFrame) {
 	err := frame.GetJsonData(o.FileName, &o.Records)
 	if err != nil {
 		panic(err)
+	}
+	for k, e := range o.Records {
+		pn := &collaborate.TYPE_PossibleNames{Entry: e}
+		pn.GenSearchAbleString()
+		o.searchableEntries[k] = pn
+		o.searchableByName[pn.Entry.CurrentName] = pn
 	}
 	frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
 		name, ud := entry.Username, entry.UUID
@@ -538,8 +546,8 @@ func (o *KeepAlive) Init(cfg *defines.ComponentConfig) {
 func (o *KeepAlive) Inject(frame defines.MainFrame) {
 	o.mainFrame = frame
 	o.mainFrame.GetGameListener().SetGameChatInterceptor(func(chat *defines.GameChat) (stop bool) {
+		o.replay = true
 		if len(chat.Msg) > 0 && chat.Msg[0] == "alive" {
-			o.replay = true
 			return true
 		}
 		return false
@@ -563,11 +571,13 @@ func (o *KeepAlive) Activate() {
 				fmt.Println("3秒后退出")
 				<-time.NewTimer(time.Second * 3).C
 				panic("Omega 假死，已退出...\n" +
+					"可以使用启动器保持自动重连，或者： \n" +
 					"可以配合如下启动指令使 Omega 系统自动循环重启 (注意，延迟不得小于30秒，否则可能被封号)\n" +
 					"对于windows系统： \n" +
 					"for /l %i in (0,0,1) do @fastbuilder-windows.exe --omega_system -c 租赁服号 & @TIMEOUT /T 30 /NOBREAK\n" +
 					"对于其他系统：\n" +
-					"while true; ./fastbuilder -c 租赁服号 --omega_system; sleep 30; done\n")
+					"while true; ./fastbuilder -c 租赁服号 --omega_system; sleep 30; done\n",
+				)
 			}
 		}
 	}()

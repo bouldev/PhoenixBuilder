@@ -15,9 +15,17 @@ type ChatLogger struct {
 func (cl *ChatLogger) Inject(frame defines.MainFrame) {
 	cl.Frame = frame
 	cl.logger = cl.Frame.GetLogger("聊天记录.log")
+	botName := cl.Frame.GetUQHolder().GetBotName()
 	cl.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDText, func(p packet.Packet) {
 		pk := p.(*packet.Text)
+		if strings.HasPrefix(pk.SourceName, botName) {
+			return
+		}
 		msg := strings.TrimSpace(pk.Message)
+		//TODO don't do this
+		if msg == "alive" {
+			return
+		}
 		_l := len(msg)
 		if _l > 200 {
 			msg = msg[:200] + fmt.Sprintf("...[还有%v字]", _l-200)

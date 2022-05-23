@@ -44,12 +44,12 @@ func (me *Memo) send(playerName string) {
 	}
 }
 
-func (me *Memo) save(chat *defines.GameChat) bool {
-	dstPlayer := chat.Msg[0]
-	msg := strings.Join(chat.Msg[1:], " ")
-	me.logger.Write(fmt.Sprintf("[%v]->[%v]:%v ", chat.Type, chat.Name, msg))
+func (me *Memo) save(srcPlayer, dstPlayer, msg string) bool {
+	//dstPlayer := chat.Msg[0]
+	//msg := strings.Join(chat.Msg[1:], " ")
+	me.logger.Write(fmt.Sprintf("[%v]->[%v]:%v ", srcPlayer, dstPlayer, msg))
 	m := utils.FormateByRepalcment(me.Response, map[string]interface{}{
-		"[src_player]": chat.Name,
+		"[src_player]": srcPlayer,
 		"[dst_player]": dstPlayer,
 		"[msg]":        msg,
 	})
@@ -59,7 +59,7 @@ func (me *Memo) save(chat *defines.GameChat) bool {
 		me.Memos[dstPlayer] = make([]string, 0)
 	}
 	me.Memos[dstPlayer] = append(me.Memos[dstPlayer],
-		fmt.Sprintf("你有一条来自 %v 的留言: %v", chat.Name, msg),
+		fmt.Sprintf("你有一条来自 %v 的留言: %v", srcPlayer, msg),
 	)
 	for _, p := range me.Frame.GetUQHolder().PlayersByEntityID {
 		if p.Username == dstPlayer {
@@ -69,47 +69,55 @@ func (me *Memo) save(chat *defines.GameChat) bool {
 	return true
 }
 
-func (me *Memo) askForMsg(chat *defines.GameChat) {
-	dstPlayer := chat.Msg[0]
-	if player := me.Frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
+func (me *Memo) askForMsg(srcPlayer, dstPlayer string) {
+	//dstPlayer := chat.Msg[0]
+	if player := me.Frame.GetGameControl().GetPlayerKit(srcPlayer); player != nil {
 		if player.SetOnParamMsg(func(c *defines.GameChat) bool {
-			c.Msg = utils.InsertHead[string](dstPlayer, c.Msg)
-			me.save(c)
+			//c.Msg = utils.InsertHead[string](dstPlayer, c.Msg)
+			me.save(srcPlayer, dstPlayer, strings.Join(c.Msg, " "))
 			return true
 		}) == nil {
-			me.Frame.GetGameControl().SayTo(chat.Name, me.HintOnEmptyMsg)
+			me.Frame.GetGameControl().SayTo(srcPlayer, me.HintOnEmptyMsg)
 		}
 	}
 }
+
+//func (me *Memo) askForPlayer(chat *defines.GameChat) {
+//	if player := me.Frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
+//		if player.SetOnParamMsg(func(c *defines.GameChat) bool {
+//			me.record(c)
+//			return true
+//		}) == nil {
+//			me.Frame.GetGameControl().SayTo(chat.Name, me.HintOnEmptyPlayer)
+//		}
+//	}
+//}
 
 func (me *Memo) askForPlayer(chat *defines.GameChat) {
-	if player := me.Frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
-		if player.SetOnParamMsg(func(c *defines.GameChat) bool {
-			me.record(c)
-			return true
-		}) == nil {
-			me.Frame.GetGameControl().SayTo(chat.Name, me.HintOnEmptyPlayer)
+	go func() {
+		if name, cancel := utils.QueryForPlayerName(
+			me.Frame.GetGameControl(), chat.Name,
+			"",
+			(*me.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)); !cancel {
+			me.askForMsg(chat.Name, name)
+		} else {
+			me.Frame.GetGameControl().SayTo(chat.Name, "已取消")
 		}
-	}
-}
+	}()
 
-func (me *Memo) isValidName(name string) {
-
+	//if player := me.Frame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
+	//	if player.SetOnParamMsg(func(c *defines.GameChat) bool {
+	//		me.record(c)
+	//		return true
+	//	}) == nil {
+	//		me.Frame.GetGameControl().SayTo(chat.Name, me.HintOnEmptyPlayer)
+	//	}
+	//}
 }
 
 func (me *Memo) record(chat *defines.GameChat) bool {
-	if len(chat.Msg) >= 2 {
-		return me.save(chat)
-	}
-	if len(chat.Msg) == 1 {
-		me.askForMsg(chat)
-		return true
-	}
-	if len(chat.Msg) == 0 {
-		me.askForPlayer(chat)
-		return true
-	}
-	return false
+	me.askForPlayer(chat)
+	return true
 }
 
 func (me *Memo) Init(cfg *defines.ComponentConfig) {

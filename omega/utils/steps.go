@@ -10,6 +10,7 @@ func QueryForPlayerName(ctrl defines.GameControl, src string, dst string, search
 	termCtx := make(chan bool)
 	var hint []string
 	var resolver func(params []string) (int, bool, error)
+	resolver = nil
 	candidateNames := []string{}
 	for {
 		if dst == "" {
@@ -18,6 +19,7 @@ func QueryForPlayerName(ctrl defines.GameControl, src string, dst string, search
 		} else {
 			candidateNames = []string{}
 			possibleNames := searchFn(dst, 3)
+			fmt.Println(possibleNames)
 			if len(possibleNames) > 0 && possibleNames[0].Entry.CurrentName == dst {
 				return dst, false
 			}
@@ -25,12 +27,12 @@ func QueryForPlayerName(ctrl defines.GameControl, src string, dst string, search
 			for i, name := range possibleNames {
 				candidateNames = append(candidateNames, name.Entry.CurrentName)
 				currentName, historyName := name.GenReadAbleStringPair()
-				hint = append(hint, fmt.Sprintf("\n%v: %v %v", i+1, currentName, historyName))
+				hint = append(hint, fmt.Sprintf("%v: %v %v", i+1, currentName, historyName))
 			}
 			if len(candidateNames) > 0 {
 				_, resolver = GenStringListHintResolverWithIndex(candidateNames)
 			} else {
-				hint = []string{"没有匹配的玩家，请输入目标玩家名,或者目标玩家名的一部分(或输入: 取消 )"}
+				hint = []string{"没有搜索到匹配的玩家，请输入目标玩家名,或者目标玩家名的一部分(或输入: 取消 )"}
 				resolver = nil
 			}
 		}
@@ -42,11 +44,12 @@ func QueryForPlayerName(ctrl defines.GameControl, src string, dst string, search
 				if resolver == nil {
 					dst = chat.Msg[0]
 					termCtx <- false
+					return
 				}
 				selection, cancel, err := resolver(chat.Msg)
 				if err != nil {
 					termCtx <- false
-					dst = ""
+					dst = chat.Msg[0]
 					return
 				}
 				if cancel {
