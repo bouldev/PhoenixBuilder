@@ -118,5 +118,11 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"计分板UID追踪": func() defines.Component {
 			return &UIDTracking{BasicComponent: &BasicComponent{}}
 		},
+		"区域扫描": func() defines.Component {
+			return &Scanner{BasicComponent: &BasicComponent{}}
+		},
+		"刷怪笼检测": func() defines.Component {
+			return &MobSpawnerScan{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

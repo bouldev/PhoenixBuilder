@@ -259,7 +259,7 @@ func (o *Omega) Activate() {
 		backendInputChan := o.adaptor.GetBackendCommandFeeder()
 		select {
 		case cmd := <-backendInputChan:
-			if cmd == "exit" {
+			if cmd == "stop" {
 				o.Stop()
 				return
 			}
