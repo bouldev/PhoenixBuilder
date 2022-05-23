@@ -3,9 +3,9 @@ package components
 import (
 	"encoding/json"
 	"fmt"
-	"phoenixbuilder/dragonfly/server/world/chunk"
-	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 )
@@ -47,14 +47,10 @@ func (o *ContainerScan) checkNbt(x, y, z int, nbt map[string]interface{}, getStr
 	}
 }
 
-func (o *ContainerScan) onLevelChunk(pk *packet.LevelChunk) {
+func (o *ContainerScan) onLevelChunk(cd *mirror.ChunkData) {
 	if o.EnableK32Detect {
-		decode, err := chunk.NetworkDecode(world_provider.AirRuntimeId, pk.RawPayload, int(pk.SubChunkCount))
-		if err != nil {
-			o.Frame.GetBackendDisplay().Write("解析区块出错: " + err.Error())
-		}
-		for pos, nbt := range decode.BlockNBT() {
-			x, y, z := pos.X(), pos.Y(), pos.Z()
+		for _, nbt := range cd.BlockNbts {
+			x, y, z := define.GetPosFromNBT(nbt)
 			o.checkNbt(int(x), int(y), int(z), nbt, func() string {
 				marshal, _ := json.Marshal(nbt)
 				return string(marshal)
@@ -79,7 +75,5 @@ func (o *ContainerScan) Inject(frame defines.MainFrame) {
 	o.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDBlockActorData, func(p packet.Packet) {
 		o.onBlockActorData(p.(*packet.BlockActorData))
 	})
-	o.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDLevelChunk, func(p packet.Packet) {
-		o.onLevelChunk(p.(*packet.LevelChunk))
-	})
+	o.Frame.GetGameListener().SetOnLevelChunkCallBack(o.onLevelChunk)
 }

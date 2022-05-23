@@ -60,6 +60,10 @@ func (o *Reactor) SetOnTypedPacketCallBack(pktID uint32, cb func(packet.Packet))
 	o.OnTypedPacketCallBacks[pktID] = append(o.OnTypedPacketCallBacks[pktID], cb)
 }
 
+func (o *Reactor) SetOnLevelChunkCallBack(fn func(cd *mirror.ChunkData)) {
+	o.OnLevelChunkData = append(o.OnLevelChunkData, fn)
+}
+
 func (o *Reactor) AppendLoginInfoCallback(cb func(entry protocol.PlayerListEntry)) {
 	o.SetOnTypedPacketCallBack(packet.IDPlayerList, func(p packet.Packet) {
 		pk := p.(*packet.PlayerList)
@@ -179,11 +183,14 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.CommandOutput:
 		o.GameCtrl.onNewCommandFeedBack(p)
 	case *packet.LevelChunk:
+		chunkData := io.NEMCPacketToChunkData(p)
+		if chunkData == nil {
+			break
+		}
+		for _, cb := range o.Reactor.OnLevelChunkData {
+			cb(chunkData)
+		}
 		if r.MirrorAvailable {
-			chunkData := io.NEMCPacketToChunkData(p)
-			if chunkData == nil {
-				break
-			}
 			if err := r.CurrentWorld.Write(chunkData); err != nil {
 				o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
 			} else {
@@ -205,6 +212,7 @@ type Reactor struct {
 	o                         *Omega
 	OnAnyPacketCallBack       []func(packet.Packet)
 	OnTypedPacketCallBacks    map[uint32][]func(packet.Packet)
+	OnLevelChunkData          []func(cd *mirror.ChunkData)
 	GameMenuEntries           []*defines.GameMenuEntry
 	GameChatInterceptors      []func(chat *defines.GameChat) (stop bool)
 	GameChatFinalInterceptors []func(chat *defines.GameChat) (stop bool)
@@ -264,5 +272,6 @@ func newReactor(o *Omega) *Reactor {
 		OnAnyPacketCallBack:       make([]func(packet2 packet.Packet), 0),
 		OnTypedPacketCallBacks:    make(map[uint32][]func(packet.Packet), 0),
 		OnFirstSeePlayerCallback:  make([]func(string), 0),
+		OnLevelChunkData:          make([]func(cd *mirror.ChunkData), 0),
 	}
 }

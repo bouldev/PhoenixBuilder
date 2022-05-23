@@ -4,6 +4,7 @@ import (
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror"
 
 	"github.com/google/uuid"
 )
@@ -136,7 +137,7 @@ type GameListener interface {
 	SetOnTypedPacketCallBack(uint32, func(packet.Packet))
 	SetGameMenuEntry(entry *GameMenuEntry)
 	SetGameChatInterceptor(func(chat *GameChat) (stop bool))
-
+	SetOnLevelChunkCallBack(fn func(cd *mirror.ChunkData))
 	AppendOnFirstSeePlayerCallback(cb func(string))
 	AppendLoginInfoCallback(cb func(entry protocol.PlayerListEntry))
 	AppendLogoutInfoCallback(cb func(entry protocol.PlayerListEntry))
