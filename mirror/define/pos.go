@@ -44,3 +44,11 @@ func (p Pos) Y() int {
 func (p Pos) Z() int {
 	return p[2]
 }
+
+func GetPosFromNBT(nbt map[string]interface{}) (x, y, z int) {
+	return int(nbt["x"].(int32)), int(nbt["y"].(int32)), int(nbt["z"].(int32))
+}
+
+func GetCubePosFromNBT(nbt map[string]interface{}) (p Pos) {
+	return Pos{int(nbt["x"].(int32)), int(nbt["y"].(int32)), int(nbt["z"].(int32))}
+}

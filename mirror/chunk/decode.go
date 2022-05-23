@@ -8,17 +8,24 @@ import (
 	"phoenixbuilder/minecraft/nbt"
 )
 
-func NEMCNetworkDecode(data []byte, count int) (*Chunk, []map[string]interface{}, error) {
+func NEMCNetworkDecode(data []byte, count int) (c *Chunk, nbtBlocks []map[string]interface{}, err error) {
 	air, ok := StateToRuntimeID("minecraft:air", nil)
 	if !ok {
 		panic("cannot find air runtime ID")
 	}
 	var (
-		c       = New(air, define.Range{-64, 319})
 		buf     = bytes.NewBuffer(data)
-		err     error
 		encoder = &nemcNetworkEncoding{}
 	)
+	c = New(air, define.Range{-64, 319})
+	nbtBlocks = []map[string]interface{}{}
+	defer func() {
+		r := recover()
+		if r != nil {
+			c = nil
+			err = fmt.Errorf("%v", r)
+		}
+	}()
 	encoder.isChunkDecoding = true
 	for i := 0; i < count; i++ {
 		index := uint8(i)
@@ -54,7 +61,7 @@ func NEMCNetworkDecode(data []byte, count int) (*Chunk, []map[string]interface{}
 	}
 
 	dec := nbt.NewDecoder(buf)
-	nbtBlocks := []map[string]interface{}{}
+
 	for buf.Len() != 0 {
 		var m map[string]interface{}
 		if err := dec.Decode(&m); err != nil {
