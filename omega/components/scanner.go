@@ -54,15 +54,16 @@ func (o *Scanner) Filter(l string) string {
 func (o *Scanner) onLevelChunk(cd *mirror.ChunkData) {
 	if o.isScanning {
 		for _, nbt := range cd.BlockNbts {
-			x, y, z := define.GetPosFromNBT(nbt)
-			marshal, _ := json.Marshal(nbt)
-			if o.resultWriter != nil {
-				l := fmt.Sprintf("block @ %v %v %v: %v\n", x, y, z, string(marshal))
-				if l = o.Filter(l); l == "" {
-					continue
+			if x, y, z, success := define.GetPosFromNBT(nbt); success {
+				marshal, _ := json.Marshal(nbt)
+				if o.resultWriter != nil {
+					l := fmt.Sprintf("block @ %v %v %v: %v\n", x, y, z, string(marshal))
+					if l = o.Filter(l); l == "" {
+						continue
+					}
+					fmt.Print(l)
+					o.resultWriter.Write(l)
 				}
-				fmt.Print(l)
-				o.resultWriter.Write(l)
 			}
 		}
 	}
@@ -71,15 +72,16 @@ func (o *Scanner) onLevelChunk(cd *mirror.ChunkData) {
 func (o *Scanner) onBlockActorData(pk *packet.BlockActorData) {
 	if o.isScanning {
 		nbt := pk.NBTData
-		x, y, z := define.GetPosFromNBT(nbt)
-		marshal, _ := json.Marshal(nbt)
-		if o.resultWriter != nil {
-			l := fmt.Sprintf("block @ %v %v %v: %v\n", x, y, z, string(marshal))
-			if l = o.Filter(l); l == "" {
-				return
+		if x, y, z, success := define.GetPosFromNBT(nbt); success {
+			marshal, _ := json.Marshal(nbt)
+			if o.resultWriter != nil {
+				l := fmt.Sprintf("block @ %v %v %v: %v\n", x, y, z, string(marshal))
+				if l = o.Filter(l); l == "" {
+					return
+				}
+				fmt.Print(l)
+				o.resultWriter.Write(l)
 			}
-			fmt.Print(l)
-			o.resultWriter.Write(l)
 		}
 	}
 }

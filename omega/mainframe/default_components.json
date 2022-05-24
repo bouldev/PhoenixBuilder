@@ -46,8 +46,7 @@
       ],
       "登录时发送指令": [
         "/tellraw @a {\"rawtext\":[{\"text\":\"§6§l@[target_player] 欢迎回来\"}]}",
-        "/tellraw [target_player]  {\"rawtext\":[{\"text\":\"§6§l试试在聊天栏输入 omg\"}]}",
-        "say 前往 omega_storage/配置/组件-入服欢迎.json 配置"
+        "/tellraw [target_player]  {\"rawtext\":[{\"text\":\"§6§l试试在聊天栏输入 omg\"}]}"
       ],
       "登录时延迟发送": 10
     }
@@ -267,8 +266,8 @@
       "记分板校准": {
         "启用记分板校准": true,
         "校准指令": [
-          "say 前往 omega_storage/配置/组件-时间同步.json 配置",
-          "tell 2401PT 时间记分板将校准为 [year]/[month]/[day] [h24]([h12]):[min]:[sec]",
+          "tell @a[m=c] 前往 omega_storage/配置/组件-时间同步.json 配置",
+          "tell @a[m=c] 时间记分板将校准为 [year]/[month]/[day] [h24]([h12]):[min]:[sec]",
           "scoreboard players set 日期 time [day]",
           "scoreboard players set 小时 time [h24]",
           "scoreboard players set 分 time [min]",
@@ -401,13 +400,11 @@
     "配置": {
       "提示信息": "返回重生点",
       "创造玩家重生后执行的指令": [
-        "say 前往 omega_storage/配置/组件-玩家**.json 配置",
         "gamemode c [player]",
         "/tellraw [player] {\"rawtext\":[{\"text\":\"§6§l你已重生，模式已恢复\"}]}"
       ],
       "触发词": ["kill", "重生"],
       "非创造玩家重生后执行的指令": [
-        "say 前往 omega_storage/配置/组件-玩家**.json 配置",
         "gamemode s [player]",
         "/tellraw [player] {\"rawtext\":[{\"text\":\"§6§l你已重生，模式变更为生存\"}]}"
       ]
@@ -513,7 +510,7 @@
     "配置": {
       "启动时信息显示": [
         ["@a", "§6§l * Omega System Online"],
-        ["@a[m=c]", "say  前往 omega_storage/配置/组件-系统上线提示.json 配置"]
+        ["@a[m=c]", "前往 omega_storage/配置/组件-系统上线提示.json 配置"]
       ]
     }
   },
@@ -849,6 +846,23 @@
       ],
       "如果包含以下关键词则清除": ["sleep","vindicator","evocation_illager","cow","pig","dragon","villager"],
       "如果不包含以下关键词之一则清除": []
+    }
+  },
+  {
+    "名称": "快递系统",
+    "描述": "允许一个玩家给另一个玩家寄出物资",
+    "是否禁用": true,
+    "版本": "0.0.1",
+    "来源": "Built-In",
+    "配置": {
+      "触发词": ["快递","寄送"],
+      "提示信息": "给其他人寄东西",
+      "寄出成功时提示": "[package] 将在 [player] 上线时给他",
+      "登录时延迟发送": 15,
+      "提示玩家把要投递的东西丢到身边": "把要寄出的物品丢在身边3格内，完成后在聊天栏输入物品名",
+      "物品转移器": "execute [player] ~~~ tp @e[type=item,r=3] 10000 240 10000",
+      "记录文件": "快递.json",
+      "打包平台": [10000,240,10000]
     }
   }
 ]

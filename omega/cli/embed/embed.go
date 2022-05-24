@@ -58,8 +58,8 @@ func EnableOmegaSystem(env *environment.PBEnvironment) *EmbeddedAdaptor {
 		BackendCmdFeeder: make(chan string, 1024),
 		PacketFeeder:     make(chan mc_packet.Packet, 1024),
 	}
-	fmt.Println("Starting Omega in 3 Seconds")
-	time.Sleep(time.Second * 3)
+	fmt.Println("Starting Omega in 1 Seconds")
+	time.Sleep(time.Second * 1)
 	omega := mainframe.NewOmega()
 	omega.Bootstrap(ea)
 	env.OmegaHolder = omega

@@ -45,8 +45,35 @@ func (p Pos) Z() int {
 	return p[2]
 }
 
-func GetPosFromNBT(nbt map[string]interface{}) (x, y, z int) {
-	return int(nbt["x"].(int32)), int(nbt["y"].(int32)), int(nbt["z"].(int32))
+func GetPosFromNBT(nbt map[string]interface{}) (x, y, z int, success bool) {
+	if ax, hasK := nbt["x"]; hasK {
+		if cx, success := ax.(int32); success {
+			x = int(cx)
+		} else {
+			return 0, 0, 0, false
+		}
+	} else {
+		return 0, 0, 0, false
+	}
+	if ay, hasK := nbt["y"]; hasK {
+		if cy, success := ay.(int32); success {
+			y = int(cy)
+		} else {
+			return 0, 0, 0, false
+		}
+	} else {
+		return 0, 0, 0, false
+	}
+	if az, hasK := nbt["z"]; hasK {
+		if cz, success := az.(int32); success {
+			z = int(cz)
+		} else {
+			return 0, 0, 0, false
+		}
+	} else {
+		return 0, 0, 0, false
+	}
+	return x, y, z, true
 }
 
 func GetCubePosFromNBT(nbt map[string]interface{}) (p Pos) {

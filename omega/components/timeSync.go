@@ -101,8 +101,8 @@ func (o *TimeSync) Activate() {
 		t := time.NewTicker(time.Duration(o.GameTimeSyncConfig.SyncDuration) * time.Second)
 		go func() {
 			for {
-				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("/time set %v", o.getRealTimeInMCTick()))
 				<-t.C
+				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("/time set %v", o.getRealTimeInMCTick()))
 			}
 		}()
 	}

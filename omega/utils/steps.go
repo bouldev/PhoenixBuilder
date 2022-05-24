@@ -19,7 +19,7 @@ func QueryForPlayerName(ctrl defines.GameControl, src string, dst string, search
 		} else {
 			candidateNames = []string{}
 			possibleNames := searchFn(dst, 3)
-			fmt.Println(possibleNames)
+			//fmt.Println(possibleNames)
 			if len(possibleNames) > 0 && possibleNames[0].Entry.CurrentName == dst {
 				return dst, false
 			}

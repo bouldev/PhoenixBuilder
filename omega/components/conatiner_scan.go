@@ -32,9 +32,10 @@ func (o *ContainerScan) Init(cfg *defines.ComponentConfig) {
 func (o *ContainerScan) checkNbt(x, y, z int, nbt map[string]interface{}, getStr func() string) {
 	has32K := false
 	findK("lvl", nbt, func(v interface{}) {
-		level := int(v.(int16))
-		if level > o.K32Threshold {
-			has32K = true
+		if level, success := v.(int16); success {
+			if int(level) > o.K32Threshold {
+				has32K = true
+			}
 		}
 	})
 	if has32K {
@@ -50,11 +51,12 @@ func (o *ContainerScan) checkNbt(x, y, z int, nbt map[string]interface{}, getStr
 func (o *ContainerScan) onLevelChunk(cd *mirror.ChunkData) {
 	if o.EnableK32Detect {
 		for _, nbt := range cd.BlockNbts {
-			x, y, z := define.GetPosFromNBT(nbt)
-			o.checkNbt(int(x), int(y), int(z), nbt, func() string {
-				marshal, _ := json.Marshal(nbt)
-				return string(marshal)
-			})
+			if x, y, z, success := define.GetPosFromNBT(nbt); success {
+				o.checkNbt(int(x), int(y), int(z), nbt, func() string {
+					marshal, _ := json.Marshal(nbt)
+					return string(marshal)
+				})
+			}
 		}
 	}
 }

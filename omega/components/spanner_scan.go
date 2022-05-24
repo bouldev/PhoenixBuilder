@@ -50,15 +50,34 @@ func (o *MobSpawnerScan) Init(cfg *defines.ComponentConfig) {
 
 func (o *MobSpawnerScan) checkNbt(x, y, z int, nbt map[string]interface{}) {
 	illegal := false
-	EntityIdentifier := ""
+	reason := ""
 	findK("EntityIdentifier", nbt, func(v interface{}) {
-		EntityIdentifier = string(v.(string))
-		if o.needRemove(EntityIdentifier) {
-			illegal = true
+		if EntityIdentifier, success := v.(string); success {
+			if o.needRemove(EntityIdentifier) {
+				reason = fmt.Sprintf("非法的刷怪物: %v", EntityIdentifier)
+				illegal = true
+			}
 		}
 	})
+	findK("MinSpawnDelay", nbt, func(v interface{}) {
+		if deley, success := v.(int16); success {
+			if deley < 200 {
+				reason = fmt.Sprintf("刷怪速度过快: %v", deley)
+				illegal = true
+			}
+		}
+	})
+	findK("MaxSpawnDelay", nbt, func(v interface{}) {
+		if deley, success := v.(int16); success {
+			if deley < 200 {
+				reason = fmt.Sprintf("刷怪速度过快: %v", deley)
+				illegal = true
+			}
+		}
+	})
+	//fmt.Println(nbt)
 	if illegal {
-		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("位于 %v %v %v 的违规刷怪笼: %v", x, y, z, EntityIdentifier))
+		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("位于 %v %v %v 的违规刷怪笼: %v", x, y, z, reason))
 		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cleanUpActions, map[string]interface{}{
 			"[x]": x,
 			"[y]": y,
@@ -69,8 +88,9 @@ func (o *MobSpawnerScan) checkNbt(x, y, z int, nbt map[string]interface{}) {
 
 func (o *MobSpawnerScan) onLevelChunk(cd *mirror.ChunkData) {
 	for _, nbt := range cd.BlockNbts {
-		x, y, z := define.GetPosFromNBT(nbt)
-		o.checkNbt(int(x), int(y), int(z), nbt)
+		if x, y, z, success := define.GetPosFromNBT(nbt); success {
+			o.checkNbt(int(x), int(y), int(z), nbt)
+		}
 	}
 }
 

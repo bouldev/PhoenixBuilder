@@ -67,9 +67,10 @@ func (o *IntrusionDetectSystem) onSeeMobItem(pk *packet.MobEquipment) {
 		nbt := pk.NewItem.Stack.NBTData
 		has32K := false
 		findK("lvl", nbt, func(v interface{}) {
-			level := int(v.(int16))
-			if level > o.K32Threshold {
-				has32K = true
+			if level, success := v.(int16); success {
+				if int(level) > o.K32Threshold {
+					has32K = true
+				}
 			}
 		})
 		if has32K {
