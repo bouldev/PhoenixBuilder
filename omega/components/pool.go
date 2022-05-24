@@ -124,5 +124,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"刷怪笼检测": func() defines.Component {
 			return &MobSpawnerScan{BasicComponent: &BasicComponent{}}
 		},
+		"快递系统": func() defines.Component {
+			return &Express{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
