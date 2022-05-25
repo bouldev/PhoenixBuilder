@@ -105,9 +105,11 @@ func (o *Omega) readConfig() {
 		}
 	}
 	preferredOrder := map[string]int{
-		"假死检测": 0,
-		"返回主城": 1,
-		"改名记录": 2,
+		"假死检测":  0,
+		"返回主城":  1,
+		"改名记录":  2,
+		"设置重生点": 3,
+		"玩家自杀":  4,
 	}
 	groupedOrder := make([][]*defines.ComponentConfig, len(preferredOrder)+1)
 	for i := range groupedOrder {

@@ -23,7 +23,7 @@ func (cl *ChatLogger) Inject(frame defines.MainFrame) {
 		}
 		msg := strings.TrimSpace(pk.Message)
 		//TODO don't do this
-		if msg == "alive" {
+		if strings.Contains(msg, "alive") {
 			return
 		}
 		_l := len(msg)
