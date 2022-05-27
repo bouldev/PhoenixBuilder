@@ -29,7 +29,7 @@ type Banned struct {
 
 func (o *Kick) kick(name string) {
 	for _, a := range o.Actions {
-		c := utils.FormateByRepalcment(a, map[string]interface{}{
+		c := utils.FormatByReplacingOccurrences(a, map[string]interface{}{
 			"[player]": name,
 		})
 		o.Frame.GetGameControl().SendCmd(c)

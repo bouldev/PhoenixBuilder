@@ -40,7 +40,7 @@ func (o *Respawn) respawn(chat *defines.GameChat) bool {
 		go func() {
 			<-c
 			for _, cmdT := range cmdsArr {
-				cmd := utils.FormateByRepalcment(cmdT, map[string]interface{}{
+				cmd := utils.FormatByReplacingOccurrences(cmdT, map[string]interface{}{
 					"[player]": chat.Name,
 				})
 				o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {})

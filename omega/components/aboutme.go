@@ -37,7 +37,7 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("tag "+chat.Name+" list", func(output *packet.CommandOutput) {
 		if output.SuccessCount > 0 && len(output.OutputMessages) > 0 && len(output.OutputMessages[0].Parameters) > 2 {
 			for _, t := range strings.Split(output.OutputMessages[0].Parameters[2], ", ") {
-				_t := utils.RemoveFormate(t)
+				_t := utils.RemoveFormat(t)
 				hasTags[_t] = true
 				allTags = append(allTags, _t)
 			}
@@ -66,7 +66,7 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 			for n, s := range scores {
 				mappings[fmt.Sprintf("[score<%v>]", s)] = n
 			}
-			cmd := utils.FormateByRepalcment(o.Cmd, mappings)
+			cmd := utils.FormatByReplacingOccurrences(o.Cmd, mappings)
 			o.Frame.GetBackendDisplay().Write("玩家信息: " + cmd)
 			o.Frame.GetGameControl().SayTo(chat.Name, cmd)
 		})

@@ -45,7 +45,7 @@ func (o *Immortal) doRespawn(name string, pos []int) {
 		}
 	}()
 	<-c
-	msg := utils.FormateByRepalcment(o.Hint, map[string]interface{}{
+	msg := utils.FormatByReplacingOccurrences(o.Hint, map[string]interface{}{
 		"[player]":   name,
 		"[dead_pos]": pos,
 	})

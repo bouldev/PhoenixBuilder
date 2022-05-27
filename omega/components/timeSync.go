@@ -86,7 +86,7 @@ func (o *TimeSync) calibrateTime() {
 		"[sec]":   sec,
 	}
 	for _, t := range o.Cmds {
-		rc := utils.FormateByRepalcment(t, replacement)
+		rc := utils.FormatByReplacingOccurrences(t, replacement)
 		//fmt.Println(rc)
 		o.Frame.GetGameControl().SendCmd(rc)
 	}

@@ -25,7 +25,7 @@ func (o *SetSpawnPoint) Init(cfg *defines.ComponentConfig) {
 }
 
 func (o *SetSpawnPoint) set(chat *defines.GameChat) bool {
-	cmd := utils.FormateByRepalcment(o.Cmd, map[string]interface{}{
+	cmd := utils.FormatByReplacingOccurrences(o.Cmd, map[string]interface{}{
 		"[player]": chat.Name,
 	})
 	o.Frame.GetBackendDisplay().Write(cmd)

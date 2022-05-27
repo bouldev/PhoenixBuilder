@@ -31,7 +31,7 @@ func (o *PlayerTP) Init(cfg *defines.ComponentConfig) {
 }
 
 func (o *PlayerTP) requestTp(src, dst string) {
-	reqMsg := utils.FormateByRepalcment(o.HintOnReq, map[string]interface{}{
+	reqMsg := utils.FormatByReplacingOccurrences(o.HintOnReq, map[string]interface{}{
 		"[src]": src,
 		"[dst]": dst,
 	})
@@ -48,7 +48,7 @@ func (o *PlayerTP) requestTp(src, dst string) {
 			o.Frame.GetGameControl().SayTo(src, "传送开始")
 			o.Frame.GetGameControl().SayTo(dst, "传送开始")
 		} else {
-			m := utils.FormateByRepalcment(o.HintOnRefuse, map[string]interface{}{
+			m := utils.FormatByReplacingOccurrences(o.HintOnRefuse, map[string]interface{}{
 				"[src]": src,
 				"[dst]": dst,
 			})
@@ -57,7 +57,7 @@ func (o *PlayerTP) requestTp(src, dst string) {
 		}
 		return true
 	}) == nil {
-		sendMsg := utils.FormateByRepalcment(o.HintOnReqSent, map[string]interface{}{
+		sendMsg := utils.FormatByReplacingOccurrences(o.HintOnReqSent, map[string]interface{}{
 			"[src]": src,
 			"[dst]": dst,
 		})

@@ -82,7 +82,7 @@ func (o *Schedule) launchTask() {
 	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.actions, replacement, o.logger)
 	//for _, _a := range o.Actions {
 	//	a := _a
-	//	cmd := utils.FormateByRepalcment(a.Cmd, map[string]interface{}{})
+	//	cmd := utils.FormatByReplacingOccurrences(a.Cmd, map[string]interface{}{})
 	//	if a.Record == "" || a.Record == "无" || a.Record == "空" {
 	//		o.Frame.GetGameControl().SendCmd(cmd)
 	//	} else {
@@ -115,7 +115,7 @@ func (o *Schedule) TryOffset(offset time.Duration) (time.Duration, bool) {
 		"[min]":   fmt.Sprintf("%02d", min),
 		"[sec]":   fmt.Sprintf("%02d", sec),
 	}
-	markedTime := utils.FormateByRepalcment(o.StartTimeInReal, replacement)
+	markedTime := utils.FormatByReplacingOccurrences(o.StartTimeInReal, replacement)
 	// fmt.Println(markedTime)
 	if timeZone, err := time.LoadLocation("Asia/Shanghai"); err == nil {
 		if baseT, err := time.ParseInLocation("2006-01-02 15:04:05", markedTime, timeZone); err != nil {

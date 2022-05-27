@@ -157,7 +157,7 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 	qqUserName := groupMsg.PrivateMessage.Sender.Nickname
 	for gname, sourceGid := range cq.Groups {
 		if sourceGid == gid {
-			m := utils.FormateByRepalcment(cq.QQMessageFormat, map[string]interface{}{
+			m := utils.FormatByReplacingOccurrences(cq.QQMessageFormat, map[string]interface{}{
 				"[groupName]":  gname,
 				"[QQUserName]": qqUserName,
 				"[msg]":        msgText,
@@ -189,7 +189,7 @@ func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
 		return false
 	}
 	msgText := strings.Join(chat.Msg, " ")
-	msg := utils.FormateByRepalcment(cq.GameMessageFormat, map[string]interface{}{
+	msg := utils.FormatByReplacingOccurrences(cq.GameMessageFormat, map[string]interface{}{
 		"[player]": chat.Name,
 		"[msg]":    msgText,
 	})
@@ -198,7 +198,7 @@ func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
 	return false
 }
 
-//go:embed 如何配置群服互通.txt
+//go:embed how-to.txt
 var help []byte
 
 func (cq *QGroupLink) firstInitErr(err error) error {

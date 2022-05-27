@@ -6,7 +6,7 @@ import (
 )
 
 func GetStringContents(s string) []string {
-	_s := strings.Split(RemoveFormate(s), " ")
+	_s := strings.Split(RemoveFormat(s), " ")
 	for i, c := range _s {
 		_s[i] = strings.TrimSpace(c)
 	}
@@ -19,7 +19,7 @@ func GetStringContents(s string) []string {
 	return ss
 }
 
-func RemoveFormate(in string) string {
+func RemoveFormat(in string) string {
 	ss := make([]byte, 0, len(in))
 	flag := 0
 	for i := 0; i < len(in); i++ {
@@ -87,10 +87,13 @@ func CanTrigger(ss []string, triggers []string, allowNoSpace bool, removeColor b
 	}
 }
 
-func FormateByRepalcment(tmp string, replacements map[string]interface{}) string {
+func FormatByReplacingOccurrences(tmp string, replacements map[string]interface{}) string {
 	s := tmp
 	for k, v := range replacements {
-		s = strings.ReplaceAll(s, k, fmt.Sprintf("%v", v))
+		vstr:=fmt.Sprintf("%v",v)
+		vstr=strings.Replace(vstr, "\n", "", -1)
+		vstr=strings.Replace(vstr, "\r", "", -1)
+		s = strings.ReplaceAll(s, k, vstr)
 	}
 	return s
 }

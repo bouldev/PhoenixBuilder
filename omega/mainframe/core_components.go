@@ -139,7 +139,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat) bool {
 			tmp = multipleFmt
 		}
 		//fmt.Println(tmp)
-		entry := utils.FormateByRepalcment(tmp, map[string]interface{}{
+		entry := utils.FormatByReplacingOccurrences(tmp, map[string]interface{}{
 			"[i]":              i,
 			"[systemTrigger]":  systemTrigger,
 			"[defaultTrigger]": e.Triggers[0],

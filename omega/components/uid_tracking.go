@@ -96,7 +96,7 @@ func (o *UIDTracking) CommitUID(name string, UUID uuid.UUID, uid int) {
 }
 
 func (o *UIDTracking) RequestPlayerUID(name string) int {
-	reqCmd := utils.FormateByRepalcment(o.PlayerUIDFetchCmd, map[string]interface{}{"[player]": name})
+	reqCmd := utils.FormatByReplacingOccurrences(o.PlayerUIDFetchCmd, map[string]interface{}{"[player]": name})
 	resultWaitor := make(chan int)
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(reqCmd, func(output *packet.CommandOutput) {
 		// fmt.Println(output)
@@ -128,7 +128,7 @@ func (o *UIDTracking) doAssignPlayerUID(currentUID int, name string, UUID uuid.U
 	}
 	// pterm.Info.Println(replacement)
 	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeUidAsign, replacement, o.Frame.GetBackendDisplay())
-	assignCmd := utils.FormateByRepalcment(o.UidAsignCmd, replacement)
+	assignCmd := utils.FormatByReplacingOccurrences(o.UidAsignCmd, replacement)
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(assignCmd, func(output *packet.CommandOutput) {
 		// fmt.Println(output)
 		if output.SuccessCount == 0 || len(output.OutputMessages) == 0 || len(output.OutputMessages[0].Parameters) != 3 {

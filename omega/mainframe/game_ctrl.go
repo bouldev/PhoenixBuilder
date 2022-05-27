@@ -35,7 +35,7 @@ func (p *PlayerKitOmega) HasPermission(key string) bool {
 }
 
 func (p *PlayerKitOmega) GetPos(selector string) chan []int {
-	s := utils.FormateByRepalcment(selector, map[string]interface{}{
+	s := utils.FormatByReplacingOccurrences(selector, map[string]interface{}{
 		"[player]": p.name,
 	})
 	c := make(chan []int)

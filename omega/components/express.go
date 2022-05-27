@@ -66,7 +66,7 @@ func (o *Express) delivery(playerName string) {
 
 func (o *Express) post(srcPlayer, dstPlayer, hint string) {
 	fmt.Println(srcPlayer, dstPlayer, hint)
-	cmd := utils.FormateByRepalcment(o.SelectCmd, map[string]interface{}{"[player]": srcPlayer})
+	cmd := utils.FormatByReplacingOccurrences(o.SelectCmd, map[string]interface{}{"[player]": srcPlayer})
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 		if output.SuccessCount == 0 {
 			o.Frame.GetGameControl().SayTo(srcPlayer, "物品转移失败")

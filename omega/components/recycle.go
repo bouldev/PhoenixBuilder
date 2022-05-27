@@ -119,7 +119,7 @@ func (o *Recycle) popMenu(name string) {
 			leftStr = fmt.Sprintf("%v", o.computeMaxRecycleCount(name, e.Name, e.MaxRecyclePerDay))
 		}
 		I := i + 1
-		m := utils.FormateByRepalcment(o.Format, map[string]interface{}{
+		m := utils.FormatByReplacingOccurrences(o.Format, map[string]interface{}{
 			"[i]":             I,
 			"[name]":          e.Name,
 			"[description]":   e.Description,
@@ -213,7 +213,7 @@ func (o *Recycle) askForAmount(name string, option Option) {
 
 func (o *Recycle) startRecycle(name string, option Option, amount int) {
 	// totalPrice := amount * option.Price
-	cmd := utils.FormateByRepalcment(option.ClearCmd, map[string]interface{}{
+	cmd := utils.FormatByReplacingOccurrences(option.ClearCmd, map[string]interface{}{
 		"[player]": name,
 		"[count]":  amount,
 	})
@@ -252,7 +252,7 @@ func (o *Recycle) onRecycleSuccess(name string, option Option, realCount int) {
 
 	o.Frame.GetGameControl().SayTo(name, "回收成功")
 	for _, t := range option.RewardCmds {
-		c := utils.FormateByRepalcment(t, map[string]interface{}{
+		c := utils.FormatByReplacingOccurrences(t, map[string]interface{}{
 			"[player]":     name,
 			"[realCount]":  realCount,
 			"[totalPrice]": realCount * option.Price,

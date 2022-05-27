@@ -72,7 +72,7 @@ func (o *Shop) askForItemList(chat *defines.GameChat) {
 				f = o.FormatOnce
 			}
 			availableGoods = append(availableGoods, g.Name)
-			cmd := utils.FormateByRepalcment(f, map[string]interface{}{
+			cmd := utils.FormatByReplacingOccurrences(f, map[string]interface{}{
 				"[i]":             _i,
 				"[price]":         g.Price,
 				"[currency_name]": cn,
@@ -130,7 +130,7 @@ func (o *Shop) startBuy(player string, count int, good PlainGood) {
 				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("玩家 %v 花费 %v / %v 购买了 %v * %v", player, totalPrice, hasMoney, good.Name, count))
 				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players remove %v %v %v", player, good.CurrencyCmd, totalPrice))
 				for _, t := range good.Cmds {
-					c := utils.FormateByRepalcment(t, map[string]interface{}{
+					c := utils.FormatByReplacingOccurrences(t, map[string]interface{}{
 						"[player]":      player,
 						"[totalPrice]":  totalPrice,
 						"[moneyHas]":    hasMoney,

@@ -69,7 +69,7 @@ func (o *Portal) doTP(name string, pos string) bool {
 	ps := o.getPlayerPositions(name)
 	goPS := func(n string, p *PortalEntry) bool {
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 前往地点 %v: %v", name, n, p))
-		s := utils.FormateByRepalcment(o.Selector, map[string]interface{}{
+		s := utils.FormatByReplacingOccurrences(o.Selector, map[string]interface{}{
 			"[player]": name,
 		})
 		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("tp %v %v %v %v", s, p.Pos[0], p.Pos[1], p.Pos[2]), func(output *packet.CommandOutput) {

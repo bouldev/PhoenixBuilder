@@ -38,14 +38,14 @@ func (o *BackToHQ) back(chat *defines.GameChat) bool {
 		"[player]": chat.Name,
 	}, o.Frame.GetBackendDisplay())
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(
-		utils.FormateByRepalcment(o.ToAnchor, map[string]interface{}{
+		utils.FormatByReplacingOccurrences(o.ToAnchor, map[string]interface{}{
 			"[player]": chat.Name,
 			"[bot]":    o.Frame.GetUQHolder().GetBotName(),
 		}), func(output *packet.CommandOutput) {
 			go func() {
 				<-time.NewTimer(time.Second / 20).C
 				o.Frame.GetGameControl().SendCmd(
-					utils.FormateByRepalcment(o.ToHQ, map[string]interface{}{
+					utils.FormatByReplacingOccurrences(o.ToHQ, map[string]interface{}{
 						"[player]": chat.Name,
 						"[bot]":    o.Frame.GetUQHolder().GetBotName(),
 					}),

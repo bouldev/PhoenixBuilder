@@ -91,7 +91,7 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 			time.Sleep(time.Duration(a.SleepBefore * float32(time.Second)))
 		}
 		time.Sleep(time.Duration(a.SleepBefore * float32(time.Second)))
-		cmd := FormateByRepalcment(a.Cmd, remapping)
+		cmd := FormatByReplacingOccurrences(a.Cmd, remapping)
 		if a.Record == "" || a.Record == "无" || a.Record == "空" {
 			ctrl.SendCmd(cmd)
 		} else {
