@@ -154,7 +154,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 	}
 	switch p := pkt.(type) {
 	case *packet.Text:
-		o.backendLogger.Write(fmt.Sprintf("%v(%v):%v", p.SourceName, p.TextType, p.Message))
+		// o.backendLogger.Write(fmt.Sprintf("%v(%v):%v", p.SourceName, p.TextType, p.Message))
 		chat := o.convertTextPacket(p)
 		if p.TextType == packet.TextTypeWhisper && o.OmegaConfig.Trigger.AllowWisper {
 			chat.FrameWorkTriggered = true

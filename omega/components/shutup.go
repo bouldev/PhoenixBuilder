@@ -45,6 +45,9 @@ func (o *ShutUp) counter(c *defines.GameChat) bool {
 	if c.Name == o.Frame.GetUQHolder().GetBotName() {
 		return false
 	}
+	if c.Name == "外部" {
+		return false
+	}
 	o.mu.Lock()
 	o.statisticMsgs[c.Name]++
 	o.statisticWords[c.Name] += len(c.Msg)

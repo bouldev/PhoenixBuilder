@@ -24,7 +24,7 @@ func (o *Omega) bootstrapDirs() {
 			}
 		}
 	}
-	if o.storageRoot == "/sdcard/omega_storage" {
+	if o.storageRoot == "/sdcard/Download/omega_storage" {
 		fmt.Println("您似乎在使用安卓手机，Omega的配置和数据将被保存到 /sdcard/Download/omega_storage")
 	}
 	if !utils.IsDir(o.storageRoot) {

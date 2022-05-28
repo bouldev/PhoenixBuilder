@@ -18,12 +18,13 @@ func (cl *ChatLogger) Inject(frame defines.MainFrame) {
 	botName := cl.Frame.GetUQHolder().GetBotName()
 	cl.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDText, func(p packet.Packet) {
 		pk := p.(*packet.Text)
-		if strings.HasPrefix(pk.SourceName, botName) {
+		//TODO don't do this
+		msg := strings.TrimSpace(pk.Message)
+		// fmt.Println(msg)
+		if strings.Contains(msg, "alive") {
 			return
 		}
-		msg := strings.TrimSpace(pk.Message)
-		//TODO don't do this
-		if strings.Contains(msg, "alive") {
+		if strings.HasPrefix(pk.SourceName, botName) {
 			return
 		}
 		_l := len(msg)
