@@ -127,5 +127,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"快递系统": func() defines.Component {
 			return &Express{BasicComponent: &BasicComponent{}}
 		},
+		"高频红石检查": func() defines.Component {
+			return &RedStoneUpdateLimit{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

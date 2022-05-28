@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
+	"phoenixbuilder/omega/utils"
 	"strings"
 )
 
@@ -14,7 +15,12 @@ type ChatLogger struct {
 
 func (cl *ChatLogger) Inject(frame defines.MainFrame) {
 	cl.Frame = frame
-	cl.logger = cl.Frame.GetLogger("聊天记录.log")
+	cl.logger = &utils.MultipleLogger{
+		Loggers: []defines.LineDst{
+			cl.Frame.GetLogger("聊天记录.log"),
+			cl.Frame.GetBackendDisplay(),
+		},
+	}
 	botName := cl.Frame.GetUQHolder().GetBotName()
 	cl.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDText, func(p packet.Packet) {
 		pk := p.(*packet.Text)

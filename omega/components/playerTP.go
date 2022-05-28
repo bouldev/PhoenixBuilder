@@ -19,6 +19,7 @@ type PlayerTP struct {
 	HintOnTargetBusy     string   `json:"目标玩家忙碌时提示"`
 	HintOnRefuse         string   `json:"目标玩家拒绝时提示"`
 	CoolDownSecond       int      `json:"请求冷却时间"`
+	TPCmd                string   `json:"传送指令"`
 	lastRequestTime      map[string]time.Time
 }
 
@@ -43,7 +44,11 @@ func (o *PlayerTP) requestTp(src, dst string) {
 			return true
 		}
 		if result {
-			o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp %v %v", src, dst))
+			tpCmd := utils.FormatByReplacingOccurrences(o.TPCmd, map[string]interface{}{
+				"[src]": src,
+				"[dst]": dst,
+			})
+			o.Frame.GetGameControl().SendCmd(fmt.Sprintf(tpCmd, src, dst))
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("accept tp %v -> %v", src, dst))
 			o.Frame.GetGameControl().SayTo(src, "传送开始")
 			o.Frame.GetGameControl().SayTo(dst, "传送开始")
