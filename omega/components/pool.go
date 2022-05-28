@@ -130,5 +130,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"高频红石检查": func() defines.Component {
 			return &RedStoneUpdateLimit{BasicComponent: &BasicComponent{}}
 		},
+		"兑换码": func() defines.Component {
+			return &CDkey{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
