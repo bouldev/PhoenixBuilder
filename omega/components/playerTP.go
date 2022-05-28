@@ -48,7 +48,8 @@ func (o *PlayerTP) requestTp(src, dst string) {
 				"[src]": src,
 				"[dst]": dst,
 			})
-			o.Frame.GetGameControl().SendCmd(fmt.Sprintf(tpCmd, src, dst))
+			o.Frame.GetGameControl().SendCmd(tpCmd)
+			// fmt.Println(tpCmd)
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("accept tp %v -> %v", src, dst))
 			o.Frame.GetGameControl().SayTo(src, "传送开始")
 			o.Frame.GetGameControl().SayTo(dst, "传送开始")

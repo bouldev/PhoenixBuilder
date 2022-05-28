@@ -34,6 +34,7 @@ func (o *RedStoneUpdateLimit) Init(cfg *defines.ComponentConfig) {
 		panic(err)
 	}
 	o.redstoneRidCache = map[uint32]bool{}
+	o.updateRecord = make(map[protocol.BlockPos]int)
 }
 
 func (o *RedStoneUpdateLimit) doResponse(pos protocol.BlockPos) {
@@ -47,6 +48,12 @@ func (o *RedStoneUpdateLimit) doResponse(pos protocol.BlockPos) {
 }
 
 func (o *RedStoneUpdateLimit) recordUpdate(pos protocol.BlockPos) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			fmt.Println(r)
+		}
+	}()
 	if c, hasK := o.updateRecord[pos]; hasK {
 		if c > o.MaxUpdatePer10Second {
 			o.doResponse(pos)
@@ -93,7 +100,6 @@ func (o *RedStoneUpdateLimit) Inject(frame defines.MainFrame) {
 func (o *RedStoneUpdateLimit) Activate() {
 	for {
 		<-time.NewTimer(10 * time.Second).C
-		newRecord := make(map[protocol.BlockPos]int, 0)
-		o.updateRecord = newRecord
+		o.updateRecord = make(map[protocol.BlockPos]int, 0)
 	}
 }

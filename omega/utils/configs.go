@@ -34,7 +34,7 @@ func CollectComponentConfigs(root string) (ComponentConfigs []*defines.Component
 	}
 	ComponentConfigs = []*defines.ComponentConfig{}
 	for _, entry := range entries {
-		if !strings.HasPrefix(entry.Name(), "组件") {
+		if !strings.HasPrefix(entry.Name(), "组件") || !strings.HasSuffix(entry.Name(), ".json") {
 			continue
 		}
 		p := path.Join(root, "配置", entry.Name())
