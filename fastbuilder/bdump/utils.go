@@ -159,7 +159,6 @@ func VerifyBDXNew(filecontent []byte, sign []byte) (bool, string, error) {
 	certPart:=string(certPartBuf)
 	firstSplit:=strings.Split(certPart, "::")
 	if(len(firstSplit)!=2) {
-		fmt.Printf("%v\n", "111")
 		return true, "", nil
 	}
 	serverKeyDer, _ := pem.Decode([]byte(constantServerKey))
