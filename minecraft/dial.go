@@ -120,7 +120,7 @@ func (d Dialer) DialContext(ctx context.Context, network, address string) (conn 
 		pubKeyData := base64.StdEncoding.EncodeToString(data)
 		chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token)
 		chainAndAddr := strings.Split(chainAddr,"|")
-		bridge_fmt.Printf("Auth pass\n")
+		//bridge_fmt.Printf("Auth pass\n")
 		if err != nil {
 			if (code == -3) {
 				homedir, err := os.UserHomeDir()

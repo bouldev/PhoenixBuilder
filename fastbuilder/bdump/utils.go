@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/sha256"
 	"net/http"
+	"encoding/pem"
 	"encoding/hex"
 	"phoenixbuilder/fastbuilder/configuration"
 	"fmt"
@@ -25,7 +26,10 @@ const userAgent = "PhoenixBuilder/General"
 // SignBDX(fileContent)
 // []byte - sign
 // error  - err
-func SignBDX(filecontent []byte) ([]byte, error) {
+func SignBDX(filecontent []byte, privateKeyString string, cert string) ([]byte, error) {
+	if(len(privateKeyString)!=0&&len(cert)!=0) {
+		return SignBDXNew(filecontent,privateKeyString,cert)
+	}
 	hash:=sha256.New()
 	hash.Write(filecontent)
 	hexOfHash:=hex.EncodeToString(hash.Sum(nil))
@@ -69,6 +73,9 @@ func SignBDX(filecontent []byte) ([]byte, error) {
 // string username
 // error error
 func VerifyBDX(filecontent []byte, sign []byte) (bool, string, error) {
+	if(sign[0]==0&&sign[1]==0x8B) {
+		return VerifyBDXNew(filecontent,sign)
+	}
 	hash:=sha256.New()
 	hash.Write(filecontent)
 	hexOfHash:=hex.EncodeToString(hash.Sum(nil))
@@ -112,11 +119,13 @@ func VerifyBDX(filecontent []byte, sign []byte) (bool, string, error) {
 // error  - err
 func SignBDXNew(filecontent []byte, privateKeyString string, cert string) ([]byte, error) {
 	buf:=bytes.NewBuffer([]byte{})
-	privateKey, err:=x509.ParsePKCS1PrivateKey([]byte(privateKeyString))
+	derKey, _ := pem.Decode([]byte(privateKeyString))
+	privateKey, err:=x509.ParsePKCS1PrivateKey(derKey.Bytes)
 	if(err!=nil) {
 		return nil, err
 	}
-	signContent, err:=privateKey.Sign(rand.Reader,filecontent,crypto.SHA256)
+	hashedFileContent:=sha256.Sum256(filecontent)
+	signContent, err:=privateKey.Sign(rand.Reader,hashedFileContent[:],crypto.SHA256)
 	if(err!=nil) {
 		return nil, err
 	}
@@ -148,11 +157,13 @@ func VerifyBDXNew(filecontent []byte, sign []byte) (bool, string, error) {
 	certPartBuf:=make([]byte, certLen)
 	reader.Read(certPartBuf)
 	certPart:=string(certPartBuf)
-	firstSplit:=strings.Split(certPart, "/")
+	firstSplit:=strings.Split(certPart, "::")
 	if(len(firstSplit)!=2) {
+		fmt.Printf("%v\n", "111")
 		return true, "", nil
 	}
-	csk, _ := x509.ParsePKCS1PublicKey([]byte(constantServerKey))
+	serverKeyDer, _ := pem.Decode([]byte(constantServerKey))
+	csk, _ := x509.ParsePKCS1PublicKey(serverKeyDer.Bytes)
 	signature, _ := hex.DecodeString(firstSplit[1])
 	sum1:=sha256.Sum256([]byte(firstSplit[0]))
 	err:=rsa.VerifyPKCS1v15(csk, crypto.SHA256, sum1[:], signature)
@@ -161,7 +172,8 @@ func VerifyBDXNew(filecontent []byte, sign []byte) (bool, string, error) {
 	}
 	firstPart:=firstSplit[0]
 	fpContent:=strings.Split(firstPart,"|")
-	publicKey, err:=x509.ParsePKCS1PublicKey([]byte(fpContent[0]))
+	parsedPEM, _ := pem.Decode([]byte(fpContent[0]))
+	publicKey, err:=x509.ParsePKCS1PublicKey(parsedPEM.Bytes)
 	if(err!=nil) {
 		return true, "", nil
 	}

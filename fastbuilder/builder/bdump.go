@@ -56,7 +56,16 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 		if(bts[filelen-1]==90) {
 			types.ForwardedBrokSender<-fmt.Sprintf(I18n.T(I18n.BDump_SignedVerifying))
 			lent:=int64(bts[filelen-2])
+			longSign:=false
+			if(lent==int64(255)) {
+				lenBuf:=bts[filelen-4:filelen-2]
+				lent=int64(binary.BigEndian.Uint16(lenBuf))
+				longSign=true
+			}
 			sign:=bts[filelen-lent-2:filelen-2]
+			if(longSign) {
+				sign=sign[0:len(sign)-2]
+			}
 			cor,un,err:=bdump.VerifyBDX(bts[:filelen-lent-3],sign)
 			if(cor) {
 				return fmt.Errorf(I18n.T(I18n.FileCorruptedError))

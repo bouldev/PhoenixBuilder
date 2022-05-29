@@ -34,6 +34,7 @@ type PBEnvironment struct {
 	Destructors               []func()
 	isStopping                bool
 	stoppedWaiter             chan struct{}
+	CertSigning               bool
 	LocalKey                  string
 	LocalCert                 string
 }

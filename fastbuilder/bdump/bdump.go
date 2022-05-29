@@ -377,7 +377,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 	return nil
 }
 
-func (bdump *BDump) WriteToFile(path string) (error, error) {
+func (bdump *BDump) WriteToFile(path string, localCert string, localKey string) (error, error) {
 	file, err:=variant_path.CreateFile(path)
 	if err!=nil {
 		return nil,err
@@ -402,12 +402,19 @@ func (bdump *BDump) WriteToFile(path string) (error, error) {
 	if(err!=nil) {
 		return err, nil
 	}
-	sign, signerr:=SignBDX(bts)
+	sign, signerr:=SignBDX(bts, localKey, localCert)
 	if(signerr!=nil) {
 		brw.Write([]byte("XE"))
 	}else{
 		brw.Write(append([]byte{88}, sign...))
-		brw.Write([]byte{uint8(len(sign))})
+		if(len(sign)>=255) {
+			realLength:=make([]byte,2)
+			binary.BigEndian.PutUint16(realLength,uint16(len(sign)))
+			brw.Write(realLength)
+			brw.Write([]byte{uint8(255)})
+		}else{
+			brw.Write([]byte{uint8(len(sign))})
+		}
 		brw.Write([]byte{90})
 	}
 	err=brw.Close()

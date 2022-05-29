@@ -326,7 +326,7 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 	return nil
 }
 
-func (bdump *BDumpLegacy) WriteToFile(path string) (error, error) {
+func (bdump *BDumpLegacy) WriteToFile(path string, localCert string, localKey string) (error, error) {
 	file, err:=os.OpenFile(path, os.O_RDWR|os.O_TRUNC|os.O_CREATE,0666)
 	if err!=nil {
 		return fmt.Errorf("Failed to open file: %v", err), nil
@@ -351,12 +351,19 @@ func (bdump *BDumpLegacy) WriteToFile(path string) (error, error) {
 	if(err!=nil) {
 		return err, nil
 	}
-	sign, signerr:=SignBDX(bts)
+	sign, signerr:=SignBDX(bts, localKey, localCert)
 	if(signerr!=nil) {
 		brw.Write([]byte("XE"))
 	}else{
 		brw.Write(append([]byte{88}, sign...))
-		brw.Write([]byte{uint8(len(sign))})
+		if(len(sign)>=255) {
+			realLength:=make([]byte,2)
+			binary.BigEndian.PutUint16(realLength,uint16(len(sign)+2))
+			brw.Write(realLength)
+			brw.Write([]byte{uint8(255)})
+		}else{
+			brw.Write([]byte{uint8(len(sign))})
+		}
 		brw.Write([]byte{90})
 	}
 	err=brw.Close()

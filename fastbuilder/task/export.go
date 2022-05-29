@@ -183,7 +183,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 			cfg.Path+=".bdx"
 		}
 		cmdsender.Tellraw("EXPORT >> Writing output file")
-		err, signerr:=out.WriteToFile(cfg.Path)
+		err, signerr:=out.WriteToFile(cfg.Path, env.LocalCert, env.LocalKey)
 		if(err!=nil){
 			cmdsender.Tellraw(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v",err))
 			return
@@ -428,7 +428,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 			cfg.Path+=".bdx"
 		}
 		env.CommandSender.Tellraw("EXPORT >> Writing output file")
-		err, signerr:=out.WriteToFile(cfg.Path)
+		err, signerr:=out.WriteToFile(cfg.Path, env.LocalCert, env.LocalKey)
 		if(err!=nil){
 			env.CommandSender.Tellraw(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v",err))
 			return

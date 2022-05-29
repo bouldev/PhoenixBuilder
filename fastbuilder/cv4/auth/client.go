@@ -186,13 +186,23 @@ func (client *Client) Auth(serverCode string, serverPassword string, key string,
 	client.env.FBUCUsername = uc_username
 	client.env.Uid = u_uid
 	str, _ := resp["chainInfo"].(string)
+	client.env.CertSigning = true
 	if signingKey, success := resp["privateSigningKey"].(string); success {
 		client.env.LocalKey = signingKey
-		pterm.Error.Println("fail to fetch privateSigningKey from server")
+	}else{
+		pterm.Error.Println("Failed to fetch privateSigningKey from server")
+		client.env.CertSigning = false
+		client.env.LocalKey = ""
 	}
 	if keyProve, success := resp["prove"].(string); success {
 		client.env.LocalCert = keyProve
-		pterm.Error.Println("fail to fetch keyProve from server")
+	}else{
+		pterm.Error.Println("Failed to fetch keyProve from server")
+		client.env.CertSigning = false
+		client.env.LocalCert = ""
+	}
+	if(!client.env.CertSigning) {
+		pterm.Error.Println("CertSigning is disabled for errors above.")
 	}
 	return str, 0, nil
 }
