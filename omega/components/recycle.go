@@ -121,7 +121,7 @@ func (o *Recycle) popMenu(name string) {
 		I := i + 1
 		m := utils.FormatByReplacingOccurrences(o.Format, map[string]interface{}{
 			"[i]":             I,
-			"[name]":          e.Name,
+			"[name]":          "\"" + e.Name + "\"",
 			"[description]":   e.Description,
 			"[price]":         e.Price,
 			"[currency_name]": e.CurrencyName,
@@ -214,7 +214,7 @@ func (o *Recycle) askForAmount(name string, option Option) {
 func (o *Recycle) startRecycle(name string, option Option, amount int) {
 	// totalPrice := amount * option.Price
 	cmd := utils.FormatByReplacingOccurrences(option.ClearCmd, map[string]interface{}{
-		"[player]": name,
+		"[player]": "\"" + name + "\"",
 		"[count]":  amount,
 	})
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
@@ -253,7 +253,7 @@ func (o *Recycle) onRecycleSuccess(name string, option Option, realCount int) {
 	o.Frame.GetGameControl().SayTo(name, "回收成功")
 	for _, t := range option.RewardCmds {
 		c := utils.FormatByReplacingOccurrences(t, map[string]interface{}{
-			"[player]":     name,
+			"[player]":     "\"" + name + "\"",
 			"[realCount]":  realCount,
 			"[totalPrice]": realCount * option.Price,
 			"[leftCount]":  leftStr,

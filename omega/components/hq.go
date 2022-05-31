@@ -35,19 +35,19 @@ func (o *BackToHQ) Init(cfg *defines.ComponentConfig) {
 
 func (o *BackToHQ) back(chat *defines.GameChat) bool {
 	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeBack, map[string]interface{}{
-		"[player]": chat.Name,
+		"[player]": "\"" + chat.Name + "\"",
 	}, o.Frame.GetBackendDisplay())
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(
 		utils.FormatByReplacingOccurrences(o.ToAnchor, map[string]interface{}{
-			"[player]": chat.Name,
-			"[bot]":    o.Frame.GetUQHolder().GetBotName(),
+			"[player]": "\"" + chat.Name + "\"",
+			"[bot]":    "\"" + o.Frame.GetUQHolder().GetBotName() + "\"",
 		}), func(output *packet.CommandOutput) {
 			go func() {
 				<-time.NewTimer(time.Second / 20).C
 				o.Frame.GetGameControl().SendCmd(
 					utils.FormatByReplacingOccurrences(o.ToHQ, map[string]interface{}{
-						"[player]": chat.Name,
-						"[bot]":    o.Frame.GetUQHolder().GetBotName(),
+						"[player]": "\"" + chat.Name + "\"",
+						"[bot]":    "\"" + o.Frame.GetUQHolder().GetBotName() + "\"",
 					}),
 				)
 			}()

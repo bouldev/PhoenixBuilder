@@ -55,7 +55,7 @@ func (o *CDkey) doRedeem(player string, cmds []string, current, total int) {
 			res = fmt.Sprintf("%d", total-current)
 		}
 		c := utils.FormatByReplacingOccurrences(cmd, map[string]interface{}{
-			"[player]":  player,
+			"[player]":  "\"" + player + "\"",
 			"[current]": current,
 			"[total]":   totalS,
 			"[res]":     res,

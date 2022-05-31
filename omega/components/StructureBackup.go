@@ -176,7 +176,7 @@ func (o *StructureBackup) tryBackup(chat *defines.GameChat) bool {
 func (o *StructureBackup) doRecovery(user string, admin string, s *StructureEntry, sname string) {
 	recoverCmd := fmt.Sprintf("execute %v ~~~ structure load %v %v %v %v 0_degrees none true true", user, o.formatStructureName(s.RealIDX), s.StartPos[0], s.StartPos[1], s.StartPos[2])
 	o.Frame.GetBackendDisplay().Write(recoverCmd)
-	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("tp %v %v %v %v", user, s.CenterPos[0], s.CenterPos[1], s.CenterPos[2]), func(output *packet.CommandOutput) {
+	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("tp \"%v\" %v %v %v", user, s.CenterPos[0], s.CenterPos[1], s.CenterPos[2]), func(output *packet.CommandOutput) {
 		go func() {
 			<-time.NewTimer(time.Second).C
 			o.Frame.GetGameControl().SendCmd(recoverCmd)
@@ -187,7 +187,7 @@ func (o *StructureBackup) doRecovery(user string, admin string, s *StructureEntr
 			o.Frame.GetGameControl().SayTo(user, "不成功请找腐竹手动恢复")
 			o.Frame.GetBackendDisplay().Write(msg)
 			<-time.NewTimer(time.Second * 3).C
-			o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp %v %v %v %v", user, s.CenterPos[0], s.CenterPos[1], s.CenterPos[2]))
+			o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp \"%v\" %v %v %v", user, s.CenterPos[0], s.CenterPos[1], s.CenterPos[2]))
 			o.lastRequestTime[user] = time.Now()
 		}()
 	})

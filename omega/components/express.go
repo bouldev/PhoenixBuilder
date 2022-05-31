@@ -3,7 +3,6 @@ package components
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pterm/pterm"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/collaborate"
@@ -11,6 +10,8 @@ import (
 	"phoenixbuilder/omega/utils"
 	"strings"
 	"time"
+
+	"github.com/pterm/pterm"
 )
 
 type packageRecord struct {
@@ -52,7 +53,7 @@ func (o *Express) delivery(playerName string) {
 				for _, p := range pkgs {
 					player.Say(p.Name)
 					player.Say(fmt.Sprintf("是 %v 寄给你的", p.Src))
-					cmd := fmt.Sprintf("execute %v ~~~ structure load %v ~~~ 0_degrees none true false", playerName, p.StructureName)
+					cmd := fmt.Sprintf("execute \"%v\" ~~~ structure load %v ~~~ 0_degrees none true false", playerName, p.StructureName)
 					o.Frame.GetBackendDisplay().Write("将 " + p.Name + " 派送到 " + playerName + " " + p.StructureName)
 					o.Frame.GetGameControl().SendCmd(cmd)
 				}
@@ -66,7 +67,7 @@ func (o *Express) delivery(playerName string) {
 
 func (o *Express) post(srcPlayer, dstPlayer, hint string) {
 	fmt.Println(srcPlayer, dstPlayer, hint)
-	cmd := utils.FormatByReplacingOccurrences(o.SelectCmd, map[string]interface{}{"[player]": srcPlayer})
+	cmd := utils.FormatByReplacingOccurrences(o.SelectCmd, map[string]interface{}{"[player]": "\"" + srcPlayer + "\""})
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 		if output.SuccessCount == 0 {
 			o.Frame.GetGameControl().SayTo(srcPlayer, "物品转移失败")

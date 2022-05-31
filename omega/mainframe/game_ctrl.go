@@ -36,7 +36,7 @@ func (p *PlayerKitOmega) HasPermission(key string) bool {
 
 func (p *PlayerKitOmega) GetPos(selector string) chan []int {
 	s := utils.FormatByReplacingOccurrences(selector, map[string]interface{}{
-		"[player]": p.name,
+		"[player]": "\"" + p.name + "\"",
 	})
 	c := make(chan []int)
 	sent := false
@@ -300,22 +300,40 @@ func ToJsonRawString(line string) string {
 
 func (g *GameCtrl) SayTo(target string, line string) {
 	content := ToJsonRawString(line)
-	g.SendCmd(fmt.Sprintf("tellraw %v %v", target, content))
+	if strings.HasPrefix(target, "@") {
+		g.SendCmd(fmt.Sprintf("tellraw %v %v", target, content))
+	} else {
+		g.SendCmd(fmt.Sprintf("tellraw \"%v\" %v", target, content))
+	}
+
 }
 
 func (g *GameCtrl) ActionBarTo(target string, line string) {
 	content := ToJsonRawString(line)
-	g.SendCmd(fmt.Sprintf("titleraw %v actionbar %v", target, content))
+	if strings.HasPrefix(target, "@") {
+		g.SendCmd(fmt.Sprintf("titleraw %v actionbar %v", target, content))
+	} else {
+		g.SendCmd(fmt.Sprintf("titleraw \"%v\" actionbar %v", target, content))
+	}
+
 }
 
 func (g *GameCtrl) TitleTo(target string, line string) {
 	content := ToJsonRawString(line)
-	g.SendCmd(fmt.Sprintf("titleraw %v title %v", target, content))
+	if strings.HasPrefix(target, "@") {
+		g.SendCmd(fmt.Sprintf("titleraw %v title %v", target, content))
+	} else {
+		g.SendCmd(fmt.Sprintf("titleraw \"%v\" title %v", target, content))
+	}
 }
 
 func (g *GameCtrl) SubTitleTo(target string, line string) {
 	content := ToJsonRawString(line)
-	g.SendCmd(fmt.Sprintf("titleraw %v subtitle %v", target, content))
+	if strings.HasPrefix(target, "@") {
+		g.SendCmd(fmt.Sprintf("titleraw %v subtitle %v", target, content))
+	} else {
+		g.SendCmd(fmt.Sprintf("titleraw \"%v\" subtitle %v", target, content))
+	}
 }
 
 func (g *GameCtrl) packCmdWithUUID(cmd string, ud uuid.UUID, ws bool) *packet.CommandRequest {

@@ -33,7 +33,7 @@ func (me *FeedBack) record(chat *defines.GameChat) bool {
 	}
 	me.logger.Write(fmt.Sprintf("[%v] %v:%v ", chat.Type, chat.Name, chat.Msg))
 	m := utils.FormatByReplacingOccurrences(me.Response, map[string]interface{}{
-		"[player]": chat.Name,
+		"[player]": "\"" + chat.Name + "\"",
 		"[msg]":    msg,
 	})
 	me.Frame.GetGameControl().SendCmd(m)

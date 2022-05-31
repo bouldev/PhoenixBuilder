@@ -26,7 +26,7 @@ func (o *Respawn) Init(cfg *defines.ComponentConfig) {
 }
 
 func (o *Respawn) respawn(chat *defines.GameChat) bool {
-	killPlayer := fmt.Sprintf("kill @a[name=%v,m=!c]", chat.Name)
+	killPlayer := fmt.Sprintf("kill @a[name=\"%v\",m=!c]", chat.Name)
 	if respawn := o.Frame.GetUQHolder().GameRules["doimmediaterespawn"]; respawn != nil {
 		o.DefaultImmediateRespawn = respawn.Value.(bool)
 	}
@@ -41,7 +41,7 @@ func (o *Respawn) respawn(chat *defines.GameChat) bool {
 			<-c
 			for _, cmdT := range cmdsArr {
 				cmd := utils.FormatByReplacingOccurrences(cmdT, map[string]interface{}{
-					"[player]": chat.Name,
+					"[player]": "\"" + chat.Name + "\"",
 				})
 				o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {})
 			}
@@ -51,7 +51,7 @@ func (o *Respawn) respawn(chat *defines.GameChat) bool {
 			released := false
 			for {
 				<-t.C
-				o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("testfor "+chat.Name, func(output *packet.CommandOutput) {
+				o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("testfor \""+chat.Name+"\"", func(output *packet.CommandOutput) {
 					if output.SuccessCount != 0 {
 						if !released {
 							c <- true
@@ -70,9 +70,9 @@ func (o *Respawn) respawn(chat *defines.GameChat) bool {
 			fmt.Sprintf(killPlayer), func(output *packet.CommandOutput) {
 				if len(output.OutputMessages) > 0 && output.OutputMessages[0].Message == "commands.generic.noTargetMatch" {
 					//o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v is created", chat.Name))
-					o.Frame.GetGameControl().SendCmd("gamemode a " + chat.Name)
+					o.Frame.GetGameControl().SendCmd("gamemode a \"" + chat.Name + "\"")
 					isCreative = true
-					o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("kill "+chat.Name, func(output *packet.CommandOutput) {
+					o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("kill \""+chat.Name+"\"", func(output *packet.CommandOutput) {
 						cb()
 					})
 				} else {

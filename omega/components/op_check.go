@@ -101,7 +101,7 @@ func (o *OpCheck) react(pk *packet.AdventureSettings) {
 	}
 	o.Frame.GetBackendDisplay().Write(fmt.Sprintf("!发现 假OP玩家登录 %v(%v)", playerName, playerUUID))
 	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.fakeOPResponse, map[string]interface{}{
-		"[player]": playerName,
+		"[player]": "\"" + playerName + "\"",
 		"[uuid]":   playerUUID,
 	}, o.Frame.GetBackendDisplay())
 }

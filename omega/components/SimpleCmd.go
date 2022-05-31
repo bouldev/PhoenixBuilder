@@ -29,7 +29,7 @@ func (sc *SimpleCmd) Init(cfg *defines.ComponentConfig) {
 func (me *SimpleCmd) activate(chat *defines.GameChat) bool {
 	for _, t := range me.Cmds {
 		c := utils.FormatByReplacingOccurrences(t, map[string]interface{}{
-			"[player]": chat.Name,
+			"[player]": "\"" + chat.Name + "\"",
 			"[args]":   strings.Join(chat.Msg, " "),
 		})
 		me.Frame.GetGameControl().SendCmd(c)

@@ -49,8 +49,8 @@ func (me *Memo) save(srcPlayer, dstPlayer, msg string) bool {
 	//msg := strings.Join(chat.Msg[1:], " ")
 	me.logger.Write(fmt.Sprintf("[%v]->[%v]:%v ", srcPlayer, dstPlayer, msg))
 	m := utils.FormatByReplacingOccurrences(me.Response, map[string]interface{}{
-		"[src_player]": srcPlayer,
-		"[dst_player]": dstPlayer,
+		"[src_player]": "\"" + srcPlayer + "\"",
+		"[dst_player]": "\"" + dstPlayer + "\"",
 		"[msg]":        msg,
 	})
 

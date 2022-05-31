@@ -55,7 +55,7 @@ func (o *FakeOp) onChat(chat *defines.GameChat) bool {
 	args := strings.Join(chat.Msg[1:], " ")
 	for _, tmp := range tmps {
 		c := utils.FormatByReplacingOccurrences(tmp, map[string]interface{}{
-			"[player]": chat.Name,
+			"[player]": "\"" + chat.Name + "\"",
 			"[args]":   args,
 		})
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v@%v: %v", chat.Name, cmd, c))

@@ -79,7 +79,7 @@ func (o *MoneyTransfer) tryGetAmountAndCurrentInStr(in string) (amount int, curr
 
 func (o *MoneyTransfer) doTransfer(src, dst string, c *Currency, amount int) {
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(
-		fmt.Sprintf("scoreboard players add %v %v 0", src, c.ScoreboardName), func(output *packet.CommandOutput) {
+		fmt.Sprintf("scoreboard players add \"%v\" %v 0", src, c.ScoreboardName), func(output *packet.CommandOutput) {
 			if output.SuccessCount == 0 || len(output.OutputMessages) == 0 || len(output.OutputMessages[0].Parameters) != 4 {
 				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("购买时发现玩家没有记分板%v %v", c.ScoreboardName, output))
 				o.Frame.GetGameControl().SayTo(src, "似乎没有相关记分板，或者你这个记分板没有分数")
@@ -93,10 +93,10 @@ func (o *MoneyTransfer) doTransfer(src, dst string, c *Currency, amount int) {
 			}
 			if hasMoney > amount {
 				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("移除玩家 %v 数额 %v / %v (%v)", src, amount, hasMoney, c.ScoreboardName))
-				o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("scoreboard players remove %v %v %v", src, c.ScoreboardName, amount),
+				o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("scoreboard players remove \"%v\" %v %v", src, c.ScoreboardName, amount),
 					func(output *packet.CommandOutput) {
 						if output.SuccessCount > 0 {
-							o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("scoreboard players add %v %v %v", dst, c.ScoreboardName, amount),
+							o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(fmt.Sprintf("scoreboard players add \"%v\" %v %v", dst, c.ScoreboardName, amount),
 								func(output *packet.CommandOutput) {
 									rec, success := "", false
 									if output.SuccessCount > 0 {
@@ -110,7 +110,7 @@ func (o *MoneyTransfer) doTransfer(src, dst string, c *Currency, amount int) {
 									if !success {
 										o.Frame.GetGameControl().SayTo(src, "转账失败，尝试退回")
 										o.Frame.GetGameControl().SayTo(dst, "转账失败，尝试退回")
-										o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players add %v %v %v", src, c.ScoreboardName, amount))
+										o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players add \"%v\" %v %v", src, c.ScoreboardName, amount))
 									} else {
 										o.Frame.GetGameControl().SayTo(src, "转账完成: 给予"+dst)
 										o.Frame.GetGameControl().SayTo(dst, "转账完成: 来自"+src)

@@ -70,11 +70,7 @@ func (b *Bonjour) onLogin(entry protocol.PlayerListEntry) {
 	go func() {
 		t := time.NewTimer(time.Duration(b.Delay) * time.Second)
 		<-t.C
-		//for _, cmd := range b.LoginCmds {
-		//	s := strings.ReplaceAll(cmd, "[target_player]", name)
-		//	b.Ctrl.SendCmd(s)
-		//}
-		go utils.LaunchCmdsArray(b.Frame.GetGameControl(), b.loginCmds, map[string]interface{}{"[target_player]": name}, b.Frame.GetBackendDisplay())
+		go utils.LaunchCmdsArray(b.Frame.GetGameControl(), b.loginCmds, map[string]interface{}{"[target_player]": "\"" + name + "\""}, b.Frame.GetBackendDisplay())
 	}()
 }
 
@@ -103,5 +99,5 @@ func (b *Bonjour) onLogout(entry protocol.PlayerListEntry) {
 	//	s := strings.ReplaceAll(cmd, "[target_player]", name)
 	//	b.Ctrl.SendCmd(s)
 	//}
-	go utils.LaunchCmdsArray(b.Frame.GetGameControl(), b.logoutCmds, map[string]interface{}{"[target_player]": name}, b.Frame.GetBackendDisplay())
+	go utils.LaunchCmdsArray(b.Frame.GetGameControl(), b.logoutCmds, map[string]interface{}{"[target_player]": "\"" + name + "\""}, b.Frame.GetBackendDisplay())
 }

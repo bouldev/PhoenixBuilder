@@ -33,8 +33,8 @@ func (o *PlayerTP) Init(cfg *defines.ComponentConfig) {
 
 func (o *PlayerTP) requestTp(src, dst string) {
 	reqMsg := utils.FormatByReplacingOccurrences(o.HintOnReq, map[string]interface{}{
-		"[src]": src,
-		"[dst]": dst,
+		"[src]": "\"" + src + "\"",
+		"[dst]": "\"" + dst + "\"",
 	})
 	hint, ynResolver := utils.GenYesNoResolver()
 	if o.Frame.GetGameControl().SetOnParamMsg(dst, func(chat *defines.GameChat) (catch bool) {
@@ -45,8 +45,8 @@ func (o *PlayerTP) requestTp(src, dst string) {
 		}
 		if result {
 			tpCmd := utils.FormatByReplacingOccurrences(o.TPCmd, map[string]interface{}{
-				"[src]": src,
-				"[dst]": dst,
+				"[src]": "\"" + src + "\"",
+				"[dst]": "\"" + dst + "\"",
 			})
 			o.Frame.GetGameControl().SendCmd(tpCmd)
 			// fmt.Println(tpCmd)
@@ -55,8 +55,8 @@ func (o *PlayerTP) requestTp(src, dst string) {
 			o.Frame.GetGameControl().SayTo(dst, "传送开始")
 		} else {
 			m := utils.FormatByReplacingOccurrences(o.HintOnRefuse, map[string]interface{}{
-				"[src]": src,
-				"[dst]": dst,
+				"[src]": "\"" + src + "\"",
+				"[dst]": "\"" + dst + "\"",
 			})
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("reject tp %v -> %v", src, dst))
 			o.Frame.GetGameControl().SayTo(src, m)
@@ -64,8 +64,8 @@ func (o *PlayerTP) requestTp(src, dst string) {
 		return true
 	}) == nil {
 		sendMsg := utils.FormatByReplacingOccurrences(o.HintOnReqSent, map[string]interface{}{
-			"[src]": src,
-			"[dst]": dst,
+			"[src]": "\"" + src + "\"",
+			"[dst]": "\"" + dst + "\"",
 		})
 		o.Frame.GetGameControl().SayTo(src, sendMsg)
 		o.Frame.GetGameControl().SayTo(dst, reqMsg)
@@ -79,8 +79,9 @@ func (o *PlayerTP) requestTp(src, dst string) {
 
 func (o *PlayerTP) check(chat *defines.GameChat) bool {
 	if t, hask := o.lastRequestTime[chat.Name]; hask {
-		if time.Now().Sub(t).Seconds() < float64(o.CoolDownSecond) {
-			o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnReqTooFrequent)
+		timeLeft := time.Now().Sub(t).Seconds()
+		if timeLeft < float64(o.CoolDownSecond) {
+			o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnReqTooFrequent+fmt.Sprintf("(还剩%v秒)", int(timeLeft)))
 			return true
 		}
 	}

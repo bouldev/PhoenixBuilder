@@ -76,7 +76,7 @@ func (o *Shop) askForItemList(chat *defines.GameChat) {
 				"[i]":             _i,
 				"[price]":         g.Price,
 				"[currency_name]": cn,
-				"[name]":          g.Name,
+				"[name]":          "\"" + g.Name + "\"",
 			})
 			o.Frame.GetGameControl().SayTo(chat.Name, cmd)
 		}
@@ -113,7 +113,7 @@ func (o *Shop) startBuy(player string, count int, good PlainGood) {
 	}
 	totalPrice := count * good.Price
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(
-		fmt.Sprintf("scoreboard players add %v %v 0", player, good.CurrencyCmd), func(output *packet.CommandOutput) {
+		fmt.Sprintf("scoreboard players add \"%v\" %v 0", player, good.CurrencyCmd), func(output *packet.CommandOutput) {
 			//fmt.Println(output)
 			if output.SuccessCount == 0 || len(output.OutputMessages) == 0 || len(output.OutputMessages[0].Parameters) != 4 {
 				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("购买时发现玩家没有记分板%v %v", good.CurrencyName, output))
@@ -128,10 +128,10 @@ func (o *Shop) startBuy(player string, count int, good PlainGood) {
 			}
 			if hasMoney > totalPrice {
 				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("玩家 %v 花费 %v / %v 购买了 %v * %v", player, totalPrice, hasMoney, good.Name, count))
-				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players remove %v %v %v", player, good.CurrencyCmd, totalPrice))
+				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players remove \"%v\" %v %v", player, good.CurrencyCmd, totalPrice))
 				for _, t := range good.Cmds {
 					c := utils.FormatByReplacingOccurrences(t, map[string]interface{}{
-						"[player]":      player,
+						"[player]":      "\"" + player + "\"",
 						"[totalPrice]":  totalPrice,
 						"[moneyHas]":    hasMoney,
 						"[moneyLeft]":   hasMoney - totalPrice,

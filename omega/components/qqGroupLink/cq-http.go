@@ -190,7 +190,7 @@ func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
 	}
 	msgText := strings.Join(chat.Msg, " ")
 	msg := utils.FormatByReplacingOccurrences(cq.GameMessageFormat, map[string]interface{}{
-		"[player]": chat.Name,
+		"[player]": "\"" + chat.Name + "\"",
 		"[msg]":    msgText,
 	})
 	cq.Frame.GetBackendDisplay().Write("MC->QQ: " + msg)

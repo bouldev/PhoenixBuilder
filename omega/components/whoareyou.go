@@ -2,12 +2,13 @@ package components
 
 import (
 	"fmt"
-	"gopkg.in/square/go-jose.v2/json"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"time"
+
+	"gopkg.in/square/go-jose.v2/json"
 )
 
 type WhoAreYou struct {
@@ -55,7 +56,7 @@ func (o *WhoAreYou) onLogin(entry protocol.PlayerListEntry) {
 
 func (o *WhoAreYou) handleCheckResult(name string) {
 	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.react, map[string]interface{}{
-		"[player]": name,
+		"[player]": "\"" + name + "\"",
 		"[tag]":    o.Tag,
 	}, o.Frame.GetBackendDisplay())
 }
@@ -92,20 +93,20 @@ func (o *WhoAreYou) scan() {
 	cmd("tag @s remove " + o.checkTag)
 	go func() {
 		for _, name := range allName {
-			cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
-			cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
+			cmd(fmt.Sprintf("tag \"%v\" remove "+o.checkTag, name))
+			cmd(fmt.Sprintf("tag @a[name=\"%v\"] remove "+o.checkTag, name))
 		}
 		<-time.NewTimer(time.Second / 5).C
 		cmd("tag @a remove " + o.checkRngMark2)
 		for _, name := range allName {
-			cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
-			cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
+			cmd(fmt.Sprintf("tag \"%v\" remove "+o.checkTag, name))
+			cmd(fmt.Sprintf("tag @a[name=\"%v\"] remove "+o.checkTag, name))
 		}
 		cmd("tag @s remove " + o.checkTag)
 		<-time.NewTimer(time.Second / 5).C
 		for _, name := range allName {
-			cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
-			cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
+			cmd(fmt.Sprintf("tag \"%v\" remove "+o.checkTag, name))
+			cmd(fmt.Sprintf("tag @a[name=\"%v\"] remove "+o.checkTag, name))
 		}
 		cmd("tag @s remove " + o.checkTag)
 		illegal_names := []string{}
@@ -123,8 +124,8 @@ func (o *WhoAreYou) scan() {
 				}
 			}
 			for _, name := range allName {
-				cmd(fmt.Sprintf("tag %v remove "+o.checkTag, name))
-				cmd(fmt.Sprintf("tag @a[name=%v] remove "+o.checkTag, name))
+				cmd(fmt.Sprintf("tag \"%v\" remove "+o.checkTag, name))
+				cmd(fmt.Sprintf("tag @a[name=\"%v\"] remove "+o.checkTag, name))
 			}
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("发现违规昵称: %v,添加tag: @a[tag=%v]", illegal_names, o.Tag))
 			cmd(fmt.Sprintf("tag @a[tag="+o.checkTag+",tag="+o.checkRngMark1+",tag=!"+o.checkRngMark2+"] add %v", o.Tag))

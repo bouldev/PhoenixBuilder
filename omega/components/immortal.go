@@ -31,7 +31,7 @@ func (o *Immortal) doRespawn(name string, pos []int) {
 	go func() {
 		for {
 			<-t.C
-			o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("testfor "+name, func(output *packet.CommandOutput) {
+			o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("testfor \""+name+"\"", func(output *packet.CommandOutput) {
 				if output.SuccessCount != 0 {
 					if !released {
 						c <- true
@@ -46,7 +46,7 @@ func (o *Immortal) doRespawn(name string, pos []int) {
 	}()
 	<-c
 	msg := utils.FormatByReplacingOccurrences(o.Hint, map[string]interface{}{
-		"[player]":   name,
+		"[player]":   "\"" + name + "\"",
 		"[dead_pos]": pos,
 	})
 	o.Frame.GetGameControl().SayTo(name, msg)
@@ -60,7 +60,7 @@ func (o *Immortal) doRespawn(name string, pos []int) {
 			}
 			if b {
 				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 回到复活点 %v", name, pos))
-				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp %v %v %v %v", name, pos[0], pos[1], pos[2]))
+				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp \"%v\" %v %v %v", name, pos[0], pos[1], pos[2]))
 			}
 			return true
 		}) == nil {

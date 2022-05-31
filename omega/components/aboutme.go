@@ -34,7 +34,7 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 	hasTags := map[string]bool{}
 	allTags := []string{}
 	scores := map[string]string{}
-	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("tag "+chat.Name+" list", func(output *packet.CommandOutput) {
+	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("tag \""+chat.Name+"\" list", func(output *packet.CommandOutput) {
 		if output.SuccessCount > 0 && len(output.OutputMessages) > 0 && len(output.OutputMessages[0].Parameters) > 2 {
 			for _, t := range strings.Split(output.OutputMessages[0].Parameters[2], ", ") {
 				_t := utils.RemoveFormat(t)
@@ -42,7 +42,7 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 				allTags = append(allTags, _t)
 			}
 		}
-		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("scoreboard players list "+chat.Name, func(output *packet.CommandOutput) {
+		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("scoreboard players list \""+chat.Name+"\"", func(output *packet.CommandOutput) {
 			if output.SuccessCount > 0 {
 				for _, p := range output.OutputMessages[1:] {
 					if len(p.Parameters) == 3 {
@@ -53,7 +53,7 @@ func (o *AboutMe) show(chat *defines.GameChat) bool {
 			}
 			mappings := map[string]interface{}{
 				"[tags]":   strings.Join(allTags, ", "),
-				"[player]": chat.Name,
+				"[player]": "\"" + chat.Name + "\"",
 			}
 			for tagName, replacement := range o.Tags {
 				ac, rj := replacement[0], replacement[1]
