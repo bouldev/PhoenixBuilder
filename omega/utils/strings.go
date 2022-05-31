@@ -90,10 +90,29 @@ func CanTrigger(ss []string, triggers []string, allowNoSpace bool, removeColor b
 func FormatByReplacingOccurrences(tmp string, replacements map[string]interface{}) string {
 	s := tmp
 	for k, v := range replacements {
-		vstr:=fmt.Sprintf("%v",v)
-		vstr=strings.Replace(vstr, "\n", "", -1)
-		vstr=strings.Replace(vstr, "\r", "", -1)
-		s = strings.ReplaceAll(s, k, vstr)
+		vstr := fmt.Sprintf("%v", v)
+		vstr = strings.Replace(vstr, "\n", "", -1)
+		vstr = strings.Replace(vstr, "\r", "", -1)
+		vstrNoComma := strings.ReplaceAll(vstr, "\"", "")
+		// translateFlag := false
+		if strings.Contains(vstr, "\"") {
+			for true {
+				p := strings.Index(s, k)
+				if p == -1 {
+					break
+				} else {
+					bs := s[:p]
+					if strings.Count(bs, "\"")%2 == 1 {
+						s = strings.Replace(s, k, vstrNoComma, 1)
+					} else {
+						s = strings.Replace(s, k, vstr, 1)
+					}
+				}
+			}
+
+		} else {
+			s = strings.ReplaceAll(s, k, vstr)
+		}
 	}
 	return s
 }
