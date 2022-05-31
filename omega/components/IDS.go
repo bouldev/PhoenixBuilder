@@ -161,6 +161,15 @@ func (o *IntrusionDetectSystem) k32NbtDetect(nbt map[string]interface{}) (has32K
 }
 
 func (o *IntrusionDetectSystem) regexNbtDetect(rtid int32, nbt map[string]interface{}) (has32K bool, reason string) {
+	if rtid < 0 {
+		rtid = -rtid
+	}
+	defer func() {
+		r := recover()
+		if r != nil {
+			pterm.Error.Println(r)
+		}
+	}()
 	itemName := items.ItemRuntimeIDToNameMapping(rtid)
 	// fmt.Println(rtid, itemName)
 	for _, regexCheck := range o.RegexCheckers {
@@ -197,7 +206,7 @@ func (o *IntrusionDetectSystem) regexNbtDetect(rtid int32, nbt map[string]interf
 			reason = fmt.Sprintf("物品名\"%v\"匹配指定的正则表达式\"%v\",匹配项为\"%v\" ", itemName, regexCheck.Item, string(matchName))
 		}
 		tag := regexCheck.Tag
-		doMatch := func(s string) (has32K bool, matchName string) {
+		doMatch := func(s string) (has32K bool) {
 			if debug {
 				pterm.Info.Printfln("key: \"%v\" value: \"%v\" => 检测是否匹配 \"%v\"", regexCheck.Tag, s, regexCheck.RegexString)
 			}
@@ -225,29 +234,31 @@ func (o *IntrusionDetectSystem) regexNbtDetect(rtid int32, nbt map[string]interf
 			if has32K {
 				if debug {
 					pterm.Error.Printfln("发现32k，具体判断理由为：%v，当前处于调试模式，因此不会实际执行反制指令", reason)
-					return false, ""
+					return false
 				} else {
-					return true, reason
+					return true
 				}
 			} else {
 				if debug {
 					pterm.Success.Printfln("该物品不是作弊物品")
 				}
-				return false, ""
+				return false
 			}
 
 		}
 		if tag == "" {
 			s, err := json.Marshal(nbt)
 			if err == nil {
-				return doMatch(string(s))
+				if doMatch(string(s)) {
+					return true, reason
+				}
 			} else {
 				fmt.Println(err)
 			}
 		} else {
 			findAndPrintK(regexCheck.Tag, nbt, debug, func(s string) {
 				if !has32K {
-					has32K, reason = doMatch(string(s))
+					has32K = doMatch(string(s))
 				}
 			})
 		}
