@@ -1,0 +1,34 @@
+[
+    {
+        "触发词":"传送",
+        "菜单项":"[i]:输入 §l§c[systemTrigger] [defaultTrigger] §f§r以显示传送点相关操作",
+        "子节点":[
+            "移除",
+            "保存",
+            "所有地点"
+        ]
+    },
+    {
+        "触发词":"建筑",
+        "菜单项":"[i]:输入 §l§d[systemTrigger] [defaultTrigger] §f§r以显示建筑相关操作",
+        "子节点":[
+            "备份",
+            "恢复"
+        ]
+    },
+    {
+        "触发词":"杂项",
+        "菜单项":"[i]:输入 §l§a[systemTrigger] [defaultTrigger] §f§r以显示杂项操作",
+        "子节点":[
+            "me",
+            {
+                "触发词":"物资",
+                "菜单项":"[i]:输入 §l§b[systemTrigger] [defaultTrigger] §f§r以显示基础物资相关操作",
+                "子节点":[
+                    "give_sand",
+                    "give_stone"
+                ]
+            }
+        ]
+    }
+]
