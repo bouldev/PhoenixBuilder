@@ -43,6 +43,7 @@ type OmegaConfig struct {
 	Name                     string         `yaml:"系统名" json:"name,omitempty"`
 	Version                  string         `yaml:"版本" json:"version,omitempty"`
 	Trigger                  *TriggerConfig `yaml:"触发词" json:"触发词"`
+	MigrationVersion         int            `yanl:"自动升级识别号" json:"自动升级识别号"`
 	CommandFeedBackByDefault bool           `yaml:"默认情况下是否有commandfeedback" json:"默认情况下是否有commandfeedback,omitempty"`
 }
 
