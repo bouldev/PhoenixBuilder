@@ -133,5 +133,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"兑换码": func() defines.Component {
 			return &CDkey{BasicComponent: &BasicComponent{}}
 		},
+		"切换": func() defines.Component {
+			return &StatusToggle{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

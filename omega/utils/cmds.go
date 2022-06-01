@@ -10,19 +10,7 @@ import (
 	"time"
 )
 
-func ParseAdaptiveJsonCmd(cfg map[string]interface{}, p []string) (cmds []defines.Cmd, err error) {
-	var c interface{}
-	_p := p
-	c = cfg
-	for len(p) != 0 {
-		p0 := p[0]
-		p = p[1:]
-		if _c, ok := cfg[p0]; ok {
-			c = _c
-		} else {
-			return nil, fmt.Errorf("需要的配置项路径完整路径为: %v, 但是无法找到路径 %v", _p, p0)
-		}
-	}
+func ParseAdaptiveCmd(c interface{}) (cmds []defines.Cmd, err error) {
 	switch tc := c.(type) {
 	case []string:
 		cmds = []defines.Cmd{}
@@ -83,6 +71,22 @@ func ParseAdaptiveJsonCmd(cfg map[string]interface{}, p []string) (cmds []define
 	default:
 		return nil, fmt.Errorf("无法理解的指令序列格式 %v, 期望: []string 或 []interface{}", reflect.TypeOf(c))
 	}
+}
+
+func ParseAdaptiveJsonCmd(cfg map[string]interface{}, p []string) (cmds []defines.Cmd, err error) {
+	var c interface{}
+	_p := p
+	c = cfg
+	for len(p) != 0 {
+		p0 := p[0]
+		p = p[1:]
+		if _c, ok := cfg[p0]; ok {
+			c = _c
+		} else {
+			return nil, fmt.Errorf("需要的配置项路径完整路径为: %v, 但是无法找到路径 %v", _p, p0)
+		}
+	}
+	return ParseAdaptiveCmd(c)
 }
 
 func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map[string]interface{}, logger defines.LineDst) {

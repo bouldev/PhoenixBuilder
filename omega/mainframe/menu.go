@@ -241,7 +241,7 @@ func (m *Menu) Activate() {
 			i := len(currentAllTriggers)
 			for _, t := range e.Triggers {
 				for _, ct := range currentAllTriggers[:i] {
-					if strings.Contains(t, ct) {
+					if strings.HasPrefix(t, ct) {
 						if ct == t {
 							pterm.Error.Printfln("触发词冲突 %v 出现了两次或更多次", e)
 						} else {
