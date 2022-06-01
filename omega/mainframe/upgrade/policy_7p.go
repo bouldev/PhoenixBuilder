@@ -26,6 +26,6 @@ func Policy_7(root string) {
 		})
 		setMigrationVersion(root, 542)
 	} else if err != nil {
-		panic(err)
+		// panic(err)
 	}
 }
