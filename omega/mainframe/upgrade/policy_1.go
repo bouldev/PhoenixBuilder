@@ -18,6 +18,9 @@ func Policy_1() string {
 			return "omega_storage"
 		}
 	}
+	if utils.IsDir(android_store_path) {
+		return android_store_path
+	}
 	if utils.IsDir(path.Dir(android_store_path)) && !utils.IsDir(android_store_path) && utils.IsDir("omega_storage") {
 		pterm.Warning.Println("您似乎在使用一部安卓手机，我们将尝试将 omega 配置文件移动到 omega_storage 下")
 		if err := utils.MakeDirP(android_store_path); err != nil {
