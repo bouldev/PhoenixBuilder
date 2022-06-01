@@ -139,7 +139,11 @@ func (me *Memo) Inject(frame defines.MainFrame) {
 			timer := time.NewTimer(time.Duration(me.LoginDelay) * time.Second)
 			go func() {
 				<-timer.C
-				me.send(name)
+				for _, p := range me.Frame.GetUQHolder().PlayersByEntityID {
+					if p.Username == name {
+						me.send(name)
+					}
+				}
 			}()
 		}
 	})

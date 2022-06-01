@@ -153,7 +153,11 @@ func (o *Express) Inject(frame defines.MainFrame) {
 			timer := time.NewTimer(time.Duration(o.LoginDelay) * time.Second)
 			go func() {
 				<-timer.C
-				o.delivery(name)
+				for _, p := range o.Frame.GetUQHolder().PlayersByEntityID {
+					if p.Username == name {
+						o.delivery(name)
+					}
+				}
 			}()
 		}
 	})
