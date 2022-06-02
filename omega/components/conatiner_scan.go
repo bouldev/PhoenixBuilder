@@ -22,13 +22,14 @@ type ContainerScan struct {
 }
 
 type ContainerRegexCheck struct {
-	Enabled               bool   `json:"启用"`
-	Description           string `json:"检测说明"`
-	Debug                 bool   `json:"调试模式"`
-	Tag                   string `json:"匹配标签名"`
-	RegexString           string `json:"使用正则表达式匹配标签值"`
-	Allow                 bool   `json:"匹配标签值成功时true为放行false为作弊"`
-	ExtraCommand          string `json:"附加指令"`
+	Enabled               bool        `json:"启用"`
+	Description           string      `json:"检测说明"`
+	Debug                 bool        `json:"调试模式"`
+	Tag                   string      `json:"匹配标签名"`
+	RegexString           string      `json:"使用正则表达式匹配标签值"`
+	Allow                 bool        `json:"匹配标签值成功时true为放行false为作弊"`
+	ExtraCommandIn        interface{} `json:"附加指令"`
+	extraCommands         []defines.Cmd
 	compiledItemNameRegex regexp.Regexp
 	compiledValueRegex    regexp.Regexp
 }
@@ -45,6 +46,13 @@ func (o *ContainerScan) Init(cfg *defines.ComponentConfig) {
 	}
 	for _, rc := range o.RegexCheckers {
 		rc.compiledValueRegex = *regexp.MustCompile(rc.RegexString)
+		if rc.ExtraCommandIn == nil {
+			rc.extraCommands = make([]defines.Cmd, 0)
+		} else {
+			if rc.extraCommands, err = utils.ParseAdaptiveCmd(rc.ExtraCommandIn); err != nil {
+				panic(err)
+			}
+		}
 	}
 }
 
@@ -100,7 +108,7 @@ func (o *ContainerScan) regexNbtDetect(nbt map[string]interface{}, x, y, z int) 
 					pterm.Error.Printfln("发现32k，具体判断理由为：%v，当前处于调试模式，因此不会实际执行反制指令", reason)
 					return false
 				} else {
-					if regexCheck.ExtraCommand != "" {
+					if len(regexCheck.extraCommands) > 0 {
 						mapping := map[string]interface{}{
 							"[x]": x,
 							"[y]": y,
@@ -116,8 +124,7 @@ func (o *ContainerScan) regexNbtDetect(nbt map[string]interface{}, x, y, z int) 
 							mapping[fmt.Sprintf("[y%v]", i)] = y + i
 							mapping[fmt.Sprintf("[z%v]", i)] = z + i
 						}
-						cmd := utils.FormatByReplacingOccurrences(regexCheck.ExtraCommand, mapping)
-						o.Frame.GetGameControl().SendCmd(cmd)
+						utils.LaunchCmdsArray(o.Frame.GetGameControl(), regexCheck.extraCommands, mapping, o.Frame.GetBackendDisplay())
 					}
 					return true
 				}
