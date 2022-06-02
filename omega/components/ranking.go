@@ -1,12 +1,12 @@
 package components
 
 import (
-	"container/heap"
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
+	"sort"
 	"strconv"
 	"time"
 
@@ -71,18 +71,6 @@ func (ss *scoreRecords) Swap(i, j int) {
 	ss.records[j] = t
 }
 
-func (ss *scoreRecords) Push(x interface{}) {
-	ss.records = append(ss.records, x.(*scoreRecord))
-}
-
-func (ss *scoreRecords) Pop() interface{} {
-	old := ss.records
-	n := len(old)
-	x := old[n-1]
-	ss.records = old[:n-1]
-	return x
-}
-
 func (ss *scoreRecords) freshOrder() {
 	for i, r := range ss.records {
 		r.Rank = i + 1
@@ -109,13 +97,12 @@ func (o *Ranking) onTrigger(chat *defines.GameChat) (stop bool) {
 		if _i == o.Render.MaxCount {
 			break
 		}
-		i := _i + 1
 		fmtStr := o.Render.DefaultRenderFmt
-		if _f, hasK := o.Render.SpecificRenderFmt[fmt.Sprintf("%v", i)]; hasK {
+		if _f, hasK := o.Render.SpecificRenderFmt[fmt.Sprintf("%v", r.Rank)]; hasK {
 			fmtStr = _f
 		}
 		text := utils.FormatByReplacingOccurrences(fmtStr, map[string]interface{}{
-			"[i]":      i,
+			"[i]":      r.Rank,
 			"[player]": "\"" + r.Name + "\"",
 			"[score]":  r.Score,
 		})
@@ -161,7 +148,8 @@ func (o *Ranking) update() {
 					} else {
 						record := &scoreRecord{Name: player, UUID: uuidStr, Score: score}
 						o.playerMapping[uuidStr] = record
-						heap.Push(o.records, record)
+						o.records.records = append(o.records.records, record)
+						needRankUpdate = true
 						needSort = true
 					}
 					break
@@ -169,7 +157,7 @@ func (o *Ranking) update() {
 			}
 		}
 		if needRankUpdate {
-			heap.Init(o.records)
+			sort.Sort(o.records)
 		}
 		if needSort {
 			o.records.freshOrder()
@@ -261,7 +249,8 @@ func (o *Ranking) Inject(frame defines.MainFrame) {
 	for _, r := range plainRecords {
 		o.playerMapping[r.UUID] = r
 	}
-	heap.Init(o.records)
+	sort.Sort(o.records)
+	o.records.freshOrder()
 	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
