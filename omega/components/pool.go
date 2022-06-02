@@ -136,5 +136,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"切换": func() defines.Component {
 			return &StatusToggle{BasicComponent: &BasicComponent{}}
 		},
+		"排行榜": func() defines.Component {
+			return &Ranking{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
