@@ -6,11 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/andybalholm/brotli"
 )
 
-//go:embed runtimeids.json
+//go:embed item_runtime_ids_2_1_10.json
 var runtimeIDSData []byte
 
 type ItemDescribe struct {
@@ -19,23 +20,21 @@ type ItemDescribe struct {
 }
 
 func main() {
-	itemsList := []*ItemDescribe{}
+	itemsList := map[string]*ItemDescribe{}
 	err := json.Unmarshal(runtimeIDSData, &itemsList)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(len(itemsList))
-	runtimeIDToItemNameMapping := make([]string, len(itemsList))
-	for i, item := range itemsList {
-		fmt.Println(i, item)
-		if item != nil {
-			runtimeIDToItemNameMapping[i] = item.ItemName
-		} else {
-			runtimeIDToItemNameMapping[i] = "undefined"
+	runtimeIDToItemNameMapping := make(map[int32]*ItemDescribe)
+	for iStr, item := range itemsList {
+		if i, err := strconv.Atoi(iStr); err != nil {
+			panic(err)
+		} else if item != nil {
+			runtimeIDToItemNameMapping[int32(i)] = item
 		}
-
 	}
-	fp, err := os.OpenFile("itemRuntimeID2NameMapping_nemc_1_17.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	fp, err := os.OpenFile("itemRuntimeID2NameMapping_nemc_2_1_10.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
 		panic(err)
 	}

@@ -211,7 +211,7 @@ func main() {
 		NEMCRidToMCRid: nemcToMCRIDMapping,
 		NEMCRidToVal:   nemcToVal,
 	}
-	fp, err = os.OpenFile("convert_out/blockmapping_nemc_1_17_0_mc_1_18_30.gob", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	fp, err = os.OpenFile("convert_out/blockmapping_nemc_2_1_10_mc_1_18_30.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	compressor := brotli.NewWriter(fp)
 	if err := gob.NewEncoder(compressor).Encode(mapping_out); err != nil {
 		panic(err)

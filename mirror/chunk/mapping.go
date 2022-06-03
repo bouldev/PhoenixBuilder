@@ -187,7 +187,7 @@ func InitMapping(mappingInData []byte) {
 	}
 }
 
-//go:embed blockmapping_nemc_1_17_0_mc_1_18_30.gob
+//go:embed blockmapping_nemc_2_1_10_mc_1_18_30.gob.brotli
 var mappingInData []byte
 
 func init() {
