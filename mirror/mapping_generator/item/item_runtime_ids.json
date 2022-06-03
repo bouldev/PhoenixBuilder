@@ -1,0 +1,4174 @@
+{
+  "615" : {
+    "name" : "netherite_scrap",
+    "maxDamage" : 0
+  },
+  "-332" : {
+    "name" : "small_amethyst_bud",
+    "maxDamage" : 0
+  },
+  "-100" : {
+    "name" : "element_89",
+    "maxDamage" : 0
+  },
+  "95" : {
+    "name" : "invisiblebedrock",
+    "maxDamage" : 0
+  },
+  "115" : {
+    "name" : "item.nether_wart",
+    "maxDamage" : 0
+  },
+  "214" : {
+    "name" : "nether_wart_block",
+    "maxDamage" : 0
+  },
+  "50" : {
+    "name" : "torch",
+    "maxDamage" : 0
+  },
+  "-335" : {
+    "name" : "moss_carpet",
+    "maxDamage" : 0
+  },
+  "579" : {
+    "name" : "birch_sign",
+    "maxDamage" : 0
+  },
+  "572" : {
+    "name" : "nautilus_shell",
+    "maxDamage" : 0
+  },
+  "174" : {
+    "name" : "packed_ice",
+    "maxDamage" : 0
+  },
+  "51" : {
+    "name" : "fire",
+    "maxDamage" : 0
+  },
+  "97" : {
+    "name" : "monster_egg",
+    "maxDamage" : 0
+  },
+  "614" : {
+    "name" : "netherite_boots",
+    "maxDamage" : 481
+  },
+  "144" : {
+    "name" : "item.skull",
+    "maxDamage" : 0
+  },
+  "94" : {
+    "name" : "powered_repeater",
+    "maxDamage" : 0
+  },
+  "-285" : {
+    "name" : "polished_blackstone_brick_double_slab",
+    "maxDamage" : 0
+  },
+  "98" : {
+    "name" : "stonebrick",
+    "maxDamage" : 0
+  },
+  "52" : {
+    "name" : "mob_spawner",
+    "maxDamage" : 0
+  },
+  "-101" : {
+    "name" : "element_90",
+    "maxDamage" : 0
+  },
+  "-263" : {
+    "name" : "warped_pressure_plate",
+    "maxDamage" : 0
+  },
+  "53" : {
+    "name" : "oak_stairs",
+    "maxDamage" : 0
+  },
+  "99" : {
+    "name" : "brown_mushroom_block",
+    "maxDamage" : 0
+  },
+  "618" : {
+    "name" : "crimson_door",
+    "maxDamage" : 0
+  },
+  "215" : {
+    "name" : "red_nether_brick",
+    "maxDamage" : 0
+  },
+  "-336" : {
+    "name" : "small_dripleaf_block",
+    "maxDamage" : 0
+  },
+  "54" : {
+    "name" : "chest",
+    "maxDamage" : 0
+  },
+  "545" : {
+    "name" : "music_disc_ward",
+    "maxDamage" : 0
+  },
+  "472" : {
+    "name" : "elder_guardian_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-269" : {
+    "name" : "soul_lantern",
+    "maxDamage" : 0
+  },
+  "176" : {
+    "name" : "standing_banner",
+    "maxDamage" : 0
+  },
+  "55" : {
+    "name" : "redstone_wire",
+    "maxDamage" : 0
+  },
+  "245" : {
+    "name" : "stonecutter",
+    "maxDamage" : 0
+  },
+  "-286" : {
+    "name" : "item.chain",
+    "maxDamage" : 0
+  },
+  "217" : {
+    "name" : "structure_void",
+    "maxDamage" : 0
+  },
+  "10" : {
+    "name" : "flowing_lava",
+    "maxDamage" : 0
+  },
+  "-102" : {
+    "name" : "element_91",
+    "maxDamage" : 0
+  },
+  "56" : {
+    "name" : "diamond_ore",
+    "maxDamage" : 0
+  },
+  "-400" : {
+    "name" : "deepslate_lapis_ore",
+    "maxDamage" : 0
+  },
+  "-334" : {
+    "name" : "tinted_glass",
+    "maxDamage" : 0
+  },
+  "11" : {
+    "name" : "lava",
+    "maxDamage" : 0
+  },
+  "-337" : {
+    "name" : "azalea",
+    "maxDamage" : 0
+  },
+  "57" : {
+    "name" : "diamond_block",
+    "maxDamage" : 0
+  },
+  "96" : {
+    "name" : "trapdoor",
+    "maxDamage" : 0
+  },
+  "146" : {
+    "name" : "trapped_chest",
+    "maxDamage" : 0
+  },
+  "12" : {
+    "name" : "sand",
+    "maxDamage" : 0
+  },
+  "58" : {
+    "name" : "crafting_table",
+    "maxDamage" : 0
+  },
+  "-350" : {
+    "name" : "oxidized_cut_copper",
+    "maxDamage" : 0
+  },
+  "-333" : {
+    "name" : "tuff",
+    "maxDamage" : 0
+  },
+  "149" : {
+    "name" : "unpowered_comparator",
+    "maxDamage" : 0
+  },
+  "13" : {
+    "name" : "gravel",
+    "maxDamage" : 0
+  },
+  "-287" : {
+    "name" : "twisting_vines",
+    "maxDamage" : 0
+  },
+  "578" : {
+    "name" : "spruce_sign",
+    "maxDamage" : 0
+  },
+  "-103" : {
+    "name" : "element_92",
+    "maxDamage" : 0
+  },
+  "-401" : {
+    "name" : "deepslate_iron_ore",
+    "maxDamage" : 0
+  },
+  "14" : {
+    "name" : "gold_ore",
+    "maxDamage" : 0
+  },
+  "571" : {
+    "name" : "iron_nugget",
+    "maxDamage" : 0
+  },
+  "570" : {
+    "name" : "totem_of_undying",
+    "maxDamage" : 0
+  },
+  "-338" : {
+    "name" : "flowering_azalea",
+    "maxDamage" : 0
+  },
+  "549" : {
+    "name" : "lead",
+    "maxDamage" : 0
+  },
+  "15" : {
+    "name" : "iron_ore",
+    "maxDamage" : 0
+  },
+  "475" : {
+    "name" : "vindicator_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-351" : {
+    "name" : "waxed_cut_copper",
+    "maxDamage" : 0
+  },
+  "576" : {
+    "name" : "phantom_membrane",
+    "maxDamage" : 0
+  },
+  "548" : {
+    "name" : "trident",
+    "maxDamage" : 250
+  },
+  "16" : {
+    "name" : "coal_ore",
+    "maxDamage" : 0
+  },
+  "59" : {
+    "name" : "item.wheat",
+    "maxDamage" : 0
+  },
+  "-288" : {
+    "name" : "nether_gold_ore",
+    "maxDamage" : 0
+  },
+  "143" : {
+    "name" : "wooden_button",
+    "maxDamage" : 0
+  },
+  "-104" : {
+    "name" : "element_93",
+    "maxDamage" : 0
+  },
+  "-402" : {
+    "name" : "deepslate_gold_ore",
+    "maxDamage" : 0
+  },
+  "17" : {
+    "name" : "log",
+    "maxDamage" : 0
+  },
+  "-2" : {
+    "name" : "prismarine_stairs",
+    "maxDamage" : 0
+  },
+  "18" : {
+    "name" : "leaves",
+    "maxDamage" : 0
+  },
+  "-339" : {
+    "name" : "item.glow_frame",
+    "maxDamage" : 0
+  },
+  "-3" : {
+    "name" : "dark_prismarine_stairs",
+    "maxDamage" : 0
+  },
+  "19" : {
+    "name" : "sponge",
+    "maxDamage" : 0
+  },
+  "-352" : {
+    "name" : "waxed_exposed_cut_copper",
+    "maxDamage" : 0
+  },
+  "-289" : {
+    "name" : "crying_obsidian",
+    "maxDamage" : 0
+  },
+  "-4" : {
+    "name" : "prismarine_bricks_stairs",
+    "maxDamage" : 0
+  },
+  "-105" : {
+    "name" : "element_94",
+    "maxDamage" : 0
+  },
+  "-403" : {
+    "name" : "deepslate_redstone_ore",
+    "maxDamage" : 0
+  },
+  "-5" : {
+    "name" : "stripped_spruce_log",
+    "maxDamage" : 0
+  },
+  "-6" : {
+    "name" : "stripped_birch_log",
+    "maxDamage" : 0
+  },
+  "-353" : {
+    "name" : "waxed_weathered_cut_copper",
+    "maxDamage" : 0
+  },
+  "-7" : {
+    "name" : "stripped_jungle_log",
+    "maxDamage" : 0
+  },
+  "-106" : {
+    "name" : "element_95",
+    "maxDamage" : 0
+  },
+  "-404" : {
+    "name" : "lit_deepslate_redstone_ore",
+    "maxDamage" : 0
+  },
+  "-8" : {
+    "name" : "stripped_acacia_log",
+    "maxDamage" : 0
+  },
+  "-9" : {
+    "name" : "stripped_dark_oak_log",
+    "maxDamage" : 0
+  },
+  "-354" : {
+    "name" : "cut_copper_stairs",
+    "maxDamage" : 0
+  },
+  "-107" : {
+    "name" : "element_96",
+    "maxDamage" : 0
+  },
+  "-405" : {
+    "name" : "deepslate_diamond_ore",
+    "maxDamage" : 0
+  },
+  "-120" : {
+    "name" : "element_109",
+    "maxDamage" : 0
+  },
+  "-355" : {
+    "name" : "exposed_cut_copper_stairs",
+    "maxDamage" : 0
+  },
+  "-108" : {
+    "name" : "element_97",
+    "maxDamage" : 0
+  },
+  "-406" : {
+    "name" : "deepslate_coal_ore",
+    "maxDamage" : 0
+  },
+  "-121" : {
+    "name" : "element_110",
+    "maxDamage" : 0
+  },
+  "-356" : {
+    "name" : "weathered_cut_copper_stairs",
+    "maxDamage" : 0
+  },
+  "-109" : {
+    "name" : "element_98",
+    "maxDamage" : 0
+  },
+  "-407" : {
+    "name" : "deepslate_emerald_ore",
+    "maxDamage" : 0
+  },
+  "-122" : {
+    "name" : "element_111",
+    "maxDamage" : 0
+  },
+  "-357" : {
+    "name" : "oxidized_cut_copper_stairs",
+    "maxDamage" : 0
+  },
+  "-370" : {
+    "name" : "weathered_double_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-408" : {
+    "name" : "deepslate_copper_ore",
+    "maxDamage" : 0
+  },
+  "-123" : {
+    "name" : "element_112",
+    "maxDamage" : 0
+  },
+  "-358" : {
+    "name" : "waxed_cut_copper_stairs",
+    "maxDamage" : 0
+  },
+  "-371" : {
+    "name" : "oxidized_double_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-409" : {
+    "name" : "cracked_deepslate_tiles",
+    "maxDamage" : 0
+  },
+  "-124" : {
+    "name" : "element_113",
+    "maxDamage" : 0
+  },
+  "-359" : {
+    "name" : "waxed_exposed_cut_copper_stairs",
+    "maxDamage" : 0
+  },
+  "-372" : {
+    "name" : "waxed_double_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-125" : {
+    "name" : "element_114",
+    "maxDamage" : 0
+  },
+  "-373" : {
+    "name" : "waxed_exposed_double_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-126" : {
+    "name" : "element_115",
+    "maxDamage" : 0
+  },
+  "-374" : {
+    "name" : "waxed_weathered_double_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-127" : {
+    "name" : "element_116",
+    "maxDamage" : 0
+  },
+  "-140" : {
+    "name" : "acacia_button",
+    "maxDamage" : 0
+  },
+  "-375" : {
+    "name" : "cave_vines_body_with_berries",
+    "maxDamage" : 0
+  },
+  "-128" : {
+    "name" : "element_117",
+    "maxDamage" : 0
+  },
+  "-141" : {
+    "name" : "birch_button",
+    "maxDamage" : 0
+  },
+  "-376" : {
+    "name" : "cave_vines_head_with_berries",
+    "maxDamage" : 0
+  },
+  "-129" : {
+    "name" : "element_118",
+    "maxDamage" : 0
+  },
+  "-142" : {
+    "name" : "dark_oak_button",
+    "maxDamage" : 0
+  },
+  "-377" : {
+    "name" : "smooth_basalt",
+    "maxDamage" : 0
+  },
+  "-390" : {
+    "name" : "deepslate_tile_wall",
+    "maxDamage" : 0
+  },
+  "-143" : {
+    "name" : "jungle_button",
+    "maxDamage" : 0
+  },
+  "-378" : {
+    "name" : "deepslate",
+    "maxDamage" : 0
+  },
+  "-391" : {
+    "name" : "deepslate_bricks",
+    "maxDamage" : 0
+  },
+  "-144" : {
+    "name" : "spruce_button",
+    "maxDamage" : 0
+  },
+  "-379" : {
+    "name" : "cobbled_deepslate",
+    "maxDamage" : 0
+  },
+  "-392" : {
+    "name" : "deepslate_brick_slab",
+    "maxDamage" : 0
+  },
+  "-145" : {
+    "name" : "acacia_trapdoor",
+    "maxDamage" : 0
+  },
+  "-393" : {
+    "name" : "deepslate_brick_stairs",
+    "maxDamage" : 0
+  },
+  "-146" : {
+    "name" : "birch_trapdoor",
+    "maxDamage" : 0
+  },
+  "-394" : {
+    "name" : "deepslate_brick_wall",
+    "maxDamage" : 0
+  },
+  "-210" : {
+    "name" : "lava_cauldron",
+    "maxDamage" : 0
+  },
+  "-147" : {
+    "name" : "dark_oak_trapdoor",
+    "maxDamage" : 0
+  },
+  "-20" : {
+    "name" : "element_9",
+    "maxDamage" : 0
+  },
+  "-160" : {
+    "name" : "bubble_column",
+    "maxDamage" : 0
+  },
+  "-9735" : {
+    "name" : "micro_block",
+    "maxDamage" : 0
+  },
+  "-395" : {
+    "name" : "chiseled_deepslate",
+    "maxDamage" : 0
+  },
+  "-21" : {
+    "name" : "element_10",
+    "maxDamage" : 0
+  },
+  "-211" : {
+    "name" : "jigsaw",
+    "maxDamage" : 0
+  },
+  "-446" : {
+    "name" : "waxed_oxidized_copper",
+    "maxDamage" : 0
+  },
+  "-148" : {
+    "name" : "jungle_trapdoor",
+    "maxDamage" : 0
+  },
+  "-22" : {
+    "name" : "element_11",
+    "maxDamage" : 0
+  },
+  "-161" : {
+    "name" : "barrier",
+    "maxDamage" : 0
+  },
+  "120" : {
+    "name" : "end_portal_frame",
+    "maxDamage" : 0
+  },
+  "-396" : {
+    "name" : "cobbled_deepslate_double_slab",
+    "maxDamage" : 0
+  },
+  "-23" : {
+    "name" : "element_12",
+    "maxDamage" : 0
+  },
+  "-212" : {
+    "name" : "wood",
+    "maxDamage" : 0
+  },
+  "220" : {
+    "name" : "white_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "-149" : {
+    "name" : "spruce_trapdoor",
+    "maxDamage" : 0
+  },
+  "121" : {
+    "name" : "end_stone",
+    "maxDamage" : 0
+  },
+  "-447" : {
+    "name" : "waxed_oxidized_cut_copper",
+    "maxDamage" : 0
+  },
+  "-24" : {
+    "name" : "element_13",
+    "maxDamage" : 0
+  },
+  "-162" : {
+    "name" : "double_stone_slab3",
+    "maxDamage" : 0
+  },
+  "320" : {
+    "name" : "stick",
+    "maxDamage" : 0
+  },
+  "221" : {
+    "name" : "orange_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "122" : {
+    "name" : "dragon_egg",
+    "maxDamage" : 0
+  },
+  "420" : {
+    "name" : "repeater",
+    "maxDamage" : 0
+  },
+  "-397" : {
+    "name" : "polished_deepslate_double_slab",
+    "maxDamage" : 0
+  },
+  "-213" : {
+    "name" : "composter",
+    "maxDamage" : 0
+  },
+  "-25" : {
+    "name" : "element_14",
+    "maxDamage" : 0
+  },
+  "80" : {
+    "name" : "snow",
+    "maxDamage" : 0
+  },
+  "222" : {
+    "name" : "magenta_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "-50" : {
+    "name" : "element_39",
+    "maxDamage" : 0
+  },
+  "-448" : {
+    "name" : "waxed_oxidized_cut_copper_stairs",
+    "maxDamage" : 0
+  },
+  "123" : {
+    "name" : "redstone_lamp",
+    "maxDamage" : 0
+  },
+  "81" : {
+    "name" : "cactus",
+    "maxDamage" : 0
+  },
+  "520" : {
+    "name" : "nether_star",
+    "maxDamage" : 0
+  },
+  "-163" : {
+    "name" : "bamboo",
+    "maxDamage" : 0
+  },
+  "620" : {
+    "name" : "warped_fungus_on_a_stick",
+    "maxDamage" : 100
+  },
+  "-51" : {
+    "name" : "element_40",
+    "maxDamage" : 0
+  },
+  "82" : {
+    "name" : "clay",
+    "maxDamage" : 0
+  },
+  "-26" : {
+    "name" : "element_15",
+    "maxDamage" : 0
+  },
+  "421" : {
+    "name" : "filled_map",
+    "maxDamage" : 0
+  },
+  "422" : {
+    "name" : "shears",
+    "maxDamage" : 238
+  },
+  "322" : {
+    "name" : "golden_sword",
+    "maxDamage" : 32
+  },
+  "321" : {
+    "name" : "bowl",
+    "maxDamage" : 0
+  },
+  "323" : {
+    "name" : "golden_shovel",
+    "maxDamage" : 32
+  },
+  "-27" : {
+    "name" : "element_16",
+    "maxDamage" : 0
+  },
+  "-52" : {
+    "name" : "element_41",
+    "maxDamage" : 0
+  },
+  "521" : {
+    "name" : "firework_rocket",
+    "maxDamage" : 0
+  },
+  "-449" : {
+    "name" : "waxed_oxidized_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "84" : {
+    "name" : "jukebox",
+    "maxDamage" : 0
+  },
+  "423" : {
+    "name" : "ender_pearl",
+    "maxDamage" : 0
+  },
+  "522" : {
+    "name" : "firework_star",
+    "maxDamage" : 0
+  },
+  "-164" : {
+    "name" : "bamboo_sapling",
+    "maxDamage" : 0
+  },
+  "85" : {
+    "name" : "fence",
+    "maxDamage" : 0
+  },
+  "-28" : {
+    "name" : "element_17",
+    "maxDamage" : 0
+  },
+  "-53" : {
+    "name" : "element_42",
+    "maxDamage" : 0
+  },
+  "523" : {
+    "name" : "enchanted_book",
+    "maxDamage" : 0
+  },
+  "-399" : {
+    "name" : "deepslate_brick_double_slab",
+    "maxDamage" : 0
+  },
+  "86" : {
+    "name" : "pumpkin",
+    "maxDamage" : 0
+  },
+  "126" : {
+    "name" : "activator_rail",
+    "maxDamage" : 0
+  },
+  "-215" : {
+    "name" : "light_block",
+    "maxDamage" : 0
+  },
+  "424" : {
+    "name" : "blaze_rod",
+    "maxDamage" : 0
+  },
+  "623" : {
+    "name" : "nether_sprouts",
+    "maxDamage" : 0
+  },
+  "87" : {
+    "name" : "netherrack",
+    "maxDamage" : 0
+  },
+  "-54" : {
+    "name" : "element_43",
+    "maxDamage" : 0
+  },
+  "226" : {
+    "name" : "pink_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "350" : {
+    "name" : "diamond_boots",
+    "maxDamage" : 429
+  },
+  "-29" : {
+    "name" : "element_18",
+    "maxDamage" : 0
+  },
+  "127" : {
+    "name" : "cocoa",
+    "maxDamage" : 0
+  },
+  "-165" : {
+    "name" : "scaffolding",
+    "maxDamage" : 0
+  },
+  "450" : {
+    "name" : "villager_spawn_egg",
+    "maxDamage" : 0
+  },
+  "152" : {
+    "name" : "redstone_block",
+    "maxDamage" : 0
+  },
+  "43" : {
+    "name" : "real_double_stone_slab",
+    "maxDamage" : 0
+  },
+  "-55" : {
+    "name" : "element_44",
+    "maxDamage" : 0
+  },
+  "351" : {
+    "name" : "mod_armor",
+    "maxDamage" : 77
+  },
+  "-80" : {
+    "name" : "element_69",
+    "maxDamage" : 0
+  },
+  "425" : {
+    "name" : "ghast_tear",
+    "maxDamage" : 0
+  },
+  "44" : {
+    "name" : "double_stone_slab",
+    "maxDamage" : 0
+  },
+  "426" : {
+    "name" : "gold_nugget",
+    "maxDamage" : 0
+  },
+  "451" : {
+    "name" : "squid_spawn_egg",
+    "maxDamage" : 0
+  },
+  "625" : {
+    "name" : "glow_frame",
+    "maxDamage" : 0
+  },
+  "324" : {
+    "name" : "golden_pickaxe",
+    "maxDamage" : 32
+  },
+  "-56" : {
+    "name" : "element_45",
+    "maxDamage" : 0
+  },
+  "352" : {
+    "name" : "golden_helmet",
+    "maxDamage" : 77
+  },
+  "45" : {
+    "name" : "brick_block",
+    "maxDamage" : 0
+  },
+  "-81" : {
+    "name" : "element_70",
+    "maxDamage" : 0
+  },
+  "-166" : {
+    "name" : "double_stone_slab4",
+    "maxDamage" : 0
+  },
+  "129" : {
+    "name" : "emerald_ore",
+    "maxDamage" : 0
+  },
+  "452" : {
+    "name" : "ocelot_spawn_egg",
+    "maxDamage" : 0
+  },
+  "46" : {
+    "name" : "tnt",
+    "maxDamage" : 0
+  },
+  "526" : {
+    "name" : "quartz",
+    "maxDamage" : 0
+  },
+  "-57" : {
+    "name" : "element_46",
+    "maxDamage" : 0
+  },
+  "229" : {
+    "name" : "cyan_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "353" : {
+    "name" : "golden_chestplate",
+    "maxDamage" : 112
+  },
+  "47" : {
+    "name" : "bookshelf",
+    "maxDamage" : 0
+  },
+  "254" : {
+    "name" : "hard_stained_glass",
+    "maxDamage" : 0
+  },
+  "-82" : {
+    "name" : "element_71",
+    "maxDamage" : 0
+  },
+  "453" : {
+    "name" : "witch_spawn_egg",
+    "maxDamage" : 0
+  },
+  "155" : {
+    "name" : "quartz_block",
+    "maxDamage" : 0
+  },
+  "427" : {
+    "name" : "potion",
+    "maxDamage" : 0
+  },
+  "-58" : {
+    "name" : "element_47",
+    "maxDamage" : 0
+  },
+  "354" : {
+    "name" : "golden_leggings",
+    "maxDamage" : 105
+  },
+  "49" : {
+    "name" : "obsidian",
+    "maxDamage" : 0
+  },
+  "-167" : {
+    "name" : "real_double_stone_slab3",
+    "maxDamage" : 0
+  },
+  "255" : {
+    "name" : "reserved6",
+    "maxDamage" : 0
+  },
+  "-83" : {
+    "name" : "element_72",
+    "maxDamage" : 0
+  },
+  "454" : {
+    "name" : "bat_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-180" : {
+    "name" : "normal_stone_stairs",
+    "maxDamage" : 0
+  },
+  "156" : {
+    "name" : "quartz_stairs",
+    "maxDamage" : 0
+  },
+  "-59" : {
+    "name" : "element_48",
+    "maxDamage" : 0
+  },
+  "355" : {
+    "name" : "golden_boots",
+    "maxDamage" : 91
+  },
+  "-218" : {
+    "name" : "bee_nest",
+    "maxDamage" : 0
+  },
+  "554" : {
+    "name" : "armor_stand",
+    "maxDamage" : 0
+  },
+  "-84" : {
+    "name" : "element_73",
+    "maxDamage" : 0
+  },
+  "380" : {
+    "name" : "acacia_boat",
+    "maxDamage" : 0
+  },
+  "-231" : {
+    "name" : "weeping_vines",
+    "maxDamage" : 0
+  },
+  "455" : {
+    "name" : "ghast_spawn_egg",
+    "maxDamage" : 0
+  },
+  "480" : {
+    "name" : "tropical_fish_spawn_egg",
+    "maxDamage" : 0
+  },
+  "356" : {
+    "name" : "shield",
+    "maxDamage" : 336
+  },
+  "629" : {
+    "name" : "boat",
+    "maxDamage" : 0
+  },
+  "-168" : {
+    "name" : "real_double_stone_slab4",
+    "maxDamage" : 0
+  },
+  "555" : {
+    "name" : "spruce_door",
+    "maxDamage" : 0
+  },
+  "257" : {
+    "name" : "apple",
+    "maxDamage" : 0
+  },
+  "-85" : {
+    "name" : "element_74",
+    "maxDamage" : 0
+  },
+  "456" : {
+    "name" : "magma_cube_spawn_egg",
+    "maxDamage" : 0
+  },
+  "158" : {
+    "name" : "wooden_slab",
+    "maxDamage" : 0
+  },
+  "481" : {
+    "name" : "cod_spawn_egg",
+    "maxDamage" : 0
+  },
+  "357" : {
+    "name" : "flint",
+    "maxDamage" : 0
+  },
+  "-219" : {
+    "name" : "beehive",
+    "maxDamage" : 0
+  },
+  "-86" : {
+    "name" : "element_75",
+    "maxDamage" : 0
+  },
+  "258" : {
+    "name" : "golden_apple",
+    "maxDamage" : 0
+  },
+  "381" : {
+    "name" : "dark_oak_boat",
+    "maxDamage" : 0
+  },
+  "-232" : {
+    "name" : "crimson_nylium",
+    "maxDamage" : 0
+  },
+  "457" : {
+    "name" : "blaze_spawn_egg",
+    "maxDamage" : 0
+  },
+  "159" : {
+    "name" : "stained_hardened_clay",
+    "maxDamage" : 0
+  },
+  "482" : {
+    "name" : "pufferfish_spawn_egg",
+    "maxDamage" : 0
+  },
+  "358" : {
+    "name" : "painting",
+    "maxDamage" : 0
+  },
+  "382" : {
+    "name" : "leather",
+    "maxDamage" : 0
+  },
+  "-87" : {
+    "name" : "element_76",
+    "maxDamage" : 0
+  },
+  "557" : {
+    "name" : "jungle_door",
+    "maxDamage" : 0
+  },
+  "259" : {
+    "name" : "enchanted_golden_apple",
+    "maxDamage" : 0
+  },
+  "582" : {
+    "name" : "dark_oak_sign",
+    "maxDamage" : 0
+  },
+  "383" : {
+    "name" : "kelp",
+    "maxDamage" : 0
+  },
+  "280" : {
+    "name" : "potato",
+    "maxDamage" : 0
+  },
+  "483" : {
+    "name" : "salmon_spawn_egg",
+    "maxDamage" : 0
+  },
+  "359" : {
+    "name" : "oak_sign",
+    "maxDamage" : 0
+  },
+  "281" : {
+    "name" : "baked_potato",
+    "maxDamage" : 0
+  },
+  "-88" : {
+    "name" : "element_77",
+    "maxDamage" : 0
+  },
+  "384" : {
+    "name" : "brick",
+    "maxDamage" : 0
+  },
+  "282" : {
+    "name" : "poisonous_potato",
+    "maxDamage" : 0
+  },
+  "428" : {
+    "name" : "glass_bottle",
+    "maxDamage" : 0
+  },
+  "459" : {
+    "name" : "horse_spawn_egg",
+    "maxDamage" : 0
+  },
+  "284" : {
+    "name" : "pumpkin_pie",
+    "maxDamage" : 0
+  },
+  "484" : {
+    "name" : "drowned_spawn_egg",
+    "maxDamage" : 0
+  },
+  "429" : {
+    "name" : "fermented_spider_eye",
+    "maxDamage" : 0
+  },
+  "285" : {
+    "name" : "beetroot",
+    "maxDamage" : 0
+  },
+  "-89" : {
+    "name" : "element_78",
+    "maxDamage" : 0
+  },
+  "385" : {
+    "name" : "clay_ball",
+    "maxDamage" : 0
+  },
+  "181" : {
+    "name" : "real_double_stone_slab2",
+    "maxDamage" : 0
+  },
+  "286" : {
+    "name" : "beetroot_soup",
+    "maxDamage" : 0
+  },
+  "326" : {
+    "name" : "string",
+    "maxDamage" : 0
+  },
+  "182" : {
+    "name" : "double_stone_slab2",
+    "maxDamage" : 0
+  },
+  "485" : {
+    "name" : "dolphin_spawn_egg",
+    "maxDamage" : 0
+  },
+  "327" : {
+    "name" : "feather",
+    "maxDamage" : 0
+  },
+  "328" : {
+    "name" : "gunpowder",
+    "maxDamage" : 0
+  },
+  "386" : {
+    "name" : "sugar_cane",
+    "maxDamage" : 0
+  },
+  "-234" : {
+    "name" : "basalt",
+    "maxDamage" : 0
+  },
+  "184" : {
+    "name" : "birch_fence_gate",
+    "maxDamage" : 0
+  },
+  "585" : {
+    "name" : "skull_banner_pattern",
+    "maxDamage" : 0
+  },
+  "287" : {
+    "name" : "sweet_berries",
+    "maxDamage" : 0
+  },
+  "329" : {
+    "name" : "wooden_hoe",
+    "maxDamage" : 59
+  },
+  "486" : {
+    "name" : "turtle_spawn_egg",
+    "maxDamage" : 0
+  },
+  "186" : {
+    "name" : "dark_oak_fence_gate",
+    "maxDamage" : 0
+  },
+  "187" : {
+    "name" : "acacia_fence_gate",
+    "maxDamage" : 0
+  },
+  "387" : {
+    "name" : "paper",
+    "maxDamage" : 0
+  },
+  "-184" : {
+    "name" : "red_nether_brick_stairs",
+    "maxDamage" : 0
+  },
+  "188" : {
+    "name" : "repeating_command_block",
+    "maxDamage" : 0
+  },
+  "288" : {
+    "name" : "rabbit",
+    "maxDamage" : 0
+  },
+  "550" : {
+    "name" : "name_tag",
+    "maxDamage" : 0
+  },
+  "553" : {
+    "name" : "cooked_mutton",
+    "maxDamage" : 0
+  },
+  "487" : {
+    "name" : "phantom_spawn_egg",
+    "maxDamage" : 0
+  },
+  "189" : {
+    "name" : "chain_command_block",
+    "maxDamage" : 0
+  },
+  "185" : {
+    "name" : "jungle_fence_gate",
+    "maxDamage" : 0
+  },
+  "388" : {
+    "name" : "book",
+    "maxDamage" : 0
+  },
+  "559" : {
+    "name" : "dark_oak_door",
+    "maxDamage" : 0
+  },
+  "556" : {
+    "name" : "birch_door",
+    "maxDamage" : 0
+  },
+  "587" : {
+    "name" : "field_masoned_banner_pattern",
+    "maxDamage" : 0
+  },
+  "289" : {
+    "name" : "cooked_rabbit",
+    "maxDamage" : 0
+  },
+  "628" : {
+    "name" : "spyglass",
+    "maxDamage" : 0
+  },
+  "488" : {
+    "name" : "agent_spawn_egg",
+    "maxDamage" : 0
+  },
+  "283" : {
+    "name" : "golden_carrot",
+    "maxDamage" : 0
+  },
+  "458" : {
+    "name" : "cave_spider_spawn_egg",
+    "maxDamage" : 0
+  },
+  "389" : {
+    "name" : "slime_ball",
+    "maxDamage" : 0
+  },
+  "325" : {
+    "name" : "golden_axe",
+    "maxDamage" : 32
+  },
+  "527" : {
+    "name" : "tnt_minecart",
+    "maxDamage" : 0
+  },
+  "227" : {
+    "name" : "gray_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "558" : {
+    "name" : "acacia_door",
+    "maxDamage" : 0
+  },
+  "581" : {
+    "name" : "acacia_sign",
+    "maxDamage" : 0
+  },
+  "489" : {
+    "name" : "cat_spawn_egg",
+    "maxDamage" : 0
+  },
+  "627" : {
+    "name" : "amethyst_shard",
+    "maxDamage" : 0
+  },
+  "151" : {
+    "name" : "daylight_detector",
+    "maxDamage" : 0
+  },
+  "529" : {
+    "name" : "hopper",
+    "maxDamage" : 0
+  },
+  "528" : {
+    "name" : "hopper_minecart",
+    "maxDamage" : 0
+  },
+  "-181" : {
+    "name" : "spruce_standing_sign",
+    "maxDamage" : 0
+  },
+  "524" : {
+    "name" : "comparator",
+    "maxDamage" : 0
+  },
+  "-398" : {
+    "name" : "deepslate_tile_double_slab",
+    "maxDamage" : 0
+  },
+  "157" : {
+    "name" : "double_wooden_slab",
+    "maxDamage" : 0
+  },
+  "125" : {
+    "name" : "dropper",
+    "maxDamage" : 0
+  },
+  "584" : {
+    "name" : "creeper_banner_pattern",
+    "maxDamage" : 0
+  },
+  "-186" : {
+    "name" : "birch_standing_sign",
+    "maxDamage" : 0
+  },
+  "583" : {
+    "name" : "flower_banner_pattern",
+    "maxDamage" : 0
+  },
+  "89" : {
+    "name" : "glowstone",
+    "maxDamage" : 0
+  },
+  "41" : {
+    "name" : "gold_block",
+    "maxDamage" : 0
+  },
+  "-169" : {
+    "name" : "granite_stairs",
+    "maxDamage" : 0
+  },
+  "253" : {
+    "name" : "hard_glass",
+    "maxDamage" : 0
+  },
+  "-230" : {
+    "name" : "shroomlight",
+    "maxDamage" : 0
+  },
+  "154" : {
+    "name" : "item.hopper",
+    "maxDamage" : 0
+  },
+  "-237" : {
+    "name" : "soul_fire",
+    "maxDamage" : 0
+  },
+  "42" : {
+    "name" : "iron_block",
+    "maxDamage" : 0
+  },
+  "223" : {
+    "name" : "light_blue_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "225" : {
+    "name" : "lime_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "-250" : {
+    "name" : "crimson_standing_sign",
+    "maxDamage" : 0
+  },
+  "-214" : {
+    "name" : "lit_blast_furnace",
+    "maxDamage" : 0
+  },
+  "124" : {
+    "name" : "lit_redstone_lamp",
+    "maxDamage" : 0
+  },
+  "48" : {
+    "name" : "mossy_cobblestone",
+    "maxDamage" : 0
+  },
+  "250" : {
+    "name" : "movingblock",
+    "maxDamage" : 0
+  },
+  "-187" : {
+    "name" : "birch_wall_sign",
+    "maxDamage" : 0
+  },
+  "626" : {
+    "name" : "goat_horn",
+    "maxDamage" : 0
+  },
+  "251" : {
+    "name" : "observer",
+    "maxDamage" : 0
+  },
+  "551" : {
+    "name" : "prismarine_crystals",
+    "maxDamage" : 0
+  },
+  "-235" : {
+    "name" : "polished_basalt",
+    "maxDamage" : 0
+  },
+  "525" : {
+    "name" : "netherbrick",
+    "maxDamage" : 0
+  },
+  "150" : {
+    "name" : "powered_comparator",
+    "maxDamage" : 0
+  },
+  "153" : {
+    "name" : "quartz_ore",
+    "maxDamage" : 0
+  },
+  "-238" : {
+    "name" : "item.nether_sprouts",
+    "maxDamage" : 0
+  },
+  "40" : {
+    "name" : "red_mushroom",
+    "maxDamage" : 0
+  },
+  "180" : {
+    "name" : "red_sandstone_stairs",
+    "maxDamage" : 0
+  },
+  "83" : {
+    "name" : "item.reeds",
+    "maxDamage" : 0
+  },
+  "128" : {
+    "name" : "sandstone_stairs",
+    "maxDamage" : 0
+  },
+  "228" : {
+    "name" : "silver_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "586" : {
+    "name" : "mojang_banner_pattern",
+    "maxDamage" : 0
+  },
+  "-185" : {
+    "name" : "smooth_quartz_stairs",
+    "maxDamage" : 0
+  },
+  "-183" : {
+    "name" : "smooth_stone",
+    "maxDamage" : 0
+  },
+  "-188" : {
+    "name" : "jungle_standing_sign",
+    "maxDamage" : 0
+  },
+  "88" : {
+    "name" : "soul_sand",
+    "maxDamage" : 0
+  },
+  "-236" : {
+    "name" : "soul_soil",
+    "maxDamage" : 0
+  },
+  "-302" : {
+    "name" : "chiseled_nether_bricks",
+    "maxDamage" : 0
+  },
+  "183" : {
+    "name" : "spruce_fence_gate",
+    "maxDamage" : 0
+  },
+  "-182" : {
+    "name" : "spruce_wall_sign",
+    "maxDamage" : 0
+  },
+  "-217" : {
+    "name" : "stickypistonarmcollision",
+    "maxDamage" : 0
+  },
+  "622" : {
+    "name" : "music_disc_pigstep",
+    "maxDamage" : 0
+  },
+  "-300" : {
+    "name" : "stripped_crimson_hyphae",
+    "maxDamage" : 0
+  },
+  "621" : {
+    "name" : "chain",
+    "maxDamage" : 0
+  },
+  "-301" : {
+    "name" : "stripped_warped_hyphae",
+    "maxDamage" : 0
+  },
+  "252" : {
+    "name" : "structure_block",
+    "maxDamage" : 0
+  },
+  "-252" : {
+    "name" : "crimson_wall_sign",
+    "maxDamage" : 0
+  },
+  "-239" : {
+    "name" : "target",
+    "maxDamage" : 0
+  },
+  "588" : {
+    "name" : "bordure_indented_banner_pattern",
+    "maxDamage" : 0
+  },
+  "589" : {
+    "name" : "piglin_banner_pattern",
+    "maxDamage" : 0
+  },
+  "624" : {
+    "name" : "soul_campfire",
+    "maxDamage" : 0
+  },
+  "-189" : {
+    "name" : "jungle_wall_sign",
+    "maxDamage" : 0
+  },
+  "-233" : {
+    "name" : "warped_nylium",
+    "maxDamage" : 0
+  },
+  "-251" : {
+    "name" : "warped_standing_sign",
+    "maxDamage" : 0
+  },
+  "-303" : {
+    "name" : "cracked_nether_bricks",
+    "maxDamage" : 0
+  },
+  "580" : {
+    "name" : "jungle_sign",
+    "maxDamage" : 0
+  },
+  "552" : {
+    "name" : "mutton",
+    "maxDamage" : 0
+  },
+  "-216" : {
+    "name" : "wither_rose",
+    "maxDamage" : 0
+  },
+  "224" : {
+    "name" : "yellow_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "-253" : {
+    "name" : "warped_wall_sign",
+    "maxDamage" : 0
+  },
+  "-304" : {
+    "name" : "quartz_bricks",
+    "maxDamage" : 0
+  },
+  "-254" : {
+    "name" : "crimson_stairs",
+    "maxDamage" : 0
+  },
+  "-305" : {
+    "name" : "unknown",
+    "maxDamage" : 0
+  },
+  "-255" : {
+    "name" : "warped_stairs",
+    "maxDamage" : 0
+  },
+  "-306" : {
+    "name" : "powder_snow",
+    "maxDamage" : 0
+  },
+  "-256" : {
+    "name" : "crimson_fence",
+    "maxDamage" : 0
+  },
+  "-307" : {
+    "name" : "sculk_sensor",
+    "maxDamage" : 0
+  },
+  "-320" : {
+    "name" : "moss_block",
+    "maxDamage" : 0
+  },
+  "-257" : {
+    "name" : "warped_fence",
+    "maxDamage" : 0
+  },
+  "-270" : {
+    "name" : "netherite_block",
+    "maxDamage" : 0
+  },
+  "-308" : {
+    "name" : "pointed_dripstone",
+    "maxDamage" : 0
+  },
+  "-321" : {
+    "name" : "spore_blossom",
+    "maxDamage" : 0
+  },
+  "-258" : {
+    "name" : "crimson_fence_gate",
+    "maxDamage" : 0
+  },
+  "-271" : {
+    "name" : "ancient_debris",
+    "maxDamage" : 0
+  },
+  "-322" : {
+    "name" : "cave_vines",
+    "maxDamage" : 0
+  },
+  "-259" : {
+    "name" : "warped_fence_gate",
+    "maxDamage" : 0
+  },
+  "-272" : {
+    "name" : "respawn_anchor",
+    "maxDamage" : 0
+  },
+  "-323" : {
+    "name" : "big_dripleaf",
+    "maxDamage" : 0
+  },
+  "-273" : {
+    "name" : "blackstone",
+    "maxDamage" : 0
+  },
+  "-324" : {
+    "name" : "azalea_leaves",
+    "maxDamage" : 0
+  },
+  "-274" : {
+    "name" : "polished_blackstone_bricks",
+    "maxDamage" : 0
+  },
+  "-325" : {
+    "name" : "azalea_leaves_flowered",
+    "maxDamage" : 0
+  },
+  "-275" : {
+    "name" : "polished_blackstone_brick_stairs",
+    "maxDamage" : 0
+  },
+  "-326" : {
+    "name" : "calcite",
+    "maxDamage" : 0
+  },
+  "-276" : {
+    "name" : "blackstone_stairs",
+    "maxDamage" : 0
+  },
+  "-327" : {
+    "name" : "amethyst_block",
+    "maxDamage" : 0
+  },
+  "-340" : {
+    "name" : "copper_block",
+    "maxDamage" : 0
+  },
+  "-277" : {
+    "name" : "blackstone_wall",
+    "maxDamage" : 0
+  },
+  "70" : {
+    "name" : "stone_pressure_plate",
+    "maxDamage" : 0
+  },
+  "-290" : {
+    "name" : "item.soul_campfire",
+    "maxDamage" : 0
+  },
+  "-328" : {
+    "name" : "budding_amethyst",
+    "maxDamage" : 0
+  },
+  "71" : {
+    "name" : "item.iron_door",
+    "maxDamage" : 0
+  },
+  "-341" : {
+    "name" : "exposed_copper",
+    "maxDamage" : 0
+  },
+  "72" : {
+    "name" : "wooden_pressure_plate",
+    "maxDamage" : 0
+  },
+  "-278" : {
+    "name" : "polished_blackstone_brick_wall",
+    "maxDamage" : 0
+  },
+  "73" : {
+    "name" : "redstone_ore",
+    "maxDamage" : 0
+  },
+  "-291" : {
+    "name" : "polished_blackstone",
+    "maxDamage" : 0
+  },
+  "74" : {
+    "name" : "lit_redstone_ore",
+    "maxDamage" : 0
+  },
+  "-329" : {
+    "name" : "amethyst_cluster",
+    "maxDamage" : 0
+  },
+  "75" : {
+    "name" : "unlit_redstone_torch",
+    "maxDamage" : 0
+  },
+  "-342" : {
+    "name" : "weathered_copper",
+    "maxDamage" : 0
+  },
+  "30" : {
+    "name" : "web",
+    "maxDamage" : 0
+  },
+  "76" : {
+    "name" : "redstone_torch",
+    "maxDamage" : 0
+  },
+  "-279" : {
+    "name" : "chiseled_polished_blackstone",
+    "maxDamage" : 0
+  },
+  "31" : {
+    "name" : "tallgrass",
+    "maxDamage" : 0
+  },
+  "77" : {
+    "name" : "stone_button",
+    "maxDamage" : 0
+  },
+  "-292" : {
+    "name" : "polished_blackstone_stairs",
+    "maxDamage" : 0
+  },
+  "32" : {
+    "name" : "deadbush",
+    "maxDamage" : 0
+  },
+  "78" : {
+    "name" : "snow_layer",
+    "maxDamage" : 0
+  },
+  "-343" : {
+    "name" : "oxidized_copper",
+    "maxDamage" : 0
+  },
+  "33" : {
+    "name" : "piston",
+    "maxDamage" : 0
+  },
+  "79" : {
+    "name" : "ice",
+    "maxDamage" : 0
+  },
+  "34" : {
+    "name" : "pistonarmcollision",
+    "maxDamage" : 0
+  },
+  "-293" : {
+    "name" : "polished_blackstone_slab",
+    "maxDamage" : 0
+  },
+  "35" : {
+    "name" : "wool",
+    "maxDamage" : 0
+  },
+  "36" : {
+    "name" : "element_0",
+    "maxDamage" : 0
+  },
+  "-344" : {
+    "name" : "waxed_copper",
+    "maxDamage" : 0
+  },
+  "37" : {
+    "name" : "yellow_flower",
+    "maxDamage" : 0
+  },
+  "1" : {
+    "name" : "stone",
+    "maxDamage" : 0
+  },
+  "2" : {
+    "name" : "grass",
+    "maxDamage" : 0
+  },
+  "38" : {
+    "name" : "red_flower",
+    "maxDamage" : 0
+  },
+  "-294" : {
+    "name" : "polished_blackstone_double_slab",
+    "maxDamage" : 0
+  },
+  "3" : {
+    "name" : "dirt",
+    "maxDamage" : 0
+  },
+  "-110" : {
+    "name" : "element_99",
+    "maxDamage" : 0
+  },
+  "39" : {
+    "name" : "brown_mushroom",
+    "maxDamage" : 0
+  },
+  "4" : {
+    "name" : "cobblestone",
+    "maxDamage" : 0
+  },
+  "-345" : {
+    "name" : "waxed_exposed_copper",
+    "maxDamage" : 0
+  },
+  "5" : {
+    "name" : "planks",
+    "maxDamage" : 0
+  },
+  "6" : {
+    "name" : "sapling",
+    "maxDamage" : 0
+  },
+  "100" : {
+    "name" : "red_mushroom_block",
+    "maxDamage" : 0
+  },
+  "7" : {
+    "name" : "bedrock",
+    "maxDamage" : 0
+  },
+  "8" : {
+    "name" : "flowing_water",
+    "maxDamage" : 0
+  },
+  "-295" : {
+    "name" : "polished_blackstone_pressure_plate",
+    "maxDamage" : 0
+  },
+  "200" : {
+    "name" : "chorus_flower",
+    "maxDamage" : 0
+  },
+  "-111" : {
+    "name" : "element_100",
+    "maxDamage" : 0
+  },
+  "9" : {
+    "name" : "water",
+    "maxDamage" : 0
+  },
+  "101" : {
+    "name" : "iron_bars",
+    "maxDamage" : 0
+  },
+  "300" : {
+    "name" : "bow",
+    "maxDamage" : 384
+  },
+  "-346" : {
+    "name" : "waxed_weathered_copper",
+    "maxDamage" : 0
+  },
+  "201" : {
+    "name" : "purpur_block",
+    "maxDamage" : 0
+  },
+  "400" : {
+    "name" : "blue_dye",
+    "maxDamage" : 0
+  },
+  "102" : {
+    "name" : "glass_pane",
+    "maxDamage" : 0
+  },
+  "301" : {
+    "name" : "arrow",
+    "maxDamage" : 0
+  },
+  "-296" : {
+    "name" : "polished_blackstone_button",
+    "maxDamage" : 0
+  },
+  "-30" : {
+    "name" : "element_19",
+    "maxDamage" : 0
+  },
+  "-112" : {
+    "name" : "element_101",
+    "maxDamage" : 0
+  },
+  "202" : {
+    "name" : "colored_torch_rg",
+    "maxDamage" : 0
+  },
+  "-410" : {
+    "name" : "cracked_deepslate_bricks",
+    "maxDamage" : 0
+  },
+  "401" : {
+    "name" : "purple_dye",
+    "maxDamage" : 0
+  },
+  "500" : {
+    "name" : "zoglin_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-347" : {
+    "name" : "cut_copper",
+    "maxDamage" : 0
+  },
+  "600" : {
+    "name" : "rapid_fertilizer",
+    "maxDamage" : 0
+  },
+  "302" : {
+    "name" : "coal",
+    "maxDamage" : 0
+  },
+  "-31" : {
+    "name" : "element_20",
+    "maxDamage" : 0
+  },
+  "-360" : {
+    "name" : "waxed_weathered_cut_copper_stairs",
+    "maxDamage" : 0
+  },
+  "501" : {
+    "name" : "piglin_brute_spawn_egg",
+    "maxDamage" : 0
+  },
+  "203" : {
+    "name" : "purpur_stairs",
+    "maxDamage" : 0
+  },
+  "402" : {
+    "name" : "cyan_dye",
+    "maxDamage" : 0
+  },
+  "103" : {
+    "name" : "melon_block",
+    "maxDamage" : 0
+  },
+  "-297" : {
+    "name" : "polished_blackstone_wall",
+    "maxDamage" : 0
+  },
+  "303" : {
+    "name" : "charcoal",
+    "maxDamage" : 0
+  },
+  "104" : {
+    "name" : "pumpkin_stem",
+    "maxDamage" : 0
+  },
+  "-113" : {
+    "name" : "element_102",
+    "maxDamage" : 0
+  },
+  "204" : {
+    "name" : "colored_torch_bp",
+    "maxDamage" : 0
+  },
+  "-32" : {
+    "name" : "element_21",
+    "maxDamage" : 0
+  },
+  "502" : {
+    "name" : "axolotl_spawn_egg",
+    "maxDamage" : 0
+  },
+  "403" : {
+    "name" : "light_gray_dye",
+    "maxDamage" : 0
+  },
+  "-348" : {
+    "name" : "exposed_cut_copper",
+    "maxDamage" : 0
+  },
+  "130" : {
+    "name" : "ender_chest",
+    "maxDamage" : 0
+  },
+  "602" : {
+    "name" : "medicine",
+    "maxDamage" : 0
+  },
+  "304" : {
+    "name" : "diamond",
+    "maxDamage" : 0
+  },
+  "-33" : {
+    "name" : "element_22",
+    "maxDamage" : 0
+  },
+  "205" : {
+    "name" : "undyed_shulker_box",
+    "maxDamage" : 0
+  },
+  "503" : {
+    "name" : "goat_spawn_egg",
+    "maxDamage" : 0
+  },
+  "230" : {
+    "name" : "mod_ore",
+    "maxDamage" : 0
+  },
+  "404" : {
+    "name" : "gray_dye",
+    "maxDamage" : 0
+  },
+  "-361" : {
+    "name" : "cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-411" : {
+    "name" : "glow_lichen",
+    "maxDamage" : 0
+  },
+  "603" : {
+    "name" : "sparkler",
+    "maxDamage" : 100
+  },
+  "-114" : {
+    "name" : "element_103",
+    "maxDamage" : 0
+  },
+  "330" : {
+    "name" : "stone_hoe",
+    "maxDamage" : 131
+  },
+  "504" : {
+    "name" : "glow_squid_spawn_egg",
+    "maxDamage" : 0
+  },
+  "305" : {
+    "name" : "iron_ingot",
+    "maxDamage" : 0
+  },
+  "231" : {
+    "name" : "blue_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "405" : {
+    "name" : "pink_dye",
+    "maxDamage" : 0
+  },
+  "107" : {
+    "name" : "fence_gate",
+    "maxDamage" : 0
+  },
+  "132" : {
+    "name" : "tripwire",
+    "maxDamage" : 0
+  },
+  "306" : {
+    "name" : "gold_ingot",
+    "maxDamage" : 0
+  },
+  "430" : {
+    "name" : "blaze_powder",
+    "maxDamage" : 0
+  },
+  "331" : {
+    "name" : "iron_hoe",
+    "maxDamage" : 250
+  },
+  "505" : {
+    "name" : "glow_ink_sac",
+    "maxDamage" : 0
+  },
+  "-60" : {
+    "name" : "element_49",
+    "maxDamage" : 0
+  },
+  "232" : {
+    "name" : "brown_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "-299" : {
+    "name" : "crimson_hyphae",
+    "maxDamage" : 0
+  },
+  "406" : {
+    "name" : "lime_dye",
+    "maxDamage" : 0
+  },
+  "133" : {
+    "name" : "emerald_block",
+    "maxDamage" : 0
+  },
+  "-115" : {
+    "name" : "element_104",
+    "maxDamage" : 0
+  },
+  "605" : {
+    "name" : "netherite_ingot",
+    "maxDamage" : 0
+  },
+  "332" : {
+    "name" : "diamond_hoe",
+    "maxDamage" : 1561
+  },
+  "307" : {
+    "name" : "iron_sword",
+    "maxDamage" : 250
+  },
+  "-61" : {
+    "name" : "element_50",
+    "maxDamage" : 0
+  },
+  "530" : {
+    "name" : "rabbit_foot",
+    "maxDamage" : 0
+  },
+  "407" : {
+    "name" : "yellow_dye",
+    "maxDamage" : 0
+  },
+  "207" : {
+    "name" : "frosted_ice",
+    "maxDamage" : 0
+  },
+  "-35" : {
+    "name" : "element_24",
+    "maxDamage" : 0
+  },
+  "606" : {
+    "name" : "netherite_sword",
+    "maxDamage" : 2031
+  },
+  "308" : {
+    "name" : "wooden_sword",
+    "maxDamage" : 59
+  },
+  "333" : {
+    "name" : "golden_hoe",
+    "maxDamage" : 32
+  },
+  "507" : {
+    "name" : "raw_iron",
+    "maxDamage" : 0
+  },
+  "-36" : {
+    "name" : "element_25",
+    "maxDamage" : 0
+  },
+  "234" : {
+    "name" : "red_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "408" : {
+    "name" : "light_blue_dye",
+    "maxDamage" : 0
+  },
+  "431" : {
+    "name" : "magma_cream",
+    "maxDamage" : 0
+  },
+  "-116" : {
+    "name" : "element_105",
+    "maxDamage" : 0
+  },
+  "607" : {
+    "name" : "netherite_shovel",
+    "maxDamage" : 2031
+  },
+  "135" : {
+    "name" : "birch_stairs",
+    "maxDamage" : 0
+  },
+  "334" : {
+    "name" : "wheat",
+    "maxDamage" : 0
+  },
+  "508" : {
+    "name" : "raw_gold",
+    "maxDamage" : 0
+  },
+  "-63" : {
+    "name" : "element_52",
+    "maxDamage" : 0
+  },
+  "235" : {
+    "name" : "black_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "409" : {
+    "name" : "magenta_dye",
+    "maxDamage" : 0
+  },
+  "260" : {
+    "name" : "mushroom_stew",
+    "maxDamage" : 0
+  },
+  "160" : {
+    "name" : "stained_glass_pane",
+    "maxDamage" : 0
+  },
+  "608" : {
+    "name" : "netherite_pickaxe",
+    "maxDamage" : 2031
+  },
+  "161" : {
+    "name" : "leaves2",
+    "maxDamage" : 0
+  },
+  "335" : {
+    "name" : "leather_helmet",
+    "maxDamage" : 55
+  },
+  "509" : {
+    "name" : "raw_copper",
+    "maxDamage" : 0
+  },
+  "-64" : {
+    "name" : "element_53",
+    "maxDamage" : 0
+  },
+  "236" : {
+    "name" : "concrete",
+    "maxDamage" : 0
+  },
+  "360" : {
+    "name" : "wooden_door",
+    "maxDamage" : 0
+  },
+  "-117" : {
+    "name" : "element_106",
+    "maxDamage" : 0
+  },
+  "137" : {
+    "name" : "command_block",
+    "maxDamage" : 0
+  },
+  "609" : {
+    "name" : "netherite_axe",
+    "maxDamage" : 2031
+  },
+  "460" : {
+    "name" : "rabbit_spawn_egg",
+    "maxDamage" : 0
+  },
+  "336" : {
+    "name" : "leather_chestplate",
+    "maxDamage" : 80
+  },
+  "-130" : {
+    "name" : "seagrass",
+    "maxDamage" : 0
+  },
+  "-65" : {
+    "name" : "element_54",
+    "maxDamage" : 0
+  },
+  "237" : {
+    "name" : "concrete_powder",
+    "maxDamage" : 0
+  },
+  "361" : {
+    "name" : "bucket",
+    "maxDamage" : 0
+  },
+  "-365" : {
+    "name" : "waxed_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "138" : {
+    "name" : "beacon",
+    "maxDamage" : 0
+  },
+  "261" : {
+    "name" : "bread",
+    "maxDamage" : 0
+  },
+  "461" : {
+    "name" : "endermite_spawn_egg",
+    "maxDamage" : 0
+  },
+  "337" : {
+    "name" : "leather_leggings",
+    "maxDamage" : 75
+  },
+  "262" : {
+    "name" : "porkchop",
+    "maxDamage" : 0
+  },
+  "-66" : {
+    "name" : "element_55",
+    "maxDamage" : 0
+  },
+  "238" : {
+    "name" : "chemistry_table",
+    "maxDamage" : 0
+  },
+  "-118" : {
+    "name" : "element_107",
+    "maxDamage" : 0
+  },
+  "362" : {
+    "name" : "milk_bucket",
+    "maxDamage" : 0
+  },
+  "139" : {
+    "name" : "cobblestone_wall",
+    "maxDamage" : 0
+  },
+  "263" : {
+    "name" : "cooked_porkchop",
+    "maxDamage" : 0
+  },
+  "-131" : {
+    "name" : "coral",
+    "maxDamage" : 0
+  },
+  "338" : {
+    "name" : "leather_boots",
+    "maxDamage" : 65
+  },
+  "462" : {
+    "name" : "guardian_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-67" : {
+    "name" : "element_56",
+    "maxDamage" : 0
+  },
+  "363" : {
+    "name" : "water_bucket",
+    "maxDamage" : 0
+  },
+  "-90" : {
+    "name" : "element_79",
+    "maxDamage" : 0
+  },
+  "562" : {
+    "name" : "dragon_breath",
+    "maxDamage" : 0
+  },
+  "264" : {
+    "name" : "cod",
+    "maxDamage" : 0
+  },
+  "-91" : {
+    "name" : "element_80",
+    "maxDamage" : 0
+  },
+  "463" : {
+    "name" : "stray_spawn_egg",
+    "maxDamage" : 0
+  },
+  "339" : {
+    "name" : "chainmail_helmet",
+    "maxDamage" : 165
+  },
+  "-92" : {
+    "name" : "element_81",
+    "maxDamage" : 0
+  },
+  "-68" : {
+    "name" : "element_57",
+    "maxDamage" : 0
+  },
+  "-119" : {
+    "name" : "element_108",
+    "maxDamage" : 0
+  },
+  "364" : {
+    "name" : "lava_bucket",
+    "maxDamage" : 0
+  },
+  "-93" : {
+    "name" : "element_82",
+    "maxDamage" : 0
+  },
+  "633" : {
+    "name" : "end_crystal",
+    "maxDamage" : 0
+  },
+  "-132" : {
+    "name" : "coral_block",
+    "maxDamage" : 0
+  },
+  "464" : {
+    "name" : "husk_spawn_egg",
+    "maxDamage" : 0
+  },
+  "162" : {
+    "name" : "log2",
+    "maxDamage" : 0
+  },
+  "191" : {
+    "name" : "hard_stained_glass_pane",
+    "maxDamage" : 0
+  },
+  "-69" : {
+    "name" : "element_58",
+    "maxDamage" : 0
+  },
+  "-367" : {
+    "name" : "waxed_weathered_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "365" : {
+    "name" : "cod_bucket",
+    "maxDamage" : 0
+  },
+  "564" : {
+    "name" : "lingering_potion",
+    "maxDamage" : 0
+  },
+  "266" : {
+    "name" : "tropical_fish",
+    "maxDamage" : 0
+  },
+  "-94" : {
+    "name" : "element_83",
+    "maxDamage" : 0
+  },
+  "465" : {
+    "name" : "wither_skeleton_spawn_egg",
+    "maxDamage" : 0
+  },
+  "163" : {
+    "name" : "acacia_stairs",
+    "maxDamage" : 0
+  },
+  "192" : {
+    "name" : "chemical_heat",
+    "maxDamage" : 0
+  },
+  "366" : {
+    "name" : "salmon_bucket",
+    "maxDamage" : 0
+  },
+  "490" : {
+    "name" : "panda_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-95" : {
+    "name" : "element_84",
+    "maxDamage" : 0
+  },
+  "267" : {
+    "name" : "pufferfish",
+    "maxDamage" : 0
+  },
+  "-133" : {
+    "name" : "coral_fan",
+    "maxDamage" : 0
+  },
+  "309" : {
+    "name" : "wooden_shovel",
+    "maxDamage" : 59
+  },
+  "166" : {
+    "name" : "glow_stick",
+    "maxDamage" : 100
+  },
+  "168" : {
+    "name" : "prismarine",
+    "maxDamage" : 0
+  },
+  "491" : {
+    "name" : "fox_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-368" : {
+    "name" : "double_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "367" : {
+    "name" : "tropical_fish_bucket",
+    "maxDamage" : 0
+  },
+  "-96" : {
+    "name" : "element_85",
+    "maxDamage" : 0
+  },
+  "268" : {
+    "name" : "cooked_cod",
+    "maxDamage" : 0
+  },
+  "-381" : {
+    "name" : "cobbled_deepslate_stairs",
+    "maxDamage" : 0
+  },
+  "534" : {
+    "name" : "golden_horse_armor",
+    "maxDamage" : 0
+  },
+  "467" : {
+    "name" : "mule_spawn_egg",
+    "maxDamage" : 0
+  },
+  "169" : {
+    "name" : "sealantern",
+    "maxDamage" : 0
+  },
+  "194" : {
+    "name" : "item.birch_door",
+    "maxDamage" : 0
+  },
+  "368" : {
+    "name" : "pufferfish_bucket",
+    "maxDamage" : 0
+  },
+  "492" : {
+    "name" : "pillager_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-97" : {
+    "name" : "element_86",
+    "maxDamage" : 0
+  },
+  "-134" : {
+    "name" : "coral_fan_dead",
+    "maxDamage" : 0
+  },
+  "269" : {
+    "name" : "cooked_salmon",
+    "maxDamage" : 0
+  },
+  "390" : {
+    "name" : "chest_minecart",
+    "maxDamage" : 0
+  },
+  "391" : {
+    "name" : "egg",
+    "maxDamage" : 0
+  },
+  "392" : {
+    "name" : "compass",
+    "maxDamage" : 0
+  },
+  "393" : {
+    "name" : "fishing_rod",
+    "maxDamage" : 384
+  },
+  "369" : {
+    "name" : "powder_snow_bucket",
+    "maxDamage" : 0
+  },
+  "538" : {
+    "name" : "music_disc_blocks",
+    "maxDamage" : 0
+  },
+  "-98" : {
+    "name" : "element_87",
+    "maxDamage" : 0
+  },
+  "568" : {
+    "name" : "shulker_shell",
+    "maxDamage" : 0
+  },
+  "394" : {
+    "name" : "clock",
+    "maxDamage" : 0
+  },
+  "593" : {
+    "name" : "honey_bottle",
+    "maxDamage" : 0
+  },
+  "-37" : {
+    "name" : "element_26",
+    "maxDamage" : 0
+  },
+  "432" : {
+    "name" : "brewing_stand",
+    "maxDamage" : 0
+  },
+  "196" : {
+    "name" : "item.acacia_door",
+    "maxDamage" : 0
+  },
+  "494" : {
+    "name" : "ravager_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-38" : {
+    "name" : "element_27",
+    "maxDamage" : 0
+  },
+  "-135" : {
+    "name" : "coral_fan_hang",
+    "maxDamage" : 0
+  },
+  "-99" : {
+    "name" : "element_88",
+    "maxDamage" : 0
+  },
+  "395" : {
+    "name" : "glowstone_dust",
+    "maxDamage" : 0
+  },
+  "594" : {
+    "name" : "mod",
+    "maxDamage" : 0
+  },
+  "433" : {
+    "name" : "cauldron",
+    "maxDamage" : 0
+  },
+  "-39" : {
+    "name" : "element_28",
+    "maxDamage" : 0
+  },
+  "197" : {
+    "name" : "item.dark_oak_door",
+    "maxDamage" : 0
+  },
+  "495" : {
+    "name" : "bee_spawn_egg",
+    "maxDamage" : 0
+  },
+  "434" : {
+    "name" : "ender_eye",
+    "maxDamage" : 0
+  },
+  "396" : {
+    "name" : "black_dye",
+    "maxDamage" : 0
+  },
+  "290" : {
+    "name" : "rabbit_stew",
+    "maxDamage" : 0
+  },
+  "435" : {
+    "name" : "glistering_melon_slice",
+    "maxDamage" : 0
+  },
+  "595" : {
+    "name" : "mod_ex",
+    "maxDamage" : 0
+  },
+  "291" : {
+    "name" : "wheat_seeds",
+    "maxDamage" : 0
+  },
+  "436" : {
+    "name" : "chicken_spawn_egg",
+    "maxDamage" : 0
+  },
+  "496" : {
+    "name" : "strider_spawn_egg",
+    "maxDamage" : 0
+  },
+  "292" : {
+    "name" : "pumpkin_seeds",
+    "maxDamage" : 0
+  },
+  "-136" : {
+    "name" : "coral_fan_hang2",
+    "maxDamage" : 0
+  },
+  "397" : {
+    "name" : "red_dye",
+    "maxDamage" : 0
+  },
+  "437" : {
+    "name" : "cow_spawn_egg",
+    "maxDamage" : 0
+  },
+  "293" : {
+    "name" : "melon_seeds",
+    "maxDamage" : 0
+  },
+  "596" : {
+    "name" : "camera",
+    "maxDamage" : 0
+  },
+  "438" : {
+    "name" : "pig_spawn_egg",
+    "maxDamage" : 0
+  },
+  "294" : {
+    "name" : "nether_wart",
+    "maxDamage" : 0
+  },
+  "199" : {
+    "name" : "item.frame",
+    "maxDamage" : 0
+  },
+  "439" : {
+    "name" : "sheep_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-384" : {
+    "name" : "polished_deepslate_slab",
+    "maxDamage" : 0
+  },
+  "398" : {
+    "name" : "green_dye",
+    "maxDamage" : 0
+  },
+  "295" : {
+    "name" : "beetroot_seeds",
+    "maxDamage" : 0
+  },
+  "296" : {
+    "name" : "iron_shovel",
+    "maxDamage" : 250
+  },
+  "597" : {
+    "name" : "compound",
+    "maxDamage" : 0
+  },
+  "108" : {
+    "name" : "brick_stairs",
+    "maxDamage" : 0
+  },
+  "297" : {
+    "name" : "iron_pickaxe",
+    "maxDamage" : 250
+  },
+  "-200" : {
+    "name" : "cartography_table",
+    "maxDamage" : 0
+  },
+  "298" : {
+    "name" : "iron_axe",
+    "maxDamage" : 250
+  },
+  "299" : {
+    "name" : "flint_and_steel",
+    "maxDamage" : 64
+  },
+  "399" : {
+    "name" : "brown_dye",
+    "maxDamage" : 0
+  },
+  "493" : {
+    "name" : "wandering_trader_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-150" : {
+    "name" : "acacia_pressure_plate",
+    "maxDamage" : 0
+  },
+  "598" : {
+    "name" : "ice_bomb",
+    "maxDamage" : 0
+  },
+  "497" : {
+    "name" : "hoglin_spawn_egg",
+    "maxDamage" : 0
+  },
+  "506" : {
+    "name" : "copper_ingot",
+    "maxDamage" : 0
+  },
+  "499" : {
+    "name" : "piglin_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-369" : {
+    "name" : "exposed_double_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-363" : {
+    "name" : "weathered_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-366" : {
+    "name" : "waxed_exposed_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-201" : {
+    "name" : "fletching_table",
+    "maxDamage" : 0
+  },
+  "-34" : {
+    "name" : "element_23",
+    "maxDamage" : 0
+  },
+  "599" : {
+    "name" : "bleach",
+    "maxDamage" : 0
+  },
+  "-380" : {
+    "name" : "cobbled_deepslate_slab",
+    "maxDamage" : 0
+  },
+  "466" : {
+    "name" : "donkey_spawn_egg",
+    "maxDamage" : 0
+  },
+  "531" : {
+    "name" : "rabbit_hide",
+    "maxDamage" : 0
+  },
+  "536" : {
+    "name" : "music_disc_13",
+    "maxDamage" : 0
+  },
+  "-382" : {
+    "name" : "cobbled_deepslate_wall",
+    "maxDamage" : 0
+  },
+  "630" : {
+    "name" : "dye",
+    "maxDamage" : 0
+  },
+  "-151" : {
+    "name" : "birch_pressure_plate",
+    "maxDamage" : 0
+  },
+  "-62" : {
+    "name" : "element_51",
+    "maxDamage" : 0
+  },
+  "592" : {
+    "name" : "honeycomb",
+    "maxDamage" : 0
+  },
+  "-364" : {
+    "name" : "oxidized_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-362" : {
+    "name" : "exposed_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "-386" : {
+    "name" : "polished_deepslate_wall",
+    "maxDamage" : 0
+  },
+  "560" : {
+    "name" : "chorus_fruit",
+    "maxDamage" : 0
+  },
+  "561" : {
+    "name" : "popped_chorus_fruit",
+    "maxDamage" : 0
+  },
+  "-202" : {
+    "name" : "smithing_table",
+    "maxDamage" : 0
+  },
+  "567" : {
+    "name" : "prismarine_shard",
+    "maxDamage" : 0
+  },
+  "-137" : {
+    "name" : "coral_fan_hang3",
+    "maxDamage" : 0
+  },
+  "265" : {
+    "name" : "salmon",
+    "maxDamage" : 0
+  },
+  "164" : {
+    "name" : "dark_oak_stairs",
+    "maxDamage" : 0
+  },
+  "566" : {
+    "name" : "elytra",
+    "maxDamage" : 432
+  },
+  "533" : {
+    "name" : "iron_horse_armor",
+    "maxDamage" : 0
+  },
+  "532" : {
+    "name" : "leather_horse_armor",
+    "maxDamage" : 0
+  },
+  "535" : {
+    "name" : "diamond_horse_armor",
+    "maxDamage" : 0
+  },
+  "-152" : {
+    "name" : "dark_oak_pressure_plate",
+    "maxDamage" : 0
+  },
+  "604" : {
+    "name" : "lodestone_compass",
+    "maxDamage" : 0
+  },
+  "-139" : {
+    "name" : "dried_kelp_block",
+    "maxDamage" : 0
+  },
+  "206" : {
+    "name" : "end_bricks",
+    "maxDamage" : 0
+  },
+  "209" : {
+    "name" : "end_gateway",
+    "maxDamage" : 0
+  },
+  "-387" : {
+    "name" : "deepslate_tiles",
+    "maxDamage" : 0
+  },
+  "208" : {
+    "name" : "end_rod",
+    "maxDamage" : 0
+  },
+  "198" : {
+    "name" : "grass_path",
+    "maxDamage" : 0
+  },
+  "-203" : {
+    "name" : "barrel",
+    "maxDamage" : 0
+  },
+  "233" : {
+    "name" : "green_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "190" : {
+    "name" : "hard_glass_pane",
+    "maxDamage" : 0
+  },
+  "468" : {
+    "name" : "skeleton_horse_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-349" : {
+    "name" : "weathered_cut_copper",
+    "maxDamage" : 0
+  },
+  "565" : {
+    "name" : "command_block_minecart",
+    "maxDamage" : 0
+  },
+  "167" : {
+    "name" : "iron_trapdoor",
+    "maxDamage" : 0
+  },
+  "193" : {
+    "name" : "item.spruce_door",
+    "maxDamage" : 0
+  },
+  "195" : {
+    "name" : "item.jungle_door",
+    "maxDamage" : 0
+  },
+  "-451" : {
+    "name" : "raw_iron_block",
+    "maxDamage" : 0
+  },
+  "-153" : {
+    "name" : "jungle_pressure_plate",
+    "maxDamage" : 0
+  },
+  "136" : {
+    "name" : "jungle_stairs",
+    "maxDamage" : 0
+  },
+  "-138" : {
+    "name" : "item.kelp",
+    "maxDamage" : 0
+  },
+  "591" : {
+    "name" : "suspicious_stew",
+    "maxDamage" : 0
+  },
+  "-388" : {
+    "name" : "deepslate_tile_slab",
+    "maxDamage" : 0
+  },
+  "105" : {
+    "name" : "melon_stem",
+    "maxDamage" : 0
+  },
+  "590" : {
+    "name" : "campfire",
+    "maxDamage" : 0
+  },
+  "-204" : {
+    "name" : "loom",
+    "maxDamage" : 0
+  },
+  "634" : {
+    "name" : "glow_berries",
+    "maxDamage" : 0
+  },
+  "631" : {
+    "name" : "banner_pattern",
+    "maxDamage" : 0
+  },
+  "539" : {
+    "name" : "music_disc_chirp",
+    "maxDamage" : 0
+  },
+  "-383" : {
+    "name" : "polished_deepslate",
+    "maxDamage" : 0
+  },
+  "537" : {
+    "name" : "music_disc_cat",
+    "maxDamage" : 0
+  },
+  "-385" : {
+    "name" : "polished_deepslate_stairs",
+    "maxDamage" : 0
+  },
+  "469" : {
+    "name" : "zombie_horse_spawn_egg",
+    "maxDamage" : 0
+  },
+  "165" : {
+    "name" : "slime",
+    "maxDamage" : 0
+  },
+  "-452" : {
+    "name" : "raw_copper_block",
+    "maxDamage" : 0
+  },
+  "-450" : {
+    "name" : "waxed_oxidized_double_cut_copper_slab",
+    "maxDamage" : 0
+  },
+  "632" : {
+    "name" : "spawn_egg",
+    "maxDamage" : 0
+  },
+  "601" : {
+    "name" : "balloon",
+    "maxDamage" : 0
+  },
+  "-154" : {
+    "name" : "spruce_pressure_plate",
+    "maxDamage" : 0
+  },
+  "-389" : {
+    "name" : "deepslate_tile_stairs",
+    "maxDamage" : 0
+  },
+  "134" : {
+    "name" : "spruce_stairs",
+    "maxDamage" : 0
+  },
+  "109" : {
+    "name" : "stone_brick_stairs",
+    "maxDamage" : 0
+  },
+  "569" : {
+    "name" : "banner",
+    "maxDamage" : 0
+  },
+  "131" : {
+    "name" : "tripwire_hook",
+    "maxDamage" : 0
+  },
+  "239" : {
+    "name" : "underwater_torch",
+    "maxDamage" : 0
+  },
+  "106" : {
+    "name" : "vine",
+    "maxDamage" : 0
+  },
+  "-298" : {
+    "name" : "warped_hyphae",
+    "maxDamage" : 0
+  },
+  "563" : {
+    "name" : "splash_potion",
+    "maxDamage" : 0
+  },
+  "-155" : {
+    "name" : "carved_pumpkin",
+    "maxDamage" : 0
+  },
+  "-453" : {
+    "name" : "raw_gold_block",
+    "maxDamage" : 0
+  },
+  "-206" : {
+    "name" : "bell",
+    "maxDamage" : 0
+  },
+  "-156" : {
+    "name" : "sea_pickle",
+    "maxDamage" : 0
+  },
+  "-454" : {
+    "name" : "infested_deepslate",
+    "maxDamage" : 0
+  },
+  "-207" : {
+    "name" : "sweet_berry_bush",
+    "maxDamage" : 0
+  },
+  "-220" : {
+    "name" : "honey_block",
+    "maxDamage" : 0
+  },
+  "-157" : {
+    "name" : "conduit",
+    "maxDamage" : 0
+  },
+  "60" : {
+    "name" : "farmland",
+    "maxDamage" : 0
+  },
+  "-170" : {
+    "name" : "diorite_stairs",
+    "maxDamage" : 0
+  },
+  "61" : {
+    "name" : "furnace",
+    "maxDamage" : 0
+  },
+  "-208" : {
+    "name" : "lantern",
+    "maxDamage" : 0
+  },
+  "62" : {
+    "name" : "lit_furnace",
+    "maxDamage" : 0
+  },
+  "-221" : {
+    "name" : "honeycomb_block",
+    "maxDamage" : 0
+  },
+  "63" : {
+    "name" : "standing_sign",
+    "maxDamage" : 0
+  },
+  "-158" : {
+    "name" : "air",
+    "maxDamage" : 0
+  },
+  "-171" : {
+    "name" : "andesite_stairs",
+    "maxDamage" : 0
+  },
+  "64" : {
+    "name" : "item.wooden_door",
+    "maxDamage" : 0
+  },
+  "-209" : {
+    "name" : "item.campfire",
+    "maxDamage" : 0
+  },
+  "65" : {
+    "name" : "ladder",
+    "maxDamage" : 0
+  },
+  "-222" : {
+    "name" : "lodestone",
+    "maxDamage" : 0
+  },
+  "20" : {
+    "name" : "glass",
+    "maxDamage" : 0
+  },
+  "66" : {
+    "name" : "rail",
+    "maxDamage" : 0
+  },
+  "-159" : {
+    "name" : "turtle_egg",
+    "maxDamage" : 0
+  },
+  "21" : {
+    "name" : "lapis_ore",
+    "maxDamage" : 0
+  },
+  "67" : {
+    "name" : "stone_stairs",
+    "maxDamage" : 0
+  },
+  "-172" : {
+    "name" : "polished_granite_stairs",
+    "maxDamage" : 0
+  },
+  "22" : {
+    "name" : "lapis_block",
+    "maxDamage" : 0
+  },
+  "68" : {
+    "name" : "wall_sign",
+    "maxDamage" : 0
+  },
+  "23" : {
+    "name" : "dispenser",
+    "maxDamage" : 0
+  },
+  "-223" : {
+    "name" : "crimson_roots",
+    "maxDamage" : 0
+  },
+  "69" : {
+    "name" : "lever",
+    "maxDamage" : 0
+  },
+  "24" : {
+    "name" : "sandstone",
+    "maxDamage" : 0
+  },
+  "25" : {
+    "name" : "noteblock",
+    "maxDamage" : 0
+  },
+  "-173" : {
+    "name" : "polished_diorite_stairs",
+    "maxDamage" : 0
+  },
+  "26" : {
+    "name" : "item.bed",
+    "maxDamage" : 0
+  },
+  "-224" : {
+    "name" : "warped_roots",
+    "maxDamage" : 0
+  },
+  "27" : {
+    "name" : "golden_rail",
+    "maxDamage" : 0
+  },
+  "28" : {
+    "name" : "detector_rail",
+    "maxDamage" : 0
+  },
+  "-174" : {
+    "name" : "polished_andesite_stairs",
+    "maxDamage" : 0
+  },
+  "29" : {
+    "name" : "sticky_piston",
+    "maxDamage" : 0
+  },
+  "-225" : {
+    "name" : "crimson_stem",
+    "maxDamage" : 0
+  },
+  "-175" : {
+    "name" : "mossy_stone_brick_stairs",
+    "maxDamage" : 0
+  },
+  "-226" : {
+    "name" : "warped_stem",
+    "maxDamage" : 0
+  },
+  "-176" : {
+    "name" : "smooth_red_sandstone_stairs",
+    "maxDamage" : 0
+  },
+  "-227" : {
+    "name" : "warped_wart_block",
+    "maxDamage" : 0
+  },
+  "-240" : {
+    "name" : "stripped_crimson_stem",
+    "maxDamage" : 0
+  },
+  "-177" : {
+    "name" : "smooth_sandstone_stairs",
+    "maxDamage" : 0
+  },
+  "-190" : {
+    "name" : "acacia_standing_sign",
+    "maxDamage" : 0
+  },
+  "-228" : {
+    "name" : "crimson_fungus",
+    "maxDamage" : 0
+  },
+  "-241" : {
+    "name" : "stripped_warped_stem",
+    "maxDamage" : 0
+  },
+  "-178" : {
+    "name" : "end_brick_stairs",
+    "maxDamage" : 0
+  },
+  "-191" : {
+    "name" : "acacia_wall_sign",
+    "maxDamage" : 0
+  },
+  "-229" : {
+    "name" : "warped_fungus",
+    "maxDamage" : 0
+  },
+  "-242" : {
+    "name" : "crimson_planks",
+    "maxDamage" : 0
+  },
+  "-179" : {
+    "name" : "mossy_cobblestone_stairs",
+    "maxDamage" : 0
+  },
+  "-192" : {
+    "name" : "darkoak_standing_sign",
+    "maxDamage" : 0
+  },
+  "-243" : {
+    "name" : "warped_planks",
+    "maxDamage" : 0
+  },
+  "-193" : {
+    "name" : "darkoak_wall_sign",
+    "maxDamage" : 0
+  },
+  "-244" : {
+    "name" : "item.crimson_door",
+    "maxDamage" : 0
+  },
+  "-194" : {
+    "name" : "lectern",
+    "maxDamage" : 0
+  },
+  "-245" : {
+    "name" : "item.warped_door",
+    "maxDamage" : 0
+  },
+  "-10" : {
+    "name" : "stripped_oak_log",
+    "maxDamage" : 0
+  },
+  "-195" : {
+    "name" : "grindstone",
+    "maxDamage" : 0
+  },
+  "-11" : {
+    "name" : "blue_ice",
+    "maxDamage" : 0
+  },
+  "-246" : {
+    "name" : "crimson_trapdoor",
+    "maxDamage" : 0
+  },
+  "-196" : {
+    "name" : "blast_furnace",
+    "maxDamage" : 0
+  },
+  "-12" : {
+    "name" : "element_1",
+    "maxDamage" : 0
+  },
+  "110" : {
+    "name" : "mycelium",
+    "maxDamage" : 0
+  },
+  "-247" : {
+    "name" : "warped_trapdoor",
+    "maxDamage" : 0
+  },
+  "-13" : {
+    "name" : "element_2",
+    "maxDamage" : 0
+  },
+  "-260" : {
+    "name" : "crimson_button",
+    "maxDamage" : 0
+  },
+  "210" : {
+    "name" : "allow",
+    "maxDamage" : 0
+  },
+  "111" : {
+    "name" : "waterlily",
+    "maxDamage" : 0
+  },
+  "-197" : {
+    "name" : "stonecutter_block",
+    "maxDamage" : 0
+  },
+  "-14" : {
+    "name" : "element_3",
+    "maxDamage" : 0
+  },
+  "310" : {
+    "name" : "wooden_pickaxe",
+    "maxDamage" : 59
+  },
+  "-311" : {
+    "name" : "copper_ore",
+    "maxDamage" : 0
+  },
+  "211" : {
+    "name" : "deny",
+    "maxDamage" : 0
+  },
+  "410" : {
+    "name" : "orange_dye",
+    "maxDamage" : 0
+  },
+  "112" : {
+    "name" : "nether_brick",
+    "maxDamage" : 0
+  },
+  "-15" : {
+    "name" : "element_4",
+    "maxDamage" : 0
+  },
+  "311" : {
+    "name" : "wooden_axe",
+    "maxDamage" : 59
+  },
+  "-40" : {
+    "name" : "element_29",
+    "maxDamage" : 0
+  },
+  "212" : {
+    "name" : "border_block",
+    "maxDamage" : 0
+  },
+  "510" : {
+    "name" : "experience_bottle",
+    "maxDamage" : 0
+  },
+  "-261" : {
+    "name" : "warped_button",
+    "maxDamage" : 0
+  },
+  "411" : {
+    "name" : "white_dye",
+    "maxDamage" : 0
+  },
+  "-198" : {
+    "name" : "smoker",
+    "maxDamage" : 0
+  },
+  "113" : {
+    "name" : "nether_brick_fence",
+    "maxDamage" : 0
+  },
+  "-16" : {
+    "name" : "element_5",
+    "maxDamage" : 0
+  },
+  "312" : {
+    "name" : "stone_sword",
+    "maxDamage" : 131
+  },
+  "-41" : {
+    "name" : "element_30",
+    "maxDamage" : 0
+  },
+  "213" : {
+    "name" : "magma",
+    "maxDamage" : 0
+  },
+  "511" : {
+    "name" : "fire_charge",
+    "maxDamage" : 0
+  },
+  "610" : {
+    "name" : "netherite_hoe",
+    "maxDamage" : 2031
+  },
+  "412" : {
+    "name" : "bone_meal",
+    "maxDamage" : 0
+  },
+  "-312" : {
+    "name" : "lightning_rod",
+    "maxDamage" : 0
+  },
+  "114" : {
+    "name" : "nether_brick_stairs",
+    "maxDamage" : 0
+  },
+  "611" : {
+    "name" : "netherite_helmet",
+    "maxDamage" : 407
+  },
+  "-262" : {
+    "name" : "crimson_pressure_plate",
+    "maxDamage" : 0
+  },
+  "-17" : {
+    "name" : "element_6",
+    "maxDamage" : 0
+  },
+  "512" : {
+    "name" : "writable_book",
+    "maxDamage" : 0
+  },
+  "-42" : {
+    "name" : "element_31",
+    "maxDamage" : 0
+  },
+  "313" : {
+    "name" : "stone_shovel",
+    "maxDamage" : 131
+  },
+  "-199" : {
+    "name" : "lit_smoker",
+    "maxDamage" : 0
+  },
+  "413" : {
+    "name" : "cocoa_beans",
+    "maxDamage" : 0
+  },
+  "140" : {
+    "name" : "item.flower_pot",
+    "maxDamage" : 0
+  },
+  "612" : {
+    "name" : "netherite_chestplate",
+    "maxDamage" : 592
+  },
+  "-18" : {
+    "name" : "element_7",
+    "maxDamage" : 0
+  },
+  "314" : {
+    "name" : "stone_pickaxe",
+    "maxDamage" : 131
+  },
+  "513" : {
+    "name" : "written_book",
+    "maxDamage" : 0
+  },
+  "-43" : {
+    "name" : "element_32",
+    "maxDamage" : 0
+  },
+  "240" : {
+    "name" : "chorus_plant",
+    "maxDamage" : 0
+  },
+  "116" : {
+    "name" : "enchanting_table",
+    "maxDamage" : 0
+  },
+  "414" : {
+    "name" : "ink_sac",
+    "maxDamage" : 0
+  },
+  "141" : {
+    "name" : "carrots",
+    "maxDamage" : 0
+  },
+  "613" : {
+    "name" : "netherite_leggings",
+    "maxDamage" : 555
+  },
+  "-19" : {
+    "name" : "element_8",
+    "maxDamage" : 0
+  },
+  "340" : {
+    "name" : "chainmail_chestplate",
+    "maxDamage" : 240
+  },
+  "315" : {
+    "name" : "stone_axe",
+    "maxDamage" : 131
+  },
+  "216" : {
+    "name" : "bone_block",
+    "maxDamage" : 0
+  },
+  "241" : {
+    "name" : "stained_glass",
+    "maxDamage" : 0
+  },
+  "117" : {
+    "name" : "brewingstandblock",
+    "maxDamage" : 0
+  },
+  "415" : {
+    "name" : "lapis_lazuli",
+    "maxDamage" : 0
+  },
+  "-44" : {
+    "name" : "element_33",
+    "maxDamage" : 0
+  },
+  "316" : {
+    "name" : "diamond_sword",
+    "maxDamage" : 1561
+  },
+  "440" : {
+    "name" : "wolf_spawn_egg",
+    "maxDamage" : 0
+  },
+  "341" : {
+    "name" : "chainmail_leggings",
+    "maxDamage" : 225
+  },
+  "-45" : {
+    "name" : "element_34",
+    "maxDamage" : 0
+  },
+  "-70" : {
+    "name" : "element_59",
+    "maxDamage" : 0
+  },
+  "242" : {
+    "name" : "item.camera",
+    "maxDamage" : 0
+  },
+  "118" : {
+    "name" : "item.cauldron",
+    "maxDamage" : 0
+  },
+  "416" : {
+    "name" : "bone",
+    "maxDamage" : 0
+  },
+  "441" : {
+    "name" : "mooshroom_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-264" : {
+    "name" : "crimson_slab",
+    "maxDamage" : 0
+  },
+  "317" : {
+    "name" : "diamond_shovel",
+    "maxDamage" : 1561
+  },
+  "342" : {
+    "name" : "chainmail_boots",
+    "maxDamage" : 195
+  },
+  "218" : {
+    "name" : "shulker_box",
+    "maxDamage" : 0
+  },
+  "-46" : {
+    "name" : "element_35",
+    "maxDamage" : 0
+  },
+  "243" : {
+    "name" : "podzol",
+    "maxDamage" : 0
+  },
+  "119" : {
+    "name" : "end_portal",
+    "maxDamage" : 0
+  },
+  "417" : {
+    "name" : "sugar",
+    "maxDamage" : 0
+  },
+  "442" : {
+    "name" : "creeper_spawn_egg",
+    "maxDamage" : 0
+  },
+  "616" : {
+    "name" : "crimson_sign",
+    "maxDamage" : 0
+  },
+  "318" : {
+    "name" : "diamond_pickaxe",
+    "maxDamage" : 1561
+  },
+  "-47" : {
+    "name" : "element_36",
+    "maxDamage" : 0
+  },
+  "343" : {
+    "name" : "iron_helmet",
+    "maxDamage" : 165
+  },
+  "-72" : {
+    "name" : "element_61",
+    "maxDamage" : 0
+  },
+  "244" : {
+    "name" : "item.beetroot",
+    "maxDamage" : 0
+  },
+  "418" : {
+    "name" : "cake",
+    "maxDamage" : 0
+  },
+  "-265" : {
+    "name" : "warped_slab",
+    "maxDamage" : 0
+  },
+  "443" : {
+    "name" : "enderman_spawn_egg",
+    "maxDamage" : 0
+  },
+  "617" : {
+    "name" : "warped_sign",
+    "maxDamage" : 0
+  },
+  "145" : {
+    "name" : "anvil",
+    "maxDamage" : 0
+  },
+  "-48" : {
+    "name" : "element_37",
+    "maxDamage" : 0
+  },
+  "344" : {
+    "name" : "iron_chestplate",
+    "maxDamage" : 240
+  },
+  "-73" : {
+    "name" : "element_62",
+    "maxDamage" : 0
+  },
+  "518" : {
+    "name" : "skull",
+    "maxDamage" : 0
+  },
+  "419" : {
+    "name" : "bed",
+    "maxDamage" : 0
+  },
+  "270" : {
+    "name" : "dried_kelp",
+    "maxDamage" : 0
+  },
+  "444" : {
+    "name" : "silverfish_spawn_egg",
+    "maxDamage" : 0
+  },
+  "319" : {
+    "name" : "diamond_axe",
+    "maxDamage" : 1561
+  },
+  "541" : {
+    "name" : "music_disc_mall",
+    "maxDamage" : 0
+  },
+  "-49" : {
+    "name" : "element_38",
+    "maxDamage" : 0
+  },
+  "345" : {
+    "name" : "iron_leggings",
+    "maxDamage" : 225
+  },
+  "-74" : {
+    "name" : "element_63",
+    "maxDamage" : 0
+  },
+  "246" : {
+    "name" : "glowingobsidian",
+    "maxDamage" : 0
+  },
+  "-266" : {
+    "name" : "crimson_double_slab",
+    "maxDamage" : 0
+  },
+  "370" : {
+    "name" : "axolotl_bucket",
+    "maxDamage" : 0
+  },
+  "445" : {
+    "name" : "skeleton_spawn_egg",
+    "maxDamage" : 0
+  },
+  "619" : {
+    "name" : "warped_door",
+    "maxDamage" : 0
+  },
+  "470" : {
+    "name" : "shulker_spawn_egg",
+    "maxDamage" : 0
+  },
+  "346" : {
+    "name" : "iron_boots",
+    "maxDamage" : 195
+  },
+  "271" : {
+    "name" : "cookie",
+    "maxDamage" : 0
+  },
+  "-75" : {
+    "name" : "element_64",
+    "maxDamage" : 0
+  },
+  "-317" : {
+    "name" : "dripstone_block",
+    "maxDamage" : 0
+  },
+  "247" : {
+    "name" : "netherreactor",
+    "maxDamage" : 0
+  },
+  "371" : {
+    "name" : "minecart",
+    "maxDamage" : 0
+  },
+  "446" : {
+    "name" : "slime_spawn_egg",
+    "maxDamage" : 0
+  },
+  "148" : {
+    "name" : "heavy_weighted_pressure_plate",
+    "maxDamage" : 0
+  },
+  "471" : {
+    "name" : "npc_spawn_egg",
+    "maxDamage" : 0
+  },
+  "347" : {
+    "name" : "diamond_helmet",
+    "maxDamage" : 363
+  },
+  "272" : {
+    "name" : "melon_slice",
+    "maxDamage" : 0
+  },
+  "-76" : {
+    "name" : "element_65",
+    "maxDamage" : 0
+  },
+  "-267" : {
+    "name" : "warped_double_slab",
+    "maxDamage" : 0
+  },
+  "248" : {
+    "name" : "info_update",
+    "maxDamage" : 0
+  },
+  "372" : {
+    "name" : "saddle",
+    "maxDamage" : 0
+  },
+  "447" : {
+    "name" : "spider_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-280" : {
+    "name" : "cracked_polished_blackstone_bricks",
+    "maxDamage" : 0
+  },
+  "273" : {
+    "name" : "beef",
+    "maxDamage" : 0
+  },
+  "173" : {
+    "name" : "coal_block",
+    "maxDamage" : 0
+  },
+  "546" : {
+    "name" : "music_disc_11",
+    "maxDamage" : 0
+  },
+  "-77" : {
+    "name" : "element_66",
+    "maxDamage" : 0
+  },
+  "373" : {
+    "name" : "iron_door",
+    "maxDamage" : 0
+  },
+  "219" : {
+    "name" : "purple_glazed_terracotta",
+    "maxDamage" : 0
+  },
+  "274" : {
+    "name" : "cooked_beef",
+    "maxDamage" : 0
+  },
+  "448" : {
+    "name" : "zombie_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-71" : {
+    "name" : "element_60",
+    "maxDamage" : 0
+  },
+  "473" : {
+    "name" : "polar_bear_spawn_egg",
+    "maxDamage" : 0
+  },
+  "349" : {
+    "name" : "diamond_leggings",
+    "maxDamage" : 495
+  },
+  "175" : {
+    "name" : "double_plant",
+    "maxDamage" : 0
+  },
+  "-78" : {
+    "name" : "element_67",
+    "maxDamage" : 0
+  },
+  "374" : {
+    "name" : "redstone",
+    "maxDamage" : 0
+  },
+  "-268" : {
+    "name" : "soul_torch",
+    "maxDamage" : 0
+  },
+  "275" : {
+    "name" : "chicken",
+    "maxDamage" : 0
+  },
+  "449" : {
+    "name" : "zombie_pigman_spawn_egg",
+    "maxDamage" : 0
+  },
+  "-281" : {
+    "name" : "gilded_blackstone",
+    "maxDamage" : 0
+  },
+  "474" : {
+    "name" : "llama_spawn_egg",
+    "maxDamage" : 0
+  },
+  "519" : {
+    "name" : "carrot_on_a_stick",
+    "maxDamage" : 26
+  },
+  "-319" : {
+    "name" : "hanging_roots",
+    "maxDamage" : 0
+  },
+  "-79" : {
+    "name" : "element_68",
+    "maxDamage" : 0
+  },
+  "375" : {
+    "name" : "snowball",
+    "maxDamage" : 0
+  },
+  "542" : {
+    "name" : "music_disc_mellohi",
+    "maxDamage" : 0
+  },
+  "276" : {
+    "name" : "cooked_chicken",
+    "maxDamage" : 0
+  },
+  "547" : {
+    "name" : "music_disc_wait",
+    "maxDamage" : 0
+  },
+  "540" : {
+    "name" : "music_disc_far",
+    "maxDamage" : 0
+  },
+  "177" : {
+    "name" : "wall_banner",
+    "maxDamage" : 0
+  },
+  "348" : {
+    "name" : "diamond_chestplate",
+    "maxDamage" : 528
+  },
+  "543" : {
+    "name" : "music_disc_stal",
+    "maxDamage" : 0
+  },
+  "376" : {
+    "name" : "oak_boat",
+    "maxDamage" : 0
+  },
+  "171" : {
+    "name" : "carpet",
+    "maxDamage" : 0
+  },
+  "-330" : {
+    "name" : "large_amethyst_bud",
+    "maxDamage" : 0
+  },
+  "-282" : {
+    "name" : "blackstone_slab",
+    "maxDamage" : 0
+  },
+  "277" : {
+    "name" : "rotten_flesh",
+    "maxDamage" : 0
+  },
+  "575" : {
+    "name" : "turtle_helmet",
+    "maxDamage" : 275
+  },
+  "476" : {
+    "name" : "evoker_spawn_egg",
+    "maxDamage" : 0
+  },
+  "178" : {
+    "name" : "daylight_detector_inverted",
+    "maxDamage" : 0
+  },
+  "544" : {
+    "name" : "music_disc_strad",
+    "maxDamage" : 0
+  },
+  "377" : {
+    "name" : "birch_boat",
+    "maxDamage" : 0
+  },
+  "516" : {
+    "name" : "flower_pot",
+    "maxDamage" : 0
+  },
+  "514" : {
+    "name" : "emerald",
+    "maxDamage" : 0
+  },
+  "278" : {
+    "name" : "spider_eye",
+    "maxDamage" : 0
+  },
+  "517" : {
+    "name" : "empty_map",
+    "maxDamage" : 0
+  },
+  "515" : {
+    "name" : "frame",
+    "maxDamage" : 0
+  },
+  "90" : {
+    "name" : "portal",
+    "maxDamage" : 0
+  },
+  "477" : {
+    "name" : "vex_spawn_egg",
+    "maxDamage" : 0
+  },
+  "179" : {
+    "name" : "red_sandstone",
+    "maxDamage" : 0
+  },
+  "378" : {
+    "name" : "jungle_boat",
+    "maxDamage" : 0
+  },
+  "249" : {
+    "name" : "info_update2",
+    "maxDamage" : 0
+  },
+  "-283" : {
+    "name" : "blackstone_double_slab",
+    "maxDamage" : 0
+  },
+  "91" : {
+    "name" : "lit_pumpkin",
+    "maxDamage" : 0
+  },
+  "577" : {
+    "name" : "crossbow",
+    "maxDamage" : 464
+  },
+  "279" : {
+    "name" : "carrot",
+    "maxDamage" : 0
+  },
+  "478" : {
+    "name" : "zombie_villager_spawn_egg",
+    "maxDamage" : 0
+  },
+  "92" : {
+    "name" : "item.cake",
+    "maxDamage" : 0
+  },
+  "-318" : {
+    "name" : "dirt_with_roots",
+    "maxDamage" : 0
+  },
+  "379" : {
+    "name" : "spruce_boat",
+    "maxDamage" : 0
+  },
+  "574" : {
+    "name" : "scute",
+    "maxDamage" : 0
+  },
+  "172" : {
+    "name" : "hardened_clay",
+    "maxDamage" : 0
+  },
+  "93" : {
+    "name" : "unpowered_repeater",
+    "maxDamage" : 0
+  },
+  "170" : {
+    "name" : "hay_block",
+    "maxDamage" : 0
+  },
+  "573" : {
+    "name" : "heart_of_the_sea",
+    "maxDamage" : 0
+  },
+  "479" : {
+    "name" : "parrot_spawn_egg",
+    "maxDamage" : 0
+  },
+  "142" : {
+    "name" : "potatoes",
+    "maxDamage" : 0
+  },
+  "147" : {
+    "name" : "light_weighted_pressure_plate",
+    "maxDamage" : 0
+  },
+  "-331" : {
+    "name" : "medium_amethyst_bud",
+    "maxDamage" : 0
+  },
+  "-284" : {
+    "name" : "polished_blackstone_brick_slab",
+    "maxDamage" : 0
+  }
+}

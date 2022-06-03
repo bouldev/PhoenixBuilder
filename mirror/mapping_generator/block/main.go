@@ -15,7 +15,7 @@ import (
 //go:embed block_states_1_18_30.nbt
 var blockStateData []byte
 
-//go:embed runtimeIds.json
+//go:embed runtimeIds_2_1_10.json
 var nemcJsonData []byte
 
 type GeneralBlock struct {
