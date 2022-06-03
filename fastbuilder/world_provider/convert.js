@@ -1,5 +1,5 @@
 const fs=require("fs");
-const rids=require("./runtimeIds.json");
+const rids=require("./runtimeIds_2_1_10.json");
 
 let out=`package world_provider
 
@@ -35,7 +35,7 @@ for(let i of rids) {
 	out+=`\tworld.RegisterBlockState("${i[0]}",${i[1]})\n`;
 }
 out+="}\n\n"
-out+="var RuntimeIdArray_117 []*types.ConstBlock = []*types.ConstBlock {\n";
+out+="var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {\n";
 for(let i of rids) {
 	if(i===null) {
 		out+="\tnil,\n";

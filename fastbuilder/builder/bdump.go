@@ -516,6 +516,8 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			}
 			if(poolId[0]==117) {
 				runtimeIdPoolUsing=world_provider.RuntimeIdArray_117
+			}else if(poolId[0]==118) {
+				runtimeIdPoolUsing=world_provider.RuntimeIdArray_2_1_10
 			}else{
 				return fmt.Errorf("This file is using an unknown runtime id pool, we're unable to resolve it.")
 			}

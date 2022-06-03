@@ -15383,7 +15383,7 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("yellow_glazed_terracotta",5)
 }
 
-var RuntimeIdArray_117 []*types.ConstBlock = []*types.ConstBlock {
+var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "acacia_button", Data: 0 },
 	&types.ConstBlock { Name: "acacia_button", Data: 1 },
 	&types.ConstBlock { Name: "acacia_button", Data: 2 },

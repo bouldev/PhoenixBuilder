@@ -122,8 +122,8 @@ func (bdump *BDump) writeHeader(w *bytes.Buffer) error {
 func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 	bdump.formatBlocks()
 	brushPosition:=[]int{0,0,0}
-	// Use block runtime id palette 117.
-	w.Write([]byte{31,117})
+	// Use block runtime id palette 118(2_1_10).
+	w.Write([]byte{31,118})
 	for _,mdl := range bdump.Blocks {
 		for {
 			if(mdl.Point.X!=brushPosition[0]) {
