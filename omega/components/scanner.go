@@ -137,9 +137,9 @@ func (o *Scanner) handleScan(cmds []string) bool {
 					fmt.Sprintf("tp @s %v %v %v", x, 255, z), func(output *packet.CommandOutput) {
 						data_mark := time.Now().Format("2006-01-02-15:04:05")
 						fileName := "扫描日志" + data_mark + ".txt"
+						fileName = o.Frame.GetRelativeFileName(fileName)
 						fp, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
 						o.resultWriter = &simpleFileLineDstWrapper{fp: fp, name: fileName}
-						// o.closeFn = func() { fp.Close() }
 						if err != nil {
 							o.Frame.GetBackendDisplay().Write(pterm.Error.Sprintfln("记录文件打开失败，扫描终止,%v", err))
 						}

@@ -161,9 +161,6 @@ func (o *IntrusionDetectSystem) k32NbtDetect(nbt map[string]interface{}) (has32K
 }
 
 func (o *IntrusionDetectSystem) regexNbtDetect(rtid int32, nbt map[string]interface{}) (has32K bool, reason string) {
-	if rtid < 0 {
-		rtid = -rtid
-	}
 	defer func() {
 		r := recover()
 		if r != nil {
