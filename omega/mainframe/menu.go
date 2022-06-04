@@ -110,6 +110,13 @@ func (m *Menu) popup() {
 func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 	pk := m.mainFrame.GetGameControl().GetPlayerKit(chat.Name)
 	if len(chat.Msg) != 0 {
+		msg := chat.Msg[0]
+		for _, sm := range node.SubMenus {
+			if sm.Trigger == msg {
+				chat.Msg = chat.Msg[1:]
+				return m.popGameMenu(chat, sm.ChildNode)
+			}
+		}
 		pk.Say(m.HintOnUnknownCmd)
 		if !m.OpenMenuOnUnknownCmd {
 			return true
@@ -162,7 +169,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 	}
 	pk.Say(fmt.Sprintf(m.WisperHint))
 	pk.Say(fmt.Sprintf(m.MenuTail))
-	fmt.Println(chat)
+	// fmt.Println(chat)
 	if m.ContinueAsking {
 		if player := m.mainFrame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
 			hint, resolver := utils.GenStringListHintResolverWithIndex(available)
@@ -295,6 +302,7 @@ func (m *Menu) Inject(frame defines.MainFrame) {
 			return true
 		},
 	})
+	botName := ""
 	frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     m.GameTriggers,
@@ -302,6 +310,13 @@ func (m *Menu) Inject(frame defines.MainFrame) {
 			FinalTrigger: true,
 		},
 		OptionalOnTriggerFn: func(chat *defines.GameChat) (stop bool) {
+			if botName == "" {
+				botName = m.mainFrame.GetUQHolder().GetBotName()
+			}
+			// fmt.Println(botName)
+			if botName == chat.Name {
+				return true
+			}
 			return m.popGameMenu(chat, m.menuRootNode)
 		},
 	})
