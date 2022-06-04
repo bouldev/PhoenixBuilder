@@ -14,19 +14,19 @@ import (
 //go:embed item_runtime_ids_2_1_10.json
 var runtimeIDSData []byte
 
-type ItemDescribe struct {
+type ItemDesc struct {
 	ItemName string `json:"name"`
 	Meta     int    `json:"maxDamage"`
 }
 
 func main() {
-	itemsList := map[string]*ItemDescribe{}
+	itemsList := map[string]*ItemDesc{}
 	err := json.Unmarshal(runtimeIDSData, &itemsList)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(len(itemsList))
-	runtimeIDToItemNameMapping := make(map[int32]*ItemDescribe)
+	runtimeIDToItemNameMapping := make(map[int32]*ItemDesc)
 	for iStr, item := range itemsList {
 		if i, err := strconv.Atoi(iStr); err != nil {
 			panic(err)
