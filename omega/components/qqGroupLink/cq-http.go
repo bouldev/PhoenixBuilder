@@ -24,16 +24,18 @@ import (
 
 type QGroupLink struct {
 	Frame                     defines.MainFrame
-	Address                   string           `json:"CQHTTP正向Websocket代理地址"`
-	GameMessageFormat         string           `json:"游戏消息格式化模版"`
-	QQMessageFormat           string           `json:"Q群消息格式化模版"`
-	Groups                    map[string]int64 `json:"链接的Q群"`
-	Selector                  string           `json:"游戏内可以听到QQ消息的玩家的选择器"`
-	NoBotMsg                  bool             `json:"不要转发机器人的消息"`
-	ChatOnly                  bool             `json:"只转发聊天消息"`
-	MuteIgnored               bool             `json:"屏蔽其他群的消息"`
-	FilterQQToServerMsgByHead string           `json:"仅仅转发开头为以下特定字符的消息到服务器"`
-	FilterServerToQQMsgByHead string           `json:"仅仅转发开头为以下特定字符的消息到QQ"`
+	Address                   string            `json:"CQHTTP正向Websocket代理地址"`
+	GameMessageFormat         string            `json:"游戏消息格式化模版"`
+	QQMessageFormat           string            `json:"Q群消息格式化模版"`
+	Groups                    map[string]int64  `json:"链接的Q群"`
+	Selector                  string            `json:"游戏内可以听到QQ消息的玩家的选择器"`
+	NoBotMsg                  bool              `json:"不要转发机器人的消息"`
+	ChatOnly                  bool              `json:"只转发聊天消息"`
+	MuteIgnored               bool              `json:"屏蔽其他群的消息"`
+	FilterQQToServerMsgByHead string            `json:"仅仅转发开头为以下特定字符的消息到服务器"`
+	FilterServerToQQMsgByHead string            `json:"仅仅转发开头为以下特定字符的消息到QQ"`
+	AllowedCmdExecutor        map[int64]bool    `json:"允许这些人透过QQ执行命令"`
+	DenyCmds                  map[string]string `json:"屏蔽这些指令"`
 	upgrader                  *websocket.Upgrader
 	conn                      *websocket.Conn
 	connectLock               chan int
@@ -167,8 +169,38 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 	}
 	msgText = GetRawTextFromCQMessage(msgText)
 	qqUserName := groupMsg.PrivateMessage.Sender.Nickname
+
 	for gname, sourceGid := range cq.Groups {
 		if sourceGid == gid {
+			uid := groupMsg.PrivateMessage.UserId
+			if allowed, hasK := cq.AllowedCmdExecutor[uid]; hasK && allowed && strings.HasPrefix(msgText, "/") {
+				for cmd, resp := range cq.DenyCmds {
+					if strings.Contains(msgText, cmd) {
+						cq.sendQQMessage(resp)
+						return
+					}
+				}
+
+				cq.Frame.GetGameControl().SendCmdAndInvokeOnResponse(msgText, func(output *packet.CommandOutput) {
+					result := ""
+					if output.SuccessCount > 0 {
+						result += "执行成功✓\n---\n"
+					} else {
+						result += "执行失败✗\n---\n"
+					}
+					for _, r := range output.OutputMessages {
+						if r.Success {
+							result += "✓ "
+						} else {
+							result += "✗ "
+						}
+						result += r.Message + " " + fmt.Sprintf("%v", r.Parameters) + "\n"
+					}
+					cq.sendQQMessage(result)
+				})
+
+				return
+			}
 			m := utils.FormatByReplacingOccurrences(cq.QQMessageFormat, map[string]interface{}{
 				"[groupName]":  gname,
 				"[QQUserName]": qqUserName,
@@ -221,6 +253,7 @@ func (cq *QGroupLink) firstInitErr(err error) error {
 }
 
 func (b *QGroupLink) Init(cfg *defines.ComponentConfig) {
+	b.AllowedCmdExecutor = map[int64]bool{}
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, b)
 	if err != nil {

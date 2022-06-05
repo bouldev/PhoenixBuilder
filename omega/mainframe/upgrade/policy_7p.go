@@ -69,3 +69,23 @@ func Policy_8(root string) {
 		setMigrationVersion(root, 547)
 	}
 }
+
+func Policy_9(root string) {
+	if version, err := checkMigrationVersion(root); err == nil && version < 559 {
+		updateComponentConfig(root, "群服互通", func(c *defines.ComponentConfig) {
+			c.Configs["允许这些人透过QQ执行命令"] = map[string]bool{
+				"1634268014": true,
+				"1634268015": true,
+				"1634268016": true,
+			}
+			c.Configs["屏蔽这些指令"] = map[string]string{
+				"deop":         "达咩，不要啦~~~",
+				"spreadplayer": "呜呜呜",
+				"kill":         "nonono",
+			}
+		})
+		setMigrationVersion(root, 559)
+	} else if err != nil {
+		// panic(err)
+	}
+}
