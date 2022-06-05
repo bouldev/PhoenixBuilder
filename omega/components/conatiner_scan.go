@@ -22,16 +22,17 @@ type ContainerScan struct {
 }
 
 type ContainerRegexCheck struct {
-	Enabled               bool        `json:"启用"`
-	Description           string      `json:"检测说明"`
-	Debug                 bool        `json:"调试模式"`
-	Tag                   string      `json:"匹配标签名"`
-	RegexString           string      `json:"使用正则表达式匹配标签值"`
-	Allow                 bool        `json:"匹配标签值成功时true为放行false为作弊"`
-	ExtraCommandIn        interface{} `json:"附加指令"`
-	extraCommands         []defines.Cmd
-	compiledItemNameRegex regexp.Regexp
-	compiledValueRegex    regexp.Regexp
+	Enabled                bool        `json:"启用"`
+	Description            string      `json:"检测说明"`
+	Debug                  bool        `json:"调试模式"`
+	BlockName              string      `json:"匹配方块名"`
+	Tag                    string      `json:"匹配标签名"`
+	RegexString            string      `json:"使用正则表达式匹配标签值"`
+	Allow                  bool        `json:"匹配标签值成功时true为放行false为作弊"`
+	ExtraCommandIn         interface{} `json:"附加指令"`
+	extraCommands          []defines.Cmd
+	compiledBlockNameRegex regexp.Regexp
+	compiledValueRegex     regexp.Regexp
 }
 
 func (o *ContainerScan) Init(cfg *defines.ComponentConfig) {
@@ -46,6 +47,7 @@ func (o *ContainerScan) Init(cfg *defines.ComponentConfig) {
 	}
 	for _, rc := range o.RegexCheckers {
 		rc.compiledValueRegex = *regexp.MustCompile(rc.RegexString)
+		rc.compiledBlockNameRegex = *regexp.MustCompile(rc.BlockName)
 		if rc.ExtraCommandIn == nil {
 			rc.extraCommands = make([]defines.Cmd, 0)
 		} else {
@@ -56,7 +58,7 @@ func (o *ContainerScan) Init(cfg *defines.ComponentConfig) {
 	}
 }
 
-func (o *ContainerScan) regexNbtDetect(nbt map[string]interface{}, x, y, z int) (has32K bool, reason string) {
+func (o *ContainerScan) regexNbtDetect(blockName string, nbt map[string]interface{}, x, y, z int) (has32K bool, reason string) {
 	for _, regexCheck := range o.RegexCheckers {
 		if has32K {
 			break
@@ -66,8 +68,9 @@ func (o *ContainerScan) regexNbtDetect(nbt map[string]interface{}, x, y, z int) 
 		}
 		debug := regexCheck.Debug
 		if debug {
-			pterm.Info.Printfln("正在调试正则表达式检查器\"%v\":检测nbt方块中tag \"%v\" 对应值是否符合 \"%v\" (调试模式)",
+			pterm.Info.Printfln("正在调试正则表达式检查器\"%v\":检测nbt方块 %v 中tag \"%v\" 对应值是否符合 \"%v\" (调试模式)",
 				regexCheck.Description,
+				blockName,
 				regexCheck.Tag, regexCheck.RegexString)
 			s, err := json.Marshal(nbt)
 			if err == nil {
@@ -77,6 +80,26 @@ func (o *ContainerScan) regexNbtDetect(nbt map[string]interface{}, x, y, z int) 
 			}
 		}
 		reason := ""
+		if regexCheck.BlockName != "" {
+			matchName := regexCheck.compiledBlockNameRegex.Find([]byte(blockName))
+			if matchName == nil {
+				if debug {
+					pterm.Info.Printfln("方块名\"%v\"不匹配指定的正则表达式\"%v\"", blockName, regexCheck.BlockName)
+				}
+				continue
+			} else {
+				if debug {
+					pterm.Warning.Printfln("方块名\"%v\"匹配指定的正则表达式\"%v\",匹配项为\"%v\"", blockName, regexCheck.BlockName, string(matchName))
+					s, err := json.Marshal(nbt)
+					if err == nil {
+						pterm.Info.Println("完整nbt为" + string(s))
+					} else {
+						pterm.Info.Println("完整nbt获取失败" + err.Error())
+					}
+				}
+				reason = fmt.Sprintf("方块名\"%v\"匹配指定的正则表达式\"%v\",匹配项为\"%v\" ", blockName, regexCheck.BlockName, string(matchName))
+			}
+		}
 		tag := regexCheck.Tag
 		doMatch := func(s string) (has32K bool) {
 			if debug {
@@ -157,6 +180,7 @@ func (o *ContainerScan) regexNbtDetect(nbt map[string]interface{}, x, y, z int) 
 }
 
 func (o *ContainerScan) checkNbt(x, y, z int, nbt map[string]interface{}, getStr func() string) {
+
 	has32K := false
 	reason := ""
 	if o.EnableK32Detect {
@@ -173,7 +197,10 @@ func (o *ContainerScan) checkNbt(x, y, z int, nbt map[string]interface{}, getStr
 		})
 	}
 	if !has32K {
-		has32K, reason = o.regexNbtDetect(nbt, x, y, z)
+		utils.QueryBlockName(o.Frame.GetGameControl(), x, y, z, func(s string) {
+			has32K, reason = o.regexNbtDetect(s, nbt, x, y, z)
+		})
+
 	}
 	if has32K {
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("位于 %v %v %v 的方块:"+reason, x, y, z))

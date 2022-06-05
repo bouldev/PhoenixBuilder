@@ -33,20 +33,26 @@ func Policy_7(root string) {
 }
 
 func Policy_8(root string) {
+	offNbtBlockCheck := false
+	if version, err := checkMigrationVersion(root); err == nil && version < 547 {
+		offNbtBlockCheck = true
+	}
 	updateComponentConfig(root, "32k方块检测", func(c *defines.ComponentConfig) {
 		if s := c.Configs["使用以下正则表达式检查"]; s != nil {
 			if ts, success := s.([]interface{}); success {
 				for i, te := range ts {
 					if tte, success := te.(map[string]interface{}); success {
-						tte["启用"] = false
+						if offNbtBlockCheck {
+							tte["启用"] = false
+						}
 						if raw, hasK := tte["附加指令"]; hasK {
-							switch tr:=raw.(type){
-								case string:
-									tte["附加指令"] = []interface{}{raw}
-								case []interface{}:
-									if cmd,success:=tr[0].([]interface{});success{
-										tte["附加指令"] = cmd
-									}
+							switch tr := raw.(type) {
+							case string:
+								tte["附加指令"] = []interface{}{raw}
+							case []interface{}:
+								if cmd, success := tr[0].([]interface{}); success {
+									tte["附加指令"] = cmd
+								}
 							}
 						}
 						ts[i] = tte
