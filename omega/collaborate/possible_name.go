@@ -1,6 +1,8 @@
 package collaborate
 
-import "strings"
+import (
+	"strings"
+)
 
 const (
 	INTERFACE_POSSIBLE_NAME = "GET_POSSIBLE_NAME"

@@ -45,22 +45,42 @@ func (o *Express) formatPackage(idx int) string {
 }
 
 func (o *Express) delivery(playerName string) {
-	if pkgs, hasK := o.Record.Packages[playerName]; hasK {
-		if len(pkgs) > 0 {
-			if player := o.Frame.GetGameControl().GetPlayerKit(playerName); player != nil {
-				player.Title("有新快递")
-				player.SubTitle("物品将被放到周围")
-				for _, p := range pkgs {
-					player.Say(p.Name)
-					player.Say(fmt.Sprintf("是 %v 寄给你的", p.Src))
-					cmd := fmt.Sprintf("execute \"%v\" ~~~ structure load %v ~~~ 0_degrees none true false", playerName, p.StructureName)
-					o.Frame.GetBackendDisplay().Write("将 " + p.Name + " 派送到 " + playerName + " " + p.StructureName)
-					o.Frame.GetGameControl().SendCmd(cmd)
+	utils.GetPlayerList(o.Frame.GetGameControl(), "@a[name=\""+playerName+"\"]", func(s []string) {
+		if len(s) == 0 {
+			return
+		}
+		if pkgs, hasK := o.Record.Packages[playerName]; hasK {
+			if len(pkgs) > 0 {
+				if player := o.Frame.GetGameControl().GetPlayerKit(playerName); player != nil {
+					player.Title("有新快递")
+					player.SubTitle("物品将被放到周围")
+					for _, p := range pkgs {
+						player.Say(p.Name)
+						player.Say(fmt.Sprintf("是 %v 寄给你的", p.Src))
+						cmd := fmt.Sprintf("execute \"%v\" ~~~ structure load %v ~~~ 0_degrees none true false", playerName, p.StructureName)
+						o.Frame.GetBackendDisplay().Write("将 " + p.Name + " 派送到 " + playerName + " " + p.StructureName)
+						o.Frame.GetGameControl().SendCmd(cmd)
+					}
+					delete(o.Record.Packages, playerName)
 				}
+			} else {
 				delete(o.Record.Packages, playerName)
 			}
-		} else {
-			delete(o.Record.Packages, playerName)
+		}
+	})
+}
+
+func (o *Express) acquireEmptyNumber() int {
+	names := map[string]bool{}
+	for _, records := range o.Record.Packages {
+		for _, r := range records {
+			names[r.StructureName] = true
+		}
+	}
+	for i := 1; ; i++ {
+		pkgName := o.formatPackage(i)
+		if _, hasK := names[pkgName]; !hasK {
+			return i
 		}
 	}
 }
@@ -75,10 +95,13 @@ func (o *Express) post(srcPlayer, dstPlayer, hint string) {
 			ox, oy, oz := o.PackagePlatform[0], o.PackagePlatform[1], o.PackagePlatform[2]
 			sx, sy, sz := ox-1, oy, oz-1
 			ex, ey, ez := ox+1, oy+1, oz+1
-			packageName := o.formatPackage(o.Record.CurrentIndex)
+			emptyIndex := o.acquireEmptyNumber()
+			packageName := o.formatPackage(emptyIndex)
 			cmd = fmt.Sprintf("structure save %v %v %v %v %v %v %v true disk false",
 				packageName, sx, sy, sz, ex, ey, ez)
-			o.Record.CurrentIndex++
+			if emptyIndex > o.Record.CurrentIndex {
+				o.Record.CurrentIndex = emptyIndex
+			}
 			o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 				if output.SuccessCount != 0 {
 					o.Frame.GetGameControl().SayTo(srcPlayer, "打包成功！将在目标玩家上线时送到")

@@ -23,22 +23,24 @@ import (
 //}
 
 type QGroupLink struct {
-	Frame             defines.MainFrame
-	Address           string           `json:"CQHTTP正向Websocket代理地址"`
-	GameMessageFormat string           `json:"游戏消息格式化模版"`
-	QQMessageFormat   string           `json:"Q群消息格式化模版"`
-	Groups            map[string]int64 `json:"链接的Q群"`
-	Selector          string           `json:"游戏内可以听到QQ消息的玩家的选择器"`
-	NoBotMsg          bool             `json:"不要转发机器人的消息"`
-	ChatOnly          bool             `json:"只转发聊天消息"`
-	MuteIgnored       bool             `json:"屏蔽其他群的消息"`
-	upgrader          *websocket.Upgrader
-	conn              *websocket.Conn
-	connectLock       chan int
-	initLock          chan int
-	inited            bool
-	firstInit         bool
-	sendChan          chan string
+	Frame                     defines.MainFrame
+	Address                   string           `json:"CQHTTP正向Websocket代理地址"`
+	GameMessageFormat         string           `json:"游戏消息格式化模版"`
+	QQMessageFormat           string           `json:"Q群消息格式化模版"`
+	Groups                    map[string]int64 `json:"链接的Q群"`
+	Selector                  string           `json:"游戏内可以听到QQ消息的玩家的选择器"`
+	NoBotMsg                  bool             `json:"不要转发机器人的消息"`
+	ChatOnly                  bool             `json:"只转发聊天消息"`
+	MuteIgnored               bool             `json:"屏蔽其他群的消息"`
+	FilterQQToServerMsgByHead string           `json:"仅仅转发开头为以下特定字符的消息到服务器"`
+	FilterServerToQQMsgByHead string           `json:"仅仅转发开头为以下特定字符的消息到QQ"`
+	upgrader                  *websocket.Upgrader
+	conn                      *websocket.Conn
+	connectLock               chan int
+	initLock                  chan int
+	inited                    bool
+	firstInit                 bool
+	sendChan                  chan string
 }
 
 // receiveRoutine 接收并处理协议端的消息 from QQ
@@ -87,6 +89,11 @@ func (cq *QGroupLink) sendRoutine() {
 	lastSend := ""
 	for {
 		lastSend = <-cq.sendChan
+		if cq.FilterServerToQQMsgByHead != "" {
+			if !strings.HasPrefix(lastSend, cq.FilterServerToQQMsgByHead) {
+				continue
+			}
+		}
 		echo, _ := uuid.NewUUID()
 		for _, gid := range cq.Groups {
 			qmsg := QMessage{
@@ -153,6 +160,11 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 	groupMsg := msg.(GroupMessage)
 	gid := groupMsg.GroupID
 	msgText := groupMsg.Message
+	if cq.FilterQQToServerMsgByHead != "" {
+		if !strings.HasPrefix(msgText, cq.FilterQQToServerMsgByHead) {
+			return
+		}
+	}
 	msgText = GetRawTextFromCQMessage(msgText)
 	qqUserName := groupMsg.PrivateMessage.Sender.Nickname
 	for gname, sourceGid := range cq.Groups {
@@ -190,7 +202,7 @@ func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
 	}
 	msgText := strings.Join(chat.Msg, " ")
 	msg := utils.FormatByReplacingOccurrences(cq.GameMessageFormat, map[string]interface{}{
-		"[player]": "\"" + chat.Name + "\"",
+		"[player]": chat.Name,
 		"[msg]":    msgText,
 	})
 	cq.Frame.GetBackendDisplay().Write("MC->QQ: " + msg)
