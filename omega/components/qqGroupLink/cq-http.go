@@ -91,11 +91,6 @@ func (cq *QGroupLink) sendRoutine() {
 	lastSend := ""
 	for {
 		lastSend = <-cq.sendChan
-		if cq.FilterServerToQQMsgByHead != "" {
-			if !strings.HasPrefix(lastSend, cq.FilterServerToQQMsgByHead) {
-				continue
-			}
-		}
 		echo, _ := uuid.NewUUID()
 		for _, gid := range cq.Groups {
 			qmsg := QMessage{
@@ -162,7 +157,7 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 	groupMsg := msg.(GroupMessage)
 	gid := groupMsg.GroupID
 	msgText := groupMsg.Message
-	if cq.FilterQQToServerMsgByHead != "" {
+	if cq.FilterQQToServerMsgByHead != "" && !strings.HasPrefix(msgText,"/") {
 		if !strings.HasPrefix(msgText, cq.FilterQQToServerMsgByHead) {
 			return
 		}
@@ -184,17 +179,17 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 				cq.Frame.GetGameControl().SendCmdAndInvokeOnResponse(msgText, func(output *packet.CommandOutput) {
 					result := ""
 					if output.SuccessCount > 0 {
-						result += "执行成功✓\n---\n"
+						result += "执行成功✓\n---"
 					} else {
-						result += "执行失败✗\n---\n"
+						result += "执行失败✗\n---"
 					}
 					for _, r := range output.OutputMessages {
 						if r.Success {
-							result += "✓ "
+							result += "\n✓ "
 						} else {
-							result += "✗ "
+							result += "\n✗ "
 						}
-						result += r.Message + " " + fmt.Sprintf("%v", r.Parameters) + "\n"
+						result += r.Message + " " + fmt.Sprintf("%v", r.Parameters)
 					}
 					cq.sendQQMessage(result)
 				})
@@ -233,6 +228,11 @@ func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
 		return false
 	}
 	msgText := strings.Join(chat.Msg, " ")
+	if cq.FilterServerToQQMsgByHead != "" {
+		if !strings.HasPrefix(msgText, cq.FilterServerToQQMsgByHead) {
+			return false
+		}
+	}
 	msg := utils.FormatByReplacingOccurrences(cq.GameMessageFormat, map[string]interface{}{
 		"[player]": chat.Name,
 		"[msg]":    msgText,

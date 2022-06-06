@@ -1,3 +1,4 @@
+[如果你使用 Omega 启动器,请忽略下述说明]
 1. 首先在这个页面下载 CQ-HTTP:
     https://github.com/Mrs4s/go-cqhttp/releases
     如果你不知道如何下载，请点击下面的链接:
@@ -38,3 +39,4 @@
     如果你是Linux用户，可能不知道如何将程序放到后台，请在网上搜索 "screen" 指令的用法，或者 "byobu" 的用法
 
 祝你使用愉快awa
+[如果你使用 Omega 启动器,请忽略上述说明]

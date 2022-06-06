@@ -10,6 +10,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
+	"time"
 
 	"github.com/pterm/pterm"
 )
@@ -162,6 +163,10 @@ func (o *Omega) Stop() error {
 		return fmt.Errorf("关闭系统各部件中，发生了以下错误:\n" + errS)
 	}
 	fmt.Println("Omega 系统已安全退出")
+	go func ()  {
+		<-time.NewTimer(time.Second).C
+		panic("Quit")
+	}()
 	close(o.fullyStopped)
 	return nil
 }
