@@ -657,13 +657,8 @@ func runClient(env *environment.PBEnvironment) {
 				})
 			}
 		case *packet.LevelChunk:
-			if world_provider.ChunkInput != nil {
-				world_provider.ChunkInput <- p
-			} else {
-				if !args.ShouldEnableOmegaSystem() {
-					world_provider.DoCache(p)
-				}
-			}
+			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX,p.ChunkZ},p)
+			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX,p.ChunkZ},p)
 		case *packet.UpdateBlock:
 			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
 			if h {
