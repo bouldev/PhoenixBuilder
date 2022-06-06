@@ -2,21 +2,24 @@ package task
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"phoenixbuilder/dragonfly/server/block/cube"
 	"phoenixbuilder/dragonfly/server/world"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
+	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/parsing"
+	"phoenixbuilder/fastbuilder/task/fetcher"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/fastbuilder/environment"
 	"runtime"
-	"strings"
 	"strconv"
+	"strings"
+
+	"github.com/google/uuid"
+	"github.com/pterm/pterm"
 )
 
 
@@ -43,11 +46,13 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 	}
 	beginPos := cfg.Position
 	endPos := cfg.End
+	startX,endX,startZ,endZ:=0,0,0,0
 	if(endPos.X-beginPos.X<0) {
 		temp:=endPos.X
 		endPos.X=beginPos.X
 		beginPos.X=temp
 	}
+	startX,endX=beginPos.X,endPos.X
 	if(endPos.Y-beginPos.Y<0) {
 		temp:=endPos.Y
 		endPos.Y=beginPos.Y
@@ -58,11 +63,52 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 		endPos.Z=beginPos.Z
 		beginPos.Z=temp
 	}
-	if(world_provider.CurrentWorld!=nil) {
-		cmdsender.Tellraw("EXPORT >> World interaction interface is occupied, failing")
-		return nil
+	startZ,endZ=beginPos.Z,endPos.Z
+	hopPath,requiredChunks:=fetcher.PlanHopSwapPath(startX,startZ,endX,endZ,16)
+	chunkPool:=map[fetcher.ChunkPosDefine]fetcher.ChunkDefine{}
+	memoryCacheFetcher:=fetcher.CreateCacheHitFetcher(requiredChunks,chunkPool)
+	world_provider.GlobalLRUMemoryChunkCacher.Iter(func(pos world_provider.ChunkPosDefine, chunk world_provider.ChunkDefine) (stop bool) {
+		memoryCacheFetcher(fetcher.ChunkPosDefine{int(pos[0])*16,int(pos[1])*16},fetcher.ChunkDefine(chunk))
+		return false
+	})
+	hopPath=fetcher.SimplifyHopPos(hopPath)
+	fmt.Println("Hop Left: ",len(hopPath))
+	teleportFn:=func (x,z int)  {
+		cmd:=fmt.Sprintf("tp @s %v 255 %v",x,z)
+		uuid,_:=uuid.NewUUID()
+		cmdsender.SendCommand(cmd,uuid)
 	}
-	world_provider.NewWorld(env)
+	feedChan:=make(chan *fetcher.ChunkDefineWithPos,1024)
+	deRegFn:=world_provider.GlobalChunkFeeder.RegNewReader(func (pos world_provider.ChunkPosDefine,chunk world_provider.ChunkDefine)  {
+		feedChan<-&fetcher.ChunkDefineWithPos{Chunk: fetcher.ChunkDefine(chunk),Pos:fetcher.ChunkPosDefine{int(pos[0])*16,int(pos[1])*16}}
+	})
+	fmt.Println("Begin Fast Hopping")
+	fetcher.FastHopper(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,0.5,10)
+	fmt.Println("Fast Hopping Done")
+	deRegFn()
+	hopPath=fetcher.SimplifyHopPos(hopPath)
+	fmt.Println("Hop Left: ",len(hopPath))
+	if len(hopPath)>0{
+		fetcher.FixMissing(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,3,20)
+	}
+	hasMissing:=false
+	for _,c:=range requiredChunks{
+		if !c.CachedMark{
+			hasMissing=true
+			pterm.Error.Printfln("Missing Chunk %v",c.Pos)
+		}
+	}
+	if !hasMissing{
+		pterm.Success.Println("all chunks successfully fetched!")
+	}
+	providerChunksMap:=make(map[world_provider.ChunkPosDefine]world_provider.ChunkDefine)
+	for _,chunk:=range chunkPool{
+		providerChunksMap[world_provider.ChunkPosDefine{chunk.ChunkX,chunk.ChunkZ}]=world_provider.ChunkDefine(chunk)
+	}
+	var offlineWorld *world.World
+	offlineWorld=world.New(&world_provider.StubLogger{},32)
+	offlineWorld.Provider(world_provider.NewOfflineWorldProvider(providerChunksMap))
+
 	go func() {
 		defer func() {
 			r:=recover()
@@ -77,7 +123,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 		for x:=beginPos.X; x<=endPos.X; x++ {
 			for z:=beginPos.Z; z<=endPos.Z; z++ {
 				for y:=beginPos.Y; y<=endPos.Y; y++ {
-					blk:=world_provider.CurrentWorld.Block(cube.Pos{x,y,z})
+					blk:=offlineWorld.Block(cube.Pos{x,y,z})
 					runtimeId:=world.LoadRuntimeID(blk)
 					if runtimeId==world_provider.AirRuntimeId {
 						continue
@@ -173,7 +219,6 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 				}
 			}
 		}
-		world_provider.DestroyWorld()
 		blocks=blocks[:counter]
 		runtime.GC()
 		out:=bdump.BDump {
