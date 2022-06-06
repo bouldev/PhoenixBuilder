@@ -7,7 +7,6 @@ import (
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"github.com/google/uuid"
-	"phoenixbuilder/fastbuilder/configuration"
 	"io/ioutil"
 	"strings"
 	"runtime"
@@ -238,7 +237,7 @@ func OpenMenu(env *environment.PBEnvironment) {
 		levelArr=[]string{}
 		isInSelectionType=0
 		if(OPRuntimeId==0) {
-			player:=configuration.RespondUser
+			player:=env.RespondUser
 			lineUUID,_:=uuid.NewUUID()
 			lineChan:=make(chan *packet.CommandOutput)
 			(*env.CommandSender.GetUUIDMap()).Store(lineUUID.String(),lineChan)
@@ -254,7 +253,7 @@ func OpenMenu(env *environment.PBEnvironment) {
 		}
 		curSel:=0
 		for {
-			player:=configuration.RespondUser
+			player:=env.RespondUser
 			dispUUID,_:=uuid.NewUUID()
 			env.CommandSender.SendWSCommand(fmt.Sprintf("execute %s ~ ~ ~ tp %s ~ ~2 ~",player,conn.IdentityData().DisplayName),dispUUID)
 			if(LastOPPitch<(-60)) {

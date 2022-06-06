@@ -22,6 +22,8 @@ char args_no_readline=0;
 char *pack_scripts="";
 char *pack_scripts_out="";
 char enable_omega_system=0;
+char *custom_gamename="";
+char ingame_response=0;
 
 extern void custom_script_engine_const(const char *key, const char *val);
 extern void do_suppress_se_const(const char *key);
@@ -47,6 +49,8 @@ void print_help(const char *self_name) {
 	printf("\t--no-readline: Suppress user input.\n");
 	printf("\t--pack-scripts <manifest path>: Create a script package.\n");
 	printf("\t--pack-scripts-to <path>: Specify the path for the output script package.\n");
+	printf("\t-N, --gamename <name>: Specify the game name to use interactive commands (e.g. get), instead of using the server provided one.\n");
+	printf("\t--ingame-response: Turn on the feature to listen to commands or give output in game.\n");
 	printf("\n");
 	printf("\t-O, --omega_system: Enable Omega System.\n");
 	printf("\n");
@@ -137,11 +141,13 @@ int _parse_args(int argc, char **argv) {
 			{"pack-scripts", required_argument, 0, 0}, //18
 			{"pack-scripts-to", required_argument, 0, 0}, //19
 			{"capture", required_argument, 0, 0}, // 20
-			{"omega_system", no_argument, 0, 'O'}, //21
+			{"omega_system", no_argument, 0, 'O'}, // 21
+			{"gamename", required_argument, 0, 'N'}, // 22
+			{"ingame-response", no_argument, 0, 0}, // 23
 			{0, 0, 0, 0}
 		};
 		int option_index;
-		int c=getopt_long(argc,argv,"hA:MvS:c:p:t:T:O", opts, &option_index);
+		int c=getopt_long(argc,argv,"hA:MvS:c:p:t:T:ON:", opts, &option_index);
 		if(c==-1)
 			break;
 		switch(c) {
@@ -203,6 +209,9 @@ int _parse_args(int argc, char **argv) {
 			case 20:
 				quickcopy(&capture_output_file);
 				break;
+			case 23:
+				ingame_response=1;
+				break;
 			};
 			break;
 		case 'h':
@@ -246,8 +255,11 @@ int _parse_args(int argc, char **argv) {
 			print_version(1);
 			return 0;
 		case 'O':
-		    enable_omega_system=1;
-		    break;
+			enable_omega_system=1;
+			break;
+		case 'N':
+			quickcopy(&custom_gamename);
+			break;
 		default:
 			print_help(argv[0]);
 			return 1;

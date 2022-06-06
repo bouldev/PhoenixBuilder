@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/fastbuilder/args"
 	"time"
 	//"github.com/google/uuid"
 	"encoding/json"
@@ -36,7 +37,9 @@ func TellRawRequest(target types.Target, lines ...string) string {
 func (sender *CommandSender) Tellraw(content string) error {
 	//uuid1, _ := uuid.NewUUID()
 	bridge_fmt.Printf("%s\n", content)
-	return nil
+	if(!args.InGameResponse()) {
+		return nil
+	}
 	msg := strings.Replace(content, "schematic", "sc***atic", -1)
 	msg =  strings.Replace(msg, ".", "．", -1)
 	// Netease set .bdx, .schematic, .mcacblock, etc as blocked words

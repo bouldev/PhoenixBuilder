@@ -33,8 +33,10 @@ extern char *capture_output_file;
 extern char args_no_readline;
 extern char *pack_scripts;
 extern char *pack_scripts_out;
+extern char *custom_gamename;
 
 extern char enable_omega_system;
+extern char ingame_response;
 */
 import "C"
 
@@ -199,4 +201,12 @@ func PackScripts() string {
 
 func PackScriptsOut() string {
 	return C.GoString(C.pack_scripts_out)
+}
+
+func GetCustomGameName() string {
+	return C.GoString(C.custom_gamename)
+}
+
+func InGameResponse() bool {
+	return boolify(C.ingame_response)
 }

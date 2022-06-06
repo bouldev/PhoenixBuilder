@@ -179,21 +179,21 @@ func InitInternalFunctions(fh *FunctionHolder) {
 				ArgumentTypes: []byte{},
 				Content: func(env *environment.PBEnvironment,_ []interface{}) {
 					env.CommandSender.SendSizukanaCommand("gamerule sendcommandfeedback true")
-					env.CommandSender.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId)
+					env.CommandSender.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",env.RespondUser),configuration.ZeroId)
 				},
 			},
 			"begin": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment,_ []interface{}) {
 					env.CommandSender.SendSizukanaCommand("gamerule sendcommandfeedback true")
-					env.CommandSender.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.ZeroId)
+					env.CommandSender.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",env.RespondUser),configuration.ZeroId)
 				},
 			},
 			"end": &FunctionChainItem {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment,_ []interface{}) {
 					env.CommandSender.SendSizukanaCommand("gamerule sendcommandfeedback true")
-					env.CommandSender.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",configuration.RespondUser),configuration.OneId)
+					env.CommandSender.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",env.RespondUser),configuration.OneId)
 				},
 			},
 		},
