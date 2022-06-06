@@ -127,10 +127,11 @@ func (o *Ranking) onTrigger(chat *defines.GameChat) (stop bool) {
 
 func (o *Ranking) update() {
 	if players, hasK := rankingLastFetchResult[o.ScoreboardName]; !hasK {
-		pterm.Error.Println("没有计分板 %v,所有的计分板为", o.ScoreboardName)
+		pterm.Error.Printfln("没有计分板 %v,所有的计分板被列在下方,如果有计分板但还是出现这个错误，可能是因为没有一个玩家在这个计分板上有分数\n如果你不需要排行榜功能，可以去 配置/组件-排行榜.json 禁用这个功能以摆脱这个错误", o.ScoreboardName)
 		for n, _ := range rankingLastFetchResult {
 			pterm.Error.Println(n)
 		}
+		o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players add @s %v 0",o.ScoreboardName))
 	} else {
 		needSort := false
 		needRankUpdate := false
