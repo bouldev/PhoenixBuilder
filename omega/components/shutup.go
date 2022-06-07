@@ -3,6 +3,7 @@ package components
 import (
 	"encoding/json"
 	"fmt"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"sync"
@@ -45,7 +46,7 @@ func (o *ShutUp) counter(c *defines.GameChat) bool {
 	if c.Name == o.Frame.GetUQHolder().GetBotName() {
 		return false
 	}
-	if c.Name == "外部" {
+	if c.Name == "外部" || c.Name == "" || c.Type == packet.TextTypeObject || c.Type == packet.TextTypeAnnouncement {
 		return false
 	}
 	o.mu.Lock()

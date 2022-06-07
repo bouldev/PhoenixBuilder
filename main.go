@@ -340,6 +340,7 @@ func runClient(env *environment.PBEnvironment) {
 	})
 	env.Connection = conn
 	env.UQHolder = uqHolder.NewUQHolder(conn.GameData().EntityRuntimeID)
+	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = uint64(time.Now().Sub(conn.GameData().ConnectTime).Milliseconds()) / 50
 
 	if args.ShouldEnableOmegaSystem() {

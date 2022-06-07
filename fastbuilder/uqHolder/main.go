@@ -36,7 +36,7 @@ type Player struct {
 	Entity          *Entity
 	// PlayerUniqueID is a unique identifier of the player. It appears it is not required to fill this field
 	// out with a correct value. Simply writing 0 seems to work.
-	PlayerUniqueID int64
+	// PlayerUniqueID int64
 }
 
 type PosRepresent struct {
@@ -257,18 +257,6 @@ func (uq *UQHolder) GetPlayersByUUID(ud uuid.UUID) *Player {
 	}
 }
 
-//func (uq *UQHolder) UpdateFromConn(conn *minecraft.Conn) {
-//	gd := conn.GameData()
-//	uq.BotUniqueID = gd.EntityUniqueID
-//	uq.ConnectTime = gd.ConnectTime
-//	uq.WorldName = gd.WorldName
-//	uq.WorldGameMode = gd.WorldGameMode
-//	uq.WorldDifficulty = uint32(gd.Difficulty)
-//	uq.OnConnectWoldSpawnPosition = gd.WorldSpawn
-//	cd := conn.ClientData()
-//	uq.BotRandomID = cd.ClientRandomID
-//}
-
 func GetStringContents(s string) []string {
 	_s := strings.Split(s, " ")
 	for i, c := range _s {
@@ -423,7 +411,6 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		player.ActionPermissions = p.ActionPermissions
 		player.OPPermissionLevel = p.PermissionLevel
 		player.CustomStoredPermissions = p.CustomStoredPermissions
-		player.PlayerUniqueID = p.PlayerUniqueID
 
 	case *packet.MobEquipment:
 		entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)

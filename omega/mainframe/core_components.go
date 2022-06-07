@@ -352,7 +352,11 @@ func (o *KeepAlive) Inject(frame defines.MainFrame) {
 	o.mainFrame = frame
 	o.mainFrame.GetGameListener().SetGameChatInterceptor(func(chat *defines.GameChat) (stop bool) {
 		o.replay = true
-		if len(chat.Msg) > 0 && chat.Msg[0] == "alive" {
+		// if len(chat.Msg) > 0 && chat.Msg[0] == "alive" {
+
+		// }
+		if chat.Name == o.mainFrame.GetUQHolder().GetBotName() {
+			// fmt.Println("popOut")
 			return true
 		}
 		return false
