@@ -89,3 +89,14 @@ func Policy_9(root string) {
 		// panic(err)
 	}
 }
+
+func Policy_10(root string) {
+	if version, err := checkMigrationVersion(root); err == nil && version < 575 {
+		updateComponentConfig(root, "每日签到", func(c *defines.ComponentConfig) {
+			c.Configs["玩家登录延迟"] = 20
+			c.Configs["提醒玩家签到的消息"] = "@[player] 今日还未签到，记得签到喔"
+			c.Configs["为true时被动签到false时主动签到"] = false
+		})
+		setMigrationVersion(root, 575)
+	}
+}

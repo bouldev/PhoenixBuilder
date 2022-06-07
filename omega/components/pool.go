@@ -139,8 +139,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"排行榜": func() defines.Component {
 			return &Ranking{BasicComponent: &BasicComponent{}}
 		},
-		// "每日签到": func() defines.Component {
-		// 	return &DailyAttendance{BasicComponent: &BasicComponent{}}
-		// },
+		"每日签到": func() defines.Component {
+			return &DailyAttendance{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
