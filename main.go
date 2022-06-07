@@ -288,13 +288,13 @@ func runClient(env *environment.PBEnvironment) {
 			panic(err)
 		}
 		conn = cconn
-		if(args.GetCustomGameName()=="") {
+		if args.GetCustomGameName() == "" {
 			go func() {
 				user := fbauthclient.ShouldRespondUser()
 				env.RespondUser = user
 			}()
-		}else{
-			env.RespondUser=args.GetCustomGameName();
+		} else {
+			env.RespondUser = args.GetCustomGameName()
 		}
 		env.WorldChatChannel = make(chan []string)
 	}
@@ -395,6 +395,12 @@ func runClient(env *environment.PBEnvironment) {
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
 	var captureFp *os.File
+	defer func() {
+		if captureFp != nil {
+			captureFp.Close()
+			fmt.Println("Capture Closed")
+		}
+	}()
 	if captureOutputFileName := args.CaptureOutputFile(); captureOutputFileName != "" {
 		if fp, err := os.OpenFile(captureOutputFileName, os.O_CREATE|os.O_WRONLY, 0755); err != nil {
 			panic(err)
@@ -612,8 +618,8 @@ func runClient(env *environment.PBEnvironment) {
 			break
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
-				if(args.InGameResponse()) {
-					if(p.SourceName==env.RespondUser) {
+				if args.InGameResponse() {
+					if p.SourceName == env.RespondUser {
 						functionHolder.Process(p.Message)
 					}
 				}
@@ -663,8 +669,8 @@ func runClient(env *environment.PBEnvironment) {
 				})
 			}
 		case *packet.LevelChunk:
-			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX,p.ChunkZ},p)
-			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX,p.ChunkZ},p)
+			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
+			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
 		case *packet.UpdateBlock:
 			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
 			if h {
