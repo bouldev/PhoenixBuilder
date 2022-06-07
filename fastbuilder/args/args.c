@@ -8,7 +8,7 @@ char args_disableHashCheck=0;
 char replaced_auth_server=0;
 char *newAuthServer;
 char args_muteWorldChat=0;
-char args_noPyRpc=0;
+char args_noPyRpc=1;
 char use_startup_script=0;
 char *startup_script;
 char specified_server=0;
@@ -34,7 +34,7 @@ void print_help(const char *self_name) {
 	printf("\t-A <url>, --auth-server=<url>: Use the specified authentication server, instead of the default one.\n");
 	printf("\t--no-update-check: Suppress update notifications.\n");
 	printf("\t-M, --no-world-chat: Ignore world chat on client side.\n");
-	printf("\t--no-pyrpc: Disable the PyRpcPacket interaction, the client's commands will be prevented from execution by netease's rental server.\n");
+	printf("\t--with-pyrpc: Enable the PyRpcPacket interaction, client will be kicked automatically by netease's rental server.\n");
 #ifdef WITH_V8
 	printf("\t-S, --script=<*.js>: run a .js script at start\n");
 	printf("\t--script-engine-const key=value: Define a const value for script engine's \"consts\" const. Can be used to replace the default value. Specify multiple items by using this argument for multiple times.\n");
@@ -125,7 +125,7 @@ int _parse_args(int argc, char **argv) {
 			{"auth-server", required_argument, 0, 'A'}, //2
 			{"no-update-check", no_argument, 0, 0}, //3
 			{"no-world-chat", no_argument, 0, 'M'}, //4
-			{"no-pyrpc", no_argument, 0, 0}, //5
+			{"with-pyrpc", no_argument, 0, 0}, //5
 			{"no-nbt", no_argument, 0, 0}, //6
 			{"script", required_argument, 0, 'S'}, //7
 			{"version", no_argument, 0, 'v'}, //8
@@ -160,7 +160,7 @@ int _parse_args(int argc, char **argv) {
 				args_disableHashCheck=1;
 				break;
 			case 5:
-				args_noPyRpc=1;
+				args_noPyRpc=0;
 				break;
 			case 6:
 				fprintf(stderr, "--no-nbt option is no longer available.\n");
