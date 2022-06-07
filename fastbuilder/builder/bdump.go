@@ -167,7 +167,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				return fmt.Errorf("Failed to get argument for cmd[pos5], file may be corrupted")
 			}
 			if int(blockId) >= len(blocksStrPool) {
-				bridge_fmt.Printf("WARNING: Invalid command")
+				bridge_fmt.Printf("WARNING: BlockID exceeded BlockPool\n")
 				continue
 			}
 			blockData := binary.BigEndian.Uint16(rdst)

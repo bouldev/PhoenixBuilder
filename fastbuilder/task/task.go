@@ -207,7 +207,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				bridge_fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n",skipBlocks)
 			}
 			for _, blk := range blocks {
-				if task.AsyncInfo.Built>skipBlocks{
+				if task.AsyncInfo.Built>=skipBlocks{
 					blockschannel <- blk
 				}
 				task.AsyncInfo.Built++
