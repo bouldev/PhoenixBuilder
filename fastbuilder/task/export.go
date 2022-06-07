@@ -74,22 +74,25 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 	hopPath=fetcher.SimplifyHopPos(hopPath)
 	fmt.Println("Hop Left: ",len(hopPath))
 	teleportFn:=func (x,z int)  {
-		cmd:=fmt.Sprintf("tp @s %v 255 %v",x,z)
-		uuid,_:=uuid.NewUUID()
-		cmdsender.SendCommand(cmd,uuid)
+		cmd:=fmt.Sprintf("tp @s %v 128 %v",x,z)
+		uid,_:=uuid.NewUUID()
+		cmdsender.SendCommand(cmd,uid)
+		cmd=fmt.Sprintf("execute @s ~~~ spreadplayers ~ ~ 3 4 @s")
+		uid,_=uuid.NewUUID()
+		cmdsender.SendCommand(cmd,uid)
 	}
 	feedChan:=make(chan *fetcher.ChunkDefineWithPos,1024)
 	deRegFn:=world_provider.GlobalChunkFeeder.RegNewReader(func (pos world_provider.ChunkPosDefine,chunk world_provider.ChunkDefine)  {
 		feedChan<-&fetcher.ChunkDefineWithPos{Chunk: fetcher.ChunkDefine(chunk),Pos:fetcher.ChunkPosDefine{int(pos[0])*16,int(pos[1])*16}}
 	})
 	fmt.Println("Begin Fast Hopping")
-	fetcher.FastHopper(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,0.5,10)
+	fetcher.FastHopper(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,0.5,3)
 	fmt.Println("Fast Hopping Done")
 	deRegFn()
 	hopPath=fetcher.SimplifyHopPos(hopPath)
 	fmt.Println("Hop Left: ",len(hopPath))
 	if len(hopPath)>0{
-		fetcher.FixMissing(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,3,20)
+		fetcher.FixMissing(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,2,3)
 	}
 	hasMissing:=false
 	for _,c:=range requiredChunks{
