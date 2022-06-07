@@ -108,6 +108,12 @@ func (m *Menu) popup() {
 }
 
 func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
+	// pterm.Error.Println(m.mainFrame.GetUQHolder().GetBotName())
+	// pterm.Error.Println(chat.Name)
+	// if chat.Name == m.mainFrame.GetUQHolder().GetBotName() {
+	// 	fmt.Println("Ignore Bot Req")
+	// 	return true
+	// }
 	pk := m.mainFrame.GetGameControl().GetPlayerKit(chat.Name)
 	if len(chat.Msg) != 0 {
 		msg := chat.Msg[0]

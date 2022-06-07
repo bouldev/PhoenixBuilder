@@ -70,7 +70,7 @@ func (o *TimeSync) calibrateTime() {
 	nowTime := time.Now()
 	nowTime = nowTime.Add(time.Duration(o.TimeOffset) * time.Second)
 	year := nowTime.Year()
-	month := nowTime.Month()
+	month := int(nowTime.Month())
 	day := nowTime.Day()
 	h24 := nowTime.Hour()
 	h12 := h24 % 12
@@ -85,6 +85,8 @@ func (o *TimeSync) calibrateTime() {
 		"[min]":   min,
 		"[sec]":   sec,
 	}
+	// fmt.Println("timeSync")
+	// fmt.Println(replacement)
 	for _, t := range o.Cmds {
 		rc := utils.FormatByReplacingOccurrences(t, replacement)
 		//fmt.Println(rc)
@@ -107,7 +109,7 @@ func (o *TimeSync) Activate() {
 		}()
 	}
 	if o.ScoreboardCalibrateConfig.Enable {
-		t := time.NewTicker(time.Duration(o.GameTimeSyncConfig.SyncDuration) * time.Second)
+		t := time.NewTicker(time.Duration(o.ScoreboardCalibrateConfig.SyncDuration) * time.Second)
 		go func() {
 			for {
 				o.calibrateTime()

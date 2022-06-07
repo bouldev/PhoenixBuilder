@@ -8,6 +8,7 @@ import (
 	"phoenixbuilder/omega/mainframe/upgrade"
 	"phoenixbuilder/omega/utils"
 	"strings"
+	"time"
 
 	"github.com/pterm/pterm"
 )
@@ -131,7 +132,7 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	o.backendLogger = &BackEndLogger{
 		loggers: []defines.LineDst{
 			o.GetLogger("后台信息.log"),
-			utils.NewIONormalLogger(os.Stdout),
+			utils.NewIOColorTranslateLogger(os.Stdout),
 		},
 	}
 	o.redAlertLogger = &BackEndLogger{
@@ -143,6 +144,8 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 			}},
 		},
 	}
+	timeLocal := time.FixedZone("CST", 3600*8)
+	time.Local = timeLocal
 	o.backendLogger.Write("日志系统已可用,正在激活主框架...")
 	o.backendLogger.Write("加载组件中...")
 	o.Reactor.onBootstrap()

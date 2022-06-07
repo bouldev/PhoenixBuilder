@@ -115,27 +115,20 @@ func (o *Schedule) TryOffset(offset time.Duration) (time.Duration, bool) {
 		"[min]":   fmt.Sprintf("%02d", min),
 		"[sec]":   fmt.Sprintf("%02d", sec),
 	}
+	// fmt.Println(replacement)
+	// fmt.Println(o.StartTimeInReal)
 	markedTime := utils.FormatByReplacingOccurrences(o.StartTimeInReal, replacement)
 	// fmt.Println(markedTime)
-	if timeZone, err := time.LoadLocation("Asia/Shanghai"); err == nil {
-		if baseT, err := time.ParseInLocation("2006-01-02 15:04:05", markedTime, timeZone); err != nil {
-			panic(fmt.Sprintf("第一次启动的现实时间 %v 格式不正确，\n"+
-				"应该类似 [year]-[month]-[day] [h24]:04:05   (在最近一小时的 4分5秒第一次启动)\n"+
-				"或者类似 [year]-[month]-[day] 00:04:05 (在最近一天的 凌晨4分5秒第一次启动),%v\n", o.StartTimeInReal, err))
-		} else {
-			if baseT.After(nt) {
-				return baseT.Sub(nt), true
-			}
-		}
+	// fmt.Println(markedTime)
+	// fmt.Println("------")
+	if baseT, err := time.Parse("2006-01-02 15:04:05 -0700 MST", markedTime+" +0800 CST"); err != nil {
+		panic(fmt.Sprintf("第一次启动的现实时间 %v 格式不正确，\n"+
+			"应该类似 [year]-[month]-[day] [h24]:04:05   (在最近一小时的 4分5秒第一次启动)\n"+
+			"或者类似 [year]-[month]-[day] 00:04:05 (在最近一天的 凌晨4分5秒第一次启动),%v\n", o.StartTimeInReal, err))
 	} else {
-		if baseT, err := time.Parse("2006-01-02 15:04:05", markedTime); err != nil {
-			panic(fmt.Sprintf("第一次启动的现实时间 %v 格式不正确，\n"+
-				"应该类似 [year]-[month]-[day] [h24]:04:05   (在最近一小时的 4分5秒第一次启动)\n"+
-				"或者类似 [year]-[month]-[day] 00:04:05 (在最近一天的 凌晨4分5秒第一次启动),%v\n", o.StartTimeInReal, err))
-		} else {
-			if baseT.After(nt) {
-				return baseT.Sub(nt), true
-			}
+		baseT := baseT.Local()
+		if baseT.After(time.Now()) {
+			return baseT.Sub(time.Now()), true
 		}
 	}
 
@@ -182,6 +175,7 @@ func (o *Schedule) Activate() {
 	if o.StartTimeInReal != "" {
 		go func() {
 			d := o.GetRealStartTime()
+			// fmt.Println(d)
 			startTimeStr := time.Now().Add(d).Format("2006-01-02 15:04:05")
 			o.Frame.GetBackendDisplay().Write(pterm.Info.Sprintf(
 				"计划任务 %v 将于 %d 秒后 (%v) 第一次执行，随后每隔 %v 秒执行一次",
