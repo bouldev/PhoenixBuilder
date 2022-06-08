@@ -1,8 +1,14 @@
 package mainframe
 
 import (
+	"archive/zip"
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
+	"path"
 	"phoenixbuilder/omega/components"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/mainframe/upgrade"
@@ -12,6 +18,209 @@ import (
 
 	"github.com/pterm/pterm"
 )
+
+func CompressLog(srcFile string, dstFile string, zipWriter *zip.Writer, startThres time.Time, stopThres time.Time) (lineCompressed, lineRetained int, err error) {
+	const TIME_LAYOUT = "2006/01/02"
+	// first, determine whether the file need to be compressed
+	var info os.FileInfo
+	var reader *bufio.Reader
+	var currentLine []byte
+	var zipFileWriter io.Writer
+	var fp *os.File
+	defer func() {
+		if fp != nil {
+			fp.Close()
+		}
+	}()
+	// get file info
+	{
+		info, err = os.Stat(srcFile)
+		if err != nil {
+			return
+		}
+		fp, err = os.OpenFile(srcFile, os.O_RDONLY, 0755)
+		if err != nil {
+			return
+		}
+		reader = bufio.NewReader(fp)
+	}
+	// get log start time
+	{
+		firstLine, err := reader.ReadBytes('\n')
+		if err != nil {
+			return 0, 0, nil
+		}
+		currentLine = firstLine
+
+		if len(firstLine) < 10 || firstLine[4] != '/' || firstLine[7] != '/' {
+			return 0, 0, nil
+		}
+		possibleDataInfo := firstLine[:10]
+		startTime, err := time.Parse(TIME_LAYOUT, string(possibleDataInfo))
+		if err != nil {
+			return 0, 0, nil
+		}
+		if startTime.After(startThres) {
+			return 0, 0, nil
+		}
+	}
+	// create zip file entry in zip
+	{
+		var header *zip.FileHeader
+		header, err = zip.FileInfoHeader(info)
+		if err != nil {
+			return
+		}
+		header.Name = srcFile
+		header.Name = strings.ReplaceAll(header.Name, "\\", "/")
+		header.Method = zip.Deflate
+		zipFileWriter, err = zipWriter.CreateHeader(header)
+	}
+	// zip file
+	{
+		fmt.Printf("正在压缩日志文件: %v\n", srcFile)
+		fastDeterminCache := []byte{}
+		lineCompressed++
+		zipFileWriter.Write(currentLine)
+		for {
+			currentLine, err = reader.ReadBytes('\n')
+			if err != nil {
+				return lineCompressed, lineRetained, nil
+			}
+			if len(currentLine) >= 10 && currentLine[4] == '/' && currentLine[7] == '/' {
+				possibleDataInfo := currentLine[:10]
+				if bytes.Equal(fastDeterminCache, possibleDataInfo) {
+					lineCompressed++
+					zipFileWriter.Write(currentLine)
+				} else {
+					startTime, err := time.Parse(TIME_LAYOUT, string(possibleDataInfo))
+					if err != nil {
+						lineCompressed++
+						zipFileWriter.Write(currentLine)
+					}
+					if startTime.After(startThres) {
+						break
+					} else {
+						fastDeterminCache = possibleDataInfo
+						lineCompressed++
+						zipFileWriter.Write(currentLine)
+					}
+				}
+			} else {
+				lineCompressed++
+				zipFileWriter.Write(currentLine)
+			}
+		}
+		{
+			var dstFp *os.File
+			if dstFp, err = os.OpenFile(dstFile, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0755); err != nil {
+				return
+			}
+			lineRetained++
+			dstFp.Write(currentLine)
+			for {
+				currentLine, err = reader.ReadBytes('\n')
+				if err != nil {
+					dstFp.Close()
+					return lineCompressed, lineRetained, nil
+				}
+				lineRetained++
+				dstFp.Write(currentLine)
+			}
+
+		}
+	}
+}
+
+func CompressLogs(root string, startThres, endThres int) error {
+	totalCompressed := 0
+	totalRetained := 0
+	var zipWriter *zip.Writer
+	workDir := path.Join(root, "日志压缩临时目录")
+	logRoot := path.Join(root, "logs")
+	zipDir := path.Join(root, "日志压缩")
+	if _, err := os.Stat(logRoot); err != nil {
+		return nil
+	}
+	os.RemoveAll(workDir)
+	os.MkdirAll(workDir, 0755)
+	defer func() {
+		os.RemoveAll(workDir)
+	}()
+
+	today := time.Now().Truncate(24 * time.Hour)
+	fp, err := os.OpenFile(path.Join(workDir, "压缩中.zip.tmp"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	zipWriter = zip.NewWriter(fp)
+
+	fileInfos, err := ioutil.ReadDir(logRoot)
+	if err != nil {
+		return err
+	}
+	filesToMove := []string{}
+	srcFileToRemove := []string{}
+	var origSize int64
+	for _, info := range fileInfos {
+		if info.IsDir() {
+			continue
+		} else {
+			fileName := info.Name()
+			if strings.HasSuffix(fileName, ".log") {
+				if lineCompressed, lineRetained, err := CompressLog(
+					path.Join(logRoot, fileName), path.Join(workDir, fileName),
+					zipWriter, today.AddDate(0, 0, -startThres), today.AddDate(0, 0, -endThres)); err != nil {
+					fmt.Println(err)
+				} else {
+					if lineCompressed != 0 || lineRetained != 0 {
+						totalCompressed += lineCompressed
+						totalRetained += lineRetained
+						if lineRetained > 0 {
+							filesToMove = append(filesToMove, fileName)
+						} else {
+							srcFileToRemove = append(srcFileToRemove, fileName)
+						}
+						origSize += info.Size()
+					}
+				}
+			}
+		}
+	}
+	zipWriter.Close()
+
+	if totalCompressed == 0 {
+		return nil
+	}
+	fileInfos, err = ioutil.ReadDir(workDir)
+	if err != nil {
+		return err
+	}
+	compressedSize := int64(0)
+	for _, info := range fileInfos {
+		compressedSize += info.Size()
+	}
+	origSizef := float32(origSize) / 1024 / 1024
+	compressedSizef := float32(compressedSize) / 1024 / 1024
+	os.MkdirAll(zipDir, 0755)
+	if err := os.Rename(path.Join(workDir, "压缩中.zip.tmp"), path.Join(zipDir, "截止到"+today.AddDate(0, 0, -endThres).Format("2006_01_02")+"的日志.zip")); err != nil {
+		return err
+	}
+	for _, fileName := range filesToMove {
+		if err := os.Rename(path.Join(workDir, fileName), path.Join(logRoot, fileName)); err != nil {
+			return err
+		}
+	}
+	for _, fileName := range srcFileToRemove {
+		os.Remove(path.Join(logRoot, fileName))
+	}
+	if totalCompressed > 0 {
+		pterm.Success.Printf("共计压缩 %v 行日志(超出%v天的日志), 保留 %v 行日志(%v天内的日志) \n原始文件大小 %.1f MB 压缩后日志总大小 %.1f MB, 节约空间 %.1f MB, 比率 %.1f%%\n",
+			totalCompressed, endThres, totalRetained, endThres, origSizef, compressedSizef, origSizef-compressedSizef, compressedSizef*100/origSizef)
+	}
+
+	return nil
+}
 
 func (o *Omega) bootstrapDirs() {
 	o.storageRoot = "omega_storage"
@@ -129,6 +338,8 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	o.bootstrapDirs()
 	o.adaptor = adaptor
 	o.uqHolder = adaptor.GetInitUQHolderCopy()
+	fmt.Println("开始空间回收任务: 日志压缩")
+	CompressLogs(o.storageRoot, 14, 7)
 	o.backendLogger = &BackEndLogger{
 		loggers: []defines.LineDst{
 			o.GetLogger("后台信息.log"),
