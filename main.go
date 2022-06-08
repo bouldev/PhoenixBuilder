@@ -670,6 +670,9 @@ func runClient(env *environment.PBEnvironment) {
 				})
 			}
 		case *packet.LevelChunk:
+			if args.ShouldEnableOmegaSystem() {
+				world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
+			}
 			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
 			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
 		case *packet.UpdateBlock:

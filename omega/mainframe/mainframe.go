@@ -229,6 +229,16 @@ func GetMemUsageByMB() uint64 {
 	return m.Sys / 1024 / 1024
 }
 
+func GetMemUsageByMBInDetailedString() string {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	toMB := func(v uint64) float32 {
+		return float32(v) / 1024 / 1024
+	}
+	memUsage := toMB(m.HeapIdle - m.HeapReleased + m.StackSys)
+	return fmt.Sprintf("系统分配[包括备用]内存 %.1f MB, 实际使用内存 %.1f MB(=[空闲堆]%.1fMB - [释放堆]%.1fMB + [分配栈]%.1fMB)", toMB(m.Sys), memUsage, toMB(m.HeapIdle), toMB(m.HeapReleased), toMB(m.StackSys))
+}
+
 func (o *Omega) Activate() {
 	defer func(o *Omega) {
 		err := o.Stop()
@@ -271,7 +281,7 @@ func (o *Omega) Activate() {
 		if o.OmegaConfig.ShowMemUsagePeriod != 0 {
 			go func() {
 				for {
-					pterm.Info.Printfln("内存使用: %v MB", GetMemUsageByMB())
+					pterm.Info.Printfln("[内存] %v", GetMemUsageByMBInDetailedString())
 					<-time.NewTimer(time.Duration(o.OmegaConfig.ShowMemUsagePeriod) * time.Second).C
 				}
 			}()
@@ -279,7 +289,7 @@ func (o *Omega) Activate() {
 		for {
 			usage = GetMemUsageByMB()
 			if usage > uint64(o.OmegaConfig.MemLimit) {
-				hint := fmt.Sprintf("内存使用 %v MB 超出上限 %v MB, 为保证数据安全，Omega 将立刻保存数据并重启以释放内存", usage, o.OmegaConfig.MemLimit)
+				hint := fmt.Sprintf("系统分配内存 %v MB 超出安全上限 %v MB, 为保证数据安全，Omega 将立刻保存数据并重启以释放内存(您可以在 配置/主系统中调整)", usage, o.OmegaConfig.MemLimit)
 				pterm.Warning.Println(hint)
 				o.Stop()
 				panic(hint)
