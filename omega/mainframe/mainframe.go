@@ -10,6 +10,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
+	"runtime"
 	"time"
 
 	"github.com/pterm/pterm"
@@ -163,10 +164,6 @@ func (o *Omega) Stop() error {
 		return fmt.Errorf("关闭系统各部件中，发生了以下错误:\n" + errS)
 	}
 	fmt.Println("Omega 系统已安全退出")
-	go func ()  {
-		<-time.NewTimer(time.Second).C
-		panic("Quit")
-	}()
 	close(o.fullyStopped)
 	return nil
 }
@@ -226,6 +223,12 @@ func (o *Omega) RegOnAlertHandler(cb func(info string)) {
 	o.redAlertHandlers = append(o.redAlertHandlers, cb)
 }
 
+func GetMemUsageByMB() uint64 {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	return m.Sys / 1024 / 1024
+}
+
 func (o *Omega) Activate() {
 	defer func(o *Omega) {
 		err := o.Stop()
@@ -241,7 +244,7 @@ func (o *Omega) Activate() {
 			}
 			//fmt.Println(pkt)
 			if o.closed {
-				o.backendLogger.Write(pterm.Warning.Sprintln("Game Packet Feeder & Reactor & UQHoder 已退出"))
+				// o.backendLogger.Write(pterm.Warning.Sprintln("Game Packet Feeder & Reactor & UQHoder 已退出"))
 				return
 			}
 			uqHolderDelayUpdate := false
@@ -258,6 +261,30 @@ func (o *Omega) Activate() {
 				o.Reactor.React(pkt)
 				o.uqHolder.Update(pkt)
 			}
+		}
+	}()
+	go func() {
+		if o.OmegaConfig.ShowMemUsagePeriod == 0 && o.OmegaConfig.MemLimit == 0 {
+			return
+		}
+		usage := GetMemUsageByMB()
+		if o.OmegaConfig.ShowMemUsagePeriod != 0 {
+			go func() {
+				for {
+					pterm.Info.Printfln("内存使用: %v MB", GetMemUsageByMB())
+					<-time.NewTimer(time.Duration(o.OmegaConfig.ShowMemUsagePeriod) * time.Second).C
+				}
+			}()
+		}
+		for {
+			usage = GetMemUsageByMB()
+			if usage > uint64(o.OmegaConfig.MemLimit) {
+				hint := fmt.Sprintf("内存使用 %v MB 超出上限 %v MB, 为保证数据安全，Omega 将立刻保存数据并重启以释放内存", usage, o.OmegaConfig.MemLimit)
+				pterm.Warning.Println(hint)
+				o.Stop()
+				panic(hint)
+			}
+			<-time.NewTimer(3 * time.Second).C
 		}
 	}()
 	for {
@@ -286,7 +313,7 @@ func (o *Omega) Activate() {
 				o.adaptor.FBEval(cmd)
 			}()
 		case <-o.stopC:
-			o.backendLogger.Write(pterm.Warning.Sprintln("后台指令分派器已退出"))
+			// o.backendLogger.Write(pterm.Warning.Sprintln("后台指令分派器已退出"))
 			return
 		}
 	}

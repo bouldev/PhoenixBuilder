@@ -1,7 +1,10 @@
 package upgrade
 
 import (
+	"io/ioutil"
+	"path"
 	"phoenixbuilder/omega/defines"
+	"phoenixbuilder/omega/utils"
 )
 
 func Policy_7(root string) {
@@ -98,5 +101,28 @@ func Policy_10(root string) {
 			c.Configs["为true时被动签到false时主动签到"] = false
 		})
 		setMigrationVersion(root, 575)
+	}
+}
+
+func Policy_11(root string) {
+	if version, err := checkMigrationVersion(root); err == nil && version < 576 {
+		d := path.Join(root, "配置")
+		entries, err := ioutil.ReadDir(d)
+		if err != nil {
+			return
+		}
+		for _, entry := range entries {
+			if entry.Name() == "主系统.json" {
+				p := path.Join(root, "配置", entry.Name())
+				c := &defines.OmegaConfig{}
+				if err := utils.GetJsonData(p, c); err != nil {
+					return
+				}
+				c.MigrationVersion = 576
+				c.MemLimit = 1024
+				c.ShowMemUsagePeriod = 120
+				utils.WriteJsonData(p, c)
+			}
+		}
 	}
 }

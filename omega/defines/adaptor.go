@@ -45,6 +45,8 @@ type OmegaConfig struct {
 	Trigger                  *TriggerConfig `yaml:"触发词" json:"触发词"`
 	MigrationVersion         int            `yanl:"自动升级识别号" json:"自动升级识别号"`
 	CommandFeedBackByDefault bool           `yaml:"默认情况下是否有commandfeedback" json:"默认情况下是否有commandfeedback,omitempty"`
+	MemLimit                 int            `yaml:"限制内存占用" json:"限制内存占用"`
+	ShowMemUsagePeriod       int            `yaml:"内存占用显示周期" json:"内存占用显示周期"`
 }
 
 // ComponentConfig 描述了 插件 的配置内容，必须保证可被 yaml 正确处理
