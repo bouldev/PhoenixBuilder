@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
@@ -291,6 +292,8 @@ func (uq *UQHolder) GetBotName() string {
 	}
 }
 
+var recordNoPlayerEntity = false
+
 func (uq *UQHolder) Update(pk packet.Packet) {
 	defer func() {
 		r := recover()
@@ -426,6 +429,9 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	case *packet.UpdateSoftEnum:
 		uq.CommandRelatedEnums = append(uq.CommandRelatedEnums, p)
 	case *packet.AddActor:
+		if !recordNoPlayerEntity {
+			return
+		}
 		entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
 		entity.IsPlayer = false
 		entity.UniqueID = p.EntityUniqueID
@@ -551,6 +557,18 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 			}
 		}
 	}
+}
+
+func (uq *UQHolder) UpdateFromConn(conn *minecraft.Conn) {
+	gd := conn.GameData()
+	uq.BotUniqueID = gd.EntityUniqueID
+	uq.ConnectTime = gd.ConnectTime
+	uq.WorldName = gd.WorldName
+	uq.WorldGameMode = gd.WorldGameMode
+	uq.WorldDifficulty = uint32(gd.Difficulty)
+	uq.OnConnectWoldSpawnPosition = gd.WorldSpawn
+	cd := conn.ClientData()
+	uq.BotRandomID = cd.ClientRandomID
 }
 
 //func main() {
