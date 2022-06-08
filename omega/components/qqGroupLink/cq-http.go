@@ -157,7 +157,7 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 	groupMsg := msg.(GroupMessage)
 	gid := groupMsg.GroupID
 	msgText := groupMsg.Message
-	if cq.FilterQQToServerMsgByHead != "" && !strings.HasPrefix(msgText,"/") {
+	if cq.FilterQQToServerMsgByHead != "" && !strings.HasPrefix(msgText, "/") {
 		if !strings.HasPrefix(msgText, cq.FilterQQToServerMsgByHead) {
 			return
 		}
@@ -268,10 +268,30 @@ func (b *QGroupLink) Inject(frame defines.MainFrame) {
 	b.connect()
 	<-b.initLock
 	b.Frame.GetBackendDisplay().Write("Q群链接组件: 连接成功")
+	hint := "[群服互通]: 连接成功"
+	if b.FilterQQToServerMsgByHead != "" {
+		hint += "\n QQ->MC: 消息开头必须为" + b.FilterQQToServerMsgByHead
+	}
+	if b.FilterServerToQQMsgByHead != "" {
+		hint += "\n MC->QQ: 消息开头必须为" + b.FilterQQToServerMsgByHead
+	}
+	if len(b.AllowedCmdExecutor) > 0 {
+		perms := []string{}
+		for qq, hasPerm := range b.AllowedCmdExecutor {
+			if hasPerm {
+				perms = append(perms, fmt.Sprintf("%v", qq))
+			}
+		}
+		if len(perms) > 0 {
+			hint += "\n MC 指令权限: " + strings.Join(perms, ", ")
+		}
+	}
+	b.sendQQMessage(hint)
 	b.Frame.GetGameListener().SetGameChatInterceptor(b.onNewGameMsg)
 }
 
 func (b *QGroupLink) Stop() error {
+	b.sendQQMessage("[群服互通]: 机器人已经退出服务器")
 	return nil
 }
 
