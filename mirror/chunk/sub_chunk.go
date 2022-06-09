@@ -50,15 +50,15 @@ func (sub *SubChunk) SetBlock(x, y, z byte, layer uint8, block uint32) {
 
 // Compact cleans the garbage from all block storages that sub chunk contains, so that they may be
 // cleanly written to a database.
-func (sub *SubChunk) compact() {
-	newStorages := make([]*PalettedStorage, 0, len(sub.storages))
-	for _, storage := range sub.storages {
-		storage.compact()
-		if len(storage.palette.values) == 1 && storage.palette.values[0] == sub.air {
-			// If the palette has only air in it, it means the storage is empty, so we can ignore it.
-			continue
-		}
-		newStorages = append(newStorages, storage)
-	}
-	sub.storages = newStorages
-}
+// func (sub *SubChunk) compact() {
+// 	newStorages := make([]*PalettedStorage, 0, len(sub.storages))
+// 	for _, storage := range sub.storages {
+// 		storage.compact()
+// 		if len(storage.palette.values) == 1 && storage.palette.values[0] == sub.air {
+// 			// If the palette has only air in it, it means the storage is empty, so we can ignore it.
+// 			continue
+// 		}
+// 		newStorages = append(newStorages, storage)
+// 	}
+// 	sub.storages = newStorages
+// }

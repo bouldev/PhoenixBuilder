@@ -145,40 +145,40 @@ func (storage *PalettedStorage) resize(newPaletteSize paletteSize) {
 // compact clears unused indexes in the palette by scanning for usages in the PalettedStorage. This is a
 // relatively heavy task which should only happen right before the sub chunk holding this PalettedStorage is
 // saved to disk. compact also shrinks the palette size if possible.
-func (storage *PalettedStorage) compact() {
-	usedIndices := make([]bool, storage.palette.Len())
-	for x := byte(0); x < 16; x++ {
-		for y := byte(0); y < 16; y++ {
-			for z := byte(0); z < 16; z++ {
-				usedIndices[storage.paletteIndex(x, y, z)] = true
-			}
-		}
-	}
-	newRuntimeIDs := make([]uint32, 0, len(usedIndices))
-	conversion := make([]uint16, len(usedIndices))
+// func (storage *PalettedStorage) compact() {
+// 	usedIndices := make([]bool, storage.palette.Len())
+// 	for x := byte(0); x < 16; x++ {
+// 		for y := byte(0); y < 16; y++ {
+// 			for z := byte(0); z < 16; z++ {
+// 				usedIndices[storage.paletteIndex(x, y, z)] = true
+// 			}
+// 		}
+// 	}
+// 	newRuntimeIDs := make([]uint32, 0, len(usedIndices))
+// 	conversion := make([]uint16, len(usedIndices))
 
-	for index, set := range usedIndices {
-		if set {
-			conversion[index] = uint16(len(newRuntimeIDs))
-			newRuntimeIDs = append(newRuntimeIDs, storage.palette.values[index])
-		}
-	}
-	// Construct a new storage and set all values in there manually. We can't easily do this in a better
-	// way, because all values will be at a different index with a different length.
-	size := paletteSizeFor(len(newRuntimeIDs))
-	newStorage := newPalettedStorage(make([]uint32, size.uint32s()), newPalette(size, newRuntimeIDs))
+// 	for index, set := range usedIndices {
+// 		if set {
+// 			conversion[index] = uint16(len(newRuntimeIDs))
+// 			newRuntimeIDs = append(newRuntimeIDs, storage.palette.values[index])
+// 		}
+// 	}
+// 	// Construct a new storage and set all values in there manually. We can't easily do this in a better
+// 	// way, because all values will be at a different index with a different length.
+// 	size := paletteSizeFor(len(newRuntimeIDs))
+// 	newStorage := newPalettedStorage(make([]uint32, size.uint32s()), newPalette(size, newRuntimeIDs))
 
-	for x := byte(0); x < 16; x++ {
-		for y := byte(0); y < 16; y++ {
-			for z := byte(0); z < 16; z++ {
-				// Replace all usages of the old palette indexes with the new indexes using the map we
-				// produced earlier.
-				newStorage.setPaletteIndex(x, y, z, conversion[storage.paletteIndex(x, y, z)])
-			}
-		}
-	}
-	*storage = *newStorage
-}
+// 	for x := byte(0); x < 16; x++ {
+// 		for y := byte(0); y < 16; y++ {
+// 			for z := byte(0); z < 16; z++ {
+// 				// Replace all usages of the old palette indexes with the new indexes using the map we
+// 				// produced earlier.
+// 				newStorage.setPaletteIndex(x, y, z, conversion[storage.paletteIndex(x, y, z)])
+// 			}
+// 		}
+// 	}
+// 	*storage = *newStorage
+// }
 func (storage *PalettedStorage) shrinkAir() {
 	airRID := AirRID
 	foundAirPalette := false

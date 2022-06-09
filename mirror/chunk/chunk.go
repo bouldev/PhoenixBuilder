@@ -64,11 +64,11 @@ func (chunk *Chunk) SetBlock(x uint8, y int16, z uint8, layer uint8, block uint3
 // Compact compacts the chunk as much as possible, getting rid of any sub chunks that are empty, and compacts
 // all storages in the sub chunks to occupy as little space as possible.
 // Compact should be called right before the chunk is saved in order to optimise the storage space.
-func (chunk *Chunk) Compact() {
-	for i := range chunk.sub {
-		chunk.sub[i].compact()
-	}
-}
+// func (chunk *Chunk) Compact() {
+// 	for i := range chunk.sub {
+// 		chunk.sub[i].compact()
+// 	}
+// }
 
 // subChunk finds the correct SubChunk in the Chunk by a Y value.
 func (chunk *Chunk) subChunk(y int16) *SubChunk {
