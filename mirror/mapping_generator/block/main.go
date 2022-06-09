@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"os"
 
+	"phoenixbuilder/minecraft/nbt"
+
 	"github.com/andybalholm/brotli"
-	"github.com/sandertv/gophertunnel/minecraft/nbt"
 )
 
 //go:embed block_states_1_19.nbt
@@ -103,6 +104,17 @@ type MappingOut struct {
 }
 
 func main() {
+	for i := 1; i < 5; i++ {
+		if i == 1 {
+			remapper[fmt.Sprintf("stone_slab")] = "stone_block_slab"
+			remapper[fmt.Sprintf("double_stone_slab")] = "double_stone_block_slab"
+		} else {
+			remapper[fmt.Sprintf("stone_slab%v", i)] = fmt.Sprintf("stone_block_slab%v", i)
+			remapper[fmt.Sprintf("double_stone_slab%v", i)] = fmt.Sprintf("double_stone_block_slab%v", i)
+		}
+
+	}
+
 	airRID := 0
 	nemcAirRID := 0
 	skullRID := 0
