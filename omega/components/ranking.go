@@ -54,6 +54,7 @@ type Ranking struct {
 	scoreboardRenderCache []string
 }
 
+// TODO: Remove Global Var
 var rankingLastFetchTime time.Time
 var rankingLastFetchResult map[string]map[string]int
 
@@ -131,7 +132,7 @@ func (o *Ranking) update() {
 		for n, _ := range rankingLastFetchResult {
 			pterm.Error.Println(n)
 		}
-		o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players add @s %v 0",o.ScoreboardName))
+		o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players add @s %v 0", o.ScoreboardName))
 	} else {
 		needSort := false
 		needRankUpdate := false

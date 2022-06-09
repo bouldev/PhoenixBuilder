@@ -46,6 +46,7 @@ type QGroupLink struct {
 	connectionFalseHintReduce int
 }
 
+// TODO: remove global var
 var cqStartPrintErr bool
 
 func cqStartPrintErrRoutine() {
