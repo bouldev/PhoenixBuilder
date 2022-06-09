@@ -12,7 +12,7 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/nbt"
 )
 
-//go:embed block_states_1_18_30.nbt
+//go:embed block_states_1_19.nbt
 var blockStateData []byte
 
 //go:embed runtimeIds_2_1_10.json
@@ -195,7 +195,7 @@ func main() {
 		nemcToMCRIDMapping[b.NEMCRID] = int16(rid)
 	}
 	fmt.Println(nemcToMCRIDMapping[nemcAirRID])
-	fp, err = os.OpenFile("convert_out/nemcRIDToMC1_18_30RID.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	fp, err = os.OpenFile("convert_out/nemcRIDToMC1_19RID.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err = json.NewEncoder(fp).Encode(nemcToMCRIDMapping); err != nil {
 		panic(err)
 	}
@@ -211,7 +211,7 @@ func main() {
 		NEMCRidToMCRid: nemcToMCRIDMapping,
 		NEMCRidToVal:   nemcToVal,
 	}
-	fp, err = os.OpenFile("convert_out/blockmapping_nemc_2_1_10_mc_1_18_30.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	fp, err = os.OpenFile("convert_out/blockmapping_nemc_2_1_10_mc_1_19.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	compressor := brotli.NewWriter(fp)
 	if err := gob.NewEncoder(compressor).Encode(mapping_out); err != nil {
 		panic(err)
