@@ -23,18 +23,20 @@ type MenuRenderNode struct {
 
 type Menu struct {
 	*BaseCoreComponent
-	BackendTriggers                []string    `json:"后台菜单触发词" yaml:"后台菜单触发词"`
-	GameTriggers                   []string    `json:"游戏菜单触发词" yaml:"游戏菜单触发词"`
-	HintOnUnknownCmd               string      `json:"无法理解指令时提示" yaml:"无法理解指令时提示"`
-	MenuHead                       string      `json:"菜单标题" yaml:"菜单标题"`
-	BotTag                         string      `json:"机器人标签" yaml:"机器人标签"`
-	MenuFormat                     string      `json:"菜单显示格式" yaml:"菜单显示格式"`
-	MenuFormatWithMultipleTriggers string      `json:"多个触发词的菜单显示格式" yaml:"多个触发词的菜单显示格式"`
-	WisperHint                     string      `json:"悄悄话菜单提示" yaml:"悄悄话菜单提示"`
-	MenuTail                       string      `json:"菜单末尾" yaml:"菜单末尾"`
-	OpenMenuOnUnknownCmd           bool        `json:"在遇到未知指令时打开菜单" yaml:"在遇到未知指令时打开菜单"`
-	ContinueAsking                 bool        `json:"菜单打开后是否继续询问操作"`
-	MenuStructure                  interface{} `json:"目录结构"`
+	BackendTriggers                []string          `json:"后台菜单触发词" yaml:"后台菜单触发词"`
+	GameTriggers                   []string          `json:"游戏菜单触发词" yaml:"游戏菜单触发词"`
+	HintOnUnknownCmd               string            `json:"无法理解指令时提示" yaml:"无法理解指令时提示"`
+	MenuHead                       string            `json:"菜单标题" yaml:"菜单标题"`
+	BotTag                         string            `json:"机器人标签" yaml:"机器人标签"`
+	MenuFormat                     string            `json:"菜单显示格式" yaml:"菜单显示格式"`
+	MenuFormatWithMultipleTriggers string            `json:"多个触发词的菜单显示格式" yaml:"多个触发词的菜单显示格式"`
+	WisperHint                     string            `json:"悄悄话菜单提示" yaml:"悄悄话菜单提示"`
+	MenuTail                       string            `json:"菜单末尾" yaml:"菜单末尾"`
+	OpenMenuOnUnknownCmd           bool              `json:"在遇到未知指令时打开菜单" yaml:"在遇到未知指令时打开菜单"`
+	ContinueAsking                 bool              `json:"菜单打开后是否继续询问操作"`
+	MenuStructure                  interface{}       `json:"目录结构"`
+	ForceOverwriteOptions          map[string]string `json:"强制修改菜单信息"`
+	replaceFn                      func(string) string
 	menuRootNode                   *MenuRenderNode
 	// componentDefaultTriggers       []string
 }
@@ -122,9 +124,8 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 			return true
 		}
 	}
-	pk.Say("Omega · Async Rental Server Auxiliary · System · Author: §l2401PT")
-	pk.Say("基于 PhoenixBuilder, 原型来自 CMA 服务器的 Omega 系统，此处感谢 CMA 的小伙伴们")
-	pk.Say(fmt.Sprintf(m.MenuHead))
+	pk.Say("Omega System from: §l2401PT@CMA (Base On PhoenixBuilder)")
+	pk.Say(m.replaceFn(fmt.Sprintf(m.MenuHead)))
 	systemTrigger := m.omega.OmegaConfig.Trigger.DefaultTigger
 	menuFmt := m.MenuFormat
 	multipleFmt := m.MenuFormatWithMultipleTriggers
@@ -148,7 +149,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 			"[argumentHint]":   e.ArgumentHint,
 		})
 		//fmt.Println(entry)
-		pk.Say(entry)
+		pk.Say(m.replaceFn(entry))
 		actions = append(actions, e.OptionalOnTriggerFn)
 		available = append(available, e.Triggers[0])
 	}
@@ -160,15 +161,15 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 			"[systemTrigger]":  systemTrigger,
 			"[defaultTrigger]": sm.Trigger,
 		})
-		pk.Say(entry)
+		pk.Say(m.replaceFn(entry))
 		cn := sm.ChildNode
 		actions = append(actions, func(newChat *defines.GameChat) bool {
 			return m.popGameMenu(newChat, cn)
 		})
 		available = append(available, sm.Trigger)
 	}
-	pk.Say(fmt.Sprintf(m.WisperHint))
-	pk.Say(fmt.Sprintf(m.MenuTail))
+	pk.Say(m.replaceFn(fmt.Sprintf(m.WisperHint)))
+	pk.Say(m.replaceFn(fmt.Sprintf(m.MenuTail)))
 	// fmt.Println(chat)
 	if m.ContinueAsking {
 		if player := m.mainFrame.GetGameControl().GetPlayerKit(chat.Name); player != nil {
@@ -286,6 +287,15 @@ func (m *Menu) Init(cfg *defines.ComponentConfig) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, m); err != nil {
 		panic(err)
+	}
+	replaceElems := []string{}
+	for k, v := range m.ForceOverwriteOptions {
+		replaceElems = append(replaceElems, k)
+		replaceElems = append(replaceElems, v)
+	}
+	replacer := strings.NewReplacer(replaceElems...)
+	m.replaceFn = func(s string) string {
+		return replacer.Replace(s)
 	}
 }
 

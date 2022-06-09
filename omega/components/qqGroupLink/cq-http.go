@@ -43,6 +43,20 @@ type QGroupLink struct {
 	inited                    bool
 	firstInit                 bool
 	sendChan                  chan string
+	connectionFalseHintReduce int
+}
+
+var cqStartPrintErr bool
+
+func cqStartPrintErrRoutine() {
+	if cqStartPrintErr {
+		return
+	}
+	cqStartPrintErr = true
+	for {
+		pterm.Error.Println("Q群链接组件: 和CQ-HTTP连接出现故障, 请排除错误并重启 Omega ")
+		<-time.NewTimer(time.Minute * 2).C
+	}
 }
 
 // receiveRoutine 接收并处理协议端的消息 from QQ
@@ -52,7 +66,9 @@ func (cq *QGroupLink) receiveRoutine() {
 		_, data, err := cq.conn.ReadMessage()
 		if err != nil {
 			cq.Frame.GetBackendDisplay().Write(fmt.Sprintf("Q群链接组件: 和CQ-HTTP连接出现故障:" + err.Error()))
-			cq.Frame.GetBackendDisplay().Write(fmt.Sprintf("10秒后重连"))
+			cqStartPrintErrRoutine()
+			return
+			// cq.Frame.GetBackendDisplay().Write(fmt.Sprintf("10秒后重连"))
 			time.Sleep(10 * time.Second)
 			cq.conn.Close()
 			// 如果发送协程还没有尝试重连，那么由发送线程尝试重连
@@ -108,6 +124,8 @@ func (cq *QGroupLink) sendRoutine() {
 			err := cq.conn.WriteMessage(1, data)
 			if err != nil {
 				cq.conn.Close()
+				cqStartPrintErrRoutine()
+				return
 				// 如果接收协程还没有尝试重连，那么由发送线程尝试重连
 				if cq.inited {
 					cq.connect()
@@ -218,6 +236,9 @@ func (cq *QGroupLink) sendQQMessage(msg string) {
 }
 
 func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
+	if cqStartPrintErr {
+		return false
+	}
 	if cq.ChatOnly && chat.Type != packet.TextTypeChat {
 		return false
 	}
@@ -249,7 +270,10 @@ func (cq *QGroupLink) firstInitErr(err error) error {
 	pterm.Error.Println("首次连接到 CQ-HTTP 时出现错误" + err.Error())
 	fmt.Println(string(help))
 	pterm.Info.Println("请按上述说明配置CQ-HTTP，完成后重启 Omega系统，但是保持 CQ-HTTP 运行")
-	return fmt.Errorf("群服互联插件需要配置")
+	pterm.Error.Println("如果您不主动关闭 Omega，3 分钟后将在没有群服互通功能的情况下继续运行 Omega")
+	time.Sleep(3 * time.Minute)
+	// return fmt.Errorf("群服互联插件需要配置")
+	return nil
 }
 
 func (b *QGroupLink) Init(cfg *defines.ComponentConfig) {

@@ -105,7 +105,7 @@ func Policy_10(root string) {
 }
 
 func Policy_11(root string) {
-	if version, err := checkMigrationVersion(root); err == nil && version < 576 {
+	if version, err := checkMigrationVersion(root); err == nil && version < 582 {
 		d := path.Join(root, "配置")
 		entries, err := ioutil.ReadDir(d)
 		if err != nil {
@@ -118,11 +118,14 @@ func Policy_11(root string) {
 				if err := utils.GetJsonData(p, c); err != nil {
 					return
 				}
-				c.MigrationVersion = 576
-				c.MemLimit = 1024
+				c.MigrationVersion = 582
+				c.MemLimit = 400
 				c.ShowMemUsagePeriod = 120
 				utils.WriteJsonData(p, c)
 			}
 		}
+		updateComponentConfig(root, "菜单显示", func(c *defines.ComponentConfig) {
+			c.Configs["强制修改菜单信息"] = map[string]string{}
+		})
 	}
 }

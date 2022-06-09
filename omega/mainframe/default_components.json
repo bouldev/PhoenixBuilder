@@ -221,13 +221,13 @@
       "随机巡逻(秒)": 120,
       "使用以下正则表达式检查": [
         {
-          "启用": false,
-          "检测说明": "鱼桶检测",
-          "调试模式": false,
-          "使用正则表达式匹配物品名": ".*_bucket",
+          "使用正则表达式匹配标签值": "minecraft:axolotl|minecraft:pufferfish|minecraft:tropicalfish|minecraft:salmon|minecraft:cod|minecraft:bee",
+          "使用正则表达式匹配物品名": "",
+          "匹配标签值成功时true为放行false为作弊": true,
           "匹配标签名": "definitions",
-          "使用正则表达式匹配标签值": ".*fish",
-          "匹配标签值成功时true为放行false为作弊": true
+          "启用": false,
+          "检测说明": "鱼桶检测(可能误封)(感谢感人老师)",
+          "调试模式": false
         },
         {
           "启用": false,
@@ -794,6 +794,9 @@
           ]
         }
       ]
+    },
+    "强制修改菜单信息":{
+      
     }
   },
   {

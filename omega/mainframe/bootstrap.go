@@ -339,7 +339,7 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	o.adaptor = adaptor
 	o.uqHolder = adaptor.GetInitUQHolderCopy()
 	fmt.Println("开始空间回收任务: 日志压缩")
-	CompressLogs(o.storageRoot, 14, 7)
+	CompressLogs(o.storageRoot, 7, 3)
 	o.backendLogger = &BackEndLogger{
 		loggers: []defines.LineDst{
 			o.GetLogger("后台信息.log"),

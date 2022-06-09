@@ -11,6 +11,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/pterm/pterm"
@@ -84,6 +85,11 @@ func (o *Omega) GetOmegaConfig() *defines.OmegaConfig {
 	return o.OmegaConfig
 }
 func (o *Omega) GetPath(elem ...string) string {
+	for _, ele := range elem {
+		if strings.HasPrefix(ele, "/") || strings.Contains(ele, "..") {
+			panic(fmt.Errorf("为了安全考虑，路径开头不能为 / 且不能包含 .."))
+		}
+	}
 	return path.Join(o.storageRoot, path.Join(elem...))
 }
 
@@ -226,7 +232,7 @@ func (o *Omega) RegOnAlertHandler(cb func(info string)) {
 func GetMemUsageByMB() uint64 {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	return m.Sys / 1024 / 1024
+	return (m.HeapIdle - m.HeapReleased + m.StackSys) / 1024 / 1024
 }
 
 func GetMemUsageByMBInDetailedString() string {
@@ -289,7 +295,7 @@ func (o *Omega) Activate() {
 		for {
 			usage = GetMemUsageByMB()
 			if usage > uint64(o.OmegaConfig.MemLimit) {
-				hint := fmt.Sprintf("系统分配内存 %v MB 超出安全上限 %v MB, 为保证数据安全，Omega 将立刻保存数据并重启以释放内存(您可以在 配置/主系统中调整)", usage, o.OmegaConfig.MemLimit)
+				hint := fmt.Sprintf("使用内存 %v MB 超出安全上限 %v MB, 为保证数据安全，Omega 将立刻保存数据并重启以释放内存(您可以在 配置/主系统中调整)", usage, o.OmegaConfig.MemLimit)
 				pterm.Warning.Println(hint)
 				o.Stop()
 				panic(hint)
