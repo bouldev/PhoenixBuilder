@@ -30,7 +30,7 @@ func NEMCNetworkDecode(data []byte, count int) (c *Chunk, nbtBlocks []map[string
 	for i := 0; i < count; i++ {
 		index := uint8(i)
 		// decodeSubChunk(buf, c, &index, NetworkEncoding)
-		c.sub[index+4], err = decodeSubChunk(buf, c, &index, encoder)
+		c.sub[index+4], err = decodeSubChunkNEMC(buf, c, &index, encoder)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -146,6 +146,42 @@ func decodeSubChunk(buf *bytes.Buffer, c *Chunk, index *byte, e Encoding) (*SubC
 	return sub, nil
 }
 
+func decodeSubChunkNEMC(buf *bytes.Buffer, c *Chunk, index *byte, e Encoding) (*SubChunk, error) {
+	ver, err := buf.ReadByte()
+	if err != nil {
+		return nil, fmt.Errorf("error reading version: %w", err)
+	}
+	sub := NewSubChunk(c.air)
+	switch ver {
+	default:
+		return nil, fmt.Errorf("unknown sub chunk version %v: can't decode", ver)
+	case 8, 9:
+		// Version 8 allows up to 256 layers for one sub chunk.
+		storageCount, err := buf.ReadByte()
+		if err != nil {
+			return nil, fmt.Errorf("error reading storage count: %w", err)
+		}
+		if ver == 9 {
+			uIndex, err := buf.ReadByte()
+			if err != nil {
+				return nil, fmt.Errorf("error reading subchunk index: %w", err)
+			}
+			// The index as written here isn't the actual index of the subchunk within the chunk. Rather, it is the Y
+			// value of the subchunk. This means that we need to translate it to an index.
+			*index = uint8(int8(uIndex) - int8(c.r[0]>>4))
+		}
+		sub.storages = make([]*PalettedStorage, storageCount)
+
+		for i := byte(0); i < storageCount; i++ {
+			sub.storages[i], err = decodePalettedStorageNEMC(buf, e, BlockPaletteEncoding)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return sub, nil
+}
+
 // decodePalettedStorage decodes a PalettedStorage from a bytes.Buffer. The Encoding passed is used to read either a
 // network or disk block storage.
 func decodePalettedStorage(buf *bytes.Buffer, e Encoding, pe paletteEncoding) (*PalettedStorage, error) {
@@ -174,4 +210,34 @@ func decodePalettedStorage(buf *bytes.Buffer, e Encoding, pe paletteEncoding) (*
 	}
 	p, err := e.decodePalette(buf, paletteSize(blockSize), pe)
 	return newPalettedStorage(uint32s, p), err
+}
+
+func decodePalettedStorageNEMC(buf *bytes.Buffer, e Encoding, pe paletteEncoding) (*PalettedStorage, error) {
+	blockSize, err := buf.ReadByte()
+	if err != nil {
+		return nil, fmt.Errorf("error reading block size: %w", err)
+	}
+	blockSize >>= 1
+	if blockSize == 0x7f {
+		return nil, nil
+	}
+
+	size := paletteSize(blockSize)
+	uint32Count := size.uint32s()
+
+	uint32s := make([]uint32, uint32Count)
+	byteCount := uint32Count * 4
+
+	data := buf.Next(byteCount)
+	if len(data) != byteCount {
+		return nil, fmt.Errorf("cannot read paletted storage (size=%v) %T: not enough block data present: expected %v bytes, got %v", blockSize, pe, byteCount, len(data))
+	}
+	for i := 0; i < uint32Count; i++ {
+		// Explicitly don't use the binary package to greatly improve performance of reading the uint32s.
+		uint32s[i] = uint32(data[i*4]) | uint32(data[i*4+1])<<8 | uint32(data[i*4+2])<<16 | uint32(data[i*4+3])<<24
+	}
+	p, err := e.decodePalette(buf, paletteSize(blockSize), pe)
+	newPalette := newPalettedStorage(uint32s, p)
+	newPalette.shrinkAir()
+	return newPalette, err
 }

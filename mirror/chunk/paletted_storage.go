@@ -1,6 +1,7 @@
 package chunk
 
 import (
+	"fmt"
 	"reflect"
 	"unsafe"
 )
@@ -177,4 +178,59 @@ func (storage *PalettedStorage) compact() {
 		}
 	}
 	*storage = *newStorage
+}
+func (storage *PalettedStorage) shrinkAir() {
+	airRID := AirRID
+	foundAirPalette := false
+	shrinkHappen := false
+	for _, v := range storage.palette.values {
+		if v == airRID {
+			if !foundAirPalette {
+				foundAirPalette = true
+			} else {
+				shrinkHappen = true
+				break
+			}
+		}
+	}
+	// quit as soon as possible
+	if !shrinkHappen {
+		return
+	}
+	foundAirPalette = false
+	airPaletteI := 0
+	conversion := make([]uint16, len(storage.palette.values))
+	newStoragePaletteValues := make([]uint32, 0, len(storage.palette.values))
+	for i, v := range storage.palette.values {
+		if v == airRID {
+			if !foundAirPalette {
+				foundAirPalette = true
+				airPaletteI = i
+				conversion[i] = uint16(len(newStoragePaletteValues))
+				newStoragePaletteValues = append(newStoragePaletteValues, v)
+			} else {
+				conversion[i] = uint16(airPaletteI)
+			}
+		} else {
+			conversion[i] = uint16(len(newStoragePaletteValues))
+			newStoragePaletteValues = append(newStoragePaletteValues, v)
+		}
+	}
+	fmt.Println(len(conversion))
+	fmt.Println(len(newStoragePaletteValues))
+	storage.palette.values = newStoragePaletteValues
+	for x := byte(0); x < 16; x++ {
+		for y := byte(0); y < 16; y++ {
+			for z := byte(0); z < 16; z++ {
+				// Replace all usages of the old palette indexes with the new indexes using the map we
+				// produced earlier.
+				origI := storage.paletteIndex(x, y, z)
+				shrinkI := conversion[origI]
+				if origI != shrinkI {
+					fmt.Println(x, y, z, origI, "->", shrinkI)
+					storage.setPaletteIndex(x, y, z, shrinkI)
+				}
+			}
+		}
+	}
 }
