@@ -30,7 +30,7 @@ func NEMCNetworkDecode(data []byte, count int) (c *Chunk, nbtBlocks []map[string
 	for i := 0; i < count; i++ {
 		index := uint8(i)
 		// decodeSubChunk(buf, c, &index, NetworkEncoding)
-		c.sub[index+4], err = decodeSubChunkNEMC(buf, c, &index, encoder)
+		c.sub[index+4], err = decodeSubChunk(buf, c, &index, encoder)
 		if err != nil {
 			return nil, nil, err
 		}
