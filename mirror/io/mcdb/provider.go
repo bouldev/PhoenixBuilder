@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"os"
 	"path/filepath"
 	"phoenixbuilder/mirror/define"
@@ -22,7 +21,7 @@ import (
 
 // Provider implements a world provider for the Minecraft world format, which is based on a leveldb database.
 type Provider struct {
-	db  *leveldb.DB
+	DB  *leveldb.DB
 	dir string
 	D   data
 }
@@ -66,7 +65,7 @@ func New(dir string, compression opt.Compression) (*Provider, error) {
 		}); err != nil {
 		return nil, fmt.Errorf("error opening leveldb database: %w", err)
 	} else {
-		p.db = db
+		p.DB = db
 	}
 
 	if err := p.saveAuxInfo(); err != nil {
@@ -89,7 +88,7 @@ func (p *Provider) initDefaultLevelDat() {
 	p.D.StorageVersion = 8
 	p.D.Generator = 1
 	p.D.Abilities.WalkSpeed = 0.1
-	p.D.PVP = true
+	p.D.PVP = false
 	p.D.WorldStartCount = 1
 	p.D.RandomTickSpeed = 1
 	p.D.FallDamage = true
@@ -97,7 +96,11 @@ func (p *Provider) initDefaultLevelDat() {
 	p.D.DrowningDamage = true
 	p.D.CommandsEnabled = true
 	p.D.MultiPlayerGame = true
-	p.D.SpawnY = math.MaxInt32
+	p.D.SpawnX = 0
+	p.D.SpawnZ = 0
+	p.D.SpawnY = 330
+	p.D.ShowCoordinates = true
+	p.D.Abilities.OP = true
 	p.D.Difficulty = 1 //peaceful
 	p.D.DoWeatherCycle = true
 	p.D.RainLevel = 1.0
@@ -114,10 +117,10 @@ func (p *Provider) loadChunk(position define.ChunkPos) (c *chunk.Chunk, exists b
 
 	// This key is where the version of a chunk resides. The chunk version has changed many times, without any
 	// actual substantial changes, so we don't check this.
-	_, err = p.db.Get(append(key, keyVersion), nil)
+	_, err = p.DB.Get(append(key, keyVersion), nil)
 	if err == leveldb.ErrNotFound {
 		// The new key was not found, so we try the old key.
-		if _, err = p.db.Get(append(key, keyVersionOld), nil); err != nil {
+		if _, err = p.DB.Get(append(key, keyVersionOld), nil); err != nil {
 			return nil, false, nil
 		}
 	} else if err != nil {
@@ -125,7 +128,7 @@ func (p *Provider) loadChunk(position define.ChunkPos) (c *chunk.Chunk, exists b
 	}
 	data.SubChunks = make([][]byte, (mirror.WorldRange.Height()>>4)+1)
 	for i := range data.SubChunks {
-		data.SubChunks[i], err = p.db.Get(append(key, keySubChunkData, uint8(i+(mirror.WorldRange[0]>>4))), nil)
+		data.SubChunks[i], err = p.DB.Get(append(key, keySubChunkData, uint8(i+(mirror.WorldRange[0]>>4))), nil)
 		if err == leveldb.ErrNotFound {
 			// No sub chunk present at this Y level. We skip this one and move to the next, which might still
 			// be present.
@@ -140,7 +143,7 @@ func (p *Provider) loadChunk(position define.ChunkPos) (c *chunk.Chunk, exists b
 
 // LoadBlockNBT loads all block entities from the chunk position passed.
 func (p *Provider) loadBlockNBT(position define.ChunkPos) ([]map[string]any, error) {
-	data, err := p.db.Get(append(p.index(position), keyBlockEntities), nil)
+	data, err := p.DB.Get(append(p.index(position), keyBlockEntities), nil)
 	if err != leveldb.ErrNotFound && err != nil {
 		return nil, err
 	}
@@ -160,7 +163,7 @@ func (p *Provider) loadBlockNBT(position define.ChunkPos) ([]map[string]any, err
 }
 
 func (p *Provider) loadTimeStamp(position define.ChunkPos) (timeStamp int64) {
-	data, err := p.db.Get(append(p.index(position), keyTimeStamp), nil)
+	data, err := p.DB.Get(append(p.index(position), keyTimeStamp), nil)
 	if err != nil || len(data) != 0 {
 		return mirror.TimeStampNotFound
 	}
@@ -192,16 +195,16 @@ func (p *Provider) saveChunk(position define.ChunkPos, c *chunk.Chunk) error {
 	data := chunk.Encode(c, chunk.DiskEncoding)
 
 	key := p.index(position)
-	_ = p.db.Put(append(key, keyVersion), []byte{chunkVersion}, nil)
+	_ = p.DB.Put(append(key, keyVersion), []byte{chunkVersion}, nil)
 	// Write the heightmap by just writing 512 empty bytes.
 	//_ = p.db.Put(append(key, key3DData), append(make([]byte, 512), data.Biomes...), nil)
 
 	finalisation := make([]byte, 4)
 	binary.LittleEndian.PutUint32(finalisation, 2)
-	_ = p.db.Put(append(key, keyFinalisation), finalisation, nil)
+	_ = p.DB.Put(append(key, keyFinalisation), finalisation, nil)
 
 	for i, sub := range data.SubChunks {
-		_ = p.db.Put(append(key, keySubChunkData, byte(i+(c.Range()[0]>>4))), sub, nil)
+		_ = p.DB.Put(append(key, keySubChunkData, byte(i+(c.Range()[0]>>4))), sub, nil)
 	}
 	return nil
 }
@@ -209,7 +212,7 @@ func (p *Provider) saveChunk(position define.ChunkPos, c *chunk.Chunk) error {
 // saveBlockNBT saves all block NBT data to the chunk position passed.
 func (p *Provider) saveBlockNBT(position define.ChunkPos, data []map[string]any) error {
 	if len(data) == 0 {
-		return p.db.Delete(append(p.index(position), keyBlockEntities), nil)
+		return p.DB.Delete(append(p.index(position), keyBlockEntities), nil)
 	}
 	buf := bytes.NewBuffer(nil)
 	enc := nbt.NewEncoderWithEncoding(buf, nbt.LittleEndian)
@@ -218,13 +221,13 @@ func (p *Provider) saveBlockNBT(position define.ChunkPos, data []map[string]any)
 			return fmt.Errorf("error encoding block NBT: %w", err)
 		}
 	}
-	return p.db.Put(append(p.index(position), keyBlockEntities), buf.Bytes(), nil)
+	return p.DB.Put(append(p.index(position), keyBlockEntities), buf.Bytes(), nil)
 }
 
 func (p *Provider) saveTimeStamp(position define.ChunkPos, timeStamp int64) error {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, uint64(timeStamp))
-	return p.db.Put(append(p.index(position), keyTimeStamp), buf, nil)
+	return p.DB.Put(append(p.index(position), keyTimeStamp), buf, nil)
 }
 
 func (p *Provider) Write(cd *mirror.ChunkData) error {
@@ -238,6 +241,48 @@ func (p *Provider) Write(cd *mirror.ChunkData) error {
 		return err
 	}
 	return nil
+}
+
+type ChunksInfo struct {
+	hasTimeStamp       bool
+	hasVersion         bool
+	hasNbtKey          bool
+	haskeyFinalisation bool
+	SubChunksCount     uint8
+}
+
+func (p *Provider) IterAll() map[define.ChunkPos]*ChunksInfo {
+	iter := p.DB.NewIterator(nil, nil)
+	result := make(map[define.ChunkPos]*ChunksInfo)
+	var r *ChunksInfo
+	var hasK bool
+	for iter.Next() {
+		key := iter.Key()
+		if len(key) < 8 || len(key) > 10 {
+			fmt.Println(string(key))
+			continue
+		}
+		pos, rest_key := p.Position(key)
+		if len(rest_key) > 0 {
+			if r, hasK = result[pos]; !hasK {
+				r = &ChunksInfo{}
+				result[pos] = r
+			}
+			switch rest_key[0] {
+			case keySubChunkData:
+				r.SubChunksCount++
+			case keyTimeStamp:
+				r.hasTimeStamp = true
+			case keyVersion:
+				r.hasVersion = true
+			case keyBlockEntities:
+				r.hasNbtKey = true
+			case keyFinalisation:
+				r.haskeyFinalisation = true
+			}
+		}
+	}
+	return result
 }
 
 func (p *Provider) saveAuxInfo() (err error) {
@@ -269,8 +314,9 @@ func (p *Provider) saveAuxInfo() (err error) {
 
 // Close closes the provider, saving any file that might need to be saved, such as the level.dat.
 func (p *Provider) Close() error {
+	p.initDefaultLevelDat()
 	p.saveAuxInfo()
-	return p.db.Close()
+	return p.DB.Close()
 }
 
 // index returns a byte buffer holding the written index of the chunk position passed. If the dimension passed to New
@@ -286,4 +332,15 @@ func (p *Provider) index(position define.ChunkPos) []byte {
 	}
 	binary.LittleEndian.PutUint32(b[8:], dim)
 	return b
+}
+func (p *Provider) Position(key []byte) (position define.ChunkPos, rest []byte) {
+	x := binary.LittleEndian.Uint32(key[0:4])
+	z := binary.LittleEndian.Uint32(key[4:8])
+	if len(key) == 8 {
+		return define.ChunkPos{int32(x), int32(z)}, key[8:]
+	}
+	if key[8] < 3 {
+		return define.ChunkPos{int32(x), int32(z)}, key[12:]
+	}
+	return define.ChunkPos{int32(x), int32(z)}, key[8:]
 }
