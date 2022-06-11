@@ -110,6 +110,10 @@ func hashProperties(properties map[string]any) string {
 func registerBlockState(s *GeneralBlock) {
 	h := StateHash{name: s.Name, properties: hashProperties(s.Properties)}
 	if _, ok := stateRuntimeIDs[h]; ok {
+		blocks=append(blocks,s)
+		return
+		// UNSAFE !!! IGNORING SAME RUNTIME IDS !!!
+		// =
 		panic(fmt.Sprintf("cannot register the same state twice (%+v)", s))
 	}
 	rid := uint32(len(blocks))
@@ -165,7 +169,7 @@ func InitMapping(mappingInData []byte) {
 		return uint32(nemcToMCRIDMapping[nemcRuntimeID])
 	}
 	if NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID) != AirRID {
-		panic("Air rid not matching")
+		panic(fmt.Errorf("Air rid not matching: %d vs %d.",NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID),AirRID))
 	}
 
 	nemcToVal := mappingIn.NEMCRidToVal
