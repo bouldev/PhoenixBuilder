@@ -31,10 +31,10 @@ type LimitRecord struct {
 
 type Recycle struct {
 	*BasicComponent
-	RecordFileName      string   `json:"最后回收记录文件"`
-	Triggers            []string `json:"触发词"`
-	Format              string   `json:"展示模版"`
-	Options             []Option `json:"回收清单文件"`
+	RecordFileName      string    `json:"最后回收记录文件"`
+	Triggers            []string  `json:"触发词"`
+	Format              string    `json:"展示模版"`
+	Options             []*Option `json:"回收清单文件"`
 	PlayerRecycleRecord map[string]map[string]LimitRecord
 }
 
@@ -44,10 +44,11 @@ func (o *Recycle) Init(cfg *defines.ComponentConfig) {
 		panic(err)
 	}
 	var err error
-	for _, o := range o.Options {
-		if o.RewardCmds, err = utils.ParseAdaptiveCmd(o.RewardCmdsIn); err != nil {
+	for _, item := range o.Options {
+		if item.RewardCmds, err = utils.ParseAdaptiveCmd(item.RewardCmdsIn); err != nil {
 			panic(err)
 		}
+		// o.Options[i] = item
 	}
 }
 
@@ -162,7 +163,7 @@ func (o *Recycle) popMenu(name string) {
 	}
 }
 
-func (o *Recycle) tryHandleAmount(name string, option Option, amount string) {
+func (o *Recycle) tryHandleAmount(name string, option *Option, amount string) {
 	maxC := 0
 	if option.MaxRecyclePerDay != 0 {
 		maxC = o.computeMaxRecycleCount(name, option.Name, option.MaxRecyclePerDay)
@@ -189,7 +190,7 @@ func (o *Recycle) tryHandleAmount(name string, option Option, amount string) {
 	o.startRecycle(name, option, set)
 }
 
-func (o *Recycle) askForAmount(name string, option Option) {
+func (o *Recycle) askForAmount(name string, option *Option) {
 	maxC := 0
 	if option.MaxRecyclePerDay != 0 {
 		maxC = o.computeMaxRecycleCount(name, option.Name, option.MaxRecyclePerDay)
@@ -218,7 +219,7 @@ func (o *Recycle) askForAmount(name string, option Option) {
 	}
 }
 
-func (o *Recycle) startRecycle(name string, option Option, amount int) {
+func (o *Recycle) startRecycle(name string, option *Option, amount int) {
 	// totalPrice := amount * option.Price
 	cmd := utils.FormatByReplacingOccurrences(option.ClearCmd, map[string]interface{}{
 		"[player]": "\"" + name + "\"",
@@ -241,7 +242,7 @@ func (o *Recycle) startRecycle(name string, option Option, amount int) {
 	})
 }
 
-func (o *Recycle) onRecycleSuccess(name string, option Option, realCount int) {
+func (o *Recycle) onRecycleSuccess(name string, option *Option, realCount int) {
 	//o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 回收 %v * %v 收益 %v (%v->%v)"))
 	leftStr := "无限制"
 	if option.MaxRecyclePerDay != 0 {

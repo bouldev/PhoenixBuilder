@@ -19,24 +19,24 @@ type Good struct {
 }
 
 type GoodsGroup struct {
-	CurrencyName string `json:"货币显示名"`
-	CurrencyCmd  string `json:"货币记分板指令名"`
-	Goods        []Good `json:"商品"`
+	CurrencyName string  `json:"货币显示名"`
+	CurrencyCmd  string  `json:"货币记分板指令名"`
+	Goods        []*Good `json:"商品"`
 }
 
 type PlainGood struct {
-	Good
+	*Good
 	CurrencyName string
 	CurrencyCmd  string
 }
 
 type Shop struct {
 	*BasicComponent
-	Goods      map[string]GoodsGroup `json:"商品清单文件"`
-	Triggers   []string              `json:"触发词"`
-	Format     string                `json:"展示模版"`
-	FormatOnce string                `json:"一次只能购买一个时的展示模版"`
-	PlainItems map[string]PlainGood
+	Goods      map[string]*GoodsGroup `json:"商品清单文件"`
+	Triggers   []string               `json:"触发词"`
+	Format     string                 `json:"展示模版"`
+	FormatOnce string                 `json:"一次只能购买一个时的展示模版"`
+	PlainItems map[string]*PlainGood
 }
 
 func (o *Shop) Init(cfg *defines.ComponentConfig) {
@@ -117,7 +117,7 @@ func (o *Shop) askForItemList(chat *defines.GameChat) {
 	}
 }
 
-func (o *Shop) startBuy(player string, count int, good PlainGood) {
+func (o *Shop) startBuy(player string, count int, good *PlainGood) {
 	fmt.Println(player, count, good)
 	if good.Once {
 		count = 1
@@ -203,12 +203,12 @@ func (o *Shop) Inject(frame defines.MainFrame) {
 		},
 		OptionalOnTriggerFn: o.guide,
 	})
-	o.PlainItems = map[string]PlainGood{}
+	o.PlainItems = map[string]*PlainGood{}
 	for _, gs := range o.Goods {
 		c := gs.CurrencyCmd
 		cn := gs.CurrencyName
 		for _, e := range gs.Goods {
-			o.PlainItems[e.Name] = PlainGood{
+			o.PlainItems[e.Name] = &PlainGood{
 				Good:         e,
 				CurrencyName: cn,
 				CurrencyCmd:  c,

@@ -8,6 +8,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,6 +33,7 @@ type UIDTracking struct {
 	DiskUUIDs          map[string]*UIDRecord
 	AllUids            map[uuid.UUID]int
 	IsTracking         map[int64]bool
+	mu                 sync.Mutex
 }
 
 func (o *UIDTracking) Init(cfg *defines.ComponentConfig) {
@@ -48,6 +50,7 @@ func (o *UIDTracking) Init(cfg *defines.ComponentConfig) {
 		[]string{"为某玩家分配uid的后续工作"}); err != nil {
 		panic(err)
 	}
+	o.mu = sync.Mutex{}
 	o.IsTracking = make(map[int64]bool)
 	o.DiskUUIDs = map[string]*UIDRecord{}
 	o.AllUids = make(map[uuid.UUID]int)
@@ -75,6 +78,8 @@ func (o *UIDTracking) Inject(frame defines.MainFrame) {
 	o.loadTracking()
 	o.Frame.GetGameListener().AppendLoginInfoCallback(o.onNewPlayer)
 	o.Frame.GetGameListener().AppendLogoutInfoCallback(func(entry protocol.PlayerListEntry) {
+		o.mu.Lock()
+		defer o.mu.Unlock()
 		if _, hasK := o.IsTracking[entry.EntityUniqueID]; hasK {
 			// fmt.Println("Remove Tracking", entry.EntityUniqueID)
 			delete(o.IsTracking, entry.EntityUniqueID)
@@ -190,6 +195,8 @@ func (o *UIDTracking) onNewPlayer(entry protocol.PlayerListEntry) {
 				o.AssignPlayerUID(Name, UUID, uid)
 				return
 			} else {
+				o.mu.Lock()
+				defer o.mu.Unlock()
 				if o.IsTracking[entry.EntityUniqueID] {
 					return
 				}
