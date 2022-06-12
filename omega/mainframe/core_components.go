@@ -293,7 +293,7 @@ func (o *NameRecord) GetPossibleName(name string, maxC int) (names []*collaborat
 		}
 		if strings.Contains(p.SearchableString, name) {
 			names = append(names, p)
-			if len(names) == maxC {
+			if maxC != 0 && len(names) == maxC {
 				return
 			}
 		}

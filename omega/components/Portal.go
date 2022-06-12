@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"time"
@@ -36,6 +37,21 @@ func (o *Portal) getPlayerPositions(name string) map[string]*PortalEntry {
 	if ps, hasK := o.positions[name]; hasK {
 		return ps
 	} else {
+		// check rename
+		possibleNames := (*o.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)(name, 0)
+		for _, nameEntry := range possibleNames {
+			if nameEntry.Entry.CurrentName != name {
+				continue
+			}
+			historyNames := nameEntry.GetHistoryNames()
+			for _, historyName := range historyNames {
+				if ps, hasK := o.positions[historyName]; hasK {
+					o.positions[name] = ps
+					delete(o.positions, historyName)
+					return o.positions[name]
+				}
+			}
+		}
 		o.positions[name] = map[string]*PortalEntry{}
 		return o.positions[name]
 	}

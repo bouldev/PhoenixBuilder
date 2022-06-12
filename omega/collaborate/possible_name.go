@@ -53,4 +53,15 @@ func (o *TYPE_PossibleNames) GenReadAbleStringPair() (currentName string, histor
 	}
 }
 
+func (o *TYPE_PossibleNames) GetHistoryNames() []string {
+	historyNames := []string{}
+	for _, h := range o.Entry.NameRecord {
+		ss := strings.Split(h, ";")
+		if len(ss) == 2 {
+			historyNames = append(historyNames, ss[0])
+		}
+	}
+	return historyNames
+}
+
 type FUNC_GetPossibleName func(name string, maxC int) []*TYPE_PossibleNames

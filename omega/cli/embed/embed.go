@@ -1,12 +1,14 @@
 package embed
 
 import (
+	"fmt"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft"
 	mc_packet "phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/mainframe"
+	"time"
 )
 
 type EmbeddedAdaptor struct {
@@ -56,8 +58,8 @@ func EnableOmegaSystem(env *environment.PBEnvironment) *EmbeddedAdaptor {
 		BackendCmdFeeder: make(chan string, 1024),
 		PacketFeeder:     make(chan mc_packet.Packet, 1024),
 	}
-	// fmt.Println("Starting Omega in 1 Seconds")
-	// time.Sleep(time.Second * 1)
+	fmt.Println("Starting Omega in 1 Seconds")
+	time.Sleep(time.Second * 1)
 	omega := mainframe.NewOmega()
 	omega.Bootstrap(ea)
 	env.OmegaHolder = omega
