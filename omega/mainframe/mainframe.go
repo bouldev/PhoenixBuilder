@@ -121,6 +121,15 @@ func (o *Omega) WriteJsonData(topic string, data interface{}) error {
 	return utils.WriteJsonData(fname, data)
 }
 
+func (o *Omega) WriteJsonDataWithTMP(topic string, tmpSuffix string, data interface{}) error {
+	fname := o.GetRelativeFileName(topic + tmpSuffix)
+	if err := utils.WriteJsonData(fname, data); err == nil {
+		return os.Rename(fname, o.GetRelativeFileName(topic))
+	} else {
+		return err
+	}
+}
+
 func (o *Omega) GetJsonData(topic string, ptr interface{}) error {
 	data, err := o.GetFileData(topic)
 	if err != nil {
@@ -300,6 +309,15 @@ func (o *Omega) Activate() {
 				panic(hint)
 			}
 			<-time.NewTimer(3 * time.Second).C
+		}
+	}()
+	go func() {
+		t := time.NewTicker(time.Second * 5)
+		for {
+			<-t.C
+			for _, c := range o.Components {
+				c.Signal(defines.SIGNAL_DATA_CHECKPOINT)
+			}
 		}
 	}()
 	for {

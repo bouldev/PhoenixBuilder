@@ -22,6 +22,7 @@ type UIDRecord struct {
 
 type UIDTracking struct {
 	*BasicComponent
+	fileChange         bool
 	FileName           string        `json:"记录文件"`
 	PlayerUIDFetchCmd  string        `json:"获取某玩家的uid的指令"`
 	AuxUidAssign       bool          `json:"是否让Omega完成uid分配"`
@@ -87,9 +88,20 @@ func (o *UIDTracking) Inject(frame defines.MainFrame) {
 	})
 }
 
+func (o *UIDTracking) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", &o.DiskUUIDs)
+		}
+	}
+	return nil
+}
+
 func (o *UIDTracking) Stop() error {
 	fmt.Println("正在保存 ", o.FileName)
-	return o.Frame.WriteJsonData(o.FileName, o.DiskUUIDs)
+	return o.Frame.WriteJsonDataWithTMP(o.FileName, ".final", o.DiskUUIDs)
 }
 
 func (o *UIDTracking) CommitUID(name string, UUID uuid.UUID, uid int) {
@@ -98,6 +110,7 @@ func (o *UIDTracking) CommitUID(name string, UUID uuid.UUID, uid int) {
 		Name: name,
 	}
 	o.AllUids[UUID] = uid
+	o.fileChange = true
 }
 
 func (o *UIDTracking) RequestPlayerUID(name string) int {

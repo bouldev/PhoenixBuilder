@@ -29,6 +29,10 @@ func (bc *BasicComponent) Stop() error {
 	return nil
 }
 
+func (bc *BasicComponent) Signal(signal int) error {
+	return nil
+}
+
 func GetComponentsPool() map[string]func() defines.Component {
 	return map[string]func() defines.Component{
 		"入服欢迎": func() defines.Component {

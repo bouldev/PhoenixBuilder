@@ -14,9 +14,10 @@ import (
 type Memo struct {
 	*BasicComponent
 	logger            defines.LineDst
-	HintOnEmptyPlayer string   `json:"没有指定玩家时提示"`
-	HintOnEmptyMsg    string   `json:"没有输入信息时提示"`
-	Response          string   `json:"留言成功时提示"`
+	HintOnEmptyPlayer string `json:"没有指定玩家时提示"`
+	HintOnEmptyMsg    string `json:"没有输入信息时提示"`
+	Response          string `json:"留言成功时提示"`
+	fileChange        bool
 	FileName          string   `json:"留言记录文件"`
 	LogFile           string   `json:"日志文件"`
 	Triggers          []string `json:"触发词"`
@@ -37,9 +38,11 @@ func (me *Memo) send(playerName string) {
 					me.logger.Write("send to " + playerName + " " + m)
 				}
 				delete(me.Memos, playerName)
+				me.fileChange = true
 			}
 		} else {
 			delete(me.Memos, playerName)
+			me.fileChange = true
 		}
 	}
 }
@@ -66,6 +69,7 @@ func (me *Memo) save(srcPlayer, dstPlayer, msg string) bool {
 			me.send(dstPlayer)
 		}
 	}
+	me.fileChange = true
 	return true
 }
 
@@ -166,8 +170,17 @@ func (me *Memo) Inject(frame defines.MainFrame) {
 	}
 	me.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)
 }
-
+func (o *Memo) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", o.Memos)
+		}
+	}
+	return nil
+}
 func (me *Memo) Stop() error {
 	fmt.Printf("正在保存 %v\n", me.FileName)
-	return me.Frame.WriteJsonData(me.FileName, me.Memos)
+	return me.Frame.WriteJsonDataWithTMP(me.FileName, ".final", me.Memos)
 }

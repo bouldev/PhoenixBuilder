@@ -41,9 +41,10 @@ type RankRenderOption struct {
 
 type Ranking struct {
 	*BasicComponent
-	Triggers               []string          `json:"触发词"`
-	Usage                  string            `json:"提示信息"`
-	ScoreboardName         string            `json:"计分板名"`
+	Triggers               []string `json:"触发词"`
+	Usage                  string   `json:"提示信息"`
+	ScoreboardName         string   `json:"计分板名"`
+	fileChange             bool
 	FileName               string            `json:"排名记录文件"`
 	MaxSaveCount           int               `json:"最多保存多少记录在文件中"`
 	Ascending              bool              `json:"升序"`
@@ -158,12 +159,15 @@ func (o *Ranking) update() {
 		}
 		if needRankUpdate {
 			sort.Sort(o.records)
+			o.fileChange = true
 		}
 		if needSort {
 			o.records.freshOrder()
+			o.fileChange = true
 		}
 		if needSort || needRankUpdate || len(o.scoreboardRenderCache) == 0 {
 			o.freshScoreboardDisplay()
+			o.fileChange = true
 		}
 	}
 }
@@ -262,12 +266,23 @@ func (o *Ranking) Inject(frame defines.MainFrame) {
 	})
 }
 
+func (o *Ranking) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", o.records.records)
+		}
+	}
+	return nil
+}
+
 func (o *Ranking) Stop() error {
 	fmt.Printf("正在保存 %v\n", o.FileName)
 	if o.MaxSaveCount > 0 && o.MaxSaveCount < len(o.records.records) {
 		o.records.records = o.records.records[:o.MaxSaveCount]
 	}
-	return o.Frame.WriteJsonData(o.FileName, o.records.records)
+	return o.Frame.WriteJsonDataWithTMP(o.FileName, ".final", o.records.records)
 }
 
 func (o *Ranking) Activate() {

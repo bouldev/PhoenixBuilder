@@ -33,9 +33,10 @@ type Express struct {
 	Usage             string   `json:"提示信息"`
 	Response          string   `json:"寄出成功时提示"`
 	HintOnPlayerReady string   `json:"提示玩家把要投递的东西丢到身边"`
-	FileName          string   `json:"记录文件"`
-	PackagePlatform   []int    `json:"打包平台"`
-	SelectCmd         string   `json:"物品转移器"`
+	fileChange        bool
+	FileName          string `json:"记录文件"`
+	PackagePlatform   []int  `json:"打包平台"`
+	SelectCmd         string `json:"物品转移器"`
 	Record            ExpressInfo
 	PlayerSearcher    collaborate.FUNC_GetPossibleName
 }
@@ -66,6 +67,7 @@ func (o *Express) delivery(playerName string) {
 			} else {
 				delete(o.Record.Packages, playerName)
 			}
+			o.fileChange = true
 		}
 	})
 }
@@ -120,6 +122,7 @@ func (o *Express) post(srcPlayer, dstPlayer, hint string) {
 						time.Sleep(3 * time.Second)
 						o.delivery(dstPlayer)
 					}()
+					o.fileChange = true
 				} else {
 					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] %v", ox, oy, oz, srcPlayer))
 					o.Frame.GetGameControl().SayTo(srcPlayer, "打包失败，尝试退回物品")
@@ -232,7 +235,18 @@ func (o *Express) Activate() {
 	}
 }
 
+func (o *Express) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", o.Record)
+		}
+	}
+	return nil
+}
+
 func (o *Express) Stop() error {
 	fmt.Printf("正在保存 %v\n", o.FileName)
-	return o.Frame.WriteJsonData(o.FileName, o.Record)
+	return o.Frame.WriteJsonDataWithTMP(o.FileName, ".final", o.Record)
 }

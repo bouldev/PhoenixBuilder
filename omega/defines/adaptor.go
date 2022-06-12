@@ -59,6 +59,12 @@ type ComponentConfig struct {
 	Configs     map[string]interface{} `json:"配置"`
 }
 
+const (
+	// 设计失误之一，由于希望使用者可以直接阅读数据，就没有上数据库，后果就是进程被强杀时会掉数据
+	// 所以需要 这个 SIGNAL，让组件时不时的保存一下数据
+	SIGNAL_DATA_CHECKPOINT = iota
+)
+
 // Component 描述了插件应该具有的接口
 // 顺序 &Component{} -> .Init(ComponentConfig) -> Activate() -> Stop()
 // 每个 Activate 工作在一个独立的 goroutine 下
@@ -67,6 +73,7 @@ type Component interface {
 	Inject(frame MainFrame)
 	Activate()
 	Stop() error
+	Signal(int) error
 }
 
 type CoreComponent interface {

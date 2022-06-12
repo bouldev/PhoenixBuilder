@@ -31,6 +31,7 @@ type LimitRecord struct {
 
 type Recycle struct {
 	*BasicComponent
+	fileChange          bool
 	RecordFileName      string    `json:"最后回收记录文件"`
 	Triggers            []string  `json:"触发词"`
 	Format              string    `json:"展示模版"`
@@ -111,11 +112,22 @@ func (o *Recycle) setCountsLeft(name string, option string, counts int) {
 		cached:     true,
 		CountsLeft: counts,
 	}
+	o.fileChange = true
+}
+func (o *Recycle) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.RecordFileName, ".ckpt", &o.PlayerRecycleRecord)
+		}
+	}
+	return nil
 }
 
 func (o *Recycle) Stop() error {
 	fmt.Println("正在保存" + o.RecordFileName)
-	return o.Frame.WriteJsonData(o.RecordFileName, o.PlayerRecycleRecord)
+	return o.Frame.WriteJsonDataWithTMP(o.RecordFileName, ".final", o.PlayerRecycleRecord)
 }
 
 func (o *Recycle) popMenu(name string) {

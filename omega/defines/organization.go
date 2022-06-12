@@ -85,6 +85,7 @@ type StorageAndLogProvider interface {
 	GetWorldsDir() string
 	WriteFileData(topic string, data []byte) error
 	WriteJsonData(topic string, data interface{}) error
+	WriteJsonDataWithTMP(topic string, tmpSuffix string, data interface{}) error
 }
 
 // 与后端的交互接口

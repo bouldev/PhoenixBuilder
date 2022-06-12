@@ -39,6 +39,7 @@ type StructureBackup struct {
 	Admin                 []string `json:"建筑恢复管理员"`
 	lastRequestTime       map[string]time.Time
 	Structures            *StructureRecords
+	fileChange            bool
 	FileName              string `json:"存档点记录文件名"`
 }
 
@@ -89,10 +90,12 @@ func (o *StructureBackup) doBackup(user, structureName string, pos []int, idx in
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("备份成功 %v@%v:%v %v->%v", user, structureName, o.Structures.User[user][structureName], cmd, output))
 			pk.Say("备份成功")
 			o.lastRequestTime[user] = time.Now()
+			o.fileChange = true
 		} else {
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("备份失败 %v@%v:%v %v->%v", user, structureName, o.Structures.User[user][structureName], cmd, output))
 			delete(o.Structures.User[user], structureName)
 			pk.Say("备份失败")
+			o.fileChange = true
 		}
 	})
 }
@@ -159,6 +162,7 @@ func (o *StructureBackup) tryBackup(chat *defines.GameChat) bool {
 			n := sname[i]
 			if o.Structures.User[chat.Name] != nil && o.Structures.User[chat.Name][n] != nil {
 				delete(o.Structures.User[chat.Name], n)
+				o.fileChange = true
 			}
 			o.getStructureName(chat.Name, []string{}, structures[i].RealIDX)
 			return true
@@ -275,9 +279,20 @@ func (o *StructureBackup) tryRecover(chat *defines.GameChat) bool {
 	return true
 }
 
+func (o *StructureBackup) StructureBackup(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", &o.Structures)
+		}
+	}
+	return nil
+}
+
 func (o *StructureBackup) Stop() error {
 	fmt.Println("正在保存 " + o.FileName)
-	return o.Frame.WriteJsonData(o.FileName, &o.Structures)
+	return o.Frame.WriteJsonDataWithTMP(o.FileName, ".final", &o.Structures)
 }
 
 func (o *StructureBackup) Inject(frame defines.MainFrame) {

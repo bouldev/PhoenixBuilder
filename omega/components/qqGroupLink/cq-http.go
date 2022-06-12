@@ -44,16 +44,14 @@ type QGroupLink struct {
 	firstInit                 bool
 	sendChan                  chan string
 	connectionFalseHintReduce int
+	cqStartPrintErr           bool
 }
 
-// TODO: remove global var
-var cqStartPrintErr bool
-
-func cqStartPrintErrRoutine() {
-	if cqStartPrintErr {
+func (cq *QGroupLink) cqStartPrintErrRoutine() {
+	if cq.cqStartPrintErr {
 		return
 	}
-	cqStartPrintErr = true
+	cq.cqStartPrintErr = true
 	for {
 		pterm.Error.Println("Q群链接组件: 和CQ-HTTP连接出现故障, 请排除错误并重启 Omega ")
 		<-time.NewTimer(time.Minute * 2).C
@@ -67,7 +65,7 @@ func (cq *QGroupLink) receiveRoutine() {
 		_, data, err := cq.conn.ReadMessage()
 		if err != nil {
 			cq.Frame.GetBackendDisplay().Write(fmt.Sprintf("Q群链接组件: 和CQ-HTTP连接出现故障:" + err.Error()))
-			cqStartPrintErrRoutine()
+			cq.cqStartPrintErrRoutine()
 			return
 			// cq.Frame.GetBackendDisplay().Write(fmt.Sprintf("10秒后重连"))
 			time.Sleep(10 * time.Second)
@@ -125,7 +123,7 @@ func (cq *QGroupLink) sendRoutine() {
 			err := cq.conn.WriteMessage(1, data)
 			if err != nil {
 				cq.conn.Close()
-				cqStartPrintErrRoutine()
+				cq.cqStartPrintErrRoutine()
 				return
 				// 如果接收协程还没有尝试重连，那么由发送线程尝试重连
 				if cq.inited {
@@ -237,7 +235,7 @@ func (cq *QGroupLink) sendQQMessage(msg string) {
 }
 
 func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
-	if cqStartPrintErr {
+	if cq.cqStartPrintErr {
 		return false
 	}
 	if cq.ChatOnly && chat.Type != packet.TextTypeChat {
@@ -317,6 +315,10 @@ func (b *QGroupLink) Inject(frame defines.MainFrame) {
 
 func (b *QGroupLink) Stop() error {
 	b.sendQQMessage("[群服互通]: 机器人已经退出服务器")
+	return nil
+}
+
+func (b *QGroupLink) Signal(signal int) error {
 	return nil
 }
 

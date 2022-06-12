@@ -30,7 +30,8 @@ type CDkey struct {
 	HintOnInvalid   string                  `json:"兑换码无效时提示"`
 	HintOnRetake    string                  `json:"不可重复兑换时提示"`
 	HintOnRateLimit string                  `json:"领取次数到达上限时提示"`
-	FileName        string                  `json:"兑换码领取记录文件"`
+	fileChange      bool
+	FileName        string `json:"兑换码领取记录文件"`
 }
 
 func (o *CDkey) Init(cfg *defines.ComponentConfig) {
@@ -97,6 +98,7 @@ func (o *CDkey) redeem(chat *defines.GameChat) bool {
 					)
 					redeem.TotalTaken++
 					o.Frame.GetBackendDisplay().Write(fmt.Sprintf("player %v 重复兑换 %v (%v/%v)", chat.Name, key, redeem.TotalTaken, redeem.Total))
+					o.fileChange = true
 					o.doRedeem(chat.Name, redeem.Cmds, redeem.TotalTaken, redeem.Total)
 				} else {
 					redeem.PlayerTaken[uuid] = []*cdKeyTakenRecord{
@@ -107,6 +109,7 @@ func (o *CDkey) redeem(chat *defines.GameChat) bool {
 					}
 					redeem.TotalTaken++
 					o.Frame.GetBackendDisplay().Write(fmt.Sprintf("player %v 首次兑换 %v (%v/%v)", chat.Name, key, redeem.TotalTaken, redeem.Total))
+					o.fileChange = true
 					o.doRedeem(chat.Name, redeem.Cmds, redeem.TotalTaken, redeem.Total)
 				}
 			}
@@ -152,11 +155,26 @@ func (o *CDkey) Inject(frame defines.MainFrame) {
 	})
 }
 
+func (o *CDkey) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			playerTaken := map[string]map[string][]*cdKeyTakenRecord{}
+			for cdKey, record := range o.CDKeys {
+				playerTaken[cdKey] = record.PlayerTaken
+			}
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", playerTaken)
+		}
+	}
+	return nil
+}
+
 func (o *CDkey) Stop() error {
 	fmt.Println("正在保存 " + o.FileName)
 	playerTaken := map[string]map[string][]*cdKeyTakenRecord{}
 	for cdKey, record := range o.CDKeys {
 		playerTaken[cdKey] = record.PlayerTaken
 	}
-	return o.Frame.WriteJsonData(o.FileName, playerTaken)
+	return o.Frame.WriteJsonDataWithTMP(o.FileName, ".final", playerTaken)
 }

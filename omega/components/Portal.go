@@ -17,6 +17,7 @@ type PortalEntry struct {
 
 type Portal struct {
 	*BasicComponent
+	fileChange    bool
 	FileName      string   `json:"存档点记录文件名"`
 	SaveTrigger   []string `json:"保存存档点触发词"`
 	RemoveTrigger []string `json:"删除存档点触发词"`
@@ -31,6 +32,10 @@ func (o *Portal) Init(cfg *defines.ComponentConfig) {
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)
 	}
+}
+
+func (o *Portal) markFileChange() {
+	o.fileChange = true
 }
 
 func (o *Portal) getPlayerPositions(name string) map[string]*PortalEntry {
@@ -48,11 +53,13 @@ func (o *Portal) getPlayerPositions(name string) map[string]*PortalEntry {
 				if ps, hasK := o.positions[historyName]; hasK {
 					o.positions[name] = ps
 					delete(o.positions, historyName)
+					o.markFileChange()
 					return o.positions[name]
 				}
 			}
 		}
 		o.positions[name] = map[string]*PortalEntry{}
+		o.markFileChange()
 		return o.positions[name]
 	}
 }
@@ -158,6 +165,7 @@ func (o *Portal) doRemove(name string, pos string) bool {
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 移除了地点 %v: %v", name, n, ps[n]))
 			o.Frame.GetGameControl().SayTo(name, "已移除")
 			delete(ps, n)
+			o.markFileChange()
 			return true
 		}
 	}
@@ -188,6 +196,7 @@ func (o *Portal) doAdd(name string, posName string) {
 		}
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 添加了地点 %v: %v", name, posName, o.positions[name][posName]))
 		pk.Say("添加成功")
+		o.markFileChange()
 	}()
 }
 
@@ -243,9 +252,20 @@ func (o *Portal) remove(chat *defines.GameChat) bool {
 	return true
 }
 
+func (o *Portal) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", &o.positions)
+		}
+	}
+	return nil
+}
+
 func (o *Portal) Stop() error {
 	fmt.Println("正在保存 " + o.FileName)
-	return o.Frame.WriteJsonData(o.FileName, &o.positions)
+	return o.Frame.WriteJsonDataWithTMP(o.FileName, ".final", &o.positions)
 }
 
 func (o *Portal) Inject(frame defines.MainFrame) {

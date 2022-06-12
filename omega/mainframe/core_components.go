@@ -24,6 +24,10 @@ func (c *BaseCoreComponent) Init(cfg *defines.ComponentConfig) {
 	c.cfg = cfg
 }
 
+func (c *BaseCoreComponent) Signal(signal int) error {
+	return nil
+}
+
 func (c *BaseCoreComponent) Activate() {}
 
 func (c *BaseCoreComponent) Stop() error { return nil }

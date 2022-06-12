@@ -77,6 +77,7 @@ type DailyAttendance struct {
 	HintOnSuggestCheckOut   string          `json:"提醒玩家签到的消息"`
 	PassiveCheckOut         bool            `json:"为true时被动签到false时主动签到"`
 	allPlayerAttendanceInfo map[string]*PlayerAttendanceInfo
+	fileChange              bool
 }
 
 func (o *DailyAttendance) computeLastCheckPointTime() time.Time {
@@ -176,6 +177,7 @@ func (o *DailyAttendance) doUpdate(uidString string, record *PlayerAttendanceInf
 	record.LastAttendanceTime = updatedTimestamp
 	// fmt.Println(record)
 	o.allPlayerAttendanceInfo[uidString] = record
+	o.fileChange = true
 	o.doResponse(record.PlayerName, record.AccumulateAttendanceDays, record.ContinuationAttendanceDays)
 }
 
@@ -273,7 +275,18 @@ func (o *DailyAttendance) Inject(frame defines.MainFrame) {
 	}
 }
 
+func (o *DailyAttendance) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", o.allPlayerAttendanceInfo)
+		}
+	}
+	return nil
+}
+
 func (o *DailyAttendance) Stop() error {
 	fmt.Println("正在保存: " + o.FileName)
-	return o.Frame.WriteJsonData(o.FileName, o.allPlayerAttendanceInfo)
+	return o.Frame.WriteJsonDataWithTMP(o.FileName, ".final", o.allPlayerAttendanceInfo)
 }

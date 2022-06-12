@@ -16,7 +16,8 @@ type nameEntry struct {
 
 type OpCheck struct {
 	*BasicComponent
-	OPS            []string      `json:"管理员昵称"`
+	OPS            []string `json:"管理员昵称"`
+	fileChange     bool
 	FileName       string        `json:"管理员改名记录文件"`
 	fakeOPResponse []defines.Cmd `json:"假管理反制"`
 	Records        map[string]*nameEntry
@@ -57,9 +58,20 @@ func (o *OpCheck) Init(cfg *defines.ComponentConfig) {
 //	}
 //}
 
+func (o *OpCheck) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", o.Records)
+		}
+	}
+	return nil
+}
+
 func (o *OpCheck) Stop() error {
 	fmt.Println("正在保存 " + o.FileName)
-	return o.Frame.WriteJsonData(o.FileName, o.Records)
+	return o.Frame.WriteJsonDataWithTMP(o.FileName, ".final", o.Records)
 }
 
 func (o *OpCheck) react(pk *packet.AdventureSettings) {
@@ -96,6 +108,7 @@ func (o *OpCheck) react(pk *packet.AdventureSettings) {
 				UUID:        playerUUID,
 				AuthName:    op,
 			}
+			o.fileChange = true
 			return
 		}
 	}
