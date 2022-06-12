@@ -13,7 +13,7 @@ import (
 type Schedule struct {
 	*BasicComponent
 	Name            string        `json:"任务"`
-	Duration        int           `json:"周期"`
+	Duration        float32       `json:"周期"`
 	StartTimeInReal string        `json:"第一次启动的现实时间"`
 	actions         []defines.Cmd `json:"动作"`
 	LogFile         string        `json:"结果记录文件"`
@@ -79,7 +79,7 @@ func (o *Schedule) launchTask() {
 		"[min]":   fmt.Sprintf("%02d", min),
 		"[sec]":   fmt.Sprintf("%02d", sec),
 	}
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.actions, replacement, o.logger)
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.actions, replacement, o.logger)
 	//for _, _a := range o.Actions {
 	//	a := _a
 	//	cmd := utils.FormatByReplacingOccurrences(a.Cmd, map[string]interface{}{})
@@ -159,7 +159,7 @@ func (o *Schedule) doTick() {
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("计划任务 %v 已退出, 因为周期为 0", o.Name))
 		return
 	}
-	ticker := time.NewTicker(time.Duration(o.Duration) * time.Second)
+	ticker := time.NewTicker(time.Duration(o.Duration * float32(time.Second)))
 	for {
 		select {
 		case <-ticker.C:
@@ -184,7 +184,7 @@ func (o *Schedule) Activate() {
 			time.Sleep(d)
 			o.Frame.GetBackendDisplay().Write(pterm.Info.Sprintf(
 				"计划任务 %v 于 %v 第一次执行，随后每隔 %v 秒执行一次 (下一次时间为 %v)",
-				o.Name, time.Now().Format("2006-01-02 15:04:05"), o.Duration, time.Now().Add(time.Duration(o.Duration)).Format("2006-01-02 15:04:05"),
+				o.Name, time.Now().Format("2006-01-02 15:04:05"), o.Duration, time.Now().Add(time.Duration(o.Duration*float32(time.Second))).Format("2006-01-02 15:04:05"),
 			))
 			o.doTick()
 		}()

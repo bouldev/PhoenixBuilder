@@ -92,7 +92,7 @@ func (o *IntrusionDetectSystem) doNbtCheck(rtid int32, nbt map[string]interface{
 		player := getPlayerName()
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("发现持有非法物资玩家 %v: %v", player, reason))
 		o.Frame.GetBackendDisplay().Write(getPacketString())
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.k32Response, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.k32Response, map[string]interface{}{
 			"[player]": "\"" + player + "\"",
 		}, o.Frame.GetBackendDisplay())
 	}

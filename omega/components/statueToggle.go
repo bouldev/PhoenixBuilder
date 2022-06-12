@@ -81,7 +81,7 @@ func (o *StatusToggle) doMatch(player, argument string, idx int) {
 		}
 	}
 	if success {
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), logic.toggleCommand, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), logic.toggleCommand, map[string]interface{}{
 			"[player]": "\"" + player + "\"",
 			"[args]":   argument,
 		}, o.Frame.GetBackendDisplay())

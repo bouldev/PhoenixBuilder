@@ -17,13 +17,13 @@ import (
 
 type ContainerScan struct {
 	*BasicComponent
-	EnableK32Detect bool                   `json:"启用32容器检测"`
-	K32Threshold    int                    `json:"32k物品附魔等级阈值"`
-	k32Response     []defines.Cmd          `json:"32k容器反制"`
-	RegexCheckers   []*ContainerRegexCheck `json:"使用以下正则表达式检查"`
-	needFetchBlockName     bool 
-	regexTaskQueue []func()
-	regexMu sync.Mutex
+	EnableK32Detect    bool                   `json:"启用32容器检测"`
+	K32Threshold       int                    `json:"32k物品附魔等级阈值"`
+	k32Response        []defines.Cmd          `json:"32k容器反制"`
+	RegexCheckers      []*ContainerRegexCheck `json:"使用以下正则表达式检查"`
+	needFetchBlockName bool
+	regexTaskQueue     []func()
+	regexMu            sync.Mutex
 	regexCheckerAwaked bool
 }
 
@@ -51,12 +51,12 @@ func (o *ContainerScan) Init(cfg *defines.ComponentConfig) {
 	if err != nil {
 		panic(err)
 	}
-	o.regexTaskQueue=make([]func(), 0)
-	o.regexMu=sync.Mutex{}
+	o.regexTaskQueue = make([]func(), 0)
+	o.regexMu = sync.Mutex{}
 	for _, rc := range o.RegexCheckers {
 		rc.compiledValueRegex = *regexp.MustCompile(rc.RegexString)
-		if rc.BlockName!="" && rc.Enabled{
-			o.needFetchBlockName=true
+		if rc.BlockName != "" && rc.Enabled {
+			o.needFetchBlockName = true
 		}
 		rc.compiledBlockNameRegex = *regexp.MustCompile(rc.BlockName)
 		if rc.ExtraCommandIn == nil {
@@ -158,7 +158,7 @@ func (o *ContainerScan) regexNbtDetect(blockName string, nbt map[string]interfac
 							mapping[fmt.Sprintf("[y%v]", i)] = y + i
 							mapping[fmt.Sprintf("[z%v]", i)] = z + i
 						}
-						utils.LaunchCmdsArray(o.Frame.GetGameControl(), regexCheck.extraCommands, mapping, o.Frame.GetBackendDisplay())
+						go utils.LaunchCmdsArray(o.Frame.GetGameControl(), regexCheck.extraCommands, mapping, o.Frame.GetBackendDisplay())
 					}
 					return true
 				}
@@ -207,9 +207,9 @@ func (o *ContainerScan) doCheckNbt(x, y, z int, nbt map[string]interface{}, getS
 		})
 	}
 	if !has32K {
-		if !o.needFetchBlockName{
+		if !o.needFetchBlockName {
 			has32K, reason = o.regexNbtDetect("2401PT_error", nbt, x, y, z)
-		}else{
+		} else {
 			utils.QueryBlockName(o.Frame.GetGameControl(), x, y, z, func(s string) {
 				has32K, reason = o.regexNbtDetect(s, nbt, x, y, z)
 			})
@@ -217,7 +217,7 @@ func (o *ContainerScan) doCheckNbt(x, y, z int, nbt map[string]interface{}, getS
 	}
 	if has32K {
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("位于 %v %v %v 的方块:"+reason, x, y, z))
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.k32Response, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.k32Response, map[string]interface{}{
 			"[x]": x,
 			"[y]": y,
 			"[z]": z,
@@ -237,12 +237,12 @@ func (o *ContainerScan) onLevelChunk(cd *mirror.ChunkData) {
 }
 
 func (o *ContainerScan) checkNbt(x, y, z int, nbt map[string]interface{}, getStr func() string) {
-	if !o.needFetchBlockName{
-		o.doCheckNbt(x,y,z,nbt,getStr)
-	}else{
+	if !o.needFetchBlockName {
+		o.doCheckNbt(x, y, z, nbt, getStr)
+	} else {
 		o.regexMu.Lock()
-		o.regexTaskQueue=append(o.regexTaskQueue, func() {
-			o.doCheckNbt(x,y,z,nbt,getStr)
+		o.regexTaskQueue = append(o.regexTaskQueue, func() {
+			o.doCheckNbt(x, y, z, nbt, getStr)
 		})
 		o.regexMu.Unlock()
 		go o.awakeChecker()
@@ -266,23 +266,23 @@ func (o *ContainerScan) Inject(frame defines.MainFrame) {
 	o.Frame.GetGameListener().SetOnLevelChunkCallBack(o.onLevelChunk)
 }
 
-func (o *ContainerScan) awakeChecker(){
-	if o.regexCheckerAwaked{
+func (o *ContainerScan) awakeChecker() {
+	if o.regexCheckerAwaked {
 		return
 	}
-	o.regexCheckerAwaked=true
-	t:=time.NewTicker(51*time.Millisecond)
+	o.regexCheckerAwaked = true
+	t := time.NewTicker(51 * time.Millisecond)
 	for {
-		if len(o.regexTaskQueue)==0{
-			o.regexCheckerAwaked=false
+		if len(o.regexTaskQueue) == 0 {
+			o.regexCheckerAwaked = false
 			return
-		}else{
+		} else {
 			// fmt.Println(len(o.regexTaskQueue))
 		}
 		<-t.C
 		o.regexMu.Lock()
-		t:=o.regexTaskQueue[0]
-		o.regexTaskQueue=o.regexTaskQueue[1:]
+		t := o.regexTaskQueue[0]
+		o.regexTaskQueue = o.regexTaskQueue[1:]
 		o.regexMu.Unlock()
 		t()
 	}

@@ -11,10 +11,11 @@ import (
 )
 
 type Good struct {
-	Name  string   `json:"商品显示名"`
-	Once  bool     `json:"一次只能买一件"`
-	Price int      `json:"价格"`
-	Cmds  []string `json:"给予模版"`
+	Name   string      `json:"商品显示名"`
+	Once   bool        `json:"一次只能买一件"`
+	Price  int         `json:"价格"`
+	CmdsIn interface{} `json:"给予模版"`
+	Cmds   []defines.Cmd
 }
 
 type GoodsGroup struct {
@@ -42,6 +43,16 @@ func (o *Shop) Init(cfg *defines.ComponentConfig) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)
+	}
+	var err error
+	for i, goodGroup := range o.Goods {
+		for j, item := range goodGroup.Goods {
+			if item.Cmds, err = utils.ParseAdaptiveCmd(item.CmdsIn); err != nil {
+				panic(err)
+			}
+			goodGroup.Goods[j] = item
+		}
+		o.Goods[i] = goodGroup
 	}
 }
 
@@ -129,18 +140,16 @@ func (o *Shop) startBuy(player string, count int, good PlainGood) {
 			if hasMoney > totalPrice {
 				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("玩家 %v 花费 %v / %v 购买了 %v * %v", player, totalPrice, hasMoney, good.Name, count))
 				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players remove \"%v\" %v %v", player, good.CurrencyCmd, totalPrice))
-				for _, t := range good.Cmds {
-					c := utils.FormatByReplacingOccurrences(t, map[string]interface{}{
-						"[player]":      "\"" + player + "\"",
-						"[totalPrice]":  totalPrice,
-						"[moneyHas]":    hasMoney,
-						"[moneyLeft]":   hasMoney - totalPrice,
-						"[count]":       count,
-						"[currency]":    good.CurrencyName,
-						"[currencyCMD]": good.CurrencyCmd,
-					})
-					o.Frame.GetGameControl().SendCmd(c)
+				mapping := map[string]interface{}{
+					"[player]":      "\"" + player + "\"",
+					"[totalPrice]":  totalPrice,
+					"[moneyHas]":    hasMoney,
+					"[moneyLeft]":   hasMoney - totalPrice,
+					"[count]":       count,
+					"[currency]":    good.CurrencyName,
+					"[currencyCMD]": good.CurrencyCmd,
 				}
+				go utils.LaunchCmdsArray(o.Frame.GetGameControl(), good.Cmds, mapping, o.Frame.GetBackendDisplay())
 			} else {
 				o.Frame.GetGameControl().SayTo(player, "很遗憾,你钱不够")
 			}

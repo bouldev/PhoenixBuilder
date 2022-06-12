@@ -241,8 +241,7 @@ func GetMemUsageByMBInDetailedString() string {
 	toMB := func(v uint64) float32 {
 		return float32(v) / 1024 / 1024
 	}
-	memUsage := toMB(m.HeapIdle - m.HeapReleased + m.StackSys)
-	return fmt.Sprintf("系统分配[包括备用]内存 %.1f MB, 实际使用内存 %.1f MB(=[空闲堆]%.1fMB - [释放堆]%.1fMB + [分配栈]%.1fMB)", toMB(m.Sys), memUsage, toMB(m.HeapIdle), toMB(m.HeapReleased), toMB(m.StackSys))
+	return fmt.Sprintf("系统分配[包括备用]内存 %.1f MB, ([空闲堆]%.1fMB / [释放堆]%.1fMB / [堆]%.1fMB / [分配栈]%.1fMB)", toMB(m.Sys), toMB(m.HeapIdle), toMB(m.HeapReleased), toMB(m.HeapInuse), toMB(m.StackSys))
 }
 
 func (o *Omega) Activate() {

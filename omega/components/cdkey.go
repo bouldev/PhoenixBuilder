@@ -12,7 +12,8 @@ type cdKeyRecord struct {
 	Total       int  `json:"可领取次数"`
 	AllowRetake bool `json:"可重复领取"`
 	TotalTaken  int
-	Cmds        []string `json:"指令"`
+	CmdsIn      interface{} `json:"指令"`
+	Cmds        []defines.Cmd
 	PlayerTaken map[string][]*cdKeyTakenRecord
 }
 
@@ -38,30 +39,32 @@ func (o *CDkey) Init(cfg *defines.ComponentConfig) {
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)
 	}
+	var err error
 	for _, r := range o.CDKeys {
 		r.PlayerTaken = make(map[string][]*cdKeyTakenRecord)
+		if r.Cmds, err = utils.ParseAdaptiveCmd(r.CmdsIn); err != nil {
+			panic(err)
+		}
 		if r.Total < 0 {
 			fmt.Println(r, " 的可领取次数不能为负数，如果希望能无限次领取可以设为0")
 		}
 	}
 }
-func (o *CDkey) doRedeem(player string, cmds []string, current, total int) {
-	for _, cmd := range cmds {
-		res := "无限"
-		totalS := fmt.Sprintf("%d", total)
-		if total == 0 {
-			totalS = "无限"
-		} else {
-			res = fmt.Sprintf("%d", total-current)
-		}
-		c := utils.FormatByReplacingOccurrences(cmd, map[string]interface{}{
-			"[player]":  "\"" + player + "\"",
-			"[current]": current,
-			"[total]":   totalS,
-			"[res]":     res,
-		})
-		o.Frame.GetGameControl().SendCmd(c)
+func (o *CDkey) doRedeem(player string, cmds []defines.Cmd, current, total int) {
+	res := "无限"
+	totalS := fmt.Sprintf("%d", total)
+	if total == 0 {
+		totalS = "无限"
+	} else {
+		res = fmt.Sprintf("%d", total-current)
 	}
+	mapping := map[string]interface{}{
+		"[player]":  "\"" + player + "\"",
+		"[current]": current,
+		"[total]":   totalS,
+		"[res]":     res,
+	}
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), cmds, mapping, o.Frame.GetBackendDisplay())
 }
 
 func (o *CDkey) redeem(chat *defines.GameChat) bool {

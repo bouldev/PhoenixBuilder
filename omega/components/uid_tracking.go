@@ -127,7 +127,7 @@ func (o *UIDTracking) doAssignPlayerUID(currentUID int, name string, UUID uuid.U
 		"[uid+1]":  currentUID + 1,
 	}
 	// pterm.Info.Println(replacement)
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeUidAsign, replacement, o.Frame.GetBackendDisplay())
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeUidAsign, replacement, o.Frame.GetBackendDisplay())
 	assignCmd := utils.FormatByReplacingOccurrences(o.UidAsignCmd, replacement)
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(assignCmd, func(output *packet.CommandOutput) {
 		// fmt.Println(output)
@@ -142,7 +142,7 @@ func (o *UIDTracking) doAssignPlayerUID(currentUID int, name string, UUID uuid.U
 			}
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("新玩家 UID 分配记录 %v %v %v", name, UUID.String(), uid))
 			o.CommitUID(name, UUID, uid)
-			utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsAfterUidAsign, replacement, o.Frame.GetBackendDisplay())
+			go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsAfterUidAsign, replacement, o.Frame.GetBackendDisplay())
 		}
 	})
 

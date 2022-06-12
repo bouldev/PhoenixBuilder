@@ -41,22 +41,20 @@ type RankRenderOption struct {
 
 type Ranking struct {
 	*BasicComponent
-	Triggers              []string          `json:"触发词"`
-	Usage                 string            `json:"提示信息"`
-	ScoreboardName        string            `json:"计分板名"`
-	FileName              string            `json:"排名记录文件"`
-	MaxSaveCount          int               `json:"最多保存多少记录在文件中"`
-	Ascending             bool              `json:"升序"`
-	Period                int               `json:"刷新周期"`
-	Render                *RankRenderOption `json:"渲染选项"`
-	records               *scoreRecords
-	playerMapping         map[string]*scoreRecord
-	scoreboardRenderCache []string
+	Triggers               []string          `json:"触发词"`
+	Usage                  string            `json:"提示信息"`
+	ScoreboardName         string            `json:"计分板名"`
+	FileName               string            `json:"排名记录文件"`
+	MaxSaveCount           int               `json:"最多保存多少记录在文件中"`
+	Ascending              bool              `json:"升序"`
+	Period                 int               `json:"刷新周期"`
+	Render                 *RankRenderOption `json:"渲染选项"`
+	records                *scoreRecords
+	playerMapping          map[string]*scoreRecord
+	scoreboardRenderCache  []string
+	rankingLastFetchTime   time.Time
+	rankingLastFetchResult map[string]map[string]int
 }
-
-// TODO: Remove Global Var
-var rankingLastFetchTime time.Time
-var rankingLastFetchResult map[string]map[string]int
 
 func (ss *scoreRecords) Len() int { return len(ss.records) }
 func (ss *scoreRecords) Less(i, j int) bool {
@@ -127,9 +125,9 @@ func (o *Ranking) onTrigger(chat *defines.GameChat) (stop bool) {
 }
 
 func (o *Ranking) update() {
-	if players, hasK := rankingLastFetchResult[o.ScoreboardName]; !hasK {
+	if players, hasK := o.rankingLastFetchResult[o.ScoreboardName]; !hasK {
 		pterm.Error.Printfln("没有计分板 %v,所有的计分板被列在下方,如果有计分板但还是出现这个错误，可能是因为没有一个玩家在这个计分板上有分数\n如果你不需要排行榜功能，可以去 配置/组件-排行榜.json 禁用这个功能以摆脱这个错误", o.ScoreboardName)
-		for n, _ := range rankingLastFetchResult {
+		for n, _ := range o.rankingLastFetchResult {
 			pterm.Error.Println(n)
 		}
 		o.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players add @s %v 0", o.ScoreboardName))
@@ -276,8 +274,8 @@ func (o *Ranking) Activate() {
 	t := time.NewTicker(time.Second * time.Duration(o.Period))
 	go func() {
 		for {
-			if time.Now().Sub(rankingLastFetchTime) > time.Second*time.Duration(o.Period) {
-				rankingLastFetchTime = time.Now()
+			if time.Now().Sub(o.rankingLastFetchTime) > time.Second*time.Duration(o.Period) {
+				o.rankingLastFetchTime = time.Now()
 				o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("scoreboard players list @a", func(output *packet.CommandOutput) {
 					if result := o.fetch(output); result == nil {
 						// m, err := json.Marshal(output)
@@ -289,12 +287,12 @@ func (o *Ranking) Activate() {
 						// }
 						// pterm.Error.Println("抓取玩家计分板信息失败:" + s)
 					} else {
-						rankingLastFetchResult = result
+						o.rankingLastFetchResult = result
 						o.update()
 					}
 				})
 			} else {
-				if rankingLastFetchResult != nil {
+				if o.rankingLastFetchResult != nil {
 					o.update()
 				}
 			}

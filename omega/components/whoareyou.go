@@ -55,7 +55,7 @@ func (o *WhoAreYou) onLogin(entry protocol.PlayerListEntry) {
 }
 
 func (o *WhoAreYou) handleCheckResult(name string) {
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.react, map[string]interface{}{
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.react, map[string]interface{}{
 		"[player]": "\"" + name + "\"",
 		"[tag]":    o.Tag,
 	}, o.Frame.GetBackendDisplay())

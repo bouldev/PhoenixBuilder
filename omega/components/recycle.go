@@ -12,13 +12,14 @@ import (
 )
 
 type Option struct {
-	Name             string   `json:"选项名"`
-	Description      string   `json:"附加说明"`
-	CurrencyName     string   `json:"货币名"`
-	Price            int      `json:"价格"`
-	MaxRecyclePerDay int      `json:"每天最多回收"`
-	ClearCmd         string   `json:"清除模版"`
-	RewardCmds       []string `json:"收益指令"`
+	Name             string      `json:"选项名"`
+	Description      string      `json:"附加说明"`
+	CurrencyName     string      `json:"货币名"`
+	Price            int         `json:"价格"`
+	MaxRecyclePerDay int         `json:"每天最多回收"`
+	ClearCmd         string      `json:"清除模版"`
+	RewardCmdsIn     interface{} `json:"收益指令"`
+	RewardCmds       []defines.Cmd
 }
 
 type LimitRecord struct {
@@ -41,6 +42,12 @@ func (o *Recycle) Init(cfg *defines.ComponentConfig) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)
+	}
+	var err error
+	for _, o := range o.Options {
+		if o.RewardCmds, err = utils.ParseAdaptiveCmd(o.RewardCmdsIn); err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -251,17 +258,14 @@ func (o *Recycle) onRecycleSuccess(name string, option Option, realCount int) {
 	}
 
 	o.Frame.GetGameControl().SayTo(name, "回收成功")
-	for _, t := range option.RewardCmds {
-		c := utils.FormatByReplacingOccurrences(t, map[string]interface{}{
-			"[player]":     "\"" + name + "\"",
-			"[realCount]":  realCount,
-			"[totalPrice]": realCount * option.Price,
-			"[leftCount]":  leftStr,
-			"[price]":      option.Price,
-		})
-		fmt.Println(c)
-		o.Frame.GetGameControl().SendCmd(c)
+	mapping := map[string]interface{}{
+		"[player]":     "\"" + name + "\"",
+		"[realCount]":  realCount,
+		"[totalPrice]": realCount * option.Price,
+		"[leftCount]":  leftStr,
+		"[price]":      option.Price,
 	}
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), option.RewardCmds, mapping, o.Frame.GetBackendDisplay())
 }
 
 func (o *Recycle) dispatch(chat *defines.GameChat) bool {

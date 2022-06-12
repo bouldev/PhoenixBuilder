@@ -90,11 +90,44 @@ func ParseAdaptiveJsonCmd(cfg map[string]interface{}, p []string) (cmds []define
 }
 
 func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map[string]interface{}, logger defines.LineDst) {
+	scoreboardFetchTarget := ""
+	scoreboardFetched := false
+	if target, hasK := remapping["[player]"]; hasK {
+		if strTarget, success := target.(string); success {
+			scoreboardFetchTarget = strTarget
+		}
+	} else if target, hasK := remapping["[target_player]"]; hasK {
+		if strTarget, success := target.(string); success {
+			scoreboardFetchTarget = strTarget
+		}
+	}
+	// fmt.Println(scoreboardFetchTarget)
 	for _, a := range cmds {
 		if a.SleepBefore != 0 {
 			time.Sleep(time.Duration(a.SleepBefore * float32(time.Second)))
 		}
 		time.Sleep(time.Duration(a.SleepBefore * float32(time.Second)))
+		if !scoreboardFetched && scoreboardFetchTarget != "" {
+			if strings.Contains(a.Cmd, "[score<") {
+				waitChan := make(chan struct{})
+				scoreboardFetched = true
+				ctrl.SendCmdAndInvokeOnResponse("scoreboard players list "+scoreboardFetchTarget+"", func(output *packet.CommandOutput) {
+					scores := map[string]string{}
+					if output.SuccessCount > 0 {
+						for _, p := range output.OutputMessages[1:] {
+							if len(p.Parameters) == 3 {
+								scores[p.Parameters[0]] = p.Parameters[2]
+							}
+						}
+					}
+					for n, s := range scores {
+						remapping[fmt.Sprintf("[score<%v>]", s)] = n
+					}
+					close(waitChan)
+				})
+				<-waitChan
+			}
+		}
 		cmd := FormatByReplacingOccurrences(a.Cmd, remapping)
 		if a.Record == "" || a.Record == "无" || a.Record == "空" {
 			ctrl.SendCmd(cmd)

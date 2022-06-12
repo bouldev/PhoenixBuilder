@@ -37,7 +37,7 @@ func (o *ShutUp) Init(cfg *defines.ComponentConfig) {
 
 func (o *ShutUp) shutup(player string) {
 	o.Frame.GetBackendDisplay().Write(fmt.Sprintf("玩家 %v 发言过快，启动反制指令", player))
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.shutupCmds, map[string]interface{}{
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.shutupCmds, map[string]interface{}{
 		"[player]": "\"" + player + "\"",
 	}, o.Frame.GetBackendDisplay())
 }

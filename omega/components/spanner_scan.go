@@ -78,7 +78,7 @@ func (o *MobSpawnerScan) checkNbt(x, y, z int, nbt map[string]interface{}) {
 	//fmt.Println(nbt)
 	if illegal {
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("位于 %v %v %v 的违规刷怪笼: %v", x, y, z, reason))
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cleanUpActions, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cleanUpActions, map[string]interface{}{
 			"[x]": x,
 			"[y]": y,
 			"[z]": z,

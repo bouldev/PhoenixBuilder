@@ -34,7 +34,7 @@ func (o *BackToHQ) Init(cfg *defines.ComponentConfig) {
 }
 
 func (o *BackToHQ) back(chat *defines.GameChat) bool {
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeBack, map[string]interface{}{
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeBack, map[string]interface{}{
 		"[player]": "\"" + chat.Name + "\"",
 	}, o.Frame.GetBackendDisplay())
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(

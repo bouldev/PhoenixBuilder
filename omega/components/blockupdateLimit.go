@@ -40,7 +40,7 @@ func (o *RedStoneUpdateLimit) Init(cfg *defines.ComponentConfig) {
 func (o *RedStoneUpdateLimit) doResponse(pos protocol.BlockPos) {
 	x, y, z := pos.X(), pos.Y(), pos.Z()
 	o.Frame.GetBackendDisplay().Write(fmt.Sprintf("位于 %v %v %v 的红石相关方块刷新过快", x, y, z))
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.execeedResponse, map[string]interface{}{
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.execeedResponse, map[string]interface{}{
 		"[x]": x,
 		"[y]": y,
 		"[z]": z,

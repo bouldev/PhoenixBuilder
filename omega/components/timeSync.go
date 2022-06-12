@@ -17,9 +17,10 @@ type GameTimeSyncConfig struct {
 }
 
 type ScoreboardCalibrateConfig struct {
-	Enable       bool     `json:"启用记分板校准"`
-	SyncDuration int      `json:"校准指令发送周期"`
-	Cmds         []string `json:"校准指令"`
+	Enable       bool        `json:"启用记分板校准"`
+	SyncDuration int         `json:"校准指令发送周期"`
+	CmdsIn       interface{} `json:"校准指令"`
+	Cmds         []defines.Cmd
 }
 
 type TimeSync struct {
@@ -45,6 +46,9 @@ func (o *TimeSync) Init(cfg *defines.ComponentConfig) {
 		if o.LockMoon != 0 && (o.DontTouchMoon || o.MoonSync) {
 			panic(fmt.Sprintf("锁定月相 不为0时，月相同步/不调整月相 都不可被启用"))
 		}
+	}
+	if o.Cmds, err = utils.ParseAdaptiveCmd(o.CmdsIn); err != nil {
+		panic(err)
 	}
 }
 
@@ -87,11 +91,7 @@ func (o *TimeSync) calibrateTime() {
 	}
 	// fmt.Println("timeSync")
 	// fmt.Println(replacement)
-	for _, t := range o.Cmds {
-		rc := utils.FormatByReplacingOccurrences(t, replacement)
-		//fmt.Println(rc)
-		o.Frame.GetGameControl().SendCmd(rc)
-	}
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.Cmds, replacement, o.Frame.GetBackendDisplay())
 }
 
 func (o *TimeSync) Inject(frame defines.MainFrame) {

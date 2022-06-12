@@ -125,7 +125,7 @@ func (o *DailyAttendance) doSendReward(player string, accumulateDays, continuati
 		"[连续签到]":   continuationDays,
 		"[累计签到]":   accumulateDays,
 	}
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), policy.rewardCmds, remapping, o.Frame.GetBackendDisplay())
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), policy.rewardCmds, remapping, o.Frame.GetBackendDisplay())
 }
 
 func (o *DailyAttendance) doResponse(player string, accumulateDays, continuationDays int) {
