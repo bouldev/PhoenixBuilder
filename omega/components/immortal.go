@@ -14,12 +14,16 @@ type Immortal struct {
 	*BasicComponent
 	Hint          string `json:"提示信息"`
 	AskForRespawn bool   `json:"询问是否返回死亡点"`
+	Selector      string `json:"死亡玩家选择器"`
 }
 
 func (b *Immortal) Init(cfg *defines.ComponentConfig) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, b); err != nil {
 		panic(err)
+	}
+	if b.Selector == "" {
+		b.Selector = "@a[name=[player]]"
 	}
 }
 
@@ -78,7 +82,7 @@ func (o *Immortal) intercept(chat *defines.GameChat) bool {
 		victim := pkt.Parameters[0]
 		go func() {
 			//fmt.Println(victim)
-			pos := <-o.Frame.GetGameControl().GetPlayerKit(victim).GetPos("@a[name=[player]]")
+			pos := <-o.Frame.GetGameControl().GetPlayerKit(victim).GetPos(o.Selector)
 			if pos != nil {
 				o.doRespawn(victim, pos)
 			}

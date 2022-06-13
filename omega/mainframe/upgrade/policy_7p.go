@@ -129,3 +129,12 @@ func Policy_11(root string) {
 		})
 	}
 }
+
+func Policy_12(root string) {
+	if version, err := checkMigrationVersion(root); err == nil && version < 583 {
+		updateComponentConfig(root, "返回死亡点", func(c *defines.ComponentConfig) {
+			c.Configs["死亡玩家选择器"] = "@a[name=[player]]"
+		})
+		setMigrationVersion(root, 583)
+	}
+}

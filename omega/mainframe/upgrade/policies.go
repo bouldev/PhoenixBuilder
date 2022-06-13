@@ -12,4 +12,5 @@ func Upgrade() {
 	Policy_9(storageRoot)
 	Policy_10(storageRoot)
 	Policy_11(storageRoot)
+	Policy_12(storageRoot)
 }
