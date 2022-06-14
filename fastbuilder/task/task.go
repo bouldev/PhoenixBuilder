@@ -6,7 +6,7 @@ import (
 	"go.uber.org/atomic"
 	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/builder"
-	"phoenixbuilder/fastbuilder/command"
+	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/parsing"
@@ -155,7 +155,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	cmdsender:=env.CommandSender
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
-		cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand),err))
+		cmdsender.Output(fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand),err))
 		return nil
 	}
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig(env).Delay())
@@ -233,22 +233,22 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			cmdsender.SendWSCommand("gamemode c", und)
 			cmdsender.SendWSCommand("gamerule sendcommandfeedback true", und)
 		}
-		request:=command.AllocateRequestString()
+		request:=commands_generator.AllocateRequestString()
 		for {
 			task.ContinueLock.Lock()
 			task.ContinueLock.Unlock()
 			curblock, ok := <-blockschannel
 			if !ok {
 				if blkscounter == 0 {
-					cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.Task_D_NothingGenerated),taskid))
+					cmdsender.Output(fmt.Sprintf(I18n.T(I18n.Task_D_NothingGenerated),taskid))
 					runtime.GC()
 					task.Finalize()
 					return
 				}
 				timeUsed := time.Now().Sub(t1)
-				cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.Task_Summary_1), taskid, blkscounter))
-				cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.Task_Summary_2), taskid, timeUsed.Seconds()))
-				cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.Task_Summary_3), taskid, float64(blkscounter)/timeUsed.Seconds()))
+				cmdsender.Output(fmt.Sprintf(I18n.T(I18n.Task_Summary_1), taskid, blkscounter))
+				cmdsender.Output(fmt.Sprintf(I18n.T(I18n.Task_Summary_2), taskid, timeUsed.Seconds()))
+				cmdsender.Output(fmt.Sprintf(I18n.T(I18n.Task_Summary_3), taskid, float64(blkscounter)/timeUsed.Seconds()))
 				runtime.GC()
 				task.Finalize()
 				return
@@ -261,7 +261,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			blkscounter++
 			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				if curblock.Block != nil {
-					command.SetBlockRequest(request,curblock, cfg)
+					commands_generator.SetBlockRequest(request,curblock, cfg)
 					if !isFastMode {
 						//<-time.After(time.Second)
 						wc:=make(chan bool)
@@ -308,16 +308,16 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					ExecuteOnFirstTick: cbdata.ExecuteOnFirstTick,
 				})
 			}else if curblock.ChestSlot != nil {
-				command.ReplaceItemRequest(request, curblock, cfg)
+				commands_generator.ReplaceItemRequest(request, curblock, cfg)
 				cmdsender.SendSizukanaCommand(*request)
 			}else{
-				command.SetBlockRequest(request, curblock, cfg)
+				commands_generator.SetBlockRequest(request, curblock, cfg)
 				err := cmdsender.SendSizukanaCommand(*request)
 				if err != nil {
 					panic(err)
 				}
 			}/*else if curblock.Entity != nil {
-				//request := command.SummonRequest(curblock, cfg)
+				//request := commands_generator.SummonRequest(curblock, cfg)
 				//err := cmdsender.SendSizukanaCommand(request)
 				//if err != nil {
 				//	panic(err)
@@ -338,21 +338,21 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 			}
 		}
-		command.FreeRequestStringPtr(request)
+		commands_generator.FreeRequestStringPtr(request)
 	} ()
 	go func() {
 		if task.Type==types.TaskTypeAsync {
 			err := builder.Generate(cfg, asyncblockschannel)
 			close(asyncblockschannel)
 			if err != nil {
-				cmdsender.Tellraw(fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
+				cmdsender.Output(fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
 			}
 			return
 		}
 		err := builder.Generate(cfg, blockschannel)
 		close(blockschannel)
 		if err != nil {
-			cmdsender.Tellraw(fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
+			cmdsender.Output(fmt.Sprintf("[%s %d] %s: %v",I18n.T(I18n.TaskTTeIuKoto), taskid,I18n.T(I18n.ERRORStr), err))
 		}
 	} ()
 	return task
@@ -363,7 +363,7 @@ func InitTaskStatusDisplay(env *environment.PBEnvironment) {
 	go func() {
 		for {
 			str:=<-holder.BrokSender
-			env.CommandSender.Tellraw(str)
+			env.CommandSender.Output(str)
 		}
 	} ()
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -389,7 +389,7 @@ func InitTaskStatusDisplay(env *environment.PBEnvironment) {
 					addstr=fmt.Sprintf("%s\nProgress: %s",addstr,ProgressThemes[0](&v.AsyncInfo))
 				}
 				displayStrs=append(displayStrs,addstr)
-				command.AdditionalTitleCb(addstr)
+				commands_generator.AdditionalTitleCb(addstr)
 				return true
 			})
 			displayStrs=append(displayStrs, holder.ExtraDisplayStrings...)

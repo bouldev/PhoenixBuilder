@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"phoenixbuilder/fastbuilder/args"
-	"phoenixbuilder/fastbuilder/command"
+	"phoenixbuilder/io/commands"
 	"phoenixbuilder/fastbuilder/configuration"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/function"
@@ -25,6 +25,7 @@ import (
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/fastbuilder/world_provider"
+	"phoenixbuilder/io/special_tasks"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -348,7 +349,7 @@ func runClient(env *environment.PBEnvironment) {
 		embed.EnableOmegaSystem(env)
 	}
 
-	commandSender := command.InitCommandSender(env)
+	commandSender := commands.InitCommandSender(env)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	function.InitInternalFunctions(functionHolder)
 	fbtask.InitTaskStatusDisplay(env)
@@ -385,7 +386,7 @@ func runClient(env *environment.PBEnvironment) {
 		}
 		for {
 			csmsg := <-env.WorldChatChannel
-			commandSender.WorldChatTellraw(csmsg[0], csmsg[1])
+			commandSender.WorldChatOutput(csmsg[0], csmsg[1])
 		}
 	}()
 
@@ -486,7 +487,7 @@ func runClient(env *environment.PBEnvironment) {
 				if env.FBAuthClient != nil {
 					fbcl := env.FBAuthClient.(*fbauth.Client)
 					if !fbcl.CanSendMessage() {
-						commandSender.WorldChatTellraw("FastBuildeｒ", "Lost connection to the authentication server.")
+						commandSender.WorldChatOutput("FastBuildeｒ", "Lost connection to the authentication server.")
 						break
 					}
 					fbcl.WorldChat(umsg)
@@ -615,7 +616,7 @@ func runClient(env *environment.PBEnvironment) {
 			}
 			break
 		case *packet.StructureTemplateDataResponse:
-			fbtask.ExportWaiter <- p.StructureTemplate
+			special_tasks.ExportWaiter <- p.StructureTemplate
 			break
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
@@ -633,7 +634,7 @@ func runClient(env *environment.PBEnvironment) {
 					configuration.IsOp = true
 				}
 				if len(pos) == 0 {
-					commandSender.Tellraw(I18n.T(I18n.InvalidPosition))
+					commandSender.Output(I18n.T(I18n.InvalidPosition))
 					break
 				}
 				configuration.GlobalFullConfig(env).Main().Position = types.Position{
@@ -641,12 +642,12 @@ func runClient(env *environment.PBEnvironment) {
 					Y: pos[1],
 					Z: pos[2],
 				}
-				commandSender.Tellraw(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+				commandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
 				break
 			} else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
 				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
 				if len(pos) == 0 {
-					commandSender.Tellraw(I18n.T(I18n.InvalidPosition))
+					commandSender.Output(I18n.T(I18n.InvalidPosition))
 					break
 				}
 				configuration.GlobalFullConfig(env).Main().End = types.Position{
@@ -654,7 +655,7 @@ func runClient(env *environment.PBEnvironment) {
 					Y: pos[1],
 					Z: pos[2],
 				}
-				commandSender.Tellraw(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
+				commandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
 				break
 			}
 			pr, ok := commandSender.UUIDMap.LoadAndDelete(p.CommandOrigin.UUID.String())

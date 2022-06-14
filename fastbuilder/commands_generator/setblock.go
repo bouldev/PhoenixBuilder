@@ -1,4 +1,4 @@
-package command
+package commands_generator
 
 // extern void SetBlockRequestInternal(void *preallocatedStr, int x, int y, int z, const char *blockName, unsigned short data, const char *method);
 import "C"

@@ -13,7 +13,7 @@ type CommandSender interface {
 	SendWSCommand(string,uuid.UUID) error
 	SendSizukanaCommand(string) error
 	SendChat(string) error
-	Tellraw(string) error
-	WorldChatTellraw(string, string) error
-	Title(lines... string) error
+	Output(string) error
+	WorldChatOutput(string, string) error
+	Title(string) error
 }

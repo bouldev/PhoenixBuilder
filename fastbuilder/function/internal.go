@@ -12,6 +12,7 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/environment"
+	"phoenixbuilder/io/special_tasks"
 )
 
 
@@ -24,7 +25,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 		FunctionType:FunctionTypeSimple,
 		SFMinSliceLen: 1,
 		FunctionContent: func(env *environment.PBEnvironment,_ []interface{}) {
-			env.CommandSender.Tellraw(I18n.T(I18n.QuitCorrectly))
+			env.CommandSender.Output(I18n.T(I18n.QuitCorrectly))
 			bridge_fmt.Printf("%s\n",I18n.T(I18n.QuitCorrectly))
 			env.Connection.(*minecraft.Conn).Close()
 			os.Exit(0)
@@ -48,11 +49,11 @@ func InitInternalFunctions(fh *FunctionHolder) {
 			token := filepath.Join(fbconfigdir,"fbtoken")
 			err = os.Remove(token)
 			if(err!=nil) {
-				commandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.FailedToRemoveToken),err))
+				commandSender.Output(fmt.Sprintf(I18n.T(I18n.FailedToRemoveToken),err))
 				return
 			}
-			commandSender.Tellraw(I18n.T(I18n.Logout_Done))
-			commandSender.Tellraw(I18n.T(I18n.QuitCorrectly))
+			commandSender.Output(I18n.T(I18n.Logout_Done))
+			commandSender.Output(I18n.T(I18n.QuitCorrectly))
 			bridge_fmt.Printf("%s\n",I18n.T(I18n.QuitCorrectly))
 			conn.Close()
 			os.Exit(0)
@@ -64,7 +65,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 		FunctionType: FunctionTypeSimple,
 		SFMinSliceLen: 1,
 		FunctionContent: func(env *environment.PBEnvironment,_ []interface{}) {
-			env.CommandSender.Tellraw(I18n.T(I18n.SelectLanguageOnConsole))
+			env.CommandSender.Output(I18n.T(I18n.SelectLanguageOnConsole))
 			I18n.SelectLanguage()
 			I18n.UpdateLanguage()
 		},
@@ -84,7 +85,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 				Y: Y,
 				Z: Z,
 			}
-			env.CommandSender.Tellraw(fmt.Sprintf("%s: %d, %d, %d.",I18n.T(I18n.PositionSet),X,Y,Z))
+			env.CommandSender.Output(fmt.Sprintf("%s: %d, %d, %d.",I18n.T(I18n.PositionSet),X,Y,Z))
 		},
 	})
 	fh.RegisterFunction(&Function {
@@ -102,7 +103,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 				Y: Y,
 				Z: Z,
 			}
-			env.CommandSender.Tellraw(fmt.Sprintf("%s: %d, %d, %d.",I18n.T(I18n.PositionSet_End),X,Y,Z))
+			env.CommandSender.Output(fmt.Sprintf("%s: %d, %d, %d.",I18n.T(I18n.PositionSet_End),X,Y,Z))
 		},
 	})
 	fh.RegisterFunction(&Function {
@@ -116,12 +117,12 @@ func InitInternalFunctions(fh *FunctionHolder) {
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
 				Content: func(env *environment.PBEnvironment, args []interface{}){
 					if configuration.GlobalFullConfig(env).Delay().DelayMode==types.DelayModeNone {
-						env.CommandSender.Tellraw(I18n.T(I18n.DelaySetUnavailableUnderNoneMode))
+						env.CommandSender.Output(I18n.T(I18n.DelaySetUnavailableUnderNoneMode))
 						return
 					}
 					ms, _:=args[0].(int)
 					configuration.GlobalFullConfig(env).Delay().Delay=int64(ms)
-					env.CommandSender.Tellraw(fmt.Sprintf("%s: %d", I18n.T(I18n.DelaySet), ms))
+					env.CommandSender.Output(fmt.Sprintf("%s: %d", I18n.T(I18n.DelaySet), ms))
 				},
 			},
 			"mode": &FunctionChainItem {
@@ -130,7 +131,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 					"get": &FunctionChainItem {
 						FunctionType: FunctionTypeSimple,
 						Content: func(env *environment.PBEnvironment, _ []interface{}){
-							env.CommandSender.Tellraw(fmt.Sprintf("%s: %s.",I18n.T(I18n.CurrentDefaultDelayMode),types.StrDelayMode(configuration.GlobalFullConfig(env).Delay().DelayMode)))
+							env.CommandSender.Output(fmt.Sprintf("%s: %s.",I18n.T(I18n.CurrentDefaultDelayMode),types.StrDelayMode(configuration.GlobalFullConfig(env).Delay().DelayMode)))
 						},
 					},
 					"set": &FunctionChainItem {
@@ -139,15 +140,15 @@ func InitInternalFunctions(fh *FunctionHolder) {
 						Content: func(env *environment.PBEnvironment, args []interface{}){
 							delaymode,_:=args[0].(byte)
 							configuration.GlobalFullConfig(env).Delay().DelayMode=delaymode
-							env.CommandSender.Tellraw(fmt.Sprintf("%s: %s",I18n.T(I18n.DelayModeSet),types.StrDelayMode(delaymode)))
+							env.CommandSender.Output(fmt.Sprintf("%s: %s",I18n.T(I18n.DelayModeSet),types.StrDelayMode(delaymode)))
 							if delaymode != types.DelayModeNone {
 								dl:=decideDelay(delaymode)
 								configuration.GlobalFullConfig(env).Delay().Delay=dl
-								env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.DelayModeSet_DelayAuto),dl))
+								env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.DelayModeSet_DelayAuto),dl))
 							}
 							if delaymode==types.DelayModeDiscrete {
 								configuration.GlobalFullConfig(env).Delay().DelayThreshold=decideDelayThreshold()
-								env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.DelayModeSet_ThresholdAuto),configuration.GlobalFullConfig(env).Delay().DelayThreshold))
+								env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.DelayModeSet_ThresholdAuto),configuration.GlobalFullConfig(env).Delay().DelayThreshold))
 							}
 						},
 					},
@@ -158,12 +159,12 @@ func InitInternalFunctions(fh *FunctionHolder) {
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
 				Content: func(env *environment.PBEnvironment, args []interface{}){
 					if configuration.GlobalFullConfig(env).Delay().DelayMode != types.DelayModeDiscrete {
-						env.CommandSender.Tellraw(I18n.T(I18n.DelayThreshold_OnlyDiscrete))
+						env.CommandSender.Output(I18n.T(I18n.DelayThreshold_OnlyDiscrete))
 						return
 					}
 					thr, _ := args[0].(int)
 					configuration.GlobalFullConfig(env).Delay().DelayThreshold=thr
-					env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.DelayThreshold_Set), thr))
+					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.DelayThreshold_Set), thr))
 				},
 			},
 		},
@@ -208,7 +209,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment,_ []interface{}) {
 					total:=0
-					env.CommandSender.Tellraw(I18n.T(I18n.CurrentTasks))
+					env.CommandSender.Output(I18n.T(I18n.CurrentTasks))
 					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
 					taskholder.TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
 						tid,_:=_tid.(int64)
@@ -221,11 +222,11 @@ func InitInternalFunctions(fh *FunctionHolder) {
 						if v.Config.Delay().DelayMode!=types.DelayModeNone {
 							dv=v.Config.Delay().Delay
 						}
-						env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskStateLine),tid,v.CommandLine,fbtask.GetStateDesc(v.State),dv,types.StrDelayMode(v.Config.Delay().DelayMode),dt))
+						env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskStateLine),tid,v.CommandLine,fbtask.GetStateDesc(v.State),dv,types.StrDelayMode(v.Config.Delay().DelayMode),dt))
 						total++
 						return true
 					})
-					env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskTotalCount),total))
+					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskTotalCount),total))
 				},
 			},
 			"pause": &FunctionChainItem {
@@ -236,11 +237,11 @@ func InitInternalFunctions(fh *FunctionHolder) {
 					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
 					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
-						env.CommandSender.Tellraw(I18n.T(I18n.TaskNotFoundMessage))
+						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Pause()
-					env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskPausedNotice),task.TaskId))
+					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskPausedNotice),task.TaskId))
 				},
 			},
 			"resume": &FunctionChainItem {
@@ -251,11 +252,11 @@ func InitInternalFunctions(fh *FunctionHolder) {
 					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
 					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
-						env.CommandSender.Tellraw(I18n.T(I18n.TaskNotFoundMessage))
+						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Resume()
-					env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskResumedNotice),task.TaskId))
+					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskResumedNotice),task.TaskId))
 				},
 			},
 			"break": &FunctionChainItem {
@@ -266,11 +267,11 @@ func InitInternalFunctions(fh *FunctionHolder) {
 					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
 					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
-						env.CommandSender.Tellraw(I18n.T(I18n.TaskNotFoundMessage))
+						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Break()
-					env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskStoppedNotice),task.TaskId))
+					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskStoppedNotice),task.TaskId))
 				},
 			},
 			"setdelay": &FunctionChainItem {
@@ -282,14 +283,14 @@ func InitInternalFunctions(fh *FunctionHolder) {
 					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
 					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
-						env.CommandSender.Tellraw(I18n.T(I18n.TaskNotFoundMessage))
+						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					if(task.Config.Delay().DelayMode==types.DelayModeNone) {
-						env.CommandSender.Tellraw(I18n.T(I18n.Task_SetDelay_Unavailable))
+						env.CommandSender.Output(I18n.T(I18n.Task_SetDelay_Unavailable))
 						return
 					}
-					env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.Task_DelaySet),task.TaskId,del))
+					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.Task_DelaySet),task.TaskId,del))
 					task.Config.Delay().Delay=int64(del)
 				},
 			},
@@ -302,19 +303,19 @@ func InitInternalFunctions(fh *FunctionHolder) {
 					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
 					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
-						env.CommandSender.Tellraw(I18n.T(I18n.TaskNotFoundMessage))
+						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Pause()
 					task.Config.Delay().DelayMode=delaymode
-					env.CommandSender.Tellraw(fmt.Sprintf("[%s %d] - %s: %s",I18n.T(I18n.TaskTTeIuKoto),tid,I18n.T(I18n.DelayModeSet),types.StrDelayMode(delaymode)))
+					env.CommandSender.Output(fmt.Sprintf("[%s %d] - %s: %s",I18n.T(I18n.TaskTTeIuKoto),tid,I18n.T(I18n.DelayModeSet),types.StrDelayMode(delaymode)))
 					if delaymode!=types.DelayModeNone {
 						task.Config.Delay().Delay=decideDelay(delaymode)
-						env.CommandSender.Tellraw(fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_DelayAuto),I18n.T(I18n.TaskTTeIuKoto),task.TaskId,task.Config.Delay().Delay))
+						env.CommandSender.Output(fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_DelayAuto),I18n.T(I18n.TaskTTeIuKoto),task.TaskId,task.Config.Delay().Delay))
 					}
 					if delaymode==types.DelayModeDiscrete {
 						task.Config.Delay().DelayThreshold=decideDelayThreshold()
-						env.CommandSender.Tellraw(fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_ThresholdAuto),I18n.T(I18n.TaskTTeIuKoto),task.TaskId,task.Config.Delay().DelayThreshold))
+						env.CommandSender.Output(fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_ThresholdAuto),I18n.T(I18n.TaskTTeIuKoto),task.TaskId,task.Config.Delay().DelayThreshold))
 					}
 					task.Resume()
 				},
@@ -328,14 +329,14 @@ func InitInternalFunctions(fh *FunctionHolder) {
 					taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
 					task:=taskholder.FindTask(int64(tid))
 					if task==nil {
-						env.CommandSender.Tellraw(I18n.T(I18n.TaskNotFoundMessage))
+						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					if task.Config.Delay().DelayMode!=types.DelayModeDiscrete {
-						env.CommandSender.Tellraw(I18n.T(I18n.DelayThreshold_OnlyDiscrete))
+						env.CommandSender.Output(I18n.T(I18n.DelayThreshold_OnlyDiscrete))
 						return
 					}
-					env.CommandSender.Tellraw(fmt.Sprintf("[%s %d] - "+I18n.T(I18n.DelayThreshold_Set),I18n.T(I18n.TaskTTeIuKoto),tid,delayt))
+					env.CommandSender.Output(fmt.Sprintf("[%s %d] - "+I18n.T(I18n.DelayThreshold_Set),I18n.T(I18n.TaskTTeIuKoto),tid,delayt))
 					task.Config.Delay().DelayThreshold=delayt
 				},
 			},
@@ -351,7 +352,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 		FunctionContent: func(env *environment.PBEnvironment,args []interface{}) {
 			ev, _:=args[0].(byte)
 			configuration.GlobalFullConfig(env).Global().TaskCreationType=ev
-			env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskTypeSwitchedTo),types.MakeTaskType(ev)))
+			env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskTypeSwitchedTo),types.MakeTaskType(ev)))
 		},
 	})
 	taskDMEnumId:=fh.RegisterEnum("true, false",types.ParseTaskDisplayMode,types.TaskDisplayInvalid)
@@ -364,7 +365,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 		FunctionContent: func(env *environment.PBEnvironment,args []interface{}) {
 			ev, _:=args[0].(byte)
 			configuration.GlobalFullConfig(env).Global().TaskDisplayMode=ev
-			env.CommandSender.Tellraw(fmt.Sprintf(I18n.T(I18n.TaskDisplayModeSet),types.MakeTaskDisplayMode(ev)))
+			env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskDisplayModeSet),types.MakeTaskDisplayMode(ev)))
 		},
 	})
 	var builderMethods []string
@@ -380,7 +381,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 			if task==nil {
 				return
 			}
-			env.CommandSender.Tellraw(fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
+			env.CommandSender.Output(fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
 		},
 	})
 	fh.RegisterFunction(&Function {
@@ -388,11 +389,11 @@ func InitInternalFunctions(fh *FunctionHolder) {
 		OwnedKeywords: []string{"export"},
 		FunctionType: FunctionTypeRegular,
 		FunctionContent: func(env *environment.PBEnvironment,msg string) {
-			task := fbtask.CreateExportTask(msg, env)
+			task := special_tasks.CreateExportTask(msg, env)
 			if task==nil {
 				return
 			}
-			env.CommandSender.Tellraw(fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
+			env.CommandSender.Output(fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
 		},
 	})
 	fh.RegisterFunction(&Function {
@@ -400,11 +401,11 @@ func InitInternalFunctions(fh *FunctionHolder) {
 		OwnedKeywords: []string{"lexport"},
 		FunctionType: FunctionTypeRegular,
 		FunctionContent: func(env *environment.PBEnvironment,msg string) {
-			task := fbtask.CreateLegacyExportTask(msg, env)
+			task := special_tasks.CreateLegacyExportTask(msg, env)
 			if task==nil {
 				return
 			}
-			env.CommandSender.Tellraw(fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
+			env.CommandSender.Output(fmt.Sprintf("%s, ID=%d.",I18n.T(I18n.TaskCreated),task.TaskId))
 		},
 	})
 	fh.RegisterFunction(&Function {
@@ -415,7 +416,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 		SFMinSliceLen: 1,
 		FunctionContent: func(env *environment.PBEnvironment,args []interface{}) {
 			str:=args[0].(string)
-			env.CommandSender.Tellraw(str)
+			env.CommandSender.Output(str)
 		},
 	})
 }

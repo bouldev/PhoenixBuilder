@@ -85,7 +85,7 @@ func (function_holder *FunctionHolder) Process(msg string) {
 		return
 	}
 	if len(slc) < int(fun.SFMinSliceLen) {
-		cmdsender.Tellraw(fmt.Sprintf("Parser: Simple function %s required at least %d arguments, but got %d.",fun.Name, fun.SFMinSliceLen, len(slc)))
+		cmdsender.Output(fmt.Sprintf("Parser: Simple function %s required at least %d arguments, but got %d.",fun.Name, fun.SFMinSliceLen, len(slc)))
 		return
 	}
 	var arguments []interface{}
@@ -101,7 +101,7 @@ func (function_holder *FunctionHolder) Process(msg string) {
 				rf, _:=cc.Content.(map[string]*FunctionChainItem)
 				itm, got := rf[""]
 				if !got {
-					cmdsender.Tellraw(I18n.T(I18n.SimpleParser_Too_few_args))
+					cmdsender.Output(I18n.T(I18n.SimpleParser_Too_few_args))
 					return
 				}
 				cc=itm
@@ -110,7 +110,7 @@ func (function_holder *FunctionHolder) Process(msg string) {
 			rfc, _:=cc.Content.(map[string]*FunctionChainItem)
 			chainitem, got := rfc[slc[ic]]
 			if !got {
-				cmdsender.Tellraw(I18n.T(I18n.SimpleParser_Invalid_decider))
+				cmdsender.Output(I18n.T(I18n.SimpleParser_Invalid_decider))
 				return
 			}
 			cc=chainitem
@@ -118,20 +118,20 @@ func (function_holder *FunctionHolder) Process(msg string) {
 			continue
 		}
 		if len(cc.ArgumentTypes) > len(slc)-ic {
-			cmdsender.Tellraw(I18n.T(I18n.SimpleParser_Too_few_args))
+			cmdsender.Output(I18n.T(I18n.SimpleParser_Too_few_args))
 			return
 		}
 		for _, tp := range cc.ArgumentTypes {
 			if tp==SimpleFunctionArgumentString {
 				arguments=append(arguments,slc[ic])
 			}else if tp==SimpleFunctionArgumentDecider {
-				cmdsender.Tellraw("Parser: Internal error - argument type [decider] is preserved.")
+				cmdsender.Output("Parser: Internal error - argument type [decider] is preserved.")
 				fmt.Println("Parser: Internal error - DO NOT REGISTER Decider ARGUMENT!")
 				return
 			}else if tp==SimpleFunctionArgumentInt {
 				parsedInt, err := strconv.Atoi(slc[ic])
 				if err != nil {
-					cmdsender.Tellraw(fmt.Sprintf("%s: %v", I18n.T(I18n.SimpleParser_Int_ParsingFailed), err))
+					cmdsender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.SimpleParser_Int_ParsingFailed), err))
 					return
 				}
 				arguments=append(arguments,parsedInt)
@@ -143,14 +143,14 @@ func (function_holder *FunctionHolder) Process(msg string) {
 			}else{
 				eindex:=int(tp-SimpleFunctionArgumentEnum)
 				if eindex>=len(function_holder.SimpleFunctionEnums) {
-					cmdsender.Tellraw("Parser: Internal error, unregistered enum")
+					cmdsender.Output("Parser: Internal error, unregistered enum")
 					fmt.Printf("Internal error, unregistered enum %d\n",int(tp))
 					return
 				}
 				ei:=function_holder.SimpleFunctionEnums[eindex]
 				itm:=ei.Parser(slc[ic])
 				if itm == ei.InvalidValue {
-					cmdsender.Tellraw(fmt.Sprintf(I18n.T(I18n.SimpleParser_InvEnum),ei.WantedValuesDescription))
+					cmdsender.Output(fmt.Sprintf(I18n.T(I18n.SimpleParser_InvEnum),ei.WantedValuesDescription))
 					return
 				}
 				arguments=append(arguments,itm)

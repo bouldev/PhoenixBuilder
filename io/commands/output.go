@@ -1,4 +1,4 @@
-package command
+package commands
 
 import (
 	"fmt"
@@ -6,7 +6,6 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/args"
 	"time"
-	//"github.com/google/uuid"
 	"encoding/json"
 	"strings"
 )
@@ -34,7 +33,7 @@ func TellRawRequest(target types.Target, lines ...string) string {
 	return cmd
 }
 
-func (sender *CommandSender) Tellraw(content string) error {
+func (sender *CommandSender) Output(content string) error {
 	//uuid1, _ := uuid.NewUUID()
 	bridge_fmt.Printf("%s\n", content)
 	if(!args.InGameResponse()) {
@@ -61,7 +60,7 @@ func RawTellRawRequest(target types.Target, line string) string {
 	return cmd
 }
 
-func (cmd_sender *CommandSender) WorldChatTellraw(sender string, content string) error {
+func (cmd_sender *CommandSender) WorldChatOutput(sender string, content string) error {
 	bridge_fmt.Printf("W <%s> %s\n", sender, content)
 	str:=fmt.Sprintf("§eW §r<%s> %s",sender,content)
 	return cmd_sender.SendSizukanaCommand(RawTellRawRequest(types.AllPlayers, str))

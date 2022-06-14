@@ -1,6 +1,6 @@
 // +build do_not_add_this_tag__not_implemented
 
-package command
+package commands_generator
 
 import (
 	"fmt"

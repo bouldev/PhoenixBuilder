@@ -1,4 +1,4 @@
-package command
+package commands_generator
 
 // extern void replaceItemRequestInternal(void *preallocatedStr, int x, int y, int z, unsigned char slot, const char *name, unsigned char count, unsigned short damage);
 import "C"

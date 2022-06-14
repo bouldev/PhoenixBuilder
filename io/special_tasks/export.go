@@ -1,4 +1,4 @@
-package task
+package special_tasks
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/parsing"
+	"phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/task/fetcher"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
@@ -37,11 +38,11 @@ type SolidRet struct {
 
 var ExportWaiter chan map[string]interface{}
 
-func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task {
+func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
 	cmdsender:=env.CommandSender
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
-		cmdsender.Tellraw(fmt.Sprintf("Failed to parse command: %v",err))
+		cmdsender.Output(fmt.Sprintf("Failed to parse command: %v",err))
 		return nil
 	}
 	beginPos := cfg.Position
@@ -119,7 +120,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 				fmt.Println("go routine @ fastbuilder.task export crashed ",r)
 			}
 		}()
-		cmdsender.Tellraw("EXPORT >> Exporting...")
+		cmdsender.Output("EXPORT >> Exporting...")
 		V:=(endPos.X-beginPos.X+1)*(endPos.Y-beginPos.Y+1)*(endPos.Z-beginPos.Z+1)
 		blocks:=make([]*types.RuntimeModule,V)
 		counter:=0
@@ -230,26 +231,26 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *Task 
 		if(strings.LastIndex(cfg.Path,".bdx")!=len(cfg.Path)-4||len(cfg.Path)<4) {
 			cfg.Path+=".bdx"
 		}
-		cmdsender.Tellraw("EXPORT >> Writing output file")
+		cmdsender.Output("EXPORT >> Writing output file")
 		err, signerr:=out.WriteToFile(cfg.Path, env.LocalCert, env.LocalKey)
 		if(err!=nil){
-			cmdsender.Tellraw(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v",err))
+			cmdsender.Output(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v",err))
 			return
 		}else if(signerr!=nil) {
-			cmdsender.Tellraw(fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v",signerr))
+			cmdsender.Output(fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v",signerr))
 		}else{
-			cmdsender.Tellraw(fmt.Sprintf("EXPORT >> File signed successfully"))
+			cmdsender.Output(fmt.Sprintf("EXPORT >> File signed successfully"))
 		}
-		cmdsender.Tellraw(fmt.Sprintf("EXPORT >> Successfully exported your structure to %v",cfg.Path))
+		cmdsender.Output(fmt.Sprintf("EXPORT >> Successfully exported your structure to %v",cfg.Path))
 		runtime.GC()
 	} ()
 	return nil
 }
 
-func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) *Task {
+func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
-		env.CommandSender.Tellraw(fmt.Sprintf("Failed to parse command: %v", err))
+		env.CommandSender.Output(fmt.Sprintf("Failed to parse command: %v", err))
 		return nil
 	}
 	beginPos := cfg.Position
@@ -283,7 +284,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		originz:=0
 		var blocks []*types.Module
 		for {
-			env.CommandSender.Tellraw("EXPORT >> Fetching data")
+			env.CommandSender.Output("EXPORT >> Fetching data")
 			cursizex:=msizex
 			cursizez:=msizez
 			if msizex>100 {
@@ -320,8 +321,8 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 			})
 			exportData:=<-ExportWaiter
 			close(ExportWaiter)
-			env.CommandSender.Tellraw("EXPORT >> Data received, processing.")
-			env.CommandSender.Tellraw("EXPORT >> Extracting blocks")
+			env.CommandSender.Output("EXPORT >> Data received, processing.")
+			env.CommandSender.Output("EXPORT >> Extracting blocks")
 			sizeoo, _:=exportData["size"].([]interface{})
 			if len(sizeoo)==0 {
 				originz++
@@ -475,17 +476,17 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		if(strings.LastIndex(cfg.Path,".bdx")!=len(cfg.Path)-4||len(cfg.Path)<4) {
 			cfg.Path+=".bdx"
 		}
-		env.CommandSender.Tellraw("EXPORT >> Writing output file")
+		env.CommandSender.Output("EXPORT >> Writing output file")
 		err, signerr:=out.WriteToFile(cfg.Path, env.LocalCert, env.LocalKey)
 		if(err!=nil){
-			env.CommandSender.Tellraw(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v",err))
+			env.CommandSender.Output(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v",err))
 			return
 		}else if(signerr!=nil) {
-			env.CommandSender.Tellraw(fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v",signerr))
+			env.CommandSender.Output(fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v",signerr))
 		}else{
-			env.CommandSender.Tellraw(fmt.Sprintf("EXPORT >> File signed successfully"))
+			env.CommandSender.Output(fmt.Sprintf("EXPORT >> File signed successfully"))
 		}
-		env.CommandSender.Tellraw(fmt.Sprintf("EXPORT >> Successfully exported your structure to %v",cfg.Path))
+		env.CommandSender.Output(fmt.Sprintf("EXPORT >> Successfully exported your structure to %v",cfg.Path))
 	} ()
 	return nil
 }

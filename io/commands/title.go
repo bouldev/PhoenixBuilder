@@ -1,4 +1,4 @@
-package command
+package commands
 
 import (
 	"fmt"
@@ -20,6 +20,6 @@ func TitleRequest(target types.Target, lines ...string) string {
 	return cmd
 }
 
-func (sender *CommandSender) Title(lines ...string) error {
-	return sender.SendSizukanaCommand(TitleRequest(types.AllPlayers, lines...))
+func (sender *CommandSender) Title(message string) error {
+	return sender.SendSizukanaCommand(TitleRequest(types.AllPlayers, message))
 }
