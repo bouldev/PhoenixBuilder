@@ -24,18 +24,19 @@ import (
 
 type QGroupLink struct {
 	Frame                     defines.MainFrame
-	Address                   string            `json:"CQHTTP正向Websocket代理地址"`
-	GameMessageFormat         string            `json:"游戏消息格式化模版"`
-	QQMessageFormat           string            `json:"Q群消息格式化模版"`
-	Groups                    map[string]int64  `json:"链接的Q群"`
-	Selector                  string            `json:"游戏内可以听到QQ消息的玩家的选择器"`
-	NoBotMsg                  bool              `json:"不要转发机器人的消息"`
-	ChatOnly                  bool              `json:"只转发聊天消息"`
-	MuteIgnored               bool              `json:"屏蔽其他群的消息"`
-	FilterQQToServerMsgByHead string            `json:"仅仅转发开头为以下特定字符的消息到服务器"`
-	FilterServerToQQMsgByHead string            `json:"仅仅转发开头为以下特定字符的消息到QQ"`
-	AllowedCmdExecutor        map[int64]bool    `json:"允许这些人透过QQ执行命令"`
-	DenyCmds                  map[string]string `json:"屏蔽这些指令"`
+	Address                   string                        `json:"CQHTTP正向Websocket代理地址"`
+	GameMessageFormat         string                        `json:"游戏消息格式化模版"`
+	QQMessageFormat           string                        `json:"Q群消息格式化模版"`
+	Groups                    map[string]int64              `json:"链接的Q群"`
+	Selector                  string                        `json:"游戏内可以听到QQ消息的玩家的选择器"`
+	NoBotMsg                  bool                          `json:"不要转发机器人的消息"`
+	ChatOnly                  bool                          `json:"只转发聊天消息"`
+	MuteIgnored               bool                          `json:"屏蔽其他群的消息"`
+	FilterQQToServerMsgByHead string                        `json:"仅仅转发开头为以下特定字符的消息到服务器"`
+	FilterServerToQQMsgByHead string                        `json:"仅仅转发开头为以下特定字符的消息到QQ"`
+	AllowedCmdExecutor        map[int64]bool                `json:"允许这些人透过QQ执行命令"`
+	AllowdFakeCmdExecutor     map[int64]map[string][]string `json:"允许这些人透过QQ执行伪命令"`
+	DenyCmds                  map[string]string             `json:"屏蔽这些指令"`
 	upgrader                  *websocket.Upgrader
 	conn                      *websocket.Conn
 	connectLock               chan int
@@ -167,6 +168,100 @@ func (cq *QGroupLink) connect() chan int {
 	return cq.initLock
 }
 
+func (cq *QGroupLink) InterceptCmdMsg(uid int64, msg string) (stop bool) {
+	cmds := []string{}
+	if allowed, hasK := cq.AllowedCmdExecutor[uid]; hasK && allowed && strings.HasPrefix(msg, "/") {
+		if strings.HasPrefix(msg, "/权限") {
+			hint := "完整 MC 指令权限:"
+			for qq, hasPerm := range cq.AllowedCmdExecutor {
+				if hasPerm {
+					hint += fmt.Sprintf("\n%v", qq)
+				}
+			}
+			if len(cq.AllowdFakeCmdExecutor) > 0 {
+				hint += "\n转义 MC 指令权限: "
+				for qq, auths := range cq.AllowdFakeCmdExecutor {
+					hint += fmt.Sprintf("\n%v:", qq)
+					for k, _ := range auths {
+						hint += "\n   -" + k
+					}
+				}
+			}
+			cq.sendQQMessage(hint)
+			return true
+		}
+	}
+	if hasPerm, hasK := cq.AllowdFakeCmdExecutor[uid]; hasK {
+		for perm, tmps := range hasPerm {
+			if !strings.HasPrefix(perm, "/") {
+				perm = "/" + perm
+			}
+			if strings.HasPrefix(msg, perm) {
+				args := msg[len(perm):]
+				for _, tmp := range tmps {
+					cmds = append(cmds, strings.ReplaceAll(tmp, "[args]", args))
+				}
+			}
+		}
+	}
+	if len(cmds) == 0 {
+		if allowed, hasK := cq.AllowedCmdExecutor[uid]; hasK && allowed && strings.HasPrefix(msg, "/") {
+			for cmd, resp := range cq.DenyCmds {
+				if strings.Contains(msg, cmd) {
+					cq.sendQQMessage(resp)
+					return true
+				}
+			}
+			cmds = append(cmds, msg)
+		}
+	}
+	if len(cmds) == 0 {
+		return false
+	} else {
+		result := ""
+		cmdI := 1
+		var sendNext func(thisCmd string, nextCmds []string)
+		sendNext = func(thisCmd string, nextCmds []string) {
+			cq.Frame.GetGameControl().SendCmdAndInvokeOnResponse(thisCmd, func(output *packet.CommandOutput) {
+				if len(nextCmds) == 0 && cmdI == 1 {
+					if output.SuccessCount > 0 {
+						result += thisCmd + " ✓"
+					} else {
+						result += thisCmd + " ✗"
+					}
+				} else {
+					if output.SuccessCount > 0 {
+						result += fmt.Sprintf("%v. %v ", cmdI, thisCmd) + "✓"
+					} else {
+						result += fmt.Sprintf("%v. %v ", cmdI, thisCmd) + "✗"
+					}
+				}
+				cmdI++
+				if len(output.OutputMessages) > 0 {
+					result += "\n---"
+				}
+				for _, r := range output.OutputMessages {
+					if r.Success {
+						result += "\n✓ "
+					} else {
+						result += "\n✗ "
+					}
+					result += r.Message + " " + fmt.Sprintf("%v", r.Parameters)
+				}
+				if len(nextCmds) > 0 {
+					_next := nextCmds[1:]
+					result += "\n\n"
+					sendNext(nextCmds[0], _next)
+				} else {
+					cq.sendQQMessage(result)
+				}
+			})
+		}
+		sendNext(cmds[0], cmds[1:])
+		return true
+	}
+}
+
 func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 	if msg.ID() != IDGroupMessage {
 		return
@@ -185,32 +280,7 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 	for gname, sourceGid := range cq.Groups {
 		if sourceGid == gid {
 			uid := groupMsg.PrivateMessage.UserId
-			if allowed, hasK := cq.AllowedCmdExecutor[uid]; hasK && allowed && strings.HasPrefix(msgText, "/") {
-				for cmd, resp := range cq.DenyCmds {
-					if strings.Contains(msgText, cmd) {
-						cq.sendQQMessage(resp)
-						return
-					}
-				}
-
-				cq.Frame.GetGameControl().SendCmdAndInvokeOnResponse(msgText, func(output *packet.CommandOutput) {
-					result := ""
-					if output.SuccessCount > 0 {
-						result += "执行成功✓\n---"
-					} else {
-						result += "执行失败✗\n---"
-					}
-					for _, r := range output.OutputMessages {
-						if r.Success {
-							result += "\n✓ "
-						} else {
-							result += "\n✗ "
-						}
-						result += r.Message + " " + fmt.Sprintf("%v", r.Parameters)
-					}
-					cq.sendQQMessage(result)
-				})
-
+			if cq.InterceptCmdMsg(uid, msgText) {
 				return
 			}
 			m := utils.FormatByReplacingOccurrences(cq.QQMessageFormat, map[string]interface{}{
@@ -302,11 +372,15 @@ func (b *QGroupLink) Inject(frame defines.MainFrame) {
 		perms := []string{}
 		for qq, hasPerm := range b.AllowedCmdExecutor {
 			if hasPerm {
-				perms = append(perms, fmt.Sprintf("%v", qq))
+				shortQQ := fmt.Sprintf("%v", qq)
+				if len(shortQQ) > 4 {
+					shortQQ = shortQQ[:4] + ".."
+				}
+				perms = append(perms, shortQQ)
 			}
 		}
 		if len(perms) > 0 {
-			hint += "\n MC 指令权限: " + strings.Join(perms, ", ")
+			hint += "\n MC 指令: \n" + strings.Join(perms, ",") + "\n输入 /权限 查看完整权限"
 		}
 	}
 	b.sendQQMessage(hint)

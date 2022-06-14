@@ -667,6 +667,23 @@
         "1634268015": true,
         "1634268016": true
       },
+      "允许这些人透过QQ执行伪命令":{
+        "1634268014":{
+          "开心一下":[
+            "scoreboard players add @a coin [args]",
+            "say 每人白给 [args] 金币！"
+          ],
+          "不开心一下":[
+            "scoreboard players remove @a coin [args]",
+            "say 每人倒扣 [args] 金币！"
+          ]
+        },
+        "23333333333":{
+          "传送":[
+            "tp [args]"
+          ]
+        }
+      },
       "屏蔽这些指令": {
         "deop": "达咩，不要啦~~~",
         "spreadplayer": "呜呜呜",

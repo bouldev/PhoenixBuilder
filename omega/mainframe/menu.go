@@ -124,7 +124,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 			return true
 		}
 	}
-	pk.Say("Omega System from: §l2401PT@CMA (Base On PhoenixBuilder)")
+	pk.Say("Omega System (Phoenix Builder Embed) by: 2401PT@CMA ")
 	pk.Say(m.replaceFn(fmt.Sprintf(m.MenuHead)))
 	systemTrigger := m.omega.OmegaConfig.Trigger.DefaultTigger
 	menuFmt := m.MenuFormat
