@@ -70,23 +70,7 @@ func main() {
 		fmt.Printf("%s", I18n.T(I18n.Special_Startup))
 	}
 
-	defer func() {
-		if err := recover(); err != nil {
-			if !args.NoReadline() {
-				readline.HardInterrupt()
-			}
-			debug.PrintStack()
-			pterm.Error.Println(I18n.T(I18n.Crashed_Tip))
-			pterm.Error.Println(I18n.T(I18n.Crashed_StackDump_And_Error))
-			pterm.Error.Println(err)
-			if runtime.GOOS == "windows" {
-				pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
-				_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
-			}
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}()
+	defer fatal()
 	if args.DebugMode() {
 		init_and_run_debug_client()
 		return
@@ -139,6 +123,24 @@ func main() {
 	} else {
 		runInteractiveClient(args.CustomTokenContent())
 	}
+}
+
+func fatal() {
+	if err := recover(); err != nil {
+		if !args.NoReadline() {
+			readline.HardInterrupt()
+		}
+		debug.PrintStack()
+		pterm.Error.Println(I18n.T(I18n.Crashed_Tip))
+		pterm.Error.Println(I18n.T(I18n.Crashed_StackDump_And_Error))
+		pterm.Error.Println(err)
+		if runtime.GOOS == "windows" {
+			pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
+			_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
+		}
+		os.Exit(1)
+	}
+	os.Exit(0)
 }
 
 func runInteractiveClient(token string) {
@@ -415,6 +417,7 @@ func runClient(env *environment.PBEnvironment) {
 		if args.NoReadline() {
 			return
 		}
+		defer fatal()
 		for {
 			cmd := readline.Readline(env)
 			if len(cmd) == 0 {

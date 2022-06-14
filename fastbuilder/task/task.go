@@ -341,6 +341,12 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 		commands_generator.FreeRequestStringPtr(request)
 	} ()
 	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				cmdsender.Output(fmt.Sprintf("[Task %d] Fatal error: %v", taskid, err))
+				close(blockschannel)
+			}
+		} ()
 		if task.Type==types.TaskTypeAsync {
 			err := builder.Generate(cfg, asyncblockschannel)
 			close(asyncblockschannel)

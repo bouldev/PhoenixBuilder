@@ -35,9 +35,12 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 	}
 
 	if err := nbt.Unmarshal(buffer, &SchematicModule); err != nil {
-		// Won't return the error since it contains a large content that can 
+		// Won't return the error `err` since it contains a large content that can 
 		// crash the server after being sent.
 		return fmt.Errorf(I18n.T(I18n.Sch_FailedToResolve))
+	}
+	if(len(SchematicModule.Blocks)==0) {
+		return fmt.Errorf("Invalid structure.")
 	}
 	Size := [3]int{SchematicModule.Width, SchematicModule.Height, SchematicModule.Length}
 	Offset := [3]int{SchematicModule.WEOffsetX, SchematicModule.WEOffsetY, SchematicModule.WEOffsetZ}
