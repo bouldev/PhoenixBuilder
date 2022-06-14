@@ -146,5 +146,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"每日签到": func() defines.Component {
 			return &DailyAttendance{BasicComponent: &BasicComponent{}}
 		},
+		"小木斧": func() defines.Component {
+			return &WoodAxe{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
