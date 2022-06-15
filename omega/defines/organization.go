@@ -5,6 +5,8 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/define"
+	"phoenixbuilder/mirror/io/world"
 
 	"github.com/google/uuid"
 )
@@ -144,6 +146,7 @@ type GameListener interface {
 	AppendLogoutInfoCallback(cb func(entry protocol.PlayerListEntry))
 	Throw(chat *GameChat)
 	GetTriggerWord() string
+	AppendOnBlockUpdateInfoCallBack(cb func(pos define.CubePos, origRTID uint32, currentRTID uint32))
 }
 
 // 安全事件发送和处理，比如某插件发现有玩家在恶意修改设置
@@ -162,4 +165,5 @@ type MainFrame interface {
 	FatalError(err string)
 	GetGameControl() GameControl
 	GetGameListener() GameListener
+	GetWorld() *world.World
 }

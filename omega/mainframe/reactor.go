@@ -7,8 +7,12 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/chunk"
+	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/mirror/io"
+	"phoenixbuilder/mirror/io/lru"
 	"phoenixbuilder/mirror/io/mcdb"
+	"phoenixbuilder/mirror/io/world"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
@@ -74,6 +78,10 @@ func (o *Reactor) AppendLoginInfoCallback(cb func(entry protocol.PlayerListEntry
 			cb(player)
 		}
 	})
+}
+
+func (o *Reactor) AppendOnBlockUpdateInfoCallBack(cb func(pos define.CubePos, origRTID uint32, currentRTID uint32)) {
+	o.BlockUpdateListeners = append(o.BlockUpdateListeners, cb)
 }
 
 func (o *Reactor) AppendLogoutInfoCallback(cb func(entry protocol.PlayerListEntry)) {
@@ -187,20 +195,29 @@ func (r *Reactor) React(pkt packet.Packet) {
 		}
 	case *packet.CommandOutput:
 		o.GameCtrl.onNewCommandFeedBack(p)
+	case *packet.UpdateBlock:
+		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
+		MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
+		if origBlockRTID, success := r.CurrentWorld.UpdateBlock(cubePos, MCRTID); success {
+			for _, cb := range r.BlockUpdateListeners {
+				cb(cubePos, origBlockRTID, p.NewBlockRuntimeID)
+			}
+		}
+	case *packet.BlockActorData:
+		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
+		r.CurrentWorld.SetBlockNbt(cubePos, p.NBTData)
 	case *packet.LevelChunk:
 		chunkData := io.NEMCPacketToChunkData(p)
 		if chunkData == nil {
 			break
 		}
+		if err := r.CurrentWorldProvider.Write(chunkData); err != nil {
+			o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
+		} else {
+			//fmt.Println("saving chunk @ ", p.ChunkX<<4, p.ChunkZ<<4)
+		}
 		for _, cb := range o.Reactor.OnLevelChunkData {
 			cb(chunkData)
-		}
-		if r.MirrorAvailable {
-			if err := r.CurrentWorld.Write(chunkData); err != nil {
-				o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
-			} else {
-				//fmt.Println("saving chunk @ ", p.ChunkX<<4, p.ChunkZ<<4)
-			}
 		}
 	}
 	for _, cb := range r.OnAnyPacketCallBack {
@@ -219,10 +236,12 @@ type Reactor struct {
 	OnTypedPacketCallBacks    map[uint32][]func(packet.Packet)
 	OnLevelChunkData          []func(cd *mirror.ChunkData)
 	GameMenuEntries           []*defines.GameMenuEntry
+	BlockUpdateListeners      []func(pos define.CubePos, origRTID uint32, currentRTID uint32)
 	GameChatInterceptors      []func(chat *defines.GameChat) (stop bool)
 	GameChatFinalInterceptors []func(chat *defines.GameChat) (stop bool)
 	OnFirstSeePlayerCallback  []func(string)
-	CurrentWorld              mirror.ChunkProvider
+	CurrentWorldProvider      mirror.ChunkProvider
+	CurrentWorld              *world.World
 	MirrorAvailable           bool
 }
 
@@ -232,40 +251,46 @@ func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
 
 func (o *Reactor) onBootstrap() {
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
-	provider, err := mcdb.New(worldDir, opt.FlateCompression)
+	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)
 	if err != nil {
 		pterm.Error.Println("创建镜像存档(" + worldDir + ")时出现错误,正在尝试移除文件夹, 错误为" + err.Error())
 		if err = os.Rename(worldDir, path.Join(o.o.GetWorldsDir(), "损坏的存档")); err != nil {
 			pterm.Error.Println("移除失败，错误为" + err.Error())
 			//panic(err)
 		}
-		if provider, err = mcdb.New(worldDir, opt.FlateCompression); err != nil {
+		if fileProvider, err = mcdb.New(worldDir, opt.FlateCompression); err != nil {
 			pterm.Error.Println("修复也失败了，错误为" + err.Error())
 			//panic(err)
 		}
-		if provider == nil {
+		if fileProvider == nil {
 			for i := 0; i < 10; i++ {
 				pterm.Error.Println("将在没有存档相关功能的情况下运行!")
 			}
 		}
 	} else {
 		o.o.GetBackendDisplay().Write(pterm.Success.Sprint("镜像存档@" + worldDir))
-	}
-	if provider != nil {
-		provider.D.LevelName = "MirrorWorld"
-		o.CurrentWorld = provider
-		o.MirrorAvailable = true
-	} else {
-		o.MirrorAvailable = false
+		fileProvider.D.LevelName = "MirrorWorld"
 	}
 
+	memoryProvider := lru.NewLRUMemoryChunkCacher(8)
+	memoryProvider.OverFlowHolder = fileProvider
+	memoryProvider.FallBackProvider = fileProvider
+	o.CurrentWorldProvider = memoryProvider
+	o.CurrentWorld = world.NewWorld(o.CurrentWorldProvider)
+
 	o.o.CloseFns = append(o.o.CloseFns, func() error {
-		fmt.Println("正在关闭反射世界")
-		if provider != nil {
-			return provider.Close()
+		fmt.Println("正在将世界缓存写入文件")
+		memoryProvider.Close()
+		if fileProvider != nil {
+			fmt.Println("正在关闭反射世界")
+			return fileProvider.Close()
 		}
 		return nil
 	})
+}
+
+func (o *Omega) GetWorld() *world.World {
+	return o.Reactor.CurrentWorld
 }
 
 func newReactor(o *Omega) *Reactor {
