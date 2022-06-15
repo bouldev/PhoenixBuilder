@@ -85,6 +85,8 @@ func GetFBCommitHash() string {
 	return C.GoString(C.commit_hash())
 }
 
+var ParsedArgs []string=[]string{}
+
 func ParseArgs() {
 	argv := make([]*C.char, len(os.Args))
 	for i, v := range os.Args {
@@ -93,6 +95,18 @@ func ParseArgs() {
 		argv[i] = cstr
 	}
 	C.parse_args(C.int(len(os.Args)), &argv[0])
+	ParsedArgs=append([]string{}, os.Args...)
+}
+
+func ParseCustomArgs(customArgs []string) {
+	argv := make([]*C.char, len(customArgs))
+	for i, v := range customArgs {
+		cstr := C.CString(v)
+		defer C.free(unsafe.Pointer(cstr))
+		argv[i] = cstr
+	}
+	C.parse_args(C.int(len(customArgs)), &argv[0])
+	ParsedArgs=append([]string{}, customArgs...)
 }
 
 func boolify(v C.char) bool {

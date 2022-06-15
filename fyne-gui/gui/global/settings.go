@@ -72,33 +72,30 @@ func MakeReadMePopupButton(win fyne.Window) *widget.Button{
 		OnTapped: func() {
 			uclink:=&widget.Hyperlink{
 				Text:       "用户中心",
-				URL:        &url.URL{Path: "http://uc.fastbuilder.pro/"},
+				URL:        &url.URL{Path: "https://uc.fastbuilder.pro/"},
 				TextStyle:  fyne.TextStyle{Bold: true},
 			}
-			uclink.SetURLFromString("http://uc.fastbuilder.pro/")
+			uclink.SetURLFromString("https://uc.fastbuilder.pro/")
 			downloadLink:=&widget.Hyperlink{
 				Text:       "软件下载/更新",
-				URL:        &url.URL{Path: "https://storage.fastbuilder.pro/epsilon/"},
 				TextStyle:  fyne.TextStyle{Bold: true},
 			}
-			downloadLink.SetURLFromString("https://storage.fastbuilder.pro/epsilon/")
+			downloadLink.SetURLFromString("https://storage.fastbuilder.pro/")
 			readmeLink:=&widget.Hyperlink{
 				Text:       "FB使用教程",
-				URL:        &url.URL{Path: "https://fastbuilder.pro/phoenix.cn.html"},
 				TextStyle:  fyne.TextStyle{Bold: true},
 			}
 			readmeLink.SetURLFromString("https://fastbuilder.pro/phoenix.cn.html")
-			nbtLink:=&widget.Hyperlink{
+			/*nbtLink:=&widget.Hyperlink{
 				Text:       "NBT教程",
-				URL:        &url.URL{Path: "https://fastbuilder.pro/nbt.html"},
 				TextStyle:  fyne.TextStyle{Bold: true},
 			}
-			nbtLink.SetURLFromString("https://fastbuilder.pro/nbt.html")
+			nbtLink.SetURLFromString("https://fastbuilder.pro/nbt.html")*/
 			dialog.ShowCustom("帮助链接","知道了",container.NewVBox(
 				uclink,
 				readmeLink,
 				downloadLink,
-				nbtLink,
+				//nbtLink,
 			), win)
 		},
 	}

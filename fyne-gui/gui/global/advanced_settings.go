@@ -6,11 +6,21 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"phoenixbuilder/fastbuilder/args"
+	"encoding/json"
 	"os"
+	"fmt"
 )
 
 
 func MakeAdvancedSettingsPage(app fyne.App,topWindow fyne.Window, setContent func(v fyne.CanvasObject), getContent func() fyne.CanvasObject) fyne.CanvasObject {
+	currentConfig:=args.ParsedArgs
+	parsedConfigBS, err:=json.MarshalIndent(currentConfig, "", "\t")
+	if(err!=nil) {
+		panic(err)
+	}
+	parsedConfig:=string(parsedConfigBS)
+	configurationJSONEntry:=widget.NewMultiLineEntry()
+	configurationJSONEntry.Text=parsedConfig
 	debugModeCheck:=widget.NewCheck("", args.Set_args_isDebugMode)
 	debugModeCheck.Checked=args.DebugMode()
 	debugModeCheckLine:=container.NewBorder(nil,nil,widget.NewLabel("调试模式"),debugModeCheck)
@@ -24,6 +34,8 @@ func MakeAdvancedSettingsPage(app fyne.App,topWindow fyne.Window, setContent fun
 	noPyRpcCheck:=widget.NewCheck("", func(val bool) {})
 	noPyRpcCheck.Checked=args.NoPyRpc()
 	noPyRpcCheck.OnChanged=func(val bool) {
+		//args.Set_noPyRpc(val)
+		return
 		if(!val) {
 			args.Set_noPyRpc(false)
 			return
@@ -36,6 +48,25 @@ func MakeAdvancedSettingsPage(app fyne.App,topWindow fyne.Window, setContent fun
 			args.Set_noPyRpc(val)
 		},topWindow)
 	}
+	configurationJSONSubmitButton:=widget.NewButton("PARSE", func() {
+		buf:=[]string{}
+		err:=json.Unmarshal([]byte(configurationJSONEntry.Text),&buf)
+		if err != nil {
+			dialog.ShowInformation("错误", fmt.Sprintf("未能粘贴 JSON: %v",err),topWindow)
+			return
+		}
+		args.ParseCustomArgs(buf)
+		debugModeCheck.Checked=args.DebugMode()
+		authserverInput.Text=args.AuthServer()
+		disableHashCheck_Check.Checked=args.ShouldDisableHashCheck()
+		muteWorldChatCheck.Checked=args.ShouldMuteWorldChat()
+		noPyRpcCheck.Checked=args.NoPyRpc()
+		debugModeCheck.Refresh()
+		authserverInput.Refresh()
+		disableHashCheck_Check.Refresh()
+		muteWorldChatCheck.Refresh()
+		noPyRpcCheck.Refresh()
+	})
 	
 	return container.NewVScroll(container.NewVBox(
 		widget.NewLabel("所有设置将在程序退出后重置。"),
@@ -48,6 +79,10 @@ func MakeAdvancedSettingsPage(app fyne.App,topWindow fyne.Window, setContent fun
 		widget.NewSeparator(),
 		container.NewBorder(nil,nil,widget.NewLabel("禁用PyRpc包"),noPyRpcCheck),
 		widget.NewSeparator(),
+		container.NewBorder(widget.NewLabel("Flags (JSON)"), container.NewVBox(
+			configurationJSONEntry,
+			configurationJSONSubmitButton,
+		), nil, nil), 
 		widget.NewButton("os.Exit(0)",func(){os.Exit(0)}),
 		widget.NewSeparator(),
 	))

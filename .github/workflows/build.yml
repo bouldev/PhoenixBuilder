@@ -101,20 +101,20 @@ jobs:
       run: |
         export THEOS=~/theos
         make package
-    #- name: Build GUI applications
-    #  run: |
-    #    export THEOS=~/theos
-    #    cd fyne-gui
-    #    cd android_wrapper
-    #    go build
-    #    cd ..
-    #    make
-    #    node simpleappend.js
-    #    ls -lh build/>release.txt
-    #    mv release.txt build/release-list.txt
-    #    cp version build/version.txt
-    #    mv build ../build/gui
-    #    cd ..
+    - name: Build GUI applications
+      run: |
+        export THEOS=~/theos
+        cd fyne-gui
+        cd android_wrapper
+        go build
+        cd ..
+        make
+        node simpleappend.js
+        ls -lh build/>release.txt
+        mv release.txt build/release-list.txt
+        cp version build/version.txt
+        mv build ../build/gui
+        cd ..
     - name: Pack binaries
       run: |
         mv release/*.deb build/
