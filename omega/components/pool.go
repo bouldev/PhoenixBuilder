@@ -2,6 +2,7 @@ package components
 
 import (
 	"phoenixbuilder/omega/components/qqGroupLink"
+	"phoenixbuilder/omega/components/woodaxe"
 	"phoenixbuilder/omega/defines"
 )
 
@@ -147,7 +148,7 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &DailyAttendance{BasicComponent: &BasicComponent{}}
 		},
 		"小木斧": func() defines.Component {
-			return &WoodAxe{BasicComponent: &BasicComponent{}}
+			return &woodaxe.WoodAxe{BasicComponent: &woodaxe.BasicComponent{}}
 		},
 	}
 }

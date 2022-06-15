@@ -1,4 +1,4 @@
-package components
+package woodaxe
 
 import (
 	"encoding/json"
@@ -11,22 +11,50 @@ import (
 	"phoenixbuilder/mirror/items"
 	"phoenixbuilder/omega/defines"
 	"strings"
+	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
 
+const (
+	AreaPosOne = iota
+	AreaPosTwo
+	BasePointOne
+	BasePointTwo
+	NotSelect = 255
+)
+
+type selectInfo struct {
+	selected         map[uint8]bool
+	pos              map[uint8]define.CubePos
+	nextSelect       uint8
+	currentSelectID  uint8
+	currentSelectPos define.CubePos
+	triggerFN        func()
+}
+
+type actionsOccupied struct {
+	occupied       bool
+	continuousCopy bool
+}
+
 type WoodAxe struct {
 	*BasicComponent
-	currentRequestUser       string
-	currentPlayerPk          *packet.AddPlayer
-	currentPlayerKit         defines.PlayerKit
-	woodAxeRTID              int32
-	woodAxeOn                bool
-	currentPos               mgl32.Vec3
-	currentYaw, currentPitch float32
-	esp                      float64
-	nan                      float64
-	structureBlock           *StructureBlock
+	currentRequestUser                   string
+	currentPlayerPk                      *packet.AddPlayer
+	currentPlayerKit                     defines.PlayerKit
+	woodAxeRTID                          int32
+	woodAxeOn                            bool
+	currentPos                           mgl32.Vec3
+	currentYaw, currentPitch             float32
+	esp                                  float64
+	nan                                  float64
+	selectIndicatorPos, areaIndicatorPos define.CubePos
+	selectIndicateStructureBlock         *StructureBlock
+	areaIndicateStructureBlock           *StructureBlock
+	lastSeeTick                          int
+	actionsOccupied
+	selectInfo
 }
 
 type StructureBlock struct {
@@ -52,7 +80,7 @@ func NewStructureBlock(Pos define.CubePos, packetSender func(packet.Packet), uid
 			PaletteName:               "default",
 			IgnoreEntities:            true,
 			IgnoreBlocks:              false,
-			Size:                      protocol.BlockPos{30, 6, 14},
+			Size:                      protocol.BlockPos{0, 0, 0},
 			Offset:                    protocol.BlockPos{0, 0, 0},
 			LastEditingPlayerUniqueID: uid,
 			Rotation:                  0,
@@ -83,6 +111,7 @@ func (o *StructureBlock) IndicateCube(start define.CubePos, end define.CubePos) 
 	size := end.Sub(start).Add(define.CubePos{1, 1, 1})
 	o.basicPacket.Settings.Offset = protocol.BlockPos{int32(offset[0]), int32(offset[1]), int32(offset[2])}
 	o.basicPacket.Settings.Size = protocol.BlockPos{int32(size[0]), int32(size[1]), int32(size[2])}
+	o.basicPacket.ShowBoundingBox = true
 	o.packetSender(o.basicPacket)
 }
 
@@ -178,10 +207,36 @@ type cmdRespDataSet struct {
 	StatusCode int               `json:"statusCode"`
 }
 
-func (o *WoodAxe) onInitStructureBlock(pos define.CubePos) {
+func (o *WoodAxe) onInitStructureBlock(selectIndicatorPos, areaIndicatorPos define.CubePos) {
 	uid := o.Frame.GetUQHolder().BotUniqueID
-	o.structureBlock = NewStructureBlock(pos, o.Frame.GetGameControl().SendMCPacket, uid)
-	o.structureBlock.OnBound()
+	o.selectIndicateStructureBlock = NewStructureBlock(selectIndicatorPos, o.Frame.GetGameControl().SendMCPacket, uid)
+	o.selectIndicateStructureBlock.OffBound()
+	o.areaIndicateStructureBlock = NewStructureBlock(areaIndicatorPos, o.Frame.GetGameControl().SendMCPacket, uid)
+	o.areaIndicateStructureBlock.OffBound()
+}
+
+func (o *WoodAxe) InitStructureBlock() {
+	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("setblock ~~-2~ air", func(output *packet.CommandOutput) {
+		o.Frame.GetGameControl().SendCmd("setblock ~~-1~ structure_block")
+		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("setblock ~~-2~ structure_block", func(output *packet.CommandOutput) {
+			if output.SuccessCount > 0 {
+				respData := cmdRespDataSet{}
+				if err := json.Unmarshal([]byte(output.DataSet), &respData); err == nil {
+					cubePos := define.CubePos{respData.Pos.X, respData.Pos.Y, respData.Pos.Z}
+					fmt.Println(cubePos)
+					o.onInitStructureBlock(cubePos, cubePos.Add(define.CubePos{0, 1, 0}))
+					return
+				}
+			}
+			o.Frame.GetGameControl().SayTo("@a", "小木斧指示器初始化失败")
+		})
+	})
+}
+
+func (o *WoodAxe) InitWorkSpace() {
+	o.InitStructureBlock()
+	o.selectInfo = selectInfo{selected: make(map[uint8]bool), pos: make(map[uint8]define.CubePos), currentSelectID: NotSelect}
+	o.currentPlayerKit.Say("小木斧初始化完成")
 }
 
 func (o *WoodAxe) onInitWorkSapce(pk *packet.AddPlayer) {
@@ -189,18 +244,17 @@ func (o *WoodAxe) onInitWorkSapce(pk *packet.AddPlayer) {
 	o.currentPlayerKit = o.Frame.GetGameControl().GetPlayerKit(pk.Username)
 	o.currentPlayerKit.Say("建筑师 " + pk.Username + " 已进入小木斧范围内")
 	o.onSeeItem(pk.HeldItem.Stack.NetworkID)
-	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("setblock ~~~ structure_block", func(output *packet.CommandOutput) {
-		if output.SuccessCount > 0 {
-			respData := cmdRespDataSet{}
-			if err := json.Unmarshal([]byte(output.DataSet), &respData); err == nil {
-				cubePos := define.CubePos{respData.Pos.X, respData.Pos.Y, respData.Pos.Z}
-				fmt.Println(cubePos)
-				o.onInitStructureBlock(cubePos)
-				return
-			}
-		}
-		o.Frame.GetGameControl().SayTo("@a", "小木斧初始化失败")
-	})
+	o.InitWorkSpace()
+}
+
+func (o *WoodAxe) CleanUpWorkSpace() {
+	pk := o.currentPlayerKit
+	o.currentPlayerPk = nil
+	o.currentPlayerKit = nil
+	o.selectIndicateStructureBlock = nil
+	o.areaIndicateStructureBlock = nil
+	o.selectInfo = selectInfo{selected: make(map[uint8]bool), pos: make(map[uint8]define.CubePos), currentSelectID: NotSelect}
+	pk.Say("小木斧工作区已关闭")
 }
 
 func (o *WoodAxe) onAddPlayer(pkt packet.Packet) {
@@ -331,9 +385,38 @@ func (o *WoodAxe) onPosInput() {
 	}
 	if selected {
 		o.currentPlayerKit.Say(fmt.Sprintf("§l§b选中 %v @ %v", strings.ReplaceAll(selectedBlockName, "minecraft:", ""), selectedBlockPos))
-		o.structureBlock.IndicateCube(selectedBlockPos, selectedBlockPos)
+		o.selectIndicateStructureBlock.IndicateCube(selectedBlockPos, selectedBlockPos)
+		o.selectInfo.currentSelectID = o.selectInfo.nextSelect
+		o.selectInfo.currentSelectPos = selectedBlockPos
+		o.onUpdateSelectPos()
 	} else {
 		o.currentPlayerKit.Say(fmt.Sprintf("§l§a未选中方块！"))
+	}
+}
+
+func (o *WoodAxe) onUpdateSelectPos() {
+	o.selectInfo.selected[o.currentSelectID] = true
+	o.selectInfo.pos[o.currentSelectID] = o.currentSelectPos
+	switch o.selectInfo.currentSelectID {
+	case AreaPosOne:
+		o.currentPlayerKit.Say("已选中区域起点 1")
+		o.areaIndicateStructureBlock.IndicateCube(o.selectInfo.pos[AreaPosOne], o.selectInfo.pos[AreaPosOne])
+	case AreaPosTwo:
+		o.currentPlayerKit.Say("已选中区域起点 2")
+		o.areaIndicateStructureBlock.IndicateCube(o.selectInfo.pos[AreaPosOne], o.selectInfo.pos[AreaPosTwo])
+	case BasePointOne:
+		o.currentPlayerKit.Say("已选中区域基准点")
+	case BasePointTwo:
+		o.currentPlayerKit.Say("已选中目标基准点")
+	}
+	if o.selectInfo.triggerFN == nil {
+		o.selectInfo.nextSelect++
+		if o.selectInfo.nextSelect == BasePointTwo {
+			o.selectInfo.nextSelect = AreaPosOne
+			o.currentPlayerKit.Say("输入 帮助 以打开小木斧帮助菜单")
+		}
+	} else {
+		o.selectInfo.triggerFN()
 	}
 }
 
@@ -342,10 +425,11 @@ func (o *WoodAxe) getPosString() string {
 }
 
 func (o *WoodAxe) onPlayerMove(pk *packet.MovePlayer) {
-	if pk.EntityRuntimeID == o.currentPlayerPk.EntityRuntimeID {
+	if o.currentPlayerPk != nil && pk.EntityRuntimeID == o.currentPlayerPk.EntityRuntimeID {
 		o.currentPos = pk.Position
 		o.currentYaw = pk.HeadYaw
 		o.currentPitch = pk.Pitch
+		o.lastSeeTick = int(pk.Tick)
 	}
 }
 
@@ -355,6 +439,43 @@ func (o *WoodAxe) BlockUpdate(pos define.CubePos, origRTID uint32, currentRTID u
 	hint := fmt.Sprintf("%v:%v->%v", pos, strings.ReplaceAll(orig.Name, "minecraft:", ""), strings.ReplaceAll(current.Name, "minecraft:", ""))
 	fmt.Println(hint)
 	// o.currentPlayerKit.ActionBar(hint)
+}
+
+func (o *WoodAxe) renderMenu() map[string]func(chat *defines.GameChat) {
+	actions := map[string]func(chat *defines.GameChat){}
+	hints := []string{"输入 初始化 以重置小木斧工作区"}
+	if action, trigger, hint, available := copyEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
+	if action, trigger, hint, available := continuousCopyEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
+	actions["帮助"] = func(chat *defines.GameChat) {
+		for _, hint := range hints {
+			o.currentPlayerKit.Say(hint)
+		}
+	}
+	actions["初始化"] = func(chat *defines.GameChat) {
+		o.InitWorkSpace()
+	}
+	return actions
+}
+
+func (o *WoodAxe) onChat(chat *defines.GameChat) (stop bool) {
+	if o.currentRequestUser == chat.Name {
+		if len(chat.Msg) > 0 {
+			menu := o.renderMenu()
+			msg := chat.Msg[0]
+			if action, hasK := menu[msg]; hasK {
+				chat.Msg = chat.Msg[1:]
+				action(chat)
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (o *WoodAxe) Inject(frame defines.MainFrame) {
@@ -370,5 +491,24 @@ func (o *WoodAxe) Inject(frame defines.MainFrame) {
 		o.onPlayerMove(p.(*packet.MovePlayer))
 	})
 	o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.BlockUpdate)
+	o.Frame.GetGameListener().SetGameChatInterceptor(o.onChat)
 	// frame.GetGameListener().SetOnAnyPacketCallBack(o.onAnyPacket)
+}
+
+func (o *WoodAxe) Activate() {
+	lastCheckTick := 0
+	go func() {
+		tick := time.NewTicker(time.Second * 3)
+		for {
+			<-tick.C
+			if o.currentPlayerPk != nil {
+				if lastCheckTick != 0 {
+					if o.lastSeeTick-lastCheckTick < 20 {
+						o.CleanUpWorkSpace()
+					}
+				}
+				lastCheckTick = o.lastSeeTick
+			}
+		}
+	}()
 }

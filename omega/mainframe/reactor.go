@@ -196,6 +196,9 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.CommandOutput:
 		o.GameCtrl.onNewCommandFeedBack(p)
 	case *packet.UpdateBlock:
+		if p.Layer != 0 {
+			break
+		}
 		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
 		MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
 		if origBlockRTID, success := r.CurrentWorld.UpdateBlock(cubePos, MCRTID); success {
