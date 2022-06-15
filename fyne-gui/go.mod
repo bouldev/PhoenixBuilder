@@ -4,6 +4,18 @@ go 1.17
 
 require phoenixbuilder v1.5.1
 
+require (
+	github.com/atomicgo/cursor v0.0.1 // indirect
+	github.com/df-mc/goleveldb v1.1.9 // indirect
+	github.com/golang/snappy v0.0.1 // indirect
+	github.com/gookit/color v1.4.2 // indirect
+	github.com/mattn/go-runewidth v0.0.13 // indirect
+	github.com/pterm/pterm v0.12.29 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
+	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
+)
+
 replace phoenixbuilder => ../
 
 require (
@@ -28,7 +40,7 @@ require (
 	github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/klauspost/compress v1.11.1 // indirect
+	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20211230184646-baf1f7156737 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

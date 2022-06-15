@@ -3,6 +3,7 @@ package task_config
 import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/configuration"
+	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
 
@@ -21,10 +22,14 @@ type GUI struct {
 
 	content      fyne.CanvasObject
 	majorContent fyne.CanvasObject
+	
+	env          *environment.PBEnvironment
 }
 
-func New() *GUI {
-	gui := &GUI{}
+func New(env *environment.PBEnvironment) *GUI {
+	gui := &GUI{
+		env: env,
+	}
 	return gui
 }
 
@@ -38,6 +43,7 @@ type DelaySetter interface {
 type GlobalDelaySetter struct {
 	mirrorDelayConfig  *types.DelayConfig
 	mirrorCreationType byte
+	env *environment.PBEnvironment
 }
 
 func (gds *GlobalDelaySetter) DelayConfigGetter() *types.DelayConfig {
@@ -54,18 +60,19 @@ func (gds *GlobalDelaySetter) CreationTypeSetter(b byte) {
 }
 
 func (gds *GlobalDelaySetter) Submit() bool {
-	configuration.GlobalFullConfig().Delay().Delay = gds.mirrorDelayConfig.Delay
-	configuration.GlobalFullConfig().Delay().DelayMode = gds.mirrorDelayConfig.DelayMode
-	configuration.GlobalFullConfig().Delay().DelayThreshold = gds.mirrorDelayConfig.DelayThreshold
-	configuration.GlobalFullConfig().Global().TaskCreationType = gds.mirrorCreationType
+	configuration.GlobalFullConfig(gds.env).Delay().Delay = gds.mirrorDelayConfig.Delay
+	configuration.GlobalFullConfig(gds.env).Delay().DelayMode = gds.mirrorDelayConfig.DelayMode
+	configuration.GlobalFullConfig(gds.env).Delay().DelayThreshold = gds.mirrorDelayConfig.DelayThreshold
+	configuration.GlobalFullConfig(gds.env).Global().TaskCreationType = gds.mirrorCreationType
 	return true
 }
 
-func makeGlobalDelaySetter() *GlobalDelaySetter {
-	_mirrorDelayConfig := *configuration.GlobalFullConfig().Delay()
+func makeGlobalDelaySetter(env *environment.PBEnvironment) *GlobalDelaySetter {
+	_mirrorDelayConfig := *configuration.GlobalFullConfig(env).Delay()
 	return &GlobalDelaySetter{
+		env: env,
 		mirrorDelayConfig:  &_mirrorDelayConfig,
-		mirrorCreationType: configuration.GlobalFullConfig().Global().TaskCreationType,
+		mirrorCreationType: configuration.GlobalFullConfig(env).Global().TaskCreationType,
 	}
 }
 
@@ -74,6 +81,7 @@ type TaskDelaySetter struct {
 	mirrorDelayConfig  *types.DelayConfig
 	mirrorCreationType byte
 	task               *task.Task
+	env                *environment.PBEnvironment
 }
 
 func (tds *TaskDelaySetter) DelayConfigGetter() *types.DelayConfig {
@@ -90,7 +98,7 @@ func (tds *TaskDelaySetter) CreationTypeSetter(b byte) {
 }
 
 func (tds *TaskDelaySetter) Submit() bool {
-	v, ok := task.TaskMap.Load(tds.id)
+	v, ok := tds.env.TaskHolder.(*task.TaskHolder).TaskMap.Load(tds.id)
 	if !ok {
 		return false
 	}
@@ -113,9 +121,9 @@ func (tds *TaskDelaySetter) Break() {
 	tds.task.Break()
 }
 
-func makeAllTasksSetter() []fyne.CanvasObject {
+func makeAllTasksSetter(env *environment.PBEnvironment) []fyne.CanvasObject {
 	taskDelaySetters := make([]fyne.CanvasObject, 0)
-	task.TaskMap.Range(func(k, v interface{}) bool {
+	env.TaskHolder.(*task.TaskHolder).TaskMap.Range(func(k, v interface{}) bool {
 		t := v.(*task.Task)
 		_mirrorDelayConfig := *(t.Config.Delay())
 		var content fyne.CanvasObject
@@ -328,9 +336,9 @@ func MakeDelaySetterGUI(ds DelaySetter, isGlobal bool) *DelaySetterGUI {
 }
 
 func (g *GUI) makeMajorContent() fyne.CanvasObject {
-	globalSetter := makeGlobalDelaySetter()
+	globalSetter := makeGlobalDelaySetter(g.env)
 	globalSetterWidget := MakeDelaySetterGUI(globalSetter, true)
-	taskSetters := makeAllTasksSetter()
+	taskSetters := makeAllTasksSetter(g.env)
 	var taskContent fyne.CanvasObject
 	if len(taskSetters) == 0 {
 		taskContent = widget.NewLabel("还没有运行中的任务")

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	bot_bridge_command "phoenixbuilder/fastbuilder/command"
+	bot_bridge_command "phoenixbuilder/fastbuilder/commands_generator"
 	bot_bridge_fmt "phoenixbuilder/bridge/bridge_fmt"
 	bot_session "phoenixbuilder_fyne_gui/dedicate/fyne/session"
 
@@ -344,7 +344,7 @@ func (g *GUI) AfterMount() {
 		g.createFromTemplateBtn.OnTapped = func() {
 			g.setContent(g.taskMenu.GetContent(g.setContent, g.getContent, g.masterWindow))
 		}
-		g.taskConfigMenu = task_config.New()
+		g.taskConfigMenu = task_config.New(g.BotSession.GetEnvironment())
 		g.taskSettingsButton.OnTapped = func() {
 			g.setContent(g.taskConfigMenu.GetContent(g.setContent, g.getContent, g.masterWindow))
 		}

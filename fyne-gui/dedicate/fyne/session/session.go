@@ -11,7 +11,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"phoenixbuilder/fastbuilder/command"
+	"phoenixbuilder/io/commands"
+	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/function"
 	fbtask "phoenixbuilder/fastbuilder/task"
@@ -23,12 +24,15 @@ import (
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/utils"
+	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder_fyne_gui/platform_helper"
 	"strings"
 	"time"
 	"phoenixbuilder/fastbuilder/args"
+	omega_embed "phoenixbuilder/omega/cli/embed"
+	"phoenixbuilder/io/special_tasks"
 )
 
 type SessionConfig struct {
@@ -40,7 +44,7 @@ type SessionConfig struct {
 	ServerPasswd  string `yaml:"server_passwd" json:"server_passwd"`
 	RespondUser   string `yaml:"respond_user" json:"respond_user"`
 	MuteWorldChat bool   `yaml:"mute_world_chat" json:"mute_world_chat"`
-	iamDeveloper  bool
+	devMode       bool
 	// when "iamDeveloper" is true, the following fields are used,
 	// otherwise, the fields are ignored (restore to default)
 	NoPyRPC               bool   `yaml:"no_py_rpc" json:"no_py_rpc"`
@@ -50,7 +54,7 @@ type SessionConfig struct {
 }
 
 func (config *SessionConfig) IsDeveloper() bool {
-	return config.iamDeveloper
+	return config.devMode
 }
 
 func NewConfig() *SessionConfig {
@@ -62,9 +66,9 @@ func NewConfig() *SessionConfig {
 		ServerCode:            "",
 		ServerPasswd:          "",
 		RespondUser:           "",
-		iamDeveloper:          false,
+		devMode:               false,
 		MuteWorldChat:         false,
-		NoPyRPC:               false,
+		NoPyRPC:               true,
 		FBVersion:             args.GetFBVersion(),
 		FBHash:                "gui~"+args.GetFBPlainVersion(),
 		FBCodeName:            DefaultFBCodeName,
@@ -79,8 +83,7 @@ type Session struct {
 	cmdChan          chan string
 	closeFns         []func()
 	worldChatChannel chan []string
-	fbClient         *fbauth.Client
-	mcConn           *minecraft.Conn
+	env *environment.PBEnvironment
 	botRuntimeID     string
 	Config           *SessionConfig
 	// set/ set end callback
@@ -108,9 +111,9 @@ func NewSession(config *SessionConfig) *Session {
 		return nil
 	}
 
-	config.iamDeveloper = false
+	config.devMode = false
 
-	if !config.iamDeveloper {
+	if !config.devMode {
 		defaultConfig := NewConfig()
 		config.NoPyRPC = defaultConfig.NoPyRPC
 		config.FBVersion = defaultConfig.FBVersion
@@ -140,6 +143,10 @@ func NewSession(config *SessionConfig) *Session {
 // func (s *Session) NewMonkeyPathWriter(path string, fp fyne.URIWriteCloser) {
 // 	configuration.MonkeyPathFileWriter[path] = fp
 // }
+
+func (s *Session) GetEnvironment() *environment.PBEnvironment {
+	return s.env
+}
 
 func (s *Session) Start() (terminateChan chan string, startErr error) {
 	// we need to make sure no multiple session is running
@@ -196,14 +203,22 @@ func (s *Session) beforeStart() (err error) {
 	if s.Config.ServerCode == "" {
 		return fmt.Errorf("no server code provided")
 	}
-
-	// do what phoenix builder does
-	worldChatChannel := make(chan []string)
-	s.worldChatChannel = worldChatChannel
-	client := fbauth.CreateClient(worldChatChannel)
-	s.fbClient = client
+	
+	env:=&environment.PBEnvironment{}
+	env.UQHolder=nil
+	env.ActivateTaskStatus=make(chan bool)
+	env.TaskHolder=fbtask.NewTaskHolder()
+	env.FunctionHolder=function.NewFunctionHolder(env)
+	env.LoginInfo=environment.LoginInfo {
+		Token: s.Config.FBToken,
+		ServerCode: s.Config.ServerCode,
+		ServerPasscode: s.Config.ServerPasswd,
+	}
+	authClient:=fbauth.CreateClient(env)
+	env.FBAuthClient = authClient
+	
 	if s.Config.FBToken == "" {
-		// we need to get the token
+		// we need to get a token
 		tokenReq := &FBPlainToken{
 			EncryptToken: true,
 			Username:     s.Config.FBUserName,
@@ -213,40 +228,61 @@ func (s *Session) beforeStart() (err error) {
 		if err != nil {
 			return fmt.Errorf("cannot marshal token request to json: \n%v", err)
 		}
-		token := client.GetToken("", string(tokenReqStr))
+		token := authClient.GetToken("", string(tokenReqStr))
 		if token == "" {
 			return fmt.Errorf("cannot get token: \n" + I18n.T(I18n.FBUC_LoginFailed))
 		}
 		s.Config.FBToken = token
+		env.LoginInfo.Token=token
 	}
-	bridge_fmt.Println(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), s.Config.ServerCode))
-	dialer := minecraft.Dialer{
-		ServerCode: s.Config.ServerCode,
-		Password:   s.Config.ServerPasswd,
-		Version:    s.Config.FBHash,
-		Token:      s.Config.FBToken,
-		Client:     client,
+	bridge_fmt.Println(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode))
+	var conn *minecraft.Conn
+	if(env.IsDebug) {
+		conn=&minecraft.Conn {
+			DebugMode: true,
+		}
+	}else{
+		connectionDeadline:=time.NewTimer(time.Minute*3)
+		go func() {
+			<-connectionDeadline.C
+			panic("Connection deadline exceeded")
+		} ()
+		dialer:=minecraft.Dialer {
+			ServerCode: env.LoginInfo.ServerCode,
+			Password:   env.LoginInfo.ServerPasscode,
+			Token:      env.LoginInfo.Token,
+			Client:     authClient,
+		}
+		cc, err:=dialer.Dial("raknet", "")
+		if(err!=nil) {
+			bridge_fmt.Println(fmt.Sprintf("%v", err))
+			return err
+		}
+		conn=cc
+		if args.GetCustomGameName() == "" {
+			go func() {
+				user := authClient.ShouldRespondUser()
+				env.RespondUser = user
+			}()
+		} else {
+			env.RespondUser = args.GetCustomGameName()
+		}
+		s.Config.RespondUser=env.RespondUser
+		env.WorldChatChannel = make(chan []string)
 	}
-	conn, err := dialer.Dial("raknet", "")
-	if err != nil {
-		return fmt.Errorf("cannot dial to netease mc server: (%v)", err)
-	}
-	s.mcConn = conn
 	s.closeFns = append(s.closeFns, func() {
 		conn.Close()
+		env.Stop()
+		env.WaitStopped()
 	})
-	// override the default respond user
-	if s.Config.RespondUser == "" {
-		s.Config.RespondUser = client.ShouldRespondUser()
-	}
-
-	// TODO: don't make this global
-	configuration.RespondUser = s.Config.RespondUser
+	bridge_fmt.Println(I18n.T(I18n.ConnectionEstablished))
+	
 
 	// set bot runtimeID
 	s.botRuntimeID = fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
 
 	// send pyRPC
+	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
 	if !s.Config.NoPyRPC {
 		conn.WritePacket(&packet.PyRpc{
 			Content: []byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xc, 0x53, 0x79, 0x6e, 0x63, 0x55, 0x73, 0x69, 0x6e, 0x67, 0x4d, 0x6f, 0x64, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0x90, 0xc0},
@@ -259,8 +295,8 @@ func (s *Session) beforeStart() (err error) {
 		})
 		conn.WritePacket(&packet.PyRpc{
 			Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xb, 0x4d, 0x6f, 0x64, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x43, 0x32, 0x53, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x94, 0xc4, 0x9, 0x4d, 0x69, 0x6e, 0x65, 0x63, 0x72, 0x61, 0x66, 0x74, 0xc4, 0x6, 0x70, 0x72, 0x65, 0x73, 0x65, 0x74, 0xc4, 0x12, 0x47, 0x65, 0x74, 0x4c, 0x6f, 0x61, 0x64, 0x65, 0x64, 0x49, 0x6e, 0x73, 0x74, 0x61, 0x6e, 0x63, 0x65, 0x73, 0x81, 0xc4, 0x8, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x49, 0x64, 0xc4},
-				[]byte{byte(len(s.botRuntimeID))},
-				[]byte(s.botRuntimeID),
+				[]byte{byte(len(runtimeid))},
+				[]byte(runtimeid),
 				[]byte{0xc0},
 			}, []byte{}),
 		})
@@ -269,8 +305,8 @@ func (s *Session) beforeStart() (err error) {
 		})
 		conn.WritePacket(&packet.PyRpc{
 			Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xb, 0x4d, 0x6f, 0x64, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x43, 0x32, 0x53, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x94, 0xc4, 0x9, 0x4d, 0x69, 0x6e, 0x65, 0x63, 0x72, 0x61, 0x66, 0x74, 0xc4, 0xe, 0x76, 0x69, 0x70, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x53, 0x79, 0x73, 0x74, 0x65, 0x6d, 0xc4, 0xc, 0x50, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x55, 0x69, 0x49, 0x6e, 0x69, 0x74, 0xc4},
-				[]byte{byte(len(s.botRuntimeID))},
-				[]byte(s.botRuntimeID),
+				[]byte{byte(len(runtimeid))},
+				[]byte(runtimeid),
 				[]byte{0xc0},
 			}, []byte{}),
 		})
@@ -280,14 +316,18 @@ func (s *Session) beforeStart() (err error) {
 	conn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
 	})
+	
+	env.Connection=conn
+	if false {
+		bridge_fmt.Println("Omega System Enabled!")
+		omega_embed.EnableOmegaSystem(env)
+	}
 
-	// init FB Functions
-	function.InitInternalFunctions()
+	commands.InitCommandSender(env)
+	functionHolder:=env.FunctionHolder.(*function.FunctionHolder)
+	function.InitInternalFunctions(functionHolder)
+	fbtask.InitTaskStatusDisplay(env)
 
-	// TODO: don't make those global
-	fbtask.InitTaskStatusDisplay(conn)
-
-	// init the bot movement sync
 	move.ConnectTime = conn.GameData().ConnectTime
 	move.Position = conn.GameData().PlayerPosition
 	move.Pitch = conn.GameData().Pitch
@@ -295,15 +335,18 @@ func (s *Session) beforeStart() (err error) {
 	move.Connection = conn
 	move.RuntimeID = conn.GameData().EntityRuntimeID
 
-	// no necessary here
-	// signalhandler.Init(conn)
+	// not necessary here
+	// signalhandler.Install(conn)
 
 	// TODO: it should have a better design
 	zeroId, _ := uuid.NewUUID()
 	oneId, _ := uuid.NewUUID()
 	configuration.ZeroId = zeroId
 	configuration.OneId = oneId
-	types.ForwardedBrokSender = fbtask.BrokSender
+	taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+	types.ForwardedBrokSender = taskholder.BrokSender
+	
+	s.env=env
 
 	return nil
 }
@@ -317,35 +360,10 @@ func (s *Session) routine(c chan string) {
 		if r != nil {
 			terminateReason = fmt.Sprintf("Session terminated\n because a panic occoured in routine: \n%v", r)
 		}else{
-			s.mcConn.Close()
 			platform_helper.StopBackground()
 		}
 		s.close()
 		c <- terminateReason
-	}()
-
-	go func() {
-		if s.Config.MuteWorldChat {
-			return
-		}
-		defer func() {
-			// we don't want the whole program to exit when there is a panic
-			// hidden in the code
-			r := recover()
-			if r != nil {
-				terminateReason = fmt.Sprintf("Session terminated\n because a panic occoured in World Chat: \n%v", r)
-			}
-			s.close()
-			c <- terminateReason
-		}()
-		for {
-			select {
-			case csmsg := <-s.worldChatChannel:
-				command.WorldChatTellraw(s.mcConn, csmsg[0], csmsg[1])
-			case <-s.stopChan:
-				return
-			}
-		}
 	}()
 
 	go func() {
@@ -368,19 +386,19 @@ func (s *Session) routine(c chan string) {
 				if cmd[0] == '.' {
 					ud, _ := uuid.NewUUID()
 					chann := make(chan *packet.CommandOutput)
-					command.UUIDMap.Store(ud.String(), chann)
-					command.SendCommand(cmd[1:], ud, s.mcConn)
+					s.env.CommandSender.GetUUIDMap().Store(ud.String(), chann)
+					s.env.CommandSender.SendCommand(cmd[1:], ud)
 					resp := <-chann
 					bridge_fmt.Printf("%+v\n", resp)
 				} else if cmd[0] == '!' {
 					ud, _ := uuid.NewUUID()
 					chann := make(chan *packet.CommandOutput)
-					command.UUIDMap.Store(ud.String(), chann)
-					command.SendWSCommand(cmd[1:], ud, s.mcConn)
+					s.env.CommandSender.GetUUIDMap().Store(ud.String(), chann)
+					s.env.CommandSender.SendWSCommand(cmd[1:], ud)
 					resp := <-chann
 					bridge_fmt.Printf("%+v\n", resp)
 				}
-				function.Process(s.mcConn, cmd)
+				s.env.FunctionHolder.(*function.FunctionHolder).Process(cmd)
 			case <-s.stopChan:
 				return
 			}
@@ -388,10 +406,10 @@ func (s *Session) routine(c chan string) {
 	}()
 
 	// A loop that reads packets from the connection until it is closed.
-	conn := s.mcConn
-	user := s.Config.RespondUser
+	env:=s.env
+	conn := env.Connection.(*minecraft.Conn)
+	user := env.RespondUser
 	zeroId := configuration.ZeroId
-	client := s.fbClient
 	for {
 		// Read a packet from the connection: ReadPacket returns an error if the connection is closed or if
 		// a read timeout is set. You will generally want to return or break if this happens.
@@ -399,22 +417,26 @@ func (s *Session) routine(c chan string) {
 		if err != nil {
 			panic(err)
 		}
+		
+		if(env.OmegaAdaptorHolder!=nil) {
+			env.OmegaAdaptorHolder.(*omega_embed.EmbeddedAdaptor).FeedPacket(pk)
+		}
+		
 
 		switch p := pk.(type) {
 		case *packet.PyRpc:
 			if s.Config.NoPyRPC {
 				break
 			}
-			//fmt.Printf("PyRpc!\n")
 			if strings.Contains(string(p.Content), "GetLoadingTime") {
 				//fmt.Printf("GetLoadingTime!!\n")
-				uid := s.mcConn.IdentityData().Uid
+				uid := env.Connection.(*minecraft.Conn).IdentityData().Uid
 				num := uid&255 ^ (uid&65280)>>8
 				curTime := time.Now().Unix()
 				num = curTime&3 ^ (num&7)<<2 ^ (curTime&252)<<3 ^ (num&248)<<8
 				numcont := make([]byte, 2)
 				binary.BigEndian.PutUint16(numcont, uint16(num))
-				s.mcConn.WritePacket(&packet.PyRpc{
+				env.Connection.(*minecraft.Conn).WritePacket(&packet.PyRpc{
 					Content: []byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0x12, 0x53, 0x65, 0x74, 0x6c, 0x6f, 0x61, 0x64, 0x4c, 0x6f, 0x61, 0x64, 0x69, 0x6e, 0x67, 0x54, 0x69, 0x6d, 0x65, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xcd, numcont[0], numcont[1], 0xc0},
 				})
 				// Good job, netease, you wasted 3 days of my idle time
@@ -456,7 +478,7 @@ func (s *Session) routine(c chan string) {
 				// 2021-12-22 10:51~11:55
 				// Thank netease for wasting my time again ;)
 				encData := p.Content[68 : len(p.Content)-1]
-				response := client.TransferData(string(encData), fmt.Sprintf("%d", conn.IdentityData().Uid))
+				response := env.FBAuthClient.(*fbauth.Client).TransferData(string(encData), fmt.Sprintf("%d", conn.IdentityData().Uid))
 				conn.WritePacket(&packet.PyRpc{
 					Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xc, 0x53, 0x65, 0x74, 0x53, 0x74, 0x61, 0x72, 0x74, 0x54, 0x79, 0x70, 0x65, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4},
 						[]byte{byte(len(response))},
@@ -467,39 +489,18 @@ func (s *Session) routine(c chan string) {
 			}
 			break
 		case *packet.StructureTemplateDataResponse:
-			//fmt.Printf("RESPONSE %+v\n",p.StructureTemplate)
-			fbtask.ExportWaiter <- p.StructureTemplate
+			special_tasks.ExportWaiter <- p.StructureTemplate
 			break
-		/*case *packet.InventoryContent:
-		for _, item := range p.Content {
-			fmt.Printf("InventorySlot %+v\n",item.Stack.NBTData["dataField"])
-		}
-		break*/
-		/*case *packet.InventorySlot:
-		fmt.Printf("Slot %d:%+v",p.Slot,p.NewItem.Stack)*/
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
-				if user == p.SourceName {
-					if p.Message[0] == '>' && len(p.Message) > 1 {
-						umsg := p.Message[1:]
-						if !client.CanSendMessage() {
-							command.WorldChatTellraw(conn, "FasｔBuildeｒ", "Lose connection to the authentication server.")
-							break
-						}
-						client.WorldChat(umsg)
+				if args.InGameResponse() {
+					if p.SourceName == env.RespondUser {
+						s.env.FunctionHolder.(*function.FunctionHolder).Process(p.Message)
 					}
-					break
-					bridge_fmt.Println(fmt.Sprintf("<%s>: %s", user,p.Message))
-					if p.Message[0] == '>' {
-						//umsg:=p.Message[1:]
-						//
-					}
-					function.Process(conn, p.Message)
-					break
 				}
+				break
 			}
 		case *packet.CommandOutput:
-			//if p.SuccessCount > 0 {
 			if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
 				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
 				if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
@@ -509,7 +510,7 @@ func (s *Session) routine(c chan string) {
 					s.tellraw(I18n.T(I18n.InvalidPosition))
 					break
 				}
-				configuration.GlobalFullConfig().Main().Position = types.Position{
+				configuration.GlobalFullConfig(env).Main().Position = types.Position{
 					X: pos[0],
 					Y: pos[1],
 					Z: pos[2],
@@ -523,7 +524,7 @@ func (s *Session) routine(c chan string) {
 					s.tellraw(I18n.T(I18n.InvalidPosition))
 					break
 				}
-				configuration.GlobalFullConfig().Main().End = types.Position{
+				configuration.GlobalFullConfig(env).Main().End = types.Position{
 					X: pos[0],
 					Y: pos[1],
 					Z: pos[2],
@@ -532,8 +533,7 @@ func (s *Session) routine(c chan string) {
 				s.tellraw(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
 				break
 			}
-			//}
-			pr, ok := command.UUIDMap.LoadAndDelete(p.CommandOrigin.UUID.String())
+			pr, ok := env.CommandSender.GetUUIDMap().LoadAndDelete(p.CommandOrigin.UUID.String())
 			if ok {
 				pu := pr.(chan *packet.CommandOutput)
 				pu <- p
@@ -546,13 +546,13 @@ func (s *Session) routine(c chan string) {
 				})
 			}
 		case *packet.LevelChunk:
-			if world_provider.ChunkInput != nil {
-				world_provider.ChunkInput <- p
-			} else {
-				world_provider.DoCache(p)
+			if args.ShouldEnableOmegaSystem() {
+				world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
 			}
+			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
+			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
 		case *packet.UpdateBlock:
-			channel, h := command.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
+			channel, h := env.CommandSender.GetBlockUpdateSubscribeMap().LoadAndDelete(p.Position)
 			if h {
 				ch := channel.(chan bool)
 				ch <- true
@@ -568,7 +568,6 @@ func (s *Session) routine(c chan string) {
 				move.Target = p.Position
 			}
 		case *packet.CorrectPlayerMovePrediction:
-			//fmt.Printf("correct %v\n",time.Now())
 			move.MoveP += 10
 			if move.MoveP > 100 {
 				move.MoveP = 0
@@ -579,7 +578,6 @@ func (s *Session) routine(c chan string) {
 			if move.TargetRuntimeID == 0 && p.EntityRuntimeID != conn.GameData().EntityRuntimeID {
 				move.Target = p.Position
 				move.TargetRuntimeID = p.EntityRuntimeID
-				//fmt.Printf("Got target: %s\n",p.Username)
 			}
 		}
 		select {
@@ -592,20 +590,20 @@ func (s *Session) routine(c chan string) {
 }
 
 func (s *Session) GetPos() (x, y, z int) {
-	return configuration.GlobalFullConfig().Main().Position.X, configuration.GlobalFullConfig().Main().Position.Y, configuration.GlobalFullConfig().Main().Position.Z
+	return configuration.GlobalFullConfig(s.env).Main().Position.X, configuration.GlobalFullConfig(s.env).Main().Position.Y, configuration.GlobalFullConfig(s.env).Main().Position.Z
 }
 
 func (s *Session) GetEndPos() (x, y, z int) {
-	return configuration.GlobalFullConfig().Main().End.X, configuration.GlobalFullConfig().Main().End.Y, configuration.GlobalFullConfig().Main().End.Z
+	return configuration.GlobalFullConfig(s.env).Main().End.X, configuration.GlobalFullConfig(s.env).Main().End.Y, configuration.GlobalFullConfig(s.env).Main().End.Z
 }
 
 func (s *Session) sendCommand(commands string, UUID uuid.UUID) error {
-	return command.SendCommand(commands, UUID, s.mcConn)
+	return s.env.CommandSender.SendCommand(commands, UUID)
 }
 
-func (s *Session) tellraw(lines ...string) error {
-	command.AdditionalChatCb(lines[0])
-	return command.Tellraw(s.mcConn, lines[0])
+func (s *Session) tellraw(message string) error {
+	commands_generator.AdditionalChatCb(message)
+	return s.env.CommandSender.Output(message)
 }
 
 func (s *Session) close() {
@@ -614,8 +612,7 @@ func (s *Session) close() {
 		fn()
 	}
 	// let GC do the work
-	s.fbClient = nil
-	s.mcConn = nil
+	s.env=nil
 }
 
 func (s *Session) Execute(cmd string) {
