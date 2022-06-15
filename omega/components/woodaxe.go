@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/chunk"
+	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/mirror/items"
 	"phoenixbuilder/omega/defines"
 
@@ -46,7 +47,15 @@ func (o *WoodAxe) onAnyPacket(pkt packet.Packet) {
 		break
 	case *packet.NetworkChunkPublisherUpdate:
 		break
-	case *packet.UpdateBlock:
+	// case *packet.UpdateBlock:
+	// 	break
+	case *packet.LevelEvent:
+		break
+	case *packet.Text:
+		break
+	case *packet.ActorEvent:
+		break
+	case *packet.RemoveActor:
 		break
 	case *packet.MovePlayer:
 		break
@@ -87,7 +96,7 @@ func (o *WoodAxe) onAddPlayer(pkt packet.Packet) {
 func (o *WoodAxe) onAnimate(pkt packet.Packet) {
 	pk := pkt.(*packet.Animate)
 	if o.currentPlayerPk != nil && pk.EntityRuntimeID == o.currentPlayerPk.EntityRuntimeID {
-		fmt.Println("animate!")
+		// fmt.Println("animate!")
 		if o.woodAxeOn {
 			o.onPosInput()
 		}
@@ -157,21 +166,19 @@ func (o *WoodAxe) computeNextPos(currentPos mgl32.Vec3, delta mgl32.Vec3) float6
 	return posDelta
 }
 
-func (o *WoodAxe) posToBlockPos(pos mgl32.Vec3) protocol.BlockPos {
-	return protocol.BlockPos{int32(math.Floor(float64(pos[0]))), int32(math.Floor(float64(pos[1]))), int32(math.Floor(float64(pos[2])))}
+func (o *WoodAxe) posToBlockPos(pos mgl32.Vec3) define.CubePos {
+	return define.CubePos{int(math.Floor(float64(pos[0]))), int(math.Floor(float64(pos[1]))), int(math.Floor(float64(pos[2])))}
 }
 
-func (o *WoodAxe) computeNexXPos(currentPos mgl32.Vec3, delta mgl32.Vec3, numNext int) (nextPoses []protocol.BlockPos) {
-	nextPoses = []protocol.BlockPos{}
+func (o *WoodAxe) computeNextXPos(currentPos mgl32.Vec3, delta mgl32.Vec3, numNext int) (nextPoses []define.CubePos) {
+	nextPoses = []define.CubePos{}
 	for i := 0; i < numNext; i++ {
 		d := o.computeNextPos(currentPos, delta)
-		fmt.Println(d)
 		if d == o.nan {
 			break
 		}
-		d += 2 * o.esp
+		d += o.esp
 		currentPos = currentPos.Add(delta.Mul(float32(d)))
-		fmt.Println(currentPos)
 		nextPoses = append(nextPoses, o.posToBlockPos(currentPos))
 	}
 	return nextPoses
@@ -179,16 +186,37 @@ func (o *WoodAxe) computeNexXPos(currentPos mgl32.Vec3, delta mgl32.Vec3, numNex
 
 func (o *WoodAxe) onPosInput() {
 	o.currentPlayerKit.Say(o.getPosString())
-	headAtBlock := protocol.BlockPos{int32(math.Floor(float64(o.currentPos[0]))), int32(math.Floor(float64(o.currentPos[1]))), int32(math.Floor(float64(o.currentPos[2])))}
-	fmt.Println(headAtBlock)
+	// headAtBlock := protocol.BlockPos{int32(math.Floor(float64(o.currentPos[0]))), int32(math.Floor(float64(o.currentPos[1]))), int32(math.Floor(float64(o.currentPos[2])))}
+	// fmt.Println(headAtBlock)
 	deltaY := math.Sin(float64(-o.currentPitch / 180 * math.Pi))
 	deltaXZ := math.Cos(float64(o.currentPitch / 180 * math.Pi))
 	deltaX := -math.Sin(float64(o.currentYaw/180*math.Pi)) * deltaXZ
 	deltaZ := math.Cos(float64(o.currentYaw/180*math.Pi)) * deltaXZ
 	lookAt := mgl32.Vec3{float32(deltaX), float32(deltaY), float32(deltaZ)}
-	o.currentPlayerKit.Say(fmt.Sprintf("LookAtDelta :[%.1f, %.1f, %.1f]", deltaX, deltaY, deltaZ))
-	nextTenBlocks := o.computeNexXPos(o.currentPos, lookAt, 10)
-	fmt.Println(nextTenBlocks)
+	// o.currentPlayerKit.Say(fmt.Sprintf("LookAtDelta :[%.1f, %.1f, %.1f]", deltaX, deltaY, deltaZ))
+	nextTenBlocks := o.computeNextXPos(o.currentPos, lookAt, 30)
+	world := o.Frame.GetWorld()
+	selected := false
+	selectedBlockName := ""
+	var selectedBlockPos define.CubePos
+	for _, pos := range nextTenBlocks {
+		if rtid, found := world.Block(pos); found {
+			if rtid == chunk.AirRID {
+				continue
+			}
+			if blockDesc, hasB := chunk.RuntimeIDToBlock(rtid); hasB {
+				selected = true
+				selectedBlockName = blockDesc.Name
+				selectedBlockPos = pos
+			}
+			break
+		}
+	}
+	if selected {
+		o.currentPlayerKit.Say(fmt.Sprintf("§l§b选中 %v @ %v", selectedBlockName, selectedBlockPos))
+	} else {
+		o.currentPlayerKit.Say(fmt.Sprintf("§l§a未选中方块！"))
+	}
 }
 
 func (o *WoodAxe) getPosString() string {
@@ -202,6 +230,8 @@ func (o *WoodAxe) onPlayerMove(pk *packet.MovePlayer) {
 		o.currentPitch = pk.Pitch
 	}
 }
+
+// func (o *WoodAxe) BlockUpdate()
 
 func (o *WoodAxe) Inject(frame defines.MainFrame) {
 	o.Frame = frame
