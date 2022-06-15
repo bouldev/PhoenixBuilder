@@ -6,9 +6,6 @@ import (
 	"time"
 )
 
-// 为和国际版MC保持统一，世界范围被定义为 -64~319,
-// 接受网易版数据包时(NEMCNetwork Decode) 会将 0~256 扩张到 -64~319
-var WorldRange = define.Range{-64, 319}
 var TimeStampNotFound = time.Unix(0, 0).Unix()
 
 // ChunkData 包含一个区块的方块数据，Nbt信息，
@@ -16,7 +13,7 @@ var TimeStampNotFound = time.Unix(0, 0).Unix()
 // 以及区块收到/保存的时间 (Unix Second)
 type ChunkData struct {
 	Chunk     *chunk.Chunk
-	BlockNbts []map[string]interface{}
+	BlockNbts map[define.CubePos]map[string]interface{}
 	TimeStamp int64
 	ChunkPos  define.ChunkPos
 }
@@ -44,7 +41,7 @@ type LegacyBlockWithNbt struct {
 // WorldChunkBasic 通过提供一个 Offset Pos (Outside Pos-Inside Pos)
 // 允许序列化的 Outside Blocks 与 Chunk 结构的 Inside Blocks 转换
 type WorldChunkBasic interface {
-	SetOffset(offset define.Pos)
+	SetOffset(offset define.CubePos)
 	DumpAll() chan RidBlockWithNbt
 }
 
@@ -76,20 +73,20 @@ type ChunkProvider interface {
 	ChunkWriter
 }
 
-type WorldDumper interface {
-	DumpAll() chan RidBlockWithNbt
-}
+// type WorldDumper interface {
+// 	DumpAll() chan RidBlockWithNbt
+// }
 
-type WorldFeeder interface {
-	Add(block RidBlockWithNbt) error
-}
+// type WorldFeeder interface {
+// 	Add(block RidBlockWithNbt) error
+// }
 
-// ChunkCacher 和 ChunkProvider 构成 MirrorWorld 的存储体系
-// offset 描述 Offset Pos (Outside Pos-Inside Pos)
-type MirrorWorld interface {
-	SetChunkRequester(requester ChunkRequester)
-	SetChunkProvider(provier ChunkProvider)
-	SetOffSet(offset define.Pos)
-	GetDumper() WorldDumper
-	GetFeeder() WorldFeeder
-}
+// // ChunkCacher 和 ChunkProvider 构成 MirrorWorld 的存储体系
+// // offset 描述 Offset Pos (Outside Pos-Inside Pos)
+// type MirrorWorld interface {
+// 	SetChunkRequester(requester ChunkRequester)
+// 	SetChunkProvider(provier ChunkProvider)
+// 	SetOffSet(offset define.Pos)
+// 	GetDumper() WorldDumper
+// 	GetFeeder() WorldFeeder
+// }

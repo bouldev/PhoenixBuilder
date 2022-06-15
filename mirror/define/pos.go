@@ -21,27 +21,36 @@ func (p ChunkPos) String() string {
 	return fmt.Sprintf("(%v, %v)", p[0], p[1])
 }
 
-// Pos holds the position of a block. The position is represented of an array with an x, y and z value,
+// 为和国际版MC保持统一，世界范围被定义为 -64~319,
+// 接受网易版数据包时(NEMCNetwork Decode) 会将 0~256 扩张到 -64~319
+var WorldRange = Range{-64, 319}
+
+// CubePos holds the position of a block. The position is represented of an array with an x, y and z value,
 // where the y value is positive.
-type Pos [3]int
+type CubePos [3]int
+
+func (p CubePos) OutOfYBounds() bool {
+	y := p[1]
+	return y > WorldRange[1] || y < WorldRange[0]
+}
 
 // String converts the Pos to a string in the format (1,2,3) and returns it.
-func (p Pos) String() string {
+func (p CubePos) String() string {
 	return fmt.Sprintf("(%v,%v,%v)", p[0], p[1], p[2])
 }
 
 // X returns the X coordinate of the block position.
-func (p Pos) X() int {
+func (p CubePos) X() int {
 	return p[0]
 }
 
 // Y returns the Y coordinate of the block position.
-func (p Pos) Y() int {
+func (p CubePos) Y() int {
 	return p[1]
 }
 
 // Z returns the Z coordinate of the block position.
-func (p Pos) Z() int {
+func (p CubePos) Z() int {
 	return p[2]
 }
 
@@ -76,6 +85,10 @@ func GetPosFromNBT(nbt map[string]interface{}) (x, y, z int, success bool) {
 	return x, y, z, true
 }
 
-func GetCubePosFromNBT(nbt map[string]interface{}) (p Pos) {
-	return Pos{int(nbt["x"].(int32)), int(nbt["y"].(int32)), int(nbt["z"].(int32))}
+func GetCubePosFromNBT(nbt map[string]interface{}) (p CubePos, success bool) {
+	if x, y, z, success := GetPosFromNBT(nbt); success {
+		return CubePos{x, y, z}, true
+	} else {
+		return CubePos{0, 0, 0}, false
+	}
 }

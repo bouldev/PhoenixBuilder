@@ -142,6 +142,11 @@ func (storage *PalettedStorage) resize(newPaletteSize paletteSize) {
 	*storage = *newStorage
 }
 
+// RuntimeID returns the runtime ID of the block located at the given x, y and z.
+func (storage *PalettedStorage) RuntimeID(x, y, z byte) uint32 {
+	return storage.indices[storage.paletteIndex(x&15, y&15, z&15)]
+}
+
 // compact clears unused indexes in the palette by scanning for usages in the PalettedStorage. This is a
 // relatively heavy task which should only happen right before the sub chunk holding this PalettedStorage is
 // saved to disk. compact also shrinks the palette size if possible.

@@ -126,9 +126,9 @@ func (p *Provider) loadChunk(position define.ChunkPos) (c *chunk.Chunk, exists b
 	} else if err != nil {
 		return nil, true, fmt.Errorf("error reading version: %w", err)
 	}
-	data.SubChunks = make([][]byte, (mirror.WorldRange.Height()>>4)+1)
+	data.SubChunks = make([][]byte, (define.WorldRange.Height()>>4)+1)
 	for i := range data.SubChunks {
-		data.SubChunks[i], err = p.DB.Get(append(key, keySubChunkData, uint8(i+(mirror.WorldRange[0]>>4))), nil)
+		data.SubChunks[i], err = p.DB.Get(append(key, keySubChunkData, uint8(i+(define.WorldRange[0]>>4))), nil)
 		if err == leveldb.ErrNotFound {
 			// No sub chunk present at this Y level. We skip this one and move to the next, which might still
 			// be present.
@@ -137,7 +137,7 @@ func (p *Provider) loadChunk(position define.ChunkPos) (c *chunk.Chunk, exists b
 			return nil, true, fmt.Errorf("error reading sub chunk data %v: %w", i, err)
 		}
 	}
-	c, err = chunk.DiskDecode(data, mirror.WorldRange)
+	c, err = chunk.DiskDecode(data, define.WorldRange)
 	return c, true, err
 }
 
@@ -179,7 +179,13 @@ func (p *Provider) Get(pos define.ChunkPos) (data *mirror.ChunkData) {
 		cd.Chunk = c
 	}
 	if nbts, err := p.loadBlockNBT(pos); err != nil {
-		cd.BlockNbts = nbts
+		posedNbt := make(map[define.CubePos]map[string]interface{})
+		for _, nbt := range nbts {
+			if pos, success := define.GetCubePosFromNBT(nbt); success {
+				posedNbt[pos] = nbt
+			}
+		}
+		cd.BlockNbts = posedNbt
 	}
 	cd.TimeStamp = p.loadTimeStamp(pos)
 	return cd
@@ -234,7 +240,11 @@ func (p *Provider) Write(cd *mirror.ChunkData) error {
 	if err := p.saveChunk(cd.ChunkPos, cd.Chunk); err != nil {
 		return err
 	}
-	if err := p.saveBlockNBT(cd.ChunkPos, cd.BlockNbts); err != nil {
+	serializedNbt := make([]map[string]interface{}, 0)
+	for _, nbt := range cd.BlockNbts {
+		serializedNbt = append(serializedNbt, nbt)
+	}
+	if err := p.saveBlockNBT(cd.ChunkPos, serializedNbt); err != nil {
 		return err
 	}
 	if err := p.saveTimeStamp(cd.ChunkPos, cd.TimeStamp); err != nil {
