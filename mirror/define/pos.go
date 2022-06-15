@@ -39,6 +39,20 @@ func (p CubePos) String() string {
 	return fmt.Sprintf("(%v,%v,%v)", p[0], p[1], p[2])
 }
 
+func (p CubePos) Sub(po CubePos) (offset CubePos) {
+	offset[0] = p[0] - po[0]
+	offset[1] = p[1] - po[1]
+	offset[2] = p[2] - po[2]
+	return offset
+}
+
+func (p CubePos) Add(po CubePos) (offset CubePos) {
+	offset[0] = p[0] + po[0]
+	offset[1] = p[1] + po[1]
+	offset[2] = p[2] + po[2]
+	return offset
+}
+
 // X returns the X coordinate of the block position.
 func (p CubePos) X() int {
 	return p[0]

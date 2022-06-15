@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/mirror/items"
 	"phoenixbuilder/omega/defines"
+	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -24,6 +26,89 @@ type WoodAxe struct {
 	currentYaw, currentPitch float32
 	esp                      float64
 	nan                      float64
+	structureBlock           *StructureBlock
+}
+
+type StructureBlock struct {
+	Pos          define.CubePos
+	pos          protocol.BlockPos
+	packetSender func(packet.Packet)
+	basicPacket  *packet.StructureBlockUpdate
+	operatorUID  int64
+}
+
+func NewStructureBlock(Pos define.CubePos, packetSender func(packet.Packet), uid int64) *StructureBlock {
+	block := &StructureBlock{Pos: Pos, packetSender: packetSender}
+	block.pos = protocol.BlockPos{int32(block.Pos[0]), int32(block.Pos[1]), int32(block.Pos[2])}
+	block.operatorUID = uid
+	block.basicPacket = &packet.StructureBlockUpdate{
+		Position:           block.pos,
+		StructureName:      "",
+		DataField:          "",
+		IncludePlayers:     false,
+		ShowBoundingBox:    true,
+		StructureBlockType: 1,
+		Settings: protocol.StructureSettings{
+			PaletteName:               "default",
+			IgnoreEntities:            true,
+			IgnoreBlocks:              false,
+			Size:                      protocol.BlockPos{30, 6, 14},
+			Offset:                    protocol.BlockPos{0, 0, 0},
+			LastEditingPlayerUniqueID: uid,
+			Rotation:                  0,
+			Mirror:                    0,
+			AnimationMode:             0,
+			AnimationDuration:         0,
+			Integrity:                 100,
+			Seed:                      0,
+			Pivot:                     mgl32.Vec3{0, 0, 0},
+		},
+		RedstoneSaveMode: 0,
+		ShouldTrigger:    false,
+	}
+	return block
+}
+
+func (o *StructureBlock) OffBound() {
+	o.packetSender(o.basicPacket)
+}
+
+func (o *StructureBlock) OnBound() {
+	o.packetSender(o.basicPacket)
+}
+
+func (o *StructureBlock) IndicateCube(start define.CubePos, end define.CubePos) {
+	start, end = sortPos(start, end)
+	offset := start.Sub(o.Pos)
+	size := end.Sub(start).Add(define.CubePos{1, 1, 1})
+	o.basicPacket.Settings.Offset = protocol.BlockPos{int32(offset[0]), int32(offset[1]), int32(offset[2])}
+	o.basicPacket.Settings.Size = protocol.BlockPos{int32(size[0]), int32(size[1]), int32(size[2])}
+	o.packetSender(o.basicPacket)
+}
+
+func sortPos(pa define.CubePos, pb define.CubePos) (start define.CubePos, end define.CubePos) {
+	if pa[0] > pb[0] {
+		start[0] = pb[0]
+		end[0] = pa[0]
+	} else {
+		start[0] = pa[0]
+		end[0] = pb[0]
+	}
+	if pa[1] > pb[1] {
+		start[1] = pb[1]
+		end[1] = pa[1]
+	} else {
+		start[1] = pa[1]
+		end[1] = pb[1]
+	}
+	if pa[2] > pb[2] {
+		start[2] = pb[2]
+		end[2] = pa[2]
+	} else {
+		start[2] = pa[2]
+		end[2] = pb[2]
+	}
+	return
 }
 
 func (o *WoodAxe) Init(cfg *defines.ComponentConfig) {
@@ -83,13 +168,45 @@ func (o *WoodAxe) onAnyPacket(pkt packet.Packet) {
 	}
 }
 
+type CmdRespDataSetPos struct {
+	X int `json:"x"`
+	Y int `json:"y"`
+	Z int `json:"z"`
+}
+type cmdRespDataSet struct {
+	Pos        CmdRespDataSetPos `json:"position"`
+	StatusCode int               `json:"statusCode"`
+}
+
+func (o *WoodAxe) onInitStructureBlock(pos define.CubePos) {
+	uid := o.Frame.GetUQHolder().BotUniqueID
+	o.structureBlock = NewStructureBlock(pos, o.Frame.GetGameControl().SendMCPacket, uid)
+	o.structureBlock.OnBound()
+}
+
+func (o *WoodAxe) onInitWorkSapce(pk *packet.AddPlayer) {
+	o.currentPlayerPk = pk
+	o.currentPlayerKit = o.Frame.GetGameControl().GetPlayerKit(pk.Username)
+	o.currentPlayerKit.Say("建筑师 " + pk.Username + " 已进入小木斧范围内")
+	o.onSeeItem(pk.HeldItem.Stack.NetworkID)
+	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse("setblock ~~~ structure_block", func(output *packet.CommandOutput) {
+		if output.SuccessCount > 0 {
+			respData := cmdRespDataSet{}
+			if err := json.Unmarshal([]byte(output.DataSet), &respData); err == nil {
+				cubePos := define.CubePos{respData.Pos.X, respData.Pos.Y, respData.Pos.Z}
+				fmt.Println(cubePos)
+				o.onInitStructureBlock(cubePos)
+				return
+			}
+		}
+		o.Frame.GetGameControl().SayTo("@a", "小木斧初始化失败")
+	})
+}
+
 func (o *WoodAxe) onAddPlayer(pkt packet.Packet) {
 	pk := pkt.(*packet.AddPlayer)
 	if pk.Username == o.currentRequestUser {
-		o.currentPlayerPk = pk
-		o.currentPlayerKit = o.Frame.GetGameControl().GetPlayerKit(pk.Username)
-		o.currentPlayerKit.Say("建筑师 " + pk.Username + " 已进入小木斧范围内")
-		o.onSeeItem(pk.HeldItem.Stack.NetworkID)
+		o.onInitWorkSapce(pk)
 	}
 }
 
@@ -213,7 +330,8 @@ func (o *WoodAxe) onPosInput() {
 		}
 	}
 	if selected {
-		o.currentPlayerKit.Say(fmt.Sprintf("§l§b选中 %v @ %v", selectedBlockName, selectedBlockPos))
+		o.currentPlayerKit.Say(fmt.Sprintf("§l§b选中 %v @ %v", strings.ReplaceAll(selectedBlockName, "minecraft:", ""), selectedBlockPos))
+		o.structureBlock.IndicateCube(selectedBlockPos, selectedBlockPos)
 	} else {
 		o.currentPlayerKit.Say(fmt.Sprintf("§l§a未选中方块！"))
 	}
@@ -231,7 +349,13 @@ func (o *WoodAxe) onPlayerMove(pk *packet.MovePlayer) {
 	}
 }
 
-// func (o *WoodAxe) BlockUpdate()
+func (o *WoodAxe) BlockUpdate(pos define.CubePos, origRTID uint32, currentRTID uint32) {
+	orig, _ := chunk.RuntimeIDToBlock(origRTID)
+	current, _ := chunk.RuntimeIDToBlock(currentRTID)
+	hint := fmt.Sprintf("%v:%v->%v", pos, strings.ReplaceAll(orig.Name, "minecraft:", ""), strings.ReplaceAll(current.Name, "minecraft:", ""))
+	fmt.Println(hint)
+	// o.currentPlayerKit.ActionBar(hint)
+}
 
 func (o *WoodAxe) Inject(frame defines.MainFrame) {
 	o.Frame = frame
@@ -245,5 +369,6 @@ func (o *WoodAxe) Inject(frame defines.MainFrame) {
 	o.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDMovePlayer, func(p packet.Packet) {
 		o.onPlayerMove(p.(*packet.MovePlayer))
 	})
+	o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.BlockUpdate)
 	// frame.GetGameListener().SetOnAnyPacketCallBack(o.onAnyPacket)
 }
