@@ -90,6 +90,9 @@ func (w *World) SetBlockNbt(pos define.CubePos, nbt map[string]interface{}) (suc
 		return false
 	}
 	if nbtBlockPos, success := define.GetCubePosFromNBT(nbt); success {
+		if c.BlockNbts == nil {
+			c.BlockNbts = make(map[define.CubePos]map[string]interface{})
+		}
 		c.BlockNbts[nbtBlockPos] = nbt
 	}
 	// c.BlockNbts

@@ -200,7 +200,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 		MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
 		if origBlockRTID, success := r.CurrentWorld.UpdateBlock(cubePos, MCRTID); success {
 			for _, cb := range r.BlockUpdateListeners {
-				cb(cubePos, origBlockRTID, p.NewBlockRuntimeID)
+				cb(cubePos, origBlockRTID, MCRTID)
 			}
 		}
 	case *packet.BlockActorData:
