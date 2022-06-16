@@ -45,6 +45,7 @@ type MenuEntry struct {
 }
 
 type Cmd struct {
+	Conditinal  bool    `json:"有条件"`
 	Cmd         string  `json:"指令"`
 	SleepBefore float32 `json:"执行前延迟"`
 	Sleep       float32 `json:"执行后延迟"`

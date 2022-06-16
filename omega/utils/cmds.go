@@ -6,6 +6,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -89,9 +90,32 @@ func ParseAdaptiveJsonCmd(cfg map[string]interface{}, p []string) (cmds []define
 	return ParseAdaptiveCmd(c)
 }
 
+func splitScoreFetchGroup(defaultTarget string, targets []string) [][]string {
+	pairs := [][]string{}
+	occurred := map[string]bool{}
+	for _, origTarget := range targets {
+		if _, hasK := occurred[origTarget]; hasK {
+			continue
+		} else {
+			occurred[origTarget] = true
+		}
+		target := origTarget[7 : len(origTarget)-2]
+		pair := strings.Split(target, ",")
+		if len(pair) == 1 {
+			pair = []string{defaultTarget, pair[0]}
+		} else if len(pair) > 2 {
+			pair = pair[:2]
+		}
+		pair = append(pair, origTarget)
+		pairs = append(pairs, pair)
+	}
+	return pairs
+}
+
+var scoreTester = regexp.MustCompile(`\[score<.*?>\]`)
+
 func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map[string]interface{}, logger defines.LineDst) {
 	scoreboardFetchTarget := ""
-	scoreboardFetched := false
 	if target, hasK := remapping["[player]"]; hasK {
 		if strTarget, success := target.(string); success {
 			scoreboardFetchTarget = strTarget
@@ -101,38 +125,54 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 			scoreboardFetchTarget = strTarget
 		}
 	}
-	// fmt.Println(scoreboardFetchTarget)
-	for _, a := range cmds {
+	executeSucceed := false
+	for i, a := range cmds {
+		if a.Conditinal && !executeSucceed {
+			continue
+		}
 		if a.SleepBefore != 0 {
 			time.Sleep(time.Duration(a.SleepBefore * float32(time.Second)))
 		}
-		time.Sleep(time.Duration(a.SleepBefore * float32(time.Second)))
-		if !scoreboardFetched && scoreboardFetchTarget != "" {
-			if strings.Contains(a.Cmd, "[score<") {
-				waitChan := make(chan struct{})
-				scoreboardFetched = true
-				ctrl.SendCmdAndInvokeOnResponse("scoreboard players list "+scoreboardFetchTarget+"", func(output *packet.CommandOutput) {
-					scores := map[string]string{}
-					if output.SuccessCount > 0 {
-						for _, p := range output.OutputMessages[1:] {
-							if len(p.Parameters) == 3 {
-								scores[p.Parameters[0]] = p.Parameters[2]
-							}
-						}
-					}
-					for n, s := range scores {
-						remapping[fmt.Sprintf("[score<%v>]", s)] = n
-					}
-					close(waitChan)
-				})
-				<-waitChan
+		conditional := false
+		if i+1 != len(cmds) {
+			if cmds[i+1].Conditinal {
+				conditional = true
 			}
 		}
 		cmd := FormatByReplacingOccurrences(a.Cmd, remapping)
-		if a.Record == "" || a.Record == "无" || a.Record == "空" {
+		matches := scoreTester.FindAllString(cmd, -1)
+		if len(matches) > 0 {
+			pairs := splitScoreFetchGroup(scoreboardFetchTarget, matches)
+			// fmt.Println(pairs)
+			for _, pair := range pairs {
+				_player, _scoreboard, _replacement := pair[0], pair[1], pair[2]
+				waitChan := make(chan struct{})
+				val := "not_found"
+				checkCmd := fmt.Sprintf("scoreboard players add %v %v 0", _player, _scoreboard)
+				// fmt.Println(checkCmd)
+				ctrl.SendCmdAndInvokeOnResponse(checkCmd, func(output *packet.CommandOutput) {
+					if output.SuccessCount == 0 || len(output.OutputMessages) == 0 || len(output.OutputMessages[0].Parameters) != 4 {
+						fmt.Printf("发现缺少记分板%v (%v)->(%v)", _scoreboard, checkCmd, output)
+						close(waitChan)
+						return
+					}
+					val = output.OutputMessages[0].Parameters[3]
+					close(waitChan)
+				})
+				<-waitChan
+				cmd = strings.ReplaceAll(cmd, _replacement, val)
+			}
+		}
+		if (a.Record == "" || a.Record == "无" || a.Record == "空") && !conditional {
 			ctrl.SendCmd(cmd)
 		} else {
+			waitChan := make(chan bool)
 			onResponse := func(output *packet.CommandOutput) {
+				if output.SuccessCount == 0 {
+					waitChan <- false
+				} else {
+					waitChan <- true
+				}
 				if a.Record == "成功次数" {
 					logger.Write(fmt.Sprintf("[%v]=>success:[%v]", cmd, output.SuccessCount))
 				} else {
@@ -144,6 +184,7 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 			} else {
 				ctrl.SendCmdAndInvokeOnResponseWithFeedback(cmd, onResponse)
 			}
+			executeSucceed = <-waitChan
 		}
 		if a.Sleep != 0 {
 			time.Sleep(time.Duration(a.Sleep * float32(time.Second)))
