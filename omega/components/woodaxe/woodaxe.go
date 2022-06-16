@@ -36,6 +36,7 @@ type selectInfo struct {
 type actionsOccupied struct {
 	occupied       bool
 	continuousCopy bool
+	undo           bool
 }
 
 type WoodAxe struct {
@@ -53,6 +54,7 @@ type WoodAxe struct {
 	selectIndicateStructureBlock         *StructureBlock
 	areaIndicateStructureBlock           *StructureBlock
 	lastSeeTick                          int
+	actionManager                        *ActionManager
 	actionsOccupied
 	selectInfo
 }
@@ -236,6 +238,7 @@ func (o *WoodAxe) InitStructureBlock() {
 func (o *WoodAxe) InitWorkSpace() {
 	o.InitStructureBlock()
 	o.selectInfo = selectInfo{selected: make(map[uint8]bool), pos: make(map[uint8]define.CubePos), currentSelectID: NotSelect}
+	o.actionManager = NewActionManager("omwa", o.Frame.GetGameControl().SendCmd)
 	o.currentPlayerKit.Say("小木斧初始化完成")
 }
 
@@ -254,6 +257,7 @@ func (o *WoodAxe) CleanUpWorkSpace() {
 	o.selectIndicateStructureBlock = nil
 	o.areaIndicateStructureBlock = nil
 	o.selectInfo = selectInfo{selected: make(map[uint8]bool), pos: make(map[uint8]define.CubePos), currentSelectID: NotSelect}
+	o.actionManager = nil
 	pk.Say("小木斧工作区已关闭")
 }
 
@@ -449,6 +453,18 @@ func (o *WoodAxe) renderMenu() map[string]func(chat *defines.GameChat) {
 		actions[trigger] = action
 	}
 	if action, trigger, hint, available := continuousCopyEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
+	if action, trigger, hint, available := undoEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
+	if action, trigger, hint, available := redoEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
+	if action, trigger, hint, available := doneUndoEntry(o); available {
 		hints = append(hints, hint)
 		actions[trigger] = action
 	}
