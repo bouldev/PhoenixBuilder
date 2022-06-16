@@ -67,6 +67,9 @@ func (o *IntrusionDetectSystem) Init(cfg *defines.ComponentConfig) {
 		rc.compiledItemNameRegex = *regexp.MustCompile(rc.Item)
 		rc.compiledValueRegex = *regexp.MustCompile(rc.RegexString)
 	}
+	if o.EnablePatrol && o.Patrol > 0 && o.Patrol < 30 {
+		panic("巡逻时间太短，至少应该设为 30")
+	}
 }
 
 func (o *IntrusionDetectSystem) Inject(frame defines.MainFrame) {
