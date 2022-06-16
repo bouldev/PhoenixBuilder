@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -207,12 +209,21 @@ func (o *ContainerScan) doCheckNbt(x, y, z int, nbt map[string]interface{}, getS
 		})
 	}
 	if !has32K {
-		if !o.needFetchBlockName {
-			has32K, reason = o.regexNbtDetect("2401PT_error", nbt, x, y, z)
-		} else {
-			utils.QueryBlockName(o.Frame.GetGameControl(), x, y, z, func(s string) {
-				has32K, reason = o.regexNbtDetect(s, nbt, x, y, z)
-			})
+		flag := true
+		if o.needFetchBlockName {
+			if rtid, success := o.Frame.GetWorld().Block(define.CubePos{x, y, z}); success {
+				if block, found := chunk.RuntimeIDToBlock(rtid); found {
+					flag = false
+					has32K, reason = o.regexNbtDetect(strings.ReplaceAll(block.Name, "minecraft:", ""), nbt, x, y, z)
+				}
+			}
+			// has32K, reason = o.regexNbtDetect(s, nbt, x, y, z)
+			// utils.QueryBlockName(o.Frame.GetGameControl(), x, y, z, func(s string) {
+			// 	has32K, reason = o.regexNbtDetect(s, nbt, x, y, z)
+			// })
+		}
+		if flag {
+			has32K, reason = o.regexNbtDetect("unknow_error", nbt, x, y, z)
 		}
 	}
 	if has32K {
@@ -237,16 +248,16 @@ func (o *ContainerScan) onLevelChunk(cd *mirror.ChunkData) {
 }
 
 func (o *ContainerScan) checkNbt(x, y, z int, nbt map[string]interface{}, getStr func() string) {
-	if !o.needFetchBlockName {
-		o.doCheckNbt(x, y, z, nbt, getStr)
-	} else {
-		o.regexMu.Lock()
-		o.regexTaskQueue = append(o.regexTaskQueue, func() {
-			o.doCheckNbt(x, y, z, nbt, getStr)
-		})
-		o.regexMu.Unlock()
-		go o.awakeChecker()
-	}
+	// if !o.needFetchBlockName {
+	o.doCheckNbt(x, y, z, nbt, getStr)
+	// } else {
+	// 	o.regexMu.Lock()
+	// 	o.regexTaskQueue = append(o.regexTaskQueue, func() {
+	// 		o.doCheckNbt(x, y, z, nbt, getStr)
+	// 	})
+	// 	o.regexMu.Unlock()
+	// 	go o.awakeChecker()
+	// }
 }
 
 func (o *ContainerScan) onBlockActorData(pk *packet.BlockActorData) {
