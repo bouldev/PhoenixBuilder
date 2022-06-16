@@ -71,7 +71,7 @@ func (o *Recycle) getCountsLeft(name string, option string) (time.Time, int) {
 	if o.PlayerRecycleRecord[name][option].cached {
 		return o.PlayerRecycleRecord[name][option].time, o.PlayerRecycleRecord[name][option].CountsLeft
 	}
-	t, err := time.Parse("2006-01-02 15:04:05", o.PlayerRecycleRecord[name][option].StrTime)
+	t, err := time.Parse("2006-01-02 15:04:05 -0700 MST", o.PlayerRecycleRecord[name][option].StrTime+" +0800 CST")
 	if err != nil {
 		o.PlayerRecycleRecord[name][option] = LimitRecord{
 			StrTime:    time.Now().Add(-time.Hour * time.Duration(24*2)).Format("2006-01-02 15:04:05"),

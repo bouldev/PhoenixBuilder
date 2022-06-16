@@ -253,9 +253,11 @@ func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
 }
 
 func (o *Reactor) onBootstrap() {
+	memoryProvider := lru.NewLRUMemoryChunkCacher(8)
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)
 	if err != nil {
+		fileProvider = nil
 		pterm.Error.Println("创建镜像存档(" + worldDir + ")时出现错误,正在尝试移除文件夹, 错误为" + err.Error())
 		if err = os.Rename(worldDir, path.Join(o.o.GetWorldsDir(), "损坏的存档")); err != nil {
 			pterm.Error.Println("移除失败，错误为" + err.Error())
@@ -264,6 +266,7 @@ func (o *Reactor) onBootstrap() {
 		if fileProvider, err = mcdb.New(worldDir, opt.FlateCompression); err != nil {
 			pterm.Error.Println("修复也失败了，错误为" + err.Error())
 			//panic(err)
+			fileProvider = nil
 		}
 		if fileProvider == nil {
 			for i := 0; i < 10; i++ {
@@ -274,10 +277,10 @@ func (o *Reactor) onBootstrap() {
 		o.o.GetBackendDisplay().Write(pterm.Success.Sprint("镜像存档@" + worldDir))
 		fileProvider.D.LevelName = "MirrorWorld"
 	}
-
-	memoryProvider := lru.NewLRUMemoryChunkCacher(8)
-	memoryProvider.OverFlowHolder = fileProvider
-	memoryProvider.FallBackProvider = fileProvider
+	if fileProvider != nil {
+		memoryProvider.OverFlowHolder = fileProvider
+		memoryProvider.FallBackProvider = fileProvider
+	}
 	o.CurrentWorldProvider = memoryProvider
 	o.CurrentWorld = world.NewWorld(o.CurrentWorldProvider)
 

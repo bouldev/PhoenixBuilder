@@ -88,12 +88,12 @@ func (o *DailyAttendance) computeLastCheckPointTime() time.Time {
 	} else {
 		baselineTime := stratOfThisDay.Add(timeOffset)
 		if baselineTime.After(nowTime) {
-			if baselineTime.Add(-(time.Duration(24) * time.Hour)).After(nowTime) {
-				panic("签到时间偏移应该控制在 24 小时内")
+			for baselineTime.After(nowTime) {
+				baselineTime = baselineTime.Add(-(time.Duration(24) * time.Hour))
 			}
-		} else {
-			if baselineTime.Add(time.Duration(24) * time.Hour).Before(nowTime) {
-				panic("签到时间偏移应该控制在 24 小时内")
+		} else if baselineTime.Before(nowTime) {
+			for baselineTime.Before(nowTime) {
+				baselineTime = baselineTime.Add((time.Duration(24) * time.Hour))
 			}
 		}
 		return baselineTime
@@ -160,7 +160,7 @@ func (o *DailyAttendance) doUpdate(uidString string, record *PlayerAttendanceInf
 		// lastAttendanceTime, _ := utils.StringToTimeWithLocal(record.LastAttendanceTime + " +0800 CST")
 		// fmt.Println(lastAttendanceTime.Local())
 		// fmt.Println(checkPointTime)
-		if lastAttendanceTime, err := utils.StringToTime(record.LastAttendanceTime + " +0800 CST"); err != nil {
+		if lastAttendanceTime, err := utils.StringToTimeWithLocal(record.LastAttendanceTime + " +0800 CST"); err != nil {
 			o.Frame.GetBackendDisplay().Write(pterm.Error.Sprintf("日期记录错误 %v 无法解析 %v", record, err))
 		} else if lastAttendanceTime.After(checkPointTime) {
 			o.Frame.GetGameControl().SayTo(record.PlayerName, o.HintOnRepeatCheckout)
@@ -215,7 +215,7 @@ func (o *DailyAttendance) isPlayerChecked(player *uqHolder.Player) bool {
 		// 计算最近一次签到开始时间
 		checkPointTime := o.computeLastCheckPointTime()
 		// 换算玩家最近签到时间
-		if lastAttendanceTime, err := utils.StringToTime(record.LastAttendanceTime + " +0800 CST"); err != nil {
+		if lastAttendanceTime, err := utils.StringToTimeWithLocal(record.LastAttendanceTime + " +0800 CST"); err != nil {
 			// 记录文件损坏，在后台显示警告
 			o.Frame.GetBackendDisplay().Write(pterm.Error.Sprintf("日期记录错误 %v 无法解析 %v", record, err))
 			return true

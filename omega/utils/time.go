@@ -7,7 +7,7 @@ func TimeToString(t time.Time) string {
 }
 
 func StringToTime(timeStr string) (time.Time, error) {
-	return time.Parse("2006-01-02/15:04:05  -0700 MST", timeStr)
+	return time.Parse("2006-01-02/15:04:05", timeStr)
 }
 
 func StringToTimeWithLocal(timeStr string) (time.Time, error) {

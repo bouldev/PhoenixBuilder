@@ -34,7 +34,6 @@ func (o *LRUMemoryChunkCacher) Get(pos define.ChunkPos) (data *mirror.ChunkData)
 	if chunk, hasK := o.memoryChunks[pos]; hasK {
 		return chunk
 	} else if o.FallBackProvider == nil {
-
 		return nil
 	} else {
 		return o.FallBackProvider.Get(pos)
