@@ -11,7 +11,6 @@ import (
 	"phoenixbuilder/mirror/items"
 	"phoenixbuilder/omega/defines"
 	"strings"
-	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -37,11 +36,12 @@ type actionsOccupied struct {
 	occupied       bool
 	continuousCopy bool
 	undo           bool
+	largeFill      bool
 }
 
 type WoodAxe struct {
 	*BasicComponent
-	currentRequestUser                   string
+	CurrentRequestUser                   string `json:"当前使用者"`
 	currentPlayerPk                      *packet.AddPlayer
 	currentPlayerKit                     defines.PlayerKit
 	woodAxeRTID                          int32
@@ -225,7 +225,6 @@ func (o *WoodAxe) InitStructureBlock() {
 				respData := cmdRespDataSet{}
 				if err := json.Unmarshal([]byte(output.DataSet), &respData); err == nil {
 					cubePos := define.CubePos{respData.Pos.X, respData.Pos.Y, respData.Pos.Z}
-					fmt.Println(cubePos)
 					o.onInitStructureBlock(cubePos, cubePos.Add(define.CubePos{0, 1, 0}))
 					return
 				}
@@ -263,7 +262,7 @@ func (o *WoodAxe) CleanUpWorkSpace() {
 
 func (o *WoodAxe) onAddPlayer(pkt packet.Packet) {
 	pk := pkt.(*packet.AddPlayer)
-	if pk.Username == o.currentRequestUser {
+	if pk.Username == o.CurrentRequestUser {
 		o.onInitWorkSapce(pk)
 	}
 }
@@ -438,10 +437,10 @@ func (o *WoodAxe) onPlayerMove(pk *packet.MovePlayer) {
 }
 
 func (o *WoodAxe) BlockUpdate(pos define.CubePos, origRTID uint32, currentRTID uint32) {
-	orig, _ := chunk.RuntimeIDToBlock(origRTID)
-	current, _ := chunk.RuntimeIDToBlock(currentRTID)
-	hint := fmt.Sprintf("%v:%v->%v", pos, strings.ReplaceAll(orig.Name, "minecraft:", ""), strings.ReplaceAll(current.Name, "minecraft:", ""))
-	fmt.Println(hint)
+	// orig, _ := chunk.RuntimeIDToBlock(origRTID)
+	// current, _ := chunk.RuntimeIDToBlock(currentRTID)
+	// hint := fmt.Sprintf("%v:%v->%v", pos, strings.ReplaceAll(orig.Name, "minecraft:", ""), strings.ReplaceAll(current.Name, "minecraft:", ""))
+	// fmt.Println(hint)
 	// o.currentPlayerKit.ActionBar(hint)
 }
 
@@ -468,6 +467,14 @@ func (o *WoodAxe) renderMenu() map[string]func(chat *defines.GameChat) {
 		hints = append(hints, hint)
 		actions[trigger] = action
 	}
+	if action, trigger, hint, available := largeFillEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
+	if action, trigger, hint, available := fillEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
 	actions["帮助"] = func(chat *defines.GameChat) {
 		for _, hint := range hints {
 			o.currentPlayerKit.Say(hint)
@@ -480,7 +487,7 @@ func (o *WoodAxe) renderMenu() map[string]func(chat *defines.GameChat) {
 }
 
 func (o *WoodAxe) onChat(chat *defines.GameChat) (stop bool) {
-	if o.currentRequestUser == chat.Name {
+	if o.CurrentRequestUser == chat.Name {
 		if len(chat.Msg) > 0 {
 			menu := o.renderMenu()
 			msg := chat.Msg[0]
@@ -497,7 +504,10 @@ func (o *WoodAxe) onChat(chat *defines.GameChat) (stop bool) {
 func (o *WoodAxe) Inject(frame defines.MainFrame) {
 	o.Frame = frame
 	// frame.GetGa,e
-	o.currentRequestUser = "2401PT"
+	if o.CurrentRequestUser == "" {
+		o.CurrentRequestUser = "一碗飯飯"
+	}
+
 	frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDAddPlayer, o.onAddPlayer)
 	frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDAnimate, o.onAnimate)
 	o.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDMobEquipment, func(p packet.Packet) {
@@ -512,19 +522,19 @@ func (o *WoodAxe) Inject(frame defines.MainFrame) {
 }
 
 func (o *WoodAxe) Activate() {
-	lastCheckTick := 0
-	go func() {
-		tick := time.NewTicker(time.Second * 3)
-		for {
-			<-tick.C
-			if o.currentPlayerPk != nil {
-				if lastCheckTick != 0 {
-					if o.lastSeeTick-lastCheckTick < 20 {
-						o.CleanUpWorkSpace()
-					}
-				}
-				lastCheckTick = o.lastSeeTick
-			}
-		}
-	}()
+	// lastCheckTick := 0
+	// go func() {
+	// 	tick := time.NewTicker(time.Second * 3)
+	// 	for {
+	// 		<-tick.C
+	// 		if o.currentPlayerPk != nil {
+	// 			if lastCheckTick != 0 {
+	// 				if o.lastSeeTick-lastCheckTick < 20 {
+	// 					o.CleanUpWorkSpace()
+	// 				}
+	// 			}
+	// 			lastCheckTick = o.lastSeeTick
+	// 		}
+	// 	}
+	// }()
 }
