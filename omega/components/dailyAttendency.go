@@ -95,6 +95,7 @@ func (o *DailyAttendance) computeLastCheckPointTime() time.Time {
 			for baselineTime.Before(nowTime) {
 				baselineTime = baselineTime.Add((time.Duration(24) * time.Hour))
 			}
+			baselineTime = baselineTime.Add(-(time.Duration(24) * time.Hour))
 		}
 		return baselineTime
 	}
