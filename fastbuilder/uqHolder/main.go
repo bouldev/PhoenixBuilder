@@ -353,10 +353,10 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	case *packet.SetCommandsEnabled:
 		uq.CommandsEnabled = p.Enabled
 	case *packet.UpdateAttributes:
-		e := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
-		e.LastUpdateTick = p.Tick
-		e.Attributes = p.Attributes
-		uq.UpdateTick(p.Tick)
+		// e := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
+		// e.LastUpdateTick = p.Tick
+		// e.Attributes = p.Attributes
+		// uq.UpdateTick(p.Tick)
 	case *packet.GameRulesChanged:
 		for _, r := range p.GameRules {
 			uq.GameRules[r.Name] = &GameRule{
@@ -427,26 +427,26 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	case *packet.SetHealth:
 		uq.BotHealth = p.Health
 	case *packet.UpdateSoftEnum:
-		uq.CommandRelatedEnums = append(uq.CommandRelatedEnums, p)
+		// uq.CommandRelatedEnums = append(uq.CommandRelatedEnums, p)
 	case *packet.AddActor:
-		if !recordNoPlayerEntity {
-			return
-		}
-		entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
-		entity.IsPlayer = false
-		entity.UniqueID = p.EntityUniqueID
-		uq.entitiesByUniqueID[p.EntityUniqueID] = entity
-		entity.EntityType = p.EntityType
-		entity.LastUpdateTick = uq.CurrentTick
-		entity.LastPosInfo.LastUpdateTick = uq.CurrentTick
-		entity.LastPosInfo.Position = p.Position
-		entity.LastPosInfo.Velocity = p.Velocity
-		entity.LastPosInfo.Pitch = p.Pitch
-		entity.LastPosInfo.Yaw = p.Yaw
-		entity.LastPosInfo.HeadYaw = p.Yaw
-		entity.Attributes = p.Attributes
-		entity.Metadata = p.EntityMetadata
-		entity.EntityLinks = p.EntityLinks
+		// if !recordNoPlayerEntity {
+		// 	return
+		// }
+		// entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
+		// entity.IsPlayer = false
+		// entity.UniqueID = p.EntityUniqueID
+		// uq.entitiesByUniqueID[p.EntityUniqueID] = entity
+		// entity.EntityType = p.EntityType
+		// entity.LastUpdateTick = uq.CurrentTick
+		// entity.LastPosInfo.LastUpdateTick = uq.CurrentTick
+		// entity.LastPosInfo.Position = p.Position
+		// entity.LastPosInfo.Velocity = p.Velocity
+		// entity.LastPosInfo.Pitch = p.Pitch
+		// entity.LastPosInfo.Yaw = p.Yaw
+		// entity.LastPosInfo.HeadYaw = p.Yaw
+		// entity.Attributes = p.Attributes
+		// entity.Metadata = p.EntityMetadata
+		// entity.EntityLinks = p.EntityLinks
 
 	case *packet.RemoveActor:
 		if entity, ok := uq.entitiesByUniqueID[p.EntityUniqueID]; ok {
@@ -459,24 +459,24 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 			}
 		}
 	case *packet.MoveActorDelta:
-		entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
-		entity.LastPosInfo.LastUpdateTick = uq.CurrentTick
-		entity.LastPosInfo.Position = p.Position
-		entity.LastPosInfo.Rotation = p.Rotation
-		if x := p.Rotation.X(); x != 0 {
-			entity.LastPosInfo.MaskedRotation[0] = x
-		}
-		if y := p.Rotation.Y(); y != 0 {
-			entity.LastPosInfo.MaskedRotation[1] = y
-		}
-		if z := p.Rotation.Z(); z != 0 {
-			entity.LastPosInfo.MaskedRotation[2] = z
-		}
+		// entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
+		// entity.LastPosInfo.LastUpdateTick = uq.CurrentTick
+		// entity.LastPosInfo.Position = p.Position
+		// entity.LastPosInfo.Rotation = p.Rotation
+		// if x := p.Rotation.X(); x != 0 {
+		// 	entity.LastPosInfo.MaskedRotation[0] = x
+		// }
+		// if y := p.Rotation.Y(); y != 0 {
+		// 	entity.LastPosInfo.MaskedRotation[1] = y
+		// }
+		// if z := p.Rotation.Z(); z != 0 {
+		// 	entity.LastPosInfo.MaskedRotation[2] = z
+		// }
 
 	case *packet.SetActorMotion:
-		entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
-		entity.LastPosInfo.LastUpdateTick = uq.CurrentTick
-		entity.LastPosInfo.Velocity = p.Velocity
+		// entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
+		// entity.LastPosInfo.LastUpdateTick = uq.CurrentTick
+		// entity.LastPosInfo.Velocity = p.Velocity
 
 	// not fully supported
 	case *packet.Respawn:
