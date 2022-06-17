@@ -98,7 +98,7 @@ func CompressLog(srcFile string, dstFile string, zipWriter *zip.Writer, startThr
 						lineCompressed++
 						zipFileWriter.Write(currentLine)
 					}
-					if startTime.After(startThres) {
+					if startTime.After(stopThres) {
 						break
 					} else {
 						fastDeterminCache = possibleDataInfo
