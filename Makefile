@@ -87,8 +87,10 @@ build/phoenixbuilder-v8-ios-executable: build/ ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=`pwd`/archs/ios.sh CXX=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8-ios-executable
 	${IOS_STRIP} build/phoenixbuilder-v8-ios-executable
 	${LDID} -Sios-ent.xml build/phoenixbuilder-v8-ios-executable
-build/phoenixbuilder-ios-static.a: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -buildmode=c-archive -trimpath -ldflags "-s -w" -tags is_tweak,no_readline -o build/phoenixbuilder-ios-static.a
+build/libexternal_functions_provider.dylib: build/ io/external_functions_provider/provider.c
+	`pwd`/archs/ios.sh io/external_functions_provider/provider.c -shared -o build/libexternal_functions_provider.dylib
+build/phoenixbuilder-ios-static.a: build/ build/libexternal_functions_provider.dylib ${SRCS_GO}
+	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Lbuild -lexternal_functions_provider" CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -buildmode=c-archive -trimpath -ldflags "-s -w" -tags is_tweak,no_readline -o build/phoenixbuilder-ios-static.a
 build/phoenixbuilder-macos-x86_64: build/ ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-x86_64
 build/phoenixbuilder-macos-arm64: build/ ${SRCS_GO}
