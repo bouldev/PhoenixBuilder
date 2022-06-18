@@ -278,15 +278,13 @@ func (o *Omega) Activate() {
 					uqHolderDelayUpdate = true
 				}
 			}
-			go func() {
-				if !uqHolderDelayUpdate {
-					o.uqHolder.Update(pkt)
-					o.Reactor.React(pkt)
-				} else {
-					o.Reactor.React(pkt)
-					o.uqHolder.Update(pkt)
-				}
-			}()
+			if !uqHolderDelayUpdate {
+				o.uqHolder.Update(pkt)
+				o.Reactor.React(pkt)
+			} else {
+				o.Reactor.React(pkt)
+				o.uqHolder.Update(pkt)
+			}
 		}
 	}()
 	go func() {

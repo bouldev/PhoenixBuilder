@@ -161,8 +161,10 @@ func (r *Reactor) Throw(chat *defines.GameChat) {
 }
 
 func (r *Reactor) React(pkt packet.Packet) {
+	// fmt.Println("PacketID ", pkt.ID())
 	choked := make(chan struct{})
 	defer func() {
+		// fmt.Println("Handled ")
 		close(choked)
 	}()
 	go func() {

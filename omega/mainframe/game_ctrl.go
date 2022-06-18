@@ -385,7 +385,10 @@ func (g *GameCtrl) onCommandFeedBackOff() {
 
 func (g *GameCtrl) onNewCommandFeedBack(p *packet.CommandOutput) {
 	s := p.CommandOrigin.UUID.String()
-	if cb, hasK := g.uuidMaps[s]; hasK {
+	g.uuidLock.Lock()
+	cb, hasK := g.uuidMaps[s]
+	g.uuidLock.Unlock()
+	if hasK {
 		//fmt.Println("Hit!")
 		cb(p)
 		g.uuidLock.Lock()

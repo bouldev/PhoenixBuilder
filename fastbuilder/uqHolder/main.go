@@ -8,6 +8,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/andybalholm/brotli"
@@ -109,6 +110,7 @@ type UQHolder struct {
 	BotHealth             int32
 	CommandRelatedEnums   []*packet.UpdateSoftEnum
 	displayUnknownPackets bool
+	mu                    sync.Mutex
 }
 
 func NewUQHolder(BotRuntimeID uint64) *UQHolder {
@@ -126,6 +128,7 @@ func NewUQHolder(BotRuntimeID uint64) *UQHolder {
 		InventoryContent:      map[uint32][]protocol.ItemInstance{},
 		CommandRelatedEnums:   make([]*packet.UpdateSoftEnum, 0),
 		displayUnknownPackets: false,
+		mu:                    sync.Mutex{},
 	}
 	go func() {
 		t := time.NewTicker(50 * time.Millisecond)
@@ -295,6 +298,8 @@ func (uq *UQHolder) GetBotName() string {
 var recordNoPlayerEntity = false
 
 func (uq *UQHolder) Update(pk packet.Packet) {
+	uq.mu.Lock()
+	defer uq.mu.Unlock()
 	defer func() {
 		r := recover()
 		if r != nil {
