@@ -16,6 +16,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
+	"time"
 
 	"github.com/df-mc/goleveldb/leveldb/opt"
 	"github.com/pterm/pterm"
@@ -160,6 +161,17 @@ func (r *Reactor) Throw(chat *defines.GameChat) {
 }
 
 func (r *Reactor) React(pkt packet.Packet) {
+	choked := make(chan struct{})
+	defer func() {
+		close(choked)
+	}()
+	go func() {
+		select {
+		case <-time.NewTimer(time.Second).C:
+			pterm.Error.Println("警告，您的配置文件似乎被您改错了，现在的配置文件使 omega 运行效率低下，甚至可能卡死，请试着逐个关闭配置文件，以确认具体错误")
+		case <-choked:
+		}
+	}()
 	o := r.o
 	pktID := pkt.ID()
 	if pkt == nil {
@@ -196,7 +208,9 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.CommandOutput:
 		o.GameCtrl.onNewCommandFeedBack(p)
 	case *packet.UpdateBlock:
-		if p.Flags&packet.BlockUpdateNoGraphics != 0 {
+		if p.Flags&packet.BlockUpdateNetwork == 0 || p.Flags&packet.BlockUpdateNoGraphics != 0 || p.Layer != 0 {
+			// MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
+			// fmt.Println(p, chunk.RuntimeIDToLegacyBlock(MCRTID))
 			break
 		}
 		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
