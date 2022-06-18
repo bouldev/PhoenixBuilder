@@ -1,5 +1,5 @@
 package interfaces
 
 type FunctionHolder interface {
-	Process(string)
+	Process(string) bool
 }

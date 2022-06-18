@@ -1,3 +1,5 @@
+// +build !is_tweak
+
 package commands
 
 import (

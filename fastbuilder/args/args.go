@@ -224,3 +224,8 @@ func GetCustomGameName() string {
 func InGameResponse() bool {
 	return boolify(C.ingame_response)
 }
+
+//export cexporttestfunc
+func cexporttestfunc() string {
+	return "test succ"
+}

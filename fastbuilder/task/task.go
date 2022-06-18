@@ -11,10 +11,10 @@ import (
 	"phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/parsing"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/fastbuilder/environment"
+	"phoenixbuilder/io/commands"
 	"runtime"
 	"strings"
 	"sync"
@@ -151,8 +151,7 @@ func (holder *TaskHolder) FindTask(taskId int64) *Task {
 
 func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	holder:=env.TaskHolder.(*TaskHolder)
-	conn:=env.Connection.(*minecraft.Conn)
-	cmdsender:=env.CommandSender
+	cmdsender:=env.CommandSender.(*commands.CommandSender)
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
 		cmdsender.Output(fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand),err))
@@ -295,18 +294,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					}
 					close(w)
 				}
-				conn.WritePacket(&packet.CommandBlockUpdate {
-					Block: true,
-					Position: protocol.BlockPos{int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z)},
-					Mode: cbdata.Mode,
-					NeedsRedstone: cbdata.NeedRedstone,
-					Conditional: cbdata.Conditional,
-					Command: cbdata.Command,
-					LastOutput: cbdata.LastOutput,
-					Name: cbdata.CustomName,
-					TickDelay: cbdata.TickDelay,
-					ExecuteOnFirstTick: cbdata.ExecuteOnFirstTick,
-				})
+				cmdsender.UpdateCommandBlock(int32(curblock.Point.X),int32(curblock.Point.Y),int32(curblock.Point.Z), cbdata)
 			}else if curblock.ChestSlot != nil {
 				commands_generator.ReplaceItemRequest(request, curblock, cfg)
 				cmdsender.SendSizukanaCommand(*request)

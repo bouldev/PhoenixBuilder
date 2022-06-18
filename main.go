@@ -43,6 +43,7 @@ import (
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/external"
 	"phoenixbuilder/fastbuilder/readline"
+	_ "phoenixbuilder/io"
 )
 
 func main() {
