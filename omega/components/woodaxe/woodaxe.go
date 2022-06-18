@@ -55,6 +55,7 @@ type WoodAxe struct {
 	areaIndicateStructureBlock           *StructureBlock
 	lastSeeTick                          int
 	actionManager                        *ActionManager
+	actionsChan                          chan func()
 	actionsOccupied
 	selectInfo
 }
@@ -155,6 +156,7 @@ func (o *WoodAxe) Init(cfg *defines.ComponentConfig) {
 	}
 	o.esp = 0.00001
 	o.nan = math.NaN()
+	o.actionsChan = make(chan func(), 1024)
 }
 
 func (o *WoodAxe) onAnyPacket(pkt packet.Packet) {
@@ -237,7 +239,7 @@ func (o *WoodAxe) InitStructureBlock() {
 func (o *WoodAxe) InitWorkSpace() {
 	o.InitStructureBlock()
 	o.selectInfo = selectInfo{selected: make(map[uint8]bool), pos: make(map[uint8]define.CubePos), currentSelectID: NotSelect}
-	o.actionManager = NewActionManager("omwa", o.Frame.GetGameControl().SendCmd)
+	o.actionManager = NewActionManager("omwa", o.Frame.GetGameControl().SendCmd, o.actionsChan)
 	o.currentPlayerKit.Say("小木斧初始化完成")
 }
 
@@ -372,22 +374,24 @@ func (o *WoodAxe) onPosInput() {
 	world := o.Frame.GetWorld()
 	selected := false
 	selectedBlockName := ""
+	selectedBlockData := 0
 	var selectedBlockPos define.CubePos
 	for _, pos := range nextTenBlocks {
 		if rtid, found := world.Block(pos); found {
 			if rtid == chunk.AirRID {
 				continue
 			}
-			if blockDesc, hasB := chunk.RuntimeIDToBlock(rtid); hasB {
+			if blockDesc := chunk.RuntimeIDToLegacyBlock(rtid); blockDesc != nil {
 				selected = true
 				selectedBlockName = blockDesc.Name
+				selectedBlockData = int(blockDesc.Val)
 				selectedBlockPos = pos
 			}
 			break
 		}
 	}
 	if selected {
-		o.currentPlayerKit.Say(fmt.Sprintf("§l§b选中 %v @ %v", strings.ReplaceAll(selectedBlockName, "minecraft:", ""), selectedBlockPos))
+		o.currentPlayerKit.Say(fmt.Sprintf("§l§b选中 %v %v @ %v", strings.ReplaceAll(selectedBlockName, "minecraft:", ""), selectedBlockData, selectedBlockPos))
 		o.selectIndicateStructureBlock.IndicateCube(selectedBlockPos, selectedBlockPos)
 		o.selectInfo.currentSelectID = o.selectInfo.nextSelect
 		o.selectInfo.currentSelectPos = selectedBlockPos
@@ -475,6 +479,14 @@ func (o *WoodAxe) renderMenu() map[string]func(chat *defines.GameChat) {
 		hints = append(hints, hint)
 		actions[trigger] = action
 	}
+	if action, trigger, hint, available := replaceEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
+	if action, trigger, hint, available := moveEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
 	actions["帮助"] = func(chat *defines.GameChat) {
 		for _, hint := range hints {
 			o.currentPlayerKit.Say(hint)
@@ -522,6 +534,11 @@ func (o *WoodAxe) Inject(frame defines.MainFrame) {
 }
 
 func (o *WoodAxe) Activate() {
+	go func() {
+		for action := range o.actionsChan {
+			action()
+		}
+	}()
 	// lastCheckTick := 0
 	// go func() {
 	// 	tick := time.NewTicker(time.Second * 3)

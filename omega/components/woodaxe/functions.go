@@ -31,26 +31,26 @@ func copyEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 		o.selectInfo.triggerFN = nil
 	}
 	activateFinalHint := func() {
-		o.currentPlayerKit.Say("选择目标基准点以决定复制的位置")
+		o.currentPlayerKit.Say("§6选择目标基准点以决定复制的位置")
 		o.selectInfo.nextSelect = BasePointTwo
 		o.selectInfo.triggerFN = finalFunc
 	}
 	activateBasePointOneHint := func() {
-		o.currentPlayerKit.Say("选择当前区域基准点(当然你也可以再点击一下起点)")
+		o.currentPlayerKit.Say("§6选择当前区域基准点(当然你也可以再点击一下起点)")
 		o.selectInfo.nextSelect = BasePointOne
 		o.selectInfo.triggerFN = func() {
 			activateFinalHint()
 		}
 	}
 	activateAreaTwoHint := func() {
-		o.currentPlayerKit.Say("选择当前区域结束点")
+		o.currentPlayerKit.Say("§6选择当前区域结束点")
 		o.selectInfo.nextSelect = AreaPosTwo
 		o.selectInfo.triggerFN = func() {
 			activateBasePointOneHint()
 		}
 	}
 	activateAreaOneHint := func() {
-		o.currentPlayerKit.Say("选择当前区域起始点")
+		o.currentPlayerKit.Say("§6选择当前区域起始点")
 		o.selectInfo.nextSelect = AreaPosOne
 		o.selectInfo.triggerFN = func() {
 			activateAreaTwoHint()
@@ -76,6 +76,75 @@ func copyEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 	return nil, "", "", false
 }
 
+func moveEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName string, hint string, available bool) {
+	if o.actionsOccupied.occupied {
+		return nil, "", "", false
+	}
+	finalFunc := func() {
+		start, end := sortPos(o.selectInfo.pos[AreaPosOne], o.selectInfo.pos[AreaPosTwo])
+		offset := o.selectInfo.pos[BasePointTwo].Sub(o.selectInfo.pos[BasePointOne])
+		size := end.Sub(start)
+		target := start.Add(offset)
+		o.actionManager.Commit(&Action{
+			Do: func() {
+				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("clone %v %v %v %v %v %v %v %v %v",
+					start[0], start[1], start[2], end[0], end[1], end[2], target[0], target[1], target[2]))
+				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("fill %v %v %v %v %v %v air 0",
+					start[0], start[1], start[2], end[0], end[1], end[2]))
+			},
+			AffectAreas: [][2]define.CubePos{{start, end}, {target, target.Add(size)}},
+		})
+
+		o.selectInfo.nextSelect = AreaPosOne
+		o.selectInfo.currentSelectID = NotSelect
+		o.selectInfo.triggerFN = nil
+	}
+	activateFinalHint := func() {
+		o.currentPlayerKit.Say("§6选择目标基准点以决定移动的位置")
+		o.selectInfo.nextSelect = BasePointTwo
+		o.selectInfo.triggerFN = finalFunc
+	}
+	activateBasePointOneHint := func() {
+		o.currentPlayerKit.Say("§6选择当前区域基准点(当然你也可以再点击一下起点)")
+		o.selectInfo.nextSelect = BasePointOne
+		o.selectInfo.triggerFN = func() {
+			activateFinalHint()
+		}
+	}
+	activateAreaTwoHint := func() {
+		o.currentPlayerKit.Say("§6选择当前区域结束点")
+		o.selectInfo.nextSelect = AreaPosTwo
+		o.selectInfo.triggerFN = func() {
+			activateBasePointOneHint()
+		}
+	}
+	activateAreaOneHint := func() {
+		o.currentPlayerKit.Say("§6选择当前区域起始点")
+		o.selectInfo.nextSelect = AreaPosOne
+		o.selectInfo.triggerFN = func() {
+			activateAreaTwoHint()
+		}
+	}
+	if o.selectInfo.currentSelectID == BasePointOne {
+		return func(chat *defines.GameChat) {
+			activateFinalHint()
+		}, "移动", "输入 移动 以复制选中的区域，移动位置由两个基准点决定", true
+	} else if o.selectInfo.currentSelectID == AreaPosTwo {
+		return func(chat *defines.GameChat) {
+			activateBasePointOneHint()
+		}, "移动", "输入 移动 以复制选中的区域，移动位置由两个基准点决定", true
+	} else if o.selectInfo.currentSelectID == AreaPosOne {
+		return func(chat *defines.GameChat) {
+			activateAreaTwoHint()
+		}, "移动", "输入 移动 以移动选中的区域，区域由两个基准点决定", true
+	} else if o.selectInfo.currentSelectID == NotSelect {
+		return func(chat *defines.GameChat) {
+			activateAreaOneHint()
+		}, "移动", "输入 移动 以移动选中的区域，区域由两个基准点决定", true
+	}
+	return nil, "", "", false
+}
+
 func continuousCopyEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName string, hint string, available bool) {
 	if o.actionsOccupied.occupied && !o.actionsOccupied.continuousCopy {
 		return nil, "", "", false
@@ -87,7 +156,7 @@ func continuousCopyEntry(o *WoodAxe) (action func(chat *defines.GameChat), actio
 			o.actionsOccupied.occupied = false
 			o.actionsOccupied.continuousCopy = false
 			o.currentPlayerKit.Say("已停止")
-		}, "停止", "输入 停止 以停止连续复制", true
+		}, "停止", "§6输入 停止 以停止连续复制", true
 	}
 	finalFunc := func() {
 		start, end := sortPos(o.selectInfo.pos[AreaPosOne], o.selectInfo.pos[AreaPosTwo])
@@ -102,31 +171,32 @@ func continuousCopyEntry(o *WoodAxe) (action func(chat *defines.GameChat), actio
 			AffectAreas: [][2]define.CubePos{{target, target.Add(size)}},
 		})
 		o.selectInfo.nextSelect = BasePointTwo
-		o.currentPlayerKit.Say("选择复制基准点")
+		o.currentPlayerKit.Say("§6选择复制基准点")
+		o.currentPlayerKit.Say("§6要停止复制请输入 停止")
 	}
 	activateFinalHint := func() {
-		o.currentPlayerKit.Say("选择目标基准点以决定复制的位置")
+		o.currentPlayerKit.Say("§6选择目标基准点以决定复制的位置")
 		o.selectInfo.nextSelect = BasePointTwo
 		o.selectInfo.triggerFN = finalFunc
 		o.actionsOccupied.occupied = true
 		o.actionsOccupied.continuousCopy = true
 	}
 	activateBasePointOneHint := func() {
-		o.currentPlayerKit.Say("选择当前区域基准点(当然你也可以再点击一下起点)")
+		o.currentPlayerKit.Say("§6选择当前区域基准点(当然你也可以再点击一下起点)")
 		o.selectInfo.nextSelect = BasePointOne
 		o.selectInfo.triggerFN = func() {
 			activateFinalHint()
 		}
 	}
 	activateAreaTwoHint := func() {
-		o.currentPlayerKit.Say("选择当前区域结束点")
+		o.currentPlayerKit.Say("§6选择当前区域结束点")
 		o.selectInfo.nextSelect = AreaPosTwo
 		o.selectInfo.triggerFN = func() {
 			activateBasePointOneHint()
 		}
 	}
 	activateAreaOneHint := func() {
-		o.currentPlayerKit.Say("选择当前区域起始点")
+		o.currentPlayerKit.Say("§6选择当前区域起始点")
 		o.selectInfo.nextSelect = AreaPosOne
 		o.selectInfo.triggerFN = func() {
 			activateAreaTwoHint()
@@ -158,19 +228,19 @@ func undoEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 	}
 	return func(chat *defines.GameChat) {
 		o.selectInfo.triggerFN = func() {
-			o.currentPlayerKit.Say("输入 完成 以完成接受当前状态")
+			o.currentPlayerKit.Say("§6输入 完成 以完成接受当前状态")
 		}
 		step := 1
 		if len(chat.Msg) > 0 {
 			if _steps, err := strconv.Atoi(chat.Msg[0]); err == nil {
 				if _steps < 1 {
-					o.currentPlayerKit.Say("撤销的步数无效")
+					o.currentPlayerKit.Say("§6撤销的步数无效")
 					return
 				} else {
 					step = _steps
 				}
 			} else {
-				o.currentPlayerKit.Say("撤销的步数无效")
+				o.currentPlayerKit.Say("§6撤销的步数无效")
 				return
 			}
 		}
@@ -179,7 +249,7 @@ func undoEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 		o.actionsOccupied.undo = true
 		for i := 0; i < step; i++ {
 			if err := o.actionManager.Undo(); err != nil {
-				o.currentPlayerKit.Say("无法继续撤销了")
+				o.currentPlayerKit.Say("§6无法继续撤销了")
 				break
 			}
 		}
@@ -199,13 +269,13 @@ func redoEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 		if len(chat.Msg) > 0 {
 			if _steps, err := strconv.Atoi(chat.Msg[0]); err == nil {
 				if _steps < 1 {
-					o.currentPlayerKit.Say("重做的步数无效")
+					o.currentPlayerKit.Say("§6重做的步数无效")
 					return
 				} else {
 					step = _steps
 				}
 			} else {
-				o.currentPlayerKit.Say("重做的步数无效")
+				o.currentPlayerKit.Say("§6重做的步数无效")
 				return
 			}
 		}
@@ -213,11 +283,11 @@ func redoEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 		o.actionsOccupied.undo = true
 		for i := 0; i < step; i++ {
 			if err := o.actionManager.Redo(); err != nil {
-				o.currentPlayerKit.Say("无法继续重做了")
+				o.currentPlayerKit.Say("§6无法继续重做了")
 				break
 			}
 		}
-		o.currentPlayerKit.Say("你可以继续输入 撤销/重做/完成")
+		o.currentPlayerKit.Say("§6你可以继续输入 撤销/重做/完成")
 	}, "重做", "输入 重做 [数量] 以重做指定数量的操作，不指定数量时默认重做一步", true
 }
 
@@ -231,7 +301,7 @@ func doneUndoEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName 
 		o.selectInfo.triggerFN = nil
 		o.actionManager.Trim()
 		o.actionManager.DeFreeze()
-	}, "完成", "输入 完成 以接受当前的撤销动作", true
+	}, "完成", "§6输入 完成 以接受当前的撤销动作", true
 }
 
 func (o *WoodAxe) splitLargeArea(start, end define.CubePos) [][2]define.CubePos {
@@ -286,20 +356,19 @@ func fillEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 		o.actionsOccupied.occupied = true
 		o.actionsOccupied.largeFill = true
 		cubes := o.splitLargeArea(o.selectInfo.pos[AreaPosOne], o.selectInfo.pos[AreaPosTwo])
-		for i, cube := range cubes {
-			o.currentPlayerKit.ActionBar(fmt.Sprintf("fill sub chunk %v/%v", i, len(cubes)))
-			o.actionManager.Commit(&Action{
-				Do: func() {
+		o.actionManager.Commit(&Action{
+			Do: func() {
+				for i, cube := range cubes {
+					o.currentPlayerKit.ActionBar(fmt.Sprintf("fill sub chunk %v/%v", i, len(cubes)))
 					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("fill %v %v %v %v %v %v %v %v",
 						cube[0][0], cube[0][1], cube[0][2], cube[1][0], cube[1][1], cube[1][2], block, data),
 					)
-				},
-				AffectAreas: [][2]define.CubePos{cube},
-			})
-
-			time.Sleep(time.Millisecond * 100)
-		}
-		o.currentPlayerKit.Say("填充完成")
+					time.Sleep(time.Millisecond * 100)
+				}
+			},
+			AffectAreas: cubes,
+		})
+		o.currentPlayerKit.Say("§6填充完成")
 		o.actionsOccupied.occupied = false
 		o.actionsOccupied.largeFill = false
 		o.nextSelect = AreaPosOne
@@ -307,12 +376,12 @@ func fillEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 	}
 
 	onAreaPosOneSelected := func() {
-		o.currentPlayerKit.Say("请选择区域终点")
+		o.currentPlayerKit.Say("§6请选择区域终点")
 		o.selectInfo.triggerFN = doFill
 	}
 
 	onNotSelected := func() {
-		o.currentPlayerKit.Say("请选择区域起点")
+		o.currentPlayerKit.Say("§6请选择区域起点")
 		o.selectInfo.triggerFN = onAreaPosOneSelected
 	}
 
@@ -331,6 +400,67 @@ func fillEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 			onNotSelected()
 		}
 	}, "填充", "输入 填充 [方块名] 以进行填充", true
+}
+
+func replaceEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName string, hint string, available bool) {
+	if o.actionsOccupied.occupied {
+		return nil, "", "", false
+	}
+
+	block1 := ""
+	data1 := ""
+	block2 := ""
+	data2 := ""
+
+	doFill := func() {
+		o.actionsOccupied.occupied = true
+		o.actionsOccupied.largeFill = true
+		cubes := o.splitLargeArea(o.selectInfo.pos[AreaPosOne], o.selectInfo.pos[AreaPosTwo])
+		o.actionManager.Commit(&Action{
+			Do: func() {
+				for i, cube := range cubes {
+					o.currentPlayerKit.ActionBar(fmt.Sprintf("replace sub chunk %v/%v", i, len(cubes)))
+					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("fill %v %v %v %v %v %v %v %v replace %v %v",
+						cube[0][0], cube[0][1], cube[0][2], cube[1][0], cube[1][1], cube[1][2], block2, data2, block1, data1),
+					)
+					time.Sleep(time.Millisecond * 100)
+				}
+			},
+			AffectAreas: cubes,
+		})
+		o.currentPlayerKit.Say("§6替换完成")
+		o.actionsOccupied.occupied = false
+		o.actionsOccupied.largeFill = false
+		o.nextSelect = AreaPosOne
+		o.selectInfo.triggerFN = nil
+	}
+
+	onAreaPosOneSelected := func() {
+		o.currentPlayerKit.Say("§6请选择区域终点")
+		o.selectInfo.triggerFN = doFill
+	}
+
+	onNotSelected := func() {
+		o.currentPlayerKit.Say("§6请选择区域起点")
+		o.selectInfo.triggerFN = onAreaPosOneSelected
+	}
+
+	return func(chat *defines.GameChat) {
+		if len(chat.Msg) < 4 {
+			o.currentPlayerKit.Say("§6参数不正确")
+		}
+		block1 = chat.Msg[0]
+		data1 = chat.Msg[1]
+		block2 = chat.Msg[2]
+		data2 = chat.Msg[3]
+		if o.selectInfo.currentSelectID > AreaPosOne {
+			doFill()
+		} else if o.selectInfo.currentSelectID == AreaPosOne {
+			onAreaPosOneSelected()
+		} else if o.selectInfo.currentSelectID == NotSelect {
+			onNotSelected()
+		}
+	}, "替换", "输入 替换 [原方块名] [原方块值] [新方块名] [新方块值] 以进行替换", true
 }
 
 func largeFillEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName string, hint string, available bool) {

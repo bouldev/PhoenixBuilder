@@ -3,6 +3,7 @@ package woodaxe
 import (
 	"fmt"
 	"phoenixbuilder/mirror/define"
+	"time"
 )
 
 type Action struct {
@@ -20,9 +21,10 @@ type ActionManager struct {
 	ActionStack          []*Action
 	ActionStackPointer   int
 	Freezed              bool
+	actionChan           chan func()
 }
 
-func NewActionManager(prefix string, commandSender func(string)) *ActionManager {
+func NewActionManager(prefix string, commandSender func(string), actionChan chan func()) *ActionManager {
 	am := &ActionManager{
 		commandSender:        commandSender,
 		StructureBlockPrefix: prefix,
@@ -31,6 +33,7 @@ func NewActionManager(prefix string, commandSender func(string)) *ActionManager 
 		ActionStack:          make([]*Action, 0),
 		ActionStackPointer:   -1,
 		Freezed:              false,
+		actionChan:           actionChan,
 	}
 	return am
 }
@@ -83,11 +86,12 @@ func (o *ActionManager) Commit(a *Action) error {
 			a.Undo = func() {
 				for _, cmd := range undoCmds {
 					o.commandSender(cmd)
+					time.Sleep(100 * time.Millisecond)
 				}
 			}
 		}
 		o.ActionStack = append(o.ActionStack, a)
-		a.Do()
+		o.actionChan <- a.Do
 		o.ActionStackPointer++
 		return nil
 	}
@@ -105,7 +109,7 @@ func (o *ActionManager) Undo() error {
 	if o.ActionStackPointer == -1 {
 		return fmt.Errorf("Cannot Undo")
 	}
-	o.ActionStack[o.ActionStackPointer].Undo()
+	o.actionChan <- o.ActionStack[o.ActionStackPointer].Undo
 	o.ActionStackPointer--
 	return nil
 }
@@ -115,7 +119,7 @@ func (o *ActionManager) Redo() error {
 		return fmt.Errorf("Cannot Redo")
 	} else {
 		o.ActionStackPointer++
-		o.ActionStack[o.ActionStackPointer].Do()
+		o.actionChan <- o.ActionStack[o.ActionStackPointer].Do
 		return nil
 	}
 }
