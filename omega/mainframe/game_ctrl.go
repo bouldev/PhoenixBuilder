@@ -362,6 +362,13 @@ func (g *GameCtrl) SendCmd(cmd string) {
 	g.WriteFn(g.packCmdWithUUID(cmd, ud, true))
 }
 
+func (g *GameCtrl) SendWOCmd(cmd string) {
+	g.WriteFn(&packet.SettingsCommand{
+		CommandLine:    cmd,
+		SuppressOutput: true,
+	})
+}
+
 // onCommandFeedbackOnCmds is called by reactor to send commands by that need feedback
 func (g *GameCtrl) onCommandFeedbackOn() {
 	// fmt.Println("recv sendcommandfeedback ture")

@@ -107,6 +107,7 @@ type GameControl interface {
 	TitleTo(target string, msg string)
 	SubTitleTo(target string, msg string)
 	SendCmd(cmd string)
+	SendWOCmd(cmd string)
 	SendCmdAndInvokeOnResponse(string, func(output *packet.CommandOutput))
 	SendCmdAndInvokeOnResponseWithFeedback(string, func(output *packet.CommandOutput))
 	SendMCPacket(packet.Packet)
@@ -167,4 +168,5 @@ type MainFrame interface {
 	GetGameControl() GameControl
 	GetGameListener() GameListener
 	GetWorld() *world.World
+	GetWorldProvider() mirror.ChunkProvider
 }

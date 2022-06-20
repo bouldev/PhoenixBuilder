@@ -315,6 +315,10 @@ func (o *Omega) GetWorld() *world.World {
 	return o.Reactor.CurrentWorld
 }
 
+func (o *Omega) GetWorldProvider() mirror.ChunkProvider {
+	return o.Reactor.CurrentWorldProvider
+}
+
 func newReactor(o *Omega) *Reactor {
 	return &Reactor{
 		o:                         o,

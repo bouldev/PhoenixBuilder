@@ -150,5 +150,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"小木斧": func() defines.Component {
 			return &woodaxe.WoodAxe{BasicComponent: &woodaxe.BasicComponent{}}
 		},
+		"存档修复": func() defines.Component {
+			return &DifferRecover{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
