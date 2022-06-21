@@ -11,6 +11,7 @@ import (
 	"phoenixbuilder/mirror/items"
 	"phoenixbuilder/omega/defines"
 	"strings"
+	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -41,7 +42,12 @@ type actionsOccupied struct {
 
 type WoodAxe struct {
 	*BasicComponent
-	CurrentRequestUser                   string `json:"当前使用者"`
+	Operators                            []string `json:"授权使用者"`
+	Triggers                             []string `json:"触发词"`
+	UseLargeFill                         bool     `json:"使用LargeFill功能"`
+	releaseChan                          chan struct{}
+	chanCreated                          bool
+	CurrentRequestUser                   string
 	currentPlayerPk                      *packet.AddPlayer
 	currentPlayerKit                     defines.PlayerKit
 	woodAxeRTID                          int32
@@ -241,6 +247,7 @@ func (o *WoodAxe) InitWorkSpace() {
 	o.selectInfo = selectInfo{selected: make(map[uint8]bool), pos: make(map[uint8]define.CubePos), currentSelectID: NotSelect}
 	o.actionManager = NewActionManager("omwa", o.Frame.GetGameControl().SendCmd, o.actionsChan)
 	o.currentPlayerKit.Say("小木斧初始化完成")
+	o.currentPlayerKit.Say("输入 帮助 获得可用操作")
 }
 
 func (o *WoodAxe) onInitWorkSapce(pk *packet.AddPlayer) {
@@ -252,6 +259,10 @@ func (o *WoodAxe) onInitWorkSapce(pk *packet.AddPlayer) {
 }
 
 func (o *WoodAxe) CleanUpWorkSpace() {
+	if o.chanCreated {
+		o.chanCreated = false
+		close(o.releaseChan)
+	}
 	pk := o.currentPlayerKit
 	o.currentPlayerPk = nil
 	o.currentPlayerKit = nil
@@ -271,8 +282,7 @@ func (o *WoodAxe) onAddPlayer(pkt packet.Packet) {
 
 func (o *WoodAxe) onAnimate(pkt packet.Packet) {
 	pk := pkt.(*packet.Animate)
-	if o.currentPlayerPk != nil && pk.EntityRuntimeID == o.currentPlayerPk.EntityRuntimeID {
-		// fmt.Println("animate!")
+	if o.currentPlayerKit != nil && o.currentPlayerKit.GetRelatedUQ().Entity != nil && pk.EntityRuntimeID == o.currentPlayerKit.GetRelatedUQ().Entity.RuntimeID {
 		if o.woodAxeOn {
 			o.onPosInput()
 		}
@@ -280,7 +290,7 @@ func (o *WoodAxe) onAnimate(pkt packet.Packet) {
 }
 
 func (o *WoodAxe) onSeeMobItem(pk *packet.MobEquipment) {
-	if o.currentPlayerPk == nil || pk.EntityRuntimeID != o.currentPlayerPk.EntityRuntimeID {
+	if o.currentPlayerKit == nil || o.currentPlayerKit.GetRelatedUQ().Entity == nil || pk.EntityRuntimeID != o.currentPlayerKit.GetRelatedUQ().Entity.RuntimeID {
 		return
 	}
 	rtid := pk.NewItem.Stack.NetworkID
@@ -432,7 +442,7 @@ func (o *WoodAxe) getPosString() string {
 }
 
 func (o *WoodAxe) onPlayerMove(pk *packet.MovePlayer) {
-	if o.currentPlayerPk != nil && pk.EntityRuntimeID == o.currentPlayerPk.EntityRuntimeID {
+	if o.currentPlayerKit != nil && o.currentPlayerKit.GetRelatedUQ().Entity != nil && pk.EntityRuntimeID == o.currentPlayerKit.GetRelatedUQ().Entity.RuntimeID {
 		o.currentPos = pk.Position
 		o.currentYaw = pk.HeadYaw
 		o.currentPitch = pk.Pitch
@@ -450,7 +460,7 @@ func (o *WoodAxe) BlockUpdate(pos define.CubePos, origRTID uint32, currentRTID u
 
 func (o *WoodAxe) renderMenu() map[string]func(chat *defines.GameChat) {
 	actions := map[string]func(chat *defines.GameChat){}
-	hints := []string{"输入 初始化 以重置小木斧工作区"}
+	hints := []string{"输入 初始化 以重置小木斧工作区", "输入 完成 以释放机器人，使之回到原本的任务中"}
 	if action, trigger, hint, available := copyEntry(o); available {
 		hints = append(hints, hint)
 		actions[trigger] = action
@@ -471,9 +481,11 @@ func (o *WoodAxe) renderMenu() map[string]func(chat *defines.GameChat) {
 		hints = append(hints, hint)
 		actions[trigger] = action
 	}
-	if action, trigger, hint, available := largeFillEntry(o); available {
-		hints = append(hints, hint)
-		actions[trigger] = action
+	if o.UseLargeFill {
+		if action, trigger, hint, available := largeFillEntry(o); available {
+			hints = append(hints, hint)
+			actions[trigger] = action
+		}
 	}
 	if action, trigger, hint, available := fillEntry(o); available {
 		hints = append(hints, hint)
@@ -486,6 +498,13 @@ func (o *WoodAxe) renderMenu() map[string]func(chat *defines.GameChat) {
 	if action, trigger, hint, available := moveEntry(o); available {
 		hints = append(hints, hint)
 		actions[trigger] = action
+	}
+	if action, trigger, hint, available := flipEntry(o); available {
+		hints = append(hints, hint)
+		actions[trigger] = action
+	}
+	actions["完成"] = func(chat *defines.GameChat) {
+		o.CleanUpWorkSpace()
 	}
 	actions["帮助"] = func(chat *defines.GameChat) {
 		for _, hint := range hints {
@@ -513,13 +532,48 @@ func (o *WoodAxe) onChat(chat *defines.GameChat) (stop bool) {
 	return false
 }
 
+func (o *WoodAxe) onTrigger(chat *defines.GameChat) (stop bool) {
+	flag := false
+	for _, name := range o.Operators {
+		if name == chat.Name {
+			flag = true
+		}
+	}
+	if !flag {
+		o.Frame.GetGameControl().SayTo(chat.Name, "你没有权限使用这个功能")
+		return true
+	} else {
+		if o.CurrentRequestUser == chat.Name {
+			o.Frame.GetGameControl().SayTo(chat.Name, "你已经在使用这个功能了， 或许你想说 初始化 ?")
+			return true
+		}
+
+		o.Frame.GetBotTaskScheduler().CommitNormalTask(&defines.BasicBotTaskPauseAble{
+			BasicBotTask: defines.BasicBotTask{
+				Name: fmt.Sprintf("小木斧 " + chat.Name),
+				ActivateFn: func() {
+					o.CurrentRequestUser = chat.Name
+					if !o.chanCreated {
+						o.releaseChan = make(chan struct{})
+						o.chanCreated = true
+					}
+					o.currentPlayerKit = o.Frame.GetGameControl().GetPlayerKit(chat.Name)
+					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @s \"%v\"", chat.Name))
+					time.Sleep(time.Second * 1)
+					o.InitWorkSpace()
+					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @s ~500 ~ ~"))
+					time.Sleep(time.Second * 3)
+					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @s ~-500 ~ ~"))
+					<-o.releaseChan
+				},
+			},
+		})
+	}
+	return true
+}
+
 func (o *WoodAxe) Inject(frame defines.MainFrame) {
 	o.Frame = frame
-	// frame.GetGa,e
-	if o.CurrentRequestUser == "" {
-		o.CurrentRequestUser = "一碗飯飯"
-	}
-
 	frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDAddPlayer, o.onAddPlayer)
 	frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDAnimate, o.onAnimate)
 	o.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDMobEquipment, func(p packet.Packet) {
@@ -531,6 +585,15 @@ func (o *WoodAxe) Inject(frame defines.MainFrame) {
 	o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.BlockUpdate)
 	o.Frame.GetGameListener().SetGameChatInterceptor(o.onChat)
 	// frame.GetGameListener().SetOnAnyPacketCallBack(o.onAnyPacket)
+	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
+		MenuEntry: defines.MenuEntry{
+			Triggers:     o.Triggers,
+			ArgumentHint: "",
+			FinalTrigger: false,
+			Usage:        "启用小木斧帮助编辑建筑和结构",
+		},
+		OptionalOnTriggerFn: o.onTrigger,
+	})
 }
 
 func (o *WoodAxe) Activate() {

@@ -402,6 +402,59 @@ func fillEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName stri
 	}, "填充", "输入 填充 [方块名] 以进行填充", true
 }
 
+func flipEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName string, hint string, available bool) {
+	if o.actionsOccupied.occupied {
+		return nil, "", "", false
+	}
+
+	dir := "x"
+
+	doFill := func() {
+		o.actionsOccupied.occupied = true
+		o.actionsOccupied.largeFill = true
+		area := [2]define.CubePos{o.selectInfo.pos[AreaPosOne], o.selectInfo.pos[AreaPosTwo]}
+		startPos, endPos := sortPos(area[0], area[1])
+		o.actionManager.Commit(&Action{
+			Do: func() {
+				cmd := fmt.Sprintf("structure save %v %v %v %v %v %v %v true memory ", "omwat", startPos[0], startPos[1], startPos[2], endPos[0], endPos[1], endPos[2])
+				o.Frame.GetGameControl().SendCmd(cmd)
+				time.Sleep(time.Millisecond * 50)
+				cmd = fmt.Sprintf("structure load %v %v %v %v 0_degrees %v", "omwat", startPos[0], startPos[1], startPos[2], dir)
+				o.Frame.GetGameControl().SendCmd(cmd)
+			},
+			AffectAreas: [][2]define.CubePos{area},
+		})
+		o.currentPlayerKit.Say("§6翻转完成")
+		o.actionsOccupied.occupied = false
+		o.actionsOccupied.largeFill = false
+		o.nextSelect = AreaPosOne
+		o.selectInfo.triggerFN = nil
+	}
+
+	onAreaPosOneSelected := func() {
+		o.currentPlayerKit.Say("§6请选择区域终点")
+		o.selectInfo.triggerFN = doFill
+	}
+
+	onNotSelected := func() {
+		o.currentPlayerKit.Say("§6请选择区域起点")
+		o.selectInfo.triggerFN = onAreaPosOneSelected
+	}
+
+	return func(chat *defines.GameChat) {
+		if len(chat.Msg) > 0 {
+			dir = chat.Msg[0]
+		}
+		if o.selectInfo.currentSelectID > AreaPosOne {
+			doFill()
+		} else if o.selectInfo.currentSelectID == AreaPosOne {
+			onAreaPosOneSelected()
+		} else if o.selectInfo.currentSelectID == NotSelect {
+			onNotSelected()
+		}
+	}, "翻转", "输入 翻转 [x/z/xz] 以进行翻转", true
+}
+
 func replaceEntry(o *WoodAxe) (action func(chat *defines.GameChat), actionName string, hint string, available bool) {
 	if o.actionsOccupied.occupied {
 		return nil, "", "", false
