@@ -285,31 +285,26 @@ func (o *IntrusionDetectSystem) onSeePlayer(pk *packet.AddPlayer) {
 func (o *IntrusionDetectSystem) Activate() {
 	if o.EnablePatrol && o.Patrol > 0 {
 		go func() {
+			count := 0
 			for {
-				t := time.NewTimer(time.Second * time.Duration(o.Patrol))
-				<-t.C
-				utils.GetPlayerList(o.Frame.GetGameControl(), "@r[rm=3]", func(players []string) {
-					if len(players) > 0 {
-						player := players[0]
-						// o.Frame.GetBackendDisplay().Write("尝试扫描玩家: " + player)
-						o.Frame.GetGameControl().SendCmd("effect @s invisibility 120 1 true")
-						o.Frame.GetGameControl().SendCmd("tp @s \"" + player + "\"")
-						o.Frame.GetGameControl().SendCmd("tp @s ~ 256 ~")
-					}
+				count++
+				o.Frame.GetBotTaskScheduler().CommitBackgroundTask(&defines.BasicBotTaskPauseAble{
+					BasicBotTask: defines.BasicBotTask{
+						Name: fmt.Sprintf("Portal %v", count),
+						ActivateFn: func() {
+							utils.GetPlayerList(o.Frame.GetGameControl(), "@r[rm=100]", func(players []string) {
+								if len(players) > 0 {
+									player := players[0]
+									o.Frame.GetGameControl().SendCmd(fmt.Sprintf("effect @s invisibility %v 1 true", o.Patrol))
+									o.Frame.GetGameControl().SendCmd("tp @s \"" + player + "\"")
+									o.Frame.GetGameControl().SendCmd("tp @s ~ 256 ~")
+								}
+							})
+						},
+					},
 				})
+				<-time.NewTimer(time.Second * time.Duration(o.Patrol)).C
 			}
 		}()
 	}
 }
-
-// {
-// 	"备注": "踢人",
-// 	"指令": "kick [player] 持有违禁物品，踢出",
-// 	"结果记录": "完整结果"
-// }
-
-// {
-// 	"备注": "清包",
-// 	"执行后延迟": 3,
-// 	"指令": "clear [player]"
-// },

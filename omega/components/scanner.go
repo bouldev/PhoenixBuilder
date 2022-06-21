@@ -130,26 +130,45 @@ func (o *Scanner) handleScan(cmds []string) bool {
 			pterm.Error.Println("上一个扫描尚未关闭，请输入 " + o.Trigger + " stop 关闭上一个扫描")
 			return true
 		}
-		pterm.Info.Println("正在准备扫描")
-		o.Frame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(
-			fmt.Sprintf("tp @s %v %v %v", x+1000, 255, z+1000), func(output *packet.CommandOutput) {
-				o.Frame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(
-					fmt.Sprintf("tp @s %v %v %v", x, 255, z), func(output *packet.CommandOutput) {
-						data_mark := time.Now().Format("2006-01-02-15:04:05")
-						fileName := "扫描日志" + data_mark + ".txt"
-						fileName = o.Frame.GetRelativeFileName(fileName)
-						fp, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
-						o.resultWriter = &simpleFileLineDstWrapper{fp: fp, name: fileName}
-						if err != nil {
-							o.Frame.GetBackendDisplay().Write(pterm.Error.Sprintfln("记录文件打开失败，扫描终止,%v", err))
-						}
-						o.isScanning = true
-						pterm.Info.Printfln("扫描开始，结果将保存到 %v 中，输入 "+o.Trigger+" stop 停止扫描", fileName)
+		o.Frame.GetBotTaskScheduler().CommitNormalTask(&defines.BasicBotTaskPauseAble{
+			BasicBotTask: defines.BasicBotTask{
+				Name: fmt.Sprintf("Scan"),
+				ActivateFn: func() {
+					pterm.Info.Println("正在准备扫描")
+					utils.GetPlayerList(o.Frame.GetGameControl(), "@r[rm=100]", func(players []string) {
+						o.Frame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(
+							fmt.Sprintf("tp @s %v %v %v", x+1000, 255, z+1000), func(output *packet.CommandOutput) {
+								o.Frame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(
+									fmt.Sprintf("tp @s %v %v %v", x, 255, z), func(output *packet.CommandOutput) {
+										data_mark := time.Now().Format("2006-01-02-15:04:05")
+										fileName := "扫描日志" + data_mark + ".txt"
+										fileName = o.Frame.GetRelativeFileName(fileName)
+										fp, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0777)
+										o.resultWriter = &simpleFileLineDstWrapper{fp: fp, name: fileName}
+										if err != nil {
+											o.Frame.GetBackendDisplay().Write(pterm.Error.Sprintfln("记录文件打开失败，扫描终止,%v", err))
+										}
+										o.isScanning = true
+										pterm.Info.Printfln("扫描开始，结果将保存到 %v 中，输入 "+o.Trigger+" stop 停止扫描", fileName)
+										pterm.Warning.Printfln("注意：机器人可能忽略扫描前已经看到的生物和nbt方块")
+
+									},
+								)
+							},
+						)
+
+					})
+					time.Sleep(time.Second * 10)
+					if o.isScanning {
+						pterm.Info.Println("停止扫描,结果已经导出到 " + o.resultWriter.name)
 						pterm.Warning.Printfln("注意：机器人可能忽略扫描前已经看到的生物和nbt方块")
-					},
-				)
+						o.resultWriter.fp.Close()
+						o.isScanning = false
+						o.resultWriter = nil
+					}
+				},
 			},
-		)
+		})
 		return true
 	}
 	pterm.Error.Printfln("错误的指令格式，应该为\n" + o.Trigger + " x z\n或者\n" + o.Trigger + " stop")

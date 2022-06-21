@@ -158,6 +158,47 @@ type SecurityEventIO interface {
 	RegOnAlertHandler(cb func(info string))
 }
 
+type BasicBotTask struct {
+	Name       string
+	ActivateFn func()
+}
+
+func (bbt *BasicBotTask) Activate() {
+	// fmt.Println("Executing " + bbt.Name)
+	bbt.ActivateFn()
+}
+
+type BotTask interface {
+	Activate()
+}
+
+type BasicBotTaskPauseAble struct {
+	BasicBotTask
+}
+
+func (bbtpa *BasicBotTaskPauseAble) Pause() {
+	// fmt.Println("Pasue " + bbtpa.Name)
+}
+
+func (bbtpa *BasicBotTaskPauseAble) Resume() {
+	// fmt.Println("Resume " + bbtpa.Name)
+}
+
+type BotTaskPauseAble interface {
+	BotTask
+	Pause()
+	Resume()
+}
+
+type BotTaskScheduler interface {
+	// background task will not execute if a normal task or urgent task exist
+	CommitBackgroundTask(BotTaskPauseAble) (reject, pending bool)
+	// a normal task will pause the executing background task
+	CommitNormalTask(BotTaskPauseAble) (pending bool)
+	// a urgent task will pause normal task and background task
+	CommitUrgentTask(BotTask) (pending bool)
+}
+
 type MainFrame interface {
 	CtxProvider
 	ConfigProvider
@@ -167,6 +208,7 @@ type MainFrame interface {
 	FatalError(err string)
 	GetGameControl() GameControl
 	GetGameListener() GameListener
+	GetBotTaskScheduler() BotTaskScheduler
 	GetWorld() *world.World
 	GetWorldProvider() mirror.ChunkProvider
 }

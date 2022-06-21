@@ -47,6 +47,8 @@ type Omega struct {
 
 	Components              []defines.Component
 	configStageCompleteFlag bool
+
+	scheduler *OmegaBotTaskScheduler
 }
 
 func NewOmega() *Omega {
@@ -60,6 +62,7 @@ func NewOmega() *Omega {
 		//OpenedDBs:           make(map[string]*utils.LevelDBWrapper),
 		stopC:        make(chan struct{}),
 		fullyStopped: make(chan struct{}),
+		scheduler:    NewOmegaBotTaskScheduler(),
 	}
 	o.Reactor = newReactor(o)
 	o.ctx = &map[string]interface{}{}
@@ -251,6 +254,10 @@ func GetMemUsageByMBInDetailedString() string {
 		return float32(v) / 1024 / 1024
 	}
 	return fmt.Sprintf("系统分配[包括备用]内存 %.1f MB, ([空闲堆]%.1fMB / [释放堆]%.1fMB / [堆]%.1fMB / [分配栈]%.1fMB)", toMB(m.Sys), toMB(m.HeapIdle), toMB(m.HeapReleased), toMB(m.HeapInuse), toMB(m.StackSys))
+}
+
+func (o *Omega) GetBotTaskScheduler() defines.BotTaskScheduler {
+	return o.scheduler
 }
 
 func (o *Omega) Activate() {
