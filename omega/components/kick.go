@@ -11,14 +11,19 @@ import (
 
 type Kick struct {
 	*BasicComponent
-	Selector string   `json:"选择器"`
-	Duration int      `json:"检查周期"`
-	Actions  []string `json:"制裁"`
+	Selector  string      `json:"选择器"`
+	Duration  int         `json:"检查周期"`
+	ActionsIn interface{} `json:"制裁"`
+	Actions   []defines.Cmd
 }
 
 func (o *Kick) Init(cfg *defines.ComponentConfig) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
+		panic(err)
+	}
+	var err error
+	if o.Actions, err = utils.ParseAdaptiveCmd(o.ActionsIn); err != nil {
 		panic(err)
 	}
 }
@@ -28,12 +33,9 @@ type Banned struct {
 }
 
 func (o *Kick) kick(name string) {
-	for _, a := range o.Actions {
-		c := utils.FormatByReplacingOccurrences(a, map[string]interface{}{
-			"[player]": "\"" + name + "\"",
-		})
-		o.Frame.GetGameControl().SendCmd(c)
-	}
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.Actions, map[string]interface{}{
+		"[player]": "\"" + name + "\"",
+	}, o.Frame.GetBackendDisplay())
 }
 
 func (o *Kick) Activate() {
