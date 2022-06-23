@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
@@ -11,6 +13,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/df-mc/goleveldb/leveldb/opt"
@@ -23,6 +26,8 @@ type DifferRecover struct {
 	BackUpName                    string   `json:"备份存档名"`
 	Operators                     []string `json:"授权使用者"`
 	currentProvider, ckptProvider mirror.ChunkReader
+	delayBlocks                   map[define.CubePos]*blockToRepair
+	delayBlocksMu                 sync.Mutex
 }
 
 func (o *DifferRecover) Init(cfg *defines.ComponentConfig) {
@@ -35,15 +40,17 @@ func (o *DifferRecover) Init(cfg *defines.ComponentConfig) {
 }
 
 type blockToRepair struct {
-	pos   define.CubePos
-	block uint32
+	pos      define.CubePos
+	block    uint32
+	blockNbt map[string]interface{}
+	hit      bool
 }
 
-func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.ChunkReader, pos define.CubePos, distance int) chan blockToRepair {
+func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.ChunkReader, pos define.CubePos, distance int) chan *blockToRepair {
 	computeRequiredChunks := func(pos define.CubePos, distance int) (requiredChunks []define.ChunkPos) {
 		// chunkX, ChunkZ := int(math.Floor(float64(pos[0]/16))), int(math.Floor(float64(pos[2]/16)))
-		chunkSX, chunkSZ := (pos[0]-distance)/16, (pos[2]-distance)/16
-		chunkEX, chunkEZ := (pos[0]+distance)/16, (pos[2]+distance)/16
+		chunkSX, chunkSZ := (pos[0]-distance-1)/16, (pos[2]-distance-1)/16
+		chunkEX, chunkEZ := (pos[0]+distance+1)/16, (pos[2]+distance+1)/16
 		requiredChunks = make([]define.ChunkPos, 0)
 		for cx := chunkSX; cx <= chunkEX; cx++ {
 			for cz := chunkSZ; cz <= chunkEZ; cz++ {
@@ -53,7 +60,7 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 		return requiredChunks
 	}
 	chunksToFix := computeRequiredChunks(pos, distance)
-	repairChan := make(chan blockToRepair, 10240)
+	repairChan := make(chan *blockToRepair, 10240)
 	go func() {
 		for _, chunkPos := range chunksToFix {
 			ckpt := ckptProvider.Get(chunkPos)
@@ -66,14 +73,23 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 				fmt.Printf("missing current chunk @ %v, skipping\n", chunkPos)
 				continue
 			}
+			nbts := ckpt.BlockNbts
 			for x := uint8(0); x < 16; x++ {
 				for z := uint8(0); z < 16; z++ {
-					for y := int16(256); y != 0; y-- {
-						targetBlock := ckpt.Chunk.Block(x, y, z, 0)
-						realBlock := current.Chunk.Block(x, y, z, 0)
-						if targetBlock != realBlock {
-							p := define.CubePos{int(x) + int(chunkPos[0])*16, int(y), int(z) + int(chunkPos[1])*16}
-							repairChan <- blockToRepair{pos: p, block: targetBlock}
+					for subChunk := int16(0); subChunk < 16; subChunk++ {
+						for sy := int16(0); sy < 16; sy++ {
+							y := subChunk*16 + sy
+							targetBlock := ckpt.Chunk.Block(x, y, z, 0)
+							realBlock := current.Chunk.Block(x, y, z, 0)
+							if targetBlock != realBlock {
+								p := define.CubePos{int(x) + int(chunkPos[0])*16, int(y), int(z) + int(chunkPos[1])*16}
+								b := &blockToRepair{pos: p, block: targetBlock}
+								if nbt, hasK := nbts[p]; hasK {
+									b.blockNbt = nbt
+									// fmt.Println("A: ", b.blockNbt)
+								}
+								repairChan <- b
+							}
 						}
 					}
 				}
@@ -82,6 +98,29 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 		close(repairChan)
 	}()
 	return repairChan
+}
+
+func (o *DifferRecover) updateDelayBlocks(force bool) {
+	// fmt.Println("C: ", o.delayBlocks)
+	for pos, block := range o.delayBlocks {
+		fmt.Println(block)
+		if block.hit || force {
+			switch block.blockNbt["id"] {
+			case "sign":
+				nbt := block.blockNbt
+				fmt.Println("sign: ", nbt)
+				o.Frame.GetGameControl().SendMCPacket(&packet.BlockActorData{
+					Position: protocol.BlockPos{int32(pos[0]), int32(pos[1]), int32(pos[2])},
+					NBTData:  nbt,
+				})
+			case "CommandBlock":
+
+			}
+			o.delayBlocksMu.Lock()
+			delete(o.delayBlocks, pos)
+			o.delayBlocksMu.Unlock()
+		}
+	}
 }
 
 func (o *DifferRecover) onTrigger(chat *defines.GameChat) (stop bool) {
@@ -109,36 +148,67 @@ func (o *DifferRecover) onTrigger(chat *defines.GameChat) (stop bool) {
 	} else {
 		o.Frame.GetGameControl().SayTo(chat.Name, "未输入修复半径，将修复当前所在区块")
 	}
-	go func() {
-		pk := o.Frame.GetGameControl().GetPlayerKit(chat.Name)
-		_currentPos := <-pk.GetPos("@a[name=[player]]")
-		if _currentPos == nil || len(_currentPos) == 0 {
-			pk.Say("位置无效，请退出租赁服重试")
-		}
-		fmt.Println(_currentPos)
-		o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @s %v %v %v", _currentPos[0], _currentPos[1], _currentPos[2]))
-		currentPos := define.CubePos{_currentPos[0], _currentPos[1], _currentPos[2]}
-		blocksToFix := o.GetBlocksPipe(o.currentProvider, o.ckptProvider, currentPos, distance)
-		counter := 0
-		t := time.NewTicker(time.Millisecond * time.Duration(o.Speed))
-		sender := o.Frame.GetGameControl().SendWOCmd
-		for block := range blocksToFix {
-			counter++
-			if counter%100 == 99 {
-				pk.ActionBar(fmt.Sprintf("current %v blocks\n", counter+1))
-			}
-			blk := chunk.RuntimeIDToLegacyBlock(block.block)
-			if blk == nil {
-				continue
-			}
-			cmd := fmt.Sprintf("setblock %v %v %v %v %v\n", block.pos[0], block.pos[1], block.pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)
-			// fmt.Println(cmd)
-			sender(cmd)
-			<-t.C
-		}
-		pk.Say(fmt.Sprintf("完成，总计 %v 方块\n", counter))
-	}()
+	o.Frame.GetBotTaskScheduler().CommitNormalTask(&defines.BasicBotTaskPauseAble{
+		BasicBotTask: defines.BasicBotTask{
+			Name: fmt.Sprintf("Fix"),
+			ActivateFn: func() {
+				pk := o.Frame.GetGameControl().GetPlayerKit(chat.Name)
+				_currentPos := <-pk.GetPos("@a[name=[player]]")
+				if _currentPos == nil || len(_currentPos) == 0 {
+					pk.Say("位置无效，请退出租赁服重试")
+				}
+				fmt.Println(_currentPos)
+				o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @s %v %v %v", _currentPos[0], _currentPos[1], _currentPos[2]))
+				currentPos := define.CubePos{_currentPos[0], _currentPos[1], _currentPos[2]}
+				blocksToFix := o.GetBlocksPipe(o.currentProvider, o.ckptProvider, currentPos, distance)
+				counter := 0
+				o.delayBlocks = make(map[define.CubePos]*blockToRepair)
+				o.delayBlocksMu = sync.Mutex{}
+				t := time.NewTicker(time.Millisecond * time.Duration(o.Speed))
+				sender := o.Frame.GetGameControl().SendWOCmd
+				for block := range blocksToFix {
+					counter++
+					if counter%100 == 99 {
+						pk.ActionBar(fmt.Sprintf("current %v blocks\n", counter+1))
+						sender(fmt.Sprintf("tp @s %v %v %v\n", block.pos[0], block.pos[1], block.pos[2]))
+					}
+					blk := chunk.RuntimeIDToLegacyBlock(block.block)
+					if blk == nil {
+						continue
+					}
+					cmd := fmt.Sprintf("setblock %v %v %v %v %v\n", block.pos[0], block.pos[1], block.pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)
+					sender(cmd)
+					if block.blockNbt != nil {
+						o.delayBlocksMu.Lock()
+						o.delayBlocks[block.pos] = block
+						// fmt.Println("B: ", o.delayBlocks[block.pos])
+						o.delayBlocksMu.Unlock()
+						if len(o.delayBlocks) > 64 {
+							o.updateDelayBlocks(false)
+						}
+					}
+					<-t.C
+				}
+				time.Sleep(3 * time.Second)
+				o.updateDelayBlocks(true)
+				pk.Say(fmt.Sprintf("完成，总计 %v 方块\n", counter))
+				o.delayBlocks = nil
+			},
+		},
+	})
 	return true
+}
+
+func (o *DifferRecover) onBlockUpdate(pos define.CubePos, origRTID, currentRTID uint32) {
+	if o.delayBlocks != nil {
+		b := o.delayBlocks[pos]
+		if b == nil {
+			return
+		}
+		if b.block == origRTID || b.block == currentRTID {
+			b.hit = true
+		}
+	}
 }
 
 // func (o *DifferRecover) onChunk(chunk *mirror.ChunkData) {
@@ -203,5 +273,5 @@ func (o *DifferRecover) Inject(frame defines.MainFrame) {
 		},
 		OptionalOnTriggerFn: o.onTrigger,
 	})
-	// o.Frame.GetGameListener().SetOnLevelChunkCallBack(o.onChunk)
+	o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.onBlockUpdate)
 }
