@@ -210,13 +210,13 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.CommandOutput:
 		o.GameCtrl.onNewCommandFeedBack(p)
 	case *packet.UpdateBlock:
-		if p.Flags&packet.BlockUpdateNetwork == 0 || p.Flags&packet.BlockUpdateNoGraphics != 0 || p.Layer != 0 {
-			// MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
+		MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
+		p.Flags &= 0xf
+		if (p.Flags != packet.BlockUpdateNetwork && p.Flags != (packet.BlockUpdateNetwork|packet.BlockUpdateNeighbours)) || p.Layer != 0 {
 			// fmt.Println(p, chunk.RuntimeIDToLegacyBlock(MCRTID))
 			break
 		}
 		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
-		MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
 		if origBlockRTID, success := r.CurrentWorld.UpdateBlock(cubePos, MCRTID); success {
 			for _, cb := range r.BlockUpdateListeners {
 				cb(cubePos, origBlockRTID, MCRTID)
