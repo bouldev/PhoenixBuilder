@@ -128,6 +128,7 @@ type MappingIn struct {
 	RIDToMCBlock   []*GeneralBlock
 	NEMCRidToMCRid []int16
 	NEMCRidToVal   []uint8
+	NEMCToName     []string
 }
 
 func InitMapping(mappingInData []byte) {
@@ -173,17 +174,29 @@ func InitMapping(mappingInData []byte) {
 	}
 
 	nemcToVal := mappingIn.NEMCRidToVal
+	nemcToName := mappingIn.NEMCToName
 	legacyBlocks := make([]*LegacyBlock, len(blocks))
-	for rid, block := range blocks {
-		legacyBlocks[rid] = &LegacyBlock{Name: block.Name, Val: 0}
+	for rid, _ := range blocks {
+		legacyBlocks[rid] = &LegacyBlock{Name: "", Val: 0}
 	}
 	for nemcRid, Rid := range nemcToMCRIDMapping {
+		if legacyBlocks[Rid].Name != "" {
+			continue
+		}
 		val := nemcToVal[nemcRid]
 		if nemcRid == int(NEMCAirRID) {
 			continue
 		}
 		legacyBlocks[Rid].Val = val
+		legacyBlocks[Rid].Name = nemcToName[nemcRid]
 	}
+	for rid, _ := range blocks {
+		if legacyBlocks[rid].Name == "" {
+			legacyBlocks[rid].Name = "air"
+		}
+	}
+	legacyBlocks[AirRID].Name = "air"
+	legacyBlocks[AirRID].Val = 0
 	for rid, block := range legacyBlocks {
 		legacyRuntimeIDs[LegacyBlockHash{name: block.Name, data: block.Val}] = uint32(rid)
 	}

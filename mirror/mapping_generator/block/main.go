@@ -101,6 +101,7 @@ type MappingOut struct {
 	RIDToMCBlock   []*GeneralBlock
 	NEMCRidToMCRid []int16
 	NEMCRidToVal   []uint8
+	NEMCToName     []string
 }
 
 func main() {
@@ -117,7 +118,6 @@ func main() {
 
 	airRID := 0
 	nemcAirRID := 0
-	skullRID := 0
 	dec := nbt.NewDecoder(bytes.NewBuffer(blockStateData))
 	groupedBlocks := make(map[string]*IDGroup)
 	blocks := []*RichBlock{}
@@ -142,10 +142,10 @@ func main() {
 			groupedBlocks[rb.Name] = NewIDGroup()
 		}
 		groupedBlocks[rb.Name].AppendItem(rb)
-		if skullRID == 0 && rb.Name == "minecraft:skull" {
-			skullRID = rid
-			rb.Val = 0
-		}
+		// if skullRID == 0 && rb.Name == "minecraft:skull" {
+		// 	skullRID = rid
+		// 	rb.Val = 0
+		// }
 		blocks = append(blocks, rb)
 		ridToMCBlock = append(ridToMCBlock, &GeneralBlock{
 			Name:       s.Name,
@@ -186,24 +186,26 @@ func main() {
 			}
 		}
 	}
-	fmt.Println(airRID, " ", nemcAirRID, " ", skullRID)
+	fmt.Println(airRID, " ", nemcAirRID)
 
 	nemcToMCRIDMapping := make([]int16, len(nemcData))
 	nemcToVal := make([]uint8, len(nemcData))
+	nemcToName := make([]string, len(nemcData))
 	for i := 0; i < len(nemcData); i++ {
 		nemcToMCRIDMapping[i] = int16(airRID)
 		nemcToVal[i] = uint8(nemcData[i].Val)
+		nemcToName[i] = nemcData[i].Name
 	}
 	for rid, b := range blocks {
 		if b.NEMCRID == -1 {
 			fmt.Println("new block ", b)
 			continue
 		}
-		origBlock := nemcData[b.NEMCRID]
-		if origBlock.Name == "minecraft:skull" {
-			nemcToMCRIDMapping[b.NEMCRID] = int16(skullRID)
-			continue
-		}
+		// origBlock := nemcData[b.NEMCRID]
+		// if origBlock.Name == "minecraft:skull" {
+		// 	nemcToMCRIDMapping[b.NEMCRID] = int16(skullRID)
+		// 	continue
+		// }
 		nemcToMCRIDMapping[b.NEMCRID] = int16(rid)
 	}
 	fmt.Println(nemcToMCRIDMapping[nemcAirRID])
@@ -222,6 +224,7 @@ func main() {
 		RIDToMCBlock:   ridToMCBlock,
 		NEMCRidToMCRid: nemcToMCRIDMapping,
 		NEMCRidToVal:   nemcToVal,
+		NEMCToName:     nemcToName,
 	}
 	fp, err = os.OpenFile("convert_out/blockmapping_nemc_2_1_10_mc_1_19.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	compressor := brotli.NewWriter(fp)

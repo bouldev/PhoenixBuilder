@@ -178,14 +178,13 @@ func (p *Provider) Get(pos define.ChunkPos) (data *mirror.ChunkData) {
 	} else {
 		cd.Chunk = c
 	}
-	if nbts, err := p.loadBlockNBT(pos); err != nil {
-		posedNbt := make(map[define.CubePos]map[string]interface{})
+	if nbts, err := p.loadBlockNBT(pos); err == nil {
+		cd.BlockNbts = make(map[define.CubePos]map[string]interface{})
 		for _, nbt := range nbts {
 			if pos, success := define.GetCubePosFromNBT(nbt); success {
-				posedNbt[pos] = nbt
+				cd.BlockNbts[pos] = nbt
 			}
 		}
-		cd.BlockNbts = posedNbt
 	}
 	cd.TimeStamp = p.loadTimeStamp(pos)
 	return cd
