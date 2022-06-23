@@ -24,7 +24,6 @@ func (cl *ChatLogger) Inject(frame defines.MainFrame) {
 	// botName := cl.Frame.GetUQHolder().GetBotName()
 	cl.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDText, func(p packet.Packet) {
 		pk := p.(*packet.Text)
-		//TODO don't do this
 		msg := strings.TrimSpace(pk.Message)
 		// fmt.Println(msg)
 		if strings.Contains(msg, "alive") {

@@ -175,10 +175,10 @@ func (r *Reactor) React(pkt packet.Packet) {
 		}
 	}()
 	o := r.o
-	pktID := pkt.ID()
 	if pkt == nil {
 		return
 	}
+	pktID := pkt.ID()
 	switch p := pkt.(type) {
 	case *packet.Text:
 		// o.backendLogger.Write(fmt.Sprintf("%v(%v):%v", p.SourceName, p.TextType, p.Message))
