@@ -210,6 +210,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.CommandOutput:
 		o.GameCtrl.onNewCommandFeedBack(p)
 	case *packet.UpdateBlock:
+		// TODO WIP cannot decide which block are air and which are not
 		MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
 		p.Flags &= 0xf
 		if (p.Flags != packet.BlockUpdateNetwork && p.Flags != (packet.BlockUpdateNetwork|packet.BlockUpdateNeighbours)) || p.Layer != 0 {

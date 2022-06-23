@@ -12,9 +12,11 @@ import (
 
 type Immortal struct {
 	*BasicComponent
-	Hint          string `json:"提示信息"`
-	AskForRespawn bool   `json:"询问是否返回死亡点"`
-	Selector      string `json:"死亡玩家选择器"`
+	Hint          string      `json:"提示信息"`
+	AskForRespawn bool        `json:"询问是否返回死亡点"`
+	Selector      string      `json:"死亡玩家选择器"`
+	CmdsIn        interface{} `json:"复活时执行指令"`
+	Cmds          []defines.Cmd
 }
 
 func (b *Immortal) Init(cfg *defines.ComponentConfig) {
@@ -24,6 +26,13 @@ func (b *Immortal) Init(cfg *defines.ComponentConfig) {
 	}
 	if b.Selector == "" {
 		b.Selector = "@a[name=[player]]"
+	}
+	var err error
+	if b.CmdsIn == nil {
+		b.CmdsIn = []string{}
+	}
+	if b.Cmds, err = utils.ParseAdaptiveCmd(b.CmdsIn); err != nil {
+		panic(err)
 	}
 }
 
@@ -49,6 +58,10 @@ func (o *Immortal) doRespawn(name string, pos []int) {
 		}
 	}()
 	<-c
+	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.Cmds, map[string]interface{}{
+		"[player]":   "\"" + name + "\"",
+		"[dead_pos]": pos,
+	}, o.Frame.GetBackendDisplay())
 	msg := utils.FormatByReplacingOccurrences(o.Hint, map[string]interface{}{
 		"[player]":   "\"" + name + "\"",
 		"[dead_pos]": pos,
