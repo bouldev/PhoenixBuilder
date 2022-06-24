@@ -124,7 +124,7 @@ jobs:
         go build
         cd ..
         make
-        node simpleappend.js
+        #node simpleappend.js
         ls -lh build/>release.txt
         mv release.txt build/release-list.txt
         cp version build/version.txt
