@@ -38,6 +38,9 @@ endif
 ifneq ($(wildcard /usr/bin/aarch64-linux-gnu-gcc),)
 	TARGETS:=${TARGETS} current-arm64-executable
 endif
+ifneq ($(wildcard `pwd`/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64),)
+	TARGETS:=${TARGETS} openwrt-mt7620-mipsel_24kc
+endif
 
 VERSION=$(shell cat version)
 
@@ -61,6 +64,7 @@ android-executable-x86: build/phoenixbuilder-android-executable-x86
 windows-executable: windows-executable-x86 windows-executable-x86_64
 windows-executable-x86: build/phoenixbuilder-windows-executable-x86.exe
 windows-executable-x86_64: build/phoenixbuilder-windows-executable-x86_64.exe
+openwrt-mt7620-mipsel_24kc: build/phoenixbuilder-openwrt-mt7620-mipsel_24kc
 #windows-v8-executable-x86_64: build/phoenixbuilder-v8-windows-executable-x86_64.exe
 #windows-shared: build/phoenixbuilder-windows-shared.dll
 
@@ -117,6 +121,8 @@ build/phoenixbuilder-windows-executable-x86.exe: build/ /usr/bin/i686-w64-mingw3
 	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86.exe
 build/phoenixbuilder-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86_64.exe
+build/phoenixbuilder-openwrt-mt7620-mipsel_24kc: build/ openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64/ ${SRCS_GO}
+	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64/staging_dir/toolchain-mipsel_24kc_gcc-8.4.0_musl/bin/mipsel-openwrt-linux-gcc CXX=`pwd`/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64/staging_dir/toolchain-mipsel_24kc_gcc-8.4.0_musl/bin/mipsel-openwrt-linux-g++ GOARCH=mipsle CGO_ENABLED=1 go build -trimpath -tags no_readline -ldflags "-s -w" -o build/phoenixbuilder-openwrt-mt7620-mipsel_24kc
 #build/phoenixbuilder-v8-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
 #	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=/usr/bin/x86_64-w64-mingw32-gcc CXX=/usr/bin/x86_64-w64-mingw32-g++ GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8-windows-executable-x86_64.exe
 #build/phoenixbuilder-windows-shared.dll: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}

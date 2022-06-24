@@ -4,6 +4,7 @@ package protocol
 
 import (
 	"encoding/binary"
+	"unsafe"
 	"math"
 )
 

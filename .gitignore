@@ -84,3 +84,4 @@ analyze/
 .vscode
 omega_storage
 docker
+openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64/

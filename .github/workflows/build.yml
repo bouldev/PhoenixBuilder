@@ -86,6 +86,21 @@ jobs:
     #  run: |
     #    mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
     #    rm -rf $GITHUB_WORKSPACE/macOS-sdks
+    - name: Cache Openwrt SDK
+      id: cache-openwrt-sdk
+      uses: actions/cache@v3
+      with:
+        key: openwrt-sdk-cache
+        path: ~/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64
+    - name: Download Openwrt SDK
+      if: steps.cache-openwrt-sdk.outputs.cache-hit != 'true'
+      run: |
+        wget https://archive.openwrt.org/releases/21.02.2/targets/ramips/mt7620/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+        tar -xJf openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+        rm openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+        mv openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64 ~/
+    - name: Soft link Openwrt SDK
+      run: ln -s ~/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64 openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64
     - name: Pre-Build & configure go-raknet
       run: |
         make current
