@@ -4,17 +4,29 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"strconv"
+	"sync"
 	"time"
 )
 
 var rankingLastFetchTime time.Time
 var rankingLastFetchResult map[string]map[string]int
+var rankingWaiter []func(map[string]map[string]int)
+var rankingWaiterLock sync.Mutex
 
 func UpdateScore(ctrl defines.GameControl, allowDuration time.Duration, onUpdateDone func(map[string]map[string]int)) {
 	if rankingLastFetchResult != nil {
-		if time.Since(rankingLastFetchTime) < allowDuration {
+		if time.Since(rankingLastFetchTime) < allowDuration+time.Second {
 			onUpdateDone(rankingLastFetchResult)
 		}
+	}
+	rankingWaiterLock.Lock()
+	if rankingWaiter != nil {
+		rankingWaiter = append(rankingWaiter, onUpdateDone)
+		rankingWaiterLock.Unlock()
+		return
+	} else {
+		rankingWaiter = make([]func(map[string]map[string]int), 0)
+		rankingWaiterLock.Unlock()
 	}
 	ctrl.SendCmdAndInvokeOnResponse("scoreboard players list @a", func(output *packet.CommandOutput) {
 		fetch := func(output *packet.CommandOutput) (result map[string]map[string]int) {
@@ -54,6 +66,12 @@ func UpdateScore(ctrl defines.GameControl, allowDuration time.Duration, onUpdate
 			rankingLastFetchResult = result
 			rankingLastFetchTime = time.Now()
 			onUpdateDone(rankingLastFetchResult)
+			rankingWaiterLock.Lock()
+			for _, cb := range rankingWaiter {
+				cb(rankingLastFetchResult)
+			}
+			rankingWaiter = nil
+			rankingWaiterLock.Unlock()
 		}
 	})
 }

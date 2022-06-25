@@ -135,7 +135,7 @@ func (o *OpCheck) Inject(frame defines.MainFrame) {
 			//pks, _ = json.Marshal(o.Frame.GetUQHolder())
 			//fmt.Println(string(pks))
 			if pk.PlayerUniqueID == o.Frame.GetUQHolder().BotUniqueID {
-				fmt.Println("Skip Bot Check")
+				// fmt.Println("Skip Bot Check")
 				return
 			}
 			o.react(pk)
