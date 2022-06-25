@@ -381,10 +381,8 @@ func (g *GameCtrl) onCommandFeedbackOn() {
 	pkts := g.NeedFeedBackPackets
 	g.NeedFeedBackPackets = make([]packet.Packet, 0)
 	go func() {
-		t := time.NewTicker(time.Millisecond * 20)
 		for _, p := range pkts {
 			g.SendMCPacket(p)
-			<-t.C
 		}
 		if !g.ExpectedCmdFeedBack {
 			g.turnOffFeedBack()
