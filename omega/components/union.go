@@ -10,11 +10,6 @@ import (
 	"time"
 )
 
-type cmdsWithName struct {
-	Name string        `json:"玩家"`
-	Cmds []defines.Cmd `json:"指令"`
-}
-
 type UnionMember struct {
 	Name  string `json:"成员名"`
 	Uid   string `json:"UUID"`
@@ -44,8 +39,8 @@ type UnionData struct {
 }
 
 type unionFileData struct {
-	DeferedCmds map[string]*cmdsWithName `json:"下次上线时执行的指令"`
-	Unions      []*UnionData             `json:"工会信息"`
+	DeferedCmds map[string]*defines.CmdsWithName `json:"下次上线时执行的指令"`
+	Unions      []*UnionData                     `json:"工会信息"`
 }
 
 type UnionDisplayConfig struct {
@@ -86,7 +81,7 @@ func (o *Union) executeCmdsWithDefer(player, uid string, cmds []defines.Cmd) {
 			if cw, hasK := o.fileData.DeferedCmds[uid]; hasK {
 				cw.Cmds = append(cw.Cmds, cmds...)
 			} else {
-				o.fileData.DeferedCmds[uid] = &cmdsWithName{Name: player, Cmds: cmds}
+				o.fileData.DeferedCmds[uid] = &defines.CmdsWithName{Name: player, Cmds: cmds}
 			}
 			o.mu.Unlock()
 			o.fileChange = true

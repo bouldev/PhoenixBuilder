@@ -202,3 +202,18 @@ func GetPlayerList(ctrl defines.GameControl, selector string, onResult func([]st
 		onResult([]string{})
 	})
 }
+
+func CheckPlayerMatchSelector(ctrl defines.GameControl, name, selector string) (success chan bool) {
+	s := FormatByReplacingOccurrences(selector, map[string]interface{}{
+		"[player]": "\"" + name + "\"",
+	})
+	c := make(chan bool)
+	ctrl.SendCmdAndInvokeOnResponse(fmt.Sprintf("testfor %v", s), func(output *packet.CommandOutput) {
+		if output.SuccessCount != 0 {
+			c <- true
+		} else {
+			c <- false
+		}
+	})
+	return c
+}

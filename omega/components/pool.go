@@ -153,5 +153,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"存档修复": func() defines.Component {
 			return &DifferRecover{BasicComponent: &BasicComponent{}}
 		},
+		"玩家商店": func() defines.Component {
+			return &PlayerShop{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

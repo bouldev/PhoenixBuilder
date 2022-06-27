@@ -54,6 +54,17 @@ type Cmd struct {
 	Note        string  `json:"备注"`
 }
 
+type CmdsWithName struct {
+	Name   string                 `json:"玩家"`
+	Cmds   []Cmd                  `json:"指令"`
+	Params map[string]interface{} `json:"参数"`
+}
+
+type Currency struct {
+	CurrencyName   string `json:"货币名"`
+	ScoreboardName string `json:"记分板名"`
+}
+
 type GameMenuEntry struct {
 	MenuEntry
 	OptionalOnTriggerFn func(chat *GameChat) (stop bool)

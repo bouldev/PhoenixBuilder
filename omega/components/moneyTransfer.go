@@ -12,17 +12,12 @@ import (
 	"strings"
 )
 
-type Currency struct {
-	CurrencyName   string `json:"货币名"`
-	ScoreboardName string `json:"记分板名"`
-}
-
 type MoneyTransfer struct {
 	*BasicComponent
-	Triggers        []string    `json:"触发词"`
-	DefaultCurrency *Currency   `json:"默认货币"`
-	AllCurrency     []*Currency `json:"可转账货币"`
-	Usage           string      `json:"提示信息"`
+	Triggers        []string            `json:"触发词"`
+	DefaultCurrency *defines.Currency   `json:"默认货币"`
+	AllCurrency     []*defines.Currency `json:"可转账货币"`
+	Usage           string              `json:"提示信息"`
 }
 
 func (o *MoneyTransfer) Init(cfg *defines.ComponentConfig) {
@@ -34,7 +29,7 @@ func (o *MoneyTransfer) Init(cfg *defines.ComponentConfig) {
 	if o.DefaultCurrency.CurrencyName == "" {
 		panic("必须设置默认货币名")
 	}
-	currencys := []*Currency{o.DefaultCurrency}
+	currencys := []*defines.Currency{o.DefaultCurrency}
 	allNames := map[string]bool{}
 	allNames[o.DefaultCurrency.CurrencyName] = true
 	for _, c := range o.AllCurrency {
@@ -59,7 +54,7 @@ func (o *MoneyTransfer) getCurrencyName() string {
 	return strings.Join(nameStrs, "/")
 }
 
-func (o *MoneyTransfer) tryGetAmountAndCurrentInStr(in string) (amount int, currency *Currency, err error) {
+func (o *MoneyTransfer) tryGetAmountAndCurrentInStr(in string) (amount int, currency *defines.Currency, err error) {
 	re := regexp.MustCompile("^[-]?[0-9]+")
 	val := re.FindAllString(in, 1)
 	if len(val) == 0 {
@@ -77,7 +72,7 @@ func (o *MoneyTransfer) tryGetAmountAndCurrentInStr(in string) (amount int, curr
 	return v, o.DefaultCurrency, nil
 }
 
-func (o *MoneyTransfer) doTransfer(src, dst string, c *Currency, amount int) {
+func (o *MoneyTransfer) doTransfer(src, dst string, c *defines.Currency, amount int) {
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(
 		fmt.Sprintf("scoreboard players add \"%v\" %v 0", src, c.ScoreboardName), func(output *packet.CommandOutput) {
 			if output.SuccessCount == 0 || len(output.OutputMessages) == 0 || len(output.OutputMessages[0].Parameters) != 4 {
