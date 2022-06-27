@@ -232,7 +232,6 @@ type GameCtrl struct {
 	//playerNameDB        defines.NoSqlDB
 	//playerStorageDB     defines.NoSqlDB
 	PlayerPermission map[string]map[string]bool
-	deferredCmds     chan *packet.CommandRequest
 }
 
 func (g *GameCtrl) GetPlayerKit(name string) defines.PlayerKit {
@@ -363,7 +362,7 @@ func (g *GameCtrl) packCmdWithUUID(cmd string, ud uuid.UUID, ws bool) *packet.Co
 
 func (g *GameCtrl) SendCmd(cmd string) {
 	ud, _ := uuid.NewUUID()
-	g.deferredCmds <- g.packCmdWithUUID(cmd, ud, true)
+	g.WriteFn(g.packCmdWithUUID(cmd, ud, true))
 }
 
 func (g *GameCtrl) SendWOCmd(cmd string) {
@@ -380,14 +379,12 @@ func (g *GameCtrl) onCommandFeedbackOn() {
 	g.CmdFeedBackOnSent = false
 	pkts := g.NeedFeedBackPackets
 	g.NeedFeedBackPackets = make([]packet.Packet, 0)
-	go func() {
-		for _, p := range pkts {
-			g.SendMCPacket(p)
-		}
-		if !g.ExpectedCmdFeedBack {
-			g.turnOffFeedBack()
-		}
-	}()
+	for _, p := range pkts {
+		g.SendMCPacket(p)
+	}
+	if !g.ExpectedCmdFeedBack {
+		g.turnOffFeedBack()
+	}
 }
 
 func (g *GameCtrl) onCommandFeedBackOff() {
@@ -456,7 +453,6 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		perPlayerStorage:    make(map[string]*PlayerKitOmega),
 		//playerNameDB:        o.GetNoSqlDB("playerNameDB"),
 		//playerStorageDB:     o.GetNoSqlDB("playerStorageDB"),
-		deferredCmds: make(chan *packet.CommandRequest, 1024),
 	}
 	err := o.GetJsonData("playerPermission.json", &c.PlayerPermission)
 	if err != nil {
@@ -470,13 +466,6 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		return o.WriteJsonData("playerPermission.json", c.PlayerPermission)
 	})
 	c.toExpectedFeedBackStatus()
-	go func() {
-		t := time.NewTicker(20 * time.Millisecond)
-		for c := range o.GameCtrl.deferredCmds {
-			o.adaptor.Write(c)
-			<-t.C
-		}
-	}()
 	return c
 }
 
