@@ -406,9 +406,8 @@ func (o *PlayerShop) packupGood(good *PlayerShopDataGood) {
 				} else {
 					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] %v", ox, oy, oz, good.Src))
 					o.Frame.GetGameControl().SayTo(good.Src, "打包失败，尝试退回物品")
-					o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v: 打包失败 %v (%v)", good.Src, descStr, good.StructureName))
+					o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v: 打包失败", good.Src))
 				}
-
 			})
 		}
 	})
