@@ -376,7 +376,7 @@ func (o *PlayerShop) onSale(good *PlayerShopDataGood) {
 	}, o.Frame.GetBackendDisplay())
 }
 
-func (o *PlayerShop) packupGood(good *PlayerShopDataGood, descStr string) {
+func (o *PlayerShop) packupGood(good *PlayerShopDataGood) {
 	cmd := utils.FormatByReplacingOccurrences(o.SelectCmd, map[string]interface{}{"[player]": "\"" + good.Src + "\""})
 	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 		if output.SuccessCount == 0 {
@@ -385,12 +385,19 @@ func (o *PlayerShop) packupGood(good *PlayerShopDataGood, descStr string) {
 			ox, oy, oz := o.PackagePlatform[0], o.PackagePlatform[1], o.PackagePlatform[2]
 			sx, sy, sz := ox-1, oy, oz-1
 			ex, ey, ez := ox+1, oy+1, oz+1
+			sid := o.acquireEmptyNumber()
+			good.StructureName = o.formatPackage(sid)
 			cmd = fmt.Sprintf("structure save %v %v %v %v %v %v %v true disk false",
 				good.StructureName, sx, sy, sz, ex, ey, ez)
 			o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 				if output.SuccessCount != 0 {
 					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] ~ -40 ~", ox, oy, oz))
-					o.Frame.GetBackendDisplay().Write("出售物品，信息: " + descStr)
+					if m, err := json.Marshal(good); err == nil {
+						descStr := string(m)
+						o.Frame.GetBackendDisplay().Write("出售物品，信息: " + descStr)
+					} else {
+						o.Frame.GetBackendDisplay().Write(err.Error())
+					}
 					o.mu.Lock()
 					o.fileData.Goods[good.StructureName] = good
 					o.fileChange = true
@@ -410,24 +417,18 @@ func (o *PlayerShop) packupGood(good *PlayerShopDataGood, descStr string) {
 func (o *PlayerShop) askForGoods(playerName, goodName string, price int, currency *defines.Currency) {
 	//dstPlayer := chat.Msg[0]
 	if o.Frame.GetGameControl().SetOnParamMsg(playerName, func(c *defines.GameChat) bool {
-		sid := o.acquireEmptyNumber()
-		sname := o.formatPackage(sid)
+
 		uid := o.Frame.GetGameControl().GetPlayerKit(playerName).GetRelatedUQ().UUID.String()
 		g := &PlayerShopDataGood{
 			Src:           playerName,
 			Name:          goodName,
 			TimeStamp:     utils.TimeToString(time.Now()),
-			StructureName: sname,
+			StructureName: "",
 			Price:         price,
 			Currency:      *currency,
 			UID:           uid,
 		}
-		if m, err := json.Marshal(g); err == nil {
-			descStr := string(m)
-			o.packupGood(g, descStr)
-		} else {
-			o.Frame.GetBackendDisplay().Write(err.Error())
-		}
+		o.packupGood(g)
 		return true
 	}) == nil {
 		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep3, map[string]interface{}{
