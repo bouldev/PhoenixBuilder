@@ -62,7 +62,9 @@ func UpdateScore(ctrl defines.GameControl, allowDuration time.Duration, onUpdate
 			return fetchResult
 		}
 		if result := fetch(output); result == nil {
+			// fmt.Println("cannot get scoreboard result")
 		} else {
+			// fmt.Println(result)
 			rankingLastFetchResult = result
 			rankingLastFetchTime = time.Now()
 			onUpdateDone(rankingLastFetchResult)

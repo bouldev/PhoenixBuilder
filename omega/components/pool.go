@@ -156,5 +156,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"玩家商店": func() defines.Component {
 			return &PlayerShop{BasicComponent: &BasicComponent{}}
 		},
+		"封禁时间": func() defines.Component {
+			return &BanTime{BasicComponent: &BasicComponent{}}
+		},
 	}
 }
