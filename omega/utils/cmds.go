@@ -7,6 +7,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -216,4 +217,19 @@ func CheckPlayerMatchSelector(ctrl defines.GameControl, name, selector string) (
 		}
 	})
 	return c
+}
+func GetPlayerScore(ctrl defines.GameControl, player, scoreboard string, onResult func(val int, err error)) {
+	ctrl.SendCmdAndInvokeOnResponse(fmt.Sprintf("scoreboard players add \"%v\" %v 0", player, scoreboard), func(output *packet.CommandOutput) {
+		if output.SuccessCount == 0 || len(output.OutputMessages) == 0 || len(output.OutputMessages[0].Parameters) != 4 {
+			onResult(0, fmt.Errorf("没有相关记分板"))
+			return
+		}
+		val, err := strconv.Atoi(output.OutputMessages[0].Parameters[3])
+		if err != nil {
+			onResult(0, fmt.Errorf("数据解析出错 %v", err))
+			return
+		} else {
+			onResult(val, nil)
+		}
+	})
 }
