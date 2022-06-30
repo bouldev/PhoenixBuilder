@@ -38,17 +38,17 @@ const (
 
 // blockEntry represents a block as found in a disk save of a world.
 type blockEntry struct {
-	Name    string         `nbt:"name"`
-	State   map[string]any `nbt:"states"`
-	Version int32          `nbt:"version"`
-	ID      int32          `nbt:"oldid,omitempty"` // PM writes this field, so we allow it anyway to avoid issues loading PM worlds.
-	Meta    int16          `nbt:"val,omitempty"`
+	Name    string                 `nbt:"name"`
+	State   map[string]interface{} `nbt:"states"`
+	Version int32                  `nbt:"version"`
+	ID      int32                  `nbt:"oldid,omitempty"` // PM writes this field, so we allow it anyway to avoid issues loading PM worlds.
+	Meta    int16                  `nbt:"val,omitempty"`
 }
 
 type GeneralBlock struct {
-	Name       string         `nbt:"name"`
-	Properties map[string]any `nbt:"states"`
-	Version    int32          `nbt:"version"`
+	Name       string                 `nbt:"name"`
+	Properties map[string]interface{} `nbt:"states"`
+	Version    int32                  `nbt:"version"`
 }
 
 type LegacyBlock struct {
@@ -69,7 +69,7 @@ type LegacyBlockHash struct {
 	data uint8
 }
 
-func hashProperties(properties map[string]any) string {
+func hashProperties(properties map[string]interface{}) string {
 	if properties == nil {
 		return ""
 	}
@@ -110,7 +110,7 @@ func hashProperties(properties map[string]any) string {
 func registerBlockState(s *GeneralBlock) {
 	h := StateHash{name: s.Name, properties: hashProperties(s.Properties)}
 	if _, ok := stateRuntimeIDs[h]; ok {
-		blocks=append(blocks,s)
+		Blocks = append(Blocks, s)
 		return
 		// UNSAFE !!! IGNORING SAME RUNTIME IDS !!!
 		// =
@@ -144,7 +144,7 @@ func InitMapping(mappingInData []byte) {
 		panic("blockStateData read fail")
 	}
 
-	RuntimeIDToState = func(runtimeID uint32) (name string, properties map[string]any, found bool) {
+	RuntimeIDToState = func(runtimeID uint32) (name string, properties map[string]interface{}, found bool) {
 		if runtimeID >= uint32(len(Blocks)) {
 			return "", nil, false
 		}
@@ -158,7 +158,7 @@ func InitMapping(mappingInData []byte) {
 		return Blocks[runtimeID], true
 	}
 
-	StateToRuntimeID = func(name string, properties map[string]any) (runtimeID uint32, found bool) {
+	StateToRuntimeID = func(name string, properties map[string]interface{}) (runtimeID uint32, found bool) {
 		rid, ok := stateRuntimeIDs[StateHash{name: name, properties: hashProperties(properties)}]
 		return rid, ok
 	}
@@ -170,7 +170,7 @@ func InitMapping(mappingInData []byte) {
 		return uint32(nemcToMCRIDMapping[nemcRuntimeID])
 	}
 	if NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID) != AirRID {
-		panic(fmt.Errorf("Air rid not matching: %d vs %d.",NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID),AirRID))
+		panic(fmt.Errorf("Air rid not matching: %d vs %d.", NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID), AirRID))
 	}
 
 	nemcToVal := mappingIn.NEMCRidToVal
@@ -205,7 +205,7 @@ func InitMapping(mappingInData []byte) {
 	}
 }
 
-//go:embed blockmapping_nemc_2_1_10_mc_1_19_10_22.gob.brotli
+//go:embed blockmapping_nemc_2_1_10_mc_1_19.gob.brotli
 var mappingInData []byte
 
 func init() {
