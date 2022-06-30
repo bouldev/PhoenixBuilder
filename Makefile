@@ -38,7 +38,7 @@ endif
 ifneq ($(wildcard /usr/bin/aarch64-linux-gnu-gcc),)
 	TARGETS:=${TARGETS} current-arm64-executable
 endif
-ifneq ($(wildcard `pwd`/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64),)
+ifneq ($(wildcard openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64),)
 	TARGETS:=${TARGETS} openwrt-mt7620-mipsel_24kc
 endif
 

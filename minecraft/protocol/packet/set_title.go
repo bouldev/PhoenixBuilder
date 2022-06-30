@@ -11,6 +11,9 @@ const (
 	TitleActionSetSubtitle
 	TitleActionSetActionBar
 	TitleActionSetDurations
+	TitleActionTitleTextObject
+	TitleActionSubtitleTextObject
+	TitleActionActionbarTextObject
 )
 
 // SetTitle is sent by the server to make a title, subtitle or action bar shown to a player. It has several
@@ -31,6 +34,11 @@ type SetTitle struct {
 	// FadeOutDuration is the duration that the title takes to fade out of the screen of the player. It is
 	// measured in 20ths of a second (AKA in ticks).
 	FadeOutDuration int32
+	// XUID is the XBOX Live user ID of the player, which will remain consistent as long as the player is
+	// logged in with the XBOX Live account. It is empty if the user is not logged into its XBL account.
+	XUID string
+	// PlatformOnlineID is either a uint64 or an empty string.
+	PlatformOnlineID string
 }
 
 // ID ...
@@ -45,6 +53,8 @@ func (pk *SetTitle) Marshal(w *protocol.Writer) {
 	w.Varint32(&pk.FadeInDuration)
 	w.Varint32(&pk.RemainDuration)
 	w.Varint32(&pk.FadeOutDuration)
+	w.String(&pk.XUID)
+	w.String(&pk.PlatformOnlineID)
 }
 
 // Unmarshal ...
@@ -54,4 +64,6 @@ func (pk *SetTitle) Unmarshal(r *protocol.Reader) {
 	r.Varint32(&pk.FadeInDuration)
 	r.Varint32(&pk.RemainDuration)
 	r.Varint32(&pk.FadeOutDuration)
+	r.String(&pk.XUID)
+	r.String(&pk.PlatformOnlineID)
 }

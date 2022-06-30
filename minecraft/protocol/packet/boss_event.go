@@ -6,15 +6,24 @@ import (
 
 const (
 	BossEventShow = iota
-	// BossEventRegisterPlayer is sent by the client to the server to request being shown the boss bar.
 	BossEventRegisterPlayer
 	BossEventHide
-	// BossEventUnregisterPlayer is sent by the client to request the removal of the boss bar.
 	BossEventUnregisterPlayer
 	BossEventHealthPercentage
 	BossEventTitle
 	BossEventAppearanceProperties
 	BossEventTexture
+	BossEventRequest
+)
+
+const (
+	BossEventColourGrey = iota
+	BossEventColourBlue
+	BossEventColourRed
+	BossEventColourGreen
+	BossEventColourYellow
+	BossEventColourPurple
+	BossEventColourWhite
 )
 
 // BossEvent is sent by the server to make a specific 'boss event' occur in the world. It includes features
@@ -40,9 +49,9 @@ type BossEvent struct {
 	HealthPercentage float32
 	// ScreenDarkening currently seems not to do anything.
 	ScreenDarkening int16
-	// Colour is the colour of the boss bar that is shown when a player is subscribed. It currently does not
-	// function. It is only set if the EventType is BossEventShow, BossEventAppearanceProperties or
-	// BossEventTexture.
+	// Colour is the colour of the boss bar that is shown when a player is subscribed. It is only set if the
+	// EventType is BossEventShow, BossEventAppearanceProperties or BossEventTexture. This is functional as
+	// of 1.18 and can be any of the BossEventColour constants listed above.
 	Colour uint32
 	// Overlay is the overlay of the boss bar that is shown on top of the boss bar when a player is
 	// subscribed. It currently does not function. It is only set if the EventType is BossEventShow,
@@ -66,7 +75,7 @@ func (pk *BossEvent) Marshal(w *protocol.Writer) {
 		w.Int16(&pk.ScreenDarkening)
 		w.Varuint32(&pk.Colour)
 		w.Varuint32(&pk.Overlay)
-	case BossEventRegisterPlayer, BossEventUnregisterPlayer:
+	case BossEventRegisterPlayer, BossEventUnregisterPlayer, BossEventRequest:
 		w.Varint64(&pk.PlayerUniqueID)
 	case BossEventHide:
 		// No extra payload for this boss event type.
@@ -97,7 +106,7 @@ func (pk *BossEvent) Unmarshal(r *protocol.Reader) {
 		r.Int16(&pk.ScreenDarkening)
 		r.Varuint32(&pk.Colour)
 		r.Varuint32(&pk.Overlay)
-	case BossEventRegisterPlayer, BossEventUnregisterPlayer:
+	case BossEventRegisterPlayer, BossEventUnregisterPlayer, BossEventRequest:
 		r.Varint64(&pk.PlayerUniqueID)
 	case BossEventHide:
 		// No extra payload for this boss event type.

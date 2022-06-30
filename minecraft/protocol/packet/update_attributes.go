@@ -32,6 +32,8 @@ func (pk *UpdateAttributes) Marshal(w *protocol.Writer) {
 
 // Unmarshal ...
 func (pk *UpdateAttributes) Unmarshal(r *protocol.Reader) {
+	// Simple bad patch: no unmarshal
+	return
 	r.Varuint64(&pk.EntityRuntimeID)
 	protocol.Attributes(r, &pk.Attributes)
 	r.Varuint64(&pk.Tick)

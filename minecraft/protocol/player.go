@@ -103,7 +103,7 @@ func PlayerAddEntry(r *Reader, x *PlayerListEntry) {
 type PlayerMovementSettings struct {
 	// MovementType specifies the way the server handles player movement. Available options are
 	// packet.AuthoritativeMovementModeClient, packet.AuthoritativeMovementModeServer and
-	// packet.AuthoritativeMovementModeServerWithRewind, where server the server authoritative types result
+	// packet.AuthoritativeMovementModeServerWithRewind, where the server authoritative types result
 	// in the client sending PlayerAuthInput packets instead of MovePlayer packets and the rewind mode
 	// requires sending the tick of movement and several actions.
 	MovementType int32
@@ -122,31 +122,6 @@ func PlayerMoveSettings(r IO, x *PlayerMovementSettings) {
 	r.Varint32(&x.MovementType)
 	r.Varint32(&x.RewindHistorySize)
 	r.Bool(&x.ServerAuthoritativeBlockBreaking)
-}
-
-// PlayerInventoryAction reads/writes a PlayerInventoryAction x to/from IO r.
-func PlayerInventoryAction(r IO, x *UseItemTransactionData) {
-	r.Varint32(&x.LegacyRequestID)
-	if x.LegacyRequestID != 0 {
-		l := uint32(len(x.LegacySetItemSlots))
-		r.Varuint32(&l)
-		for _, slot := range x.LegacySetItemSlots {
-			SetItemSlot(r, &slot)
-		}
-	}
-	l := uint32(len(x.Actions))
-	r.Varuint32(&l)
-	for _, a := range x.Actions {
-		InvAction(r, &a)
-	}
-	r.Varuint32(&x.ActionType)
-	r.BlockPos(&x.BlockPosition)
-	r.Varint32(&x.BlockFace)
-	r.Varint32(&x.HotBarSlot)
-	r.ItemInstance(&x.HeldItem)
-	r.Vec3(&x.Position)
-	r.Vec3(&x.ClickedPosition)
-	r.Varuint32(&x.BlockRuntimeID)
 }
 
 // PlayerBlockAction ...

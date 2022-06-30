@@ -11,12 +11,7 @@ import (
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 	"time"
-	_ "embed"
-	//"strings"
 )
-
-//go:embed skindump.json
-var claimData string
 
 // chain holds a chain with claims, each with their own headers, payloads and signatures. Each claim holds
 // a public key used to verify other claims.
@@ -81,7 +76,7 @@ func Parse(request []byte) (IdentityData, ClientData, AuthResult, error) {
 
 	var identityClaims identityClaims
 	var authenticated bool
-	t, iss := time.Now(), "NetEase"
+	t, iss := time.Now(), "Mojang"
 
 	switch len(req.Chain) {
 	case 1:
@@ -102,7 +97,7 @@ func Parse(request []byte) (IdentityData, ClientData, AuthResult, error) {
 		if err := c.Validate(jwt.Expected{Time: t}); err != nil {
 			return iData, cData, res, fmt.Errorf("validate token 0: %w", err)
 		}
-		authenticated = true//bytes.Equal(key.X.Bytes(), mojangKey.X.Bytes()) && bytes.Equal(key.Y.Bytes(), mojangKey.Y.Bytes())
+		authenticated = bytes.Equal(key.X.Bytes(), mojangKey.X.Bytes()) && bytes.Equal(key.Y.Bytes(), mojangKey.Y.Bytes())
 
 		if err := parseFullClaim(req.Chain[1], key, &c); err != nil {
 			return iData, cData, res, fmt.Errorf("parse token 1: %w", err)
@@ -215,10 +210,6 @@ func Encode(loginChain string, data ClientData, key *ecdsa.PrivateKey) []byte {
 	request.Chain = append(chain{firstJWT}, request.Chain...)
 	// We create another token this time, which is signed the same as the claim we just inserted in the chain,
 	// just now it contains client data.
-	//data=claimData
-	//var outmap map[string]interface{}
-	//str:=strings.Replace(claimData,"Ni3rtfss",data.ThirdPartyName,-1)
-	//json.Unmarshal([]byte(str),&outmap)
 	request.RawToken, _ = jwt.Signed(signer).Claims(data).CompactSerialize()
 
 	return encodeRequest(request)

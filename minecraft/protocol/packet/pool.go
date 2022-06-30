@@ -44,7 +44,7 @@ func init() {
 		IDTakeItemActor:     func() Packet { return &TakeItemActor{} },
 		IDMoveActorAbsolute: func() Packet { return &MoveActorAbsolute{} },
 		IDMovePlayer:        func() Packet { return &MovePlayer{} },
-		IDRiderJump:         func() Packet { return &RiderJump{} },
+		IDPassengerJump:     func() Packet { return &PassengerJump{} },
 		IDUpdateBlock:       func() Packet { return &UpdateBlock{} },
 		IDAddPainting:       func() Packet { return &AddPainting{} },
 		IDTickSync:          func() Packet { return &TickSync{} },
@@ -155,7 +155,7 @@ func init() {
 		IDClientCacheStatus:             func() Packet { return &ClientCacheStatus{} },
 		IDOnScreenTextureAnimation:      func() Packet { return &OnScreenTextureAnimation{} },
 		IDMapCreateLockedCopy:           func() Packet { return &MapCreateLockedCopy{} },
-		IDStructureTemplateDataRequest:  func() Packet { return &StructureTemplateDataResponse{} },
+		IDStructureTemplateDataRequest:  func() Packet { return &StructureTemplateDataRequest{} },
 		IDStructureTemplateDataResponse: func() Packet { return &StructureTemplateDataResponse{} },
 		// ---
 		IDClientCacheBlobStatus:             func() Packet { return &ClientCacheBlobStatus{} },
@@ -191,8 +191,18 @@ func init() {
 		IDSyncActorProperty:                 func() Packet { return &SyncActorProperty{} },
 		IDAddVolumeEntity:                   func() Packet { return &AddVolumeEntity{} },
 		IDRemoveVolumeEntity:                func() Packet { return &RemoveVolumeEntity{} },
-		//IDNeteaseJson:			     func() Packet { return &NeteaseJson{} },
-		IDPyRpc:			     func() Packet { return &PyRpc{} },
+		IDSimulationType:                    func() Packet { return &SimulationType{} },
+		IDNPCDialogue:                       func() Packet { return &NPCDialogue{} },
+		IDEducationResourceURI:              func() Packet { return &EducationResourceURI{} },
+		IDCreatePhoto:                       func() Packet { return &CreatePhoto{} },
+		IDUpdateSubChunkBlocks:              func() Packet { return &UpdateSubChunkBlocks{} },
+		IDPhotoInfoRequest:                  func() Packet { return &PhotoInfoRequest{} },
+		IDSubChunk:                          func() Packet { return &SubChunk{} },
+		IDSubChunkRequest:                   func() Packet { return &SubChunkRequest{} },
+		IDClientStartItemCooldown:           func() Packet { return &ClientStartItemCooldown{} },
+		IDScriptMessage:                     func() Packet { return &ScriptMessage{} },
+		IDCodeBuilderSource:                 func() Packet { return &CodeBuilderSource{} },
+		IDPyRpc:                             func() Packet { return &PyRpc{} },
 	}
 	for id, pk := range packets {
 		Register(id, pk)

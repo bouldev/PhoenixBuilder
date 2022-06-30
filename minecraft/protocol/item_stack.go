@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"bytes"
 	"fmt"
 )
 
@@ -15,9 +14,9 @@ type ItemStackRequest struct {
 	// Actions is a list of actions performed by the client. The actual type of the actions depends on which
 	// ID was present, and is one of the concrete types below.
 	Actions []StackRequestAction
-	// CustomNames is a list of custom names involved in the request. This is typically filled with one string
-	// when an anvil is used.
-	CustomNames []string
+	// FilterStrings is a list of filter strings involved in the request. This is typically filled with one string
+	// when an anvil or cartography is used.
+	FilterStrings []string
 }
 
 // WriteStackRequest writes an ItemStackRequest x to Writer w.
@@ -56,19 +55,23 @@ func WriteStackRequest(w *Writer, x *ItemStackRequest) {
 			id = StackRequestActionCraftCreative
 		case *CraftRecipeOptionalStackRequestAction:
 			id = StackRequestActionCraftRecipeOptional
+		case *CraftGrindstoneRecipeStackRequestAction:
+			id = StackRequestActionCraftGrindstone
+		case *CraftLoomRecipeStackRequestAction:
+			id = StackRequestActionCraftLoom
 		case *CraftNonImplementedStackRequestAction:
 			id = StackRequestActionCraftNonImplementedDeprecated
 		case *CraftResultsDeprecatedStackRequestAction:
-			id = 17//StackRequestActionCraftResultsDeprecated
+			id = StackRequestActionCraftResultsDeprecated
 		default:
 			w.UnknownEnumOption(fmt.Sprintf("%T", action), "stack request action type")
 		}
 		w.Uint8(&id)
 		action.Marshal(w)
 	}
-	l = uint32(len(x.CustomNames))
+	l = uint32(len(x.FilterStrings))
 	w.Varuint32(&l)
-	for _, n := range x.CustomNames {
+	for _, n := range x.FilterStrings {
 		w.String(&n)
 	}
 }
@@ -101,6 +104,10 @@ func StackRequest(r *Reader, x *ItemStackRequest) {
 			action = &ConsumeStackRequestAction{}
 		case StackRequestActionCreate:
 			action = &CreateStackRequestAction{}
+		case StackRequestActionPlaceInContainer:
+			action = &PlaceInContainerStackRequestAction{}
+		case StackRequestActionTakeOutContainer:
+			action = &TakeOutContainerStackRequestAction{}
 		case StackRequestActionLabTableCombine:
 			action = &LabTableCombineStackRequestAction{}
 		case StackRequestActionBeaconPayment:
@@ -115,11 +122,13 @@ func StackRequest(r *Reader, x *ItemStackRequest) {
 			action = &CraftCreativeStackRequestAction{}
 		case StackRequestActionCraftRecipeOptional:
 			action = &CraftRecipeOptionalStackRequestAction{}
+		case StackRequestActionCraftGrindstone:
+			action = &CraftGrindstoneRecipeStackRequestAction{}
+		case StackRequestActionCraftLoom:
+			action = &CraftLoomRecipeStackRequestAction{}
 		case StackRequestActionCraftNonImplementedDeprecated:
 			action = &CraftNonImplementedStackRequestAction{}
 		case StackRequestActionCraftResultsDeprecated:
-			action = &CraftResultsDeprecatedStackRequestAction{}
-		case 17:
 			action = &CraftResultsDeprecatedStackRequestAction{}
 		default:
 			r.UnknownEnumOption(id, "stack request action type")
@@ -132,9 +141,9 @@ func StackRequest(r *Reader, x *ItemStackRequest) {
 	r.Varuint32(&count)
 	r.LimitUint32(count, 64)
 
-	x.CustomNames = make([]string, count)
+	x.FilterStrings = make([]string, count)
 	for i := uint32(0); i < count; i++ {
-		r.String(&x.CustomNames[i])
+		r.String(&x.FilterStrings[i])
 	}
 }
 
@@ -270,6 +279,8 @@ const (
 	StackRequestActionDestroy
 	StackRequestActionConsume
 	StackRequestActionCreate
+	StackRequestActionPlaceInContainer
+	StackRequestActionTakeOutContainer
 	StackRequestActionLabTableCombine
 	StackRequestActionBeaconPayment
 	StackRequestActionMineBlock
@@ -277,6 +288,8 @@ const (
 	StackRequestActionCraftRecipeAuto
 	StackRequestActionCraftCreative
 	StackRequestActionCraftRecipeOptional
+	StackRequestActionCraftGrindstone
+	StackRequestActionCraftLoom
 	StackRequestActionCraftNonImplementedDeprecated
 	StackRequestActionCraftResultsDeprecated
 )
@@ -416,6 +429,16 @@ func (a *CreateStackRequestAction) Unmarshal(r *Reader) {
 	r.Uint8(&a.ResultsSlot)
 }
 
+// PlaceInContainerStackRequestAction currently has no known purpose.
+type PlaceInContainerStackRequestAction struct {
+	transferStackRequestAction
+}
+
+// TakeOutContainerStackRequestAction currently has no known purpose.
+type TakeOutContainerStackRequestAction struct {
+	transferStackRequestAction
+}
+
 // LabTableCombineStackRequestAction is sent by the client when it uses a lab table to combine item stacks.
 type LabTableCombineStackRequestAction struct{}
 
@@ -446,8 +469,8 @@ func (a *BeaconPaymentStackRequestAction) Unmarshal(r *Reader) {
 
 // MineBlockStackRequestAction is sent by the client when it breaks a block.
 type MineBlockStackRequestAction struct {
-	// Unknown1 ... TODO: Find out what this is for
-	Unknown1 int32
+	// HotbarSlot is the slot held by the player while mining a block.
+	HotbarSlot int32
 	// PredictedDurability is the durability of the item that the client assumes to be present at the time.
 	PredictedDurability int32
 	// StackNetworkID is the unique stack ID that the client assumes to be present at the time. The server
@@ -458,14 +481,14 @@ type MineBlockStackRequestAction struct {
 
 // Marshal ...
 func (a *MineBlockStackRequestAction) Marshal(w *Writer) {
-	w.Varint32(&a.Unknown1)
+	w.Varint32(&a.HotbarSlot)
 	w.Varint32(&a.PredictedDurability)
 	w.Varint32(&a.StackNetworkID)
 }
 
 // Unmarshal ...
 func (a *MineBlockStackRequestAction) Unmarshal(r *Reader) {
-	r.Varint32(&a.Unknown1)
+	r.Varint32(&a.HotbarSlot)
 	r.Varint32(&a.PredictedDurability)
 	r.Varint32(&a.StackNetworkID)
 }
@@ -494,7 +517,24 @@ func (a *CraftRecipeStackRequestAction) Unmarshal(r *Reader) {
 // AutoCraftRecipeStackRequestAction is sent by the client similarly to the CraftRecipeStackRequestAction. The
 // only difference is that the recipe is automatically created and crafted by shift clicking the recipe book.
 type AutoCraftRecipeStackRequestAction struct {
-	CraftRecipeStackRequestAction
+	// RecipeNetworkID is the network ID of the recipe that is about to be crafted. This network ID matches
+	// one of the recipes sent in the CraftingData packet, where each of the recipes have a RecipeNetworkID as
+	// of 1.16.
+	RecipeNetworkID uint32
+	// TimesCrafted is how many times the recipe was crafted.
+	TimesCrafted byte
+}
+
+// Marshal ...
+func (a *AutoCraftRecipeStackRequestAction) Marshal(w *Writer) {
+	w.Varuint32(&a.RecipeNetworkID)
+	w.Uint8(&a.TimesCrafted)
+}
+
+// Unmarshal ...
+func (a *AutoCraftRecipeStackRequestAction) Unmarshal(r *Reader) {
+	r.Varuint32(&a.RecipeNetworkID)
+	r.Uint8(&a.TimesCrafted)
 }
 
 // CraftCreativeStackRequestAction is sent by the client when it takes an item out fo the creative inventory.
@@ -516,31 +556,66 @@ func (a *CraftCreativeStackRequestAction) Unmarshal(r *Reader) {
 }
 
 // CraftRecipeOptionalStackRequestAction is sent when using an anvil. When this action is sent, the
-// CustomNames field in the respective stack request is non-empty and contains the name of the item created
-// using the anvil.
+// FilterStrings field in the respective stack request is non-empty and contains the name of the item created
+// using the anvil or cartography table.
 type CraftRecipeOptionalStackRequestAction struct {
-	// UnknownBytes currently has an unknown usage. It seems to always be 5 zero bytes when using an anvil.
-	UnknownBytes [5]byte
+	// RequestID is a unique ID for the request. This ID is used by the server to send a response for this
+	// specific request in the ItemStackResponse packet.
+	RequestID int32
+	// FilterStringIndex is the index of a filter string sent in a ItemStackRequest.
+	FilterStringIndex int32
 }
 
 // Marshal ...
 func (c *CraftRecipeOptionalStackRequestAction) Marshal(w *Writer) {
-	for i := 0; i < len(c.UnknownBytes); i++ {
-		w.Uint8(&c.UnknownBytes[i])
-	}
+	w.Varint32(&c.RequestID)
+	w.Int32(&c.FilterStringIndex)
 }
-
-// zeroBytes holds 5 zero bytes.
-var zeroBytes = make([]byte, 5)
 
 // Unmarshal ...
 func (c *CraftRecipeOptionalStackRequestAction) Unmarshal(r *Reader) {
-	for i := 0; i < len(c.UnknownBytes); i++ {
-		r.Uint8(&c.UnknownBytes[i])
-	}
-	if !bytes.Equal(c.UnknownBytes[:], zeroBytes) {
-		panic(fmt.Sprintf("craft recipe optional stack request action unknown bytes are not all 0: %x", c.UnknownBytes))
-	}
+	r.Varint32(&c.RequestID)
+	r.Int32(&c.FilterStringIndex)
+}
+
+// CraftGrindstoneRecipeStackRequestAction is sent when a grindstone recipe is crafted. It contains the RecipeNetworkID
+// to identify the recipe crafted, and the cost for crafting the recipe.
+type CraftGrindstoneRecipeStackRequestAction struct {
+	// RecipeNetworkID is the network ID of the recipe that is about to be crafted. This network ID matches
+	// one of the recipes sent in the CraftingData packet, where each of the recipes have a RecipeNetworkID as
+	// of 1.16.
+	RecipeNetworkID uint32
+	// Cost is the cost of the recipe that was crafted.
+	Cost int32
+}
+
+// Marshal ...
+func (c *CraftGrindstoneRecipeStackRequestAction) Marshal(w *Writer) {
+	w.Varuint32(&c.RecipeNetworkID)
+	w.Varint32(&c.Cost)
+}
+
+// Unmarshal ...
+func (c *CraftGrindstoneRecipeStackRequestAction) Unmarshal(r *Reader) {
+	r.Varuint32(&c.RecipeNetworkID)
+	r.Varint32(&c.Cost)
+}
+
+// CraftLoomRecipeStackRequestAction is sent when a loom recipe is crafted. It simply contains the
+// pattern identifier to figure out what pattern is meant to be applied to the item.
+type CraftLoomRecipeStackRequestAction struct {
+	// Pattern is the pattern identifier for the loom recipe.
+	Pattern string
+}
+
+// Marshal ...
+func (c *CraftLoomRecipeStackRequestAction) Marshal(w *Writer) {
+	w.String(&c.Pattern)
+}
+
+// Unmarshal ...
+func (c *CraftLoomRecipeStackRequestAction) Unmarshal(r *Reader) {
+	r.String(&c.Pattern)
 }
 
 // CraftNonImplementedStackRequestAction is an action sent for inventory actions that aren't yet implemented

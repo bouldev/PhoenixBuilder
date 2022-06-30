@@ -27,8 +27,6 @@ type ResourcePackStack struct {
 	// ExperimentsPreviouslyToggled specifies if any experiments were previously toggled in this world. It is
 	// probably used for some kind of metrics.
 	ExperimentsPreviouslyToggled bool
-	Unknown1 bool
-	Unknown2 bool
 }
 
 // ID ...
@@ -55,8 +53,6 @@ func (pk *ResourcePackStack) Marshal(w *protocol.Writer) {
 		protocol.Experiment(w, &experiment)
 	}
 	w.Bool(&pk.ExperimentsPreviouslyToggled)
-	w.Bool(&pk.Unknown1)
-	w.Bool(&pk.Unknown2)
 }
 
 // Unmarshal ...
@@ -82,6 +78,4 @@ func (pk *ResourcePackStack) Unmarshal(r *protocol.Reader) {
 		protocol.Experiment(r, &pk.Experiments[i])
 	}
 	r.Bool(&pk.ExperimentsPreviouslyToggled)
-	r.Bool(&pk.Unknown1)
-	r.Bool(&pk.Unknown2)
 }

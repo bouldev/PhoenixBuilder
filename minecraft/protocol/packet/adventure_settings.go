@@ -6,10 +6,10 @@ import (
 
 const (
 	AdventureFlagWorldImmutable = 1 << iota
-	AdventureFlagNoPVP
-	_
-	_
-	_
+	AdventureSettingsFlagsNoPvM
+	AdventureSettingsFlagsNoMvP
+	AdventureSettingsFlagsUnused
+	AdventureSettingsFlagsShowNameTags
 	AdventureFlagAutoJump
 	AdventureFlagAllowFlight
 	AdventureFlagNoClip
@@ -20,21 +20,22 @@ const (
 
 const (
 	CommandPermissionLevelNormal = iota
-	CommandPermissionLevelOperator
-	CommandPermissionLevelHost
-	CommandPermissionLevelAutomation
+	CommandPermissionLevelGameDirectors
 	CommandPermissionLevelAdmin
+	CommandPermissionLevelHost
+	CommandPermissionLevelOwner
+	CommandPermissionLevelInternal
 )
 
 const (
-	ActionPermissionBuild = 1 << iota
-	ActionPermissionDoorsAndSwitched
+	ActionPermissionMine = 1 << iota
+	ActionPermissionDoorsAndSwitches
 	ActionPermissionOpenContainers
 	ActionPermissionAttackPlayers
 	ActionPermissionAttackMobs
 	ActionPermissionOperator
 	ActionPermissionTeleport
-	ActionPermissionMine
+	ActionPermissionBuild
 	ActionPermissionDefault
 )
 
@@ -67,8 +68,8 @@ type AdventureSettings struct {
 	PermissionLevel uint32
 	// CustomStoredPermissions ...
 	CustomStoredPermissions uint32
-	// PlayerUniqueID is a unique identifier of the player. It appears it is not required to fill this field
-	// out with a correct value. Simply writing 0 seems to work.
+	// PlayerUniqueID is a unique identifier of the player. This must be filled out with the entity unique ID of the
+	// player.
 	PlayerUniqueID int64
 }
 

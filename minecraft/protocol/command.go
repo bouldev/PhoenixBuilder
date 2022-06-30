@@ -14,7 +14,7 @@ type Command struct {
 	// a command.
 	Description string
 	// Flags is a combination of flags not currently known. Leaving the Flags field empty appears to work.
-	Flags byte
+	Flags uint16
 	// PermissionLevel is the command permission level that the player required to execute this command. The
 	// field no longer seems to serve a purpose, as the client does not handle the execution of commands
 	// anymore: The permissions should be checked server-side.
@@ -65,6 +65,7 @@ const (
 	// <false|true|yes|no> <$Name: bool>.
 	ParamOptionCollapseEnum = iota + 1
 	ParamOptionHasSemanticConstraint
+	ParamOptionAsChainedCommand
 )
 
 // CommandParameter represents a single parameter of a command overload, which accepts a certain type of input
@@ -127,6 +128,7 @@ const (
 	CommandOriginPrecompiled
 	CommandOriginGameDirectorEntityServer
 	CommandOriginScript
+	CommandOriginExecutor
 )
 
 // CommandOrigin holds data that identifies the origin of the requesting of a command. It holds several
@@ -211,7 +213,7 @@ func CommandData(r *Reader, x *Command, enums []CommandEnum, suffixes []string) 
 	)
 	r.String(&x.Name)
 	r.String(&x.Description)
-	r.Uint8(&x.Flags)
+	r.Uint16(&x.Flags)
 	r.Uint8(&x.PermissionLevel)
 	r.Int32(&aliasOffset)
 	if aliasOffset >= 0 {
@@ -240,7 +242,7 @@ func WriteCommandData(w *Writer, x *Command, enumIndices map[string]int, suffixI
 	}
 	w.String(&x.Name)
 	w.String(&x.Description)
-	w.Uint8(&x.Flags)
+	w.Uint16(&x.Flags)
 	w.Uint8(&x.PermissionLevel)
 	w.Int32(&alias)
 	w.Varuint32(&l)

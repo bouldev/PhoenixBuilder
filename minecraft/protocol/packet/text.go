@@ -14,8 +14,8 @@ const (
 	TextTypeSystem
 	TextTypeWhisper
 	TextTypeAnnouncement
-	TextTypeObject
 	TextTypeObjectWhisper
+	TextTypeObject
 )
 
 // Text is sent by the client to the server to send chat messages, and by the server to the client to forward
@@ -45,6 +45,7 @@ type Text struct {
 	// Nintendo Switch). It is otherwise an empty string, and is used to decide which players are able to
 	// chat with each other.
 	PlatformChatID string
+	// Netease PlayerRuntimeID
 	PlayerRuntimeID string
 }
 

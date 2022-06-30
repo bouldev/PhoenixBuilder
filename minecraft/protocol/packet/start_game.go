@@ -155,6 +155,8 @@ type StartGame struct {
 	LimitedWorldWidth, LimitedWorldDepth int32
 	// NewNether specifies if the server runs with the new nether introduced in the 1.16 update.
 	NewNether bool
+	// EducationSharedResourceURI is an education edition feature that transmits education resource settings to clients.
+	EducationSharedResourceURI protocol.EducationSharedResourceURI
 	// ForceExperimentalGameplay specifies if experimental gameplay should be force enabled. For servers this
 	// should always be set to false.
 	ForceExperimentalGameplay bool
@@ -192,6 +194,9 @@ type StartGame struct {
 	ServerAuthoritativeInventory bool
 	// GameVersion is the version of the game the server is running. The exact function of this field isn't clear.
 	GameVersion string
+	// ServerBlockStateChecksum is a checksum to ensure block states between the server and client match.
+	// This can simply be left empty, and the client will avoid trying to verify it.
+	ServerBlockStateChecksum uint64
 }
 
 // ID ...
@@ -251,6 +256,7 @@ func (pk *StartGame) Marshal(w *protocol.Writer) {
 	w.Int32(&pk.LimitedWorldWidth)
 	w.Int32(&pk.LimitedWorldDepth)
 	w.Bool(&pk.NewNether)
+	protocol.EducationResourceURI(w, &pk.EducationSharedResourceURI)
 	w.Bool(&pk.ForceExperimentalGameplay)
 	if pk.ForceExperimentalGameplay {
 		// This might look wrong, but is in fact correct: Mojang is writing this bool if the same bool above
@@ -279,6 +285,7 @@ func (pk *StartGame) Marshal(w *protocol.Writer) {
 	w.String(&pk.MultiPlayerCorrelationID)
 	w.Bool(&pk.ServerAuthoritativeInventory)
 	w.String(&pk.GameVersion)
+	w.Uint64(&pk.ServerBlockStateChecksum)
 }
 
 // Unmarshal ...
@@ -335,6 +342,7 @@ func (pk *StartGame) Unmarshal(r *protocol.Reader) {
 	r.Int32(&pk.LimitedWorldWidth)
 	r.Int32(&pk.LimitedWorldDepth)
 	r.Bool(&pk.NewNether)
+	protocol.EducationResourceURI(r, &pk.EducationSharedResourceURI)
 	r.Bool(&pk.ForceExperimentalGameplay)
 	if pk.ForceExperimentalGameplay {
 		// This might look wrong, but is in fact correct: Mojang is writing this bool if the same bool above
@@ -363,4 +371,5 @@ func (pk *StartGame) Unmarshal(r *protocol.Reader) {
 	r.String(&pk.MultiPlayerCorrelationID)
 	r.Bool(&pk.ServerAuthoritativeInventory)
 	r.String(&pk.GameVersion)
+	r.Uint64(&pk.ServerBlockStateChecksum)
 }

@@ -1,7 +1,15 @@
 package packet
 
-import (
-	"phoenixbuilder/minecraft/protocol"
+import "phoenixbuilder/minecraft/protocol"
+
+const (
+	NPCRequestActionSetActions = iota
+	NPCRequestActionExecuteAction
+	NPCRequestActionExecuteClosingCommands
+	NPCRequestActionSetName
+	NPCRequestActionSetSkin
+	NPCRequestActionSetInteractText
+	NPCRequestActionExecuteOpeningCommands
 )
 
 // NPCRequest is sent by the client when it interacts with an NPC.
@@ -19,6 +27,9 @@ type NPCRequest struct {
 	CommandString string
 	// ActionType is the type of the action to execute.
 	ActionType byte
+	// SceneName is the name of the scene. This can be left empty to specify the last scene that the player
+	// was sent.
+	SceneName string
 }
 
 // ID ...
@@ -32,6 +43,7 @@ func (pk *NPCRequest) Marshal(w *protocol.Writer) {
 	w.Uint8(&pk.RequestType)
 	w.String(&pk.CommandString)
 	w.Uint8(&pk.ActionType)
+	w.String(&pk.SceneName)
 }
 
 // Unmarshal ...
@@ -40,4 +52,5 @@ func (pk *NPCRequest) Unmarshal(r *protocol.Reader) {
 	r.Uint8(&pk.RequestType)
 	r.String(&pk.CommandString)
 	r.Uint8(&pk.ActionType)
+	r.String(&pk.SceneName)
 }

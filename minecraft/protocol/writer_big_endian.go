@@ -5,7 +5,6 @@ package protocol
 import (
 	"encoding/binary"
 	"unsafe"
-	"math"
 )
 
 // Uint16 writes a little endian uint16 to the underlying buffer.

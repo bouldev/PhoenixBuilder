@@ -37,19 +37,20 @@ func (p *packetData) decode(conn *Conn) (pk packet.Packet, err error) {
 	if !ok {
 		// No packet with the ID. This may be a custom packet of some sorts.
 		pk = &packet.Unknown{PacketID: p.h.PacketID}
-	}else{
+	} else {
 		pk = pkFunc()
 	}
 
 	r := protocol.NewReader(p.payload, conn.shieldID.Load())
 	defer func() {
 		if recoveredErr := recover(); recoveredErr != nil {
-			//err = fmt.Errorf("%T: %w", pk, recoveredErr.(error))
+			err = fmt.Errorf("%T: %w", pk, recoveredErr.(error))
 		}
 	}()
 	pk.Unmarshal(r)
 	if p.payload.Len() != 0 {
-		return pk, nil//fmt.Errorf("%T: %v unread bytes left: 0x%x", pk, p.payload.Len(), p.payload.Bytes())
+		return pk, nil
+		//return pk, fmt.Errorf("%T: %v unread bytes left: 0x%x", pk, p.payload.Len(), p.payload.Bytes())
 	}
 	return pk, nil
 }

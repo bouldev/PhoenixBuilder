@@ -47,6 +47,8 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		cmdsender.Output(fmt.Sprintf("Failed to parse command: %v",err))
 		return nil
 	}
+	cmdsender.Output("Sorry, but compatibility works haven't been done yet, please use lexport.")
+	return nil
 	beginPos := cfg.Position
 	endPos := cfg.End
 	startX,endX,startZ,endZ:=0,0,0,0
@@ -109,7 +111,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	}
 	providerChunksMap:=make(map[world_provider.ChunkPosDefine]world_provider.ChunkDefine)
 	for _,chunk:=range chunkPool{
-		providerChunksMap[world_provider.ChunkPosDefine{chunk.ChunkX,chunk.ChunkZ}]=world_provider.ChunkDefine(chunk)
+		providerChunksMap[world_provider.ChunkPosDefine{chunk.Position[0],chunk.Position[1]}]=world_provider.ChunkDefine(chunk)
 	}
 	var offlineWorld *world.World
 	offlineWorld=world.New(&world_provider.StubLogger{},32)
@@ -161,7 +163,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 						if(block=="command_block"){
 							mode=packet.CommandBlockImpulse
 						}else if(block=="repeating_command_block"){
-							mode=packet.CommandBlockRepeat
+							mode=packet.CommandBlockRepeating
 						}else if(block=="chain_command_block"){
 							mode=packet.CommandBlockChain
 						}
@@ -394,7 +396,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 							if(curblockname=="command_block"){
 								mode=packet.CommandBlockImpulse
 							}else if(curblockname=="repeating_command_block"){
-								mode=packet.CommandBlockRepeat
+								mode=packet.CommandBlockRepeating
 							}else if(curblockname=="chain_command_block"){
 								mode=packet.CommandBlockChain
 							}

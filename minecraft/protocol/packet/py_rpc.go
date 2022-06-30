@@ -1,11 +1,10 @@
 package packet
 
 import (
-	//"bytes"
-	//"fmt"
 	"phoenixbuilder/minecraft/protocol"
 )
 
+// Netease PyRpc
 
 type PyRpc struct {
 	Content []byte

@@ -49,7 +49,7 @@ func DoCache(pkt *packet.LevelChunk) {
 }
 
 func quickCache(pkt *packet.LevelChunk) {
-	ChunkCache[world.ChunkPos{pkt.ChunkX,pkt.ChunkZ}]=pkt
+	ChunkCache[world.ChunkPos{pkt.Position[0],pkt.Position[1]}]=pkt
 }
 
 func wander(env *environment.PBEnvironment, position world.ChunkPos) {
@@ -101,8 +101,8 @@ func (p *OnlineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chunk
 			select {
 			case inp=<-ChunkInput:
 				quickCache(inp)
-				fmt.Printf("Waiting for chunk: current: %d, %d | expected: %v\n",inp.ChunkX,inp.ChunkZ,position)
-				if(inp.ChunkX!=position[0]||inp.ChunkZ!=position[1]) {
+				fmt.Printf("Waiting for chunk: current: %d, %d | expected: %v\n",inp.Position[0],inp.Position[1],position)
+				if(inp.Position[0]!=position[0]||inp.Position[1]!=position[1]) {
 					continue
 				}
 			case <-time.After(2*time.Second):

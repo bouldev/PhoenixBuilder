@@ -9,6 +9,7 @@ import (
 	"image/color"
 	"io"
 	"reflect"
+	"sort"
 	"unsafe"
 )
 
@@ -35,6 +36,11 @@ func NewWriter(w interface {
 // Uint8 writes a uint8 to the underlying buffer.
 func (w *Writer) Uint8(x *uint8) {
 	_ = w.w.WriteByte(*x)
+}
+
+// Int8 writes an int8 to the underlying buffer.
+func (w *Writer) Int8(x *int8) {
+	_ = w.w.WriteByte(byte(*x) & 0xff)
 }
 
 // Bool writes a bool as either 0 or 1 to the underlying buffer.
@@ -101,6 +107,19 @@ func (w *Writer) UBlockPos(x *BlockPos) {
 	w.Varint32(&x[2])
 }
 
+// ChunkPos writes a ChunkPos as 2 varint32s to the underlying buffer.
+func (w *Writer) ChunkPos(x *ChunkPos) {
+	w.Varint32(&x[0])
+	w.Varint32(&x[1])
+}
+
+// SubChunkPos writes a SubChunkPos as 3 varint32s to the underlying buffer.
+func (w *Writer) SubChunkPos(x *SubChunkPos) {
+	w.Varint32(&x[0])
+	w.Varint32(&x[1])
+	w.Varint32(&x[2])
+}
+
 // VarRGBA writes a color.RGBA x as a varuint32 to the underlying buffer.
 func (w *Writer) VarRGBA(x *color.RGBA) {
 	val := uint32(x.R) | uint32(x.G)<<8 | uint32(x.B)<<16 | uint32(x.A)<<24
@@ -116,11 +135,50 @@ func (w *Writer) UUID(x *uuid.UUID) {
 	_, _ = w.w.Write(b)
 }
 
+// PlayerInventoryAction writes a PlayerInventoryAction.
+func (w *Writer) PlayerInventoryAction(x *UseItemTransactionData) {
+	w.Varint32(&x.LegacyRequestID)
+	if x.LegacyRequestID < -1 && (x.LegacyRequestID&1) == 0 {
+		l := uint32(len(x.LegacySetItemSlots))
+		w.Varuint32(&l)
+
+		for _, slot := range x.LegacySetItemSlots {
+			SetItemSlot(w, &slot)
+		}
+	}
+	l := uint32(len(x.Actions))
+	w.Varuint32(&l)
+
+	for _, a := range x.Actions {
+		InvAction(w, &a)
+	}
+	w.Varuint32(&x.ActionType)
+	w.BlockPos(&x.BlockPosition)
+	w.Varint32(&x.BlockFace)
+	w.Varint32(&x.HotBarSlot)
+	w.ItemInstance(&x.HeldItem)
+	w.Vec3(&x.Position)
+	w.Vec3(&x.ClickedPosition)
+	w.Varuint32(&x.BlockRuntimeID)
+}
+
 // EntityMetadata writes an entity metadata map x to the underlying buffer.
 func (w *Writer) EntityMetadata(x *map[uint32]interface{}) {
 	l := uint32(len(*x))
 	w.Varuint32(&l)
-	for key, value := range *x {
+
+	// Entity metadata needs to be sorted for some functionality to work. NPCs, for example, need to have their fields
+	// set in increasing order, or the text or buttons won't be shown to the client. See #88.
+	// Sorting this is probably not very fast, but it'll have to do for now: We can change entity metadata to a slice
+	// later on.
+	keys := make([]int, 0, l)
+	for k := range *x {
+		keys = append(keys, int(k))
+	}
+	sort.Ints(keys)
+	for _, k := range keys {
+		key := uint32(k)
+		value := (*x)[uint32(k)]
 		w.Varuint32(&key)
 		switch v := value.(type) {
 		case byte:
@@ -255,9 +313,23 @@ func (w *Writer) Item(x *ItemStack) {
 		var blockingTick int64
 		bufWriter.Int64(&blockingTick)
 	}
-	extraData=buf.Bytes()
 
+	extraData = buf.Bytes()
 	w.ByteSlice(&extraData)
+}
+
+// MaterialReducer writes a material reducer to the writer.
+func (w *Writer) MaterialReducer(m *MaterialReducer) {
+	mix := (m.InputItem.NetworkID << 16) | int32(m.InputItem.MetadataValue)
+	itemCountsLen := uint32(len(m.Outputs))
+
+	w.Varint32(&mix)
+	w.Varuint32(&itemCountsLen)
+
+	for _, out := range m.Outputs {
+		w.Varint32(&out.NetworkID)
+		w.Varint32(&out.Count)
+	}
 }
 
 // Varint64 writes an int64 as 1-10 bytes to the underlying buffer.

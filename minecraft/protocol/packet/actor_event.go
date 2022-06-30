@@ -5,67 +5,66 @@ import (
 )
 
 const (
-	_ = iota
-	ActorEventJump
+	ActorEventJump = iota + 1
 	ActorEventHurt
 	ActorEventDeath
-	ActorEventStartAttack
-	ActorEventStopAttack
-	ActorEventTameFail
-	ActorEventTameSucceed
-	ActorEventShakeDry
+	ActorEventStartAttacking
+	ActorEventStopAttacking
+	ActorEventTamingFailed
+	ActorEventTamingSucceeded
+	ActorEventShakeWetness
 	ActorEventUseItem
 	ActorEventEatGrass
-	ActorEventFishHookBubble
-	ActorEventFishHookPosition
-	ActorEventFishHook
-	ActorEventFishHookTease
-	ActorEventSquidInkCloud
-	ActorEventZombieVillagerCure
-	ActorEventPlayAmbientSound
-	ActorEventRespawn
-	ActorEventIronGolemOfferFlower
-	ActorEventIronGolemWithdrawFlower
-	ActorEventLookingForPartner
-	ActorEventHappyVillager
-	ActorEventAngryVillager
-	ActorEventWitchSpell
-	ActorEventFirework
-	ActorEventFoundPartner
-	ActorEventSilverfishSpawn
-	ActorEventGuardianAttack
-	ActorEventWitchDrinkPotion
-	ActorEventWitchThrowPotion
-	ActorEventMinecartTNTPrimeFuse
-	ActorEventCreeperPrimeFuse
-	ActorEventAirSupplyExpired
-	ActorEventPlayerAddXPLevels
-	ActorEventElderGuardianCurse
-	ActorEventAgentArmSwing
-	ActorEventEnderDragonDeath
-	ActorEventDustParticles
-	ActorEventArrowShake
+	ActorEventFishhookBubble
+	ActorEventFishhookFishPosition
+	ActorEventFishhookHookTime
+	ActorEventFishhookTease
+	ActorEventSquidFleeing
+	ActorEventZombieConverting
+	ActorEventPlayAmbient
+	ActorEventSpawnAlive
+	ActorEventStartOfferFlower
+	ActorEventStopOfferFlower
+	ActorEventLoveHearts
+	ActorEventVillagerAngry
+	ActorEventVillagerHappy
+	ActorEventWitchHatMagic
+	ActorEventFireworksExplode
+	ActorEventInLoveHearts
+	ActorEventSilverfishMergeAnimation
+	ActorEventGuardianAttackSound
+	ActorEventDrinkPotion
+	ActorEventThrowPotion
+	ActorEventCartWithPrimeTNT
+	ActorEventPrimeCreeper
+	ActorEventAirSupply
+	ActorEventAddPlayerLevels
+	ActorEventGuardianMiningFatigue
+	ActorEventAgentSwingArm
+	ActorEventDragonStartDeathAnim
+	ActorEventGroundDust
+	ActorEventShake
 )
 
 const (
-	ActorEventEatingItem = iota + 57
-	_
-	_
-	ActorEventBabyAnimalFeed
-	ActorEventDeathSmokeCloud
-	ActorEventCompleteTrade
-	ActorEventRemoveLeash
-	ActorEventLlamaCaravanUpdated
-	ActorEventConsumeTotem
-	ActorEventPlayerCheckTreasureHunterAchievement
-	ActorEventEntitySpawn
-	ActorEventDragonBreath
-	ActorEventItemEntityMerge
+	ActorEventFeed = iota + 57
+	ActorEventBabyEat
+	ActorEventInstantDeath
+	ActorEventNotifyTrade
+	ActorEventLeashDestroyed
+	ActorEventCaravanUpdated
+	ActorEventTalismanActivate
+	ActorEventUpdateStructureFeature
+	ActorEventPlayerSpawnedMob
+	ActorEventPuke
+	ActorEventUpdateStackSize
 	ActorEventStartSwimming
 	ActorEventBalloonPop
 	ActorEventTreasureHunt
 	ActorEventSummonAgent
-	ActorEventCrossbowCharged
+	ActorEventFinishedChargingCrossbow
+	ActorEventLandedOnGround
+	ActorEventActorGrowUp
 )
 
 // ActorEvent is sent by the server when a particular event happens that has to do with an entity. Some of

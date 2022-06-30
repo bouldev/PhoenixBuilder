@@ -15,7 +15,7 @@ func NEMCPacketToChunkData(p *packet.LevelChunk) (cd *mirror.ChunkData) {
 	}
 	cd = &mirror.ChunkData{
 		Chunk: c, BlockNbts: nbt,
-		ChunkPos:  define.ChunkPos{p.ChunkX, p.ChunkZ},
+		ChunkPos:  define.ChunkPos{p.Position[0], p.Position[0]},
 		TimeStamp: time.Now().Unix(),
 	}
 	return cd

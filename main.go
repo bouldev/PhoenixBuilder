@@ -506,21 +506,9 @@ func runClient(env *environment.PBEnvironment) {
 	}
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	for {
-		pk, data, err := conn.ReadPacketAndBytes()
+		pk, err := conn.ReadPacket()
 		if err != nil {
 			panic(err)
-		}
-		if captureFp != nil {
-			buf := make([]byte, 4)
-			binary.LittleEndian.PutUint32(buf, uint32(len(data)))
-			_, err := captureFp.Write(buf)
-			if err != nil {
-				panic("dump to capture file (len hdr) fail " + err.Error())
-			}
-			_, err = captureFp.Write(data)
-			if err != nil {
-				panic("dump to capture file fail " + err.Error())
-			}
 		}
 		if env.OmegaAdaptorHolder != nil {
 			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacket(pk)
@@ -535,9 +523,6 @@ func runClient(env *environment.PBEnvironment) {
 				return string(marshalErr)
 			}
 			return string(marshal)
-		}
-		if env.ExternalConnectionHandler != nil {
-			env.ExternalConnectionHandler.(*external.ExternalConnectionHandler).PacketChannel <- data
 		}
 
 		switch p := pk.(type) {
@@ -678,8 +663,8 @@ func runClient(env *environment.PBEnvironment) {
 			if args.ShouldEnableOmegaSystem() {
 				world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
 			}
-			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
-			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
+			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position[0], p.Position[1]}, p)
+			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position[0], p.Position[1]}, p)
 		case *packet.UpdateBlock:
 			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
 			if h {
