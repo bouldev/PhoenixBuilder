@@ -21,9 +21,9 @@ var LegacyBlockToRuntimeID func(block *LegacyBlock) (runtimeID uint32)
 var AirRID uint32
 var NEMCAirRID uint32
 var stateRuntimeIDs = map[StateHash]uint32{}
-var blocks []*GeneralBlock
-var legacyBlocks []*LegacyBlock
-var legacyRuntimeIDs = map[LegacyBlockHash]uint32{}
+var Blocks []*GeneralBlock
+var LegacyBlocks []*LegacyBlock
+var LegacyRuntimeIDs = map[LegacyBlockHash]uint32{}
 
 const (
 	// SubChunkVersion is the current version of the written sub chunks, specifying the format they are
@@ -116,12 +116,12 @@ func registerBlockState(s *GeneralBlock) {
 		// =
 		panic(fmt.Sprintf("cannot register the same state twice (%+v)", s))
 	}
-	rid := uint32(len(blocks))
+	rid := uint32(len(Blocks))
 	if s.Name == "minecraft:air" {
 		AirRID = rid
 	}
 	stateRuntimeIDs[h] = rid
-	blocks = append(blocks, s)
+	Blocks = append(Blocks, s)
 }
 
 type MappingIn struct {
@@ -140,22 +140,22 @@ func InitMapping(mappingInData []byte) {
 	for _, block := range mappingIn.RIDToMCBlock {
 		registerBlockState(block)
 	}
-	if len(blocks) == 0 {
+	if len(Blocks) == 0 {
 		panic("blockStateData read fail")
 	}
 
 	RuntimeIDToState = func(runtimeID uint32) (name string, properties map[string]any, found bool) {
-		if runtimeID >= uint32(len(blocks)) {
+		if runtimeID >= uint32(len(Blocks)) {
 			return "", nil, false
 		}
-		name, properties = blocks[runtimeID].EncodeBlock()
+		name, properties = Blocks[runtimeID].EncodeBlock()
 		return name, properties, true
 	}
 	RuntimeIDToBlock = func(runtimeID uint32) (block *GeneralBlock, found bool) {
-		if runtimeID >= uint32(len(blocks)) {
+		if runtimeID >= uint32(len(Blocks)) {
 			return nil, false
 		}
-		return blocks[runtimeID], true
+		return Blocks[runtimeID], true
 	}
 
 	StateToRuntimeID = func(name string, properties map[string]any) (runtimeID uint32, found bool) {
@@ -175,8 +175,8 @@ func InitMapping(mappingInData []byte) {
 
 	nemcToVal := mappingIn.NEMCRidToVal
 	nemcToName := mappingIn.NEMCToName
-	legacyBlocks := make([]*LegacyBlock, len(blocks))
-	for rid, _ := range blocks {
+	legacyBlocks := make([]*LegacyBlock, len(Blocks))
+	for rid, _ := range Blocks {
 		legacyBlocks[rid] = &LegacyBlock{Name: "", Val: 0}
 	}
 	for nemcRid, Rid := range nemcToMCRIDMapping {
@@ -190,7 +190,7 @@ func InitMapping(mappingInData []byte) {
 		legacyBlocks[Rid].Val = val
 		legacyBlocks[Rid].Name = nemcToName[nemcRid]
 	}
-	for rid, _ := range blocks {
+	for rid, _ := range Blocks {
 		if legacyBlocks[rid].Name == "" {
 			legacyBlocks[rid].Name = "air"
 		}
@@ -198,7 +198,7 @@ func InitMapping(mappingInData []byte) {
 	legacyBlocks[AirRID].Name = "air"
 	legacyBlocks[AirRID].Val = 0
 	for rid, block := range legacyBlocks {
-		legacyRuntimeIDs[LegacyBlockHash{name: block.Name, data: block.Val}] = uint32(rid)
+		LegacyRuntimeIDs[LegacyBlockHash{name: block.Name, data: block.Val}] = uint32(rid)
 	}
 	RuntimeIDToLegacyBlock = func(runtimeID uint32) (legacyBlock *LegacyBlock) {
 		return legacyBlocks[runtimeID]

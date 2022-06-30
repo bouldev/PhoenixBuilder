@@ -159,5 +159,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"封禁时间": func() defines.Component {
 			return &BanTime{BasicComponent: &BasicComponent{}}
 		},
+		"消除方块": func() defines.Component {
+			return &RemoveBlock{BasicComponent: &BasicComponent{}}
+		},
 	}
 }

@@ -1604,5 +1604,30 @@
       "选择器": "@a[scores={封禁时间=1..}]",
       "文件名":"封禁时间记录.json"
     }
-  }  
+  },
+  {
+    "名称": "消除方块",
+    "描述": "消除指定的方块",
+    "是否禁用": false,
+    "版本": "0.0.1",
+    "来源": "Built-In",
+    "配置": {
+      "清除规则":{
+        "smithing_table":{
+          "处理指令":[
+            "setblock [x] [y] [z] sealantern",
+            "tell @a[m=c] 已移除 [x] [y] [z] 的锻造台"
+          ]
+        },
+        "movingBlock":{
+          "处理指令":[
+            "setblock [x] [y] [z] commandblock",
+            "setblock [x] [y] [z] bedrock",
+            "tell @a[m=c] 已移除 [x] [y] [z] 的movingBlock (可能误封)"
+          ]
+        }
+      }
+    }
+  }
+  
 ]

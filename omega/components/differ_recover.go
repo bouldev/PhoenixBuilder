@@ -78,7 +78,7 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 				for z := uint8(0); z < 16; z++ {
 					for subChunk := int16(0); subChunk < 16; subChunk++ {
 						for sy := int16(0); sy < 16; sy++ {
-							y := subChunk*16 + sy
+							y := subChunk*16 + sy + int16(define.NEMCWorldStart)
 							targetBlock := ckpt.Chunk.Block(x, y, z, 0)
 							realBlock := current.Chunk.Block(x, y, z, 0)
 							if targetBlock != realBlock {
