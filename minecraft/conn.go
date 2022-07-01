@@ -8,8 +8,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/sandertv/go-raknet"
+	"io"
+	"log"
+	"net"
 	"phoenixbuilder/minecraft/internal"
 	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/minecraft/protocol"
@@ -17,15 +18,15 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/resource"
 	"phoenixbuilder/minecraft/text"
-	"go.uber.org/atomic"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
-	"io"
-	"log"
-	"net"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/sandertv/go-raknet"
+	"go.uber.org/atomic"
+	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 // exemptedResourcePack is a resource pack that is exempted from being downloaded. These packs may be directly
@@ -125,7 +126,7 @@ type Conn struct {
 	disconnectMessage atomic.String
 
 	shieldID atomic.Int32
-	
+
 	// PhoenixBuilder debug mode, which means this connection is fake
 	// and nothing will be sended or received from it.
 	DebugMode bool
@@ -291,7 +292,7 @@ func (conn *Conn) DoSpawnContext(ctx context.Context) error {
 // WritePacket encodes the packet passed and writes it to the Conn. The encoded data is buffered until the
 // next 20th of a second, after which the data is flushed and sent over the connection.
 func (conn *Conn) WritePacket(pk packet.Packet) error {
-	if(conn.DebugMode) {
+	if conn.DebugMode {
 		return nil
 	}
 	select {
@@ -350,6 +351,35 @@ func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
 			return conn.ReadPacket()
 		}
 		return pk, nil
+	}
+}
+
+func (conn *Conn) ReadPacketAndBytes() (pk packet.Packet, data []byte, err error) {
+	if data, ok := conn.takeDeferredPacket(); ok {
+		// if data.h.PacketID != 67 {
+		// 	fmt.Println(data.h.PacketID)
+		// }
+
+		pk, err := data.decode(conn)
+		if err != nil {
+			conn.log.Println(err)
+			return conn.ReadPacketAndBytes()
+		}
+		return pk, data.full, nil
+	}
+
+	select {
+	case <-conn.close:
+		return nil, nil, conn.closeErr("read packet")
+	case <-conn.readDeadline:
+		return nil, nil, conn.wrap(context.DeadlineExceeded, "read packet")
+	case data := <-conn.packets:
+		pk, err := data.decode(conn)
+		if err != nil {
+			conn.log.Println(err)
+			return conn.ReadPacketAndBytes()
+		}
+		return pk, data.full, nil
 	}
 }
 
@@ -424,7 +454,7 @@ func (conn *Conn) Flush() error {
 // Close closes the Conn and its underlying connection. Before closing, it also calls Flush() so that any
 // packets currently pending are sent out.
 func (conn *Conn) Close() error {
-	if(conn.DebugMode) {
+	if conn.DebugMode {
 		return nil
 	}
 	var err error
