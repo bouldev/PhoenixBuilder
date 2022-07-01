@@ -46,6 +46,7 @@ type blockToRepair struct {
 	hit      bool
 }
 
+//TODO Check if differ recover is affected by 0 -> -64
 func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.ChunkReader, pos define.CubePos, distance int) chan *blockToRepair {
 	computeRequiredChunks := func(pos define.CubePos, distance int) (requiredChunks []define.ChunkPos) {
 		// chunkX, ChunkZ := int(math.Floor(float64(pos[0]/16))), int(math.Floor(float64(pos[2]/16)))
@@ -77,8 +78,8 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 			for x := uint8(0); x < 16; x++ {
 				for z := uint8(0); z < 16; z++ {
 					for subChunk := int16(0); subChunk < 16; subChunk++ {
-						for sy := int16(0); sy < 16; sy++ {
-							y := subChunk*16 + sy + int16(define.NEMCWorldStart)
+						for sy := int16(0); sy < 24; sy++ {
+							y := subChunk*16 + sy + int16(define.WorldRange[0])
 							targetBlock := ckpt.Chunk.Block(x, y, z, 0)
 							realBlock := current.Chunk.Block(x, y, z, 0)
 							if targetBlock != realBlock {

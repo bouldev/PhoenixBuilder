@@ -27,12 +27,12 @@ func NEMCNetworkDecode(data []byte, count int) (c *Chunk, nbtBlocks []map[string
 		}
 	}()
 	encoder.isChunkDecoding = true
-	offset := uint8((int(define.NEMCWorldStart) - define.WorldRange[0]) / 16)
+	// offset := uint8((int(define.NEMCWorldStart) - define.WorldRange[0]) / 16)
 	// fmt.Println(offset)
 	for i := 0; i < count; i++ {
 		index := uint8(i)
 		// decodeSubChunk(buf, c, &index, NetworkEncoding)
-		c.sub[index+uint8(offset)], err = decodeSubChunk(buf, c, &index, encoder)
+		c.sub[index], err = decodeSubChunk(buf, c, &index, encoder)
 		if err != nil {
 			return nil, nil, err
 		}

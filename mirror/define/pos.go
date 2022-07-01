@@ -21,10 +21,8 @@ func (p ChunkPos) String() string {
 	return fmt.Sprintf("(%v, %v)", p[0], p[1])
 }
 
-// 为和国际版MC保持统一，世界范围被定义为 -64~319,
-// 接受网易版数据包时(NEMCNetwork Decode) 会将 0~256 扩张到 -64~319
+// 为和国际版MC保持统一，世界范围被定义为 -64~319 ,现在网易的高度也是 -64 ~ 319 了，所以省事了不少
 var WorldRange = Range{-64, 319}
-var NEMCWorldStart = int16(-64)
 
 // CubePos holds the position of a block. The position is represented of an array with an x, y and z value,
 // where the y value is positive.

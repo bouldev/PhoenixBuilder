@@ -15,6 +15,7 @@ func (w *World) chunk(pos define.ChunkPos) *mirror.ChunkData {
 	return c
 }
 
+// TODO Check if WoodAxe is affected by 0 -> -64
 func (w *World) Block(pos define.CubePos) (rtid uint32, found bool) {
 	if w == nil || pos.OutOfYBounds() {
 		// Fast way out.

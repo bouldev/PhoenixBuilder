@@ -227,6 +227,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
 		r.CurrentWorld.SetBlockNbt(cubePos, p.NBTData)
 	case *packet.LevelChunk:
+		// TODO Check if level chunk decode is affected by 0 -> -64
 		chunkData := io.NEMCPacketToChunkData(p)
 		if chunkData == nil {
 			break

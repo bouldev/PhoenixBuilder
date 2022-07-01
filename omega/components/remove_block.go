@@ -46,6 +46,7 @@ func (o *RemoveBlock) Init(cfg *defines.ComponentConfig) {
 	}
 }
 
+//TODO Check if remove block is affected by 0 -> -64
 func (o *RemoveBlock) onLevelChunk(cd *mirror.ChunkData) {
 	for sub_i, sub := range cd.Chunk.Sub() {
 		palette := sub.Layer(0).Palette()
@@ -62,10 +63,10 @@ func (o *RemoveBlock) onLevelChunk(cd *mirror.ChunkData) {
 		}
 		for x := uint8(0); x < 16; x++ {
 			for z := uint8(0); z < 16; z++ {
-				for y := uint8(0); y < 16; y++ {
+				for y := uint8(0); y < 24; y++ {
 					rtid := sub.Block(x, y, z, 0)
 					if complex, hasK := o.fastFilter[rtid]; hasK {
-						wy := int16(sub_i)*16 + int16(y) + int16(define.NEMCWorldStart) + int16(define.WorldRange[0])
+						wy := int16(sub_i)*16 + int16(y) + int16(define.WorldRange[0])
 						wx := int(cd.ChunkPos.X())*16 + int(x)
 						wz := int(cd.ChunkPos.Z())*16 + int(z)
 						// fmt.Println(wx, wy, wz)
