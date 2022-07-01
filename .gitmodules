@@ -1,0 +1,3 @@
+[submodule "depends"]
+	path = depends
+	url = ../phoenixbuilder-depends
