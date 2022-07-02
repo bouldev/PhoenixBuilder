@@ -3,6 +3,13 @@
 #include <getopt.h>
 #include <string.h>
 
+#ifndef FB_VERSION
+#define FB_VERSION "(CUSTOM)"
+#define FB_COMMIT "???"
+#define FB_COMMIT_LONG "???"
+#warning "It seems that you're building PhoenixBuilder with plain `go build` command, it is highly recommended to use `make current` instead."
+#endif
+
 char args_isDebugMode=0;
 char args_disableHashCheck=0;
 char replaced_auth_server=0;
