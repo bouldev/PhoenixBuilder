@@ -211,6 +211,8 @@ func (r *Reactor) React(pkt packet.Packet) {
 		o.GameCtrl.onNewCommandFeedBack(p)
 	case *packet.UpdateBlock:
 		// TODO WIP cannot decide which block are air and which are not
+		// TODO remove this line after runtime id mapping update
+		return
 		MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
 		p.Flags &= 0xf
 		if (p.Flags != packet.BlockUpdateNetwork && p.Flags != (packet.BlockUpdateNetwork|packet.BlockUpdateNeighbours)) || p.Layer != 0 {
@@ -228,6 +230,8 @@ func (r *Reactor) React(pkt packet.Packet) {
 		r.CurrentWorld.SetBlockNbt(cubePos, p.NBTData)
 	case *packet.LevelChunk:
 		// TODO Check if level chunk decode is affected by 0 -> -64
+		// TODO remove this line after runtime id mapping update
+		return
 		chunkData := io.NEMCPacketToChunkData(p)
 		if chunkData == nil {
 			break

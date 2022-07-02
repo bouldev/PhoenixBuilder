@@ -2,9 +2,10 @@ package components
 
 import (
 	"phoenixbuilder/omega/components/qqGroupLink"
-	"phoenixbuilder/omega/components/woodaxe"
 	"phoenixbuilder/omega/defines"
 )
+
+var HintOnRequireMappingUpdate = "该组件暂时无法在 1.18 客户端下正常工作，7.8~7.11号完成 ID 表更新后才可正常工作，请保持耐心,现在，请暂时禁用上述组件"
 
 func GetComponentsPool() map[string]func() defines.Component {
 	return map[string]func() defines.Component{
@@ -78,13 +79,17 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &Crash{BasicComponent: &defines.BasicComponent{}}
 		},
 		"手持32k检测": func() defines.Component {
-			return &IntrusionDetectSystem{BasicComponent: &defines.BasicComponent{}}
+			// TODO: Mapping Update
+			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
+			// return &IntrusionDetectSystem{BasicComponent: &defines.BasicComponent{}}
 		},
 		"违规昵称检测": func() defines.Component {
 			return &WhoAreYou{BasicComponent: &defines.BasicComponent{}}
 		},
 		"32k方块检测": func() defines.Component {
-			return &ContainerScan{BasicComponent: &defines.BasicComponent{}}
+			// TODO: Mapping Update
+			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
+			// return &ContainerScan{BasicComponent: &defines.BasicComponent{}}
 		},
 		"管理员检测": func() defines.Component {
 			return &OpCheck{BasicComponent: &defines.BasicComponent{}}
@@ -105,7 +110,9 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &Express{BasicComponent: &defines.BasicComponent{}}
 		},
 		"高频红石检查": func() defines.Component {
-			return &RedStoneUpdateLimit{BasicComponent: &defines.BasicComponent{}}
+			// TODO: Mapping Update
+			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
+			// return &RedStoneUpdateLimit{BasicComponent: &defines.BasicComponent{}}
 		},
 		"兑换码": func() defines.Component {
 			return &CDkey{BasicComponent: &defines.BasicComponent{}}
@@ -120,10 +127,14 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &DailyAttendance{BasicComponent: &defines.BasicComponent{}}
 		},
 		"小木斧": func() defines.Component {
-			return &woodaxe.WoodAxe{BasicComponent: &defines.BasicComponent{}}
+			// TODO: Mapping Update
+			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
+			// return &woodaxe.WoodAxe{BasicComponent: &defines.BasicComponent{}}
 		},
 		"存档修复": func() defines.Component {
-			return &DifferRecover{BasicComponent: &defines.BasicComponent{}}
+			// TODO: Mapping Update
+			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
+			// return &DifferRecover{BasicComponent: &defines.BasicComponent{}}
 		},
 		"玩家商店": func() defines.Component {
 			return &PlayerShop{BasicComponent: &defines.BasicComponent{}}
@@ -132,7 +143,9 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &BanTime{BasicComponent: &defines.BasicComponent{}}
 		},
 		"消除方块": func() defines.Component {
-			return &RemoveBlock{BasicComponent: &defines.BasicComponent{}}
+			// TODO: Mapping Update
+			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
+			// return &RemoveBlock{BasicComponent: &defines.BasicComponent{}}
 		},
 	}
 }

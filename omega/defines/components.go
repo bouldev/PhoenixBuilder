@@ -59,3 +59,12 @@ func (bc *BasicComponent) Stop() error {
 func (bc *BasicComponent) Signal(signal int) error {
 	return nil
 }
+
+type StubComponent struct {
+	*BasicComponent
+	Hint string
+}
+
+func (sc *StubComponent) Init(cfg *ComponentConfig) {
+	panic(sc.Hint)
+}
