@@ -33,7 +33,7 @@ type PlayerShopData struct {
 }
 
 type PlayerShop struct {
-	*BasicComponent
+	*defines.BasicComponent
 	fileData                 *PlayerShopData
 	fileChange               bool
 	FileName                 string   `json:"数据文件"`

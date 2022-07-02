@@ -11,7 +11,7 @@ import (
 )
 
 type Immortal struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Hint          string      `json:"提示信息"`
 	AskForRespawn bool        `json:"询问是否返回死亡点"`
 	Selector      string      `json:"死亡玩家选择器"`

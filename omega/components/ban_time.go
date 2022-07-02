@@ -14,7 +14,7 @@ import (
 )
 
 type BanTime struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Selector             string  `json:"选择器"`
 	Duration             float64 `json:"检查周期"`
 	OnOmegaTakeOver      []defines.Cmd

@@ -11,7 +11,7 @@ import (
 )
 
 type ShutUp struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Round          int `json:"发言检测周期(秒)"`
 	MaxWords       int `json:"周期内字数限制"`
 	MaxMsgs        int `json:"周期内条数限制"`

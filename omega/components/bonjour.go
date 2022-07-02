@@ -10,7 +10,7 @@ import (
 )
 
 type Bonjour struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Delay      int           `json:"登录时延迟发送" yaml:"登录时延迟发送"`
 	loginCmds  []defines.Cmd `json:"登录时发送指令" yaml:"登录时发送指令"`
 	logoutCmds []defines.Cmd `json:"登出时发送指令" yaml:"登出时发送指令"`

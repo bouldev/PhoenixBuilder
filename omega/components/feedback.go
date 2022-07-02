@@ -9,7 +9,7 @@ import (
 )
 
 type FeedBack struct {
-	*BasicComponent
+	*defines.BasicComponent
 	logger      defines.LineDst
 	Response    string   `json:"反馈记录成功时提示"`
 	FileName    string   `json:"反馈记录文件"`

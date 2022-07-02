@@ -9,7 +9,7 @@ import (
 )
 
 type BackToHQ struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers       []string      `json:"触发词"`
 	ToAnchor       string        `json:"世界锚点"`
 	ToHQ           string        `json:"主城锚点"`

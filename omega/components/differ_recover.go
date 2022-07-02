@@ -20,7 +20,7 @@ import (
 )
 
 type DifferRecover struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers                      []string `json:"触发词"`
 	Speed                         int      `json:"修复速度"`
 	BackUpName                    string   `json:"备份存档名"`

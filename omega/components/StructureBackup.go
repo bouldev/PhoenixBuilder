@@ -28,7 +28,7 @@ type StructureRecords struct {
 }
 
 type StructureBackup struct {
-	*BasicComponent
+	*defines.BasicComponent
 	BackupTriggers        []string `json:"备份触发词"`
 	RecoverTriggers       []string `json:"恢复触发词"`
 	CoolDownSecond        int      `json:"请求冷却时间"`

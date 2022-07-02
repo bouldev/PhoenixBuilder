@@ -10,7 +10,7 @@ import (
 )
 
 type Kick struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Selector  string      `json:"选择器"`
 	Duration  int         `json:"检查周期"`
 	ActionsIn interface{} `json:"制裁"`

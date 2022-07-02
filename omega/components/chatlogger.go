@@ -9,7 +9,7 @@ import (
 )
 
 type ChatLogger struct {
-	*BasicComponent
+	*defines.BasicComponent
 	logger defines.LineDst
 }
 

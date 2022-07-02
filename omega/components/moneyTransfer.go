@@ -13,7 +13,7 @@ import (
 )
 
 type MoneyTransfer struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers        []string            `json:"触发词"`
 	DefaultCurrency *defines.Currency   `json:"默认货币"`
 	AllCurrency     []*defines.Currency `json:"可转账货币"`

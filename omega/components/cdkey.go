@@ -23,7 +23,7 @@ type cdKeyTakenRecord struct {
 }
 
 type CDkey struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers        []string                `json:"触发词"`
 	Usage           string                  `json:"菜单提示"`
 	CDKeys          map[string]*cdKeyRecord `json:"兑换码"`

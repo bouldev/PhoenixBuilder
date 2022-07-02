@@ -30,7 +30,7 @@ type LimitRecord struct {
 }
 
 type Recycle struct {
-	*BasicComponent
+	*defines.BasicComponent
 	fileChange          bool
 	RecordFileName      string    `json:"最后回收记录文件"`
 	Triggers            []string  `json:"触发词"`

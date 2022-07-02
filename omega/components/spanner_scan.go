@@ -11,7 +11,7 @@ import (
 )
 
 type MobSpawnerScan struct {
-	*BasicComponent
+	*defines.BasicComponent
 	FilterHas      []string      `json:"如果包含以下关键词则清除"`
 	FilterHasnt    []string      `json:"如果不包含以下关键词之一则清除"`
 	cleanUpActions []defines.Cmd `json:"违规刷怪笼反制"`

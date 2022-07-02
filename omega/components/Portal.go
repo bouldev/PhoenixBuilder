@@ -16,7 +16,7 @@ type PortalEntry struct {
 }
 
 type Portal struct {
-	*BasicComponent
+	*defines.BasicComponent
 	fileChange    bool
 	FileName      string   `json:"存档点记录文件名"`
 	SaveTrigger   []string `json:"保存存档点触发词"`

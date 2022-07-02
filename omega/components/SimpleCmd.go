@@ -8,7 +8,7 @@ import (
 )
 
 type SimpleCmd struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers     []string    `json:"触发词"`
 	FinalTrigger bool        `json:"总是触发"`
 	ArgumentHint string      `json:"参数描述"`

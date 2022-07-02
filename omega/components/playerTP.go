@@ -9,7 +9,7 @@ import (
 )
 
 type PlayerTP struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers             []string `json:"触发词"`
 	HintOnNoTarget       string   `json:"没有指定玩家时提示"`
 	HintOnNoPlayer       string   `json:"没有对应玩家时提示"`

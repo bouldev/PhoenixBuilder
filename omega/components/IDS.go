@@ -26,7 +26,7 @@ type RegexCheck struct {
 }
 
 type IntrusionDetectSystem struct {
-	*BasicComponent
+	*defines.BasicComponent
 	EnableK32Detect bool          `json:"启用32k手持物品检测"`
 	K32Threshold    int           `json:"32k手持物品附魔等级阈值"`
 	k32Response     []defines.Cmd `json:"32k手持物品反制"`

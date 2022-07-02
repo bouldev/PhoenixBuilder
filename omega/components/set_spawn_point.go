@@ -9,7 +9,7 @@ import (
 )
 
 type SetSpawnPoint struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers             []string `json:"触发词"`
 	HintOnSuccess        string   `json:"设置成功时的提示"`
 	HintOnFailure        string   `json:"设置失败时的提示"`

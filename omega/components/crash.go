@@ -8,7 +8,7 @@ import (
 )
 
 type Crash struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Delay int `json:"强制退出延迟"`
 }
 

@@ -41,7 +41,7 @@ type RankRenderOption struct {
 }
 
 type Ranking struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers              []string `json:"触发词"`
 	Usage                 string   `json:"提示信息"`
 	ScoreboardName        string   `json:"计分板名"`

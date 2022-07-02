@@ -12,7 +12,7 @@ import (
 )
 
 type WhoAreYou struct {
-	*BasicComponent
+	*defines.BasicComponent
 	react         []defines.Cmd
 	Tag           string `json:"添加标签"`
 	checkTag      string

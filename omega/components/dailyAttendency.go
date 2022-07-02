@@ -65,7 +65,7 @@ func (rp *RewardPolicy) isMatch(accumulateDays, continuationDays int) (match boo
 }
 
 type DailyAttendance struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers                []string        `json:"触发词"`
 	Usage                   string          `json:"菜单提示"`
 	CheckPointTimeOffset    string          `json:"签到时间偏移"`

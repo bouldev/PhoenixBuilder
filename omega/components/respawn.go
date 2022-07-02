@@ -10,7 +10,7 @@ import (
 )
 
 type Respawn struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers                   []string `json:"触发词"`
 	CmdsAfterNormalUserSpawned []string `json:"非创造玩家重生后执行的指令"`
 	CmdsToKillCreativeUser     []string `json:"创造玩家重生后执行的指令"`

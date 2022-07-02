@@ -15,7 +15,7 @@ type nameEntry struct {
 }
 
 type OpCheck struct {
-	*BasicComponent
+	*defines.BasicComponent
 	OPS            []string `json:"管理员昵称"`
 	fileChange     bool
 	FileName       string        `json:"管理员改名记录文件"`

@@ -41,7 +41,7 @@ type actionsOccupied struct {
 }
 
 type WoodAxe struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Operators                            []string `json:"授权使用者"`
 	Triggers                             []string `json:"触发词"`
 	UseLargeFill                         bool     `json:"使用LargeFill功能"`

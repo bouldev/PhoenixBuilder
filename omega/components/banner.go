@@ -7,7 +7,7 @@ import (
 )
 
 type Banner struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Cmds [][]string `json:"启动时信息显示" yaml:"启动时信息显示"`
 }
 

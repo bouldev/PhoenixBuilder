@@ -21,7 +21,7 @@ type UIDRecord struct {
 }
 
 type UIDTracking struct {
-	*BasicComponent
+	*defines.BasicComponent
 	fileChange         bool
 	FileName           string        `json:"记录文件"`
 	PlayerUIDFetchCmd  string        `json:"获取某玩家的uid的指令"`

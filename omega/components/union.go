@@ -47,7 +47,7 @@ type UnionDisplayConfig struct {
 }
 
 type Union struct {
-	*BasicComponent
+	*defines.BasicComponent
 	fileData      *unionFileData
 	fileChange    bool
 	FileName      string              `json:"数据文件"`

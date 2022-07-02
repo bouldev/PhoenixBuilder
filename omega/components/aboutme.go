@@ -10,7 +10,7 @@ import (
 )
 
 type AboutMe struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers []string            `json:"触发词"`
 	Cmd      string              `json:"显示信息模版"`
 	Tags     map[string][]string `json:"标签替换"`

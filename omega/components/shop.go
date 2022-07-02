@@ -31,7 +31,7 @@ type PlainGood struct {
 }
 
 type Shop struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Goods      map[string]*GoodsGroup `json:"商品清单文件"`
 	Triggers   []string               `json:"触发词"`
 	Format     string                 `json:"展示模版"`

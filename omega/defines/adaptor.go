@@ -48,35 +48,3 @@ type OmegaConfig struct {
 	MemLimit                 int            `yaml:"限制内存占用" json:"限制内存占用"`
 	ShowMemUsagePeriod       int            `yaml:"内存占用显示周期" json:"内存占用显示周期"`
 }
-
-// ComponentConfig 描述了 插件 的配置内容，必须保证可被 yaml 正确处理
-type ComponentConfig struct {
-	Name        string                 `json:"名称"`
-	Description string                 `json:"描述"`
-	Disabled    bool                   `json:"是否禁用"`
-	Version     string                 `json:"版本"`
-	Source      string                 `json:"来源"`
-	Configs     map[string]interface{} `json:"配置"`
-}
-
-const (
-	// 设计失误之一，由于希望使用者可以直接阅读数据，就没有上数据库，后果就是进程被强杀时会掉数据
-	// 所以需要 这个 SIGNAL，让组件时不时的保存一下数据
-	SIGNAL_DATA_CHECKPOINT = iota
-)
-
-// Component 描述了插件应该具有的接口
-// 顺序 &Component{} -> .Init(ComponentConfig) -> Activate() -> Stop()
-// 每个 Activate 工作在一个独立的 goroutine 下
-type Component interface {
-	Init(cfg *ComponentConfig)
-	Inject(frame MainFrame)
-	Activate()
-	Stop() error
-	Signal(int) error
-}
-
-type CoreComponent interface {
-	Component
-	SetSystem(interface{})
-}

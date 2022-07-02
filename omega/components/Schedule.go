@@ -11,7 +11,7 @@ import (
 )
 
 type Schedule struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Name            string        `json:"任务"`
 	Duration        float32       `json:"周期"`
 	StartTimeInReal string        `json:"第一次启动的现实时间"`

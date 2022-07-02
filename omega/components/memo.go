@@ -12,7 +12,7 @@ import (
 )
 
 type Memo struct {
-	*BasicComponent
+	*defines.BasicComponent
 	logger            defines.LineDst
 	HintOnEmptyPlayer string `json:"没有指定玩家时提示"`
 	HintOnEmptyMsg    string `json:"没有输入信息时提示"`

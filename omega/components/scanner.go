@@ -16,7 +16,7 @@ import (
 )
 
 type Scanner struct {
-	*BasicComponent
+	*defines.BasicComponent
 	isScanning   bool
 	resultWriter *simpleFileLineDstWrapper
 	Trigger      string   `json:"触发词"`

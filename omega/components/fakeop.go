@@ -10,7 +10,7 @@ import (
 )
 
 type FakeOp struct {
-	*BasicComponent
+	*defines.BasicComponent
 	// AuthFile string `json:"授权文件"`
 	Auth map[string]map[string][]string `json:"授权文件"`
 }

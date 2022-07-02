@@ -27,7 +27,7 @@ type ExpressInfo struct {
 }
 
 type Express struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers          []string `json:"触发词"`
 	LoginDelay        int      `json:"登录时延迟发送"`
 	Usage             string   `json:"提示信息"`

@@ -23,7 +23,7 @@ type StatusToggleLogic struct {
 }
 
 type StatusToggle struct {
-	*BasicComponent
+	*defines.BasicComponent
 	Triggers        []string             `json:"触发词"`
 	Usage           string               `json:"提示信息"`
 	ArgumentHint    string               `json:"若需要参数则参数提示为"`

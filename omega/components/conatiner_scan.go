@@ -18,7 +18,7 @@ import (
 )
 
 type ContainerScan struct {
-	*BasicComponent
+	*defines.BasicComponent
 	EnableK32Detect    bool                   `json:"启用32容器检测"`
 	K32Threshold       int                    `json:"32k物品附魔等级阈值"`
 	k32Response        []defines.Cmd          `json:"32k容器反制"`

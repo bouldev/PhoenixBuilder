@@ -24,7 +24,7 @@ type ScoreboardCalibrateConfig struct {
 }
 
 type TimeSync struct {
-	*BasicComponent
+	*defines.BasicComponent
 	TimeOffset                int `json:"时区偏移(秒)"`
 	GameTimeSyncConfig        `json:"现实时间同步"`
 	ScoreboardCalibrateConfig `json:"记分板校准"`

@@ -18,7 +18,7 @@ type RemoveBlockComplex struct {
 }
 
 type RemoveBlock struct {
-	*BasicComponent
+	*defines.BasicComponent
 	BlocksToRemove map[string]*RemoveBlockComplex `json:"清除规则"`
 	fastFilter     map[uint32]*RemoveBlockComplex
 }
