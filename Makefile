@@ -46,7 +46,7 @@ VERSION=$(shell cat version)
 
 SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go $(dir)/*.c))
 
-CGO_DEF := "-DFB_VERSION=\"$(VERSION)~pre-release-omega\" -DFB_COMMIT=\"$(shell git log -1 --format=format:"%h")\" -DFB_COMMIT_LONG=\"$(shell git log -1 --format=format:"%H")\""
+CGO_DEF := "-DFB_VERSION=\"$(VERSION)\" -DFB_COMMIT=\"$(shell git log -1 --format=format:"%h")\" -DFB_COMMIT_LONG=\"$(shell git log -1 --format=format:"%H")\""
 
 all: ${TARGETS} build/hashes.json
 current: build/phoenixbuilder
