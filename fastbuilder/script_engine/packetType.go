@@ -25,7 +25,7 @@ func init() {
 		"IDTakeItemActor":                     packet.IDTakeItemActor,
 		"IDMoveActorAbsolute":                 packet.IDMoveActorAbsolute,
 		"IDMovePlayer":                        packet.IDMovePlayer,
-		"IDRiderJump":                         packet.IDRiderJump,
+//		"IDRiderJump":                         packet.IDRiderJump,
 		"IDUpdateBlock":                       packet.IDUpdateBlock,
 		"IDAddPainting":                       packet.IDAddPainting,
 		"IDTickSync":                          packet.IDTickSync,
@@ -167,7 +167,7 @@ func init() {
 		"IDSyncActorProperty":                 packet.IDSyncActorProperty,
 		"IDAddVolumeEntity":                   packet.IDAddVolumeEntity,
 		"IDRemoveVolumeEntity":                packet.IDRemoveVolumeEntity,
-		"IDNeteaseJson":                       packet.IDNeteaseJson,
+//		"IDNeteaseJson":                       packet.IDNeteaseJson,
 		"IDPyRpc":                             packet.IDPyRpc,
 	}
 	bridge.PacketNameMap=PacketNameMap
