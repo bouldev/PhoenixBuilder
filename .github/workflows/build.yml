@@ -13,7 +13,10 @@ jobs:
   linux-build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
