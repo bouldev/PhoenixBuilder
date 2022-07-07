@@ -257,7 +257,9 @@ func (o *DailyAttendance) onPlayerLogin(entry protocol.PlayerListEntry) {
 func (o *DailyAttendance) Inject(frame defines.MainFrame) {
 	o.Frame = frame
 	o.allPlayerAttendanceInfo = make(map[string]*PlayerAttendanceInfo)
-	o.Frame.GetJsonData(o.FileName, &o.allPlayerAttendanceInfo)
+	if err := o.Frame.GetJsonData(o.FileName, &o.allPlayerAttendanceInfo); err != nil {
+		panic(err)
+	}
 	if !o.PassiveCheckOut {
 		// 以下为菜单项渲染
 		o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{

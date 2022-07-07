@@ -172,6 +172,7 @@ func (o *Ranking) update(rankingLastFetchResult map[string]map[string]int) {
 }
 
 func (o *Ranking) freshScoreboardDisplay() {
+	// TODO update refresh algorithm
 	if !o.Render.RenderScoreBoard {
 		return
 	}

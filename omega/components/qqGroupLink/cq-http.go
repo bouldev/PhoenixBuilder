@@ -366,7 +366,7 @@ func (b *QGroupLink) Inject(frame defines.MainFrame) {
 		hint += "\n QQ->MC: 消息开头必须为" + b.FilterQQToServerMsgByHead
 	}
 	if b.FilterServerToQQMsgByHead != "" {
-		hint += "\n MC->QQ: 消息开头必须为" + b.FilterQQToServerMsgByHead
+		hint += "\n MC->QQ: 消息开头必须为" + b.FilterServerToQQMsgByHead
 	}
 	if len(b.AllowedCmdExecutor) > 0 {
 		perms := []string{}

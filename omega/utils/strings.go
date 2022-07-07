@@ -117,13 +117,17 @@ func FormatByReplacingOccurrences(tmp string, replacements map[string]interface{
 	return s
 }
 
-func ToPlainName(name string) string {
+func ToPlainName(raw_name string) string {
+	name := raw_name
 	if strings.Contains(name, ">") {
 		name = strings.ReplaceAll(name, ">", " ")
 		name = strings.ReplaceAll(name, "<", " ")
 	}
 	if name != "" {
 		names := GetStringContents(name)
+		if len(names) == 0 {
+			return raw_name
+		}
 		name = names[len(names)-1]
 	}
 	return name
