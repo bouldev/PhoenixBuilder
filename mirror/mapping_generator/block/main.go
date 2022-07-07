@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 
 	"phoenixbuilder/minecraft/nbt"
 
@@ -19,6 +20,9 @@ var blockStateData []byte
 //go:embed runtimeIds_2_1_10.json
 var nemcJsonData []byte
 
+//go:embed block_1_18_java_to_bedrock.json
+var javaJsonData []byte
+
 type GeneralBlock struct {
 	Name       string         `nbt:"name"`
 	Properties map[string]any `nbt:"states"`
@@ -27,9 +31,10 @@ type GeneralBlock struct {
 
 type RichBlock struct {
 	GeneralBlock
-	Val     int
-	NEMCRID int
-	RID     int
+	Val        int
+	NEMCRID    int
+	RID        int
+	JavaString string
 }
 
 type NEMCBlock struct {
@@ -38,16 +43,9 @@ type NEMCBlock struct {
 	NEMCRID int
 }
 
-func NewNEMCBlock(p [2]interface{}, nemcRID int) NEMCBlock {
-	s, ok := p[0].(string)
-	if !ok {
-		panic("fail")
-	}
-	i, ok := p[1].(float64)
-	if !ok {
-		panic("fail")
-	}
-	return NEMCBlock{s, int(i), nemcRID}
+type JavaToBedrockMappingIn struct {
+	Name       string         `json:"bedrock_identifier"`
+	Properties map[string]any `json:"bedrock_states"`
 }
 
 type IDGroup struct {
@@ -68,6 +66,18 @@ func (ig *IDGroup) AppendItem(p *RichBlock) {
 }
 
 func ReadNemcData() []NEMCBlock {
+	NewNEMCBlock := func(p [2]interface{}, nemcRID int) NEMCBlock {
+		s, ok := p[0].(string)
+		if !ok {
+			panic("fail")
+		}
+		i, ok := p[1].(float64)
+		if !ok {
+			panic("fail")
+		}
+		return NEMCBlock{s, int(i), nemcRID}
+	}
+
 	runtimeIDData := make([][2]interface{}, 0)
 	err := json.Unmarshal(nemcJsonData, &runtimeIDData)
 	if err != nil {
@@ -102,13 +112,14 @@ type MappingOut struct {
 	NEMCRidToMCRid []int16
 	NEMCRidToVal   []uint8
 	NEMCToName     []string
+	JavaToRid      map[string]uint32
 }
 
 func main() {
 	for i := 1; i < 5; i++ {
 		if i == 1 {
-			remapper[fmt.Sprintf("stone_slab")] = "stone_block_slab"
-			remapper[fmt.Sprintf("double_stone_slab")] = "double_stone_block_slab"
+			remapper["stone_slab"] = "stone_block_slab"
+			remapper["double_stone_slab"] = "double_stone_block_slab"
 		} else {
 			remapper[fmt.Sprintf("stone_slab%v", i)] = fmt.Sprintf("stone_block_slab%v", i)
 			remapper[fmt.Sprintf("double_stone_slab%v", i)] = fmt.Sprintf("double_stone_block_slab%v", i)
@@ -116,6 +127,11 @@ func main() {
 
 	}
 
+	if err := os.MkdirAll("convert_out", 0755); err != nil {
+		panic(err)
+	}
+
+	// group up standard mc block states
 	airRID := 0
 	nemcAirRID := 0
 	dec := nbt.NewDecoder(bytes.NewBuffer(blockStateData))
@@ -142,10 +158,6 @@ func main() {
 			groupedBlocks[rb.Name] = NewIDGroup()
 		}
 		groupedBlocks[rb.Name].AppendItem(rb)
-		// if skullRID == 0 && rb.Name == "minecraft:skull" {
-		// 	skullRID = rid
-		// 	rb.Val = 0
-		// }
 		blocks = append(blocks, rb)
 		ridToMCBlock = append(ridToMCBlock, &GeneralBlock{
 			Name:       s.Name,
@@ -153,18 +165,10 @@ func main() {
 			Version:    s.Version,
 		})
 	}
+	var fp *os.File
+	var err error
 
-	if err := os.MkdirAll("convert_out", 0755); err != nil {
-		panic(err)
-	}
-	fp, err := os.OpenFile("convert_out/StandardMCStates.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-	if err != nil {
-		panic(err)
-	}
-	enc := json.NewEncoder(fp)
-	enc.SetIndent("", "\t")
-	enc.Encode(groupedBlocks)
-	fp.Close()
+	// read nemc blocks and generated mapping
 	nemcData := ReadNemcData()
 	for rid, nemcBlocks := range nemcData {
 		if nemcBlocks.Name == "air" {
@@ -210,23 +214,125 @@ func main() {
 	}
 	fmt.Println(nemcToMCRIDMapping[nemcAirRID])
 	fp, err = os.OpenFile("convert_out/nemcRIDToMC1_19RID.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		panic(err)
+	}
 	if err = json.NewEncoder(fp).Encode(nemcToMCRIDMapping); err != nil {
 		panic(err)
 	}
 	fp.Close()
 
 	fp, err = os.OpenFile("convert_out/nemcRIDToVal.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		panic(err)
+	}
 	if err = json.NewEncoder(fp).Encode(nemcToVal); err != nil {
 		panic(err)
 	}
 	fp.Close()
+
+	// java mapping
+	javaBlocks := map[string]JavaToBedrockMappingIn{}
+	err = json.Unmarshal(javaJsonData, &javaBlocks)
+	if err != nil {
+		panic(err)
+	}
+	javaToRid := map[string]uint32{}
+	for javaName, bedrockBlockDescribe := range javaBlocks {
+		if javaName == "minecraft:campfire[facing=east,lit=false,signal_fire=false,waterlogged=false]" {
+			fmt.Println("stop")
+		}
+		bedrockBlocks, hasK := groupedBlocks[bedrockBlockDescribe.Name]
+		if !hasK {
+			fmt.Println(javaName, " group not found")
+			continue
+		}
+		rbs := bedrockBlocks.IDS
+		found := false
+		for _, rb := range rbs {
+			propTarget := rb.Properties
+			propSrc := bedrockBlockDescribe.Properties
+			propMatch := true
+			for k, targetV := range propTarget {
+				wanT := reflect.TypeOf(targetV).Kind()
+				srcV := propSrc[k]
+				switch wanT {
+				case reflect.Uint8:
+					if b, ok := srcV.(bool); ok {
+						if b != (targetV.(uint8) == 1) {
+							propMatch = false
+						}
+					} else {
+						if uint8(int(srcV.(float64))) != targetV.(uint8) {
+							propMatch = false
+						}
+					}
+				case reflect.Int32:
+					if int32(int(srcV.(float64))) != targetV.(int32) {
+						propMatch = false
+					}
+				case reflect.String:
+					if srcV.(string) != targetV.(string) {
+						propMatch = false
+					}
+				default:
+					panic(wanT)
+				}
+				if !propMatch {
+					break
+				}
+			}
+			if propMatch {
+				found = true
+				rb.JavaString = javaName
+				javaToRid[javaName] = uint32(rb.RID)
+				break
+			}
+		}
+		if !found {
+			fmt.Println(javaName, " block statue not found")
+		}
+	}
+
+	counter := 0
+	for _, blk := range blocks {
+		if blk.JavaString == "" {
+			counter += 1
+			// fmt.Printf("%v not found in java\n", blk)
+		}
+	}
+	fmt.Printf("%v blocks not found in java", counter)
+
+	fp, err = os.OpenFile("convert_out/javaBlockToRid.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		panic(err)
+	}
+	if err = json.NewEncoder(fp).Encode(javaToRid); err != nil {
+		panic(err)
+	}
+	fp.Close()
+
 	mapping_out := MappingOut{
 		RIDToMCBlock:   ridToMCBlock,
 		NEMCRidToMCRid: nemcToMCRIDMapping,
 		NEMCRidToVal:   nemcToVal,
 		NEMCToName:     nemcToName,
+		JavaToRid:      javaToRid,
 	}
+
+	fp, err = os.OpenFile("convert_out/StandardMCStates.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		panic(err)
+	}
+	enc := json.NewEncoder(fp)
+	enc.SetIndent("", "\t")
+	enc.Encode(groupedBlocks)
+	fp.Close()
+
 	fp, err = os.OpenFile("convert_out/blockmapping_nemc_2_1_10_mc_1_19.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		panic(err)
+	}
 	compressor := brotli.NewWriter(fp)
 	if err := gob.NewEncoder(compressor).Encode(mapping_out); err != nil {
 		panic(err)

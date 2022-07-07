@@ -25,6 +25,8 @@ var Blocks []*GeneralBlock
 var LegacyBlocks []*LegacyBlock
 var LegacyRuntimeIDs = map[LegacyBlockHash]uint32{}
 
+var JavaToRuntimeID func(javaBlockStr string) (runtimeID uint32, found bool)
+
 const (
 	// SubChunkVersion is the current version of the written sub chunks, specifying the format they are
 	// written on disk and over network.
@@ -111,7 +113,7 @@ func registerBlockState(s *GeneralBlock) {
 	h := StateHash{name: s.Name, properties: hashProperties(s.Properties)}
 	if _, ok := stateRuntimeIDs[h]; ok {
 		Blocks = append(Blocks, s)
-		return
+		// return
 		// UNSAFE !!! IGNORING SAME RUNTIME IDS !!!
 		// =
 		panic(fmt.Sprintf("cannot register the same state twice (%+v)", s))
@@ -129,6 +131,7 @@ type MappingIn struct {
 	NEMCRidToMCRid []int16
 	NEMCRidToVal   []uint8
 	NEMCToName     []string
+	JavaToRid      map[string]uint32
 }
 
 func InitMapping(mappingInData []byte) {
@@ -202,6 +205,13 @@ func InitMapping(mappingInData []byte) {
 	}
 	RuntimeIDToLegacyBlock = func(runtimeID uint32) (legacyBlock *LegacyBlock) {
 		return legacyBlocks[runtimeID]
+	}
+	JavaToRuntimeID = func(javaBlockStr string) (runtimeID uint32, found bool) {
+		if rtid, hasK := mappingIn.JavaToRid[javaBlockStr]; hasK {
+			return rtid, true
+		} else {
+			return AirRID, false
+		}
 	}
 }
 
