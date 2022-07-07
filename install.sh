@@ -8,95 +8,150 @@
 # operating systems or machines, please contact us by email:
 # <support at boul dot dev>
 
-#Planned support: macOS, iOS, Android, Linux (Debian, Ubuntu)
-
+# Planned support: macOS, iOS, Android, Linux (Debian, Ubuntu)
 #=============================================================#
 
-# I keep meeting bugs when testing this fucked-up script
-# Temp disable macOS for now, I will try to fix it later
-if [[ $(uname) == "Darwin" ]] && [[ $(uname -m) == "arm64" ]] || [[ $(uname -m) == "x86_64" ]]; then
-  echo "macOS not supported by installer at that time!"
-  echo "Please wait for updates or install FastBuilder manually."
-  exit 1
-fi
-# Define a function to properly exit
+# Define functions to properly exit
 # This were designed to delete temp files after script ends
+trap ctrl_c INT
+
 function quit_installer() {
-  rm -r ${PREFIX}/./fastbuilder-temp
-  exit ${1}
+  rm -rf "${PREFIX}"/./fastbuilder-temp
+  exit "${1}"
+}
+
+function ctrl_c() {
+  printf "\n\033[33mUser forced exit, performing clenup steps...\033[0m\n"
+  quit_installer 1
 }
 
 # Start
-SCRIPT_VERSION="0.0.1"
-printf "\033[33mFastBuilder Phoenix Installer v${SCRIPT_VERSION}\033[0m\n"
-printf "\033[33mBouldev 2021, Copyrights Reserved.\033[0m\n"
+SCRIPT_VERSION="0.0.2"
+printf "\033[33mFastBuilder Phoenix Installer v%s\033[0m\n" "${SCRIPT_VERSION}"
+printf "\033[33mBouldev 2022, Copyrights Reserved.\033[0m\n"
 printf "\033[32mStarting installation progress...\033[0m\n"
 
 # Check permissions and prefix
 echo "Checking permissons..."
-if [ ${PREFIX} ]; then
-  printf "\033[33mFound prefix preset in your environment: ${PREFIX}\033[0m\n"
+if [ "${DESTDIR}" ]; then
+  printf "\033[33mFound DESTDIR: %s\033[0m\n" "${DESTDIR}"
+  PREFIX="${DESTDIR}"
+elif [ "${PREFIX}" ]; then
+  printf "\033[33mFound prefix preset in your environment: %s\033[0m\n" "${PREFIX}"
 else
   PREFIX="/usr/local"
 fi
 BINDIR="${PREFIX}/bin"
 ROOT_REQUIRED="1"
-if [[ ${1} ]] && [[ ${1} == "local" ]]; then
-  printf "\033[32mUser required to run install script with non-root access\033[0m\n"
-  printf "A folder named \"fastbuilder\" will be created under ${HOME}\n"
+if [ ${LOCAL} ]; then
+  printf "\033[32mUser required to run install script with non-privileged access\033[0m\n"
+  printf "A folder named \"fastbuilder\" will be created under %s\n" "${HOME}"
   PREFIX="${HOME}/fastbuilder"
   ROOT_REQUIRED="0"
-elif [ $(id -u) == 0 ]; then
+elif [[ $(uname -o) == "Android" ]] && [[ $(apt install &> /dev/null; echo $?) == 0 ]]; then
+  # No need of root on Termux
+  printf "\033[32mRunning under Android Termux (APT does not require root)\033[0m\n"
+  ROOT_REQUIRED="1"
+elif [[ $(id -u) == 0 ]]; then
   if [ ${SUDO_UID} ]; then
-    printf "\033[32mRunning under sudo priviledges\033[0m\n"
+    printf "\033[32mRunning under sudo privileges\033[0m\n"
   else
     printf "\033[33mIt is dangerous to run under root directly, but the\033[0m"
     printf "\033[33m install script would proceed anyway (sudo suggested).\033[0m\n"
   fi
 else
-  printf "\033[31mRoot priviledge required!\033[0m\n"
-  printf "\033[31mPlease run the installer using this command:\033[0m\n"
-  printf "\033[33m  sudo sh ${0}\033[0m\n"
-  exit 1
+  printf "\033[31mRoot privilege required!\033[0m\n"
+  printf "\033[31mPlease run this installer under root\033[0m\n"
+  printf "\033[31mOr prepend LOCAL=1 before command\033[0m\n"
+  printf "\033[31mTo install FastBuilder without root access.\033[0m\n"
+  quit_installer 1
 fi
 
 # Basic informations
 echo "Fetching basic info..."
-MACHINE=$(uname -m)
 SYSTEM_NAME=$(uname)
 KERNEL_VERSION=$(uname -r)
 # The reason we do not use "uname -m"/"uname -p" to identify arch
 # is that they may return unexpected values.
 # e.g. "uname -m" returns device model name when on iOS
 arch_format() {
-  ARCH=$(arch)
-  if [ $(echo ${ARCH} | grep -E "armv8|aarch64" | echo $?) -eq 0 ]; then
+  which arch > /dev/null 2>&1
+  if [ $? == 0 ]; then
+    ARCH=$(arch)
+  else
+    ARCH=$(uname -m)
+  fi
+
+  if [ $(echo ${ARCH} | grep -E "armv8|aarch64" &> /dev/null; echo $?) == 0 ]; then
     ARCH="arm64"
-  elif [ $(echo ${ARCH} | grep -E "x64|amd64" | echo $?) -eq 0 ]; then
+  elif [ $(echo ${ARCH} | grep -E "x64|amd64" &> /dev/null; echo $?) == 0 ]; then
     ARCH="x86_64"
-  elif [[ ${ARCH} == "arm" ]] || [[ ${ARCH} = "arm32" ]]; then
+  elif [ $(echo ${ARCH} | grep -E "386|586|686" &> /dev/null; echo $?) == 0 ]; then
+    ARCH="x86"
+  elif [[ ${ARCH} == "arm" ]] || [[ ${ARCH} == "arm32" ]]; then
     ARCH="armv7"
   fi
   printf ${ARCH}
 }
+machine_format() {
+  MACHINE=$(uname -m)
+  if [ $(echo ${MACHINE} | grep -E "armv4|armv5|armv6|armv7" &> /dev/null; echo $?) == 0 ]; then
+    MACHINE="arm"
+  elif [ $(echo ${MACHINE} | grep -E "386|586|686" &> /dev/null; echo $?) == 0 ]; then
+    MACHINE="x86"
+  fi
+  printf ${MACHINE}
+}
 ARCH="$(arch_format)"
-echo "Your device and OS: ${SYSTEM_NAME}, ${KERNEL_VERSION} ${ARCH}"
+MACHINE="$(machine_format)"
+# Darwin's uname is not reliable, using sw_vers to identify device family if possible
+if [ ${SYSTEM_NAME} == "Darwin" ]; then
+  which sw_vers > /dev/null 2>&1
+  if [ $? == 0 ]; then
+    if [ "$(sw_vers -productName)" == "macOS" ]; then
+      MACHINE="macos"
+    elif [ "$(sw_vers -productName)" == "iPhone OS" ]; then
+      MACHINE="ios"
+    else
+      printf "\033[31mUnknown Darwin Product %s!\033[0m\n" "$(sw_vers -productName)"
+      printf "\033[31mPlease report this issue under \033[0m"
+      printf "\033[33mhttps://github.com/LNSSPsd/PhoenixBuilder/issues\033[0m\n"
+      exit 1
+    fi
+  else
+    printf "\033[31mRequired command sw_vers(1) not found\033[0m\n"
+    printf "\033[31mUsing uname(1) for guessing (That's terrible)\033[0m\n"
+    if [ $(echo ${MACHINE} | grep -E "iPhone|iPad|iPod"; echo $?) == 0 ]; then
+      MACHINE="ios"
+    else
+      MACHINE="macos"
+    fi
+  fi
+fi
+echo "Your device and OS: ${SYSTEM_NAME} ${KERNEL_VERSION}, ${ARCH}"
 
 # Check if any CLI tools that can be used to download files
 # Use cURL by default
 echo "Finding downloaders..."
 DL_TOOL=""
+DL_TOOL_NAME=""
+DL_TOOL_OUT_FLAG="-o"
 for i in "curl" "wget" "axel" "aria2c"; do
-  which ${i} >/dev/null 2>&1
-  if [ $? -eq 0 ]; then
+  which ${i} > /dev/null 2>&1
+  if [ $? == 0 ]; then
     echo "Found ${i}: $(which ${i})"
     DL_TOOL=$(which ${i})
+    DL_TOOL_NAME="${i}"
     break
   fi
 done
 if [ ${DL_TOOL} == "" ]; then
   printf "\033[31mInstall curl before using this script!\033[0m\n"
   exit 1
+elif [ ${DL_TOOL_NAME} == "wget" ]; then
+  DL_TOOL_OUT_FLAG="-O"
+elif [ ${DL_TOOL_NAME} == "curl" ]; then
+  DL_TOOL_OUT_FLAG="-fSL -o"
 fi
 
 # Check if "install" command exists
@@ -105,158 +160,242 @@ INSTALL=""
 # On macOS, GNU install were installed using brew with name "ginstall"
 for i in "ginstall" "install"; do
   which ${i} >/dev/null 2>&1
-  if [ $? -eq 0 ]; then
+  if [ $? == 0 ]; then
     printf "\033[32mFastBuilder will be installed by using ${i}: \033[0m"
     printf "\033[32m$(which ${i})\033[0m\n"
-    INSTALL="${i} -m 755"
+    INSTALL="${i} -m 0755"
     break
   fi
 done
-if [ ${INSTALL} == "" ]; then
+if [ "${INSTALL}" == "" ]; then
   printf "\033[33mThis script prefers to install files by using \033[0m"
-  printf "\033[33mGNU/BSD coreutils but you do not have it. Skipping.\033[0m"
+  printf "\033[33mGNU/BSD install(1) but you do not have it. Skipping.\033[0m"
   INSTALL="cp -f"
 fi
 
-printf "\033[32mAll basic checks complete! Proceeding to install...\033[0m"
+printf "\033[32mAll basic checks complete! Proceeding the installation...\033[0m\n"
+
 # FastBuilder Presets
 # You should not change these contents
-FB_DOMAIN="https://fastbuilder.pro/"
-FB_LOCATION_ROOT="downloads/phoenix/"
-FB_SUFFIX="phoenixbuilder"
-FB_LINK=${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_SUFFIX}
+FB_DOMAIN="https://storage.fastbuilder.pro/"
+FB_LOCATION_ROOT=""
+FB_PREFIX="phoenixbuilder"
+FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}"
 FB_VER=""
 
 # Further system detection
 FILE_TYPE=""
 FILE_ARCH=""
+
+BINARY_INSTALL="0"
+
 if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) == "Android" ]]; then
-  if [[ ${MACHINE} != "arm" ]] && [[ ${MACHINE} != "i386" ]] && [[ $(dpkg -L pro.fastbuilder.phoenix-android | echo $?) -eq 0 ]]; then
-    #printf "\033[31mYou have already installed FastBuilder through APT!\nPlease uninstall \"pro.fastbuilder.phoenix-android\" before running this script.\033[0m\n"
-    #printf "\033[32mOr, download latest FastBuilder's deb package from the user center.\033[0m\n"
-    printf "\033[32mFound previous installed FastBuilder\033[0m\n"
-    #exit 1
-  elif [ $(echo ${ARCH} | grep -E "arm64|armv7" | echo $?) -eq 0 ]; then
-    echo "Downloading FastBuilder Phoenix for Android..."
-    FB_SUFFIX="pro.fastbuilder.phoenix-android"
+  # We do not provide .deb packages for Android X86 currently
+  if [[ ${ROOT_REQUIRED} == "1" ]] && [[ ${ARCH} != "x86" ]] && [[ ${ARCH} != "x86_64" ]] && [[ $(dpkg --version &> /dev/null; echo $?) == 0 ]]; then
+    if [[ $(dpkg -L pro.fastbuilder.phoenix-android &> /dev/null; echo $?) == 0 ]]; then
+      FB_VER=$(dpkg-query --showformat='${Version}' --show pro.fastbuilder.phoenix-android)
+      printf "\033[32mFound previously installed FastBuilder, Version: ${FB_VER}\033[0m\n"
+    fi
+    echo "Requesting FastBuilder Phoenix for Android ${ARCH}..."
+    FB_PREFIX="pro.fastbuilder.phoenix-android"
     FILE_TYPE=".deb"
-    if [ $(echo ${ARCH} | grep "arm64" | echo $?) -eq 0 ]; then
+    if [ $(echo ${ARCH} | grep "arm64" &> /dev/null; echo $?) == 0 ]; then
       FILE_ARCH="aarch64"
     else
       FILE_ARCH="arm"
     fi
   else
-    printf "\033[31mFastBuilder no longer support ${ARCH} Android! Stopping.\033[0m\n"
-    exit 1
+    # Weird error, some Android may not using Termux and then dpkg is something nonexist
+    printf "\033[31mFastBuilder cannot provide .deb for your ${ARCH} Android! Requesting binary executables.\033[0m\n"
+    FB_PREFIX="phoenixbuilder-android-executable-"
+    FILE_TYPE=""
+    FILE_ARCH="${ARCH}"
+    BINARY_INSTALL="1"
   fi
-elif [ $(echo ${MACHINE} | grep -E "iPhone|iPad|iPod" | echo $?) == "0" ]; then
-  echo ${MACHINE}
-  if [ $(dpkg -L pro.fastbuilder.phoenix | echo $?) == "0" ]; then
-    #printf "\033[31mYou have already installed FastBuilder through APT!\nPlease uninstall \"pro.fastbuilder.phoenix\" before running this script.\033[0m\n"
-    #printf "\033[32mOr, download latest FastBuilder's deb package from your package manager (Cydia, Sileo, etc.).\033[0m\n"
-    printf "\033[32mFound previous installed FastBuilder\033[0m\n"
-    #exit 1
-  elif [ ${ARCH} != "arm64" ]; then
-    printf "\033[31mFastBuilder no longer support ${ARCH} iOS! Stopping.\033[0m\n"
-    exit 1
-  fi
-    echo "Downloading FastBuilder Phoenix for iOS..."
-    FB_SUFFIX="pro.fastbuilder.phoenix"
+elif [ ${MACHINE} == "ios" ]; then
+  if [[ ${ROOT_REQUIRED} == "1" ]]; then
+    if [[ $(dpkg -L pro.fastbuilder.phoenix &> /dev/null; echo $?) == "0" ]]; then
+      FB_VER=$(dpkg-query --showformat='${Version}' --show pro.fastbuilder.phoenix)
+      printf "\033[32mFound previously installed FastBuilder, Version: ${FB_VER}\033[0m\n"
+    fi
+    printf "\033[32mIt is suggested to upgrade FastBuilder from your package manager (Cydia, Sileo, etc.).\033[0m\n"
+    printf "\033[32mBut I don't care, proceeding...\033[0m\n"
+    echo "Requesting FastBuilder Phoenix for ${ARCH} iOS..."
+    FB_PREFIX="pro.fastbuilder.phoenix"
     FILE_TYPE=".deb"
     # iOS does not seperate architectures, iphoneos-arm for all
     FILE_ARCH="iphoneos-arm"
-else
-  echo fuck
+  elif [ ${ARCH} != "arm64" ]; then
+    printf "\033[31mFastBuilder no longer support ${ARCH} iOS! Stopping.\033[0m\n"
+    exit 1
+  elif [[ $(dpkg --version &> /dev/null; echo $?) != 0 ]] || [[ ${ROOT_REQUIRED} != "1" ]]; then
+    printf "\033[32mWe can't call your Debian Packager, Requesting binary executables.\033[0m\n"
+    FB_PREFIX="phoenixbuilder-ios-executable"
+    FILE_TYPE=""
+    FILE_ARCH=""
+    BINARY_INSTALL="1"
+  fi
+elif [ ${MACHINE} == "macos" ]; then
+  # Fat Mach-O contains multiple arches, and yes we did that
+  if [[ ${ARCH} == "arm64" ]] || [[ ${ARCH} == "x86_64" ]]; then
+    echo "Requesting FastBuilder Phoenix for ${ARCH} macOS..."
+    FB_PREFIX="phoenixbuilder-macos"
+    FILE_TYPE=""
+    FILE_ARCH=""
+    BINARY_INSTALL="1"
+  else
+    printf "\033[31mFastBuilder no longer support ${ARCH} macOS! Stopping.\033[0m\n"
+    exit 1
+  fi
+elif [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) != "Android" ]]; then
+  # Finally, Linux
+  echo     "NOTE: We only provide x86_64 and arm64 executables currently, if"
+  echo     "      you need prebuilts for other architectures, issue at"
+  printf "\033[32mhttps://github.com/LNSSPsd/PhoenixBuilder/issues\033[0m\n"
+  if [[ ${ARCH} != "x86_64" ]] && [[ ${ARCH} == "arm64" ]]; then
+    FB_PREFIX="phoenixbuilder-"
+    FILE_ARCH="aarch64"
+  elif [[ ${ARCH} != "x86_64" ]] && [[ ${ARCH} != "arm64" ]]; then
+    FB_PREFIX="phoenixbuilder-"
+    FILE_ARCH="${ARCH}"
+  fi
+  BINARY_INSTALL="1"
 fi
 
 # Download now
-if [ ${FILE_ARCH} == "iphoneos-arm" ]; then
+if [[ ${MACHINE} == "ios" ]] && [[ ${ROOT_REQUIRED} == "1" ]]; then
   # Install APT source for iOS. This would allow users to upgrade FastBuilder from Cydia
-  if [[ $(grep "apt.boul.dev" -rl /etc/apt/sources.list.d | echo $?) -eq 1 ]] && [[ ${ROOT_REQUIRED} == "1" ]]; then
+  if [ $(grep "apt.boul.dev" -rl /etc/apt/sources.list.d &> /dev/null; echo $?) != 0 ]; then
     printf "\033[32mAdding apt.boul.dev to your repo list...\033[0m\n"
-    echo "deb https://apt.boul.dev/ ./" >/etc/apt/sources.list.d/apt.boul.dev.list
+    echo "deb https://apt.boul.dev/ ./" > /etc/apt/sources.list.d/apt.boul.dev.list
   else
     printf "\033[32mUser already added apt.boul.dev to repo list.\033[0m\n"
   fi
 fi
 
-mkdir -p ${PREFIX}/./fastbuilder-temp ${PREFIX}/./fastbuilder
-if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) != "Android" ]]; then
-  # We have not provide Linux distribution packages currently, so binaries only
+rm -rf "${PREFIX}"/./fastbuilder-temp "${BINDIR}"/./fastbuilder
+mkdir -p "${PREFIX}"/./fastbuilder-temp
+LAUNCH_CMD=""
+
+report_error() {
+  if [ ${DL_TOOL_NAME} == "curl" ]; then
+    if [ ${1} == 22 ]; then
+      printf "\033[031Download failure! Requested resources not exist! (curl: 22)\033[0m\n"
+      printf "\033[031 ${FB_LINK}\033[0m\n"
+    elif [ ${1} == 3 ]; then
+      printf "\033[031URL malformed. (curl: 3)\033[0m\n"
+      printf "\033[031Please report this bug!\033[0m\n"
+    elif [ ${1} == 23 ]; then
+        printf "\033[031Could not write data to local filesystem! (curl: 23)\033[0m\n"
+        printf "\033[031Check your r/w permissions before the installation.\033[0m\n"
+    else
+        printf "\033[031Download failure! Please check your connections (curl: ${DL_RET}).\nStopping.\033[0m\n"
+    fi
+  elif [ ${DL_TOOL_NAME} == "wget" ]; then
+    if [ ${1} == 1 ]; then
+      printf "\033[031Generic error (wget: 1)\nTry using curl?\033[0m\n"
+    elif [ ${1} == 2 ]; then
+      printf "\033[031Parse error, check your .wgetrc and .netrc (wget: 2)\033[0m\n"
+    elif [ ${1} == 3 ]; then
+      printf "\033[031File I/O error (wget: 3)\033[0m\n"
+      printf "\033[031Check your r/w permissions before the installation.\033[0m\n"
+    elif [ ${1} == 8 ]; then
+      printf "\033[031Download failure! Requested resources not exist! (wget: 8)\033[0m\n"
+      printf "\033[031 ${FB_LINK}\033[0m\n"
+    else
+      printf "\033[031Download failure! Please check your connections (wget: ${1}).\nStopping.\033[0m\n"
+    fi
+  elif [ ${DL_TOOL_NAME} == "aria2c" ]; then
+    if [ ${1} == 1 ]; then
+      printf "\033[031Unknown error occurred (aria2c: 1)\nTry using curl?\033[0m\n"
+    elif [ ${1} == 3 ]; then
+      printf "\033[031Download failure! Requested resources not exist! (aria2c: 3)\033[0m\n"
+      printf "\033[031 ${FB_LINK}\033[0m\n"
+    elif [ ${1} == 9 ]; then
+      printf "\033[031Disk space not enough. (aria2c: 9)\nCleanup spaces before the installation!\033[0m\n"
+    elif [[ ${1} == 15 ]] || [[ ${1} == 16 ]] || [[ ${1} == 17 ]] || [[ ${1} == 18 ]]; then
+      printf "\033[031Could not open/create file or directory (aria2c: ${1})\033[0m\n"
+      printf "\033[031Check your r/w permissions before the installation.\033[0m\n"
+    else
+      printf "\033[031Download failure! Please check your connections (aria2c: ${1}).\nStopping.\033[0m\n"
+    fi
+  elif [ ${DL_TOOL_NAME} == "axel" ]; then
+    if [ ${1} == 1 ]; then
+      printf "\033[031Something went wrong (axel: 1)\nTry using curl?\033[0m\n"
+    else
+      printf "\033[031Download failure! Please check your connections (axel: ${DL_RET}).\nStopping.\033[0m\n"
+    fi
+  else
+    printf "\033[031Download failure! (${DL_TOOL}: ${DL_RET}).\nStopping.\033[0m\n"
+  fi
+  quit_installer 1
+}
+
+if [[ ${BINARY_INSTALL} == "1" ]]; then
+  # Repeat FB_LINK
+  FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
   printf "Downloading FastBuilder binary..."
-  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/fastbuilder ${FB_LINK}
-  if [ $? -eq 0 ]; then
-    printf "\033[32mSuccessfully downloaded FastBuilder (x86_64)\033[0m\n"
+  ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}/./fastbuilder-temp/fastbuilder" "${FB_LINK}"
+  DL_RET=$?
+  if [ ${DL_RET} == 0 ]; then
+    printf "\033[32mSuccessfully downloaded FastBuilder\033[0m"
+    if [ ${MACHINE} == "macos" ]; then
+      printf "\033[32m (Universal)\033[0m\n"
+    elif [ ${MACHINE} == "ios" ]; then
+      printf "\033[32m for iOS\033[0m\n"
+    else
+      printf "\033[32m (${ARCH})\033[0m\n"
+    fi
   else
-    printf "\033[31mDownload failure! Please check your connections.\nStopping.\033[0m\n"
-    quit_installer 1
+    report_error ${DL_RET}
   fi
+  # Explictly perform chmod
+  chmod +x "${PREFIX}"/./fastbuilder-temp/fastbuilder
   if [ ${ROOT_REQUIRED} == "1" ]; then
-    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${BINDIR}
+    ${INSTALL} "${PREFIX}"/./fastbuilder-temp/fastbuilder ${BINDIR}
+    LAUNCH_CMD="fastbuilder"
   else
-    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${PREFIX}/
-  fi
-elif [[ ${SYSTEM_NAME} == "Darwin" ]] && [[ ${FILE_ARCH} != "iphoneos-arm" ]]; then
-  printf "Downloading FastBuilder binary..."
-  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/fastbuilder ${FB_LINK}-macos
-  if [ $? -eq 0 ]; then
-    printf "\033[32mSuccessfully downloaded FastBuilder (Universal)\033[0m\n"
-  else
-    printf "\033[31mDownload failure! Please check your connections.\nStopping.\033[0m\n"
-    quit_installer 1
-  fi
-  if [ ${ROOT_REQUIRED} == "1" ]; then
-    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${BINDIR}
-  else
-    ${INSTALL} ${PREFIX}/./fastbuilder-temp/fastbuilder ${PREFIX}/
+    ${INSTALL} "${PREFIX}"/./fastbuilder-temp/fastbuilder "${PREFIX}"/
+    LAUNCH_CMD="${PREFIX}/fastbuilder"
   fi
 else
   # Download a file contains the latest version num for FastBuilder distros
   printf "Getting latest version of FastBuilder..."
-  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}version
-  if [ $? -eq 0 ]; then
-    FB_VER=$(cat fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
+  ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}/version
+  DL_RET=$?
+  if [ ${DL_RET} == 0 ]; then
+    FB_VER=$(cat "${PREFIX}"/./fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
+    printf "${FB_VER}\n"
   else
-    printf "\033[31mDownload failure! Please check your connections.\nStopping.\033[0m\n"
-    quit_installer 1
+    report_error ${DL_RET}
   fi
   printf "Downloading FastBuilder package...\n"
-  ${DL_TOOL} -o ${PREFIX}/./fastbuilder-temp/fastbuilder.deb ${FB_LINK}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}
-  if [ $? -eq 0 ]; then
+  # Repeat FB_LINK
+  FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
+  ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/fastbuilder.deb ${FB_LINK}
+  DL_RET=$?
+  if [ ${DL_RET} == 0 ]; then
     printf "\033[32mSuccessfully downloaded FastBuilder\033[0m\n"
   else
-    printf "\033[031Download failure! Please check your connections.\nStopping.\033[0m\n"
-    quit_installer 1
+    report_error ${DL_RET}
   fi
   # When installer.sh have root priviledges, it will install packages directly through dpkg
-  # If not, it will unpack it and export the FastBuilder executable to PATH
   if [ ${ROOT_REQUIRED} == "1" ]; then
     printf "Installing deb package...\n"
-    dpkg -i ${PREFIX}/./fastbuilder-temp/fastbuilder.deb
-    if [ $? != "0" ]; then
+    dpkg -i "${PREFIX}"/./fastbuilder-temp/fastbuilder.deb
+    if [ $? != 0 ]; then
       printf "\033[31mSome errors occured when calling Debian Packager.\nYou may want to run \"dpkg --configure -a\" to fix some problems.\033[0m\n"
       quit_installer 1
     fi
+    LAUNCH_CMD="fastbuilder"
   else
-    printf "Installing FastBuilder to specified path: ${PREFIX}\n"
-    mkdir -p ${PREFIX}
-    dpkg -x ${PREFIX}/./fastbuilder-temp/fastbuilder.deb ${PREFIX}/./fastbuilder/
-    if [ $(uname -o | grep "Android" | echo $?) -eq 0 ]; then
-      mv ${PREFIX}/data/data/com.termux/files/usr/bin/fastbuilder ${PREFIX}/
-      # Remember to add a dot in front of the target directory
-      # to prevent some unexpected behavior
-      rm -r ${PREFIX}/./data
-    else
-      mv ${PREFIX}/usr/local/bin/fastbuilder ${PREFIX}/
-      rm -r ${PREFIX}/./usr
-    fi
-    if [ $(cat ${HOME}/.profile | grep "export \${HOME}/fastbuilder:\$PATH" | echo $?) -eq 1 ]; then
-      echo "Adding ${HOME}/fastbuilder to your \$PATH"
-      echo "export \${HOME}/fastbuilder:\$PATH" >${HOME}/.profile
-    fi
+    mv "${PREFIX}"/./fastbuilder-temp/fastbuilder.deb "${PREFIX}"/./fastbuilder.deb
+    printf "\033[32mUnprevileged, A deb file has been downloaded at %s/fastbuilder.deb\033[0m\n" "${PREFIX}"
+    printf "\033[32mManually install it by \"dpkg -i %s/fastbuilder.deb\"" "${PREFIX}\033[0m\n"
+    quit_installer 0
   fi
 fi
 
 # Yay, everything done!
-printf "\033[32mFastBuilder has been successfully installed on your device!\nUse command \"fastbuilder\" to launch it.\033[0m\n"
+printf "\033[32mFastBuilder has been successfully installed on your device!\nUse command \"%s\" to launch it.\033[0m\n" "${LAUNCH_CMD}"
 quit_installer 0

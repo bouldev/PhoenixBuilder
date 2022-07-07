@@ -86,6 +86,20 @@ jobs:
     #  run: |
     #    mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
     #    rm -rf $GITHUB_WORKSPACE/macOS-sdks
+    # Debian/Ubuntu provided LLVM only support native targets, using Homebrew prebuilt for all targets
+    - name: Cache LLVM
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        key: llvm-cache
+        path: ~/llvm
+    - name: Download LLVM
+      if: steps.cache-llvm.outputs.cache-hit != 'true'
+      run: |
+        wget -q https://github.com/Torrekie/homebrew-core/releases/download/LLVM-14.0.6/llvm.tar.xz
+        tar xf llvm.tar.xz
+        rm llvm.tar.xz
+        mv llvm/14.0.6 ~/llvm
     - name: Cache Openwrt SDK
       id: cache-openwrt-sdk
       uses: actions/cache@v3
@@ -95,7 +109,7 @@ jobs:
     - name: Download Openwrt SDK
       if: steps.cache-openwrt-sdk.outputs.cache-hit != 'true'
       run: |
-        wget https://archive.openwrt.org/releases/21.02.2/targets/ramips/mt7620/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+        wget -q https://archive.openwrt.org/releases/21.02.2/targets/ramips/mt7620/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         tar -xJf openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         rm openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         mv openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64 ~/
@@ -119,8 +133,7 @@ jobs:
     - name: Build GUI applications
       run: |
         export THEOS=~/theos
-        cd fyne-gui
-        cd android_wrapper
+        cd fyne-gui/android_wrapper
         go build
         cd ..
         make
@@ -138,6 +151,7 @@ jobs:
         ls -lh build/>release.txt
         mv release.txt build/release-list.txt
         cp version build/version.txt
+        cp install.sh build/install.sh
     - name: Generate index files for storage over github
       run: node index_generator.js build
     - name: Deploy to storage
