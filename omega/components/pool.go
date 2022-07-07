@@ -147,5 +147,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
 			// return &RemoveBlock{BasicComponent: &defines.BasicComponent{}}
 		},
+		"统一导入系统": func() defines.Component {
+			return &UniverseImport{BasicComponent: &defines.BasicComponent{}}
+		},
 	}
 }

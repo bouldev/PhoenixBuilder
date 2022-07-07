@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
-	"phoenixbuilder/minecraft/protocol"
-	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
@@ -15,6 +13,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"phoenixbuilder/omega/utils/structure"
 
 	"github.com/df-mc/goleveldb/leveldb/opt"
 )
@@ -26,7 +26,7 @@ type DifferRecover struct {
 	BackUpName                    string   `json:"备份存档名"`
 	Operators                     []string `json:"授权使用者"`
 	currentProvider, ckptProvider mirror.ChunkReader
-	delayBlocks                   map[define.CubePos]*blockToRepair
+	delayBlocks                   map[define.CubePos]*structure.IOBlock
 	delayBlocksMu                 sync.Mutex
 }
 
@@ -39,15 +39,8 @@ func (o *DifferRecover) Init(cfg *defines.ComponentConfig) {
 	o.BackUpName = "backup"
 }
 
-type blockToRepair struct {
-	pos      define.CubePos
-	block    uint32
-	blockNbt map[string]interface{}
-	hit      bool
-}
-
 //TODO Check if differ recover is affected by 0 -> -64
-func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.ChunkReader, pos define.CubePos, distance int) chan *blockToRepair {
+func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.ChunkReader, pos define.CubePos, distance int) chan *structure.IOBlock {
 	computeRequiredChunks := func(pos define.CubePos, distance int) (requiredChunks []define.ChunkPos) {
 		// chunkX, ChunkZ := int(math.Floor(float64(pos[0]/16))), int(math.Floor(float64(pos[2]/16)))
 		chunkSX, chunkSZ := (pos[0]-distance-1)/16, (pos[2]-distance-1)/16
@@ -61,7 +54,7 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 		return requiredChunks
 	}
 	chunksToFix := computeRequiredChunks(pos, distance)
-	repairChan := make(chan *blockToRepair, 10240)
+	repairChan := make(chan *structure.IOBlock, 10240)
 	go func() {
 		for _, chunkPos := range chunksToFix {
 			ckpt := ckptProvider.Get(chunkPos)
@@ -84,9 +77,9 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 							realBlock := current.Chunk.Block(x, y, z, 0)
 							if targetBlock != realBlock {
 								p := define.CubePos{int(x) + int(chunkPos[0])*16, int(y), int(z) + int(chunkPos[1])*16}
-								b := &blockToRepair{pos: p, block: targetBlock}
+								b := &structure.IOBlock{Pos: p, RTID: targetBlock}
 								if nbt, hasK := nbts[p]; hasK {
-									b.blockNbt = nbt
+									b.NBT = nbt
 									// fmt.Println("A: ", b.blockNbt)
 								}
 								repairChan <- b
@@ -105,15 +98,15 @@ func (o *DifferRecover) updateDelayBlocks(force bool) {
 	// fmt.Println("C: ", o.delayBlocks)
 	for pos, block := range o.delayBlocks {
 		fmt.Println(block)
-		if block.hit || force {
-			switch block.blockNbt["id"] {
+		if block.Hit || force {
+			switch block.NBT["id"] {
 			case "sign":
-				nbt := block.blockNbt
-				fmt.Println("sign: ", nbt)
-				o.Frame.GetGameControl().SendMCPacket(&packet.BlockActorData{
-					Position: protocol.BlockPos{int32(pos[0]), int32(pos[1]), int32(pos[2])},
-					NBTData:  nbt,
-				})
+				// nbt := block.BlockNbt
+				// fmt.Println("sign: ", nbt)
+				// o.Frame.GetGameControl().SendMCPacket(&packet.BlockActorData{
+				// 	Position: protocol.BlockPos{int32(pos[0]), int32(pos[1]), int32(pos[2])},
+				// 	NBTData:  nbt,
+				// })
 			case "CommandBlock":
 
 			}
@@ -163,7 +156,7 @@ func (o *DifferRecover) onTrigger(chat *defines.GameChat) (stop bool) {
 				currentPos := define.CubePos{_currentPos[0], _currentPos[1], _currentPos[2]}
 				blocksToFix := o.GetBlocksPipe(o.currentProvider, o.ckptProvider, currentPos, distance)
 				counter := 0
-				o.delayBlocks = make(map[define.CubePos]*blockToRepair)
+				o.delayBlocks = make(map[define.CubePos]*structure.IOBlock)
 				o.delayBlocksMu = sync.Mutex{}
 				t := time.NewTicker(time.Millisecond * time.Duration(o.Speed))
 				sender := o.Frame.GetGameControl().SendWOCmd
@@ -171,17 +164,17 @@ func (o *DifferRecover) onTrigger(chat *defines.GameChat) (stop bool) {
 					counter++
 					if counter%100 == 99 {
 						pk.ActionBar(fmt.Sprintf("current %v blocks\n", counter+1))
-						sender(fmt.Sprintf("tp @s %v %v %v\n", block.pos[0], block.pos[1], block.pos[2]))
+						sender(fmt.Sprintf("tp @s %v %v %v\n", block.Pos[0], block.Pos[1], block.Pos[2]))
 					}
-					blk := chunk.RuntimeIDToLegacyBlock(block.block)
+					blk := chunk.RuntimeIDToLegacyBlock(block.RTID)
 					if blk == nil {
 						continue
 					}
-					cmd := fmt.Sprintf("setblock %v %v %v %v %v\n", block.pos[0], block.pos[1], block.pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)
+					cmd := fmt.Sprintf("setblock %v %v %v %v %v\n", block.Pos[0], block.Pos[1], block.Pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)
 					sender(cmd)
-					if block.blockNbt != nil {
+					if block.NBT != nil {
 						o.delayBlocksMu.Lock()
-						o.delayBlocks[block.pos] = block
+						o.delayBlocks[block.Pos] = block
 						// fmt.Println("B: ", o.delayBlocks[block.pos])
 						o.delayBlocksMu.Unlock()
 						if len(o.delayBlocks) > 64 {
@@ -206,8 +199,8 @@ func (o *DifferRecover) onBlockUpdate(pos define.CubePos, origRTID, currentRTID 
 		if b == nil {
 			return
 		}
-		if b.block == origRTID || b.block == currentRTID {
-			b.hit = true
+		if b.RTID == origRTID || b.RTID == currentRTID {
+			b.Hit = true
 		}
 	}
 }

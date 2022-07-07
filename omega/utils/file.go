@@ -156,3 +156,23 @@ func CopySymLink(source, dest string) error {
 	}
 	return os.Symlink(link, dest)
 }
+
+func GetFileNotFindStack(path string) (find bool, isDir bool, errStr []string) {
+	if stat, err := os.Stat(path); err == nil {
+		isDir := stat.Mode().IsDir()
+		return true, isDir, nil
+	}
+	errStr = []string{}
+	for {
+		if path == "." {
+			return false, false, errStr
+		}
+		if _, err := os.Stat(path); err != nil {
+			errStr = append(errStr, fmt.Sprintf("无法找到 %v", path))
+			path = filepath.Dir(path)
+		} else {
+			errStr = append(errStr, fmt.Sprintf("可以找到 %v ", path))
+			return false, false, errStr
+		}
+	}
+}
