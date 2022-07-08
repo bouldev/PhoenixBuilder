@@ -35,8 +35,8 @@ endif
 #endif
 
 VERSION=$(shell cat version)
-FBVERSION=$(shell cat version)
-GUIVERSION=$(shell cat ../version)
+GUIVERSION=$(shell cat version)
+FBVERSION=$(shell cat ../version)
 
 SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go $(dir)/*.c))
 
