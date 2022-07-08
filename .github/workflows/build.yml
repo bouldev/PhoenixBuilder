@@ -90,6 +90,8 @@ jobs:
     #    mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
     #    rm -rf $GITHUB_WORKSPACE/macOS-sdks
     # Debian/Ubuntu provided LLVM only support native targets, using Homebrew prebuilt for all targets
+    - name: Setup LLVM dependencies
+      run: sudo apt install libffi6 libedit2 libxml2 libncursesw6 binutils elfutils
     - name: Cache LLVM
       id: cache-llvm
       uses: actions/cache@v3
