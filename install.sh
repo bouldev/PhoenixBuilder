@@ -69,7 +69,7 @@ fi
 
 # Basic informations
 echo "Fetching basic info..."
-SYSTEM_NAME=$(uname | sed -e 's/\(.*\)/\L\1/')
+SYSTEM_NAME=$(uname)
 KERNEL_VERSION=$(uname -r)
 # The reason we do not use "uname -m"/"uname -p" to identify arch
 # is that they may return unexpected values.
