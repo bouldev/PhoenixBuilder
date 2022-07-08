@@ -48,11 +48,13 @@ func (o *RemoveBlock) Init(cfg *defines.ComponentConfig) {
 
 //TODO Check if remove block is affected by 0 -> -64
 func (o *RemoveBlock) onLevelChunk(cd *mirror.ChunkData) {
+	// fmt.Println("chunk arrive!")
 	for sub_i, sub := range cd.Chunk.Sub() {
 		palette := sub.Layer(0).Palette()
 		flag := false
 		for palette_i := 0; palette_i < palette.Len(); palette_i++ {
 			rtid := palette.Value(uint16(palette_i))
+			// fmt.Printf("%v \t", rtid)
 			if _, hasK := o.fastFilter[rtid]; hasK {
 				// fmt.Println("HasK!")
 				flag = true

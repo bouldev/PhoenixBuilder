@@ -3,9 +3,11 @@ package components
 import (
 	"phoenixbuilder/omega/components/qqGroupLink"
 	"phoenixbuilder/omega/defines"
+
+	"github.com/pterm/pterm"
 )
 
-var HintOnRequireMappingUpdate = "该组件暂时无法在 1.18 客户端下正常工作，7.8~7.11号完成 ID 表更新后才可正常工作，请保持耐心,现在，请暂时禁用上述组件"
+var HintOnRequireMappingUpdate = "该组件暂时无法在 1.18 客户端下正常工作，需要进一步适配，请保持耐心,现在，请暂时禁用上述组件"
 
 func GetComponentsPool() map[string]func() defines.Component {
 	return map[string]func() defines.Component{
@@ -88,8 +90,9 @@ func GetComponentsPool() map[string]func() defines.Component {
 		},
 		"32k方块检测": func() defines.Component {
 			// TODO: Mapping Update
-			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
-			// return &ContainerScan{BasicComponent: &defines.BasicComponent{}}
+			// return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
+			pterm.Error.Println("受更新影响，本组件功能部分受损，正则匹配获得的方块名都被改为 unknown，请等待进一步适配")
+			return &ContainerScan{BasicComponent: &defines.BasicComponent{}}
 		},
 		"管理员检测": func() defines.Component {
 			return &OpCheck{BasicComponent: &defines.BasicComponent{}}
@@ -110,9 +113,7 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &Express{BasicComponent: &defines.BasicComponent{}}
 		},
 		"高频红石检查": func() defines.Component {
-			// TODO: Mapping Update
-			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
-			// return &RedStoneUpdateLimit{BasicComponent: &defines.BasicComponent{}}
+			return &RedStoneUpdateLimit{BasicComponent: &defines.BasicComponent{}}
 		},
 		"兑换码": func() defines.Component {
 			return &CDkey{BasicComponent: &defines.BasicComponent{}}

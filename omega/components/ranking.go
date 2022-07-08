@@ -205,10 +205,10 @@ func (o *Ranking) freshScoreboardDisplay() {
 		o.scoreboardRenderCache = newCmds
 		go func() {
 			o.Frame.GetGameControl().SendCmd(o.Render.ClearScoreBoardCmd)
-			time.Sleep(50 * time.Millisecond)
+			// time.Sleep(50 * time.Millisecond)
 			for _, cmd := range newCmds {
 				o.Frame.GetGameControl().SendCmd(cmd)
-				time.Sleep(50 * time.Millisecond)
+				// time.Sleep(50 * time.Millisecond)
 			}
 		}()
 	}

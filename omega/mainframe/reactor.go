@@ -212,13 +212,15 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.UpdateBlock:
 		// TODO WIP cannot decide which block are air and which are not
 		// TODO remove this line after runtime id mapping update
-		return
+		// fmt.Println(p.Position, " -> ", p.NewBlockRuntimeID)
+		// return
 		MCRTID := chunk.NEMCRuntimeIDToStandardRuntimeID(p.NewBlockRuntimeID)
 		p.Flags &= 0xf
 		if (p.Flags != packet.BlockUpdateNetwork && p.Flags != (packet.BlockUpdateNetwork|packet.BlockUpdateNeighbours)) || p.Layer != 0 {
 			// fmt.Println(p, chunk.RuntimeIDToLegacyBlock(MCRTID))
 			break
 		}
+		// fmt.Println(p, chunk.RuntimeIDToLegacyBlock(MCRTID))
 		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
 		if origBlockRTID, success := r.CurrentWorld.UpdateBlock(cubePos, MCRTID); success {
 			for _, cb := range r.BlockUpdateListeners {
@@ -244,6 +246,8 @@ func (r *Reactor) React(pkt packet.Packet) {
 		for _, cb := range o.Reactor.OnLevelChunkData {
 			cb(chunkData)
 		}
+	case *packet.SubChunk:
+		// fmt.Println("SubChunk Packet")
 	}
 	for _, cb := range r.OnAnyPacketCallBack {
 		cb(pkt)
