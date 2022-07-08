@@ -70,8 +70,8 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 			nbts := ckpt.BlockNbts
 			for x := uint8(0); x < 16; x++ {
 				for z := uint8(0); z < 16; z++ {
-					for subChunk := int16(0); subChunk < 16; subChunk++ {
-						for sy := int16(0); sy < 24; sy++ {
+					for subChunk := int16(0); subChunk < 24; subChunk++ {
+						for sy := int16(0); sy < 16; sy++ {
 							y := subChunk*16 + sy + int16(define.WorldRange[0])
 							targetBlock := ckpt.Chunk.Block(x, y, z, 0)
 							realBlock := current.Chunk.Block(x, y, z, 0)
@@ -170,7 +170,7 @@ func (o *DifferRecover) onTrigger(chat *defines.GameChat) (stop bool) {
 					if blk == nil {
 						continue
 					}
-					cmd := fmt.Sprintf("setblock %v %v %v %v %v\n", block.Pos[0], block.Pos[1], block.Pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)
+					cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)
 					sender(cmd)
 					if block.NBT != nil {
 						o.delayBlocksMu.Lock()

@@ -79,7 +79,7 @@ func (o *OmegaBotTaskScheduler) scheduleNext() {
 	}
 	if (o.taskLink.flag & UrgentTask) != 0 {
 		t := o.taskLink
-		t.flag &= Executing
+		t.flag |= Executing
 		go func() {
 			t.task.Activate()
 			t.flag = t.flag & (^Executing)
@@ -98,7 +98,7 @@ func (o *OmegaBotTaskScheduler) scheduleNext() {
 	} else {
 		if (o.taskLink.flag & Paused) == 0 {
 			t := o.taskLink
-			t.flag &= Executing
+			t.flag |= Executing
 			go func() {
 				t.pauseAbleTask.Activate()
 				t.flag = t.flag & (^Executing)

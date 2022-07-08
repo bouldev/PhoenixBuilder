@@ -12,33 +12,40 @@ import (
 type Builder struct {
 	delayBlocks     map[define.CubePos]*IOBlock
 	delayBlocksMu   sync.RWMutex
-	CmdSender       func(cmd string)
+	BlockCmdSender  func(cmd string)
+	TpCmdSender     func(cmd string)
 	ProgressUpdater func(currBlock int)
 	FinalWaitTime   int
 	IgnoreNbt       bool
 	Stop            bool
 }
 
-func (o *Builder) Build(blocksIn chan *IOBlock) {
+func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 	o.delayBlocks = make(map[define.CubePos]*IOBlock)
 	o.delayBlocksMu = sync.RWMutex{}
 	counter := 0
+	delay := time.Duration((float64(1000) / float64(speed)) * float64(time.Millisecond))
+	ticker := time.NewTicker(delay)
 	for block := range blocksIn {
 		if o.Stop {
 			return
 		}
-		if counter%100 == 99 {
-			o.CmdSender(fmt.Sprintf("tp @s %v %v %v\n", block.Pos[0], block.Pos[1], block.Pos[2]))
+		if counter%40 == 0 {
+			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2]))
 		}
 		blk := chunk.RuntimeIDToLegacyBlock(block.RTID)
+		// if blk.Name == "air" {
+		// 	fmt.Println(block.RTID)
+		// }
 		if blk == nil {
 			continue
 		}
-		cmd := fmt.Sprintf("setblock %v %v %v %v %v\n", block.Pos[0], block.Pos[1], block.Pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)
-		o.CmdSender(cmd)
+		cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)
+		o.BlockCmdSender(cmd)
 		o.ProgressUpdater(counter)
 
 		counter++
+		<-ticker.C
 		if block.NBT != nil && !o.IgnoreNbt {
 			o.delayBlocksMu.Lock()
 			o.delayBlocks[block.Pos] = block

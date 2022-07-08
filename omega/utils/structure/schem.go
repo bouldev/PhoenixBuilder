@@ -5,19 +5,20 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"reflect"
+
+	"github.com/Tnze/go-mc/nbt"
 )
 
 type SchemFileStructrue struct {
 	Palette       map[string]int32
 	Metadata      map[string]interface{}
 	DataVersion   int32
-	BlockDataIn   interface{} `nbt:"BlockData"`
+	BlockDataIn   []byte      `nbt:"BlockData"`
 	OffsetIn      interface{} `nbt:"Offset"`
-	blockData     []uint32
+	blockData     []uint16
 	offset        []int
 	PaletteMax    int32
 	Version       int32
@@ -51,46 +52,44 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 			return nil, nil, err
 		}
 	}
-	nbtDecoder := nbt.NewDecoderWithEncoding(dataFeeder, nbt.BigEndian)
+	nbtDecoder := nbt.NewDecoder(dataFeeder)
 	var schemData SchemFileStructrue
-	err = nbtDecoder.Decode(&schemData)
-	if err != nil {
+	infoSender("解压缩数据，将消耗大量内存")
+	_, err = nbtDecoder.Decode(&schemData)
+	infoSender("解压缩成功")
+	if err != nil || schemData.BlockDataIn == nil || len(schemData.BlockDataIn) == 0 {
 		return nil, nil, ErrImportFormateNotSupport
 	}
 
-	convertBlockData := reflect.ValueOf(schemData.BlockDataIn)
-	dataLen := convertBlockData.Len()
+	// convertBlockData := reflect.ValueOf(schemData.BlockDataIn)
+	// dataLen := convertBlockData.Len()
 	blockLen := 0
-	schemData.blockData = make([]uint32, dataLen)
+	schemData.blockData = make([]uint16, len(schemData.BlockDataIn))
 
 	currOffset := uint8(0)
-	currLowByte := uint32(0)
-	for i := 0; i < dataLen; i++ {
-		rv := convertBlockData.Index(i)
-		if !rv.CanUint() {
-			return nil, nil, fmt.Errorf("cannot convert block data %v to uint, please contact 2401PT", rv)
-		}
-		currentByte := uint8(rv.Uint())
+	currLowByte := uint16(0)
+	for i := 0; i < len(schemData.BlockDataIn); i++ {
+		currentByte := schemData.BlockDataIn[i]
 		if currentByte&128 != 0 {
-			currLowByte |= uint32((currentByte)&127) << (currOffset * 7)
+			currLowByte |= uint16((currentByte)&127) << (currOffset * 7)
 			currOffset++
 			continue
 		}
 		if currOffset == 0 {
 			blockLen++
-			schemData.blockData[i] = uint32(currentByte)
+			schemData.blockData[blockLen] = uint16(currentByte)
 		} else {
 			blockLen++
-			currLowByte |= uint32((currentByte)&127) << (currOffset * 7)
-			schemData.blockData[i] = currLowByte
+			currLowByte |= uint16((currentByte)&127) << (currOffset * 7)
+			schemData.blockData[blockLen] = currLowByte
 			currLowByte = 0
 			currOffset = 0
 		}
 	}
 	schemData.blockData = schemData.blockData[:blockLen]
-
+	schemData.BlockDataIn = nil
 	convertOffset := reflect.ValueOf(schemData.OffsetIn)
-	dataLen = convertOffset.Len()
+	dataLen := convertOffset.Len()
 	schemData.offset = make([]int, dataLen)
 	for i := 0; i < dataLen; i++ {
 		rv := convertOffset.Index(i)
@@ -111,12 +110,12 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	}
 	fmt.Printf("schem file size %v %v %v\n", schemData.Width, schemData.Height, schemData.Length)
 	if len(schemData.blockData) != int(schemData.Height)*int(schemData.Width)*int(schemData.Length) {
-		return nil, nil, fmt.Errorf("schem file size check fail %v", len(schemData.blockData))
+		return nil, nil, fmt.Errorf("size check fail %v != %v", schemData.Width*schemData.Height*schemData.Length, len(schemData.blockData))
 	}
 
 	Nbts := make(map[define.CubePos]map[string]interface{})
 	for _, nbt := range schemData.BlockEntities {
-		pos := nbt["Pos"].([3]int32)
+		pos := nbt["Pos"].([]int32)
 		// fmt.Println(nbt)
 		Nbts[define.CubePos{int(pos[0]), int(pos[1]), int(pos[2])}] = nbt
 	}
@@ -125,19 +124,29 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	blockData := schemData.blockData
 	blockChan := make(chan *IOBlock, 4096)
 	stop := false
+	airRID := chunk.AirRID
+	fmt.Println(airRID)
+	infoSender(fmt.Sprintf("格式匹配成功,开始解析,尺寸 [%v, %v, %v]", width, height, length))
 	go func() {
-		for x := 0; x < width; x++ {
-			for y := 0; y < height; y++ {
-				for z := 0; z < length; z++ {
+		defer func() {
+			close(blockChan)
+		}()
+		x, y, z, index := 0, 0, 0, 0
+		blkRTID := uint32(0)
+		var p define.CubePos
+		for z = 0; z < length; z++ {
+			for y = 0; y < height; y++ {
+				for x = 0; x < width; x++ {
 					if stop {
 						return
 					}
-					index := y*width*length + z*width + x
-					blkRTID := blockData[index]
-					p := define.CubePos{x, y, z}
-					b := &IOBlock{Pos: p, RTID: blkRTID}
-					b.NBT = Nbts[p]
-					blockChan <- b
+					index = x + z*width + y*length*width
+					blkRTID = paletteMapping[int32(blockData[index])]
+					if blkRTID == airRID {
+						continue
+					}
+					p = define.CubePos{x, y, z}
+					blockChan <- &IOBlock{Pos: p, RTID: blkRTID, NBT: Nbts[p]}
 				}
 			}
 		}

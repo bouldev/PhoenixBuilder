@@ -41,7 +41,11 @@ type UniverseImport struct {
 type Importor struct {
 	frontendStopper func()
 	middleStopper   func()
+	finalFeeder     chan *structure.IOBlock
 	builder         *structure.Builder
+	task            *universeImportTask
+	doneWaiter      chan struct{}
+	speed           int
 }
 
 func (o *Importor) cancel() {
@@ -50,11 +54,27 @@ func (o *Importor) cancel() {
 	o.builder.Stop = true
 }
 
+func (o *Importor) Activate() {
+	pterm.Info.Printfln("开始处理任务 %v 起点(%v %v %v) 从 %v 方块处开始导入", o.task.Path, o.task.Offset[0], o.task.Offset[1], o.task.Offset[2], o.task.Progress)
+	o.builder.Build(o.finalFeeder, o.speed)
+	close(o.doneWaiter)
+}
+
 func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlock, stopFn func(), err error) {
-	if blockFeeder, stopFn, err := structure.DecodeSchem(data, func(s string) {}); err == nil {
-		return blockFeeder, stopFn, err
+	sender := func(s string) {
+		fmt.Println(s)
 	}
-	pterm.Warning.Println("文件无法被 schem 解析器解析，将尝试下一个解析器")
+	if blockFeeder, stopFn, err := structure.DecodeSchem(data, sender); err == nil {
+		return blockFeeder, stopFn, err
+	} else {
+		pterm.Warning.Printfln("文件无法被 schem 解析器解析，将尝试下一个解析器 (%v)", err)
+	}
+
+	if blockFeeder, stopFn, err := structure.DecodeSchematic(data, func(s string) {}); err == nil {
+		return blockFeeder, stopFn, err
+	} else {
+		pterm.Warning.Printfln("文件无法被 schematic 解析器解析，将尝试下一个解析器 (%v)", err)
+	}
 	return nil, nil, fmt.Errorf("无法找到合适的解析器")
 }
 
@@ -82,9 +102,19 @@ func (o *UniverseImport) StartNewTask() {
 		pterm.Success.Println("文件成功被解析,将开始导入")
 		o.currentBuilder = &Importor{
 			frontendStopper: stopFn,
+			task:            task,
+			speed:           o.ImportSpeed,
 		}
+		o.currentBuilder.doneWaiter = make(chan struct{})
+		sender := o.Frame.GetGameControl().SendWOCmd
 		builder := &structure.Builder{
-			CmdSender: o.Frame.GetGameControl().SendWOCmd,
+			BlockCmdSender: func(cmd string) {
+				// fmt.Println(cmd)
+				sender(cmd)
+			},
+			TpCmdSender: func(cmd string) {
+				o.Frame.GetGameControl().SendCmd(cmd)
+			},
 			ProgressUpdater: func(currBlock int) {
 				currProgress := baseProgress + currBlock
 				if currProgress%100 == 99 {
@@ -96,16 +126,17 @@ func (o *UniverseImport) StartNewTask() {
 			FinalWaitTime: 3,
 			IgnoreNbt:     o.IgnoreBlockNbt,
 		}
-		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeed(feeder, task.Offset, task.Progress, o.ImportSpeed, 4096)
+		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeedWithReArrangeOnce(feeder, task.Offset, task.Progress, 4096)
+		o.currentBuilder.finalFeeder = middleFeeder
 		o.currentBuilder.middleStopper = middleStopFn
 		o.currentBuilder.builder = builder
-		pterm.Info.Printfln("开始处理任务 %v 起点(%v %v %v) 从 %v 方块处开始导入", task.Path, task.Offset[0], task.Offset[1], task.Offset[2], task.Progress)
-		builder.Build(middleFeeder)
-
+		o.Frame.GetBotTaskScheduler().CommitUrgentTask(o.currentBuilder)
+		<-o.currentBuilder.doneWaiter
+		pterm.Success.Printfln("\n导入完成 %v ", path)
 	} else {
-		pterm.Success.Println("无法解析文件 %v ", path)
+		pterm.Error.Println("无法解析文件 %v ", path)
 	}
-
+	o.data.CurrentTask = nil
 }
 
 func (o *Importor) onBlockUpdate(pos define.CubePos, origRTID, currentRTID uint32) {
@@ -250,6 +281,7 @@ func (o *UniverseImport) Activate() {
 			if len(o.data.QueuedTasks) > 0 {
 				o.data.CurrentTask = o.data.QueuedTasks[0]
 				o.data.QueuedTasks = o.data.QueuedTasks[1:]
+				o.fileChange = true
 			}
 		}
 		if o.data.CurrentTask != nil {
