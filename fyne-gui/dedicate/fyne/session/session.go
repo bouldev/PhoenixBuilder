@@ -1,3 +1,4 @@
+//go:build fyne_gui
 // +build fyne_gui
 
 package session
@@ -11,28 +12,28 @@ import (
 
 	"github.com/google/uuid"
 
-	"phoenixbuilder/io/commands"
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/function"
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/world_provider"
+	"phoenixbuilder/io/commands"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 
+	"phoenixbuilder/bridge/bridge_fmt"
+	"phoenixbuilder/fastbuilder/args"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
+	"phoenixbuilder/fastbuilder/environment"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/utils"
-	"phoenixbuilder/fastbuilder/environment"
+	"phoenixbuilder/io/special_tasks"
 	"phoenixbuilder/minecraft"
-	"phoenixbuilder/bridge/bridge_fmt"
+	omega_embed "phoenixbuilder/omega/cli/embed"
 	"phoenixbuilder_fyne_gui/platform_helper"
 	"strings"
 	"time"
-	"phoenixbuilder/fastbuilder/args"
-	omega_embed "phoenixbuilder/omega/cli/embed"
-	"phoenixbuilder/io/special_tasks"
 )
 
 type SessionConfig struct {
@@ -47,10 +48,10 @@ type SessionConfig struct {
 	devMode       bool
 	// when "iamDeveloper" is true, the following fields are used,
 	// otherwise, the fields are ignored (restore to default)
-	NoPyRPC               bool   `yaml:"no_py_rpc" json:"no_py_rpc"`
-	FBVersion             string `yaml:"fb_version" json:"fb_version"`
-	FBHash                string `yaml:"fb_hash" json:"fb_hash"`
-	FBCodeName            string `yaml:"fb_codename" json:"fb_codename"`
+	NoPyRPC    bool   `yaml:"no_py_rpc" json:"no_py_rpc"`
+	FBVersion  string `yaml:"fb_version" json:"fb_version"`
+	FBHash     string `yaml:"fb_hash" json:"fb_hash"`
+	FBCodeName string `yaml:"fb_codename" json:"fb_codename"`
 }
 
 func (config *SessionConfig) IsDeveloper() bool {
@@ -59,19 +60,19 @@ func (config *SessionConfig) IsDeveloper() bool {
 
 func NewConfig() *SessionConfig {
 	return &SessionConfig{
-		Lang:                  "zh_CN", // "en_US"
-		FBUserName:            "",
-		FBPassword:            "",
-		FBToken:               "",
-		ServerCode:            "",
-		ServerPasswd:          "",
-		RespondUser:           "",
-		devMode:               false,
-		MuteWorldChat:         false,
-		NoPyRPC:               true,
-		FBVersion:             args.GetFBVersion(),
-		FBHash:                "gui~"+args.GetFBPlainVersion(),
-		FBCodeName:            DefaultFBCodeName,
+		Lang:          "zh_CN", // "en_US"
+		FBUserName:    "",
+		FBPassword:    "",
+		FBToken:       "",
+		ServerCode:    "",
+		ServerPasswd:  "",
+		RespondUser:   "",
+		devMode:       false,
+		MuteWorldChat: false,
+		NoPyRPC:       true,
+		FBVersion:     args.GetFBVersion(),
+		FBHash:        "gui~" + args.GetFBPlainVersion(),
+		FBCodeName:    DefaultFBCodeName,
 	}
 }
 
@@ -83,7 +84,7 @@ type Session struct {
 	cmdChan          chan string
 	closeFns         []func()
 	worldChatChannel chan []string
-	env *environment.PBEnvironment
+	env              *environment.PBEnvironment
 	botRuntimeID     string
 	Config           *SessionConfig
 	// set/ set end callback
@@ -203,20 +204,20 @@ func (s *Session) beforeStart() (err error) {
 	if s.Config.ServerCode == "" {
 		return fmt.Errorf("no server code provided")
 	}
-	
-	env:=&environment.PBEnvironment{}
-	env.UQHolder=nil
-	env.ActivateTaskStatus=make(chan bool)
-	env.TaskHolder=fbtask.NewTaskHolder()
-	env.FunctionHolder=function.NewFunctionHolder(env)
-	env.LoginInfo=environment.LoginInfo {
-		Token: s.Config.FBToken,
-		ServerCode: s.Config.ServerCode,
+
+	env := &environment.PBEnvironment{}
+	env.UQHolder = nil
+	env.ActivateTaskStatus = make(chan bool)
+	env.TaskHolder = fbtask.NewTaskHolder()
+	env.FunctionHolder = function.NewFunctionHolder(env)
+	env.LoginInfo = environment.LoginInfo{
+		Token:          s.Config.FBToken,
+		ServerCode:     s.Config.ServerCode,
 		ServerPasscode: s.Config.ServerPasswd,
 	}
-	authClient:=fbauth.CreateClient(env)
+	authClient := fbauth.CreateClient(env)
 	env.FBAuthClient = authClient
-	
+
 	if s.Config.FBToken == "" {
 		// we need to get a token
 		tokenReq := &FBPlainToken{
@@ -233,32 +234,32 @@ func (s *Session) beforeStart() (err error) {
 			return fmt.Errorf("cannot get token: \n" + I18n.T(I18n.FBUC_LoginFailed))
 		}
 		s.Config.FBToken = token
-		env.LoginInfo.Token=token
+		env.LoginInfo.Token = token
 	}
 	bridge_fmt.Println(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode))
 	var conn *minecraft.Conn
-	if(env.IsDebug) {
-		conn=&minecraft.Conn {
+	if env.IsDebug {
+		conn = &minecraft.Conn{
 			DebugMode: true,
 		}
-	}else{
-		connectionDeadline:=time.NewTimer(time.Minute*3)
+	} else {
+		connectionDeadline := time.NewTimer(time.Minute * 3)
 		go func() {
 			<-connectionDeadline.C
 			panic("Connection deadline exceeded")
-		} ()
-		dialer:=minecraft.Dialer {
+		}()
+		dialer := minecraft.Dialer{
 			ServerCode: env.LoginInfo.ServerCode,
 			Password:   env.LoginInfo.ServerPasscode,
 			Token:      env.LoginInfo.Token,
 			Client:     authClient,
 		}
-		cc, err:=dialer.Dial("raknet", "")
-		if(err!=nil) {
+		cc, err := dialer.Dial("raknet", "")
+		if err != nil {
 			bridge_fmt.Println(fmt.Sprintf("%v", err))
 			return err
 		}
-		conn=cc
+		conn = cc
 		if args.GetCustomGameName() == "" {
 			go func() {
 				user := authClient.ShouldRespondUser()
@@ -267,7 +268,7 @@ func (s *Session) beforeStart() (err error) {
 		} else {
 			env.RespondUser = args.GetCustomGameName()
 		}
-		s.Config.RespondUser=env.RespondUser
+		s.Config.RespondUser = env.RespondUser
 		env.WorldChatChannel = make(chan []string)
 	}
 	s.closeFns = append(s.closeFns, func() {
@@ -276,7 +277,6 @@ func (s *Session) beforeStart() (err error) {
 		env.WaitStopped()
 	})
 	bridge_fmt.Println(I18n.T(I18n.ConnectionEstablished))
-	
 
 	// set bot runtimeID
 	s.botRuntimeID = fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
@@ -316,15 +316,15 @@ func (s *Session) beforeStart() (err error) {
 	conn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
 	})
-	
-	env.Connection=conn
+
+	env.Connection = conn
 	if false {
 		bridge_fmt.Println("Omega System Enabled!")
 		omega_embed.EnableOmegaSystem(env)
 	}
 
 	commands.InitCommandSender(env)
-	functionHolder:=env.FunctionHolder.(*function.FunctionHolder)
+	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	function.InitInternalFunctions(functionHolder)
 	fbtask.InitTaskStatusDisplay(env)
 
@@ -343,10 +343,10 @@ func (s *Session) beforeStart() (err error) {
 	oneId, _ := uuid.NewUUID()
 	configuration.ZeroId = zeroId
 	configuration.OneId = oneId
-	taskholder:=env.TaskHolder.(*fbtask.TaskHolder)
+	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
-	
-	s.env=env
+
+	s.env = env
 
 	return nil
 }
@@ -359,7 +359,7 @@ func (s *Session) routine(c chan string) {
 		r := recover()
 		if r != nil {
 			terminateReason = fmt.Sprintf("Session terminated\n because a panic occoured in routine: \n%v", r)
-		}else{
+		} else {
 			platform_helper.StopBackground()
 		}
 		s.close()
@@ -406,7 +406,7 @@ func (s *Session) routine(c chan string) {
 	}()
 
 	// A loop that reads packets from the connection until it is closed.
-	env:=s.env
+	env := s.env
 	conn := env.Connection.(*minecraft.Conn)
 	user := env.RespondUser
 	zeroId := configuration.ZeroId
@@ -417,11 +417,10 @@ func (s *Session) routine(c chan string) {
 		if err != nil {
 			panic(err)
 		}
-		
-		if(env.OmegaAdaptorHolder!=nil) {
+
+		if env.OmegaAdaptorHolder != nil {
 			env.OmegaAdaptorHolder.(*omega_embed.EmbeddedAdaptor).FeedPacket(pk)
 		}
-		
 
 		switch p := pk.(type) {
 		case *packet.PyRpc:
@@ -549,8 +548,8 @@ func (s *Session) routine(c chan string) {
 			if args.ShouldEnableOmegaSystem() {
 				world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
 			}
-			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
-			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.ChunkX, p.ChunkZ}, p)
+			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
+			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
 		case *packet.UpdateBlock:
 			channel, h := env.CommandSender.GetBlockUpdateSubscribeMap().LoadAndDelete(p.Position)
 			if h {
@@ -612,7 +611,7 @@ func (s *Session) close() {
 		fn()
 	}
 	// let GC do the work
-	s.env=nil
+	s.env = nil
 }
 
 func (s *Session) Execute(cmd string) {

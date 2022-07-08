@@ -66,7 +66,7 @@ func ReadDumpPackets(fileName string) (chunkPackets []*ChunkPacket) {
 		if pkt != nil {
 			switch p := pkt.(type) {
 			case *packet.LevelChunk:
-				chunkPackets = append(chunkPackets, &ChunkPacket{X: p.ChunkX, Z: p.ChunkZ, SubChunksCount: p.SubChunkCount, Payload: p.RawPayload})
+				chunkPackets = append(chunkPackets, &ChunkPacket{X: p.Position.X(), Z: p.Position.Z(), SubChunksCount: p.SubChunkCount, Payload: p.RawPayload})
 			}
 		}
 	}
