@@ -50,7 +50,7 @@ ifneq ($(wildcard ${HOME}/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux
 	TARGETS:=${TARGETS} openwrt-mt7620-mipsel_24kc
 endif
 ifneq ($(wildcard ${HOME}/llvm),)
-	TARGETS:=${TARGETS} netbsd-executable
+	TARGETS:=${TARGETS} netbsd-executable freebsd-executable
 	# Do other BSDs later
 endif
 
