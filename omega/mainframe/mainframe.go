@@ -158,10 +158,6 @@ func (o *Omega) GetJsonData(topic string, ptr interface{}) error {
 //	return db
 //}
 
-func (o *Omega) FullyStopped() chan struct{} {
-	return o.fullyStopped
-}
-
 func (o *Omega) Stop() error {
 	if o.closed {
 		<-o.fullyStopped
@@ -261,12 +257,7 @@ func (o *Omega) GetBotTaskScheduler() defines.BotTaskScheduler {
 }
 
 func (o *Omega) Activate() {
-	defer func(o *Omega) {
-		err := o.Stop()
-		if err != nil {
-
-		}
-	}(o)
+	defer o.Stop()
 	go func() {
 		for {
 			pkt := o.adaptor.Read()

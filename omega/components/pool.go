@@ -129,8 +129,6 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &DailyAttendance{BasicComponent: &defines.BasicComponent{}}
 		},
 		"小木斧": func() defines.Component {
-			// TODO: Mapping Update
-			// return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
 			return &woodaxe.WoodAxe{BasicComponent: &defines.BasicComponent{}}
 		},
 		"存档修复": func() defines.Component {

@@ -163,7 +163,8 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 			}
 			chunks = make(map[define.ChunkPos]*mirror.ChunkData)
 		}
-		for b := range inChan {
+		for _b := range inChan {
+			b := _b
 			if stop {
 				return
 			}
@@ -174,13 +175,13 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 				delete(b.NBT, "z")
 			} else {
 				setBlock(b)
-				if len(chunks) > 4096 {
-					fmt.Println("batch dump chunks")
+				if len(chunks) > 256 {
+					// fmt.Println("batch dump chunks")
 					dumpAllChunks()
 				}
 			}
 		}
-		fmt.Println("dumping")
+		// fmt.Println("dumping")
 		dumpAllChunks()
 		close(outChan)
 	}()

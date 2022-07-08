@@ -99,7 +99,7 @@ func (o *UniverseImport) StartNewTask() {
 		pterm.Info.Println(s)
 	}); err == nil {
 		baseProgress := task.Progress
-		pterm.Success.Println("文件成功被解析,将开始导入")
+		pterm.Success.Println("文件成功被解析,将开始优化导入顺序")
 		o.currentBuilder = &Importor{
 			frontendStopper: stopFn,
 			task:            task,
@@ -116,6 +116,9 @@ func (o *UniverseImport) StartNewTask() {
 				o.Frame.GetGameControl().SendCmd(cmd)
 			},
 			ProgressUpdater: func(currBlock int) {
+				if currBlock == 0 {
+					pterm.Success.Println("优化完成，开始导入")
+				}
 				currProgress := baseProgress + currBlock
 				if currProgress%100 == 99 {
 					task.Progress = currProgress
@@ -126,7 +129,7 @@ func (o *UniverseImport) StartNewTask() {
 			FinalWaitTime: 3,
 			IgnoreNbt:     o.IgnoreBlockNbt,
 		}
-		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeedWithReArrangeOnce(feeder, task.Offset, task.Progress, 4096)
+		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeedWithReArrangeOnce(feeder, task.Offset, task.Progress, 16*16)
 		o.currentBuilder.finalFeeder = middleFeeder
 		o.currentBuilder.middleStopper = middleStopFn
 		o.currentBuilder.builder = builder

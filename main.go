@@ -30,6 +30,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/cli/embed"
+	"phoenixbuilder/omega/suggest"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -135,6 +136,10 @@ func fatal() {
 		pterm.Error.Println(I18n.T(I18n.Crashed_Tip))
 		pterm.Error.Println(I18n.T(I18n.Crashed_StackDump_And_Error))
 		pterm.Error.Println(err)
+		if args.ShouldEnableOmegaSystem() {
+			omegaSuggest := suggest.GetOmegaErrorSuggest(fmt.Sprintf("%v", err))
+			fmt.Print(omegaSuggest)
+		}
 		if runtime.GOOS == "windows" {
 			pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
 			_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
