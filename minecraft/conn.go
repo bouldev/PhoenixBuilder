@@ -362,7 +362,7 @@ func (conn *Conn) ReadPacketAndBytes() (pk packet.Packet, data []byte, err error
 
 		pk, err := data.decode(conn)
 		if err != nil {
-			conn.log.Println(err)
+			// conn.log.Println(err)
 			return conn.ReadPacketAndBytes()
 		}
 		return pk, data.full, nil
@@ -376,7 +376,7 @@ func (conn *Conn) ReadPacketAndBytes() (pk packet.Packet, data []byte, err error
 	case data := <-conn.packets:
 		pk, err := data.decode(conn)
 		if err != nil {
-			conn.log.Println(err)
+			// conn.log.Println(err)
 			return conn.ReadPacketAndBytes()
 		}
 		return pk, data.full, nil
