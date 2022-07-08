@@ -6,11 +6,10 @@ import (
 	"math"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/mirror/items"
 	"phoenixbuilder/omega/defines"
-	"strings"
+	"phoenixbuilder/omega/utils"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
@@ -380,35 +379,57 @@ func (o *WoodAxe) onPosInput() {
 	deltaZ := math.Cos(float64(o.currentYaw/180*math.Pi)) * deltaXZ
 	lookAt := mgl32.Vec3{float32(deltaX), float32(deltaY), float32(deltaZ)}
 	// o.currentPlayerKit.Say(fmt.Sprintf("LookAtDelta :[%.1f, %.1f, %.1f]", deltaX, deltaY, deltaZ))
-	nextTenBlocks := o.computeNextXPos(o.currentPos, lookAt, 30)
-	world := o.Frame.GetWorld()
+	nextBlocks := o.computeNextXPos(o.currentPos, lookAt, 30)
 	selected := false
-	selectedBlockName := ""
-	selectedBlockData := 0
 	var selectedBlockPos define.CubePos
-	for _, pos := range nextTenBlocks {
-		if rtid, found := world.Block(pos); found {
-			if rtid == chunk.AirRID {
-				continue
+	t := time.NewTicker(time.Millisecond * 10)
+	selectedI := 30
+	selectedBlockName := ""
+	arrived := 0
+	go func() {
+		for i, pos := range nextBlocks {
+			_pos := define.CubePos{pos[0], pos[1], pos[2]}
+			_i := i
+			utils.GetBlockAt(o.Frame.GetGameControl(), fmt.Sprintf("%v %v %v", _pos[0], _pos[1], _pos[2]),
+				func(outOfWorld bool, isAir bool, name string, realPos define.CubePos) {
+					// fmt.Println(_i, outOfWorld, isAir, name, realPos)
+					if _i > arrived {
+						arrived = _i
+					}
+					if (!outOfWorld) && (!isAir) {
+						if _i < selectedI {
+							selectedBlockPos = _pos
+							selectedI = _i
+							selected = true
+							// fmt.Println("selected!")
+							selectedBlockName = name
+						}
+					}
+				})
+			if !selected {
+				<-t.C
+			} else {
+				break
 			}
-			if blockDesc := chunk.RuntimeIDToLegacyBlock(rtid); blockDesc != nil {
-				selected = true
-				selectedBlockName = blockDesc.Name
-				selectedBlockData = int(blockDesc.Val)
-				selectedBlockPos = pos
-			}
-			break
 		}
-	}
-	if selected {
-		o.currentPlayerKit.Say(fmt.Sprintf("§l§b选中 %v %v @ %v", strings.ReplaceAll(selectedBlockName, "minecraft:", ""), selectedBlockData, selectedBlockPos))
-		o.selectIndicateStructureBlock.IndicateCube(selectedBlockPos, selectedBlockPos)
-		o.selectInfo.currentSelectID = o.selectInfo.nextSelect
-		o.selectInfo.currentSelectPos = selectedBlockPos
-		o.onUpdateSelectPos()
-	} else {
-		o.currentPlayerKit.Say(fmt.Sprintf("§l§a未选中方块！"))
-	}
+		if !selected {
+			for {
+				if arrived >= len(nextBlocks)-2 {
+					break
+				}
+				<-t.C
+			}
+		}
+		if selected {
+			o.currentPlayerKit.Say(fmt.Sprintf("§l§b选中 %v @ %v", selectedBlockName, selectedBlockPos))
+			o.selectIndicateStructureBlock.IndicateCube(selectedBlockPos, selectedBlockPos)
+			o.selectInfo.currentSelectID = o.selectInfo.nextSelect
+			o.selectInfo.currentSelectPos = selectedBlockPos
+			o.onUpdateSelectPos()
+		} else {
+			o.currentPlayerKit.Say(fmt.Sprintf("§l§a未选中方块！"))
+		}
+	}()
 }
 
 func (o *WoodAxe) onUpdateSelectPos() {

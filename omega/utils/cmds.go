@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"reflect"
 	"regexp"
@@ -230,6 +231,37 @@ func GetPlayerScore(ctrl defines.GameControl, player, scoreboard string, onResul
 			return
 		} else {
 			onResult(val, nil)
+		}
+	})
+}
+
+func GetBlockAt(ctrl defines.GameControl, pos string, result func(outOfWorld bool, isAir bool, name string, pos define.CubePos)) {
+	ctrl.SendCmdAndInvokeOnResponse("testforblock "+pos+" air 0", func(output *packet.CommandOutput) {
+		if output.SuccessCount != 0 {
+			x, _ := strconv.Atoi(output.OutputMessages[0].Parameters[0])
+			y, _ := strconv.Atoi(output.OutputMessages[0].Parameters[1])
+			z, _ := strconv.Atoi(output.OutputMessages[0].Parameters[2])
+			result(false, true, "air", define.CubePos{x, y, z})
+			return
+		} else {
+			if len(output.OutputMessages) > 0 && output.OutputMessages[0].Message == "commands.testforblock.failed.tile" {
+				if len(output.OutputMessages[0].Parameters) == 5 {
+					if x, err := strconv.Atoi(output.OutputMessages[0].Parameters[0]); err == nil {
+						if y, err := strconv.Atoi(output.OutputMessages[0].Parameters[1]); err == nil {
+							if z, err := strconv.Atoi(output.OutputMessages[0].Parameters[2]); err == nil {
+								frags := strings.Split(output.OutputMessages[0].Parameters[3], ".")
+								if len(frags) == 1 {
+									result(false, false, strings.ReplaceAll(frags[0], "%", ""), define.CubePos{x, y, z})
+								} else {
+									result(false, false, frags[1], define.CubePos{x, y, z})
+								}
+								return
+							}
+						}
+					}
+				}
+			}
+			result(true, false, "unknown", define.CubePos{0, 0, 0})
 		}
 	})
 }
