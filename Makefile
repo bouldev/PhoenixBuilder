@@ -152,11 +152,11 @@ build/phoenixbuilder-windows-executable-x86.exe: build/ /usr/bin/i686-w64-mingw3
 build/phoenixbuilder-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86_64.exe
 build/phoenixbuilder-freebsd-executable-x86:
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/freebsd/i386/lib -Ldepends/buildroot/freebsd/i386/usr/lib -Wl,-rpath,/usr/local/lib" CC="${HOME}/llvm/bin/clang -target i686-unknown-freebsd --sysroot=`pwd`/depends/buildroot/freebsd/i386 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=freebsd GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-freebsd-executable-x86
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/freebsd/i386/lib -Ldepends/buildroot/freebsd/i386/usr/lib -Wl,-rpath,/usr/local/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/freebsd/bin/clang -target i686-unknown-freebsd --sysroot=`pwd`/depends/buildroot/freebsd/i386 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=freebsd GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-freebsd-executable-x86
 build/phoenixbuilder-freebsd-executable-x86_64:
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/freebsd/amd64/lib -Ldepends/buildroot/freebsd/amd64/usr/lib -Wl,-rpath,/usr/local/lib" CC="${HOME}/llvm/bin/clang -target amd64-unknown-freebsd --sysroot=`pwd`/depends/buildroot/freebsd/amd64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=freebsd GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-freebsd-executable-x86_64
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/freebsd/amd64/lib -Ldepends/buildroot/freebsd/amd64/usr/lib -Wl,-rpath,/usr/local/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/freebsd/bin/clang -target amd64-unknown-freebsd --sysroot=`pwd`/depends/buildroot/freebsd/amd64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=freebsd GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-freebsd-executable-x86_64
 build/phoenixbuilder-freebsd-executable-arm64:
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/freebsd/arm64/lib -Ldepends/buildroot/freebsd/arm64/usr/lib -Wl,-rpath,/usr/local/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/freebsd/arm64/usr/bin/aarch64-unknown-freebsd13-clang -target aarch64-unknown-freebsd --sysroot=`pwd`/depends/buildroot/freebsd/arm64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=freebsd GOARCH=arm64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-freebsd-executable-arm64
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/freebsd/arm64/lib -Ldepends/buildroot/freebsd/arm64/usr/lib -Wl,-rpath,/usr/local/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/freebsd/bin/clang -target aarch64-unknown-freebsd --sysroot=`pwd`/depends/buildroot/freebsd/arm64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=freebsd GOARCH=arm64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-freebsd-executable-arm64
 build/phoenixbuilder-netbsd-executable-x86:
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/i386/lib -Ldepends/buildroot/netbsd/i386/usr/lib -Wl,-rpath,/usr/pkg/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/netbsd/bin/clang -target i386--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/i386 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=netbsd GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-x86
 build/phoenixbuilder-netbsd-executable-x86_64:
@@ -194,7 +194,7 @@ package/ios: build/phoenixbuilder-ios-executable release/
 	Homepage: https://fastbuilder.pro\n\
 	Depiction: https://apt.boul.dev/info/fastbuilder\n\
 	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-iphoneos/DEBIAN/control
-	dpkg -b release/phoenixbuilder-iphoneos release/
+	dpkg -Zxz -b release/phoenixbuilder-iphoneos release/
 package/android: package/android-armv7 package/android-arm64
 package/android-armv7: build/phoenixbuilder-android-executable-armv7 release/
 	mkdir -p release/phoenixbuilder-android-armv7/data/data/com.termux/files/usr/bin release/phoenixbuilder-android-armv7/DEBIAN
@@ -209,7 +209,7 @@ package/android-armv7: build/phoenixbuilder-android-executable-armv7 release/
 	Priority: optional\n\
 	Homepage: https://fastbuilder.pro\n\
 	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-android-armv7/DEBIAN/control
-	dpkg -b release/phoenixbuilder-android-armv7 release/
+	dpkg -Zxz -b release/phoenixbuilder-android-armv7 release/
 package/android-arm64: build/phoenixbuilder-android-executable-arm64 release/
 	mkdir -p release/phoenixbuilder-android-arm64/data/data/com.termux/files/usr/bin release/phoenixbuilder-android-arm64/DEBIAN
 	cp build/phoenixbuilder-android-executable-arm64 release/phoenixbuilder-android-arm64/data/data/com.termux/files/usr/bin/fastbuilder
@@ -223,6 +223,6 @@ package/android-arm64: build/phoenixbuilder-android-executable-arm64 release/
 	Priority: optional\n\
 	Homepage: https://fastbuilder.pro\n\
 	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-android-arm64/DEBIAN/control
-	dpkg -b release/phoenixbuilder-android-arm64 release/
+	dpkg -Zxz -b release/phoenixbuilder-android-arm64 release/
 clean:
 	rm -f build/phoenixbuilder*
