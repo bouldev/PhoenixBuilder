@@ -17,7 +17,7 @@ import (
 //go:embed block_states_1_19.nbt
 var blockStateData []byte
 
-//go:embed runtimeIds_2_1_10.json
+//go:embed runtimeIds_2_2_fake.json
 var nemcJsonData []byte
 
 //go:embed block_1_18_java_to_bedrock.json
@@ -329,7 +329,7 @@ func main() {
 	enc.Encode(groupedBlocks)
 	fp.Close()
 
-	fp, err = os.OpenFile("convert_out/blockmapping_nemc_2_1_10_mc_1_19.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	fp, err = os.OpenFile("convert_out/blockmapping_nemc_2_2_fake_mc_1_19.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
 		panic(err)
 	}

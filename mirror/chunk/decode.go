@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"phoenixbuilder/mirror/define"
-
-	"phoenixbuilder/minecraft/nbt"
 )
 
 func NEMCNetworkDecode(data []byte, count int) (c *Chunk, nbtBlocks []map[string]interface{}, err error) {
@@ -38,43 +36,13 @@ func NEMCNetworkDecode(data []byte, count int) (c *Chunk, nbtBlocks []map[string
 		}
 	}
 	encoder.isChunkDecoding = false
-	fakeBiomes := make([]byte, 256)
-	buf.Read(fakeBiomes)
-	_, _ = buf.ReadByte()
-
-	// it seems netease add something after biomes info,
-	// e.g. [13 45 77 109 141 173 205 237]
-	//      [5 13 37 45 69 77 85 109 141 173 205 237]
-	// the following 14 lines try to get rid of it, but i don't know what
-	// is missed
-	for _, b := range buf.Bytes() {
-		// Nbt should start with a Nbt TAG_Compound
-		if b != uint8(10) {
-			buf.ReadByte()
-		} else {
-			dec := nbt.NewDecoder(bytes.NewBuffer(buf.Bytes()))
-			var m map[string]interface{}
-			if err := dec.Decode(&m); err != nil {
-				buf.ReadByte()
-			} else {
-				break
-			}
+	subChunkCount := 25
+	for i := 0; i < subChunkCount; i++ {
+		_, err := decodePalettedStorage(buf, encoder, biomePaletteEncoding{})
+		if err != nil {
+			fmt.Println(err)
+			return nil, nil, err
 		}
-	}
-
-	dec := nbt.NewDecoder(buf)
-
-	for buf.Len() != 0 {
-		var m map[string]interface{}
-		if err := dec.Decode(&m); err != nil {
-			// the rest of buf is also effect, so we stop decoding and return immediately
-			fmt.Printf("error decoding block entity: %v\n", err)
-			return c, nbtBlocks, nil
-			// return nil, fmt.Errorf("error decoding block entity: %w", err)
-		}
-		// c.SetBlockNBT(cube.Pos{int(m["x"].(int32)), int(m["y"].(int32)), int(m["z"].(int32))}, m)
-		//id:Bed isMovable:1 x:81 y:64 z:163
-		nbtBlocks = append(nbtBlocks, m)
 	}
 	return c, nbtBlocks, nil
 }

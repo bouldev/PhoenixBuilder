@@ -70,6 +70,16 @@ func (blockPaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
 	return v, nil
 }
 
+type biomePaletteEncoding struct{}
+
+func (biomePaletteEncoding) encode(buf *bytes.Buffer, v uint32) {
+	_ = binary.Write(buf, binary.LittleEndian, v)
+}
+func (biomePaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
+	var v uint32
+	return v, binary.Read(buf, binary.LittleEndian, &v)
+}
+
 // diskEncoding implements the Chunk encoding for writing to disk.
 type diskEncoding struct{}
 
@@ -108,6 +118,7 @@ type nemcNetworkEncoding struct {
 
 func (*nemcNetworkEncoding) network() byte { return 1 }
 func (*nemcNetworkEncoding) translate(nemcRID uint32) (mcRid uint32) {
+	// fmt.Println(nemcRID, " -> ", NEMCRuntimeIDToStandardRuntimeID(nemcRID))
 	return NEMCRuntimeIDToStandardRuntimeID(nemcRID)
 }
 func (*nemcNetworkEncoding) encodePalette(buf *bytes.Buffer, p *Palette, _ paletteEncoding) {

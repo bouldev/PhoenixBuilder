@@ -9,6 +9,7 @@ import (
 )
 
 func NEMCPacketToChunkData(p *packet.LevelChunk) (cd *mirror.ChunkData) {
+	// fmt.Println(p.Position, p.HighestSubChunk, p.SubChunkCount,p.SubChunkRequestMode)
 	c, nbts, err := chunk.NEMCNetworkDecode(p.RawPayload[:], int(p.SubChunkCount))
 	if err != nil {
 		return nil
