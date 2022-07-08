@@ -490,7 +490,7 @@ func InitMapping(mappingInData []byte) {
 	}
 }
 
-//go:embed blockmapping_nemc_2_1_10_mc_1_19.gob.brotli
+//go:embed blockmapping_nemc_2_2_fake_mc_1_19.gob.brotli
 var mappingInData []byte
 
 func init() {
