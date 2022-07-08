@@ -194,7 +194,7 @@ package/ios: build/phoenixbuilder-ios-executable release/
 	Homepage: https://fastbuilder.pro\n\
 	Depiction: https://apt.boul.dev/info/fastbuilder\n\
 	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-iphoneos/DEBIAN/control
-	dpkg -Zxz -b release/phoenixbuilder-iphoneos release/
+	dpkg-deb -Zxz -b release/phoenixbuilder-iphoneos release/
 package/android: package/android-armv7 package/android-arm64
 package/android-armv7: build/phoenixbuilder-android-executable-armv7 release/
 	mkdir -p release/phoenixbuilder-android-armv7/data/data/com.termux/files/usr/bin release/phoenixbuilder-android-armv7/DEBIAN
@@ -209,7 +209,7 @@ package/android-armv7: build/phoenixbuilder-android-executable-armv7 release/
 	Priority: optional\n\
 	Homepage: https://fastbuilder.pro\n\
 	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-android-armv7/DEBIAN/control
-	dpkg -Zxz -b release/phoenixbuilder-android-armv7 release/
+	dpkg-deb -Zxz -b release/phoenixbuilder-android-armv7 release/
 package/android-arm64: build/phoenixbuilder-android-executable-arm64 release/
 	mkdir -p release/phoenixbuilder-android-arm64/data/data/com.termux/files/usr/bin release/phoenixbuilder-android-arm64/DEBIAN
 	cp build/phoenixbuilder-android-executable-arm64 release/phoenixbuilder-android-arm64/data/data/com.termux/files/usr/bin/fastbuilder
@@ -223,6 +223,6 @@ package/android-arm64: build/phoenixbuilder-android-executable-arm64 release/
 	Priority: optional\n\
 	Homepage: https://fastbuilder.pro\n\
 	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-android-arm64/DEBIAN/control
-	dpkg -Zxz -b release/phoenixbuilder-android-arm64 release/
+	dpkg-deb -Zxz -b release/phoenixbuilder-android-arm64 release/
 clean:
 	rm -f build/phoenixbuilder*
