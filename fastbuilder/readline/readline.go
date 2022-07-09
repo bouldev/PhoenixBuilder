@@ -6,7 +6,8 @@ package readline
 /*
 #cgo CFLAGS: -I${SRCDIR}/../../depends/readline-master/include
 #cgo LDFLAGS: -L${SRCDIR}/../../depends/readline-master/prebuilt -L${SRCDIR}/../../depends/ncurses-6.3-20220319/prebuilt
-#cgo !android,!darwin,!ios,!windows,!netbsd LDFLAGS: -lreadline
+#cgo !android,!darwin,!ios,!windows,!netbsd,!use_aarch64_linux_rl LDFLAGS: -lreadline
+#cgo use_aarch64_linux_rl LDFLAGS: -lreadline-aarch64-linux -lncurses-aarch64-linux
 #cgo android,arm LDFLAGS: -lreadline-armv7-android -lncurses-arm-android
 #cgo android,arm64 LDFLAGS: -lreadline-aarch64-android -lncurses-aarch64-android
 #cgo android,386 LDFLAGS: -lreadline-i686-android -lncurses-i686-android

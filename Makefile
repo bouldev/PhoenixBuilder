@@ -112,7 +112,7 @@ build/libexternal_functions_provider.so: build/ io/external_functions_provider/p
 build/phoenixbuilder-static.a: build/ build/libexternal_functions_provider.so ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Lbuild -lexternal_functions_provider" CGO_ENABLED=1  go build -trimpath -buildmode=c-archive -ldflags "-s -w" -tags no_readline,is_tweak -o build/phoenixbuilder-static.a
 build/phoenixbuilder-aarch64: build/ ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -tags no_readline -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -tags use_aarch64_linux_rl -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
 build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/ios.sh CXX=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ios-executable
 	${IOS_STRIP} build/phoenixbuilder-ios-executable

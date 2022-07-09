@@ -475,7 +475,7 @@ func InitMapping(mappingInData []byte) {
 			continue
 		}
 		if _, found := LegacyBlockToRuntimeID(blkName, 0); !found {
-			fmt.Printf("Warning schematic block %v not found\n", blkName)
+			//fmt.Printf("Warning schematic block %v not found\n", blkName)
 		}
 	}
 	RuntimeIDToLegacyBlock = func(runtimeID uint32) (legacyBlock *LegacyBlock) {
