@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"reflect"
 
@@ -16,9 +17,6 @@ import (
 
 //go:embed block_states_1_19.nbt
 var blockStateData []byte
-
-//go:embed runtimeIds_2_2_fake.json
-var nemcJsonData []byte
 
 //go:embed block_1_18_java_to_bedrock.json
 var javaJsonData []byte
@@ -66,6 +64,12 @@ func (ig *IDGroup) AppendItem(p *RichBlock) {
 }
 
 func ReadNemcData() []NEMCBlock {
+	var nemcJsonData []byte
+	nemcJsonData, err := ioutil.ReadFile("resources/blockRuntimeIDs/netease/runtimeIds_2_2_15.json")
+	if err != nil {
+		panic(err)
+	}
+
 	NewNEMCBlock := func(p [2]interface{}, nemcRID int) NEMCBlock {
 		s, ok := p[0].(string)
 		if !ok {
@@ -79,7 +83,7 @@ func ReadNemcData() []NEMCBlock {
 	}
 
 	runtimeIDData := make([][2]interface{}, 0)
-	err := json.Unmarshal(nemcJsonData, &runtimeIDData)
+	err = json.Unmarshal(nemcJsonData, &runtimeIDData)
 	if err != nil {
 		panic(err)
 	}
@@ -239,9 +243,9 @@ func main() {
 	}
 	javaToRid := map[string]uint32{}
 	for javaName, bedrockBlockDescribe := range javaBlocks {
-		if javaName == "minecraft:campfire[facing=east,lit=false,signal_fire=false,waterlogged=false]" {
-			fmt.Println("stop")
-		}
+		// if javaName == "minecraft:campfire[facing=east,lit=false,signal_fire=false,waterlogged=false]" {
+		// 	fmt.Println("stop")
+		// }
 		bedrockBlocks, hasK := groupedBlocks[bedrockBlockDescribe.Name]
 		if !hasK {
 			fmt.Println(javaName, " group not found")
@@ -329,7 +333,7 @@ func main() {
 	enc.Encode(groupedBlocks)
 	fp.Close()
 
-	fp, err = os.OpenFile("convert_out/blockmapping_nemc_2_2_fake_mc_1_19.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	fp, err = os.OpenFile("mirror/chunk/blockmapping_nemc_2_2_15_mc_1_19.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
 		panic(err)
 	}

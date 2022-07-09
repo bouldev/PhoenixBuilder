@@ -171,7 +171,7 @@ func (o *IntrusionDetectSystem) regexNbtDetect(rtid int32, nbt map[string]interf
 		}
 	}()
 	itemName := items.ItemRuntimeIDToNameMapping(rtid)
-	fmt.Println(rtid, itemName)
+	// fmt.Println(rtid, itemName)
 	for _, regexCheck := range o.RegexCheckers {
 		if has32K {
 			break
