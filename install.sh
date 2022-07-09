@@ -247,6 +247,13 @@ elif [ ${MACHINE} == "macos" ]; then
     printf "\033[31mFastBuilder no longer support ${ARCH} macOS! Stopping.\033[0m\n"
     exit 1
   fi
+elif [[ ${SYSTEM_NAME} == "NetBSD" ]] || [[ ${SYSTEM_NAME} == "FreeBSD" ]] || [[ ${SYSTEM_NAME} == "OpenBSD" ]]; then
+  echo           "If you met 404 error in further downloading, report it at"
+  printf "\033[32m  https://github.com/LNSSPsd/PhoenixBuilder/issues\033[0m\n"
+  FB_PREFIX="phoenixbuilder-$(echo ${SYSTEM_NAME} | sed -e 's/\(.*\)/\L\1/')-executable-"
+  FILE_TYPE=""
+  FILE_ARCH="${ARCH}"
+  BINARY_INSTALL="1"
 elif [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) != "Android" ]]; then
   # Finally, Linux
   echo     "NOTE: We only provide x86_64 and arm64 executables currently, if"
@@ -273,7 +280,7 @@ if [[ ${MACHINE} == "ios" ]] && [[ ${ROOT_REQUIRED} == "1" ]]; then
   fi
 fi
 
-rm -rf "${PREFIX}"/./fastbuilder-temp "${BINDIR}"/./fastbuilder
+rm -rf "${PREFIX}"/./fastbuilder-temp "${BINDIR}"/./fastbuilder "${HOME}"/./fastbuilder
 mkdir -p "${PREFIX}"/./fastbuilder-temp
 LAUNCH_CMD=""
 
