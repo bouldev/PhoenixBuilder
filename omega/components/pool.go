@@ -82,9 +82,7 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &Crash{BasicComponent: &defines.BasicComponent{}}
 		},
 		"手持32k检测": func() defines.Component {
-			// TODO: Mapping Update
-			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
-			// return &IntrusionDetectSystem{BasicComponent: &defines.BasicComponent{}}
+			return &IntrusionDetectSystem{BasicComponent: &defines.BasicComponent{}}
 		},
 		"违规昵称检测": func() defines.Component {
 			return &WhoAreYou{BasicComponent: &defines.BasicComponent{}}

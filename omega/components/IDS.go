@@ -67,8 +67,8 @@ func (o *IntrusionDetectSystem) Init(cfg *defines.ComponentConfig) {
 		rc.compiledItemNameRegex = *regexp.MustCompile(rc.Item)
 		rc.compiledValueRegex = *regexp.MustCompile(rc.RegexString)
 	}
-	if o.EnablePatrol && o.Patrol > 0 && o.Patrol < 30 {
-		panic("巡逻时间太短，至少应该设为 30")
+	if o.EnablePatrol && o.Patrol > 0 && o.Patrol < 10 {
+		panic("巡逻时间太短，至少应该设为 10")
 	}
 }
 
@@ -171,7 +171,7 @@ func (o *IntrusionDetectSystem) regexNbtDetect(rtid int32, nbt map[string]interf
 		}
 	}()
 	itemName := items.ItemRuntimeIDToNameMapping(rtid)
-	// fmt.Println(rtid, itemName)
+	fmt.Println(rtid, itemName)
 	for _, regexCheck := range o.RegexCheckers {
 		if has32K {
 			break

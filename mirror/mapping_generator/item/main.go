@@ -5,14 +5,12 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 
 	"github.com/andybalholm/brotli"
 )
-
-//go:embed item_runtime_ids_2_1_10.json
-var runtimeIDSData []byte
 
 type ItemDesc struct {
 	ItemName string `json:"name"`
@@ -20,8 +18,13 @@ type ItemDesc struct {
 }
 
 func main() {
+	var runtimeIDSData []byte
+	runtimeIDSData, err := ioutil.ReadFile("resources/itemRuntimeIDs/netease/item_runtime_ids_2_2_15.json")
+	if err != nil {
+		panic(err)
+	}
 	itemsList := map[string]*ItemDesc{}
-	err := json.Unmarshal(runtimeIDSData, &itemsList)
+	err = json.Unmarshal(runtimeIDSData, &itemsList)
 	if err != nil {
 		panic(err)
 	}
@@ -34,7 +37,7 @@ func main() {
 			runtimeIDToItemNameMapping[int32(i)] = item
 		}
 	}
-	fp, err := os.OpenFile("itemRuntimeID2NameMapping_nemc_2_1_10.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	fp, err := os.OpenFile("mirror/items/itemRuntimeID2NameMapping_nemc_2_2_15.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
 		panic(err)
 	}

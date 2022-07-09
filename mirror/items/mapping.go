@@ -12,7 +12,7 @@ var ItemRuntimeIDToNameMapping func(rtid int32) string
 var ItemRuntimeIDToItemDescribe func(rtid int32) *ItemDescribe
 var RuntimeIDToItemNameMapping map[int32]*ItemDescribe
 
-//go:embed itemRuntimeID2NameMapping_nemc_2_1_10.gob.brotli
+//go:embed itemRuntimeID2NameMapping_nemc_2_2_15.gob.brotli
 var mappingInData []byte
 
 type ItemDescribe struct {
