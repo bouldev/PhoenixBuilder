@@ -1,4 +1,4 @@
-.PHONY: all current current-v8 current-arm64-executable ios-executable ios-v8-executable ios-lib macos macos-v8 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64 freebsd-executable freebsd-executable-x86 freebsd-executable-x86_64 freebsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 openwrt-mt7620-mipsel_24kc
+.PHONY: all current current-v8 current-arm64-executable ios-executable ios-v8-executable ios-lib macos macos-v8 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64 freebsd-executable freebsd-executable-x86 freebsd-executable-x86_64 freebsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 openwrt-mt7620-mipsel_24kc
 TARGETS:=build/ current current-v8
 PACKAGETARGETS:=
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
@@ -30,7 +30,7 @@ endif
 ### *-----------------------------------* ###
 
 ifneq (${THEOS},)
-	TARGETS:=${TARGETS} ios-executable ios-lib ios-v8-executable macos-v8
+	TARGETS:=${TARGETS} ios-executable ios-lib ios-v8-executable macos macos-v8
 	PACKAGETARGETS:=${PACKAGETARGETS} package/ios
 endif
 ifneq ($(wildcard ${HOME}/android-ndk-r20b),)
@@ -50,7 +50,7 @@ ifneq ($(wildcard ${HOME}/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux
 	TARGETS:=${TARGETS} openwrt-mt7620-mipsel_24kc
 endif
 ifneq ($(wildcard ${HOME}/llvm),)
-	TARGETS:=${TARGETS} netbsd-executable freebsd-executable
+	TARGETS:=${TARGETS} netbsd-executable freebsd-executable openbsd-executable
 	# Do other BSDs later
 endif
 
@@ -92,6 +92,12 @@ netbsd-executable-x86_64: build/phoenixbuilder-netbsd-executable-x86_64
 #netbsd-executable-armv6: build/phoenixbuilder-netbsd-executable-armv6
 #netbsd-executable-armv7: build/phoenixbuilder-netbsd-executable-armv7
 netbsd-executable-arm64: build/phoenixbuilder-netbsd-executable-arm64
+opensbd-executable: opensbd-executable-x86 opensbd-executable-x86_64 opensbd-executable-arm64
+opensbd-executable-x86: build/phoenixbuilder-openbsd-executable-x86
+opensbd-executable-x86_64: build/phoenixbuilder-openbsd-executable-x86_64
+#openbsd-executable-mips64: build/phoenixbuilder-openbsd-executable-mips64
+#openbsd-executable-armv7: build/phoenixbuilder-openbsd-executable-armv7
+opensbd-executable-arm64: build/phoenixbuilder-openbsd-executable-arm64
 openwrt-mt7620-mipsel_24kc: build/phoenixbuilder-openwrt-mt7620-mipsel_24kc
 #windows-v8-executable-x86_64: build/phoenixbuilder-v8-windows-executable-x86_64.exe
 #windows-shared: build/phoenixbuilder-windows-shared.dll
@@ -169,6 +175,16 @@ build/phoenixbuilder-netbsd-executable-x86_64:
 #	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/armv7/lib -Ldepends/buildroot/netbsd/armv7/usr/lib -Wl,-rpath,/usr/pkg/lib" CC="${HOME}/llvm/bin/clang -target armv7--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/armv7 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=netbsd GOARCH=arm GOARM=7 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-armv7
 build/phoenixbuilder-netbsd-executable-arm64:
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/arm64/lib -Ldepends/buildroot/netbsd/arm64/usr/lib -Wl,-rpath,/usr/pkg/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/netbsd/bin/clang -target aarch64--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/arm64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=netbsd GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-arm64
+build/phoenixbuilder-openbsd-executable-x86:
+	GODEBUG=madvdontneed=1 CGO_LDFLAGS="-Ldepends/buildroot/openbsd/i386/usr/lib -Wl,-rpath,/usr/local/lib" CGO_CFLAGS=${CGO_DEF} ALT_LD="${HOME}/llvm/bin/ld.lld" CC="cc -target i386-unknown-openbsd --sysroot=`pwd`/depends/buildroot/openbsd/i386 -fuse-ld=`pwd`/depends/buildroot/openbsd/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=openbsd GOARCH=386 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-openbsd-executable-x86
+build/phoenixbuilder-openbsd-executable-x86_64:
+	GODEBUG=madvdontneed=1 CGO_LDFLAGS="-Ldepends/buildroot/openbsd/amd64/usr/lib -Wl,-rpath,/usr/local/lib" CGO_CFLAGS=${CGO_DEF} ALT_LD="${HOME}/llvm/bin/ld.lld" CC="cc -target amd64-unknown-openbsd --sysroot=`pwd`/depends/buildroot/openbsd/amd64 -fuse-ld=`pwd`/depends/buildroot/openbsd/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=openbsd GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-openbsd-executable-x86_64
+build/phoenixbuilder-openbsd-executable-arm64:
+	GODEBUG=madvdontneed=1 CGO_LDFLAGS="-Ldepends/buildroot/openbsd/arm64/usr/lib -Wl,-rpath,/usr/local/lib" CGO_CFLAGS=${CGO_DEF} ALT_LD="${HOME}/llvm/bin/ld.lld" CC="cc -target arm64-unknown-openbsd --sysroot=`pwd`/depends/buildroot/openbsd/arm64 -fuse-ld=`pwd`/depends/buildroot/openbsd/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=openbsd GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-openbsd-executable-arm64
+#build/phoenixbuilder-openbsd-executable-armv7:
+#	GODEBUG=madvdontneed=1 CGO_LDFLAGS="-Ldepends/buildroot/openbsd/armv7/usr/lib -Wl,-rpath,/usr/local/lib" CGO_CFLAGS=${CGO_DEF} ALT_LD="${HOME}/llvm/bin/ld.lld" CC="cc -target armv7-unknown-openbsd --sysroot=`pwd`/depends/buildroot/openbsd/armv7 -fuse-ld=`pwd`/depends/buildroot/openbsd/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=openbsd GOARCH=arm GOARM=7 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-openbsd-executable-armv7
+#build/phoenixbuilder-openbsd-executable-mips64:
+#	GODEBUG=madvdontneed=1 CGO_LDFLAGS="-Ldepends/buildroot/openbsd/mips64/usr/lib -Wl,-rpath,/usr/local/lib" CGO_CFLAGS=${CGO_DEF} ALT_LD="${HOME}/llvm/bin/ld.lld" CC="cc -target mips64-unknown-openbsd --sysroot=`pwd`/depends/buildroot/openbsd/mips64 -fuse-ld=`pwd`/depends/buildroot/openbsd/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=openbsd GOARCH=mips64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-openbsd-executable-mips64
 build/phoenixbuilder-openwrt-mt7620-mipsel_24kc: build/ ${HOME}/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64/ ${SRCS_GO}
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} STAGING_DIR=${HOME}/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64/staging_dir CC=${HOME}/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64/staging_dir/toolchain-mipsel_24kc_gcc-8.4.0_musl/bin/mipsel-openwrt-linux-gcc CXX=${HOME}/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64/staging_dir/toolchain-mipsel_24kc_gcc-8.4.0_musl/bin/mipsel-openwrt-linux-g++ GOARCH=mipsle CGO_ENABLED=1 go build -trimpath -tags no_readline -ldflags "-s -w" -o build/phoenixbuilder-openwrt-mt7620-mipsel_24kc
 #build/phoenixbuilder-v8-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
