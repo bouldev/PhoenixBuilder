@@ -60,22 +60,23 @@ func (o *Importor) Activate() {
 	close(o.doneWaiter)
 }
 
-func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlock, stopFn func(), err error) {
+func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlock, stopFn func(), suggestMinCacheChunks int, err error) {
+	suggestMinCacheChunks = 0
 	sender := func(s string) {
 		fmt.Println(s)
 	}
-	if blockFeeder, stopFn, err := structure.DecodeSchem(data, sender); err == nil {
-		return blockFeeder, stopFn, err
+	if blockFeeder, stopFn, _suggestMinCacheChunks, err := structure.DecodeSchem(data, sender); err == nil {
+		return blockFeeder, stopFn, _suggestMinCacheChunks, err
 	} else {
 		pterm.Warning.Printfln("文件无法被 schem 解析器解析，将尝试下一个解析器 (%v)", err)
 	}
 
-	if blockFeeder, stopFn, err := structure.DecodeSchematic(data, func(s string) {}); err == nil {
-		return blockFeeder, stopFn, err
+	if blockFeeder, stopFn, _suggestMinCacheChunks, err := structure.DecodeSchematic(data, func(s string) {}); err == nil {
+		return blockFeeder, stopFn, _suggestMinCacheChunks, err
 	} else {
 		pterm.Warning.Printfln("文件无法被 schematic 解析器解析，将尝试下一个解析器 (%v)", err)
 	}
-	return nil, nil, fmt.Errorf("无法找到合适的解析器")
+	return nil, nil, 0, fmt.Errorf("无法找到合适的解析器")
 }
 
 func (o *UniverseImport) StartNewTask() {
@@ -95,7 +96,7 @@ func (o *UniverseImport) StartNewTask() {
 		o.data.CurrentTask = nil
 		return
 	}
-	if feeder, stopFn, err := o.getFrontEnd(data, func(s string) {
+	if feeder, stopFn, suggestMinCacheChunks, err := o.getFrontEnd(data, func(s string) {
 		pterm.Info.Println(s)
 	}); err == nil {
 		baseProgress := task.Progress
@@ -129,7 +130,11 @@ func (o *UniverseImport) StartNewTask() {
 			FinalWaitTime: 3,
 			IgnoreNbt:     o.IgnoreBlockNbt,
 		}
-		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeedWithReArrangeOnce(feeder, task.Offset, task.Progress, 16*16)
+		if suggestMinCacheChunks < 256 {
+			suggestMinCacheChunks = 256
+		}
+		pterm.Info.Println("最大缓冲区块数量: ", suggestMinCacheChunks)
+		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeedWithReArrangeOnce(feeder, task.Offset, task.Progress, suggestMinCacheChunks, 16*16*16*24)
 		o.currentBuilder.finalFeeder = middleFeeder
 		o.currentBuilder.middleStopper = middleStopFn
 		o.currentBuilder.builder = builder

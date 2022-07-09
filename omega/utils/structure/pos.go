@@ -43,7 +43,7 @@ func AlterImportPosStartAndSpeed(inChan chan *IOBlock, offset define.CubePos, st
 	}
 }
 
-func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset define.CubePos, startFrom int, outChanLen int) (outChan chan *IOBlock, stopFn func()) {
+func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset define.CubePos, startFrom int, outChanLen int, suggestMinCacheChunks int) (outChan chan *IOBlock, stopFn func()) {
 	outChan = make(chan *IOBlock, outChanLen)
 	stop := false
 	go func() {
@@ -175,7 +175,7 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 				delete(b.NBT, "z")
 			} else {
 				setBlock(b)
-				if len(chunks) > 256 {
+				if len(chunks) > suggestMinCacheChunks {
 					// fmt.Println("batch dump chunks")
 					dumpAllChunks()
 				}

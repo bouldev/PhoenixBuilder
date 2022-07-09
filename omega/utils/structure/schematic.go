@@ -11,7 +11,7 @@ import (
 	"github.com/Tnze/go-mc/nbt"
 )
 
-func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IOBlock, cancelFn func(), err error) {
+func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IOBlock, cancelFn func(), suggestMinCacheChunks int, err error) {
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -23,7 +23,7 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 	dataFeeder, err = gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		fmt.Println("fail in gzip")
-		return nil, nil, err
+		return nil, nil, 0, err
 	}
 
 	nbtDecoder := nbt.NewDecoder(dataFeeder)
@@ -44,19 +44,19 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 	infoSender("解压缩成功")
 	if err != nil {
 		// fmt.Println("fail in formate check", err, schematicData)
-		return nil, nil, ErrImportFormateNotSupport
+		return nil, nil, 0, ErrImportFormateNotSupport
 	}
 	blocks := schematicData.Blocks
 	values := schematicData.Data
 	if schematicData.Blocks == nil || len(blocks) == 0 || schematicData.Data == nil || len(values) == 0 {
 		// fmt.Println("fail in formate check", err, schematicData)
-		return nil, nil, ErrImportFormateNotSupport
+		return nil, nil, 0, ErrImportFormateNotSupport
 	}
 	Size := [3]int{int(schematicData.Width), int(schematicData.Height), int(schematicData.Length)}
 	X, Y, Z := 0, 1, 2
 	// fmt.Printf("schematic file size %v %v %v\n", Size[X], Size[Y], Size[Z])
 	if len(blocks) != int(Size[X])*int(Size[Y])*int(Size[Z]) {
-		return nil, nil, fmt.Errorf("size check fail %v != %v", int(Size[X])*int(Size[Y])*int(Size[Z]), len(blocks))
+		return nil, nil, 0, fmt.Errorf("size check fail %v != %v", int(Size[X])*int(Size[Y])*int(Size[Z]), len(blocks))
 	}
 	blockChan := make(chan *IOBlock, 4096)
 	airRID := chunk.AirRID
@@ -98,5 +98,5 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 	}()
 	return blockChan, func() {
 		stop = true
-	}, nil
+	}, (suggestMinCacheChunks / 16) + 1, nil
 }
