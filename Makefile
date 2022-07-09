@@ -92,12 +92,12 @@ netbsd-executable-x86_64: build/phoenixbuilder-netbsd-executable-x86_64
 #netbsd-executable-armv6: build/phoenixbuilder-netbsd-executable-armv6
 #netbsd-executable-armv7: build/phoenixbuilder-netbsd-executable-armv7
 netbsd-executable-arm64: build/phoenixbuilder-netbsd-executable-arm64
-opensbd-executable: opensbd-executable-x86 opensbd-executable-x86_64 opensbd-executable-arm64
-opensbd-executable-x86: build/phoenixbuilder-openbsd-executable-x86
-opensbd-executable-x86_64: build/phoenixbuilder-openbsd-executable-x86_64
+openbsd-executable: openbsd-executable-x86 openbsd-executable-x86_64 openbsd-executable-arm64
+openbsd-executable-x86: build/phoenixbuilder-openbsd-executable-x86
+openbsd-executable-x86_64: build/phoenixbuilder-openbsd-executable-x86_64
 #openbsd-executable-mips64: build/phoenixbuilder-openbsd-executable-mips64
 #openbsd-executable-armv7: build/phoenixbuilder-openbsd-executable-armv7
-opensbd-executable-arm64: build/phoenixbuilder-openbsd-executable-arm64
+openbsd-executable-arm64: build/phoenixbuilder-openbsd-executable-arm64
 openwrt-mt7620-mipsel_24kc: build/phoenixbuilder-openwrt-mt7620-mipsel_24kc
 #windows-v8-executable-x86_64: build/phoenixbuilder-v8-windows-executable-x86_64.exe
 #windows-shared: build/phoenixbuilder-windows-shared.dll
