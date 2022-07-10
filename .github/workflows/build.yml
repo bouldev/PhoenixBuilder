@@ -7,7 +7,6 @@ on:
       - "version"
       - "fyne-gui/version"
   workflow_dispatch: {}
-    
 
 jobs:
   linux-build:
@@ -189,10 +188,9 @@ jobs:
         chmod 0600 ~/fbkey
     - name: Upload binaries and publish
       env:
-        FBSERVER: storage.fastbuilder.pro
         FBUSER: ${{ secrets.FBUSER }}
       run: |
         echo "put fb-upload.tar.gz">~/a
-        sftp -i ~/fbkey -b ~/a $FBUSER@$FBSERVER
-        ssh -i ~/fbkey $FBUSER@$FBSERVER "mkdir -p fbbinaries;mv fb-upload.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rmdir build;rm -rf /var/www/storage/*;mv * /var/www/storage/;cd ..;rmdir fbbinaries"
+        sftp -i ~/fbkey -b ~/a $FBUSER@storage.fastbuilder.pro
+        ssh -i ~/fbkey $FBUSER@storage.fastbuilder.pro "mkdir -p fbbinaries;mv fb-upload.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rmdir build;rm -rf /var/www/storage/*;mv * /var/www/storage/;cd ..;rmdir fbbinaries"
 
