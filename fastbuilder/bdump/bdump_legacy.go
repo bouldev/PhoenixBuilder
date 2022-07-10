@@ -358,7 +358,7 @@ func (bdump *BDumpLegacy) WriteToFile(path string, localCert string, localKey st
 		brw.Write(append([]byte{88}, sign...))
 		if(len(sign)>=255) {
 			realLength:=make([]byte,2)
-			binary.BigEndian.PutUint16(realLength,uint16(len(sign)+2))
+			binary.BigEndian.PutUint16(realLength,uint16(len(sign)))
 			brw.Write(realLength)
 			brw.Write([]byte{uint8(255)})
 		}else{
