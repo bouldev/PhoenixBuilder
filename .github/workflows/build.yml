@@ -181,7 +181,7 @@ jobs:
     - name: Load Key
       env:
         FBKEY: ${{ secrets.FBKEY }}
-     run: |
+      run: |
         echo "$FBKEY">~/fbkey
         mkdir -p ~/.ssh
         printf "StrictHostKeyChecking no\nUserKnownHostsFile /dev/null">~/.ssh/config
