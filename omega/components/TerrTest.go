@@ -24,6 +24,7 @@ type TerritoryTest struct {
 	Usage            string            `json:"提示信息"`
 	DelayTime        int64             `json:"执行地皮保护指令延迟(毫秒)"`
 	BuyCmds          []string          `json:"购买地皮时执行的指令"`
+	fileChange       bool
 	Data             map[string]*TerritoryData
 }
 
@@ -62,7 +63,7 @@ func (b *TerritoryTest) Inject(frame defines.MainFrame) {
 	//
 	b.Frame = frame
 	//注入frame等东西
-	//b.Frame.GetJsonData("地皮信息.json", &b.Datas)
+	b.Frame.GetJsonData("地皮信息.json", &b.Data)
 	b.BasicComponent.Inject(frame)
 	//b.Listener.SetGameChatInterceptor(b.ProcessingCenter)
 	//获取信息
@@ -81,6 +82,18 @@ func (b *TerritoryTest) Activate() {
 	b.Frame.GetGameControl().SayTo("@a", "地皮组件已开启")
 	go b.protect()
 }
+
+/*
+func (b *TerritoryTest) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+
+			return b.Frame.WriteJsonDataWithTMP("地皮信息.json", ".ckpt", &b.Data)
+
+	}
+	return nil
+}*/
+
 func (b *TerritoryTest) Stop() error {
 	fmt.Print("开始保存地皮插件信息")
 	return b.Frame.WriteJsonData("地皮信息.json", b.Data)
@@ -181,45 +194,52 @@ func (b *TerritoryTest) protect() {
 
 		if len(b.Data) >= 1 {
 			for k, v := range b.Data {
-				//print(time.Duration(b.DelayTime), "延迟毫秒设定\n")
-				time.Sleep(time.Duration(b.DelayTime))
-				for _, i := range b.ProtectCmds {
-					MasterName := "name=!\"" + k + "\""
-					if len(v.Member) >= 1 {
-						for _, j := range v.Member {
-							MasterName = MasterName + "," + "name=!\"" + j + "\""
-						}
-					}
-					i = b.FormateMsg(i, "非地皮合法进入者", MasterName)
-					strPos := "x=" + strconv.Itoa(v.Pos[0]) + ",z=" + strconv.Itoa(v.Pos[2]) + ",y=-60" + ",dx=" + strconv.Itoa(v.Range[0]) + ",dy=400" + ",dz=" + strconv.Itoa(v.Range[1])
-					//fmt.Print(strPos, "\n")
-					i = b.FormateMsg(i, "地皮范围", strPos)
-					i = b.FormateMsg(i, "地皮主人", k)
-					///fmt.Print(i, "\n")
-					b.Frame.GetGameControl().SendCmd(i)
 
-					//b.Frame.GetGameControl().SendCmd(i)
-				}
+				//延迟设置
+				time.Sleep(time.Duration(b.DelayTime) * time.Millisecond)
+				cmd := "testfor @a[[地皮范围]]"
+				strPos := "x=" + strconv.Itoa(v.Pos[0]) + ",z=" + strconv.Itoa(v.Pos[2]) + ",y=-60" + ",dx=" + strconv.Itoa(v.Range[0]) + ",dy=400" + ",dz=" + strconv.Itoa(v.Range[1])
+				cmd = b.FormateMsg(cmd, "地皮范围", strPos)
+				b.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
+					for _, i := range b.ProtectCmds {
+						MasterName := "name=!\"" + k + "\""
+						if len(v.Member) >= 1 {
+							for _, j := range v.Member {
+								MasterName = MasterName + "," + "name=!\"" + j + "\""
+							}
+						}
+						i = b.FormateMsg(i, "非地皮合法进入者", MasterName)
+
+						//fmt.Print(strPos, "\n")
+						i = b.FormateMsg(i, "地皮范围", strPos)
+						i = b.FormateMsg(i, "地皮主人", k)
+						i = b.FormateMsg(i, "地皮起点x", strconv.Itoa(v.Pos[0]))
+						i = b.FormateMsg(i, "地皮起点z", strconv.Itoa(v.Pos[2]))
+						i = b.FormateMsg(i, "地皮起点y", strconv.Itoa(v.Pos[1]))
+						i = b.FormateMsg(i, "地皮dx", strconv.Itoa(v.Range[0]))
+						i = b.FormateMsg(i, "地皮dz", strconv.Itoa(v.Range[1]))
+						///fmt.Print(i, "\n")
+						b.Frame.GetGameControl().SendCmd(i)
+
+						//b.Frame.GetGameControl().SendCmd(i)
+					}
+				})
 
 			}
 		}
-		time.Sleep(50)
 	}
 
 }
 
 func (b *TerritoryTest) TpBackTerritorys(name string) {
 	//返回地皮
-	fmt.Print("tpbacketest==111\n")
+
 	if _, ok := b.Data[name]; ok {
 		msg := "tp " + b.FormateMsg(b.KeyWord["地皮主人选择器"], "地皮主人", name) + " " + strconv.Itoa(b.Data[name].Pos[0]) + " " + strconv.Itoa(b.Data[name].Pos[1]) + " " + strconv.Itoa(b.Data[name].Pos[2])
-		fmt.Print("test--110")
-		print(msg)
+
 		b.Frame.GetGameControl().SendCmd(msg)
 	} else {
-
 		msg := b.FormateMsg(b.KeyWord["无地皮提示词"], "无地皮对象", name)
-		fmt.Print(msg)
 		b.Frame.GetGameControl().SayTo("@a[name=\""+name+"\"]", msg)
 	}
 
@@ -229,7 +249,6 @@ func (b *TerritoryTest) TpBackTerritorys(name string) {
 func (b *TerritoryTest) WriteJsonDatas(name string, Range []int, price string) (suss bool) {
 
 	Pos := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
-
 	if len(b.Data) >= 1 {
 		for _, v := range b.Data {
 			if b.CheckIsoverlap(Pos, Range, v.Pos, v.Range) {
