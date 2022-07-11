@@ -500,6 +500,7 @@ func (o *PlayerShop) Signal(signal int) error {
 }
 
 func (o *PlayerShop) Activate() {
+	time.Sleep(3 * time.Second)
 	ox, oy, oz := o.PackagePlatform[0], o.PackagePlatform[1], o.PackagePlatform[2]
 	for h := -1; h < 0; h++ {
 		for wx := -1; wx < 2; wx++ {
@@ -512,7 +513,8 @@ func (o *PlayerShop) Activate() {
 						func(output *packet.CommandOutput) {
 							//fmt.Println(output)
 							if len(output.OutputMessages) > 0 && strings.Contains(output.OutputMessages[0].Message, "outOfWorld") {
-								panic(pterm.Error.Sprintf("打包平台 %v 不在常加载区内！请修改打包平台位置或者设为常加载区", o.PackagePlatform))
+								pterm.Warning.Println("打包平台(玩家商店) %v 不在常加载区内！请修改打包平台位置或者设为常加载区,\n例如输入: /tickingarea add %v 0 %v %v 0 %v",
+									o.PackagePlatform, o.PackagePlatform[0]-1, o.PackagePlatform[2]-1, o.PackagePlatform[0]+1, o.PackagePlatform[2]+1)
 							}
 							if output.SuccessCount != 0 {
 								o.Frame.GetGameControl().SendCmd(fmt.Sprintf("setblock %v %v %v sealantern", x, y, z))
