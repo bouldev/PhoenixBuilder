@@ -148,5 +148,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"统一导入系统": func() defines.Component {
 			return &UniverseImport{BasicComponent: &defines.BasicComponent{}}
 		},
+		"第三方_by温柔_地皮组件": func() defines.Component {
+			return &TerritoryTest{BasicComponent: &defines.BasicComponent{}}
+		},
 	}
 }
