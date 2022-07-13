@@ -60,8 +60,8 @@ func main() {
 	I18n.Init()
 
 	pterm.DefaultBox.Println(pterm.LightCyan("https://github.com/LNSSPsd/PhoenixBuilder"))
-	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO, CMA2401PT"))
-	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
+	pterm.Println(pterm.Yellow(I18n.T(I18n.Copyright_Notice_Contrib)))
+	pterm.Println(pterm.Yellow(I18n.T(I18n.Copyright_Notice_Bouldev)))
 	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
 
 	if !args.NoReadline() {
@@ -78,12 +78,12 @@ func main() {
 		return
 	}
 	if !args.ShouldDisableHashCheck() {
-		fmt.Printf("Checking update, please wait...")
+		fmt.Printf(I18n.T(I18n.Notice_CheckUpdate))
 		hasUpdate, latestVersion := utils.CheckUpdate(args.GetFBVersion())
-		fmt.Printf("OK\n")
+		fmt.Printf(I18n.T(I18n.Notice_OK))
 		if hasUpdate {
-			fmt.Printf("A newer version (%s) of PhoenixBuilder is available.\n", latestVersion)
-			fmt.Printf("Please update.\n")
+			fmt.Printf(I18n.T(I18n.Notice_UpdateAvailable), latestVersion)
+			fmt.Printf(I18n.T(I18n.Notice_UpdateNotice))
 			// To ensure user won't ignore it directly, can be suppressed by command line argument.
 			os.Exit(0)
 		}
@@ -108,7 +108,7 @@ func main() {
 			}
 			token, err := json.Marshal(tokenstruct)
 			if err != nil {
-				fmt.Println("Failed to generate temp token")
+				fmt.Println(I18n.T(I18n.FBUC_Token_ErrOnGen))
 				fmt.Println(err)
 				return
 			}
@@ -248,14 +248,14 @@ func init_and_run_client(token string, code string, server_password string) {
 		}
 		tokenPath := loadTokenPath()
 		if fi, err := os.Create(tokenPath); err != nil {
-			fmt.Println("Error creating token file: ", err)
-			fmt.Println("Error ignored.")
+			fmt.Println(I18n.T(I18n.FBUC_Token_ErrOnCreate), err)
+			fmt.Println(I18n.T(I18n.ErrorIgnored))
 		} else {
 			env.LoginInfo.Token = token
 			_, err = fi.WriteString(token)
 			if err != nil {
-				fmt.Println("Error saving token: ", err)
-				fmt.Println("Error ignored.")
+				fmt.Println(I18n.T(I18n.FBUC_Token_ErrOnSave), err)
+				fmt.Println(I18n.T(I18n.ErrorIgnored))
 			}
 			fi.Close()
 			fi = nil
@@ -276,7 +276,7 @@ func runClient(env *environment.PBEnvironment) {
 		go func() {
 			<-connDeadline.C
 			if env.Connection == nil {
-				panic("connection not established after very long time")
+				panic(I18n.T(I18n.Crashed_No_Connection))
 			}
 		}()
 		fbauthclient := env.FBAuthClient.(*fbauth.Client)
@@ -353,7 +353,7 @@ func runClient(env *environment.PBEnvironment) {
 	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = uint64(time.Now().Sub(conn.GameData().ConnectTime).Milliseconds()) / 50
 
 	if args.ShouldEnableOmegaSystem() {
-		fmt.Println("Omega System Enabled!")
+		fmt.Println(I18n.T(I18n.Omega_Enabled))
 		embed.EnableOmegaSystem(env)
 	}
 
@@ -756,7 +756,7 @@ func readToken(path string) (string, error) {
 func loadTokenPath() string {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
+		fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
 		homedir = "."
 	}
 	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
