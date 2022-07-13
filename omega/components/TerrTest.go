@@ -193,8 +193,8 @@ func (b *TerritoryTest) protect() {
 	for {
 
 		if len(b.Data) >= 1 {
-			for k, v := range b.Data {
-
+			for _k, _v := range b.Data {
+				k, v := _k, _v
 				//延迟设置
 				time.Sleep(time.Duration(b.DelayTime) * time.Millisecond)
 				cmd := "testfor @a[[地皮范围]]"
@@ -233,7 +233,6 @@ func (b *TerritoryTest) protect() {
 
 func (b *TerritoryTest) TpBackTerritorys(name string) {
 	//返回地皮
-
 	if _, ok := b.Data[name]; ok {
 		msg := "tp " + b.FormateMsg(b.KeyWord["地皮主人选择器"], "地皮主人", name) + " " + strconv.Itoa(b.Data[name].Pos[0]) + " " + strconv.Itoa(b.Data[name].Pos[1]) + " " + strconv.Itoa(b.Data[name].Pos[2])
 
@@ -306,40 +305,48 @@ func (b *TerritoryTest) BuyTerritorysCenter(name string) {
 		fmt.Print(msg, "自定义购买时提示话语格式化\n")
 		b.Frame.GetGameControl().SayTo("@a[name=\""+name+"\"]", msg)
 		if b.Frame.GetGameControl().SetOnParamMsg(name, func(NewChat *defines.GameChat) (catch bool) {
+
 			x := NewChat.Msg[0]
 			y := NewChat.Msg[1]
-			//Range :=[2]int{strconv.Atoi(x),strconv.Atoi(y)}
-			msg = b.FormateMsg(b.KeyWord["提示确认地皮大小提示词"], "地皮大小", x+","+y)
-			xint, err := strconv.Atoi(x)
-			if err != nil {
-				fmt.Errorf(err.Error())
-			}
-			yint, err := strconv.Atoi(y)
-			if err != nil {
-				fmt.Errorf(err.Error())
-			}
-			price := xint * b.PriceOfoneblock * yint
-
-			msg = b.FormateMsg(msg, "价格", strconv.Itoa(price))
-			msg = b.FormateMsg(msg, "购买地皮计分板", b.Score)
-			fmt.Print(msg, "\n")
-			b.Frame.GetGameControl().SayTo("@a[name=\""+name+"\"]", msg)
-			if b.Frame.GetGameControl().SetOnParamMsg(name, func(NewChats *defines.GameChat) (catch bool) {
-				if NewChats.Msg[0] == "y" {
-					var list []int
-
-					list = append(list, xint)
-					list = append(list, yint)
-					print("--247--", list, "\n")
-					b.BuyTerritory(NewChats.Name, price, list)
-				} else {
-					fmt.Print(NewChats, "购买失败\n")
-					return false
+			okx, _ := regexp.MatchString("^\\+?[1-9][0-9]*$", x)
+			okz, _ := regexp.MatchString("^\\+?[1-9][0-9]*$", y)
+			if okx && okz {
+				//Range :=[2]int{strconv.Atoi(x),strconv.Atoi(y)}
+				msg = b.FormateMsg(b.KeyWord["提示确认地皮大小提示词"], "地皮大小", x+","+y)
+				xint, err := strconv.Atoi(x)
+				if err != nil {
+					fmt.Errorf(err.Error())
 				}
-				return true
-			}) == nil {
-				fmt.Print("有人挤占")
+				yint, err := strconv.Atoi(y)
+				if err != nil {
+					fmt.Errorf(err.Error())
+				}
+				price := xint * b.PriceOfoneblock * yint
+
+				msg = b.FormateMsg(msg, "价格", strconv.Itoa(price))
+				msg = b.FormateMsg(msg, "购买地皮计分板", b.Score)
+				fmt.Print(msg, "--324--\n")
+				b.Frame.GetGameControl().SayTo("@a[name=\""+name+"\"]", msg)
+				if b.Frame.GetGameControl().SetOnParamMsg(name, func(NewChats *defines.GameChat) (catch bool) {
+					if NewChats.Msg[0] == "y" {
+						var list []int
+
+						list = append(list, xint)
+						list = append(list, yint)
+						//print("--247--", list, "\n")
+						b.BuyTerritory(NewChats.Name, price, list)
+					} else {
+						fmt.Print(NewChats, "购买失败\n")
+						return false
+					}
+					return true
+				}) == nil {
+					fmt.Print("有人挤占")
+				}
+			} else {
+				b.Frame.GetGameControl().SayTo("@a[name=\""+name+"\"]", "请输入有效数字")
 			}
+
 			return true
 		}) == nil {
 
@@ -390,7 +397,7 @@ func (b *TerritoryTest) CheckArr(arr []string, str string) (IsIn bool) {
 }
 func (b *TerritoryTest) FormateMsg(str string, re string, afterstr string) (newstr string) {
 
-	res := regexp.MustCompile("." + re + ".")
+	res := regexp.MustCompile("\\[" + re + "\\]")
 	return res.ReplaceAllString(str, afterstr)
 
 }
