@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
@@ -46,6 +47,7 @@ type QGroupLink struct {
 	sendChan                  chan string
 	connectionFalseHintReduce int
 	cqStartPrintErr           bool
+	loginTruncated            bool
 }
 
 func (cq *QGroupLink) cqStartPrintErrRoutine() {
@@ -385,6 +387,18 @@ func (b *QGroupLink) Inject(frame defines.MainFrame) {
 	}
 	b.sendQQMessage(hint)
 	b.Frame.GetGameListener().SetGameChatInterceptor(b.onNewGameMsg)
+	b.Frame.GetGameListener().AppendLogoutInfoCallback(func(entry protocol.PlayerListEntry) {
+		player := b.Frame.GetGameControl().GetPlayerKitByUUID(entry.UUID)
+		if player != nil {
+			b.sendQQMessage(fmt.Sprintf("%v 离开了游戏", player.GetRelatedUQ().Username))
+		}
+	})
+	b.Frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
+		if b.loginTruncated {
+			name := utils.ToPlainName(entry.Username)
+			b.sendQQMessage(fmt.Sprintf("%v 进入了游戏", name))
+		}
+	})
 }
 
 func (b *QGroupLink) Stop() error {
@@ -397,5 +411,6 @@ func (b *QGroupLink) Signal(signal int) error {
 }
 
 func (b *QGroupLink) Activate() {
-
+	time.Sleep(time.Second * 5)
+	b.loginTruncated = true
 }

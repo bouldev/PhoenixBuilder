@@ -107,7 +107,7 @@ func (o *Express) post(srcPlayer, dstPlayer, hint string) {
 			o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 				if output.SuccessCount != 0 {
 					o.Frame.GetGameControl().SayTo(srcPlayer, "打包成功！将在目标玩家上线时送到")
-					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] 0 -40 0", ox, oy, oz))
+					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] ~ -80 ~", ox, oy, oz))
 					o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v->%v: 寄出 %v (%v)", srcPlayer, dstPlayer, hint, packageName))
 					if _, hask := o.Record.Packages[dstPlayer]; !hask {
 						o.Record.Packages[dstPlayer] = make([]*packageRecord, 0)

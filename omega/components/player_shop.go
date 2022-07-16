@@ -391,7 +391,7 @@ func (o *PlayerShop) packupGood(good *PlayerShopDataGood) {
 				good.StructureName, sx, sy, sz, ex, ey, ez)
 			o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 				if output.SuccessCount != 0 {
-					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] ~ -40 ~", ox, oy, oz))
+					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] ~ -80 ~", ox, oy, oz))
 					if m, err := json.Marshal(good); err == nil {
 						descStr := string(m)
 						o.Frame.GetBackendDisplay().Write("出售物品，信息: " + descStr)
