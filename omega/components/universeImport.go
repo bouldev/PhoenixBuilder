@@ -9,6 +9,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"phoenixbuilder/omega/utils/structure"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -101,6 +102,9 @@ func (o *UniverseImport) StartNewTask() {
 	}); err == nil {
 		baseProgress := task.Progress
 		pterm.Success.Println("文件成功被解析,将开始优化导入顺序")
+		if runtime.GOOS == "windows" && o.ImportSpeed > 100 {
+			pterm.Error.Println("受限于windows计时器精度, 导入系统无法达到你指定的导入速度（和fb一样的问题），请考虑使用任意非windows系统（linux/macos/安卓/ios/使用linux的面板）实现导入")
+		}
 		o.currentBuilder = &Importor{
 			frontendStopper: stopFn,
 			task:            task,

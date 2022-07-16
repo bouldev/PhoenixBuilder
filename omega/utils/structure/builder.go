@@ -24,15 +24,20 @@ func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 	o.delayBlocks = make(map[define.CubePos]*IOBlock)
 	o.delayBlocksMu = sync.RWMutex{}
 	counter := 0
-	delay := time.Duration((float64(1000) / float64(speed)) * float64(time.Millisecond))
+	delay := time.Duration((float64(1000) / float64(speed) * float64(time.Millisecond)))
 	ticker := time.NewTicker(delay)
+	lastPos := define.CubePos{0, 2401, 0}
 	for block := range blocksIn {
 		if o.Stop {
 			return
 		}
-		if counter%40 == 0 {
+		xmove := block.Pos.X() - lastPos.X()
+		ymove := block.Pos.Y() - lastPos.Y()
+		zmove := block.Pos.Z() - lastPos.Z()
+		if (xmove*xmove + ymove*ymove + zmove*zmove) > 16*16 {
 			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2]))
 		}
+		lastPos = block.Pos
 		blk := chunk.RuntimeIDToLegacyBlock(block.RTID)
 		// if blk.Name == "air" {
 		// 	fmt.Println(block.RTID)
