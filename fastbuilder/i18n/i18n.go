@@ -22,16 +22,16 @@ const (
 	ACME_FailedToSeek
 	ACME_StructureErrorNotice
 	ACME_UnknownCommand
-	Auth_BackendError //107
-	Auth_FailedToRequestEntry // 105
-	Auth_HelperNotCreated //109
-	Auth_InvalidFBVersion //113
-	Auth_InvalidHelperUsername // 106
-	Auth_InvalidToken //111
-	Auth_InvalidUser //110
-	Auth_ServerNotFound // 104
-	Auth_UnauthorizedRentalServerNumber //108
-	Auth_UserCombined //112
+	Auth_BackendError //5
+	Auth_FailedToRequestEntry // 6
+	Auth_HelperNotCreated //7
+	Auth_InvalidFBVersion //8
+	Auth_InvalidHelperUsername // 9
+	Auth_InvalidToken //10
+	Auth_InvalidUser //11
+	Auth_ServerNotFound // 12
+	Auth_UnauthorizedRentalServerNumber //13
+	Auth_UserCombined //14
 	BDump_Author
 	BDump_EarlyEOFRightWhenOpening
 	BDump_FailedToReadAuthorInfo

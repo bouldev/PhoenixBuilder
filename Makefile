@@ -49,6 +49,9 @@ endif
 ifneq ($(wildcard ${HOME}/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64),)
 	TARGETS:=${TARGETS} openwrt-mt7620-mipsel_24kc
 endif
+ifneq ($(wildcard ${HOME}/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64),)
+	TARGETS:=${TARGETS} openwrt-ipq40xx-generic-armv7
+endif
 ifneq ($(wildcard ${HOME}/llvm),)
 	TARGETS:=${TARGETS} netbsd-executable freebsd-executable openbsd-executable
 	# Do other BSDs later
@@ -100,6 +103,7 @@ openbsd-executable-x86_64: build/phoenixbuilder-openbsd-executable-x86_64
 #openbsd-executable-armv7: build/phoenixbuilder-openbsd-executable-armv7
 openbsd-executable-arm64: build/phoenixbuilder-openbsd-executable-arm64
 openwrt-mt7620-mipsel_24kc: build/phoenixbuilder-openwrt-mt7620-mipsel_24kc
+openwrt-ipq40xx-generic-armv7: build/phoenixbuilder-openwrt-ipq40xx-generic-armv7
 #windows-v8-executable-x86_64: build/phoenixbuilder-v8-windows-executable-x86_64.exe
 #windows-shared: build/phoenixbuilder-windows-shared.dll
 
@@ -192,6 +196,8 @@ build/phoenixbuilder-openwrt-mt7620-mipsel_24kc: build/ ${HOME}/openwrt-sdk-21.0
 #	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=/usr/bin/x86_64-w64-mingw32-gcc CXX=/usr/bin/x86_64-w64-mingw32-g++ GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8-windows-executable-x86_64.exe
 #build/phoenixbuilder-windows-shared.dll: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
 #	CGO_CFLAGS="-Wl,--enable-stdcall-fixup -luser32 -lcomdlg32 -Wno-pointer-to-int-cast -mwindows -m64 -march=x86-64 -luser32 -lkernel32 -lgdi32 -lwinmm -lcomctl32 -ladvapi32 -lshell32 -lpsapi -nodefaultlibs -nostdlib -lmsvcrt -D_UCRT=1" CC=/usr/bin/x86_64-w64-mingw32-gcc CGO_LDFLAGS="--enable-stdcall-fixup" GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=c-shared -trimpath -o build/phoenixbuilder-windows-shared.dll
+build/phoenixbuilder-openwrt-ipq40xx-generic-armv7: build/ ${HOME}/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64/ ${SRCS_GO}
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} STAGING_DIR=${HOME}/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64/staging_dir CC=${HOME}/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64/staging_dir/toolchain-arm_cortex-a7+neon-vfpv4_gcc-11.2.0_musl_eabi/bin/arm-openwrt-linux-gcc CXX=${HOME}/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64/staging_dir/toolchain-arm_cortex-a7+neon-vfpv4_gcc-11.2.0_musl_eabi/bin/arm-openwrt-linux-g++ GOARCH=arm GOARM=7 CGO_ENABLED=1 go build -trimpath -tags no_readline -ldflags "-s -w" -o build/phoenixbuilder-openwrt-ipq40xx-generic-armv7
 build/hashes.json: build genhash.js ${TARGETS}
 	node genhash.js
 	cp version build/version
