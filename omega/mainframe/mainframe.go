@@ -81,6 +81,10 @@ func (o *Omega) GetWorldsDir() string {
 	return path.Join(o.storageRoot, "worlds")
 }
 
+func (o *Omega) GetOmegaSideDir() string {
+	return path.Join(o.storageRoot, "side")
+}
+
 func (o *Omega) GetAllConfigs() []*defines.ComponentConfig {
 	return o.ComponentConfigs
 }
