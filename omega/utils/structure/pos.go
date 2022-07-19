@@ -47,18 +47,6 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 	outChan = make(chan *IOBlock, outChanLen)
 	stop := false
 	go func() {
-		counter := 0
-		for {
-			if stop {
-				return
-			}
-			if counter < startFrom {
-				counter++
-				<-inChan
-			} else {
-				break
-			}
-		}
 		chunks := make(map[define.ChunkPos]*mirror.ChunkData)
 		setBlock := func(b *IOBlock) {
 			pos := b.Pos
@@ -84,6 +72,7 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 			}
 		}
 		air := chunk.AirRID
+		counter := 0
 		dumpAllChunks := func() {
 			chunkXs := make([]int, 0)
 			chunkZs := make([]int, 0)
@@ -144,6 +133,10 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 									continue
 								}
 								p := define.CubePos{int(x) + int(chunkPos[0])*16, int(y), int(z) + int(chunkPos[1])*16}
+								if counter < startFrom {
+									counter++
+									continue
+								}
 								if nbt, hasK := nbts[p]; hasK {
 									outChan <- &IOBlock{
 										Pos:  p,
@@ -164,10 +157,11 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 			chunks = make(map[define.ChunkPos]*mirror.ChunkData)
 		}
 		for _b := range inChan {
-			b := _b
 			if stop {
+				close(outChan)
 				return
 			}
+			b := _b
 			b.Pos = b.Pos.Add(offset)
 			if b.NBT != nil {
 				delete(b.NBT, "x")
