@@ -33,6 +33,7 @@ func (o *Reactor) SetGameMenuEntry(entry *defines.GameMenuEntry) {
 			},
 		)
 	}
+	o.freshMenu()
 }
 
 func (o *Reactor) gameMenuEntryToStdInterceptor(entry *defines.GameMenuEntry) func(chat *defines.GameChat) (stop bool) {
@@ -272,6 +273,7 @@ type Reactor struct {
 	CurrentWorldProvider      mirror.ChunkProvider
 	CurrentWorld              *world.World
 	MirrorAvailable           bool
+	freshMenu                 func()
 }
 
 func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
@@ -339,5 +341,6 @@ func newReactor(o *Omega) *Reactor {
 		OnTypedPacketCallBacks:    make(map[uint32][]func(packet.Packet), 0),
 		OnFirstSeePlayerCallback:  make([]func(string), 0),
 		OnLevelChunkData:          make([]func(cd *mirror.ChunkData), 0),
+		freshMenu:                 func() {},
 	}
 }

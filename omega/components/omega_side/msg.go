@@ -3,6 +3,7 @@ package omega_side
 import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/defines"
 
 	"github.com/pterm/pterm"
 )
@@ -97,6 +98,64 @@ func (t *omegaSideTransporter) initMapping() {
 			}
 			writer(playerList)
 		},
+		"reg_menu": func(args map[string]interface{}, writer func(interface{})) {
+			itriggers := args["triggers"].([]interface{})
+			triggers := make([]string, len(itriggers))
+			for i, t := range itriggers {
+				triggers[i] = t.(string)
+			}
+			argumentHint := args["argument_hint"].(string)
+			usage := args["usage"].(string)
+			subType := args["sub_id"].(string)
+
+			t.side.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
+				MenuEntry: defines.MenuEntry{
+					Triggers:     triggers,
+					ArgumentHint: argumentHint,
+					FinalTrigger: false,
+					Usage:        usage,
+				},
+				OptionalOnTriggerFn: func(chat *defines.GameChat) (stop bool) {
+					t.conn.WriteJSON(ServerPush{
+						ID0:     0,
+						Type:    "menuTriggered",
+						SubType: subType,
+						Data:    chat,
+					})
+					return true
+				},
+			})
+			writer(map[string]interface{}{
+				"sub_id": subType,
+			})
+		},
+		"player.next_input": func(args map[string]interface{}, writer func(interface{})) {
+			player := args["player"].(string)
+			hint := args["hint"].(string)
+			if err := t.side.Frame.GetGameControl().SetOnParamMsg(player, func(chat *defines.GameChat) (catch bool) {
+				writer(map[string]interface{}{
+					"success": true,
+					"player":  player,
+					"input":   chat.Msg,
+				})
+				return true
+			}); err == nil {
+				if hint != "" {
+					t.side.Frame.GetGameControl().SayTo(player, hint)
+				}
+			} else {
+				writer(map[string]interface{}{
+					"success": false,
+					"player":  player,
+					"err":     err.Error(),
+				})
+			}
+		},
+		// "player.say_to": func(args map[string]interface{}, writer func(interface{})) {
+		// 	player := args["player"].(string)
+		// 	msg := args["msg"].(string)
+		// 	t.side.Frame
+		// },
 	}
 }
 

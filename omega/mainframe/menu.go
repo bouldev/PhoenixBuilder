@@ -236,8 +236,7 @@ func (m *Menu) debugDisplayMenuStructure(node *MenuRenderNode, prefix string) {
 	}
 }
 
-func (m *Menu) Activate() {
-	// m.componentDefaultTriggers = make([]string, len(m.omega.Reactor.GameMenuEntries))
+func (m *Menu) fresh() {
 	currentAllTriggers := make([]string, 0)
 	m.menuRootNode = &MenuRenderNode{}
 	attachPoints := make(map[string]func(*defines.GameMenuEntry))
@@ -268,7 +267,12 @@ func (m *Menu) Activate() {
 			// m.componentDefaultTriggers = append(m.componentDefaultTriggers, defaultTrigger)
 		}
 	}
+}
 
+func (m *Menu) Activate() {
+	// m.componentDefaultTriggers = make([]string, len(m.omega.Reactor.GameMenuEntries))
+	m.fresh()
+	m.omega.Reactor.freshMenu = m.fresh
 	// m.debugDisplayMenuStructure(m.menuRootNode, "")
 
 	for _, e := range m.omega.BackendMenuEntries {

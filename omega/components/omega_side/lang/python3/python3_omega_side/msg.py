@@ -1,3 +1,5 @@
+from typing import *
+
 def encode_echo(msg:str):
     return "echo",{"msg":msg}
 
@@ -46,3 +48,19 @@ def encode_get_players_list():
 
 async def decode_get_players_list(data:dict,cb):
     await cb(data)
+
+def encode_reg_menu(triggers:List[str],argument_hint:str,usage:str,sub_id:str):
+    return "reg_menu",{"triggers":triggers,"argument_hint":argument_hint,"usage":usage,"sub_id":sub_id}
+
+async def decode_reg_menu(data:dict,cb):
+    await cb(data["sub_id"])
+
+def encode_get_player_next_input(player:str,hint:str):
+    return "player.next_input",{"player":player,"hint":hint}
+
+async def decode_player_next_input(data:dict,cb):
+    succ=data["success"]
+    player=data["player"]
+    inp=data["input"] if succ else None
+    err=data["err"] if not succ else None
+    await cb((succ,player,inp,err))

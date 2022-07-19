@@ -21,7 +21,7 @@ omega 会通过配置启动一个子进程，子进程应该连接到启动参�
 localhost:24011 为默认地址，若 24011 端口不可用，则 omega 会随机选择一个可用的端口
 默认情况下，在开发时，将 ws 服务器地址固定为 ws://localhost:24011/omega_side 就可以了
 
-### **Omega Side Protocol 基础格式**
+### **基础数据格式**
 Omega Side Protocol 包括且仅包括以下三类数据，这三类数据全部以json字符串形式出现，其基本格式为：
 - **组件向Omega框架主动发送数据的格式{"client":c,"function":f,"args":a}**  
 c 为序号(int)，其应从**1**开始，每发送一个数据包增长1，直到增长到24011,第24011个包之后的包序号应该为1  
@@ -39,7 +39,7 @@ d 为返回的数据(dict)
 "type":t,"sub":s 共同确定推送的数据是什么类型，其中 t 与 sub 都为 string 
 d 为实际数据(dict)
 
-### **Omega Side API 列表**
+### **API 列表**
 -> 表示由插件向omega框架发送请求  
 <- 表示由omega框架响应请求  
 << 表示发送该数据包之后，omega 框架后续将会推送数据  
@@ -80,7 +80,7 @@ async def test(frame:MainFrame):
 frame.add_plugin(test)
 ```
 
-- 订阅所有 mc 数据包： 通知 omega 框架，在新的任何MC数据包到来时，推送对应数据包 (d)
+- 订阅所有 mc 数据包： 通知 omega 框架，在新的任何MC数据包到来时，推送对应数据包 (d)  
 -> {"client":c,"function":"regMCPkt","args":{"pktID":0}}  
 <- {"client":c,"violate":false,"data":{"succ":bool}} 
 << {"client":0,"type":"mcPkt","sub":pktID,"data":d}}
@@ -97,7 +97,7 @@ async def test(frame:MainFrame):
 frame.add_plugin(test)
 ```
 
-- 以游戏中Websocket身份执行命令： 框架返回命令执行结果
+- 以游戏中Websocket身份执行命令： 框架返回命令执行结果  
 -> {"client":c,"function":"send_ws_cmd","args":{"cmd":cmd}}  
 <- {"client":c,"violate":false,"data":{"result":result}}  
 ```python
@@ -110,7 +110,7 @@ frame.add_plugin(test)
 ```
 
 - 以玩家身份执行命令： 框架返回命令执行结果（如果租赁服的 sendcommandfeedback为false，
-则omega会短暂的将其变为true，注意，部分指令以玩家身份执行结果和以websocket身份执行结果不一样）
+则omega会短暂的将其变为true，注意，部分指令以玩家身份执行结果和以websocket身份执行结果不一样）  
 -> {"client":c,"function":"send_player_cmd","args":{"cmd":cmd}}  
 <- {"client":c,"violate":false,"data":{"result":result}} 
 ```python
@@ -124,7 +124,7 @@ frame.add_plugin(test)
 
 - 发送 setting 命令：
 与前两个不同的是，这里的cmd 虽然也能是 "setblock ..." 但是对于诸如 "tp ..." 等指令并不能有效的执行
-且这个指令没有返回值，因此，omega框架仅仅会简单的返回一个 ack=True (ack 意为 acknowledge)
+且这个指令没有返回值，因此，omega框架仅仅会简单的返回一个 ack=True (ack 意为 acknowledge)  
 -> {"client":c,"function":"send_wo_cmd","args":{"cmd":cmd}}  
 <- {"client":c,"violate":false,"data":{"ack":True}} 
 ```python
@@ -136,7 +136,7 @@ frame.add_plugin(test)
 ```
 
 - 获得 uqholder 信息：
-由omega代为管理的，包含大量玩家信息的结构体
+由omega代为管理的，包含大量玩家信息的结构体  
 -> {"client":c,"function":"get_uqholder","args":{}}  
 <- {"client":c,"violate":false,"data":uqholder_data} 
 ```python
@@ -147,7 +147,73 @@ async def test(frame:MainFrame):
 frame.add_plugin(test)
 ```
 
-### **pktID 列表**
+- 获得 player 列表:
+和/list指令不一样的是，包含了 runtime ID, uinqueID, UUID 和 playerName  
+-> {"client":c,"function":"get_players_list","args":{}}  
+<- {"client":c,"violate":false,"data":players_list} 
+```python
+async def cb(result):
+    utils.print(result)
+async def test(frame:MainFrame):
+    await frame.get_players_list(cb=cb)
+frame.add_plugin(test)
+[
+    {'name': 'OmeGoTest', 'runtimeID': 0, 'uuid': '00000000-0000-4000-8000-0000392af26c', 'uniqueID': -201863462274},
+    ...
+]
+```
+
+- 添加菜单项:  
+将一个菜单项插入 omega  
+-> {"client":c,"function":"reg_menu","args":{"triggers":t,"argument_hint":h,"usage":u,"sub_id":i}}  
+<- {"client":c,"violate":false,"data":{"sub_id":i}} 
+<< {"client":0, "type":"menuTriggered","sub":i,"data":{"Name":name,"Msg":msg,"Type":type}}
+```python
+async def cb(result):
+    utils.print(result)
+async def on_menu_triggered(data):
+    name=data["Name"]
+    msg=data["Msg"]
+    msg_type=data["Type"]
+    utils.print(f"玩家:{name} 消息:{msg} 消息类型:{msg_type}")
+async def test(frame:MainFrame):
+    await frame.reg_menu(triggers=["cs","测试"],argument_hint="[参数]",usage="测试菜单项目添加",cb=cb,on_push_cb=on_menu_triggered)
+frame.add_plugin(test)
+```
+
+- 获得玩家下一句话:一般用在对话系统中  
+-> {"client":c,"function":"player.next_input","args":{"player":p,"hint":h}}  
+<- {"client":c,"violate":false,"data":{"success":b,"player":player,"input":i,"err":e}} 
+```python
+async def cb(result):
+    success,name,player_input,err=result
+    if success:
+        utils.print(f"玩家{name}的后续输入为{player_input}")
+    else:
+        utils.print(f"无法获得玩家{name}的后续输入，因为{err}")
+
+async def test(frame:MainFrame):
+    await frame.get_player_next_input(player="2401PT",hint="请随意输入一点什么",cb=cb)
+frame.add_plugin(test)
+
+# 建议和菜单组合使用
+async def cb(result):
+    utils.print(result)
+async def test(frame:MainFrame):
+    async def on_player_param(data):
+        success,name,player_input,err=data
+        if success:
+            utils.print(f"玩家{name}的后续输入为{player_input}")
+        else:
+            utils.print(f"无法获得玩家{name}的后续输入，因为{err}")
+    async def on_menu_triggered(data):
+        name,msg,msg_type=data["Name"],data["Msg"],data["Type"]
+        utils.print(f"玩家:{name} 消息:{msg} 消息类型:{msg_type}")
+        await frame.get_player_next_input(player=name,hint="请随意输入一点什么",cb=on_player_param)
+    await frame.reg_menu(triggers=["cs","测试"],argument_hint="[参数]",usage="测试菜单项目添加",cb=cb,on_push_cb=on_menu_triggered)
+frame.add_plugin(test)
+```
+
 "IDLogin"                            
 "IDPlayStatus"                       
 "IDServerToClientHandshake"          

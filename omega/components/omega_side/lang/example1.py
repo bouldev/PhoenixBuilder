@@ -118,7 +118,7 @@ class ExamplePlugin3_Echo(object):
 
 # 如果你不喜欢继承，你也可以这么注入一个普通的类
 # 可以这样:
-# frame.add_plugin(ExamplePlugin3_Echo(name="示例插件B")(frame=frame))
+frame.add_plugin(ExamplePlugin3_Echo(name="示例插件B")(frame=frame))
 # 这样也ok：
 # frame.add_plugin(ExamplePlugin3_Echo(name="示例插件C").any_name(frame=frame))
 

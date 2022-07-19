@@ -56,10 +56,9 @@ class Client(object):
     async def run(self,plugin_tasks):
         await self.setup_ws_client()
         print(f"激活所有插件,插件数:{len(plugin_tasks)}",flush=True)
-        await asyncio.gather(
-            *plugin_tasks,
-            self.start_recv_loop()
-        )
+        tasks=[asyncio.create_task(self.start_recv_loop())]
+        tasks+=[asyncio.create_task(t) for t in plugin_tasks]
+        await asyncio.wait(tasks)
              
     def start(self,plugin_tasks):
         self.loop.run_until_complete(self.run(plugin_tasks))
@@ -67,16 +66,15 @@ class Client(object):
 
 class ResultWaitor(object):
     def __init__(self) -> None:
-        self.lock=asyncio.Lock()
+        self.event=asyncio.Event()
         self.result=None
         
     async def set_result(self,result):
         self.result=result
-        self.lock.release()
+        self.event.set()
         
     async def wait_result(self)->any:
-        await self.lock.acquire()
-        await self.lock.acquire()
+        await self.event.wait()
         return self.result
 
 # AsyncCallBack 类型： (异步回调方式接受结果，即wait_result=False 时的 cb 参数的类型定义)
@@ -106,6 +104,7 @@ class MainFrame(object):
         self.on_resp={}
         self.onAnyMCPkt=[]
         self.onTypedMCPkt={}
+        self.onMenuTriggered={}
         self.started=False
         
     async def _on_push_msg(self,push_type,sub_type,data):
@@ -118,6 +117,8 @@ class MainFrame(object):
             for cb in self.onAnyMCPkt:
                 if cb is not None:
                     await cb(data)
+        elif push_type=="menuTriggered":
+            await self.onMenuTriggered[sub_type](data)
     
     async def _on_msg(self,msg):
         msg=json.loads(msg)
@@ -142,7 +143,7 @@ class MainFrame(object):
         else:
             waitor=ResultWaitor()
             self.on_resp[msgID]=(cb[0],cb[1],waitor.set_result)
-            return await waitor.wait_result()
+            return await asyncio.wait([waitor.wait_result()])
     
     def _add_plugin(self,plugin):
         plugin_task=None
@@ -260,6 +261,16 @@ frame.add_plugin(Plugin(name="示例插件C").any_name(frame=frame))
     async def get_players_list(self,cb:AsyncCallBack[List[dict]]=None,wait_result:bool=False)->APIResult[List[dict]]:
         return await self._send_request(*encode_get_players_list(),
         cb=("get_players_list",decode_get_players_list,cb),wait_result=wait_result)
+
+    async def reg_menu(self,triggers:List[str],argument_hint:str,usage:str,cb:AsyncCallBack[dict]=None,on_push_cb:AsyncCallBack[dict]=None,wait_result:bool=False)->APIResult[dict]:
+        sub_id=f"{triggers}{argument_hint}{usage}"
+        self.onMenuTriggered[sub_id]=on_push_cb
+        return await self._send_request(*encode_reg_menu(triggers=triggers,argument_hint=argument_hint,usage=usage,sub_id=sub_id),
+        cb=("reg_menu",decode_reg_menu,cb),wait_result=wait_result)
+
+    async def get_player_next_input(self,player:str,hint:str,cb:AsyncCallBack[Tuple[bool,str,str]]=None,wait_result:bool=False)->APIResult[Tuple[bool,str,str]]:
+        return await self._send_request(*encode_get_player_next_input(player=player,hint=hint),
+        cb=("player.next_input",decode_player_next_input,cb),wait_result=wait_result)
 
     def start(self,*plugins):
         if self.started:
