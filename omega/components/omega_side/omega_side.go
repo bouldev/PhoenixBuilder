@@ -125,7 +125,8 @@ func (t *omegaSideTransporter) regPkt(pktId int) {
 func (t *omegaSideTransporter) response(data []byte, writeFn func(interface{}) error) {
 	msg := &clientMsg{}
 	if err := json.Unmarshal(data, &msg); err != nil {
-		pterm.Error.Println(err)
+		writeFn(serverResp{ID: 0, Violate: true, Data: RespViolatePkt{Err: fmt.Sprintf("cannot decode msg %v", err)}})
+		return
 	}
 	if doFunc, hasK := t.funcMapping[msg.Action]; hasK {
 		defer func() {
