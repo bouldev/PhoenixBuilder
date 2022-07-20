@@ -9,7 +9,7 @@ import (
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
-	"phoenixbuilder/mirror/io"
+	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/mirror/io/lru"
 	"phoenixbuilder/mirror/io/mcdb"
 	"phoenixbuilder/mirror/io/world"
@@ -232,23 +232,35 @@ func (r *Reactor) React(pkt packet.Packet) {
 		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
 		r.CurrentWorld.SetBlockNbt(cubePos, p.NBTData)
 	case *packet.LevelChunk:
+		// fmt.Println("packet packet.LevelChunk")
 		// TODO Check if level chunk decode is affected by 0 -> -64
 		// TODO remove this line after runtime id mapping update
-		return
-		chunkData := io.NEMCPacketToChunkData(p)
-		if chunkData == nil {
-			break
+		if exist := r.chunkAssembler.AddPendingTask(p); !exist {
+			requests := r.chunkAssembler.GenRequestFromLevelChunk(p)
+			r.chunkRequestChan <- requests
 		}
-		if err := r.CurrentWorldProvider.Write(chunkData); err != nil {
-			o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
-		} else {
-			//fmt.Println("saving chunk @ ", p.ChunkX<<4, p.ChunkZ<<4)
-		}
-		for _, cb := range o.Reactor.OnLevelChunkData {
-			cb(chunkData)
-		}
+		// if err := r.CurrentWorldProvider.Write(chunkData); err != nil {
+		// 	o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
+		// } else {
+		// 	//fmt.Println("saving chunk @ ", p.ChunkX<<4, p.ChunkZ<<4)
+		// }
+		// for _, cb := range o.Reactor.OnLevelChunkData {
+		// 	cb(chunkData)
+		// }
 	case *packet.SubChunk:
-		// fmt.Println("SubChunk Packet")
+		// fmt.Println(p.SubChunkX, p.SubChunkY, p.SubChunkZ)
+		// fmt.Println("packet packet.SubChunk")
+		chunkData := r.chunkAssembler.OnNewSubChunk(p)
+		if chunkData != nil {
+			if err := r.CurrentWorldProvider.Write(chunkData); err != nil {
+				o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
+			} else {
+				fmt.Println("saving chunk @ ", chunkData.ChunkPos.X()<<4, chunkData.ChunkPos.Z()<<4)
+			}
+			for _, cb := range o.Reactor.OnLevelChunkData {
+				cb(chunkData)
+			}
+		}
 	}
 	for _, cb := range r.OnAnyPacketCallBack {
 		cb(pkt)
@@ -274,6 +286,8 @@ type Reactor struct {
 	CurrentWorld              *world.World
 	MirrorAvailable           bool
 	freshMenu                 func()
+	chunkAssembler            *assembler.Assembler
+	chunkRequestChan          chan []*packet.SubChunkRequest
 }
 
 func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
@@ -281,6 +295,32 @@ func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
 }
 
 func (o *Reactor) onBootstrap() {
+	o.chunkAssembler = assembler.NewAssembler()
+	o.chunkRequestChan = make(chan []*packet.SubChunkRequest, 1024)
+	go func() {
+		t := time.NewTicker(time.Second / 40)
+		// visitTime := make(map[protocol.SubChunkPos]time.Time)
+		if len(o.chunkRequestChan) > 512 {
+			pterm.Error.Println("你的机器人移动过于频繁，这可能导致机器人工作不稳定")
+		}
+		for requests := range o.chunkRequestChan {
+			// request0 := requests[0]
+			// if visitTime, hasK := visitTime[request0.Position]; hasK {
+			// 	if time.Since(visitTime) < time.Minute {
+			// 		continue
+			// 	}
+			// }
+			// visitTime[request0.Position] = time.Now()
+			for _, request := range requests {
+				o.o.adaptor.Write(request)
+				// o.o.adaptor.Write(&packet.SubChunkRequest{
+				// 	0,
+				// 	protocol.SubChunkPos{1249, 4, -1249}, nil,
+				// })
+			}
+			<-t.C
+		}
+	}()
 	memoryProvider := lru.NewLRUMemoryChunkCacher(8)
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)
@@ -311,7 +351,6 @@ func (o *Reactor) onBootstrap() {
 	}
 	o.CurrentWorldProvider = memoryProvider
 	o.CurrentWorld = world.NewWorld(o.CurrentWorldProvider)
-
 	o.o.CloseFns = append(o.o.CloseFns, func() error {
 		fmt.Println("正在将世界缓存写入文件")
 		memoryProvider.Close()

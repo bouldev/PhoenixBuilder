@@ -5,11 +5,7 @@ import (
 	"phoenixbuilder/omega/components/qqGroupLink"
 	"phoenixbuilder/omega/components/woodaxe"
 	"phoenixbuilder/omega/defines"
-
-	"github.com/pterm/pterm"
 )
-
-var HintOnRequireMappingUpdate = "该组件暂时无法在 1.18 客户端下正常工作，需要进一步适配，请保持耐心,现在，请暂时禁用上述组件"
 
 func GetComponentsPool() map[string]func() defines.Component {
 	return map[string]func() defines.Component{
@@ -89,9 +85,6 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &WhoAreYou{BasicComponent: &defines.BasicComponent{}}
 		},
 		"32k方块检测": func() defines.Component {
-			// TODO: Mapping Update
-			// return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
-			pterm.Error.Println("受更新影响，本组件功能部分受损，正则匹配获得的方块名都被改为 unknown，请等待进一步适配")
 			return &ContainerScan{BasicComponent: &defines.BasicComponent{}}
 		},
 		"管理员检测": func() defines.Component {
@@ -131,9 +124,7 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &woodaxe.WoodAxe{BasicComponent: &defines.BasicComponent{}}
 		},
 		"存档修复": func() defines.Component {
-			// TODO: Mapping Update
-			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
-			// return &DifferRecover{BasicComponent: &defines.BasicComponent{}}
+			return &DifferRecover{BasicComponent: &defines.BasicComponent{}}
 		},
 		"玩家商店": func() defines.Component {
 			return &PlayerShop{BasicComponent: &defines.BasicComponent{}}
@@ -142,9 +133,7 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &BanTime{BasicComponent: &defines.BasicComponent{}}
 		},
 		"消除方块": func() defines.Component {
-			// TODO: Mapping Update
-			return &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: HintOnRequireMappingUpdate}
-			// return &RemoveBlock{BasicComponent: &defines.BasicComponent{}}
+			return &RemoveBlock{BasicComponent: &defines.BasicComponent{}}
 		},
 		"统一导入系统": func() defines.Component {
 			return &UniverseImport{BasicComponent: &defines.BasicComponent{}}

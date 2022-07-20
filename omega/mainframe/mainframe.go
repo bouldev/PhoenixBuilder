@@ -263,8 +263,9 @@ func (o *Omega) GetBotTaskScheduler() defines.BotTaskScheduler {
 func (o *Omega) Activate() {
 	defer o.Stop()
 	go func() {
-		for {
-			pkt := o.adaptor.Read()
+		packetFeeder := o.adaptor.GetPacketFeeder()
+		// chunkDataFeeder := o.adaptor.GetChunkFeeder()
+		for pkt := range packetFeeder {
 			if pkt == nil {
 				continue
 			}

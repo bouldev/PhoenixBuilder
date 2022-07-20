@@ -3,6 +3,7 @@ package defines
 import (
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror"
 )
 
 // ConnectionAdaptor 描述了这个租赁服框架在被移植时还需要哪些接口
@@ -13,10 +14,11 @@ import (
 // 则必须从远程获得该信息，以保证状态信息的同步
 // 如果连接断开，应该调用 System.Stop() 并销毁 System
 type ConnectionAdaptor interface {
-	Read() packet.Packet
+	GetPacketFeeder() chan packet.Packet
 	Write(packet.Packet)
 	GetInitUQHolderCopy() *uqHolder.UQHolder
 	GetBackendCommandFeeder() chan string
+	GetChunkFeeder() chan *mirror.ChunkData
 	FBEval(cmd string)
 }
 

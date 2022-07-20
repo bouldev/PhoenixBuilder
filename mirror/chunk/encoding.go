@@ -118,7 +118,11 @@ type nemcNetworkEncoding struct {
 
 func (*nemcNetworkEncoding) network() byte { return 1 }
 func (*nemcNetworkEncoding) translate(nemcRID uint32) (mcRid uint32) {
-	// fmt.Println(nemcRID, " -> ", NEMCRuntimeIDToStandardRuntimeID(nemcRID))
+	// if nemcRID >= 6880 && nemcRID < 6882 {
+	// 	pterm.Error.Println(nemcRID, " -> ", NEMCRuntimeIDToStandardRuntimeID(nemcRID))
+
+	// }
+	// fmt.Print(RuntimeIDToLegacyBlock(NEMCRuntimeIDToStandardRuntimeID(nemcRID)))
 	return NEMCRuntimeIDToStandardRuntimeID(nemcRID)
 }
 func (*nemcNetworkEncoding) encodePalette(buf *bytes.Buffer, p *Palette, _ paletteEncoding) {

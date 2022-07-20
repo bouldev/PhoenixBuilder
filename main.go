@@ -23,12 +23,13 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/fastbuilder/utils"
-	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/io/commands"
 	"phoenixbuilder/io/special_tasks"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/io/assembler"
+	"phoenixbuilder/mirror/io/global"
 	"phoenixbuilder/omega/cli/embed"
 	"phoenixbuilder/omega/suggest"
 	"runtime"
@@ -369,8 +370,9 @@ func runClient(env *environment.PBEnvironment) {
 	move.RuntimeID = conn.GameData().EntityRuntimeID
 
 	signalhandler.Install(conn, env)
-	
-	currentChunkConstructor:=&world_provider.ChunkConstructor {}
+
+	chunkAssembler := assembler.NewAssembler()
+	// currentChunkConstructor := &world_provider.ChunkConstructor{}
 
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
@@ -682,26 +684,44 @@ func runClient(env *environment.PBEnvironment) {
 				})
 			}
 		case *packet.SubChunk:
-			chunk:=currentChunkConstructor.SubChunkArrived(p.Data, p.SubChunkX, p.SubChunkY, p.SubChunkZ)
+			chunkData := chunkAssembler.OnNewSubChunk(p)
+			if chunkData != nil {
+				fmt.Println("new chunk")
+				global.GlobalChunkFeeder.OnNewChunk(chunkData)
+				global.GlobalLRUMemoryChunkCacher.Write(chunkData)
+				// if env.OmegaAdaptorHolder != nil {
+				// 	fmt.Println("new chunk")
+				// 	env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedChunkData(chunkData)
+				// 	continue
+				// }
+			}
+			// chunk := currentChunkConstructor.SubChunkArrived(p.Data, p.SubChunkX, p.SubChunkY, p.SubChunkZ)
 			// chunk==nil means that the chunk has not been constructed yet
-			if chunk!=nil {
-				world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
-				world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
-			}
+			// if chunk != nil {
+			// world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
+			// world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
+			// }
 		case *packet.LevelChunk:
-			//if args.ShouldEnableOmegaSystem() {
-			//	world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
-			//}
-			currentChunkConstructor.BeginConstruction(p)
-			//world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
-			//world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
-			// It seems that LevelChunk no longer returns full chunk data now.
-			for i:=-4;i<=19;i++ {
-				conn.WritePacket(&packet.SubChunkRequest {
-					Dimension: 0,
-					Position: protocol.SubChunkPos{p.Position[0],int32(i),p.Position[1]},
-				})
+			if exist := chunkAssembler.AddPendingTask(p); !exist {
+				requests := chunkAssembler.GenRequestFromLevelChunk(p)
+				for _, request := range requests {
+					conn.WritePacket(request)
+				}
 			}
+
+			// if args.ShouldEnableOmegaSystem() {
+			// 	global.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
+			// }
+			// currentChunkConstructor.BeginConstruction(p)
+			// //world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
+			// //world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
+			// // It seems that LevelChunk no longer returns full chunk data now.
+			// for i:=-4;i<=19;i++ {
+			// 	conn.WritePacket(&packet.SubChunkRequest {
+			// 		Dimension: 0,
+			// 		Position: protocol.SubChunkPos{p.Position[0],int32(i),p.Position[1]},
+			// 	})
+			// }
 		case *packet.UpdateBlock:
 			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
 			if h {

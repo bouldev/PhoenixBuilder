@@ -56,7 +56,7 @@ func (o *RemoveBlock) onLevelChunk(cd *mirror.ChunkData) {
 			rtid := palette.Value(uint16(palette_i))
 			// fmt.Printf("%v \t", rtid)
 			if _, hasK := o.fastFilter[rtid]; hasK {
-				// fmt.Println("HasK!")
+				fmt.Println("HasK!")
 				flag = true
 			}
 		}

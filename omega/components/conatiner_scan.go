@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -209,22 +211,19 @@ func (o *ContainerScan) doCheckNbt(x, y, z int, nbt map[string]interface{}, getS
 	if !has32K {
 		flag := true
 		if o.needFetchBlockName {
-			// if rtid, success := o.Frame.GetWorld().Block(define.CubePos{x, y, z}); success {
-			// 	if block, found := chunk.RuntimeIDToBlock(rtid); found {
-			// 		flag = false
-			// 		has32K, reason = o.regexNbtDetect(strings.ReplaceAll(block.Name, "minecraft:", ""), nbt, x, y, z)
-			// 	}
-			// }
-
-			has32K, reason = o.regexNbtDetect("unknown", nbt, x, y, z)
-
+			if rtid, success := o.Frame.GetWorld().Block(define.CubePos{x, y, z}); success {
+				if block, found := chunk.RuntimeIDToBlock(rtid); found {
+					flag = false
+					has32K, reason = o.regexNbtDetect(strings.ReplaceAll(block.Name, "minecraft:", ""), nbt, x, y, z)
+				}
+			}
 			// has32K, reason = o.regexNbtDetect(s, nbt, x, y, z)
 			// utils.QueryBlockName(o.Frame.GetGameControl(), x, y, z, func(s string) {
 			// 	has32K, reason = o.regexNbtDetect(s, nbt, x, y, z)
 			// })
 		}
 		if flag {
-			has32K, reason = o.regexNbtDetect("unknown", nbt, x, y, z)
+			has32K, reason = o.regexNbtDetect("unknow_error", nbt, x, y, z)
 		}
 	}
 	if has32K {
