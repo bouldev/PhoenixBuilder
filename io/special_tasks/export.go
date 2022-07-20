@@ -44,7 +44,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	cmdsender:=env.CommandSender
 	// WIP
 	cmdsender.Output("Sorry, but compatibility works haven't been done yet, redirected to lexport.")
-	return CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment)
+	return CreateLegacyExportTask(commandLine, env)
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
 		cmdsender.Output(fmt.Sprintf("Failed to parse command: %v",err))
