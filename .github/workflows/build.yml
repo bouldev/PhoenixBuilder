@@ -107,6 +107,18 @@ jobs:
         tar xf llvm.tar.xz
         rm llvm.tar.xz
         mv llvm/14.0.6 ~/llvm
+    - name: Cache iSH GCC
+      id: cache-ish-gcc
+      uses: actions/cache@v3
+      with:
+        key: ish-gcc-cache
+        path: ~/i686-unknown-linux-musl
+    - name: Download iSH GCC
+      if: steps.cache-ish-gcc.outputs.cache-hit != 'true'
+      run: |
+        wget -q https://github.com/Torrekie/homebrew-core/releases/download/i686-unknown-linux-musl/i686-unknown-linux-musl.tar.xz
+        tar xf i686-unknown-linux-musl.tar.xz
+        rm i686-unknown-linux-musl.tar.xz
     - name: Cache Openwrt mt7620 SDK
       id: cache-openwrt-mt7620-sdk
       uses: actions/cache@v3

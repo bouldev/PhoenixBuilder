@@ -1,4 +1,4 @@
-.PHONY: all current current-v8 current-arm64-executable ios-executable ios-v8-executable ios-lib macos macos-v8 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64 freebsd-executable freebsd-executable-x86 freebsd-executable-x86_64 freebsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 openwrt-mt7620-mipsel_24kc
+.PHONY: all current current-v8 current-arm64-executable ios-executable ios-v8-executable ios-lib ish-executable macos macos-v8 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64 freebsd-executable freebsd-executable-x86 freebsd-executable-x86_64 freebsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 openwrt-mt7620-mipsel_24kc
 TARGETS:=build/ current current-v8
 PACKAGETARGETS:=
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
@@ -56,6 +56,9 @@ ifneq ($(wildcard ${HOME}/llvm),)
 	TARGETS:=${TARGETS} netbsd-executable freebsd-executable openbsd-executable
 	# Do other BSDs later
 endif
+ifneq ($(wildcard ${HOME}/i686-unknown-linux-musl),)
+	TARGETS:=${TARGETS} ish-executable
+endif
 
 VERSION=$(shell cat version)
 
@@ -71,6 +74,7 @@ current-arm64-executable: build/phoenixbuilder-aarch64
 ios-executable: build/phoenixbuilder-ios-executable
 ios-v8-executable: build/phoenixbuilder-v8-ios-executable
 ios-lib: build/phoenixbuilder-ios-static.a
+ish-executable: build/phoenixbuilder-ish-executable
 macos: build/phoenixbuilder-macos
 macos-v8: build/phoenixbuilder-v8-macos
 android-executable-armv7: build/phoenixbuilder-android-executable-armv7
@@ -137,6 +141,8 @@ build/libexternal_functions_provider.dylib: build/ io/external_functions_provide
 	`pwd`/archs/ios.sh io/external_functions_provider/provider.c -shared -o build/libexternal_functions_provider.dylib
 build/phoenixbuilder-ios-static.a: build/ build/libexternal_functions_provider.dylib ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Lbuild -lexternal_functions_provider" CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -buildmode=c-archive -trimpath -ldflags "-s -w -extar ${THEOS}/toolchain/linux/iphone/bin/ar" -tags is_tweak,no_readline -o build/phoenixbuilder-ios-static.a
+build/phoenixbuilder-ish-executable: build/ ${SRCS_GO}
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC="${HOME}/i686-unknown-linux-musl/bin/i686-unknown-linux-musl-gcc --sysroot=`pwd`/depends/buildroot/ish" CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ish-executable
 build/phoenixbuilder-macos-x86_64: build/ ${SRCS_GO}
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-x86_64
 build/phoenixbuilder-macos-arm64: build/ ${SRCS_GO}
