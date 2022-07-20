@@ -1,9 +1,8 @@
 package world_provider
 
 import (
-	"encoding/gob"
 	"fmt"
-	"os"
+	
 	"phoenixbuilder/dragonfly/server/world"
 	"phoenixbuilder/dragonfly/server/world/chunk"
 	"phoenixbuilder/dragonfly/server/block/cube"
@@ -18,7 +17,7 @@ type OfflineWorldProvider struct {
 
 func NewOfflineWorldProvider(chunksMap map[ChunkPosDefine]ChunkDefine) *OfflineWorldProvider {
 	return &OfflineWorldProvider {
-		chunksMap :chunksMap,
+		chunksMap: chunksMap,
 	}
 }
 
@@ -28,7 +27,8 @@ func (p *OfflineWorldProvider) LoadChunk(position world.ChunkPos, dim world.Dime
 		// delete(ChunkCache,position)
 		chunk, err:=chunk.NetworkDecode(AirRuntimeId, cacheitem.RawPayload, int(cacheitem.SubChunkCount), cube.Range{-64, 319})
 		if(err!=nil) {
-			fileName:=fmt.Sprintf("ErrorLevelChunkSample[%v].gob",position)
+			panic(fmt.Errorf("Failed to decode chunk: %v", err))
+			/*fileName:=fmt.Sprintf("ErrorLevelChunkSample[%v].gob",position)
 			fp,err:=os.OpenFile(fileName,os.O_WRONLY|os.O_CREATE|os.O_TRUNC,0755)
 			if err!=nil{
 				panic(pterm.Error.Sprintf("Failed to decode chunk: %v, and even fail to save error chunk\n",err))
@@ -37,7 +37,7 @@ func (p *OfflineWorldProvider) LoadChunk(position world.ChunkPos, dim world.Dime
 			encoder.Encode(chunk)
 			fp.Close()
 			panic(pterm.Error.Sprintf("Failed to decode chunk: %v, sample saved to %v please contact developer\n",err,fileName))
-			// return nil, true, err
+			*/// return nil, true, err
 		}
 		return chunk, true, nil
 	}else{

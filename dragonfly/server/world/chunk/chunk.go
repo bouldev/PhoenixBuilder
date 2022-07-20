@@ -3,6 +3,7 @@ package chunk
 import (
 	"phoenixbuilder/dragonfly/server/block/cube"
 	"sync"
+	"bytes"
 )
 
 // Chunk is a segment in the world with a size of 16x16x256 blocks. A chunk contains multiple sub chunks
@@ -42,6 +43,17 @@ func New(air uint32, r cube.Range) *Chunk {
 		recalculateHeightMap: true,
 		heightMap:            make(HeightMap, 256),
 	}
+}
+
+func (chunk *Chunk) SubChunkArrived(y int16,data []byte) error {
+	buf:=bytes.NewBuffer(data)
+	var yind byte
+	sc, e:=decodeSubChunk(buf, chunk, &yind, NetworkEncoding)
+	if e!=nil {
+		return e
+	}
+	chunk.sub[int(y)-chunk.r[0]]=sc
+	return nil
 }
 
 // Range returns the cube.Range of the Chunk as passed to New.

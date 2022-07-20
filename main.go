@@ -369,6 +369,8 @@ func runClient(env *environment.PBEnvironment) {
 	move.RuntimeID = conn.GameData().EntityRuntimeID
 
 	signalhandler.Install(conn, env)
+	
+	currentChunkConstructor:=&world_provider.ChunkConstructor {}
 
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
@@ -680,26 +682,26 @@ func runClient(env *environment.PBEnvironment) {
 				})
 			}
 		case *packet.SubChunk:
-			fmt.Printf("SubChunk %#v\n",p)
-		case *packet.LevelChunk:
-			if args.ShouldEnableOmegaSystem() {
-				world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
+			chunk:=currentChunkConstructor.SubChunkArrived(p.Data, p.SubChunkX, p.SubChunkY, p.SubChunkZ)
+			// chunk==nil means that the chunk has not been constructed yet
+			if chunk!=nil {
+				world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
+				world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
 			}
-			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
-			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
+		case *packet.LevelChunk:
+			//if args.ShouldEnableOmegaSystem() {
+			//	world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
+			//}
+			currentChunkConstructor.BeginConstruction(p)
+			//world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
+			//world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
 			// It seems that LevelChunk no longer returns full chunk data now.
-			/*for i:=-64;i<=319;i++ {
+			for i:=-4;i<=19;i++ {
 				conn.WritePacket(&packet.SubChunkRequest {
 					Dimension: 0,
-					Position: protocol.SubChunkPos{p.Position[0],p.Position[1]},
-					Offsets: [][3]int8{
-						[3]int8{0,0,0},
-					},
+					Position: protocol.SubChunkPos{p.Position[0],int32(i),p.Position[1]},
 				})
 			}
-			// TODO: Figure out the difference of SubChunkRequestPacket between netease and normal version. (?)
-			//       Make it works.
-			*/
 		case *packet.UpdateBlock:
 			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
 			if h {

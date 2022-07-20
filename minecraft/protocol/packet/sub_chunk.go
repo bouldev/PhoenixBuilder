@@ -4,16 +4,40 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 )
 
+const (
+	SubChunkRequestResultUndefined int32 = iota
+	SubChunkRequestResultSuccess
+	SubChunkRequestResultChunkNotFound
+	SubChunkRequestResultInvalidDimension
+	SubChunkRequestResultPlayerNotFound
+	SubChunkRequestResultIndexOutOfBounds
+)
+
+const (
+	HeightMapDataTypeNone byte = iota
+	HeightMapDataTypeHasData
+	HeightMapDataTypeTooHigh
+	HeightMapDataTypeTooLow
+)
+
 // SubChunk sends data about multiple sub-chunks around a center point.
 type SubChunk struct {
-	// CacheEnabled is whether the sub-chunk caching is enabled or not.
-	CacheEnabled bool
-	// Dimension is the dimension the sub-chunks are in.
+	// Dimension is the dimension of the sub chunk.
 	Dimension int32
-	// Position is an absolute sub-chunk center point that every SubChunkRequest uses as a reference.
-	Position protocol.SubChunkPos
-	// SubChunkEntries contains sub-chunk entries relative to the center point.
-	SubChunkEntries []protocol.SubChunkEntry
+	// SubChunkX, SubChunkY, and SubChunkZ help identify the sub chunk.
+	SubChunkX, SubChunkY, SubChunkZ int32
+	// Data is the actual sub chunk data, such as the blocks.
+	Data []byte
+	// RequestResult is one of the values above.
+	RequestResult int32
+	// HeightMapType is one of the values above.
+	HeightMapType byte
+	// HeightMapData is the data for the height map.
+	HeightMapData []byte
+	// CacheEnabled is whether the sub chunk caching is enabled or not.
+	CacheEnabled bool
+	// BlobHash is the hash of the blob.
+	BlobHash uint64
 }
 
 // ID ...
@@ -23,69 +47,45 @@ func (*SubChunk) ID() uint32 {
 
 // Marshal ...
 func (pk *SubChunk) Marshal(w *protocol.Writer) {
-	w.Bool(&pk.CacheEnabled)
 	w.Varint32(&pk.Dimension)
-	w.SubChunkPos(&pk.Position)
+	w.Varint32(&pk.SubChunkX)
+	w.Varint32(&pk.SubChunkY)
+	w.Varint32(&pk.SubChunkZ)
+	w.ByteSlice(&pk.Data)
+	w.Varint32(&pk.RequestResult)
 
-	count := uint32(len(pk.SubChunkEntries))
-	w.Uint32(&count)
-	for _, entry := range pk.SubChunkEntries {
-		w.Int8(&entry.Offset[0])
-		w.Int8(&entry.Offset[1])
-		w.Int8(&entry.Offset[2])
-
-		w.Uint8(&entry.Result)
-		if !pk.CacheEnabled || entry.Result != protocol.SubChunkResultSuccessAllAir {
-			w.ByteSlice(&entry.RawPayload)
+	w.Uint8(&pk.HeightMapType)
+	if pk.HeightMapType == HeightMapDataTypeHasData {
+		for i := 0; i < 256; i++ {
+			w.Uint8(&pk.HeightMapData[i])
 		}
+	}
 
-		w.Uint8(&entry.HeightMapType)
-		if entry.HeightMapType == protocol.HeightMapDataHasData {
-			for i := 0; i < 256; i++ {
-				w.Uint8(&entry.HeightMapData[i])
-			}
-		}
-
-		if pk.CacheEnabled {
-			w.Uint64(&entry.BlobHash)
-		}
+	w.Bool(&pk.CacheEnabled)
+	if pk.CacheEnabled {
+		w.Uint64(&pk.BlobHash)
 	}
 }
 
 // Unmarshal ...
 func (pk *SubChunk) Unmarshal(r *protocol.Reader) {
-	r.Bool(&pk.CacheEnabled)
 	r.Varint32(&pk.Dimension)
-	r.SubChunkPos(&pk.Position)
+	r.Varint32(&pk.SubChunkX)
+	r.Varint32(&pk.SubChunkY)
+	r.Varint32(&pk.SubChunkZ)
+	r.ByteSlice(&pk.Data)
+	r.Varint32(&pk.RequestResult)
 
-	var count uint32
-	r.Uint32(&count)
-
-	pk.SubChunkEntries = make([]protocol.SubChunkEntry, count)
-	for i := uint32(0); i < count; i++ {
-		var entry protocol.SubChunkEntry
-
-		r.Int8(&entry.Offset[0])
-		r.Int8(&entry.Offset[1])
-		r.Int8(&entry.Offset[2])
-
-		r.Uint8(&entry.Result)
-		if !pk.CacheEnabled || entry.Result != protocol.SubChunkResultSuccessAllAir {
-			r.ByteSlice(&entry.RawPayload)
+	r.Uint8(&pk.HeightMapType)
+	if pk.HeightMapType == HeightMapDataTypeHasData {
+		pk.HeightMapData = make([]uint8, 256)
+		for i := 0; i < 256; i++ {
+			r.Uint8(&pk.HeightMapData[i])
 		}
+	}
 
-		r.Uint8(&entry.HeightMapType)
-		if entry.HeightMapType == protocol.HeightMapDataHasData {
-			entry.HeightMapData = make([]uint8, 256)
-			for i := 0; i < 256; i++ {
-				r.Uint8(&entry.HeightMapData[i])
-			}
-		}
-
-		if pk.CacheEnabled {
-			r.Uint64(&entry.BlobHash)
-		}
-
-		pk.SubChunkEntries[i] = entry
+	r.Bool(&pk.CacheEnabled)
+	if pk.CacheEnabled {
+		r.Uint64(&pk.BlobHash)
 	}
 }

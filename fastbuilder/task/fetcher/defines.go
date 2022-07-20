@@ -2,7 +2,6 @@ package fetcher
 
 import "phoenixbuilder/minecraft/protocol/packet"
 
-
 type ChunkPosDefine [2]int
 
 type ExportHopPos struct {
