@@ -1,9 +1,9 @@
 package world
 
 import (
-	_ "embed"
 	"fmt"
-	"phoenixbuilder/minecraft/nbt"
+	"phoenixbuilder/dragonfly/server/item/category"
+	"image"
 )
 
 // Item represents an item that may be added to an inventory. It has a method to encode the item to an ID and
@@ -12,6 +12,18 @@ type Item interface {
 	// EncodeItem encodes the item to its Minecraft representation, which consists of a numerical ID and a
 	// metadata value.
 	EncodeItem() (name string, meta int16)
+}
+
+// CustomItem represents an item that is non-vanilla and requires a resource pack and extra steps to show it
+// to the client.
+type CustomItem interface {
+	Item
+	// Name is the name that will be displayed on the item to all clients.
+	Name() string
+	// Texture is the Image of the texture for this item.
+	Texture() image.Image
+	// Category is the category the item will be listed under in the creative inventory.
+	Category() category.Category
 }
 
 // RegisterItem registers an item with the ID and meta passed. Once registered, items may be obtained from an
@@ -23,6 +35,13 @@ func RegisterItem(item Item) {
 
 	if _, ok := items[h]; ok {
 		panic(fmt.Sprintf("item registered with name %v and meta %v already exists", name, meta))
+	}
+	if c, ok := item.(CustomItem); ok {
+		nextRID := int32(len(itemNamesToRuntimeIDs))
+		itemRuntimeIDsToNames[nextRID] = name
+		itemNamesToRuntimeIDs[name] = nextRID
+
+		customItems = append(customItems, c)
 	}
 	if _, ok := itemNamesToRuntimeIDs[name]; !ok {
 		panic(fmt.Sprintf("item name %v does not have a runtime ID", name))
@@ -37,11 +56,11 @@ type itemHash struct {
 }
 
 var (
-	//ago:embed item_runtime_ids.nbt
-	itemRuntimeIDData []byte
 	// items holds a list of all registered items, indexed using the itemHash created when calling
 	// Item.EncodeItem.
 	items = map[itemHash]Item{}
+	// customItems holds a list of all registered custom items.
+	customItems []CustomItem
 	// itemRuntimeIDsToNames holds a map to translate item runtime IDs to string IDs.
 	itemRuntimeIDsToNames = map[int32]string{}
 	// itemNamesToRuntimeIDs holds a map to translate item string IDs to runtime IDs.
@@ -49,18 +68,7 @@ var (
 )
 
 // init reads all item entries from the resource JSON, and sets the according values in the runtime ID maps.
-func init() {
-	return
-	var m map[string]int32
-	err := nbt.Unmarshal(itemRuntimeIDData, &m)
-	if err != nil {
-		panic(err)
-	}
-	for name, rid := range m {
-		itemNamesToRuntimeIDs[name] = rid
-		itemRuntimeIDsToNames[rid] = name
-	}
-}
+// REMOVED
 
 // ItemByName attempts to return an item by a name and a metadata value.
 func ItemByName(name string, meta int16) (Item, bool) {
@@ -97,4 +105,9 @@ func Items() []Item {
 		m = append(m, i)
 	}
 	return m
+}
+
+// CustomItems returns a slice of all registered custom items.
+func CustomItems() []CustomItem {
+	return customItems
 }

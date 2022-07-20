@@ -21,15 +21,15 @@ func fromJson(d jsonData) player.Data {
 		FoodTick:        d.FoodTick,
 		ExhaustionLevel: d.ExhaustionLevel,
 		SaturationLevel: d.SaturationLevel,
-		XPLevel:         d.XPLevel,
-		XPTotal:         d.XPTotal,
-		XPPercentage:    d.XPPercentage,
-		XPSeed:          d.XPSeed,
+		Experience:      d.Experience,
+		AirSupply:       d.AirSupply,
+		MaxAirSupply:    d.MaxAirSupply,
 		GameMode:        dataToGameMode(d.GameMode),
 		Effects:         dataToEffects(d.Effects),
 		FireTicks:       d.FireTicks,
 		FallDistance:    d.FallDistance,
 		Inventory:       dataToInv(d.Inventory),
+		Dimension:       d.Dimension,
 	}
 }
 
@@ -47,15 +47,15 @@ func toJson(d player.Data) jsonData {
 		FoodTick:        d.FoodTick,
 		ExhaustionLevel: d.ExhaustionLevel,
 		SaturationLevel: d.SaturationLevel,
-		XPLevel:         d.XPLevel,
-		XPTotal:         d.XPTotal,
-		XPPercentage:    d.XPPercentage,
-		XPSeed:          d.XPSeed,
+		Experience:      d.Experience,
+		AirSupply:       d.AirSupply,
+		MaxAirSupply:    d.MaxAirSupply,
 		GameMode:        gameModeToData(d.GameMode),
 		Effects:         effectsToData(d.Effects),
 		FireTicks:       d.FireTicks,
 		FallDistance:    d.FallDistance,
 		Inventory:       invToData(d.Inventory),
+		Dimension:       d.Dimension,
 	}
 }
 
@@ -68,14 +68,14 @@ type jsonData struct {
 	Hunger                           int
 	FoodTick                         int
 	ExhaustionLevel, SaturationLevel float64
-	XPLevel, XPTotal                 int
-	XPPercentage                     float64
-	XPSeed                           int
+	Experience                       int
+	AirSupply, MaxAirSupply          int64
 	GameMode                         uint8
 	Inventory                        jsonInventoryData
 	Effects                          []jsonEffect
 	FireTicks                        int64
 	FallDistance                     float64
+	Dimension                        int
 }
 
 type jsonInventoryData struct {

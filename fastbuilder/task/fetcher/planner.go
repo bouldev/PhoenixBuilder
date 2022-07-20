@@ -103,7 +103,7 @@ func SimplifyHopPos(hopPath []*ExportHopPos) (simplifiedHopPos []*ExportHopPos){
 		if !allCached{
 			simplifiedHopPos = append(simplifiedHopPos, hp)
 		}else{
-			fmt.Printf("Master Node %v all fecthed\n",hp.Pos)
+			fmt.Printf("Master Node %v all fetched\n",hp.Pos)
 		}
 	}
 	return simplifiedHopPos

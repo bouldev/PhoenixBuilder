@@ -5,7 +5,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-// InteractHandler handles the Interact packet.
+// InteractHandler handles the packet.Interact.
 type InteractHandler struct{}
 
 // Handle ...

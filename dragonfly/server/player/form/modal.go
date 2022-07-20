@@ -3,7 +3,6 @@ package form
 import (
 	"encoding/json"
 	"fmt"
-	"go/ast"
 	"reflect"
 )
 
@@ -19,7 +18,7 @@ type Modal struct {
 // title passed is formatted following the fmt.Sprintln rules.
 // Default 'yes' and 'no' buttons may be passed by setting the two exported struct fields of the submittable
 // to YesButton() and NoButton() respectively.
-func NewModal(submittable ModalSubmittable, title ...interface{}) Modal {
+func NewModal(submittable ModalSubmittable, title ...any) Modal {
 	t := reflect.TypeOf(submittable)
 	if t.Kind() != reflect.Struct {
 		panic("submittable must be struct")
@@ -41,7 +40,7 @@ func NoButton() Button {
 
 // MarshalJSON ...
 func (m Modal) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]interface{}{
+	return json.Marshal(map[string]any{
 		"type":    "modal",
 		"title":   m.title,
 		"content": m.body,
@@ -52,7 +51,7 @@ func (m Modal) MarshalJSON() ([]byte, error) {
 
 // WithBody creates a copy of the Modal form and changes its body to the body passed, after which the new Modal
 // form is returned. The text is formatted following the rules of fmt.Sprintln.
-func (m Modal) WithBody(body ...interface{}) Modal {
+func (m Modal) WithBody(body ...any) Modal {
 	m.body = format(body)
 	return m
 }
@@ -91,18 +90,17 @@ func (m Modal) SubmitJSON(b []byte, submitter Submitter) error {
 
 // Buttons returns a list of all buttons of the Modal form, which will always be a total of two buttons.
 func (m Modal) Buttons() []Button {
-	v := reflect.ValueOf(m.submittable)
-	t := reflect.TypeOf(m.submittable)
+	v := reflect.New(reflect.TypeOf(m.submittable)).Elem()
+	v.Set(reflect.ValueOf(m.submittable))
 
 	buttons := make([]Button, 0, v.NumField())
 	for i := 0; i < v.NumField(); i++ {
-		fieldT := t.Field(i)
-		fieldV := v.Field(i)
-		if !ast.IsExported(fieldT.Name) {
+		field := v.Field(i)
+		if !field.CanSet() {
 			continue
 		}
 		// Each exported field is guaranteed to be of type Button.
-		buttons = append(buttons, fieldV.Interface().(Button))
+		buttons = append(buttons, field.Interface().(Button))
 	}
 	return buttons
 }
@@ -112,11 +110,11 @@ func (m Modal) Buttons() []Button {
 func (m Modal) verify() {
 	var count int
 
-	v := reflect.ValueOf(m.submittable)
-	t := reflect.TypeOf(m.submittable)
+	v := reflect.New(reflect.TypeOf(m.submittable)).Elem()
+	v.Set(reflect.ValueOf(m.submittable))
+
 	for i := 0; i < v.NumField(); i++ {
-		fieldT := t.Field(i)
-		if !ast.IsExported(fieldT.Name) {
+		if !v.Field(i).CanSet() {
 			continue
 		}
 		if _, ok := v.Field(i).Interface().(Button); !ok {

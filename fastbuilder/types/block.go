@@ -6,6 +6,7 @@ type Module struct {
 	CommandBlockData *CommandBlockData
 	//Entity *Entity
 	ChestSlot *ChestSlot
+	ChestData *ChestData
 	Point  Position
 }
 
@@ -55,6 +56,8 @@ type DoubleModule struct {
 }
 
 var takenBlocks map[*ConstBlock]*Block = make(map[*ConstBlock]*Block)
+const takenBlocksMaxSize=1024
+const takenBlocksDeleteCount=512
 
 func CreateBlock(name string,data uint16) *Block {
 	return &Block {
@@ -67,6 +70,16 @@ func (req *ConstBlock) Take() *Block {
 	block, ok := takenBlocks[req]
 	if ok {
 		return block
+	}
+	if(len(takenBlocks)>takenBlocksMaxSize) {
+		i:=0
+		for k,_ := range takenBlocks {
+			delete(takenBlocks, k)
+			i++
+			if i >= takenBlocksDeleteCount {
+				break
+			}
+		}
 	}
 	block=&Block {
 		Name:&req.Name, //ConstBlock won't be destroyed

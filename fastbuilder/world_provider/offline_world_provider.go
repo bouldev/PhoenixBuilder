@@ -6,6 +6,8 @@ import (
 	"os"
 	"phoenixbuilder/dragonfly/server/world"
 	"phoenixbuilder/dragonfly/server/world/chunk"
+	"phoenixbuilder/dragonfly/server/block/cube"
+	"github.com/google/uuid"
 
 	"github.com/pterm/pterm"
 )
@@ -20,11 +22,11 @@ func NewOfflineWorldProvider(chunksMap map[ChunkPosDefine]ChunkDefine) *OfflineW
 	}
 }
 
-func (p *OfflineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chunk, exists bool, err error) {
+func (p *OfflineWorldProvider) LoadChunk(position world.ChunkPos, dim world.Dimension) (c *chunk.Chunk, exists bool, err error) {
 	cacheitem,hascacheitem:=p.chunksMap[ChunkPosDefine(position)]
 	if hascacheitem {
 		// delete(ChunkCache,position)
-		chunk, err:=chunk.NetworkDecode(AirRuntimeId, cacheitem.RawPayload, int(cacheitem.SubChunkCount))
+		chunk, err:=chunk.NetworkDecode(AirRuntimeId, cacheitem.RawPayload, int(cacheitem.SubChunkCount), cube.Range{-64, 319})
 		if(err!=nil) {
 			fileName:=fmt.Sprintf("ErrorLevelChunkSample[%v].gob",position)
 			fp,err:=os.OpenFile(fileName,os.O_WRONLY|os.O_CREATE|os.O_TRUNC,0755)
@@ -44,43 +46,45 @@ func (p *OfflineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chun
 	}
 }
 
-func (p *OfflineWorldProvider) Settings() world.Settings {
-	return world.Settings {
+func (p *OfflineWorldProvider) Settings() *world.Settings {
+	return &world.Settings {
 		Name: "World",
 	}
 }
 
-func (p *OfflineWorldProvider) SaveSettings(_ world.Settings) {
+func (p *OfflineWorldProvider) SaveSettings(_ *world.Settings) {
 	
 }
 
-func (p *OfflineWorldProvider) SaveChunk(position world.ChunkPos, c *chunk.Chunk) error {
+func (p *OfflineWorldProvider) SaveChunk(position world.ChunkPos, c *chunk.Chunk, dim world.Dimension) error {
 	return nil
 }
 
-func (p *OfflineWorldProvider) LoadEntities(position world.ChunkPos) ([]world.SaveableEntity, error) {
+func (p *OfflineWorldProvider) LoadEntities(position world.ChunkPos, dim world.Dimension) ([]world.SaveableEntity, error) {
 	// Not implemented
 	return []world.SaveableEntity{}, nil
 }
 
-func (p *OfflineWorldProvider) SaveEntities(position world.ChunkPos, entities []world.SaveableEntity) error {
+func (p *OfflineWorldProvider) SaveEntities(position world.ChunkPos, entities []world.SaveableEntity, dim world.Dimension) error {
 	return nil
 }
 
-func (p *OfflineWorldProvider) LoadBlockNBT(position world.ChunkPos) ([]map[string]interface{}, error) {
+func (p *OfflineWorldProvider) LoadBlockNBT(position world.ChunkPos, dim world.Dimension) ([]map[string]any, error) {
 	return nil, nil
-	/*r, h:=p.nbtmap[position]
-	if(!h) {
-		fmt.Printf("No NBT for position %v.\n",position)
-		return nil, fmt.Errorf("NO NBT")
-	}
-	return r, nil*/
 }
 
-func (p *OfflineWorldProvider) SaveBlockNBT(position world.ChunkPos, data []map[string]interface{}) error {
+func (p *OfflineWorldProvider) SaveBlockNBT(position world.ChunkPos, data []map[string]interface{}, dim world.Dimension) error {
 	return nil
 }
 
 func (p *OfflineWorldProvider) Close() error {
+	return nil
+}
+
+func (p *OfflineWorldProvider) LoadPlayerSpawnPosition(uuid uuid.UUID) (pos cube.Pos, exists bool, err error) {
+	return cube.Pos{}, false, nil
+}
+
+func (p *OfflineWorldProvider) SavePlayerSpawnPosition(uuid uuid.UUID, pos cube.Pos) error {
 	return nil
 }

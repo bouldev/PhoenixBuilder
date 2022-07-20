@@ -679,12 +679,27 @@ func runClient(env *environment.PBEnvironment) {
 					ActionType:      protocol.PlayerActionRespawn,
 				})
 			}
+		case *packet.SubChunk:
+			fmt.Printf("SubChunk %#v\n",p)
 		case *packet.LevelChunk:
 			if args.ShouldEnableOmegaSystem() {
 				world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
 			}
 			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
 			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
+			// It seems that LevelChunk no longer returns full chunk data now.
+			/*for i:=-64;i<=319;i++ {
+				conn.WritePacket(&packet.SubChunkRequest {
+					Dimension: 0,
+					Position: protocol.SubChunkPos{p.Position[0],p.Position[1]},
+					Offsets: [][3]int8{
+						[3]int8{0,0,0},
+					},
+				})
+			}
+			// TODO: Figure out the difference of SubChunkRequestPacket between netease and normal version. (?)
+			//       Make it works.
+			*/
 		case *packet.UpdateBlock:
 			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
 			if h {

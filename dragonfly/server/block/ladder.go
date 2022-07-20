@@ -5,6 +5,7 @@ import (
 	"phoenixbuilder/dragonfly/server/block/model"
 	"phoenixbuilder/dragonfly/server/item"
 	"phoenixbuilder/dragonfly/server/world"
+	"phoenixbuilder/dragonfly/server/world/particle"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -20,7 +21,8 @@ type Ladder struct {
 // NeighbourUpdateTick ...
 func (l Ladder) NeighbourUpdateTick(pos, _ cube.Pos, w *world.World) {
 	if _, ok := w.Block(pos.Side(l.Facing.Opposite().Face())).(LightDiffuser); ok {
-		w.BreakBlock(pos)
+		w.SetBlock(pos, nil, nil)
+		w.AddParticle(pos.Vec3Centre(), particle.BlockBreak{Block: l})
 	}
 }
 
@@ -52,21 +54,21 @@ func (l Ladder) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, w *world.
 	return placed(ctx)
 }
 
-// EntityCollide ...
-func (Ladder) EntityCollide(e world.Entity) {
-	if fallEntity, ok := e.(FallDistanceEntity); ok {
+// EntityInside ...
+func (l Ladder) EntityInside(_ cube.Pos, _ *world.World, e world.Entity) {
+	if fallEntity, ok := e.(fallDistanceEntity); ok {
 		fallEntity.ResetFallDistance()
 	}
 }
 
 // CanDisplace ...
-func (Ladder) CanDisplace(b world.Liquid) bool {
+func (l Ladder) CanDisplace(b world.Liquid) bool {
 	_, water := b.(Water)
 	return water
 }
 
 // SideClosed ...
-func (Ladder) SideClosed(cube.Pos, cube.Pos, *world.World) bool {
+func (l Ladder) SideClosed(cube.Pos, cube.Pos, *world.World) bool {
 	return false
 }
 
@@ -76,13 +78,13 @@ func (l Ladder) BreakInfo() BreakInfo {
 }
 
 // EncodeItem ...
-func (Ladder) EncodeItem() (name string, meta int16) {
+func (l Ladder) EncodeItem() (name string, meta int16) {
 	return "minecraft:ladder", 0
 }
 
 // EncodeBlock ...
-func (l Ladder) EncodeBlock() (string, map[string]interface{}) {
-	return "minecraft:ladder", map[string]interface{}{"facing_direction": int32(l.Facing + 2)}
+func (l Ladder) EncodeBlock() (string, map[string]any) {
+	return "minecraft:ladder", map[string]any{"facing_direction": int32(l.Facing + 2)}
 }
 
 // Model ...

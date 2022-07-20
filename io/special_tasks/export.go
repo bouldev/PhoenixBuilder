@@ -42,13 +42,16 @@ var ExportWaiter chan map[string]interface{}
 
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
 	cmdsender:=env.CommandSender
+	// WIP
+	cmdsender.Output("Sorry, but compatibility works haven't been done yet, redirected to lexport.")
+	return CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment)
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
 		cmdsender.Output(fmt.Sprintf("Failed to parse command: %v",err))
 		return nil
 	}
-	cmdsender.Output("Sorry, but compatibility works haven't been done yet, please use lexport.")
-	return nil
+	//cmdsender.Output("Sorry, but compatibility works haven't been done yet, please use lexport.")
+	//return nil
 	beginPos := cfg.Position
 	endPos := cfg.End
 	startX,endX,startZ,endZ:=0,0,0,0
@@ -114,8 +117,12 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		providerChunksMap[world_provider.ChunkPosDefine{chunk.Position[0],chunk.Position[1]}]=world_provider.ChunkDefine(chunk)
 	}
 	var offlineWorld *world.World
-	offlineWorld=world.New(&world_provider.StubLogger{},32)
-	offlineWorld.Provider(world_provider.NewOfflineWorldProvider(providerChunksMap))
+	offlineWorld=(&world.Config {
+		Log: &world_provider.StubLogger{},
+		Dim: nil,
+		Provider: world_provider.NewOfflineWorldProvider(providerChunksMap),
+		ReadOnly: true,
+	}).New()
 
 	go func() {
 		defer func() {
@@ -126,7 +133,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		}()
 		cmdsender.Output("EXPORT >> Exporting...")
 		V:=(endPos.X-beginPos.X+1)*(endPos.Y-beginPos.Y+1)*(endPos.Z-beginPos.Z+1)
-		blocks:=make([]*types.RuntimeModule,V)
+		blocks:=make([]*types.Module,V)
 		counter:=0
 		for x:=beginPos.X; x<=endPos.X; x++ {
 			for z:=beginPos.Z; z<=endPos.Z; z++ {
@@ -136,6 +143,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 					if runtimeId==world_provider.AirRuntimeId {
 						continue
 					}
+					fmt.Printf("%d\n",runtimeId)
 					block, item:=blk.EncodeBlock()
 					var cbdata *types.CommandBlockData = nil
 					var chestData *types.ChestData = nil
@@ -213,8 +221,8 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							NeedRedstone: nrb,
 						}
 					}
-					blocks[counter]=&types.RuntimeModule {
-						BlockRuntimeId: runtimeId,
+					blocks[counter]=&types.Module {
+						Block: world_provider.RuntimeIdArray_2_2_15[runtimeId].Take(),
 						CommandBlockData: cbdata,
 						ChestData: chestData,
 						Point: types.Position {
@@ -229,7 +237,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		}
 		blocks=blocks[:counter]
 		runtime.GC()
-		out:=bdump.BDump {
+		out:=bdump.BDumpLegacy {
 			Blocks: blocks,
 		}
 		if(strings.LastIndex(cfg.Path,".bdx")!=len(cfg.Path)-4||len(cfg.Path)<4) {

@@ -9,8 +9,15 @@ import (
 var CurrentWorld *world.World = nil
 
 func Create(env *environment.PBEnvironment) *world.World {
-	intw:=world.New(&StubLogger{},32)
-	intw.Provider(NewOnlineWorldProvider(env))
+	intc:=&world.Config {
+		Log: &StubLogger{},
+		Dim: nil,
+		Provider: NewOnlineWorldProvider(env),
+		ReadOnly: true,
+	}
+	intw:=intc.New()
+	//intw:=world.New(&StubLogger{},32)
+	//intw.Provider(NewOnlineWorldProvider(env))
 	return intw
 }
 

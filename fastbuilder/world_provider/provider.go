@@ -5,6 +5,7 @@ import (
 	"time"
 	"phoenixbuilder/dragonfly/server/world"
 	"phoenixbuilder/dragonfly/server/world/chunk"
+	"phoenixbuilder/dragonfly/server/block/cube"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/minecraft"
@@ -32,13 +33,13 @@ func NewOnlineWorldProvider(env *environment.PBEnvironment) *OnlineWorldProvider
 	}
 }
 
-func (p *OnlineWorldProvider) Settings() world.Settings {
-	return world.Settings {
+func (p *OnlineWorldProvider) Settings() *world.Settings {
+	return &world.Settings {
 		Name: "World",
 	}
 }
 
-func (p *OnlineWorldProvider) SaveSettings(_ world.Settings) {
+func (p *OnlineWorldProvider) SaveSettings(_ *world.Settings) {
 	
 }
 
@@ -72,14 +73,14 @@ func wander(env *environment.PBEnvironment, position world.ChunkPos) {
 	}
 }
 
-func (p *OnlineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chunk, exists bool, err error) {
+func (p *OnlineWorldProvider) LoadChunk(position world.ChunkPos, dim world.Dimension) (c *chunk.Chunk, exists bool, err error) {
 	if(ChunkCache==nil) {
 		panic("LoadChunk() before creating a world")
 	}
 	cacheitem,hascacheitem:=ChunkCache[position]
 	if hascacheitem {
 		delete(ChunkCache,position)
-		chunk, err:=chunk.NetworkDecode(AirRuntimeId, cacheitem.RawPayload, int(cacheitem.SubChunkCount))
+		chunk, err:=chunk.NetworkDecode(AirRuntimeId, cacheitem.RawPayload, int(cacheitem.SubChunkCount), cube.Range{-64, 319})
 		if(err!=nil) {
 			fmt.Printf("Failed to decode chunk: %v\n",err)
 			return nil, true, err
@@ -117,7 +118,7 @@ func (p *OnlineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chunk
 		// Hit
 		close(ChunkInput)
 		ChunkInput=nil
-		chunk, err:=chunk.NetworkDecode(AirRuntimeId, inp.RawPayload, int(inp.SubChunkCount))
+		chunk, err:=chunk.NetworkDecode(AirRuntimeId, inp.RawPayload, int(inp.SubChunkCount), cube.Range{-64, 319})
 		if(err!=nil) {
 			fmt.Printf("Failed to decode chunk: %v\n",err)
 			return nil, true, err
@@ -139,33 +140,35 @@ func (p *OnlineWorldProvider) LoadChunk(position world.ChunkPos) (c *chunk.Chunk
 	}
 }
 
-func (p *OnlineWorldProvider) SaveChunk(position world.ChunkPos, c *chunk.Chunk) error {
+func (p *OnlineWorldProvider) SaveChunk(position world.ChunkPos, c *chunk.Chunk, dim world.Dimension) error {
 	return nil
 }
 
-func (p *OnlineWorldProvider) LoadEntities(position world.ChunkPos) ([]world.SaveableEntity, error) {
+func (p *OnlineWorldProvider) LoadEntities(position world.ChunkPos, dim world.Dimension) ([]world.SaveableEntity, error) {
 	// Not implemented
 	return []world.SaveableEntity{}, nil
 }
 
-func (p *OnlineWorldProvider) SaveEntities(position world.ChunkPos, entities []world.SaveableEntity) error {
+func (p *OnlineWorldProvider) SaveEntities(position world.ChunkPos, entities []world.SaveableEntity, dim world.Dimension) error {
 	return nil
 }
 
-func (p *OnlineWorldProvider) LoadBlockNBT(position world.ChunkPos) ([]map[string]interface{}, error) {
-	return nil, nil
-	/*r, h:=p.nbtmap[position]
-	if(!h) {
-		fmt.Printf("No NBT for position %v.\n",position)
-		return nil, fmt.Errorf("NO NBT")
-	}
-	return r, nil*/
+func (p *OnlineWorldProvider) LoadBlockNBT(position world.ChunkPos, dim world.Dimension) ([]map[string]any, error) {
+	return []map[string]any{}, nil
 }
 
-func (p *OnlineWorldProvider) SaveBlockNBT(position world.ChunkPos, data []map[string]interface{}) error {
+func (p *OnlineWorldProvider) SaveBlockNBT(position world.ChunkPos, data []map[string]interface{}, dim world.Dimension) error {
 	return nil
 }
 
 func (p *OnlineWorldProvider) Close() error {
+	return nil
+}
+
+func (p *OnlineWorldProvider) LoadPlayerSpawnPosition(uuid uuid.UUID) (pos cube.Pos, exists bool, err error) {
+	return cube.Pos{}, false, nil
+}
+
+func (p *OnlineWorldProvider) SavePlayerSpawnPosition(uuid uuid.UUID, pos cube.Pos) error {
 	return nil
 }

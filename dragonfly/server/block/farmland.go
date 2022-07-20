@@ -2,6 +2,7 @@ package block
 
 import (
 	"phoenixbuilder/dragonfly/server/block/cube"
+	"phoenixbuilder/dragonfly/server/entity"
 	"phoenixbuilder/dragonfly/server/world"
 	"math/rand"
 )
@@ -17,8 +18,6 @@ type Farmland struct {
 	Hydration int
 }
 
-//TODO: Add crop trampling
-
 // SoilFor ...
 func (f Farmland) SoilFor(block world.Block) bool {
 	switch block.(type) {
@@ -31,7 +30,7 @@ func (f Farmland) SoilFor(block world.Block) bool {
 // NeighbourUpdateTick ...
 func (f Farmland) NeighbourUpdateTick(pos, _ cube.Pos, w *world.World) {
 	if solid := w.Block(pos.Side(cube.FaceUp)).Model().FaceSolid(pos.Side(cube.FaceUp), cube.FaceDown, w); solid {
-		w.SetBlock(pos, Dirt{})
+		w.SetBlock(pos, Dirt{}, nil)
 	}
 }
 
@@ -40,16 +39,16 @@ func (f Farmland) RandomTick(pos cube.Pos, w *world.World, _ *rand.Rand) {
 	if !f.hydrated(pos, w) {
 		if f.Hydration > 0 {
 			f.Hydration--
-			w.PlaceBlock(pos, f)
+			w.SetBlock(pos, f, nil)
 		} else {
 			blockAbove := w.Block(pos.Side(cube.FaceUp))
 			if _, cropAbove := blockAbove.(Crop); !cropAbove {
-				w.PlaceBlock(pos, Dirt{})
+				w.SetBlock(pos, Dirt{}, nil)
 			}
 		}
 	} else {
 		f.Hydration = 7
-		w.PlaceBlock(pos, f)
+		w.SetBlock(pos, f, nil)
 	}
 }
 
@@ -70,14 +69,31 @@ func (f Farmland) hydrated(pos cube.Pos, w *world.World) bool {
 	return false
 }
 
+// EntityLand ...
+func (f Farmland) EntityLand(pos cube.Pos, w *world.World, e world.Entity, distance *float64) {
+	if living, ok := e.(entity.Living); ok {
+		if fall, ok := living.(fallDistanceEntity); ok && rand.Float64() < fall.FallDistance()-0.5 {
+			w.SetBlock(pos, Dirt{}, nil)
+		}
+	}
+}
+
+// fallDistanceEntity is an entity that has a fall distance.
+type fallDistanceEntity interface {
+	// ResetFallDistance resets the entities fall distance.
+	ResetFallDistance()
+	// FallDistance returns the entities fall distance.
+	FallDistance() float64
+}
+
 // BreakInfo ...
 func (f Farmland) BreakInfo() BreakInfo {
 	return newBreakInfo(0.6, alwaysHarvestable, shovelEffective, oneOf(Dirt{}))
 }
 
 // EncodeBlock ...
-func (f Farmland) EncodeBlock() (name string, properties map[string]interface{}) {
-	return "minecraft:farmland", map[string]interface{}{"moisturized_amount": int32(f.Hydration)}
+func (f Farmland) EncodeBlock() (name string, properties map[string]any) {
+	return "minecraft:farmland", map[string]any{"moisturized_amount": int32(f.Hydration)}
 }
 
 // EncodeItem ...

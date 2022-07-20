@@ -488,6 +488,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:birch_wall_sign",3)
 	world.RegisterBlockState("minecraft:birch_wall_sign",4)
 	world.RegisterBlockState("minecraft:birch_wall_sign",5)
+	world.RegisterBlockState("minecraft:black_candle",0)
+	world.RegisterBlockState("minecraft:black_candle",1)
+	world.RegisterBlockState("minecraft:black_candle",2)
+	world.RegisterBlockState("minecraft:black_candle",3)
+	world.RegisterBlockState("minecraft:black_candle",4)
+	world.RegisterBlockState("minecraft:black_candle",5)
+	world.RegisterBlockState("minecraft:black_candle",6)
+	world.RegisterBlockState("minecraft:black_candle",7)
+	world.RegisterBlockState("minecraft:black_candle_cake",0)
+	world.RegisterBlockState("minecraft:black_candle_cake",1)
 	world.RegisterBlockState("minecraft:black_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:black_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:black_glazed_terracotta",2)
@@ -675,6 +685,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:blast_furnace",3)
 	world.RegisterBlockState("minecraft:blast_furnace",4)
 	world.RegisterBlockState("minecraft:blast_furnace",5)
+	world.RegisterBlockState("minecraft:blue_candle",0)
+	world.RegisterBlockState("minecraft:blue_candle",1)
+	world.RegisterBlockState("minecraft:blue_candle",2)
+	world.RegisterBlockState("minecraft:blue_candle",3)
+	world.RegisterBlockState("minecraft:blue_candle",4)
+	world.RegisterBlockState("minecraft:blue_candle",5)
+	world.RegisterBlockState("minecraft:blue_candle",6)
+	world.RegisterBlockState("minecraft:blue_candle",7)
+	world.RegisterBlockState("minecraft:blue_candle_cake",0)
+	world.RegisterBlockState("minecraft:blue_candle_cake",1)
 	world.RegisterBlockState("minecraft:blue_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:blue_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:blue_glazed_terracotta",2)
@@ -874,6 +894,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:brick_stairs",5)
 	world.RegisterBlockState("minecraft:brick_stairs",6)
 	world.RegisterBlockState("minecraft:brick_stairs",7)
+	world.RegisterBlockState("minecraft:brown_candle",0)
+	world.RegisterBlockState("minecraft:brown_candle",1)
+	world.RegisterBlockState("minecraft:brown_candle",2)
+	world.RegisterBlockState("minecraft:brown_candle",3)
+	world.RegisterBlockState("minecraft:brown_candle",4)
+	world.RegisterBlockState("minecraft:brown_candle",5)
+	world.RegisterBlockState("minecraft:brown_candle",6)
+	world.RegisterBlockState("minecraft:brown_candle",7)
+	world.RegisterBlockState("minecraft:brown_candle_cake",0)
+	world.RegisterBlockState("minecraft:brown_candle_cake",1)
 	world.RegisterBlockState("minecraft:brown_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:brown_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:brown_glazed_terracotta",2)
@@ -933,6 +963,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:campfire",5)
 	world.RegisterBlockState("minecraft:campfire",6)
 	world.RegisterBlockState("minecraft:campfire",7)
+	world.RegisterBlockState("minecraft:candle",0)
+	world.RegisterBlockState("minecraft:candle",1)
+	world.RegisterBlockState("minecraft:candle",2)
+	world.RegisterBlockState("minecraft:candle",3)
+	world.RegisterBlockState("minecraft:candle",4)
+	world.RegisterBlockState("minecraft:candle",5)
+	world.RegisterBlockState("minecraft:candle",6)
+	world.RegisterBlockState("minecraft:candle",7)
+	world.RegisterBlockState("minecraft:candle_cake",0)
+	world.RegisterBlockState("minecraft:candle_cake",1)
 	world.RegisterBlockState("minecraft:carpet",0)
 	world.RegisterBlockState("minecraft:carpet",1)
 	world.RegisterBlockState("minecraft:carpet",2)
@@ -1110,6 +1150,7 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:chorus_flower",5)
 	world.RegisterBlockState("minecraft:chorus_plant",0)
 	world.RegisterBlockState("minecraft:clay",0)
+	world.RegisterBlockState("minecraft:client_request_placeholder_block",0)
 	world.RegisterBlockState("minecraft:coal_block",0)
 	world.RegisterBlockState("minecraft:coal_ore",0)
 	world.RegisterBlockState("minecraft:cobbled_deepslate",0)
@@ -3890,6 +3931,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:cut_copper_stairs",5)
 	world.RegisterBlockState("minecraft:cut_copper_stairs",6)
 	world.RegisterBlockState("minecraft:cut_copper_stairs",7)
+	world.RegisterBlockState("minecraft:cyan_candle",0)
+	world.RegisterBlockState("minecraft:cyan_candle",1)
+	world.RegisterBlockState("minecraft:cyan_candle",2)
+	world.RegisterBlockState("minecraft:cyan_candle",3)
+	world.RegisterBlockState("minecraft:cyan_candle",4)
+	world.RegisterBlockState("minecraft:cyan_candle",5)
+	world.RegisterBlockState("minecraft:cyan_candle",6)
+	world.RegisterBlockState("minecraft:cyan_candle",7)
+	world.RegisterBlockState("minecraft:cyan_candle_cake",0)
+	world.RegisterBlockState("minecraft:cyan_candle_cake",1)
 	world.RegisterBlockState("minecraft:cyan_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:cyan_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:cyan_glazed_terracotta",2)
@@ -4819,6 +4870,18 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:frame",11)
 	world.RegisterBlockState("minecraft:frame",12)
 	world.RegisterBlockState("minecraft:frame",13)
+	world.RegisterBlockState("minecraft:frame",16)
+	world.RegisterBlockState("minecraft:frame",17)
+	world.RegisterBlockState("minecraft:frame",18)
+	world.RegisterBlockState("minecraft:frame",19)
+	world.RegisterBlockState("minecraft:frame",20)
+	world.RegisterBlockState("minecraft:frame",21)
+	world.RegisterBlockState("minecraft:frame",24)
+	world.RegisterBlockState("minecraft:frame",25)
+	world.RegisterBlockState("minecraft:frame",26)
+	world.RegisterBlockState("minecraft:frame",27)
+	world.RegisterBlockState("minecraft:frame",28)
+	world.RegisterBlockState("minecraft:frame",29)
 	world.RegisterBlockState("minecraft:frosted_ice",0)
 	world.RegisterBlockState("minecraft:frosted_ice",1)
 	world.RegisterBlockState("minecraft:frosted_ice",2)
@@ -4844,6 +4907,18 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:glow_frame",11)
 	world.RegisterBlockState("minecraft:glow_frame",12)
 	world.RegisterBlockState("minecraft:glow_frame",13)
+	world.RegisterBlockState("minecraft:glow_frame",16)
+	world.RegisterBlockState("minecraft:glow_frame",17)
+	world.RegisterBlockState("minecraft:glow_frame",18)
+	world.RegisterBlockState("minecraft:glow_frame",19)
+	world.RegisterBlockState("minecraft:glow_frame",20)
+	world.RegisterBlockState("minecraft:glow_frame",21)
+	world.RegisterBlockState("minecraft:glow_frame",24)
+	world.RegisterBlockState("minecraft:glow_frame",25)
+	world.RegisterBlockState("minecraft:glow_frame",26)
+	world.RegisterBlockState("minecraft:glow_frame",27)
+	world.RegisterBlockState("minecraft:glow_frame",28)
+	world.RegisterBlockState("minecraft:glow_frame",29)
 	world.RegisterBlockState("minecraft:glow_lichen",0)
 	world.RegisterBlockState("minecraft:glow_lichen",1)
 	world.RegisterBlockState("minecraft:glow_lichen",2)
@@ -4935,12 +5010,32 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:grass",0)
 	world.RegisterBlockState("minecraft:grass_path",0)
 	world.RegisterBlockState("minecraft:gravel",0)
+	world.RegisterBlockState("minecraft:gray_candle",0)
+	world.RegisterBlockState("minecraft:gray_candle",1)
+	world.RegisterBlockState("minecraft:gray_candle",2)
+	world.RegisterBlockState("minecraft:gray_candle",3)
+	world.RegisterBlockState("minecraft:gray_candle",4)
+	world.RegisterBlockState("minecraft:gray_candle",5)
+	world.RegisterBlockState("minecraft:gray_candle",6)
+	world.RegisterBlockState("minecraft:gray_candle",7)
+	world.RegisterBlockState("minecraft:gray_candle_cake",0)
+	world.RegisterBlockState("minecraft:gray_candle_cake",1)
 	world.RegisterBlockState("minecraft:gray_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:gray_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:gray_glazed_terracotta",2)
 	world.RegisterBlockState("minecraft:gray_glazed_terracotta",3)
 	world.RegisterBlockState("minecraft:gray_glazed_terracotta",4)
 	world.RegisterBlockState("minecraft:gray_glazed_terracotta",5)
+	world.RegisterBlockState("minecraft:green_candle",0)
+	world.RegisterBlockState("minecraft:green_candle",1)
+	world.RegisterBlockState("minecraft:green_candle",2)
+	world.RegisterBlockState("minecraft:green_candle",3)
+	world.RegisterBlockState("minecraft:green_candle",4)
+	world.RegisterBlockState("minecraft:green_candle",5)
+	world.RegisterBlockState("minecraft:green_candle",6)
+	world.RegisterBlockState("minecraft:green_candle",7)
+	world.RegisterBlockState("minecraft:green_candle_cake",0)
+	world.RegisterBlockState("minecraft:green_candle_cake",1)
 	world.RegisterBlockState("minecraft:green_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:green_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:green_glazed_terracotta",2)
@@ -5389,12 +5484,32 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:light_block",13)
 	world.RegisterBlockState("minecraft:light_block",14)
 	world.RegisterBlockState("minecraft:light_block",15)
+	world.RegisterBlockState("minecraft:light_blue_candle",0)
+	world.RegisterBlockState("minecraft:light_blue_candle",1)
+	world.RegisterBlockState("minecraft:light_blue_candle",2)
+	world.RegisterBlockState("minecraft:light_blue_candle",3)
+	world.RegisterBlockState("minecraft:light_blue_candle",4)
+	world.RegisterBlockState("minecraft:light_blue_candle",5)
+	world.RegisterBlockState("minecraft:light_blue_candle",6)
+	world.RegisterBlockState("minecraft:light_blue_candle",7)
+	world.RegisterBlockState("minecraft:light_blue_candle_cake",0)
+	world.RegisterBlockState("minecraft:light_blue_candle_cake",1)
 	world.RegisterBlockState("minecraft:light_blue_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:light_blue_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:light_blue_glazed_terracotta",2)
 	world.RegisterBlockState("minecraft:light_blue_glazed_terracotta",3)
 	world.RegisterBlockState("minecraft:light_blue_glazed_terracotta",4)
 	world.RegisterBlockState("minecraft:light_blue_glazed_terracotta",5)
+	world.RegisterBlockState("minecraft:light_gray_candle",0)
+	world.RegisterBlockState("minecraft:light_gray_candle",1)
+	world.RegisterBlockState("minecraft:light_gray_candle",2)
+	world.RegisterBlockState("minecraft:light_gray_candle",3)
+	world.RegisterBlockState("minecraft:light_gray_candle",4)
+	world.RegisterBlockState("minecraft:light_gray_candle",5)
+	world.RegisterBlockState("minecraft:light_gray_candle",6)
+	world.RegisterBlockState("minecraft:light_gray_candle",7)
+	world.RegisterBlockState("minecraft:light_gray_candle_cake",0)
+	world.RegisterBlockState("minecraft:light_gray_candle_cake",1)
 	world.RegisterBlockState("minecraft:light_weighted_pressure_plate",0)
 	world.RegisterBlockState("minecraft:light_weighted_pressure_plate",1)
 	world.RegisterBlockState("minecraft:light_weighted_pressure_plate",2)
@@ -5417,6 +5532,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:lightning_rod",3)
 	world.RegisterBlockState("minecraft:lightning_rod",4)
 	world.RegisterBlockState("minecraft:lightning_rod",5)
+	world.RegisterBlockState("minecraft:lime_candle",0)
+	world.RegisterBlockState("minecraft:lime_candle",1)
+	world.RegisterBlockState("minecraft:lime_candle",2)
+	world.RegisterBlockState("minecraft:lime_candle",3)
+	world.RegisterBlockState("minecraft:lime_candle",4)
+	world.RegisterBlockState("minecraft:lime_candle",5)
+	world.RegisterBlockState("minecraft:lime_candle",6)
+	world.RegisterBlockState("minecraft:lime_candle",7)
+	world.RegisterBlockState("minecraft:lime_candle_cake",0)
+	world.RegisterBlockState("minecraft:lime_candle_cake",1)
 	world.RegisterBlockState("minecraft:lime_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:lime_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:lime_glazed_terracotta",2)
@@ -5471,6 +5596,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:loom",1)
 	world.RegisterBlockState("minecraft:loom",2)
 	world.RegisterBlockState("minecraft:loom",3)
+	world.RegisterBlockState("minecraft:magenta_candle",0)
+	world.RegisterBlockState("minecraft:magenta_candle",1)
+	world.RegisterBlockState("minecraft:magenta_candle",2)
+	world.RegisterBlockState("minecraft:magenta_candle",3)
+	world.RegisterBlockState("minecraft:magenta_candle",4)
+	world.RegisterBlockState("minecraft:magenta_candle",5)
+	world.RegisterBlockState("minecraft:magenta_candle",6)
+	world.RegisterBlockState("minecraft:magenta_candle",7)
+	world.RegisterBlockState("minecraft:magenta_candle_cake",0)
+	world.RegisterBlockState("minecraft:magenta_candle_cake",1)
 	world.RegisterBlockState("minecraft:magenta_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:magenta_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:magenta_glazed_terracotta",2)
@@ -5563,6 +5698,8 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:mossy_stone_brick_stairs",7)
 	world.RegisterBlockState("minecraft:movingBlock",0)
 	world.RegisterBlockState("minecraft:mycelium",0)
+	world.RegisterBlockState("minecraft:mysterious_frame",0)
+	world.RegisterBlockState("minecraft:mysterious_frame_slot",0)
 	world.RegisterBlockState("minecraft:nether_brick",0)
 	world.RegisterBlockState("minecraft:nether_brick_fence",0)
 	world.RegisterBlockState("minecraft:nether_brick_stairs",0)
@@ -5613,6 +5750,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:observer",12)
 	world.RegisterBlockState("minecraft:observer",13)
 	world.RegisterBlockState("minecraft:obsidian",0)
+	world.RegisterBlockState("minecraft:orange_candle",0)
+	world.RegisterBlockState("minecraft:orange_candle",1)
+	world.RegisterBlockState("minecraft:orange_candle",2)
+	world.RegisterBlockState("minecraft:orange_candle",3)
+	world.RegisterBlockState("minecraft:orange_candle",4)
+	world.RegisterBlockState("minecraft:orange_candle",5)
+	world.RegisterBlockState("minecraft:orange_candle",6)
+	world.RegisterBlockState("minecraft:orange_candle",7)
+	world.RegisterBlockState("minecraft:orange_candle_cake",0)
+	world.RegisterBlockState("minecraft:orange_candle_cake",1)
 	world.RegisterBlockState("minecraft:orange_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:orange_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:orange_glazed_terracotta",2)
@@ -5634,6 +5781,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:oxidized_double_cut_copper_slab",0)
 	world.RegisterBlockState("minecraft:oxidized_double_cut_copper_slab",1)
 	world.RegisterBlockState("minecraft:packed_ice",0)
+	world.RegisterBlockState("minecraft:pink_candle",0)
+	world.RegisterBlockState("minecraft:pink_candle",1)
+	world.RegisterBlockState("minecraft:pink_candle",2)
+	world.RegisterBlockState("minecraft:pink_candle",3)
+	world.RegisterBlockState("minecraft:pink_candle",4)
+	world.RegisterBlockState("minecraft:pink_candle",5)
+	world.RegisterBlockState("minecraft:pink_candle",6)
+	world.RegisterBlockState("minecraft:pink_candle",7)
+	world.RegisterBlockState("minecraft:pink_candle_cake",0)
+	world.RegisterBlockState("minecraft:pink_candle_cake",1)
 	world.RegisterBlockState("minecraft:pink_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:pink_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:pink_glazed_terracotta",2)
@@ -6364,6 +6521,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:pumpkin_stem",45)
 	world.RegisterBlockState("minecraft:pumpkin_stem",46)
 	world.RegisterBlockState("minecraft:pumpkin_stem",47)
+	world.RegisterBlockState("minecraft:purple_candle",0)
+	world.RegisterBlockState("minecraft:purple_candle",1)
+	world.RegisterBlockState("minecraft:purple_candle",2)
+	world.RegisterBlockState("minecraft:purple_candle",3)
+	world.RegisterBlockState("minecraft:purple_candle",4)
+	world.RegisterBlockState("minecraft:purple_candle",5)
+	world.RegisterBlockState("minecraft:purple_candle",6)
+	world.RegisterBlockState("minecraft:purple_candle",7)
+	world.RegisterBlockState("minecraft:purple_candle_cake",0)
+	world.RegisterBlockState("minecraft:purple_candle_cake",1)
 	world.RegisterBlockState("minecraft:purple_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:purple_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:purple_glazed_terracotta",2)
@@ -6425,6 +6592,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:raw_copper_block",0)
 	world.RegisterBlockState("minecraft:raw_gold_block",0)
 	world.RegisterBlockState("minecraft:raw_iron_block",0)
+	world.RegisterBlockState("minecraft:red_candle",0)
+	world.RegisterBlockState("minecraft:red_candle",1)
+	world.RegisterBlockState("minecraft:red_candle",2)
+	world.RegisterBlockState("minecraft:red_candle",3)
+	world.RegisterBlockState("minecraft:red_candle",4)
+	world.RegisterBlockState("minecraft:red_candle",5)
+	world.RegisterBlockState("minecraft:red_candle",6)
+	world.RegisterBlockState("minecraft:red_candle",7)
+	world.RegisterBlockState("minecraft:red_candle_cake",0)
+	world.RegisterBlockState("minecraft:red_candle_cake",1)
 	world.RegisterBlockState("minecraft:red_flower",0)
 	world.RegisterBlockState("minecraft:red_flower",1)
 	world.RegisterBlockState("minecraft:red_flower",2)
@@ -6581,8 +6758,77 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:scaffolding",13)
 	world.RegisterBlockState("minecraft:scaffolding",14)
 	world.RegisterBlockState("minecraft:scaffolding",15)
+	world.RegisterBlockState("minecraft:sculk",0)
+	world.RegisterBlockState("minecraft:sculk_catalyst",0)
+	world.RegisterBlockState("minecraft:sculk_catalyst",1)
 	world.RegisterBlockState("minecraft:sculk_sensor",0)
 	world.RegisterBlockState("minecraft:sculk_sensor",1)
+	world.RegisterBlockState("minecraft:sculk_shrieker",0)
+	world.RegisterBlockState("minecraft:sculk_shrieker",1)
+	world.RegisterBlockState("minecraft:sculk_vein",0)
+	world.RegisterBlockState("minecraft:sculk_vein",1)
+	world.RegisterBlockState("minecraft:sculk_vein",2)
+	world.RegisterBlockState("minecraft:sculk_vein",3)
+	world.RegisterBlockState("minecraft:sculk_vein",4)
+	world.RegisterBlockState("minecraft:sculk_vein",5)
+	world.RegisterBlockState("minecraft:sculk_vein",6)
+	world.RegisterBlockState("minecraft:sculk_vein",7)
+	world.RegisterBlockState("minecraft:sculk_vein",8)
+	world.RegisterBlockState("minecraft:sculk_vein",9)
+	world.RegisterBlockState("minecraft:sculk_vein",10)
+	world.RegisterBlockState("minecraft:sculk_vein",11)
+	world.RegisterBlockState("minecraft:sculk_vein",12)
+	world.RegisterBlockState("minecraft:sculk_vein",13)
+	world.RegisterBlockState("minecraft:sculk_vein",14)
+	world.RegisterBlockState("minecraft:sculk_vein",15)
+	world.RegisterBlockState("minecraft:sculk_vein",16)
+	world.RegisterBlockState("minecraft:sculk_vein",17)
+	world.RegisterBlockState("minecraft:sculk_vein",18)
+	world.RegisterBlockState("minecraft:sculk_vein",19)
+	world.RegisterBlockState("minecraft:sculk_vein",20)
+	world.RegisterBlockState("minecraft:sculk_vein",21)
+	world.RegisterBlockState("minecraft:sculk_vein",22)
+	world.RegisterBlockState("minecraft:sculk_vein",23)
+	world.RegisterBlockState("minecraft:sculk_vein",24)
+	world.RegisterBlockState("minecraft:sculk_vein",25)
+	world.RegisterBlockState("minecraft:sculk_vein",26)
+	world.RegisterBlockState("minecraft:sculk_vein",27)
+	world.RegisterBlockState("minecraft:sculk_vein",28)
+	world.RegisterBlockState("minecraft:sculk_vein",29)
+	world.RegisterBlockState("minecraft:sculk_vein",30)
+	world.RegisterBlockState("minecraft:sculk_vein",31)
+	world.RegisterBlockState("minecraft:sculk_vein",32)
+	world.RegisterBlockState("minecraft:sculk_vein",33)
+	world.RegisterBlockState("minecraft:sculk_vein",34)
+	world.RegisterBlockState("minecraft:sculk_vein",35)
+	world.RegisterBlockState("minecraft:sculk_vein",36)
+	world.RegisterBlockState("minecraft:sculk_vein",37)
+	world.RegisterBlockState("minecraft:sculk_vein",38)
+	world.RegisterBlockState("minecraft:sculk_vein",39)
+	world.RegisterBlockState("minecraft:sculk_vein",40)
+	world.RegisterBlockState("minecraft:sculk_vein",41)
+	world.RegisterBlockState("minecraft:sculk_vein",42)
+	world.RegisterBlockState("minecraft:sculk_vein",43)
+	world.RegisterBlockState("minecraft:sculk_vein",44)
+	world.RegisterBlockState("minecraft:sculk_vein",45)
+	world.RegisterBlockState("minecraft:sculk_vein",46)
+	world.RegisterBlockState("minecraft:sculk_vein",47)
+	world.RegisterBlockState("minecraft:sculk_vein",48)
+	world.RegisterBlockState("minecraft:sculk_vein",49)
+	world.RegisterBlockState("minecraft:sculk_vein",50)
+	world.RegisterBlockState("minecraft:sculk_vein",51)
+	world.RegisterBlockState("minecraft:sculk_vein",52)
+	world.RegisterBlockState("minecraft:sculk_vein",53)
+	world.RegisterBlockState("minecraft:sculk_vein",54)
+	world.RegisterBlockState("minecraft:sculk_vein",55)
+	world.RegisterBlockState("minecraft:sculk_vein",56)
+	world.RegisterBlockState("minecraft:sculk_vein",57)
+	world.RegisterBlockState("minecraft:sculk_vein",58)
+	world.RegisterBlockState("minecraft:sculk_vein",59)
+	world.RegisterBlockState("minecraft:sculk_vein",60)
+	world.RegisterBlockState("minecraft:sculk_vein",61)
+	world.RegisterBlockState("minecraft:sculk_vein",62)
+	world.RegisterBlockState("minecraft:sculk_vein",63)
 	world.RegisterBlockState("minecraft:sea_pickle",0)
 	world.RegisterBlockState("minecraft:sea_pickle",1)
 	world.RegisterBlockState("minecraft:sea_pickle",2)
@@ -7556,6 +7802,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:wheat",5)
 	world.RegisterBlockState("minecraft:wheat",6)
 	world.RegisterBlockState("minecraft:wheat",7)
+	world.RegisterBlockState("minecraft:white_candle",0)
+	world.RegisterBlockState("minecraft:white_candle",1)
+	world.RegisterBlockState("minecraft:white_candle",2)
+	world.RegisterBlockState("minecraft:white_candle",3)
+	world.RegisterBlockState("minecraft:white_candle",4)
+	world.RegisterBlockState("minecraft:white_candle",5)
+	world.RegisterBlockState("minecraft:white_candle",6)
+	world.RegisterBlockState("minecraft:white_candle",7)
+	world.RegisterBlockState("minecraft:white_candle_cake",0)
+	world.RegisterBlockState("minecraft:white_candle_cake",1)
 	world.RegisterBlockState("minecraft:white_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:white_glazed_terracotta",1)
 	world.RegisterBlockState("minecraft:white_glazed_terracotta",2)
@@ -7687,6 +7943,16 @@ func InitRuntimeIds() {
 	world.RegisterBlockState("minecraft:wool",13)
 	world.RegisterBlockState("minecraft:wool",14)
 	world.RegisterBlockState("minecraft:wool",15)
+	world.RegisterBlockState("minecraft:yellow_candle",0)
+	world.RegisterBlockState("minecraft:yellow_candle",1)
+	world.RegisterBlockState("minecraft:yellow_candle",2)
+	world.RegisterBlockState("minecraft:yellow_candle",3)
+	world.RegisterBlockState("minecraft:yellow_candle",4)
+	world.RegisterBlockState("minecraft:yellow_candle",5)
+	world.RegisterBlockState("minecraft:yellow_candle",6)
+	world.RegisterBlockState("minecraft:yellow_candle",7)
+	world.RegisterBlockState("minecraft:yellow_candle_cake",0)
+	world.RegisterBlockState("minecraft:yellow_candle_cake",1)
 	world.RegisterBlockState("minecraft:yellow_flower",0)
 	world.RegisterBlockState("minecraft:yellow_glazed_terracotta",0)
 	world.RegisterBlockState("minecraft:yellow_glazed_terracotta",1)
@@ -8175,6 +8441,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("birch_wall_sign",3)
 	world.RegisterBlockState("birch_wall_sign",4)
 	world.RegisterBlockState("birch_wall_sign",5)
+	world.RegisterBlockState("black_candle",0)
+	world.RegisterBlockState("black_candle",1)
+	world.RegisterBlockState("black_candle",2)
+	world.RegisterBlockState("black_candle",3)
+	world.RegisterBlockState("black_candle",4)
+	world.RegisterBlockState("black_candle",5)
+	world.RegisterBlockState("black_candle",6)
+	world.RegisterBlockState("black_candle",7)
+	world.RegisterBlockState("black_candle_cake",0)
+	world.RegisterBlockState("black_candle_cake",1)
 	world.RegisterBlockState("black_glazed_terracotta",0)
 	world.RegisterBlockState("black_glazed_terracotta",1)
 	world.RegisterBlockState("black_glazed_terracotta",2)
@@ -8362,6 +8638,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("blast_furnace",3)
 	world.RegisterBlockState("blast_furnace",4)
 	world.RegisterBlockState("blast_furnace",5)
+	world.RegisterBlockState("blue_candle",0)
+	world.RegisterBlockState("blue_candle",1)
+	world.RegisterBlockState("blue_candle",2)
+	world.RegisterBlockState("blue_candle",3)
+	world.RegisterBlockState("blue_candle",4)
+	world.RegisterBlockState("blue_candle",5)
+	world.RegisterBlockState("blue_candle",6)
+	world.RegisterBlockState("blue_candle",7)
+	world.RegisterBlockState("blue_candle_cake",0)
+	world.RegisterBlockState("blue_candle_cake",1)
 	world.RegisterBlockState("blue_glazed_terracotta",0)
 	world.RegisterBlockState("blue_glazed_terracotta",1)
 	world.RegisterBlockState("blue_glazed_terracotta",2)
@@ -8561,6 +8847,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("brick_stairs",5)
 	world.RegisterBlockState("brick_stairs",6)
 	world.RegisterBlockState("brick_stairs",7)
+	world.RegisterBlockState("brown_candle",0)
+	world.RegisterBlockState("brown_candle",1)
+	world.RegisterBlockState("brown_candle",2)
+	world.RegisterBlockState("brown_candle",3)
+	world.RegisterBlockState("brown_candle",4)
+	world.RegisterBlockState("brown_candle",5)
+	world.RegisterBlockState("brown_candle",6)
+	world.RegisterBlockState("brown_candle",7)
+	world.RegisterBlockState("brown_candle_cake",0)
+	world.RegisterBlockState("brown_candle_cake",1)
 	world.RegisterBlockState("brown_glazed_terracotta",0)
 	world.RegisterBlockState("brown_glazed_terracotta",1)
 	world.RegisterBlockState("brown_glazed_terracotta",2)
@@ -8620,6 +8916,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("campfire",5)
 	world.RegisterBlockState("campfire",6)
 	world.RegisterBlockState("campfire",7)
+	world.RegisterBlockState("candle",0)
+	world.RegisterBlockState("candle",1)
+	world.RegisterBlockState("candle",2)
+	world.RegisterBlockState("candle",3)
+	world.RegisterBlockState("candle",4)
+	world.RegisterBlockState("candle",5)
+	world.RegisterBlockState("candle",6)
+	world.RegisterBlockState("candle",7)
+	world.RegisterBlockState("candle_cake",0)
+	world.RegisterBlockState("candle_cake",1)
 	world.RegisterBlockState("carpet",0)
 	world.RegisterBlockState("carpet",1)
 	world.RegisterBlockState("carpet",2)
@@ -8797,6 +9103,7 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("chorus_flower",5)
 	world.RegisterBlockState("chorus_plant",0)
 	world.RegisterBlockState("clay",0)
+	world.RegisterBlockState("client_request_placeholder_block",0)
 	world.RegisterBlockState("coal_block",0)
 	world.RegisterBlockState("coal_ore",0)
 	world.RegisterBlockState("cobbled_deepslate",0)
@@ -11577,6 +11884,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("cut_copper_stairs",5)
 	world.RegisterBlockState("cut_copper_stairs",6)
 	world.RegisterBlockState("cut_copper_stairs",7)
+	world.RegisterBlockState("cyan_candle",0)
+	world.RegisterBlockState("cyan_candle",1)
+	world.RegisterBlockState("cyan_candle",2)
+	world.RegisterBlockState("cyan_candle",3)
+	world.RegisterBlockState("cyan_candle",4)
+	world.RegisterBlockState("cyan_candle",5)
+	world.RegisterBlockState("cyan_candle",6)
+	world.RegisterBlockState("cyan_candle",7)
+	world.RegisterBlockState("cyan_candle_cake",0)
+	world.RegisterBlockState("cyan_candle_cake",1)
 	world.RegisterBlockState("cyan_glazed_terracotta",0)
 	world.RegisterBlockState("cyan_glazed_terracotta",1)
 	world.RegisterBlockState("cyan_glazed_terracotta",2)
@@ -12506,6 +12823,18 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("frame",11)
 	world.RegisterBlockState("frame",12)
 	world.RegisterBlockState("frame",13)
+	world.RegisterBlockState("frame",16)
+	world.RegisterBlockState("frame",17)
+	world.RegisterBlockState("frame",18)
+	world.RegisterBlockState("frame",19)
+	world.RegisterBlockState("frame",20)
+	world.RegisterBlockState("frame",21)
+	world.RegisterBlockState("frame",24)
+	world.RegisterBlockState("frame",25)
+	world.RegisterBlockState("frame",26)
+	world.RegisterBlockState("frame",27)
+	world.RegisterBlockState("frame",28)
+	world.RegisterBlockState("frame",29)
 	world.RegisterBlockState("frosted_ice",0)
 	world.RegisterBlockState("frosted_ice",1)
 	world.RegisterBlockState("frosted_ice",2)
@@ -12531,6 +12860,18 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("glow_frame",11)
 	world.RegisterBlockState("glow_frame",12)
 	world.RegisterBlockState("glow_frame",13)
+	world.RegisterBlockState("glow_frame",16)
+	world.RegisterBlockState("glow_frame",17)
+	world.RegisterBlockState("glow_frame",18)
+	world.RegisterBlockState("glow_frame",19)
+	world.RegisterBlockState("glow_frame",20)
+	world.RegisterBlockState("glow_frame",21)
+	world.RegisterBlockState("glow_frame",24)
+	world.RegisterBlockState("glow_frame",25)
+	world.RegisterBlockState("glow_frame",26)
+	world.RegisterBlockState("glow_frame",27)
+	world.RegisterBlockState("glow_frame",28)
+	world.RegisterBlockState("glow_frame",29)
 	world.RegisterBlockState("glow_lichen",0)
 	world.RegisterBlockState("glow_lichen",1)
 	world.RegisterBlockState("glow_lichen",2)
@@ -12622,12 +12963,32 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("grass",0)
 	world.RegisterBlockState("grass_path",0)
 	world.RegisterBlockState("gravel",0)
+	world.RegisterBlockState("gray_candle",0)
+	world.RegisterBlockState("gray_candle",1)
+	world.RegisterBlockState("gray_candle",2)
+	world.RegisterBlockState("gray_candle",3)
+	world.RegisterBlockState("gray_candle",4)
+	world.RegisterBlockState("gray_candle",5)
+	world.RegisterBlockState("gray_candle",6)
+	world.RegisterBlockState("gray_candle",7)
+	world.RegisterBlockState("gray_candle_cake",0)
+	world.RegisterBlockState("gray_candle_cake",1)
 	world.RegisterBlockState("gray_glazed_terracotta",0)
 	world.RegisterBlockState("gray_glazed_terracotta",1)
 	world.RegisterBlockState("gray_glazed_terracotta",2)
 	world.RegisterBlockState("gray_glazed_terracotta",3)
 	world.RegisterBlockState("gray_glazed_terracotta",4)
 	world.RegisterBlockState("gray_glazed_terracotta",5)
+	world.RegisterBlockState("green_candle",0)
+	world.RegisterBlockState("green_candle",1)
+	world.RegisterBlockState("green_candle",2)
+	world.RegisterBlockState("green_candle",3)
+	world.RegisterBlockState("green_candle",4)
+	world.RegisterBlockState("green_candle",5)
+	world.RegisterBlockState("green_candle",6)
+	world.RegisterBlockState("green_candle",7)
+	world.RegisterBlockState("green_candle_cake",0)
+	world.RegisterBlockState("green_candle_cake",1)
 	world.RegisterBlockState("green_glazed_terracotta",0)
 	world.RegisterBlockState("green_glazed_terracotta",1)
 	world.RegisterBlockState("green_glazed_terracotta",2)
@@ -13076,12 +13437,32 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("light_block",13)
 	world.RegisterBlockState("light_block",14)
 	world.RegisterBlockState("light_block",15)
+	world.RegisterBlockState("light_blue_candle",0)
+	world.RegisterBlockState("light_blue_candle",1)
+	world.RegisterBlockState("light_blue_candle",2)
+	world.RegisterBlockState("light_blue_candle",3)
+	world.RegisterBlockState("light_blue_candle",4)
+	world.RegisterBlockState("light_blue_candle",5)
+	world.RegisterBlockState("light_blue_candle",6)
+	world.RegisterBlockState("light_blue_candle",7)
+	world.RegisterBlockState("light_blue_candle_cake",0)
+	world.RegisterBlockState("light_blue_candle_cake",1)
 	world.RegisterBlockState("light_blue_glazed_terracotta",0)
 	world.RegisterBlockState("light_blue_glazed_terracotta",1)
 	world.RegisterBlockState("light_blue_glazed_terracotta",2)
 	world.RegisterBlockState("light_blue_glazed_terracotta",3)
 	world.RegisterBlockState("light_blue_glazed_terracotta",4)
 	world.RegisterBlockState("light_blue_glazed_terracotta",5)
+	world.RegisterBlockState("light_gray_candle",0)
+	world.RegisterBlockState("light_gray_candle",1)
+	world.RegisterBlockState("light_gray_candle",2)
+	world.RegisterBlockState("light_gray_candle",3)
+	world.RegisterBlockState("light_gray_candle",4)
+	world.RegisterBlockState("light_gray_candle",5)
+	world.RegisterBlockState("light_gray_candle",6)
+	world.RegisterBlockState("light_gray_candle",7)
+	world.RegisterBlockState("light_gray_candle_cake",0)
+	world.RegisterBlockState("light_gray_candle_cake",1)
 	world.RegisterBlockState("light_weighted_pressure_plate",0)
 	world.RegisterBlockState("light_weighted_pressure_plate",1)
 	world.RegisterBlockState("light_weighted_pressure_plate",2)
@@ -13104,6 +13485,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("lightning_rod",3)
 	world.RegisterBlockState("lightning_rod",4)
 	world.RegisterBlockState("lightning_rod",5)
+	world.RegisterBlockState("lime_candle",0)
+	world.RegisterBlockState("lime_candle",1)
+	world.RegisterBlockState("lime_candle",2)
+	world.RegisterBlockState("lime_candle",3)
+	world.RegisterBlockState("lime_candle",4)
+	world.RegisterBlockState("lime_candle",5)
+	world.RegisterBlockState("lime_candle",6)
+	world.RegisterBlockState("lime_candle",7)
+	world.RegisterBlockState("lime_candle_cake",0)
+	world.RegisterBlockState("lime_candle_cake",1)
 	world.RegisterBlockState("lime_glazed_terracotta",0)
 	world.RegisterBlockState("lime_glazed_terracotta",1)
 	world.RegisterBlockState("lime_glazed_terracotta",2)
@@ -13158,6 +13549,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("loom",1)
 	world.RegisterBlockState("loom",2)
 	world.RegisterBlockState("loom",3)
+	world.RegisterBlockState("magenta_candle",0)
+	world.RegisterBlockState("magenta_candle",1)
+	world.RegisterBlockState("magenta_candle",2)
+	world.RegisterBlockState("magenta_candle",3)
+	world.RegisterBlockState("magenta_candle",4)
+	world.RegisterBlockState("magenta_candle",5)
+	world.RegisterBlockState("magenta_candle",6)
+	world.RegisterBlockState("magenta_candle",7)
+	world.RegisterBlockState("magenta_candle_cake",0)
+	world.RegisterBlockState("magenta_candle_cake",1)
 	world.RegisterBlockState("magenta_glazed_terracotta",0)
 	world.RegisterBlockState("magenta_glazed_terracotta",1)
 	world.RegisterBlockState("magenta_glazed_terracotta",2)
@@ -13250,6 +13651,8 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("mossy_stone_brick_stairs",7)
 	world.RegisterBlockState("movingBlock",0)
 	world.RegisterBlockState("mycelium",0)
+	world.RegisterBlockState("mysterious_frame",0)
+	world.RegisterBlockState("mysterious_frame_slot",0)
 	world.RegisterBlockState("nether_brick",0)
 	world.RegisterBlockState("nether_brick_fence",0)
 	world.RegisterBlockState("nether_brick_stairs",0)
@@ -13300,6 +13703,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("observer",12)
 	world.RegisterBlockState("observer",13)
 	world.RegisterBlockState("obsidian",0)
+	world.RegisterBlockState("orange_candle",0)
+	world.RegisterBlockState("orange_candle",1)
+	world.RegisterBlockState("orange_candle",2)
+	world.RegisterBlockState("orange_candle",3)
+	world.RegisterBlockState("orange_candle",4)
+	world.RegisterBlockState("orange_candle",5)
+	world.RegisterBlockState("orange_candle",6)
+	world.RegisterBlockState("orange_candle",7)
+	world.RegisterBlockState("orange_candle_cake",0)
+	world.RegisterBlockState("orange_candle_cake",1)
 	world.RegisterBlockState("orange_glazed_terracotta",0)
 	world.RegisterBlockState("orange_glazed_terracotta",1)
 	world.RegisterBlockState("orange_glazed_terracotta",2)
@@ -13321,6 +13734,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("oxidized_double_cut_copper_slab",0)
 	world.RegisterBlockState("oxidized_double_cut_copper_slab",1)
 	world.RegisterBlockState("packed_ice",0)
+	world.RegisterBlockState("pink_candle",0)
+	world.RegisterBlockState("pink_candle",1)
+	world.RegisterBlockState("pink_candle",2)
+	world.RegisterBlockState("pink_candle",3)
+	world.RegisterBlockState("pink_candle",4)
+	world.RegisterBlockState("pink_candle",5)
+	world.RegisterBlockState("pink_candle",6)
+	world.RegisterBlockState("pink_candle",7)
+	world.RegisterBlockState("pink_candle_cake",0)
+	world.RegisterBlockState("pink_candle_cake",1)
 	world.RegisterBlockState("pink_glazed_terracotta",0)
 	world.RegisterBlockState("pink_glazed_terracotta",1)
 	world.RegisterBlockState("pink_glazed_terracotta",2)
@@ -14051,6 +14474,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("pumpkin_stem",45)
 	world.RegisterBlockState("pumpkin_stem",46)
 	world.RegisterBlockState("pumpkin_stem",47)
+	world.RegisterBlockState("purple_candle",0)
+	world.RegisterBlockState("purple_candle",1)
+	world.RegisterBlockState("purple_candle",2)
+	world.RegisterBlockState("purple_candle",3)
+	world.RegisterBlockState("purple_candle",4)
+	world.RegisterBlockState("purple_candle",5)
+	world.RegisterBlockState("purple_candle",6)
+	world.RegisterBlockState("purple_candle",7)
+	world.RegisterBlockState("purple_candle_cake",0)
+	world.RegisterBlockState("purple_candle_cake",1)
 	world.RegisterBlockState("purple_glazed_terracotta",0)
 	world.RegisterBlockState("purple_glazed_terracotta",1)
 	world.RegisterBlockState("purple_glazed_terracotta",2)
@@ -14112,6 +14545,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("raw_copper_block",0)
 	world.RegisterBlockState("raw_gold_block",0)
 	world.RegisterBlockState("raw_iron_block",0)
+	world.RegisterBlockState("red_candle",0)
+	world.RegisterBlockState("red_candle",1)
+	world.RegisterBlockState("red_candle",2)
+	world.RegisterBlockState("red_candle",3)
+	world.RegisterBlockState("red_candle",4)
+	world.RegisterBlockState("red_candle",5)
+	world.RegisterBlockState("red_candle",6)
+	world.RegisterBlockState("red_candle",7)
+	world.RegisterBlockState("red_candle_cake",0)
+	world.RegisterBlockState("red_candle_cake",1)
 	world.RegisterBlockState("red_flower",0)
 	world.RegisterBlockState("red_flower",1)
 	world.RegisterBlockState("red_flower",2)
@@ -14268,8 +14711,77 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("scaffolding",13)
 	world.RegisterBlockState("scaffolding",14)
 	world.RegisterBlockState("scaffolding",15)
+	world.RegisterBlockState("sculk",0)
+	world.RegisterBlockState("sculk_catalyst",0)
+	world.RegisterBlockState("sculk_catalyst",1)
 	world.RegisterBlockState("sculk_sensor",0)
 	world.RegisterBlockState("sculk_sensor",1)
+	world.RegisterBlockState("sculk_shrieker",0)
+	world.RegisterBlockState("sculk_shrieker",1)
+	world.RegisterBlockState("sculk_vein",0)
+	world.RegisterBlockState("sculk_vein",1)
+	world.RegisterBlockState("sculk_vein",2)
+	world.RegisterBlockState("sculk_vein",3)
+	world.RegisterBlockState("sculk_vein",4)
+	world.RegisterBlockState("sculk_vein",5)
+	world.RegisterBlockState("sculk_vein",6)
+	world.RegisterBlockState("sculk_vein",7)
+	world.RegisterBlockState("sculk_vein",8)
+	world.RegisterBlockState("sculk_vein",9)
+	world.RegisterBlockState("sculk_vein",10)
+	world.RegisterBlockState("sculk_vein",11)
+	world.RegisterBlockState("sculk_vein",12)
+	world.RegisterBlockState("sculk_vein",13)
+	world.RegisterBlockState("sculk_vein",14)
+	world.RegisterBlockState("sculk_vein",15)
+	world.RegisterBlockState("sculk_vein",16)
+	world.RegisterBlockState("sculk_vein",17)
+	world.RegisterBlockState("sculk_vein",18)
+	world.RegisterBlockState("sculk_vein",19)
+	world.RegisterBlockState("sculk_vein",20)
+	world.RegisterBlockState("sculk_vein",21)
+	world.RegisterBlockState("sculk_vein",22)
+	world.RegisterBlockState("sculk_vein",23)
+	world.RegisterBlockState("sculk_vein",24)
+	world.RegisterBlockState("sculk_vein",25)
+	world.RegisterBlockState("sculk_vein",26)
+	world.RegisterBlockState("sculk_vein",27)
+	world.RegisterBlockState("sculk_vein",28)
+	world.RegisterBlockState("sculk_vein",29)
+	world.RegisterBlockState("sculk_vein",30)
+	world.RegisterBlockState("sculk_vein",31)
+	world.RegisterBlockState("sculk_vein",32)
+	world.RegisterBlockState("sculk_vein",33)
+	world.RegisterBlockState("sculk_vein",34)
+	world.RegisterBlockState("sculk_vein",35)
+	world.RegisterBlockState("sculk_vein",36)
+	world.RegisterBlockState("sculk_vein",37)
+	world.RegisterBlockState("sculk_vein",38)
+	world.RegisterBlockState("sculk_vein",39)
+	world.RegisterBlockState("sculk_vein",40)
+	world.RegisterBlockState("sculk_vein",41)
+	world.RegisterBlockState("sculk_vein",42)
+	world.RegisterBlockState("sculk_vein",43)
+	world.RegisterBlockState("sculk_vein",44)
+	world.RegisterBlockState("sculk_vein",45)
+	world.RegisterBlockState("sculk_vein",46)
+	world.RegisterBlockState("sculk_vein",47)
+	world.RegisterBlockState("sculk_vein",48)
+	world.RegisterBlockState("sculk_vein",49)
+	world.RegisterBlockState("sculk_vein",50)
+	world.RegisterBlockState("sculk_vein",51)
+	world.RegisterBlockState("sculk_vein",52)
+	world.RegisterBlockState("sculk_vein",53)
+	world.RegisterBlockState("sculk_vein",54)
+	world.RegisterBlockState("sculk_vein",55)
+	world.RegisterBlockState("sculk_vein",56)
+	world.RegisterBlockState("sculk_vein",57)
+	world.RegisterBlockState("sculk_vein",58)
+	world.RegisterBlockState("sculk_vein",59)
+	world.RegisterBlockState("sculk_vein",60)
+	world.RegisterBlockState("sculk_vein",61)
+	world.RegisterBlockState("sculk_vein",62)
+	world.RegisterBlockState("sculk_vein",63)
 	world.RegisterBlockState("sea_pickle",0)
 	world.RegisterBlockState("sea_pickle",1)
 	world.RegisterBlockState("sea_pickle",2)
@@ -15243,6 +15755,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("wheat",5)
 	world.RegisterBlockState("wheat",6)
 	world.RegisterBlockState("wheat",7)
+	world.RegisterBlockState("white_candle",0)
+	world.RegisterBlockState("white_candle",1)
+	world.RegisterBlockState("white_candle",2)
+	world.RegisterBlockState("white_candle",3)
+	world.RegisterBlockState("white_candle",4)
+	world.RegisterBlockState("white_candle",5)
+	world.RegisterBlockState("white_candle",6)
+	world.RegisterBlockState("white_candle",7)
+	world.RegisterBlockState("white_candle_cake",0)
+	world.RegisterBlockState("white_candle_cake",1)
 	world.RegisterBlockState("white_glazed_terracotta",0)
 	world.RegisterBlockState("white_glazed_terracotta",1)
 	world.RegisterBlockState("white_glazed_terracotta",2)
@@ -15374,6 +15896,16 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("wool",13)
 	world.RegisterBlockState("wool",14)
 	world.RegisterBlockState("wool",15)
+	world.RegisterBlockState("yellow_candle",0)
+	world.RegisterBlockState("yellow_candle",1)
+	world.RegisterBlockState("yellow_candle",2)
+	world.RegisterBlockState("yellow_candle",3)
+	world.RegisterBlockState("yellow_candle",4)
+	world.RegisterBlockState("yellow_candle",5)
+	world.RegisterBlockState("yellow_candle",6)
+	world.RegisterBlockState("yellow_candle",7)
+	world.RegisterBlockState("yellow_candle_cake",0)
+	world.RegisterBlockState("yellow_candle_cake",1)
 	world.RegisterBlockState("yellow_flower",0)
 	world.RegisterBlockState("yellow_glazed_terracotta",0)
 	world.RegisterBlockState("yellow_glazed_terracotta",1)
@@ -15383,7 +15915,7 @@ func InitRuntimeIdsWithoutMinecraftPrefix() {
 	world.RegisterBlockState("yellow_glazed_terracotta",5)
 }
 
-var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
+var RuntimeIdArray_2_2_15 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "acacia_button", Data: 0 },
 	&types.ConstBlock { Name: "acacia_button", Data: 1 },
 	&types.ConstBlock { Name: "acacia_button", Data: 2 },
@@ -15862,6 +16394,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "birch_wall_sign", Data: 3 },
 	&types.ConstBlock { Name: "birch_wall_sign", Data: 4 },
 	&types.ConstBlock { Name: "birch_wall_sign", Data: 5 },
+	&types.ConstBlock { Name: "black_candle", Data: 0 },
+	&types.ConstBlock { Name: "black_candle", Data: 1 },
+	&types.ConstBlock { Name: "black_candle", Data: 2 },
+	&types.ConstBlock { Name: "black_candle", Data: 3 },
+	&types.ConstBlock { Name: "black_candle", Data: 4 },
+	&types.ConstBlock { Name: "black_candle", Data: 5 },
+	&types.ConstBlock { Name: "black_candle", Data: 6 },
+	&types.ConstBlock { Name: "black_candle", Data: 7 },
+	&types.ConstBlock { Name: "black_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "black_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "black_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "black_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "black_glazed_terracotta", Data: 2 },
@@ -16049,6 +16591,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "blast_furnace", Data: 3 },
 	&types.ConstBlock { Name: "blast_furnace", Data: 4 },
 	&types.ConstBlock { Name: "blast_furnace", Data: 5 },
+	&types.ConstBlock { Name: "blue_candle", Data: 0 },
+	&types.ConstBlock { Name: "blue_candle", Data: 1 },
+	&types.ConstBlock { Name: "blue_candle", Data: 2 },
+	&types.ConstBlock { Name: "blue_candle", Data: 3 },
+	&types.ConstBlock { Name: "blue_candle", Data: 4 },
+	&types.ConstBlock { Name: "blue_candle", Data: 5 },
+	&types.ConstBlock { Name: "blue_candle", Data: 6 },
+	&types.ConstBlock { Name: "blue_candle", Data: 7 },
+	&types.ConstBlock { Name: "blue_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "blue_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "blue_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "blue_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "blue_glazed_terracotta", Data: 2 },
@@ -16248,6 +16800,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "brick_stairs", Data: 5 },
 	&types.ConstBlock { Name: "brick_stairs", Data: 6 },
 	&types.ConstBlock { Name: "brick_stairs", Data: 7 },
+	&types.ConstBlock { Name: "brown_candle", Data: 0 },
+	&types.ConstBlock { Name: "brown_candle", Data: 1 },
+	&types.ConstBlock { Name: "brown_candle", Data: 2 },
+	&types.ConstBlock { Name: "brown_candle", Data: 3 },
+	&types.ConstBlock { Name: "brown_candle", Data: 4 },
+	&types.ConstBlock { Name: "brown_candle", Data: 5 },
+	&types.ConstBlock { Name: "brown_candle", Data: 6 },
+	&types.ConstBlock { Name: "brown_candle", Data: 7 },
+	&types.ConstBlock { Name: "brown_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "brown_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "brown_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "brown_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "brown_glazed_terracotta", Data: 2 },
@@ -16307,6 +16869,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "campfire", Data: 5 },
 	&types.ConstBlock { Name: "campfire", Data: 6 },
 	&types.ConstBlock { Name: "campfire", Data: 7 },
+	&types.ConstBlock { Name: "candle", Data: 0 },
+	&types.ConstBlock { Name: "candle", Data: 1 },
+	&types.ConstBlock { Name: "candle", Data: 2 },
+	&types.ConstBlock { Name: "candle", Data: 3 },
+	&types.ConstBlock { Name: "candle", Data: 4 },
+	&types.ConstBlock { Name: "candle", Data: 5 },
+	&types.ConstBlock { Name: "candle", Data: 6 },
+	&types.ConstBlock { Name: "candle", Data: 7 },
+	&types.ConstBlock { Name: "candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "carpet", Data: 0 },
 	&types.ConstBlock { Name: "carpet", Data: 1 },
 	&types.ConstBlock { Name: "carpet", Data: 2 },
@@ -16484,6 +17056,7 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "chorus_flower", Data: 5 },
 	&types.ConstBlock { Name: "chorus_plant", Data: 0 },
 	&types.ConstBlock { Name: "clay", Data: 0 },
+	&types.ConstBlock { Name: "client_request_placeholder_block", Data: 0 },
 	&types.ConstBlock { Name: "coal_block", Data: 0 },
 	&types.ConstBlock { Name: "coal_ore", Data: 0 },
 	&types.ConstBlock { Name: "cobbled_deepslate", Data: 0 },
@@ -19264,6 +19837,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "cut_copper_stairs", Data: 5 },
 	&types.ConstBlock { Name: "cut_copper_stairs", Data: 6 },
 	&types.ConstBlock { Name: "cut_copper_stairs", Data: 7 },
+	&types.ConstBlock { Name: "cyan_candle", Data: 0 },
+	&types.ConstBlock { Name: "cyan_candle", Data: 1 },
+	&types.ConstBlock { Name: "cyan_candle", Data: 2 },
+	&types.ConstBlock { Name: "cyan_candle", Data: 3 },
+	&types.ConstBlock { Name: "cyan_candle", Data: 4 },
+	&types.ConstBlock { Name: "cyan_candle", Data: 5 },
+	&types.ConstBlock { Name: "cyan_candle", Data: 6 },
+	&types.ConstBlock { Name: "cyan_candle", Data: 7 },
+	&types.ConstBlock { Name: "cyan_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "cyan_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "cyan_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "cyan_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "cyan_glazed_terracotta", Data: 2 },
@@ -20193,6 +20776,18 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "frame", Data: 11 },
 	&types.ConstBlock { Name: "frame", Data: 12 },
 	&types.ConstBlock { Name: "frame", Data: 13 },
+	&types.ConstBlock { Name: "frame", Data: 16 },
+	&types.ConstBlock { Name: "frame", Data: 17 },
+	&types.ConstBlock { Name: "frame", Data: 18 },
+	&types.ConstBlock { Name: "frame", Data: 19 },
+	&types.ConstBlock { Name: "frame", Data: 20 },
+	&types.ConstBlock { Name: "frame", Data: 21 },
+	&types.ConstBlock { Name: "frame", Data: 24 },
+	&types.ConstBlock { Name: "frame", Data: 25 },
+	&types.ConstBlock { Name: "frame", Data: 26 },
+	&types.ConstBlock { Name: "frame", Data: 27 },
+	&types.ConstBlock { Name: "frame", Data: 28 },
+	&types.ConstBlock { Name: "frame", Data: 29 },
 	&types.ConstBlock { Name: "frosted_ice", Data: 0 },
 	&types.ConstBlock { Name: "frosted_ice", Data: 1 },
 	&types.ConstBlock { Name: "frosted_ice", Data: 2 },
@@ -20218,6 +20813,18 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "glow_frame", Data: 11 },
 	&types.ConstBlock { Name: "glow_frame", Data: 12 },
 	&types.ConstBlock { Name: "glow_frame", Data: 13 },
+	&types.ConstBlock { Name: "glow_frame", Data: 16 },
+	&types.ConstBlock { Name: "glow_frame", Data: 17 },
+	&types.ConstBlock { Name: "glow_frame", Data: 18 },
+	&types.ConstBlock { Name: "glow_frame", Data: 19 },
+	&types.ConstBlock { Name: "glow_frame", Data: 20 },
+	&types.ConstBlock { Name: "glow_frame", Data: 21 },
+	&types.ConstBlock { Name: "glow_frame", Data: 24 },
+	&types.ConstBlock { Name: "glow_frame", Data: 25 },
+	&types.ConstBlock { Name: "glow_frame", Data: 26 },
+	&types.ConstBlock { Name: "glow_frame", Data: 27 },
+	&types.ConstBlock { Name: "glow_frame", Data: 28 },
+	&types.ConstBlock { Name: "glow_frame", Data: 29 },
 	&types.ConstBlock { Name: "glow_lichen", Data: 0 },
 	&types.ConstBlock { Name: "glow_lichen", Data: 1 },
 	&types.ConstBlock { Name: "glow_lichen", Data: 2 },
@@ -20309,12 +20916,32 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "grass", Data: 0 },
 	&types.ConstBlock { Name: "grass_path", Data: 0 },
 	&types.ConstBlock { Name: "gravel", Data: 0 },
+	&types.ConstBlock { Name: "gray_candle", Data: 0 },
+	&types.ConstBlock { Name: "gray_candle", Data: 1 },
+	&types.ConstBlock { Name: "gray_candle", Data: 2 },
+	&types.ConstBlock { Name: "gray_candle", Data: 3 },
+	&types.ConstBlock { Name: "gray_candle", Data: 4 },
+	&types.ConstBlock { Name: "gray_candle", Data: 5 },
+	&types.ConstBlock { Name: "gray_candle", Data: 6 },
+	&types.ConstBlock { Name: "gray_candle", Data: 7 },
+	&types.ConstBlock { Name: "gray_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "gray_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "gray_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "gray_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "gray_glazed_terracotta", Data: 2 },
 	&types.ConstBlock { Name: "gray_glazed_terracotta", Data: 3 },
 	&types.ConstBlock { Name: "gray_glazed_terracotta", Data: 4 },
 	&types.ConstBlock { Name: "gray_glazed_terracotta", Data: 5 },
+	&types.ConstBlock { Name: "green_candle", Data: 0 },
+	&types.ConstBlock { Name: "green_candle", Data: 1 },
+	&types.ConstBlock { Name: "green_candle", Data: 2 },
+	&types.ConstBlock { Name: "green_candle", Data: 3 },
+	&types.ConstBlock { Name: "green_candle", Data: 4 },
+	&types.ConstBlock { Name: "green_candle", Data: 5 },
+	&types.ConstBlock { Name: "green_candle", Data: 6 },
+	&types.ConstBlock { Name: "green_candle", Data: 7 },
+	&types.ConstBlock { Name: "green_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "green_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "green_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "green_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "green_glazed_terracotta", Data: 2 },
@@ -20763,12 +21390,32 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "light_block", Data: 13 },
 	&types.ConstBlock { Name: "light_block", Data: 14 },
 	&types.ConstBlock { Name: "light_block", Data: 15 },
+	&types.ConstBlock { Name: "light_blue_candle", Data: 0 },
+	&types.ConstBlock { Name: "light_blue_candle", Data: 1 },
+	&types.ConstBlock { Name: "light_blue_candle", Data: 2 },
+	&types.ConstBlock { Name: "light_blue_candle", Data: 3 },
+	&types.ConstBlock { Name: "light_blue_candle", Data: 4 },
+	&types.ConstBlock { Name: "light_blue_candle", Data: 5 },
+	&types.ConstBlock { Name: "light_blue_candle", Data: 6 },
+	&types.ConstBlock { Name: "light_blue_candle", Data: 7 },
+	&types.ConstBlock { Name: "light_blue_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "light_blue_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "light_blue_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "light_blue_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "light_blue_glazed_terracotta", Data: 2 },
 	&types.ConstBlock { Name: "light_blue_glazed_terracotta", Data: 3 },
 	&types.ConstBlock { Name: "light_blue_glazed_terracotta", Data: 4 },
 	&types.ConstBlock { Name: "light_blue_glazed_terracotta", Data: 5 },
+	&types.ConstBlock { Name: "light_gray_candle", Data: 0 },
+	&types.ConstBlock { Name: "light_gray_candle", Data: 1 },
+	&types.ConstBlock { Name: "light_gray_candle", Data: 2 },
+	&types.ConstBlock { Name: "light_gray_candle", Data: 3 },
+	&types.ConstBlock { Name: "light_gray_candle", Data: 4 },
+	&types.ConstBlock { Name: "light_gray_candle", Data: 5 },
+	&types.ConstBlock { Name: "light_gray_candle", Data: 6 },
+	&types.ConstBlock { Name: "light_gray_candle", Data: 7 },
+	&types.ConstBlock { Name: "light_gray_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "light_gray_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "light_weighted_pressure_plate", Data: 0 },
 	&types.ConstBlock { Name: "light_weighted_pressure_plate", Data: 1 },
 	&types.ConstBlock { Name: "light_weighted_pressure_plate", Data: 2 },
@@ -20791,6 +21438,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "lightning_rod", Data: 3 },
 	&types.ConstBlock { Name: "lightning_rod", Data: 4 },
 	&types.ConstBlock { Name: "lightning_rod", Data: 5 },
+	&types.ConstBlock { Name: "lime_candle", Data: 0 },
+	&types.ConstBlock { Name: "lime_candle", Data: 1 },
+	&types.ConstBlock { Name: "lime_candle", Data: 2 },
+	&types.ConstBlock { Name: "lime_candle", Data: 3 },
+	&types.ConstBlock { Name: "lime_candle", Data: 4 },
+	&types.ConstBlock { Name: "lime_candle", Data: 5 },
+	&types.ConstBlock { Name: "lime_candle", Data: 6 },
+	&types.ConstBlock { Name: "lime_candle", Data: 7 },
+	&types.ConstBlock { Name: "lime_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "lime_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "lime_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "lime_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "lime_glazed_terracotta", Data: 2 },
@@ -20845,6 +21502,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "loom", Data: 1 },
 	&types.ConstBlock { Name: "loom", Data: 2 },
 	&types.ConstBlock { Name: "loom", Data: 3 },
+	&types.ConstBlock { Name: "magenta_candle", Data: 0 },
+	&types.ConstBlock { Name: "magenta_candle", Data: 1 },
+	&types.ConstBlock { Name: "magenta_candle", Data: 2 },
+	&types.ConstBlock { Name: "magenta_candle", Data: 3 },
+	&types.ConstBlock { Name: "magenta_candle", Data: 4 },
+	&types.ConstBlock { Name: "magenta_candle", Data: 5 },
+	&types.ConstBlock { Name: "magenta_candle", Data: 6 },
+	&types.ConstBlock { Name: "magenta_candle", Data: 7 },
+	&types.ConstBlock { Name: "magenta_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "magenta_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "magenta_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "magenta_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "magenta_glazed_terracotta", Data: 2 },
@@ -20937,6 +21604,8 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "mossy_stone_brick_stairs", Data: 7 },
 	&types.ConstBlock { Name: "movingBlock", Data: 0 },
 	&types.ConstBlock { Name: "mycelium", Data: 0 },
+	&types.ConstBlock { Name: "mysterious_frame", Data: 0 },
+	&types.ConstBlock { Name: "mysterious_frame_slot", Data: 0 },
 	&types.ConstBlock { Name: "nether_brick", Data: 0 },
 	&types.ConstBlock { Name: "nether_brick_fence", Data: 0 },
 	&types.ConstBlock { Name: "nether_brick_stairs", Data: 0 },
@@ -20987,6 +21656,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "observer", Data: 12 },
 	&types.ConstBlock { Name: "observer", Data: 13 },
 	&types.ConstBlock { Name: "obsidian", Data: 0 },
+	&types.ConstBlock { Name: "orange_candle", Data: 0 },
+	&types.ConstBlock { Name: "orange_candle", Data: 1 },
+	&types.ConstBlock { Name: "orange_candle", Data: 2 },
+	&types.ConstBlock { Name: "orange_candle", Data: 3 },
+	&types.ConstBlock { Name: "orange_candle", Data: 4 },
+	&types.ConstBlock { Name: "orange_candle", Data: 5 },
+	&types.ConstBlock { Name: "orange_candle", Data: 6 },
+	&types.ConstBlock { Name: "orange_candle", Data: 7 },
+	&types.ConstBlock { Name: "orange_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "orange_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "orange_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "orange_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "orange_glazed_terracotta", Data: 2 },
@@ -21008,6 +21687,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "oxidized_double_cut_copper_slab", Data: 0 },
 	&types.ConstBlock { Name: "oxidized_double_cut_copper_slab", Data: 1 },
 	&types.ConstBlock { Name: "packed_ice", Data: 0 },
+	&types.ConstBlock { Name: "pink_candle", Data: 0 },
+	&types.ConstBlock { Name: "pink_candle", Data: 1 },
+	&types.ConstBlock { Name: "pink_candle", Data: 2 },
+	&types.ConstBlock { Name: "pink_candle", Data: 3 },
+	&types.ConstBlock { Name: "pink_candle", Data: 4 },
+	&types.ConstBlock { Name: "pink_candle", Data: 5 },
+	&types.ConstBlock { Name: "pink_candle", Data: 6 },
+	&types.ConstBlock { Name: "pink_candle", Data: 7 },
+	&types.ConstBlock { Name: "pink_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "pink_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "pink_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "pink_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "pink_glazed_terracotta", Data: 2 },
@@ -21738,6 +22427,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "pumpkin_stem", Data: 45 },
 	&types.ConstBlock { Name: "pumpkin_stem", Data: 46 },
 	&types.ConstBlock { Name: "pumpkin_stem", Data: 47 },
+	&types.ConstBlock { Name: "purple_candle", Data: 0 },
+	&types.ConstBlock { Name: "purple_candle", Data: 1 },
+	&types.ConstBlock { Name: "purple_candle", Data: 2 },
+	&types.ConstBlock { Name: "purple_candle", Data: 3 },
+	&types.ConstBlock { Name: "purple_candle", Data: 4 },
+	&types.ConstBlock { Name: "purple_candle", Data: 5 },
+	&types.ConstBlock { Name: "purple_candle", Data: 6 },
+	&types.ConstBlock { Name: "purple_candle", Data: 7 },
+	&types.ConstBlock { Name: "purple_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "purple_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "purple_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "purple_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "purple_glazed_terracotta", Data: 2 },
@@ -21799,6 +22498,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "raw_copper_block", Data: 0 },
 	&types.ConstBlock { Name: "raw_gold_block", Data: 0 },
 	&types.ConstBlock { Name: "raw_iron_block", Data: 0 },
+	&types.ConstBlock { Name: "red_candle", Data: 0 },
+	&types.ConstBlock { Name: "red_candle", Data: 1 },
+	&types.ConstBlock { Name: "red_candle", Data: 2 },
+	&types.ConstBlock { Name: "red_candle", Data: 3 },
+	&types.ConstBlock { Name: "red_candle", Data: 4 },
+	&types.ConstBlock { Name: "red_candle", Data: 5 },
+	&types.ConstBlock { Name: "red_candle", Data: 6 },
+	&types.ConstBlock { Name: "red_candle", Data: 7 },
+	&types.ConstBlock { Name: "red_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "red_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "red_flower", Data: 0 },
 	&types.ConstBlock { Name: "red_flower", Data: 1 },
 	&types.ConstBlock { Name: "red_flower", Data: 2 },
@@ -21955,8 +22664,77 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "scaffolding", Data: 13 },
 	&types.ConstBlock { Name: "scaffolding", Data: 14 },
 	&types.ConstBlock { Name: "scaffolding", Data: 15 },
+	&types.ConstBlock { Name: "sculk", Data: 0 },
+	&types.ConstBlock { Name: "sculk_catalyst", Data: 0 },
+	&types.ConstBlock { Name: "sculk_catalyst", Data: 1 },
 	&types.ConstBlock { Name: "sculk_sensor", Data: 0 },
 	&types.ConstBlock { Name: "sculk_sensor", Data: 1 },
+	&types.ConstBlock { Name: "sculk_shrieker", Data: 0 },
+	&types.ConstBlock { Name: "sculk_shrieker", Data: 1 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 0 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 1 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 2 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 3 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 4 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 5 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 6 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 7 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 8 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 9 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 10 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 11 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 12 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 13 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 14 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 15 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 16 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 17 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 18 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 19 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 20 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 21 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 22 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 23 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 24 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 25 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 26 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 27 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 28 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 29 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 30 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 31 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 32 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 33 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 34 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 35 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 36 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 37 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 38 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 39 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 40 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 41 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 42 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 43 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 44 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 45 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 46 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 47 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 48 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 49 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 50 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 51 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 52 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 53 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 54 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 55 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 56 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 57 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 58 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 59 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 60 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 61 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 62 },
+	&types.ConstBlock { Name: "sculk_vein", Data: 63 },
 	&types.ConstBlock { Name: "sea_pickle", Data: 0 },
 	&types.ConstBlock { Name: "sea_pickle", Data: 1 },
 	&types.ConstBlock { Name: "sea_pickle", Data: 2 },
@@ -22930,6 +23708,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "wheat", Data: 5 },
 	&types.ConstBlock { Name: "wheat", Data: 6 },
 	&types.ConstBlock { Name: "wheat", Data: 7 },
+	&types.ConstBlock { Name: "white_candle", Data: 0 },
+	&types.ConstBlock { Name: "white_candle", Data: 1 },
+	&types.ConstBlock { Name: "white_candle", Data: 2 },
+	&types.ConstBlock { Name: "white_candle", Data: 3 },
+	&types.ConstBlock { Name: "white_candle", Data: 4 },
+	&types.ConstBlock { Name: "white_candle", Data: 5 },
+	&types.ConstBlock { Name: "white_candle", Data: 6 },
+	&types.ConstBlock { Name: "white_candle", Data: 7 },
+	&types.ConstBlock { Name: "white_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "white_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "white_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "white_glazed_terracotta", Data: 1 },
 	&types.ConstBlock { Name: "white_glazed_terracotta", Data: 2 },
@@ -23061,6 +23849,16 @@ var RuntimeIdArray_2_1_10 []*types.ConstBlock = []*types.ConstBlock {
 	&types.ConstBlock { Name: "wool", Data: 13 },
 	&types.ConstBlock { Name: "wool", Data: 14 },
 	&types.ConstBlock { Name: "wool", Data: 15 },
+	&types.ConstBlock { Name: "yellow_candle", Data: 0 },
+	&types.ConstBlock { Name: "yellow_candle", Data: 1 },
+	&types.ConstBlock { Name: "yellow_candle", Data: 2 },
+	&types.ConstBlock { Name: "yellow_candle", Data: 3 },
+	&types.ConstBlock { Name: "yellow_candle", Data: 4 },
+	&types.ConstBlock { Name: "yellow_candle", Data: 5 },
+	&types.ConstBlock { Name: "yellow_candle", Data: 6 },
+	&types.ConstBlock { Name: "yellow_candle", Data: 7 },
+	&types.ConstBlock { Name: "yellow_candle_cake", Data: 0 },
+	&types.ConstBlock { Name: "yellow_candle_cake", Data: 1 },
 	&types.ConstBlock { Name: "yellow_flower", Data: 0 },
 	&types.ConstBlock { Name: "yellow_glazed_terracotta", Data: 0 },
 	&types.ConstBlock { Name: "yellow_glazed_terracotta", Data: 1 },
