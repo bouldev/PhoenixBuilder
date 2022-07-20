@@ -4,6 +4,9 @@
 #include <string.h>
 #include <dirent.h>
 #include <errno.h>
+#ifndef PATH_MAX
+#include <limits.h>
+#endif
 
 #ifndef FB_VERSION
 #define FB_VERSION "(CUSTOM)"
