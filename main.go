@@ -684,9 +684,14 @@ func runClient(env *environment.PBEnvironment) {
 				})
 			}
 		case *packet.SubChunk:
+			//fmt.Printf("CHK\n")
+			if(p.RequestResult!=packet.SubChunkRequestResultSuccess) {
+				fmt.Printf("SubChunk FAIL: %d\n", p.RequestResult)
+				break
+			}
 			chunkData := chunkAssembler.OnNewSubChunk(p)
 			if chunkData != nil {
-				fmt.Println("new chunk")
+				//fmt.Println("new chunk")
 				global.GlobalChunkFeeder.OnNewChunk(chunkData)
 				global.GlobalLRUMemoryChunkCacher.Write(chunkData)
 				// if env.OmegaAdaptorHolder != nil {
@@ -704,9 +709,12 @@ func runClient(env *environment.PBEnvironment) {
 		case *packet.LevelChunk:
 			if exist := chunkAssembler.AddPendingTask(p); !exist {
 				requests := chunkAssembler.GenRequestFromLevelChunk(p)
-				for _, request := range requests {
-					conn.WritePacket(request)
-				}
+				go func() {
+					for _, request := range requests {
+						conn.WritePacket(request)
+						time.Sleep(time.Millisecond*30)
+					}
+				} ()
 			}
 
 			// if args.ShouldEnableOmegaSystem() {

@@ -4,8 +4,6 @@ package special_tasks
 
 import (
 	"fmt"
-	"phoenixbuilder/dragonfly/server/block/cube"
-	"phoenixbuilder/dragonfly/server/world"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -13,10 +11,15 @@ import (
 	"phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/task/fetcher"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/world_provider"
+	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/define"
+	"phoenixbuilder/mirror/io/global"
+	"phoenixbuilder/mirror/io/world"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/fastbuilder/world_provider"
+	"phoenixbuilder/mirror/chunk"
 	"runtime"
 	"strconv"
 	"strings"
@@ -43,8 +46,8 @@ var ExportWaiter chan map[string]interface{}
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
 	cmdsender:=env.CommandSender
 	// WIP
-	cmdsender.Output("Sorry, but compatibility works haven't been done yet, redirected to lexport.")
-	return CreateLegacyExportTask(commandLine, env)
+	//cmdsender.Output("Sorry, but compatibility works haven't been done yet, redirected to lexport.")
+	//return CreateLegacyExportTask(commandLine, env)
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
 		cmdsender.Output(fmt.Sprintf("Failed to parse command: %v",err))
@@ -75,7 +78,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	hopPath,requiredChunks:=fetcher.PlanHopSwapPath(startX,startZ,endX,endZ,16)
 	chunkPool:=map[fetcher.ChunkPosDefine]fetcher.ChunkDefine{}
 	memoryCacheFetcher:=fetcher.CreateCacheHitFetcher(requiredChunks,chunkPool)
-	world_provider.GlobalLRUMemoryChunkCacher.Iter(func(pos world_provider.ChunkPosDefine, chunk world_provider.ChunkDefine) (stop bool) {
+	global.GlobalLRUMemoryChunkCacher.Iter(func(pos define.ChunkPos, chunk *mirror.ChunkData) (stop bool) {
 		memoryCacheFetcher(fetcher.ChunkPosDefine{int(pos[0])*16,int(pos[1])*16},fetcher.ChunkDefine(chunk))
 		return false
 	})
@@ -90,8 +93,8 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		cmdsender.SendCommand(cmd,uid)
 	}
 	feedChan:=make(chan *fetcher.ChunkDefineWithPos,1024)
-	deRegFn:=world_provider.GlobalChunkFeeder.RegNewReader(func (pos world_provider.ChunkPosDefine,chunk world_provider.ChunkDefine)  {
-		feedChan<-&fetcher.ChunkDefineWithPos{Chunk: fetcher.ChunkDefine(chunk),Pos:fetcher.ChunkPosDefine{int(pos[0])*16,int(pos[1])*16}}
+	deRegFn:=global.GlobalChunkFeeder.RegNewReader(func (chunk *mirror.ChunkData)  {
+		feedChan<-&fetcher.ChunkDefineWithPos{Chunk: fetcher.ChunkDefine(chunk),Pos:fetcher.ChunkPosDefine{int(chunk.ChunkPos[0])*16,int(chunk.ChunkPos[1])*16}}
 	})
 	fmt.Println("Begin Fast Hopping")
 	fetcher.FastHopper(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,0.5,3)
@@ -112,17 +115,12 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	if !hasMissing{
 		pterm.Success.Println("all chunks successfully fetched!")
 	}
-	providerChunksMap:=make(map[world_provider.ChunkPosDefine]world_provider.ChunkDefine)
+	providerChunksMap:=make(map[define.ChunkPos]*mirror.ChunkData)
 	for _,chunk:=range chunkPool{
-		providerChunksMap[world_provider.ChunkPosDefine{chunk.Position[0],chunk.Position[1]}]=world_provider.ChunkDefine(chunk)
+		providerChunksMap[chunk.ChunkPos]=(*mirror.ChunkData)(chunk)
 	}
 	var offlineWorld *world.World
-	offlineWorld=(&world.Config {
-		Log: &world_provider.StubLogger{},
-		Dim: nil,
-		Provider: world_provider.NewOfflineWorldProvider(providerChunksMap),
-		ReadOnly: true,
-	}).New()
+	offlineWorld=world.NewWorld(SimpleChunkProvider{providerChunksMap})
 
 	go func() {
 		defer func() {
@@ -138,13 +136,13 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		for x:=beginPos.X; x<=endPos.X; x++ {
 			for z:=beginPos.Z; z<=endPos.Z; z++ {
 				for y:=beginPos.Y; y<=endPos.Y; y++ {
-					blk:=offlineWorld.Block(cube.Pos{x,y,z})
-					runtimeId:=world.LoadRuntimeID(blk)
-					if runtimeId==world_provider.AirRuntimeId {
-						continue
+					runtimeId, found:=offlineWorld.Block(define.CubePos{x,y,z})
+					if !found {
+						fmt.Printf("WARNING %d %d %d not found\n", x, y, z)
 					}
-					fmt.Printf("%d\n",runtimeId)
-					block, item:=blk.EncodeBlock()
+					//block, item:=blk.EncodeBlock()
+					block, item, _ := chunk.RuntimeIDToState(runtimeId)
+					fmt.Printf("%s\n",block)
 					var cbdata *types.CommandBlockData = nil
 					var chestData *types.ChestData = nil
 					if(block=="chest"||strings.Contains(block,"shulker_box")) {

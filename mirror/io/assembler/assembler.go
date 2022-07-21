@@ -71,6 +71,7 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 	o.mu.RLock()
 	if chunkData, hasK := o.pendingTasks[cp]; !hasK {
 		o.mu.RUnlock()
+		//fmt.Printf("Unexpected chunk\n")
 		return nil
 	} else {
 		o.mu.RUnlock()
@@ -82,7 +83,7 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 			panic(fmt.Sprintf("sub Index conflict %v %v", pk.SubChunkY, subIndex))
 		}
 		subs := chunkData.Chunk.Sub()
-		subs[subIndex+4] = subChunk
+		chunkData.Chunk.AssignSub(int(subIndex+4), subChunk)
 		for _, nbt := range nbts {
 			if pos, success := define.GetCubePosFromNBT(nbt); success {
 				chunkData.BlockNbts[pos] = nbt
@@ -91,7 +92,7 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 		// fmt.Printf("pending %v\n", len(o.pendingTasks))
 		chunkData.TimeStamp = time.Now().Unix()
 		for _, subChunk := range subs {
-			if subChunk == nil {
+			if subChunk.Empty() {
 				return nil
 			}
 		}

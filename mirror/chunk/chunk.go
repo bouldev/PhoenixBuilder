@@ -39,6 +39,10 @@ func (chunk *Chunk) Sub() []*SubChunk {
 	return chunk.sub
 }
 
+func (chunk *Chunk) AssignSub(index int, val *SubChunk) {
+	chunk.sub[index]=val
+}
+
 // Block returns the runtime ID of the block at a given x, y and z in a chunk at the given layer. If no
 // sub chunk exists at the given y, the block is assumed to be air.
 func (chunk *Chunk) Block(x uint8, y int16, z uint8, layer uint8) uint32 {
