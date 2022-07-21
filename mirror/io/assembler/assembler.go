@@ -145,7 +145,7 @@ func (o *Assembler) CreateRequestScheduler(writeFn func(pk *packet.SubChunkReque
 		// visitTime := make(map[protocol.SubChunkPos]time.Time)
 		for requests := range o.chunkRequestChan {
 			// fmt.Println("request")
-			if len(o.chunkRequestChan) > 512 {
+			if len(o.chunkRequestChan) > 1024 {
 				pterm.Warning.Println("chunk request too busy")
 			}
 			first_subchunk_request := requests[0]
