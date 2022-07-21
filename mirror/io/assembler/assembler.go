@@ -49,18 +49,21 @@ func (o *Assembler) GenRequestFromLevelChunk(pk *packet.LevelChunk) (requests []
 
 func (o *Assembler) AddPendingTask(pk *packet.LevelChunk) (exist bool) {
 	cp := define.ChunkPos{pk.Position.X(), pk.Position.Z()}
+	o.mu.RLock()
 	if _, hasK := o.pendingTasks[cp]; hasK {
+		o.mu.RUnlock()
 		return true
 	}
+	o.mu.RUnlock()
 	chunk := chunk.New(o.airRID, define.Range{-64, 319})
 	o.mu.Lock()
-	defer o.mu.Unlock()
 	o.pendingTasks[cp] = &mirror.ChunkData{
 		Chunk:     chunk,
 		BlockNbts: make(map[define.CubePos]map[string]interface{}),
 		TimeStamp: time.Now().Unix(),
 		ChunkPos:  cp,
 	}
+	o.mu.Unlock()
 	return false
 }
 
@@ -83,7 +86,7 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 		o.mu.RUnlock()
 		if pk.RequestResult != packet.SubChunkRequestResultSuccess {
 			// cancel pending task
-			fmt.Println("Cancel Pending Task")
+			// fmt.Println("Cancel Pending Task")
 			o.mu.Lock()
 			delete(o.pendingTasks, cp)
 			o.mu.Unlock()
@@ -146,14 +149,14 @@ func (o *Assembler) CreateRequestScheduler(writeFn func(pk *packet.SubChunkReque
 				pterm.Warning.Println("chunk request too busy")
 			}
 			first_subchunk_request := requests[0]
+			o.mu.RLock()
 			if visitTime, hasK := o.visitTime[define.ChunkPos{first_subchunk_request.Position.X(), first_subchunk_request.Position.Z()}]; hasK {
-				o.mu.RLock()
 				if time.Since(visitTime) < validCacheTime {
 					o.mu.RUnlock()
 					continue
 				}
-				o.mu.RUnlock()
 			}
+			o.mu.RUnlock()
 			// visitTime[request0.Position] = time.Now()
 			for _, request := range requests {
 				writeFn(request)
