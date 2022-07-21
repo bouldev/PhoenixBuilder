@@ -4,6 +4,7 @@ package special_tasks
 
 import (
 	"fmt"
+	"time"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -18,7 +19,6 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/mirror/chunk"
 	"runtime"
 	"strconv"
@@ -96,6 +96,24 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	deRegFn:=global.GlobalChunkFeeder.RegNewReader(func (chunk *mirror.ChunkData)  {
 		feedChan<-&fetcher.ChunkDefineWithPos{Chunk: fetcher.ChunkDefine(chunk),Pos:fetcher.ChunkPosDefine{int(chunk.ChunkPos[0])*16,int(chunk.ChunkPos[1])*16}}
 	})
+	inHopping:=true
+	go func() {
+		return
+		yc:=23
+		for {
+			if(!inHopping) {
+				break
+			}
+			uuidval, _:=uuid.NewUUID()
+			yv:=(yc-4)*16+8
+			yc--
+			if yc<0 {
+				yc=23
+			}
+			cmdsender.SendCommand(fmt.Sprintf("tp @s ~ %d ~", yv),uuidval)
+			time.Sleep(time.Millisecond*50)
+		}
+	} ()
 	fmt.Println("Begin Fast Hopping")
 	fetcher.FastHopper(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,0.5,3)
 	fmt.Println("Fast Hopping Done")
@@ -105,6 +123,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	if len(hopPath)>0{
 		fetcher.FixMissing(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,2,3)
 	}
+	inHopping=false
 	hasMissing:=false
 	for _,c:=range requiredChunks{
 		if !c.CachedMark{
@@ -142,7 +161,9 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 					}
 					//block, item:=blk.EncodeBlock()
 					block, item, _ := chunk.RuntimeIDToState(runtimeId)
-					fmt.Printf("%s\n",block)
+					if block=="minecraft:air" {
+						continue
+					}
 					var cbdata *types.CommandBlockData = nil
 					var chestData *types.ChestData = nil
 					if(block=="chest"||strings.Contains(block,"shulker_box")) {
@@ -219,8 +240,12 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							NeedRedstone: nrb,
 						}
 					}
+					lb:=chunk.RuntimeIDToLegacyBlock(runtimeId)
 					blocks[counter]=&types.Module {
-						Block: world_provider.RuntimeIdArray_2_2_15[runtimeId].Take(),
+						Block: &types.Block {
+							Name: &lb.Name,
+							Data: uint16(lb.Val),
+						},
 						CommandBlockData: cbdata,
 						ChestData: chestData,
 						Point: types.Position {

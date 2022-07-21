@@ -685,10 +685,10 @@ func runClient(env *environment.PBEnvironment) {
 			}
 		case *packet.SubChunk:
 			//fmt.Printf("CHK\n")
-			if(p.RequestResult!=packet.SubChunkRequestResultSuccess) {
-				fmt.Printf("SubChunk FAIL: %d\n", p.RequestResult)
-				break
-			}
+			//if(p.RequestResult!=packet.SubChunkRequestResultSuccess) {
+			//	fmt.Printf("SubChunk FAIL: %d\n", p.RequestResult)
+			//	break
+			//}
 			chunkData := chunkAssembler.OnNewSubChunk(p)
 			if chunkData != nil {
 				//fmt.Println("new chunk")
@@ -712,7 +712,7 @@ func runClient(env *environment.PBEnvironment) {
 				go func() {
 					for _, request := range requests {
 						conn.WritePacket(request)
-						time.Sleep(time.Millisecond*30)
+						time.Sleep(time.Millisecond*50)
 					}
 				} ()
 			}

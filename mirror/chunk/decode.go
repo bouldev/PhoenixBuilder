@@ -72,7 +72,7 @@ func NEMCSubChunkDecode(data []byte) (int8, *SubChunk, []map[string]interface{},
 			if err := nbtDocoder.Decode(&blockData); err != nil {
 				pterm.Printfln("decode chunk nbt error %v", err)
 			}
-			fmt.Println(blockData)
+			//fmt.Println(blockData)
 			nbts = append(nbts, blockData)
 		}
 	}

@@ -83,6 +83,9 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 			panic(fmt.Sprintf("sub Index conflict %v %v", pk.SubChunkY, subIndex))
 		}
 		subs := chunkData.Chunk.Sub()
+		//if subChunk.Empty() {
+		//	fmt.Printf("REAL EMPTY\n")
+		//}
 		chunkData.Chunk.AssignSub(int(subIndex+4), subChunk)
 		for _, nbt := range nbts {
 			if pos, success := define.GetCubePosFromNBT(nbt); success {
@@ -91,11 +94,19 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 		}
 		// fmt.Printf("pending %v\n", len(o.pendingTasks))
 		chunkData.TimeStamp = time.Now().Unix()
+		//emptySubChunkCounter:=0
 		for _, subChunk := range subs {
-			if subChunk.Empty() {
+			if subChunk.Invalid() {
+				//emptySubChunkCounter++
 				return nil
 			}
 		}
+		/*if emptySubChunkCounter!=0 {
+			fmt.Printf("eta %d for %v\n", emptySubChunkCounter, cp)
+			return nil
+		}
+		fmt.Printf("Finished %v\n", cp)
+		*/
 		o.mu.Lock()
 		delete(o.pendingTasks, cp)
 		o.mu.Unlock()
