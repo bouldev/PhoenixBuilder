@@ -237,7 +237,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 		// TODO remove this line after runtime id mapping update
 		if exist := r.chunkAssembler.AddPendingTask(p); !exist {
 			requests := r.chunkAssembler.GenRequestFromLevelChunk(p)
-			r.chunkRequestChan <- requests
+			r.chunkAssembler.ScheduleRequest(requests)
 		}
 		// if err := r.CurrentWorldProvider.Write(chunkData); err != nil {
 		// 	o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
@@ -255,7 +255,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 			if err := r.CurrentWorldProvider.Write(chunkData); err != nil {
 				o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
 			} else {
-				fmt.Println("saving chunk @ ", chunkData.ChunkPos.X()<<4, chunkData.ChunkPos.Z()<<4)
+				// fmt.Println("saving chunk @ ", chunkData.ChunkPos.X()<<4, chunkData.ChunkPos.Z()<<4)
 			}
 			for _, cb := range o.Reactor.OnLevelChunkData {
 				cb(chunkData)
@@ -287,7 +287,6 @@ type Reactor struct {
 	MirrorAvailable           bool
 	freshMenu                 func()
 	chunkAssembler            *assembler.Assembler
-	chunkRequestChan          chan []*packet.SubChunkRequest
 }
 
 func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
@@ -296,31 +295,9 @@ func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
 
 func (o *Reactor) onBootstrap() {
 	o.chunkAssembler = assembler.NewAssembler()
-	o.chunkRequestChan = make(chan []*packet.SubChunkRequest, 1024)
-	go func() {
-		t := time.NewTicker(time.Second / 40)
-		// visitTime := make(map[protocol.SubChunkPos]time.Time)
-		if len(o.chunkRequestChan) > 512 {
-			pterm.Error.Println("你的机器人移动过于频繁，这可能导致机器人工作不稳定")
-		}
-		for requests := range o.chunkRequestChan {
-			// request0 := requests[0]
-			// if visitTime, hasK := visitTime[request0.Position]; hasK {
-			// 	if time.Since(visitTime) < time.Minute {
-			// 		continue
-			// 	}
-			// }
-			// visitTime[request0.Position] = time.Now()
-			for _, request := range requests {
-				o.o.adaptor.Write(request)
-				// o.o.adaptor.Write(&packet.SubChunkRequest{
-				// 	0,
-				// 	protocol.SubChunkPos{1249, 4, -1249}, nil,
-				// })
-			}
-			<-t.C
-		}
-	}()
+	o.chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
+		o.o.adaptor.Write(pk)
+	}, time.Millisecond*20, time.Minute)
 	memoryProvider := lru.NewLRUMemoryChunkCacher(8)
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)
