@@ -29,6 +29,9 @@ type OmegaSide struct {
 	StartUpCmds    []OmegeSideProcessStartCmd `json:"启动旁加载进程的指令"`
 	closeCtx       chan struct{}
 	pushController *pushController
+	fileChange     bool
+	FileName       string `json:"玩家数据文件"`
+	PlayerData     map[string]map[string]interface{}
 }
 
 type pushController struct {
@@ -272,7 +275,7 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 			if readString == "" {
 				continue
 			}
-			Info.Println(readString)
+			o.Frame.GetBackendDisplay().Write(Info.Sprintln(readString))
 		}
 	}()
 	cmdErr, err := cmd.StderrPipe()
@@ -288,7 +291,7 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 			if readString == "" {
 				continue
 			}
-			Error.Println(readString)
+			o.Frame.GetBackendDisplay().Write(Error.Sprintln(readString))
 		}
 	}()
 	go func() {
@@ -312,6 +315,11 @@ func (o *OmegaSide) Init(cfg *defines.ComponentConfig) {
 
 func (o *OmegaSide) Inject(frame defines.MainFrame) {
 	o.Frame = frame
+	o.PlayerData = map[string]map[string]interface{}{}
+	err := frame.GetJsonData(o.FileName, &o.PlayerData)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (o *OmegaSide) Activate() {
@@ -319,4 +327,19 @@ func (o *OmegaSide) Activate() {
 	o.Frame.GetGameListener().SetOnAnyPacketCallBack(func(p packet.Packet) {
 		o.pushController.pushMCPkt(int(p.ID()), p)
 	})
+}
+func (o *OmegaSide) Signal(signal int) error {
+	switch signal {
+	case defines.SIGNAL_DATA_CHECKPOINT:
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", o.PlayerData)
+		}
+	}
+	return nil
+}
+
+func (o *OmegaSide) Stop() error {
+	fmt.Printf("正在保存 %v\n", o.FileName)
+	return o.Frame.WriteJsonDataWithTMP(o.FileName, ".final", o.PlayerData)
 }

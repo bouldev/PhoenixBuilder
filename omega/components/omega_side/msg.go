@@ -2,10 +2,13 @@ package omega_side
 
 import (
 	"fmt"
+	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/chunk"
+	"phoenixbuilder/mirror/define"
+	"phoenixbuilder/mirror/items"
 	"phoenixbuilder/omega/defines"
-
-	"github.com/pterm/pterm"
+	"phoenixbuilder/omega/global"
 )
 
 type clientMsg struct {
@@ -72,7 +75,7 @@ func (t *omegaSideTransporter) initMapping() {
 		},
 		"send_player_cmd": func(args map[string]interface{}, writer func(interface{})) {
 			cmd := args["cmd"].(string)
-			pterm.Warning.Println("DEBUG " + cmd)
+			// pterm.Warning.Println("DEBUG " + cmd)
 			t.side.Frame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(cmd, func(output *packet.CommandOutput) {
 				writer(map[string]interface{}{"result": output})
 			})
@@ -137,6 +140,7 @@ func (t *omegaSideTransporter) initMapping() {
 					"success": true,
 					"player":  player,
 					"input":   chat.Msg,
+					"err":     nil,
 				})
 				return true
 			}); err == nil {
@@ -147,15 +151,171 @@ func (t *omegaSideTransporter) initMapping() {
 				writer(map[string]interface{}{
 					"success": false,
 					"player":  player,
+					"input":   "",
 					"err":     err.Error(),
 				})
 			}
 		},
-		// "player.say_to": func(args map[string]interface{}, writer func(interface{})) {
-		// 	player := args["player"].(string)
-		// 	msg := args["msg"].(string)
-		// 	t.side.Frame
-		// },
+		"player.say_to": func(args map[string]interface{}, writer func(interface{})) {
+			player := args["player"].(string)
+			msg := args["msg"].(string)
+			t.side.Frame.GetGameControl().SayTo(player, msg)
+			writer(map[string]interface{}{
+				"ack": true,
+			})
+		},
+		"player.title_to": func(args map[string]interface{}, writer func(interface{})) {
+			player := args["player"].(string)
+			msg := args["msg"].(string)
+			t.side.Frame.GetGameControl().TitleTo(player, msg)
+			writer(map[string]interface{}{
+				"ack": true,
+			})
+		},
+		"player.subtitle_to": func(args map[string]interface{}, writer func(interface{})) {
+			player := args["player"].(string)
+			msg := args["msg"].(string)
+			t.side.Frame.GetGameControl().TitleTo(player, msg)
+			writer(map[string]interface{}{
+				"ack": true,
+			})
+		},
+		"player.actionbar_to": func(args map[string]interface{}, writer func(interface{})) {
+			player := args["player"].(string)
+			msg := args["msg"].(string)
+			t.side.Frame.GetGameControl().ActionBarTo(player, msg)
+			writer(map[string]interface{}{
+				"ack": true,
+			})
+		},
+		"player.pos": func(args map[string]interface{}, writer func(interface{})) {
+			player := args["player"].(string)
+			limit := args["limit"].(string)
+			go func() {
+				pos := <-t.side.Frame.GetGameControl().GetPlayerKit(player).GetPos(limit)
+				get := false
+				if pos != nil {
+					get = true
+				}
+				writer(map[string]interface{}{
+					"success": get,
+					"pos":     pos,
+				})
+			}()
+		},
+		"player.set_data": func(args map[string]interface{}, writer func(interface{})) {
+			player := args["player"].(string)
+			entry := args["entry"].(string)
+			data := args["data"]
+			if player_data, hasK := t.side.PlayerData[player]; !hasK {
+				player_data = map[string]interface{}{}
+				player_data[entry] = data
+				t.side.PlayerData[player] = player_data
+			} else {
+				player_data[entry] = data
+			}
+			t.side.fileChange = true
+			writer(map[string]interface{}{
+				"ack": true,
+			})
+		},
+		"player.get_data": func(args map[string]interface{}, writer func(interface{})) {
+			player := args["player"].(string)
+			entry := args["entry"].(string)
+			if player_data, hasK := t.side.PlayerData[player]; !hasK {
+				writer(map[string]interface{}{
+					"found": false,
+					"data":  nil,
+				})
+			} else {
+				data, hasK := player_data[entry]
+				writer(map[string]interface{}{
+					"found": hasK,
+					"data":  data,
+				})
+			}
+		},
+		"reg_login": func(args map[string]interface{}, writer func(interface{})) {
+			t.side.Frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
+				t.conn.WriteJSON(ServerPush{
+					ID0:     0,
+					Type:    "playerLogin",
+					SubType: "",
+					Data:    SimplifiedPlayerInfo{entry.Username, 0, entry.UUID.String(), entry.EntityUniqueID},
+				})
+			})
+			writer(map[string]interface{}{
+				"ack": true,
+			})
+		},
+		"reg_logout": func(args map[string]interface{}, writer func(interface{})) {
+			t.side.Frame.GetGameListener().AppendLogoutInfoCallback(func(entry protocol.PlayerListEntry) {
+				player := t.side.Frame.GetGameControl().GetPlayerKitByUUID(entry.UUID)
+				if player != nil {
+					t.conn.WriteJSON(ServerPush{
+						ID0:     0,
+						Type:    "playerLogout",
+						SubType: "",
+						Data:    SimplifiedPlayerInfo{player.GetRelatedUQ().Username, 0, player.GetRelatedUQ().UUID.String(), player.GetRelatedUQ().EntityUniqueID},
+					})
+				} else {
+					t.conn.WriteJSON(ServerPush{
+						ID0:     0,
+						Type:    "playerLogout",
+						SubType: "",
+						Data:    SimplifiedPlayerInfo{"unknown", 0, entry.UUID.String(), 0},
+					})
+				}
+			})
+			writer(map[string]interface{}{
+				"ack": true,
+			})
+		},
+		"reg_block_update": func(args map[string]interface{}, writer func(interface{})) {
+			t.side.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(func(pos define.CubePos, origRTID, currentRTID uint32) {
+				oname, oprop, ofound := chunk.RuntimeIDToState(origRTID)
+				cname, cprop, cfound := chunk.RuntimeIDToState(currentRTID)
+				t.conn.WriteJSON(ServerPush{
+					ID0:     0,
+					Type:    "blockUpdate",
+					SubType: "",
+
+					Data: map[string]interface{}{
+						"pos":                        pos,
+						"origin_block_runtime_id":    origRTID,
+						"origin_block_simple_define": chunk.RuntimeIDToLegacyBlock(origRTID),
+						"origin_block_full_define": map[string]interface{}{
+							"name": oname, "props": oprop, "found": ofound,
+						},
+						"new_block_runtime_id":    currentRTID,
+						"new_block_simple_define": chunk.RuntimeIDToLegacyBlock(currentRTID),
+						"new_block_full_define": map[string]interface{}{
+							"name": cname, "props": cprop, "found": cfound,
+						},
+					},
+				})
+				writer(map[string]interface{}{
+					"ack": true,
+				})
+			})
+		},
+		"query_item_mapping": func(args map[string]interface{}, writer func(interface{})) {
+			writer(map[string]interface{}{
+				"mapping": items.RuntimeIDToItemNameMapping,
+			})
+		},
+		"query_block_mapping": func(args map[string]interface{}, writer func(interface{})) {
+			writer(map[string]interface{}{
+				"blocks":        chunk.Blocks,
+				"simple_blocks": chunk.LegacyBlocks,
+				"java_blocks":   chunk.JavaStrToRuntimeIDMapping,
+			})
+		},
+		"query_memory_scoreboard": func(args map[string]interface{}, writer func(interface{})) {
+			global.UpdateScore(t.side.Frame.GetGameControl(), 0, func(m map[string]map[string]int) {
+				writer(m)
+			})
+		},
 	}
 }
 

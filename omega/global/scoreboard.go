@@ -14,11 +14,13 @@ var rankingWaiter []func(map[string]map[string]int)
 var rankingWaiterLock sync.Mutex
 
 func UpdateScore(ctrl defines.GameControl, allowDuration time.Duration, onUpdateDone func(map[string]map[string]int)) {
+	rankingWaiterLock.Lock()
 	if rankingLastFetchResult != nil {
 		if time.Since(rankingLastFetchTime) < allowDuration+time.Second {
 			onUpdateDone(rankingLastFetchResult)
 		}
 	}
+	rankingWaiterLock.Unlock()
 	rankingWaiterLock.Lock()
 	if rankingWaiter != nil {
 		rankingWaiter = append(rankingWaiter, onUpdateDone)
@@ -29,6 +31,7 @@ func UpdateScore(ctrl defines.GameControl, allowDuration time.Duration, onUpdate
 		rankingWaiterLock.Unlock()
 	}
 	ctrl.SendCmdAndInvokeOnResponse("scoreboard players list @a", func(output *packet.CommandOutput) {
+		// fmt.Println(output)
 		fetch := func(output *packet.CommandOutput) (result map[string]map[string]int) {
 			currentPlayer := ""
 			fetchResult := map[string]map[string]int{}
@@ -61,19 +64,21 @@ func UpdateScore(ctrl defines.GameControl, allowDuration time.Duration, onUpdate
 			}
 			return fetchResult
 		}
-		if result := fetch(output); result == nil {
+		var result map[string]map[string]int
+		if result = fetch(output); result == nil {
 			// fmt.Println("cannot get scoreboard result")
+			result = map[string]map[string]int{}
 		} else {
 			// fmt.Println(result)
-			rankingLastFetchResult = result
-			rankingLastFetchTime = time.Now()
-			onUpdateDone(rankingLastFetchResult)
-			rankingWaiterLock.Lock()
-			for _, cb := range rankingWaiter {
-				cb(rankingLastFetchResult)
-			}
-			rankingWaiter = nil
-			rankingWaiterLock.Unlock()
 		}
+		rankingLastFetchResult = result
+		rankingLastFetchTime = time.Now()
+		onUpdateDone(rankingLastFetchResult)
+		rankingWaiterLock.Lock()
+		for _, cb := range rankingWaiter {
+			cb(rankingLastFetchResult)
+		}
+		rankingWaiter = nil
+		rankingWaiterLock.Unlock()
 	})
 }
