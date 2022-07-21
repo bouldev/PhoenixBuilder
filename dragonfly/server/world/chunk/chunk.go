@@ -52,7 +52,7 @@ func (chunk *Chunk) SubChunkArrived(y int16,data []byte) error {
 	if e!=nil {
 		return e
 	}
-	chunk.sub[int(y)-chunk.r[0]]=sc
+	chunk.sub[int(y)-int(chunk.r[0]/16)]=sc
 	return nil
 }
 
