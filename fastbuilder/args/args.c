@@ -7,6 +7,7 @@
 #ifndef PATH_MAX
 #include <limits.h>
 #endif
+#include <sys/types.h>
 
 #ifndef FB_VERSION
 #define FB_VERSION "(CUSTOM)"
