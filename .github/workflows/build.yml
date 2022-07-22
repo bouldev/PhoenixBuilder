@@ -180,7 +180,7 @@ jobs:
         cd fyne-gui/android_wrapper
         go build
         cd ..
-        make
+        make all
         #node simpleappend.js
         ls -lh build/>release.txt
         mv release.txt build/release-list.txt
