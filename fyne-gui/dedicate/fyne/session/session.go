@@ -16,7 +16,6 @@ import (
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/function"
 	fbtask "phoenixbuilder/fastbuilder/task"
-//	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/io/commands"
 	"phoenixbuilder/mirror/io/global"
 	"phoenixbuilder/mirror/io/assembler"
@@ -212,6 +211,8 @@ func (s *Session) beforeStart() (err error) {
 	env.UQHolder = nil
 	env.ActivateTaskStatus = make(chan bool)
 	env.TaskHolder = fbtask.NewTaskHolder()
+	env.LRUMemoryChunkCacher=lru.NewLRUMemoryChunkCacher(12)
+	env.ChunkFeeder=global.NewChunkFeeder()
 	env.FunctionHolder = function.NewFunctionHolder(env)
 	env.LoginInfo = environment.LoginInfo{
 		Token:          s.Config.FBToken,
@@ -409,6 +410,7 @@ func (s *Session) routine(c chan string) {
 			}
 		}
 	}()
+	chunkAssembler := assembler.NewAssembler()
 
 	// A loop that reads packets from the connection until it is closed.
 	env := s.env
@@ -549,8 +551,13 @@ func (s *Session) routine(c chan string) {
 					ActionType:      protocol.PlayerActionRespawn,
 				})
 			}
+		case *packet.SubChunk:
+			chunkData := chunkAssembler.OnNewSubChunk(p)
+			if chunkData != nil {
+				env.ChunkFeeder.(*global.ChunkFeeder).OnNewChunk(chunkData)
+				env.LRUMemoryChunkCacher.(*lru.LRUMemoryChunkCacher).Write(chunkData)
+			}
 		case *packet.LevelChunk:
-			chunkAssembler := assembler.NewAssembler()
 			if exist := chunkAssembler.AddPendingTask(p); !exist {
 				requests := chunkAssembler.GenRequestFromLevelChunk(p)
 				chunkAssembler.ScheduleRequest(requests)
