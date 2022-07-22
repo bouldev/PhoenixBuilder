@@ -237,6 +237,10 @@ func (o *Omega) RedAlert(info string) {
 	o.redAlertLogger.Write(info)
 }
 
+func (o *Omega) FBEval(cmd string) {
+	o.adaptor.FBEval(cmd)
+}
+
 func (o *Omega) RegOnAlertHandler(cb func(info string)) {
 	o.redAlertHandlers = append(o.redAlertHandlers, cb)
 }

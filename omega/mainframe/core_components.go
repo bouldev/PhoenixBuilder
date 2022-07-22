@@ -323,7 +323,7 @@ func (o *NameRecord) Inject(frame defines.MainFrame) {
 		name = utils.ToPlainName(name)
 		o.update(name, ud.String())
 	})
-	var fn collaborate.FUNC_GetPossibleName
+	var fn collaborate.FUNCTYPE_GET_POSSIBLE_NAME
 	fn = o.GetPossibleName
 	(*o.mainFrame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME] = fn
 }

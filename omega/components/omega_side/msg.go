@@ -7,6 +7,7 @@ import (
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/mirror/items"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/global"
 )
@@ -83,6 +84,11 @@ func (t *omegaSideTransporter) initMapping() {
 		"send_wo_cmd": func(args map[string]interface{}, writer func(interface{})) {
 			cmd := args["cmd"].(string)
 			t.side.Frame.GetGameControl().SendWOCmd(cmd)
+			writer(map[string]interface{}{"ack": true})
+		},
+		"send_fb_cmd": func(args map[string]interface{}, writer func(interface{})) {
+			cmd := args["cmd"].(string)
+			t.side.Frame.FBEval(cmd)
 			writer(map[string]interface{}{"ack": true})
 		},
 		"get_uqholder": func(args map[string]interface{}, writer func(interface{})) {
@@ -314,6 +320,15 @@ func (t *omegaSideTransporter) initMapping() {
 		"query_memory_scoreboard": func(args map[string]interface{}, writer func(interface{})) {
 			global.UpdateScore(t.side.Frame.GetGameControl(), 0, func(m map[string]map[string]int) {
 				writer(m)
+			})
+		},
+		"send_qq_msg": func(args map[string]interface{}, writer func(interface{})) {
+			msg := args["msg"].(string)
+			if send_func, hasK := (*t.side.Frame.GetContext())[collaborate.INTERFACE_SEND_TO_GROUP]; hasK {
+				send_func.(collaborate.FUNC_SEND_TO_GROUP)(msg)
+			}
+			writer(map[string]interface{}{
+				"ack": true,
 			})
 		},
 	}

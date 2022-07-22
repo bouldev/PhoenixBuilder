@@ -38,7 +38,7 @@ type Express struct {
 	PackagePlatform   []int  `json:"打包平台"`
 	SelectCmd         string `json:"物品转移器"`
 	Record            ExpressInfo
-	PlayerSearcher    collaborate.FUNC_GetPossibleName
+	PlayerSearcher    collaborate.FUNCTYPE_GET_POSSIBLE_NAME
 }
 
 func (o *Express) formatPackage(idx int) string {
@@ -152,7 +152,7 @@ func (o *Express) queryPlayer(chat *defines.GameChat) bool {
 		if name, cancel := utils.QueryForPlayerName(
 			o.Frame.GetGameControl(), chat.Name,
 			"",
-			(*o.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)); !cancel {
+			(*o.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)); !cancel {
 			o.askForPackage(chat.Name, name)
 		} else {
 			o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
@@ -207,7 +207,7 @@ func (o *Express) Inject(frame defines.MainFrame) {
 	if err != nil {
 		panic(err)
 	}
-	o.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)
+	o.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)
 }
 
 func (o *Express) Activate() {

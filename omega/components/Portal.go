@@ -43,7 +43,7 @@ func (o *Portal) getPlayerPositions(name string) map[string]*PortalEntry {
 		return ps
 	} else {
 		// check rename
-		possibleNames := (*o.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)(name, 0)
+		possibleNames := (*o.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)(name, 0)
 		for _, nameEntry := range possibleNames {
 			if nameEntry.Entry.CurrentName != name {
 				continue

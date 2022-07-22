@@ -64,4 +64,4 @@ func (o *TYPE_PossibleNames) GetHistoryNames() []string {
 	return historyNames
 }
 
-type FUNC_GetPossibleName func(name string, maxC int) []*TYPE_PossibleNames
+type FUNCTYPE_GET_POSSIBLE_NAME func(name string, maxC int) []*TYPE_PossibleNames

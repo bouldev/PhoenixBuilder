@@ -223,4 +223,5 @@ type MainFrame interface {
 	GetBotTaskScheduler() BotTaskScheduler
 	GetWorld() *world.World
 	GetWorldProvider() mirror.ChunkProvider
+	FBEval(cmd string)
 }
