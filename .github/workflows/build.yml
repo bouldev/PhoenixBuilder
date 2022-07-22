@@ -119,6 +119,7 @@ jobs:
         wget -q https://github.com/Torrekie/homebrew-core/releases/download/i686-unknown-linux-musl/i686-unknown-linux-musl.tar.xz
         tar xf i686-unknown-linux-musl.tar.xz
         rm i686-unknown-linux-musl.tar.xz
+        mv i686-unknown-linux-musl ~/
     - name: Cache Openwrt mt7620 SDK
       id: cache-openwrt-mt7620-sdk
       uses: actions/cache@v3

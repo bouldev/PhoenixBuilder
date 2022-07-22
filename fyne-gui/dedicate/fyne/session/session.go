@@ -16,10 +16,13 @@ import (
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/function"
 	fbtask "phoenixbuilder/fastbuilder/task"
-	"phoenixbuilder/fastbuilder/world_provider"
+//	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/io/commands"
+	"phoenixbuilder/mirror/io/global"
+	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/io/lru"
 
 	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/args"
@@ -217,6 +220,8 @@ func (s *Session) beforeStart() (err error) {
 	}
 	authClient := fbauth.CreateClient(env)
 	env.FBAuthClient = authClient
+	env.LRUMemoryChunkCacher=lru.NewLRUMemoryChunkCacher(12)
+	env.ChunkFeeder=global.NewChunkFeeder()
 
 	if s.Config.FBToken == "" {
 		// we need to get a token
@@ -545,11 +550,11 @@ func (s *Session) routine(c chan string) {
 				})
 			}
 		case *packet.LevelChunk:
-			if args.ShouldEnableOmegaSystem() {
-				world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
+			chunkAssembler := assembler.NewAssembler()
+			if exist := chunkAssembler.AddPendingTask(p); !exist {
+				requests := chunkAssembler.GenRequestFromLevelChunk(p)
+				chunkAssembler.ScheduleRequest(requests)
 			}
-			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
-			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
 		case *packet.UpdateBlock:
 			channel, h := env.CommandSender.GetBlockUpdateSubscribeMap().LoadAndDelete(p.Position)
 			if h {
