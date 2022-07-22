@@ -29,6 +29,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/mirror/io/global"
+	"phoenixbuilder/mirror/io/lru"
 	"phoenixbuilder/omega/cli/embed"
 	"phoenixbuilder/omega/suggest"
 	"runtime"
@@ -201,19 +202,12 @@ func create_environment() *environment.PBEnvironment {
 	env.ScriptBridge = hostBridgeGamma
 	scriptHolder := script_holder.InitScriptHolder(env)
 	env.ScriptHolder = scriptHolder
-	/*if args.StartupScript() == "" {
-		hostBridgeGamma.HostRemoveBlock()
-	} else {
-		if scriptHolder.LoadScript(args.StartupScript(), env) {
-			hostBridgeGamma.HostWaitScriptBlock()
-		} else {
-			hostBridgeGamma.HostRemoveBlock()
-		}
-	}*/
 	if args.StartupScript() != "" {
 		scriptHolder.LoadScript(args.StartupScript(), env)
 	}
 	hostBridgeGamma.HostRemoveBlock()
+	env.LRUMemoryChunkCacher=lru.NewLRUMemoryChunkCacher(12)
+	env.ChunkFeeder=global.NewChunkFeeder()
 	return env
 }
 
@@ -668,8 +662,8 @@ func runClient(env *environment.PBEnvironment) {
 			chunkData := chunkAssembler.OnNewSubChunk(p)
 			if chunkData != nil {
 				// fmt.Println("new chunk")
-				global.GlobalChunkFeeder.OnNewChunk(chunkData)
-				global.GlobalLRUMemoryChunkCacher.Write(chunkData)
+				env.ChunkFeeder.(*global.ChunkFeeder).OnNewChunk(chunkData)
+				env.LRUMemoryChunkCacher.(*lru.LRUMemoryChunkCacher).Write(chunkData)
 				// if env.OmegaAdaptorHolder != nil {
 				// 	fmt.Println("new chunk")
 				// 	env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedChunkData(chunkData)

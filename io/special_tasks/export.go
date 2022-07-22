@@ -19,6 +19,7 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/io/lru"
 	"phoenixbuilder/mirror/chunk"
 	"runtime"
 	"strconv"
@@ -78,7 +79,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	hopPath,requiredChunks:=fetcher.PlanHopSwapPath(startX,startZ,endX,endZ,16)
 	chunkPool:=map[fetcher.ChunkPosDefine]fetcher.ChunkDefine{}
 	memoryCacheFetcher:=fetcher.CreateCacheHitFetcher(requiredChunks,chunkPool)
-	global.GlobalLRUMemoryChunkCacher.Iter(func(pos define.ChunkPos, chunk *mirror.ChunkData) (stop bool) {
+	env.LRUMemoryChunkCacher.(*lru.LRUMemoryChunkCacher).Iter(func(pos define.ChunkPos, chunk *mirror.ChunkData) (stop bool) {
 		memoryCacheFetcher(fetcher.ChunkPosDefine{int(pos[0])*16,int(pos[1])*16},fetcher.ChunkDefine(chunk))
 		return false
 	})
@@ -93,7 +94,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		cmdsender.SendCommand(cmd,uid)
 	}
 	feedChan:=make(chan *fetcher.ChunkDefineWithPos,1024)
-	deRegFn:=global.GlobalChunkFeeder.RegNewReader(func (chunk *mirror.ChunkData)  {
+	deRegFn:=env.ChunkFeeder.(*global.ChunkFeeder).RegNewReader(func (chunk *mirror.ChunkData)  {
 		feedChan<-&fetcher.ChunkDefineWithPos{Chunk: fetcher.ChunkDefine(chunk),Pos:fetcher.ChunkPosDefine{int(chunk.ChunkPos[0])*16,int(chunk.ChunkPos[1])*16}}
 	})
 	inHopping:=true

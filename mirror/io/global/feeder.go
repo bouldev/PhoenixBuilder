@@ -45,6 +45,6 @@ func (o *ChunkFeeder) RegNewReader(fn ChunkWriteFn) (unRegFn func()) {
 	}
 }
 
-func init() {
+/*func init() {
 	GlobalChunkFeeder = NewChunkFeeder()
-}
+}*/
