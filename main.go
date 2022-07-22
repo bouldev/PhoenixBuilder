@@ -14,7 +14,6 @@ import (
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
-	"phoenixbuilder/fastbuilder/menu"
 	"phoenixbuilder/fastbuilder/move"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/script_engine/bridge/script_holder"
@@ -463,35 +462,8 @@ func runClient(env *environment.PBEnvironment) {
 				resp := <-chann
 				fmt.Printf("%+v\n", resp)
 			}
-			if cmd == "menu" {
-				menu.OpenMenu(env)
-				fmt.Printf("OK\n")
-				continue
-			}
 			if cmd == "move" {
 				go func() {
-					/*var counter int=0
-					var direction bool=false
-					for{
-						if counter%20==0 {
-							//move.Jump()
-						}
-						if counter>280 {
-							counter=0
-							direction= !direction
-						}
-						if direction {
-							move.Move(-2+2*moveP/100,0,2*moveP/100)
-							time.Sleep(time.Second/20)
-							counter++
-							continue
-						}else{
-							move.Move(2*moveP/100,0,-2+2*moveP/100)
-							time.Sleep(time.Second/20)
-							counter++
-							continue
-						}
-					}*/
 					for {
 						move.Auto()
 						time.Sleep(time.Second / 20)
