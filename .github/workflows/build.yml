@@ -168,7 +168,7 @@ jobs:
     - name: Build
       run: |
         export THEOS=~/theos
-        make
+        make all
     - name: Package for specific platforms
       run: |
         export THEOS=~/theos
