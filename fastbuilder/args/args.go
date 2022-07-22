@@ -229,3 +229,11 @@ func InGameResponse() bool {
 func cexporttestfunc() string {
 	return "test succ"
 }
+
+//export go_rmdir_recursive
+func go_rmdir_recursive(path *C.char) {
+	err:=os.RemoveAll(C.GoString(path))
+	if err!=nil {
+		panic(err)
+	}
+}

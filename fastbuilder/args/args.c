@@ -131,6 +131,8 @@ void quickcopy(char **target_ptr) {
 	memcpy(*target_ptr, optarg, length);
 }
 
+#ifdef DT_UNKNOWN
+
 void rmdir_recursive(char *path) {
 	char *pathend=path+strlen(path);
 	DIR *fbdir=opendir(path);
@@ -162,6 +164,15 @@ void rmdir_recursive(char *path) {
 	closedir(fbdir);
 	*pathend=0;
 }
+
+#else
+
+void go_rmdir_recursive(char *path);
+void rmdir_recursive(char *path) {
+	go_rmdir_recursive(path);
+}
+
+#endif
 
 void config_cleanup() {
 	char *home_dir=getenv("HOME");
