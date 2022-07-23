@@ -39,14 +39,14 @@ func UnZip(zipFile io.ReaderAt, size int64, dstDir string) error {
 		fullPath := path.Join(dstDir, file.Name)
 		dir := path.Dir(fullPath)
 		os.MkdirAll(dir, 0755)
-		NewFile, err := os.Create(fullPath)
+		fp, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			return err
 		}
-		if _, err := io.Copy(NewFile, r); err != nil {
+		if _, err := io.Copy(fp, r); err != nil {
 			return err
 		}
-		if err := NewFile.Close(); err != nil {
+		if err := fp.Close(); err != nil {
 			return err
 		}
 		if err := r.Close(); err != nil {

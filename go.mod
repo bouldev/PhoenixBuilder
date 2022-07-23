@@ -11,6 +11,7 @@ require (
 
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
+	github.com/cheggaaa/pb v1.0.29 // indirect
 	github.com/df-mc/goleveldb v1.1.9 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
