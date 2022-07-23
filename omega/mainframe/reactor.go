@@ -261,6 +261,9 @@ func (r *Reactor) React(pkt packet.Packet) {
 				cb(chunkData)
 			}
 		}
+	case *packet.NetworkChunkPublisherUpdate:
+		r.chunkAssembler.CancelQueueByPublishUpdate(p)
+		// fmt.Println("packet.NetworkChunkPublisherUpdate", p)
 	}
 	for _, cb := range r.OnAnyPacketCallBack {
 		cb(pkt)
@@ -297,7 +300,7 @@ func (o *Reactor) onBootstrap() {
 	o.chunkAssembler = assembler.NewAssembler()
 	o.chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		o.o.adaptor.Write(pk)
-	}, time.Second/20, time.Minute*3)
+	}, time.Second/15, time.Minute*5)
 	memoryProvider := lru.NewLRUMemoryChunkCacher(8)
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)
