@@ -1,15 +1,15 @@
-package omega_side
+package utils
 
 import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-var pktIDMapping map[string]int
-var pktIDInvMapping map[int]string
-var pktIDNames []string
+var PktIDMapping map[string]int
+var PktIDInvMapping map[int]string
+var PktIDNames []string
 
 func init() {
-	pktIDMapping = map[string]int{
+	PktIDMapping = map[string]int{
 		"IDLogin":                             packet.IDLogin,
 		"IDPlayStatus":                        packet.IDPlayStatus,
 		"IDServerToClientHandshake":           packet.IDServerToClientHandshake,
@@ -183,11 +183,11 @@ func init() {
 		"IDCodeBuilderSource":                 packet.IDCodeBuilderSource,
 		"IDPyRpc":                             packet.IDPyRpc,
 	}
-	pktIDInvMapping = make(map[int]string)
-	pktIDNames = make([]string, 0)
-	for k, v := range pktIDMapping {
-		pktIDInvMapping[v] = k
-		pktIDNames = append(pktIDNames, k)
+	PktIDInvMapping = make(map[int]string)
+	PktIDNames = make([]string, 0)
+	for k, v := range PktIDMapping {
+		PktIDInvMapping[v] = k
+		PktIDNames = append(PktIDNames, k)
 	}
 
 }

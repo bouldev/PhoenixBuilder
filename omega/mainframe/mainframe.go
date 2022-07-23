@@ -270,6 +270,10 @@ func (o *Omega) Activate() {
 		packetFeeder := o.adaptor.GetPacketFeeder()
 		// chunkDataFeeder := o.adaptor.GetChunkFeeder()
 		for pkt := range packetFeeder {
+			// fmt.Println(utils.PktIDInvMapping[int(pkt.ID())])
+			// if pkt.ID() == packet.IDClientCacheMissResponse {
+			// 	pterm.Info.Println("IDClientCacheMissResponse ", pkt)
+			// }
 			if pkt == nil {
 				continue
 			}

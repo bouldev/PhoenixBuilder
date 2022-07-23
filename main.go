@@ -206,8 +206,8 @@ func create_environment() *environment.PBEnvironment {
 		scriptHolder.LoadScript(args.StartupScript(), env)
 	}
 	hostBridgeGamma.HostRemoveBlock()
-	env.LRUMemoryChunkCacher=lru.NewLRUMemoryChunkCacher(12)
-	env.ChunkFeeder=global.NewChunkFeeder()
+	env.LRUMemoryChunkCacher = lru.NewLRUMemoryChunkCacher(12)
+	env.ChunkFeeder = global.NewChunkFeeder()
 	return env
 }
 
@@ -279,6 +279,7 @@ func runClient(env *environment.PBEnvironment) {
 			Password:   env.LoginInfo.ServerPasscode,
 			Token:      env.LoginInfo.Token,
 			Client:     fbauthclient,
+			// EnableClientCache: true,
 		}
 		cconn, err := dialer.Dial("raknet", "")
 
@@ -341,6 +342,10 @@ func runClient(env *environment.PBEnvironment) {
 	conn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
 	})
+	// conn.WritePacket(&packet.ClientCacheStatus{
+	// 	Enabled: true,
+	// })
+
 	env.Connection = conn
 	env.UQHolder = uqHolder.NewUQHolder(conn.GameData().EntityRuntimeID)
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
@@ -518,8 +523,14 @@ func runClient(env *environment.PBEnvironment) {
 		if env.ExternalConnectionHandler != nil {
 			env.ExternalConnectionHandler.(*external.ExternalConnectionHandler).PacketChannel <- data
 		}
-
+		// fmt.Println(omega_utils.PktIDInvMapping[int(pk.ID())])
 		switch p := pk.(type) {
+		// case *packet.ClientCacheMissResponse:
+		// 	pterm.Info.Println("ClientCacheMissResponse", p)
+		// case *packet.ClientCacheStatus:
+		// 	pterm.Info.Println("ClientCacheStatus", p)
+		// case *packet.ClientCacheBlobStatus:
+		// 	pterm.Info.Println("ClientCacheBlobStatus", p)
 		case *packet.PyRpc:
 			if args.NoPyRpc() {
 				break
@@ -670,13 +681,36 @@ func runClient(env *environment.PBEnvironment) {
 				// 	continue
 				// }
 			}
-			// chunk := currentChunkConstructor.SubChunkArrived(p.Data, p.SubChunkX, p.SubChunkY, p.SubChunkZ)
-			// chunk==nil means that the chunk has not been constructed yet
-			// if chunk != nil {
-			// world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
-			// world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
+		// chunk := currentChunkConstructor.SubChunkArrived(p.Data, p.SubChunkX, p.SubChunkY, p.SubChunkZ)
+		// chunk==nil means that the chunk has not been constructed yet
+		// if chunk != nil {
+		// world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
+		// world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
+		// }
+		case *packet.NetworkChunkPublisherUpdate:
+			// pterm.Info.Println("packet.NetworkChunkPublisherUpdate", p)
+			// missHash := []uint64{}
+			// hitHash := []uint64{}
+			// for i := uint64(0); i < 64; i++ {
+			// 	missHash = append(missHash, uint64(10184224921554030005+i))
+			// 	hitHash = append(hitHash, uint64(6346766690299427078-i))
 			// }
+			// conn.WritePacket(&packet.ClientCacheBlobStatus{
+			// 	MissHashes: missHash,
+			// 	HitHashes:  hitHash,
+			// })
 		case *packet.LevelChunk:
+			// pterm.Info.Println("LevelChunk", p.BlobHashes, len(p.BlobHashes), p.CacheEnabled)
+			// go func() {
+			// 	for {
+
+			// conn.WritePacket(&packet.ClientCacheBlobStatus{
+			// 	MissHashes: []uint64{p.BlobHashes[0] + 1},
+			// 	HitHashes:  []uint64{},
+			// })
+			// 		time.Sleep(100 * time.Millisecond)
+			// 	}
+			// }()
 			if exist := chunkAssembler.AddPendingTask(p); !exist {
 				requests := chunkAssembler.GenRequestFromLevelChunk(p)
 				chunkAssembler.ScheduleRequest(requests)

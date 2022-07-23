@@ -10,6 +10,7 @@ import (
 	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/global"
+	"phoenixbuilder/omega/utils"
 )
 
 type clientMsg struct {
@@ -61,11 +62,11 @@ func (t *omegaSideTransporter) initMapping() {
 			if pktID == "all" {
 				t.regPkt(0)
 				writer(map[string]interface{}{"succ": true, "err": nil})
-			} else if pktIDCode, hasK := pktIDMapping[pktID]; hasK {
+			} else if pktIDCode, hasK := utils.PktIDMapping[pktID]; hasK {
 				t.regPkt(pktIDCode)
 				writer(map[string]interface{}{"succ": true, "err": nil})
 			} else {
-				writer(map[string]interface{}{"succ": false, "err": fmt.Sprintf("pktID %v not found, all possible ids are %v", pktID, pktIDNames)})
+				writer(map[string]interface{}{"succ": false, "err": fmt.Sprintf("pktID %v not found, all possible ids are %v", pktID, utils.PktIDNames)})
 			}
 		},
 		"reg_mc_packet": func(args map[string]interface{}, writer func(interface{})) {
@@ -73,16 +74,16 @@ func (t *omegaSideTransporter) initMapping() {
 			if pktID == "all" {
 				t.regPkt(0)
 				writer(map[string]interface{}{"succ": true, "err": nil})
-			} else if pktIDCode, hasK := pktIDMapping[pktID]; hasK {
+			} else if pktIDCode, hasK := utils.PktIDMapping[pktID]; hasK {
 				t.regPkt(pktIDCode)
 				writer(map[string]interface{}{"succ": true, "err": nil})
 			} else {
-				writer(map[string]interface{}{"succ": false, "err": fmt.Sprintf("pktID %v not found, all possible ids are %v", pktID, pktIDNames)})
+				writer(map[string]interface{}{"succ": false, "err": fmt.Sprintf("pktID %v not found, all possible ids are %v", pktID, utils.PktIDNames)})
 			}
 		},
 		"query_packet_name": func(args map[string]interface{}, writer func(interface{})) {
 			pktID := int(args["pktID"].(float64))
-			pktName := pktIDInvMapping[pktID]
+			pktName := utils.PktIDInvMapping[pktID]
 			writer(map[string]interface{}{"name": pktName})
 		},
 		"send_ws_cmd": func(args map[string]interface{}, writer func(interface{})) {
@@ -354,7 +355,7 @@ func (t *omegaSideTransporter) initMapping() {
 func (p *pushController) pushMCPkt(pktID int, data interface{}) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	name := pktIDInvMapping[pktID]
+	name := utils.PktIDInvMapping[pktID]
 	if waitors, hasK := p.typedPacketWaitor[pktID]; hasK {
 		for _, w := range waitors {
 			w.WriteJSON(ServerPush{ID0: 0, Type: "mcPkt", SubType: name, Data: data})
