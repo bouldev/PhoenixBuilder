@@ -68,6 +68,23 @@ func (t *omegaSideTransporter) initMapping() {
 				writer(map[string]interface{}{"succ": false, "err": fmt.Sprintf("pktID %v not found, all possible ids are %v", pktID, pktIDNames)})
 			}
 		},
+		"reg_mc_packet": func(args map[string]interface{}, writer func(interface{})) {
+			pktID := args["pktID"].(string)
+			if pktID == "all" {
+				t.regPkt(0)
+				writer(map[string]interface{}{"succ": true, "err": nil})
+			} else if pktIDCode, hasK := pktIDMapping[pktID]; hasK {
+				t.regPkt(pktIDCode)
+				writer(map[string]interface{}{"succ": true, "err": nil})
+			} else {
+				writer(map[string]interface{}{"succ": false, "err": fmt.Sprintf("pktID %v not found, all possible ids are %v", pktID, pktIDNames)})
+			}
+		},
+		"query_packet_name": func(args map[string]interface{}, writer func(interface{})) {
+			pktID := int(args["pktID"].(float64))
+			pktName := pktIDInvMapping[pktID]
+			writer(map[string]interface{}{"name": pktName})
+		},
 		"send_ws_cmd": func(args map[string]interface{}, writer func(interface{})) {
 			cmd := args["cmd"].(string)
 			t.side.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
