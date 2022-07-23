@@ -125,7 +125,7 @@ def plugin(api:API):
         print("数据包内容为: ",packet) #{'client': 0, 'type': 'mcPkt', 'sub': 'IDPlayerHotBar', 'data': {'SelectedHotBarSlot': 0, 'WindowID': 0, 'SelectHotBarSlot': False}, 'id': 'IDPlayerHotBar'}
     
     # 订阅所有数据包，数据包的类型可以在上面的函数里用 packet.id 看到
-    # response=api.listen_any_mc_pakcet(cb=None,on_new_packet_cb=on_mc_packet) # 会收到很多很多数据，请小心的解除注释！
+    # response=api.listen_any_mc_packet(cb=None,on_new_packet_cb=on_mc_packet) # 会收到很多很多数据，请小心的解除注释！
     print(response.succ) # True
     print(response.err) # None
     
@@ -188,7 +188,7 @@ def plugin(api:API):
         print("函数被延迟执行了，延迟了3秒， "+msg1+" "+msg2) # 3秒后 函数被延迟执行了， 啊吧 啊吧吧
     # 在独立的线程延迟执行函数，这里延迟 3 秒，"啊吧","啊吧吧" 对应参数 msg1 msg2
     # 非常不建议用 sleep，特别是在回调中，因为用不好可能会卡住所有的插件，只有在单独的线程里才能sleep
-    api.execute_after(delay_exec_func,"啊吧","啊吧吧",deley_time=3)
+    api.execute_after(delay_exec_func,"啊吧","啊吧吧",delay_time=3)
     
     def func_in_individual_thread(msg1):
         time.sleep(3)

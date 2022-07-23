@@ -46,7 +46,7 @@ class AutoRestartThreadContainer(threading.Thread):
                 self.last_crash_counter+=1
                 if err!=None and self.reduce_restart_freq:
                     delay_time=self.reduce_lambda(self.last_crash_counter)
-                print(f"Tread Terminate, "+f"beacase of error {err}, " if err is not None else ""+f"and will restart on {delay_time}s")
+                print(f"Tread Terminate, "+f"because of error {err}, " if err is not None else ""+f"and will restart on {delay_time}s")
                 if delay_time>0:time.sleep(delay_time)
 
 def execute_func_in_thread_with_auto_restart(func:Callable,*args,exit_on_program_terminate:bool=True,
@@ -82,7 +82,7 @@ def crash(reason:str):
 @dataclass
 class StartUpArgs:
     named_args:Dict[str,str]=None
-    unamed_arg:List[str]=None 
+    unnamed_arg:List[str]=None 
     cwd:str=None
     script_name:str=None
     omega_lib_path:str=None
@@ -101,7 +101,7 @@ def _collect_startup_args()->StartUpArgs:
     # 因为使用者很可能缺少相关能力
     
     named_args_dict={}
-    unmaned_args=[]
+    unnamed_args=[]
     next_arg_fn=None
     for o in options:
         if o.startswith(("-","--")):
@@ -114,9 +114,9 @@ def _collect_startup_args()->StartUpArgs:
         if next_arg_fn is not None:
             next_arg_fn(o)
             continue
-        unmaned_args.append(o)
+        unnamed_args.append(o)
         
-    return StartUpArgs(named_args=named_args_dict,unamed_arg=unmaned_args,cwd=cwd,script_name=script_name,omega_lib_path=lib_path,python_exec=python_exec)
+    return StartUpArgs(named_args=named_args_dict,unnamed_arg=unnamed_args,cwd=cwd,script_name=script_name,omega_lib_path=lib_path,python_exec=python_exec)
 
 @dataclass
 class OmegaEnvArgs:

@@ -36,9 +36,9 @@ class API(object):
         self.on_menu_triggered_cbs={}
         self.normal_callbacks={}
         
-    def execute_after(self,func:Callable,*args:List[any],deley_time:int):
+    def execute_after(self,func:Callable,*args:List[any],delay_time:int):
         def delay_wrapper():
-            time.sleep(deley_time)
+            time.sleep(delay_time)
             func(*args)
         bootstrap.execute_func_in_thread_with_auto_restart(delay_wrapper)
         
@@ -46,8 +46,8 @@ class API(object):
         def repeat_wrapper():
             next_execute_time=time.time()+repeat_time
             while True:
-                slee_time=next_execute_time-time.time()
-                if slee_time>0:time.sleep(slee_time)
+                sleep_time=next_execute_time-time.time()
+                if sleep_time>0:time.sleep(sleep_time)
                 next_execute_time=time.time()+repeat_time
                 func(*args)
         bootstrap.execute_func_in_thread_with_auto_restart(repeat_wrapper)
@@ -173,7 +173,7 @@ class API(object):
         self.on_typed_mc_pkt_cbs[pkt_type].append(on_new_packet_cb)
         return self._send_request(RequestMsg(function="reg_mc_packet",args={"pktID":pkt_type}),cb=cb)
 
-    def listen_any_mc_pakcet(self,cb:Callable[[ListenPacketAcknowledgeResp],None],on_new_packet_cb:Callable[[dict],None])->ListenPacketAcknowledgeResp:
+    def listen_any_mc_packet(self,cb:Callable[[ListenPacketAcknowledgeResp],None],on_new_packet_cb:Callable[[dict],None])->ListenPacketAcknowledgeResp:
         self.on_any_mc_pkt_cbs.append(on_new_packet_cb)
         return self._send_request(RequestMsg(function="reg_mc_packet",args={"pktID":"all"}),cb=cb)
     
