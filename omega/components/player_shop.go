@@ -77,7 +77,7 @@ func (o *PlayerShop) executeCmds(player string, mapping map[string]interface{}, 
 		if len(s) == 0 {
 			resultChan <- false
 		} else {
-			utils.LaunchCmdsArray(o.Frame.GetGameControl(), cmds, mapping, o.Frame.GetBackendDisplay())
+			go utils.LaunchCmdsArray(o.Frame.GetGameControl(), cmds, mapping, o.Frame.GetBackendDisplay())
 			resultChan <- true
 		}
 	})
@@ -365,7 +365,7 @@ func (o *PlayerShop) tryGetAmountAndCurrentInStr(in string) (amount int, currenc
 func (o *PlayerShop) onSale(good *PlayerShopDataGood) {
 	shouldGet := int(math.Floor(float64(good.Price) * (float64(1) - o.Tax)))
 	totalTax := good.Price - shouldGet
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnSale, map[string]interface{}{
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnSale, map[string]interface{}{
 		"[player]": "\"" + good.Src + "\"",
 		"[商品]":     good.Name,
 		"[价格]":     good.Price,
@@ -430,7 +430,7 @@ func (o *PlayerShop) askForGoods(playerName, goodName string, price int, currenc
 		o.packupGood(g)
 		return true
 	}) == nil {
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep3, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep3, map[string]interface{}{
 			"[player]": "\"" + playerName + "\"",
 		}, o.Frame.GetBackendDisplay())
 	}
@@ -452,7 +452,7 @@ func (o *PlayerShop) askForGoodPrice(playerName, goodName string) {
 		o.askForGoods(playerName, goodName, price, currency)
 		return true
 	}) == nil {
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep2, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep2, map[string]interface{}{
 			"[player]": "\"" + playerName + "\"",
 		}, o.Frame.GetBackendDisplay())
 	}
@@ -464,7 +464,7 @@ func (o *PlayerShop) askForGoodName(name string) {
 		o.askForGoodPrice(name, goodName)
 		return true
 	}) == nil {
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep1, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep1, map[string]interface{}{
 			"[player]": "\"" + name + "\"",
 		}, o.Frame.GetBackendDisplay())
 	}
@@ -473,11 +473,11 @@ func (o *PlayerShop) askForGoodName(name string) {
 func (o *PlayerShop) onSaleTrigger(chat *defines.GameChat) (stop bool) {
 	stop = true
 	go func() {
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.PreExecuteCmdsOnSale, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.PreExecuteCmdsOnSale, map[string]interface{}{
 			"[player]": "\"" + chat.Name + "\"",
 		}, o.Frame.GetBackendDisplay())
 		if !<-utils.CheckPlayerMatchSelector(o.Frame.GetGameControl(), chat.Name, o.SaleAuthSelector) {
-			utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCannotSale, map[string]interface{}{
+			go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCannotSale, map[string]interface{}{
 				"[player]": "\"" + chat.Name + "\"",
 			}, o.Frame.GetBackendDisplay())
 			return

@@ -3,6 +3,7 @@ package components
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"time"
@@ -189,6 +190,7 @@ func (o *Schedule) Activate() {
 			o.doTick()
 		}()
 	} else {
+		time.Sleep(time.Duration(rand.Intn(int(time.Duration(o.Duration * float32(time.Second))))))
 		o.doTick()
 	}
 }
