@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"strconv"
 	"time"
 
@@ -98,10 +99,10 @@ type SimpleDeployer struct {
 }
 
 func (o *SimpleDeployer) needDownload() (needDownload bool, err error) {
-	cacheHash, err := GetFileHash(o.CacheFilePath)
-	if err != nil {
-		return true, err
-	}
+	cacheHash, _ := GetFileHash(o.CacheFilePath)
+	// if err != nil {
+	// 	return true, nil
+	// }
 	if o.SourceFileMD5 == "" {
 		remoteMD5HashStr, err := DownloadMicroContent(o.SourceFileMD5ByURL)
 		if err != nil {
@@ -109,12 +110,13 @@ func (o *SimpleDeployer) needDownload() (needDownload bool, err error) {
 		}
 		o.SourceFileMD5 = string(remoteMD5HashStr)
 	}
-	return cacheHash == o.SourceFileMD5, nil
+	return !(cacheHash == o.SourceFileMD5), nil
 }
 
 func (o *SimpleDeployer) Deploy() (err error) {
 	var sourceFileData []byte
 	if needDownload, err := o.needDownload(); err != nil {
+
 		return err
 	} else if needDownload {
 		downloadFileData, err := DownloadSmallContent(o.SourceFileURL)
@@ -122,10 +124,12 @@ func (o *SimpleDeployer) Deploy() (err error) {
 			return err
 		}
 		sourceFileData = downloadFileData
+		os.MkdirAll(path.Dir(o.CacheFilePath), 0755)
 		file, err := os.OpenFile(o.CacheFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		if err != nil {
 			return err
 		}
+		file.Write(downloadFileData)
 		defer file.Close()
 	} else {
 		cacheFileData, err := GetFileData(o.CacheFilePath)
