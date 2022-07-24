@@ -18,7 +18,7 @@ func GetBinaryHash(fileData []byte) string {
 		return in[:16]
 	}
 	hashedBytes := cvt(md5.Sum(fileData))
-	return fmt.Sprintf("%x\n", hashedBytes)
+	return fmt.Sprintf("%x", hashedBytes)
 }
 func GetFileHash(filePath string) (string, error) {
 	if IsFile(filePath) {

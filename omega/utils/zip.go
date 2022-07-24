@@ -56,7 +56,7 @@ func UnZip(zipFile io.ReaderAt, size int64, dstDir string) error {
 	return nil
 }
 
-func Zip(srcDir string, zipFile *os.File, ignores []string) error {
+func Zip(srcDir string, zipFile *os.File, discardFn func(filePath string, info os.FileInfo) (discard bool)) error {
 	archive := zip.NewWriter(zipFile)
 	defer archive.Close()
 	return filepath.Walk(srcDir, func(filePath string, info os.FileInfo, _ error) error {
@@ -69,10 +69,8 @@ func Zip(srcDir string, zipFile *os.File, ignores []string) error {
 		}
 		header.Name = filePath[len(srcDir)+1:]
 		header.Name = strings.ReplaceAll(header.Name, "\\", "/")
-		for _, ignore := range ignores {
-			if strings.HasPrefix(header.Name, ignore) {
-				return nil
-			}
+		if discardFn(header.Name, info) {
+			return nil
 		}
 		if info.IsDir() {
 			return nil
