@@ -10,6 +10,7 @@ import (
 	"path"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
+	"runtime"
 	"strings"
 	"time"
 
@@ -84,6 +85,9 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 	if !path.IsAbs(execDir) {
 		wd, _ := os.Getwd()
 		execDir = path.Join(wd, execDir)
+	}
+	if runtime.GOOS == "windows" {
+		execDir = strings.ReplaceAll(execDir, "\\", "/")
 	}
 	cmd.Dir = execDir
 	// cmd.Env = append(cmd.Env,
@@ -188,7 +192,7 @@ func (o *OmegaSide) Activate() {
 	}
 	if o.autoDeployPython {
 		needDeployPython := true
-		o.PossiblePythonExecPath = append(o.PossiblePythonExecPath, "interpreters/python/bin/python")
+		o.PossiblePythonExecPath = append(o.PossiblePythonExecPath, "interpreters/python/bin/python", "interpreters/python/bin/python.exe")
 		for _, possiblePath := range o.PossiblePythonExecPath {
 			if !path.IsAbs(possiblePath) {
 				if _, err := os.Stat(path.Join(o.getWorkingDir(), possiblePath)); err == nil {

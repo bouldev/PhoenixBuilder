@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"phoenixbuilder/omega/utils"
+	"runtime"
 
 	"github.com/pterm/pterm"
 )
@@ -134,6 +135,11 @@ func (o *OmegaSide) deployPythonRuntime() {
 			panic("自动部署失败: " + err.Error())
 		}
 		pterm.Success.Printfln("已经自动准备Python解释器")
+		o.pythonPath = "interpreters/python/bin/python"
+		if runtime.GOOS == "windows" {
+			o.pythonPath = "interpreters/python/bin/python.exe"
+		}
+
 	} else {
 		pterm.Warning.Println("无法在你的设备中自动准备Python解释器")
 	}

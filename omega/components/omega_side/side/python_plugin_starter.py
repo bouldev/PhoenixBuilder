@@ -1,3 +1,4 @@
+#coding=utf-8
 import os,sys 
 from collections import defaultdict
 from typing import *
@@ -92,7 +93,7 @@ class Linker(object):
 print("\033[32m正在将插件链接到单一进程中\033[0m")
 linker=Linker("omega_python_plugins")
 linker.scan_all_plugins()
-with open("linked_python_plugin.py","w") as f:
+with open("linked_python_plugin.py","w",encoding="utf-8") as f:
     f.write(linker.dump_code())
     
 import linked_python_plugin
