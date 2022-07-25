@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e -x
 export IPHONEOS_DEPLOYMENT_TARGET=12.0
 if [ $(uname) == "Darwin" ] && [ $(uname -m | grep -E "x86_64|arm64" > /dev/null ; echo ${?}) -eq 0 ]
 then
