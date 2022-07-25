@@ -139,7 +139,7 @@ func (o *OmegaSide) deployPythonRuntime() {
 		if runtime.GOOS == "windows" {
 			o.pythonPath = "interpreters/python/bin/python.exe"
 		}
-
+		os.Chmod(path.Join(o.getWorkingDir(), o.pythonPath), 0755)
 	} else {
 		pterm.Warning.Println("无法在你的设备中自动准备Python解释器")
 	}

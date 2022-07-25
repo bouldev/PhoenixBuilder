@@ -12,7 +12,6 @@ import (
 	"phoenixbuilder/omega/defines"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/pterm/pterm"
 )
@@ -212,7 +211,6 @@ func (o *OmegaSide) Activate() {
 			o.deployPythonRuntime()
 		}
 	}
-	time.Sleep(5)
 	o.SideUp()
 	o.Frame.GetGameListener().SetOnAnyPacketCallBack(func(p packet.Packet) {
 		o.pushController.pushMCPkt(int(p.ID()), p)

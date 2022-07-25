@@ -310,13 +310,11 @@ for runtime_id,item in response.mapping.items():
     itemNetworkID2NameEngDict[int(runtime_id)]=item["name"].replace("minecraft:","")
     
 def simplify_name(name:str):
-    if ">" in name:
-        name.replace(">"," ")
-        name.replace("<"," ")
-    if name != "" :
-        names = [n.strip() for n in name.split(" ")]
-        name = names[len(names)-1]
-    return name
+    try:
+        name = name.replace(">§r", "").split("><")[1]
+        return name
+    except:
+        return name
 
 player_message_dotcs_cbs=[]
 def listen_player_message(cb:Callable[[str,str,str],None]):
