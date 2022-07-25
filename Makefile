@@ -117,16 +117,25 @@ release/:
 	mkdir -p release
 build/:
 	mkdir build
+
+ifeq ($(shell uname | grep -iq 'Linux' && echo 1),1)
+ifeq ($(shell uname -m | grep -iqE "x86_64|amd64" && echo 1),1)
+APPEND_GO_TAGS := use_x86_64_linux_rl
+else
+APPEND_GO_TAGS :=
+endif
+endif
+
 build/phoenixbuilder: build/ ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1  go build -trimpath -ldflags "-s -w" -o $@
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 -tags "${APPEND_GO_TAGS}" go build -trimpath -ldflags "-s -w" -o $@
 build/phoenixbuilder-debug: build/ ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1  go build -o $@
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 -tags "${APPEND_GO_TAGS}" go build -o $@
 build/phoenixbuilder-v8: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CGO_ENABLED=1  go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8
+	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CGO_ENABLED=1 go build -tags "with_v8 ${APPEND_GO_TAGS}" -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8
 build/libexternal_functions_provider.so: build/ io/external_functions_provider/provider.c
 	gcc -shared io/external_functions_provider/provider.c -o build/libexternal_functions_provider.so
 build/phoenixbuilder-static.a: build/ build/libexternal_functions_provider.so ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Lbuild -lexternal_functions_provider" CGO_ENABLED=1  go build -trimpath -buildmode=c-archive -ldflags "-s -w" -tags no_readline,is_tweak -o build/phoenixbuilder-static.a
+	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Lbuild -lexternal_functions_provider" CGO_ENABLED=1 go build -trimpath -buildmode=c-archive -ldflags "-s -w" -tags "no_readline,is_tweak ${APPEND_GO_TAGS}" -o build/phoenixbuilder-static.a
 build/phoenixbuilder-aarch64: build/ ${SRCS_GO}
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -tags use_aarch64_linux_rl -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
 build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}
