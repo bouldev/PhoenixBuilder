@@ -127,9 +127,9 @@ endif
 endif
 
 build/phoenixbuilder: build/ ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 -tags "${APPEND_GO_TAGS}" go build -trimpath -ldflags "-s -w" -o $@
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 go build -tags "${APPEND_GO_TAGS}" -trimpath -ldflags "-s -w" -o $@
 build/phoenixbuilder-debug: build/ ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 -tags "${APPEND_GO_TAGS}" go build -o $@
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 go build -tags "${APPEND_GO_TAGS}" -o $@
 build/phoenixbuilder-v8: build/ ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CGO_ENABLED=1 go build -tags "with_v8 ${APPEND_GO_TAGS}" -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8
 build/libexternal_functions_provider.so: build/ io/external_functions_provider/provider.c
