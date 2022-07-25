@@ -88,3 +88,5 @@ sdks/
 
 plantform_specific_interperters
 dotcs_plugins
+
+*.tar.gz

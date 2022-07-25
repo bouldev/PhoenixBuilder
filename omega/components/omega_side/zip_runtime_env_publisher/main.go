@@ -38,7 +38,22 @@ func GenZip(srcDir string, zipFile string, discardFn func(filePath string, info 
 		fp.Close()
 	}
 }
+func GenHash(zipFile string) {
+	if hashStr, err := utils.GetFileHash(zipFile); err != nil {
+		panic(err)
+	} else {
+		fp, err := os.OpenFile(zipFile+".hash", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		if err != nil {
+			panic(err)
+		}
+		fp.WriteString(hashStr)
+		pterm.Success.Println(zipFile, ": ", hashStr)
+		fp.Close()
+	}
+}
 
+//rsync -avP --delete ./zip_out/* FBOmega:/var/www/omega-storage/omega_compoments_deploy_binary/
+// zip -q -r zip_out/linux_amd64.python.zip ../plantform_specific_python/linux_amd64
 func main() {
 	var outDir = "zip_out"
 	var srcDir = "../side"
@@ -77,42 +92,14 @@ func main() {
 		}
 		return true
 	})
-	PlantformSpecificInterperters := "../plantform_specific_interperters"
-	// python 运行环境 conda create python=3.10 -p path --copy  --no-default-packages
+	// PlantformSpecific := "../plantform_specific"
+	// python 运行环境 conda create python=3.10 -p path--no-default-packages
 	// Linux_amd64 python 运行环境
-	GenZip(path.Join(PlantformSpecificInterperters, "linux_amd64"), path.Join(outDir, "linux_amd64.python.zip"), func(filePath string, info os.FileInfo) (discard bool) {
-		if strings.Contains(filePath, ".DS_Store") {
-			return true
-		} else if strings.Contains(filePath, "python") {
-			return false
-		}
-		return true
-	})
+	GenHash(path.Join(outDir, "linux_amd64.python.tar.gz"))
 	// MacOS_amd64 python 运行环境
-	GenZip(path.Join(PlantformSpecificInterperters, "macos_amd64"), path.Join(outDir, "macos_amd64.python.zip"), func(filePath string, info os.FileInfo) (discard bool) {
-		if strings.Contains(filePath, ".DS_Store") {
-			return true
-		} else if strings.Contains(filePath, "python") {
-			return false
-		}
-		return true
-	})
-	// MacOS_arm64 python 运行环境
-	GenZip(path.Join(PlantformSpecificInterperters, "macos_arm64"), path.Join(outDir, "macos_arm64.python.zip"), func(filePath string, info os.FileInfo) (discard bool) {
-		if strings.Contains(filePath, ".DS_Store") {
-			return true
-		} else if strings.Contains(filePath, "python") {
-			return false
-		}
-		return true
-	})
-	// Windows_amd64 python 运行环境
-	GenZip(path.Join(PlantformSpecificInterperters, "windows_amd64"), path.Join(outDir, "windows_amd64.python.zip"), func(filePath string, info os.FileInfo) (discard bool) {
-		if strings.Contains(filePath, ".DS_Store") {
-			return true
-		} else if strings.Contains(filePath, "python") {
-			return false
-		}
-		return true
-	})
+	GenHash(path.Join(outDir, "macos_amd64.python.tar.gz"))
+	// // MacOS_arm64 python 运行环境
+	GenHash(path.Join(outDir, "macos_arm64.python.tar.gz"))
+	// // Windows_amd64 python 运行环境
+	GenHash(path.Join(outDir, "windows_amd64.python.tar.gz"))
 }

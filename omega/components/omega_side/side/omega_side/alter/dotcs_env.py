@@ -300,8 +300,10 @@ def on_player_logout(player:PlayerInfo):
 api.listen_player_login(cb=None,on_player_login_cb=on_player_login)
 api.listen_player_logout(cb=None,on_player_logout_cb=on_player_logout)
 
-robotname=api.do_send_ws_cmd("testfor @s",cb=None).result.OutputMessages[0].Parameters[0]
-
+try:
+    robotname=api.do_send_ws_cmd("testfor @s",cb=None).result.OutputMessages[0].Parameters[0]
+except Exception as e:
+    print(e)
 response=api.do_get_item_mapping(cb=None)
 for runtime_id,item in response.mapping.items():
     itemNetworkID2NameDict[int(runtime_id)]=item["name"].replace("minecraft:","")

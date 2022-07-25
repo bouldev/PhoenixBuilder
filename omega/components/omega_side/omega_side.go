@@ -5,19 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
-	"net/http"
+	"os"
 	"os/exec"
+	"path"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"strings"
-	"sync"
+	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/pterm/pterm"
 )
 
-type OmegeSideProcessStartCmd struct {
+type OmegaSideProcessStartCmd struct {
 	Name     string            `json:"旁加载功能名"`
 	Cmd      string            `json:"启动指令"`
 	Remapper map[string]string `json:"变更选项"`
@@ -25,200 +24,41 @@ type OmegeSideProcessStartCmd struct {
 
 type OmegaSide struct {
 	*defines.BasicComponent
-	PreferPort     string                     `json:"如果可以则使用这个http端口"`
-	StartUpCmds    []OmegeSideProcessStartCmd `json:"启动旁加载进程的指令"`
-	closeCtx       chan struct{}
-	pushController *pushController
-	fileChange     bool
-	FileName       string `json:"玩家数据文件"`
-	PlayerData     map[string]map[string]interface{}
-}
-
-type pushController struct {
-	side              *OmegaSide
-	subClientCount    int
-	anyPacketWaitor   map[int]*websocket.Conn
-	typedPacketWaitor map[int]map[int]*websocket.Conn
-	regInfoRemapper   map[int]map[int]bool
-	mu                sync.RWMutex
-}
-
-func newPushController(s *OmegaSide) *pushController {
-	p := &pushController{}
-	p.anyPacketWaitor = map[int]*websocket.Conn{}
-	p.typedPacketWaitor = map[int]map[int]*websocket.Conn{}
-	p.regInfoRemapper = map[int]map[int]bool{}
-	p.side = s
-	return p
-}
-
-func (p *pushController) nextSubClientID() int {
-	p.subClientCount++
-	return p.subClientCount
-}
-
-func (p *pushController) deRegTransportor(id int) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if pkts, hasK := p.regInfoRemapper[id]; hasK {
-		for pktID, _ := range pkts {
-			if pktID == 0 {
-				delete(p.anyPacketWaitor, id)
-			} else {
-				delete(p.typedPacketWaitor, id)
-			}
-		}
-	}
-}
-
-func (p *pushController) regPushType(clientID, pktID int, conn *websocket.Conn) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if pktID == 0 {
-		if pkts, hasK := p.regInfoRemapper[clientID]; hasK {
-			// fmt.Println(pkts)
-			for pktID, _ := range pkts {
-				if pktID != 0 {
-					delete(p.typedPacketWaitor[pktID], clientID)
-				}
-			}
-		} else {
-			p.regInfoRemapper[clientID] = map[int]bool{}
-		}
-		p.anyPacketWaitor[clientID] = conn
-		p.regInfoRemapper[clientID] = map[int]bool{0: true}
-	} else {
-		if clients, hasK := p.typedPacketWaitor[pktID]; hasK {
-			clients[clientID] = conn
-		} else {
-			p.typedPacketWaitor[pktID] = map[int]*websocket.Conn{clientID: conn}
-		}
-		if mapper, hasK := p.regInfoRemapper[clientID]; hasK {
-			mapper[pktID] = true
-		} else {
-			p.regInfoRemapper[clientID] = map[int]bool{pktID: true}
-		}
-	}
-}
-
-type omegaSideTransporter struct {
-	side        *OmegaSide
-	controller  *pushController
-	conn        *websocket.Conn
-	subClinetId int
-	funcMapping map[string]func(args map[string]interface{}, writer func(interface{}))
-}
-
-func newTransporter(p *pushController, conn *websocket.Conn) *omegaSideTransporter {
-	clientID := p.nextSubClientID()
-	transporter := omegaSideTransporter{
-		side:        p.side,
-		controller:  p,
-		subClinetId: clientID,
-		conn:        conn,
-	}
-	transporter.initMapping()
-	return &transporter
-}
-
-func (t *omegaSideTransporter) regPkt(pktId int) {
-	t.controller.regPushType(t.subClinetId, pktId, t.conn)
-}
-
-func (t *omegaSideTransporter) response(data []byte, writeFn func(interface{}) error) {
-	msg := &clientMsg{}
-	if err := json.Unmarshal(data, &msg); err != nil {
-		writeFn(serverResp{ID: 0, Violate: true, Data: RespViolatePkt{Err: fmt.Sprintf("cannot decode msg %v", err)}})
-		return
-	}
-	if doFunc, hasK := t.funcMapping[msg.Action]; hasK {
-		defer func() {
-			r := recover()
-			if r != nil {
-				writeFn(serverResp{ID: msg.ID, Violate: true, Data: RespViolatePkt{Err: fmt.Sprintf("%v", r)}})
-			}
-		}()
-		doFunc(msg.Args, wrapWriteFn(msg.ID, writeFn))
-	} else {
-		writeFn(serverResp{ID: msg.ID, Violate: true, Data: RespViolatePkt{Err: fmt.Sprintf("action %v not found", msg.Action)}})
-	}
-}
-
-func (o *OmegaSide) handle(w http.ResponseWriter, r *http.Request) {
-	upgrader := websocket.Upgrader{
-		ReadBufferSize:    4096,
-		WriteBufferSize:   4096,
-		EnableCompression: true,
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		pterm.Error.Println("Omega Side WS Error:", err)
-		return
-	}
-	defer conn.Close()
-	transportor := newTransporter(o.pushController, conn)
-	defer func() {
-		o.pushController.deRegTransportor(transportor.subClinetId)
-	}()
-	for {
-		_, data, err := conn.ReadMessage()
-		if err != nil {
-			if err != io.EOF {
-				pterm.Error.Println("A Omega Side Client Treminated")
-			}
-			return
-		}
-		transportor.response(data, conn.WriteJSON)
-	}
+	PreferPort               string   `json:"如果可以则使用这个http端口"`
+	DebugServerOnly          bool     `json:"只打开用于开发的Websocket端口而不启动任何插件"`
+	EnableOmegaPythonRuntime bool     `json:"使用Omega标准Python插件框架"`
+	EnableDotCSSimulator     bool     `json:"使用DotCS社区版插件运行模拟器"`
+	PossiblePythonExecPath   []string `json:"python解释器搜索路径"`
+	autoDeployPython         bool
+	pythonPath               string
+	StartUpCmds              []OmegaSideProcessStartCmd `json:"启动其他旁加载程序的指令"`
+	closeCtx                 chan struct{}
+	pushController           *pushController
+	fileChange               bool
+	FileName                 string `json:"玩家数据文件"`
+	PlayerData               map[string]map[string]interface{}
 }
 
 func (o *OmegaSide) WaitClose() {
 	<-o.closeCtx
 }
 
-func (o *OmegaSide) getExecDir() string {
+func (o *OmegaSide) getWorkingDir() string {
 	return o.Frame.GetOmegaSideDir()
+}
+func (o *OmegaSide) getCacheDir() string {
+	return path.Join(o.Frame.GetOmegaSideDir(), "cache")
 }
 
 func (o *OmegaSide) OnMCPkt(pktID int, data interface{}) {
 	o.pushController.pushMCPkt(pktID, data)
 }
 
-func (o *OmegaSide) SideUp() {
-	handler := http.NewServeMux()
-	handler.HandleFunc("/omega_side", o.handle)
-	server := http.Server{Handler: handler}
-	ln, err := net.Listen("tcp", o.PreferPort)
-	if err != nil {
-		pterm.Warning.Println("无法使用偏好端口 " + o.PreferPort)
-		ln, err = net.Listen("tcp", "localhost:0")
-		if err != nil {
-			panic("无法打开一个有效端口供 Omega Side 使用")
-		}
-	}
-	addr := ln.Addr().String()
-	pterm.Success.Printfln("成功打开了位于 %v 的端口供 Omega Side 使用", addr)
-	o.closeCtx = make(chan struct{})
-	o.pushController = newPushController(o)
-	go func() {
-		err := server.Serve(ln)
-		if err != nil {
-			pterm.Error.Println("Omega Side 服务端关闭 " + err.Error())
-		}
-		close(o.closeCtx)
-	}()
-	for _, cmd := range o.StartUpCmds {
-		remapper := cmd.Remapper
-		remapper["[addr]"] = addr
-		remapper["[name]"] = cmd.Name
-		o.runCmd(cmd.Name, cmd.Cmd, remapper, o.getExecDir())
-	}
-}
-
 func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[string]string, execDir string) {
+	for k, v := range remapping {
+		cmdStr = strings.ReplaceAll(cmdStr, k, v)
+	}
+
 	cmds := strings.Split(cmdStr, " ")
 	execName := ""
 	args := []string{}
@@ -231,9 +71,6 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 		if i == 1 {
 			execName = frag
 		} else {
-			for k, v := range remapping {
-				frag = strings.ReplaceAll(frag, k, v)
-			}
 			args = append(args, frag)
 		}
 	}
@@ -244,7 +81,15 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 		pterm.Info.Println("启动子进程["+subProcessName+"]: "+cmdStr+" => 标准化为", strings.Join([]string{pterm.Yellow(execName), pterm.Blue(strings.Join(args, " "))}, " "))
 	}
 	cmd := exec.Command(execName, args...)
+	if !path.IsAbs(execDir) {
+		wd, _ := os.Getwd()
+		execDir = path.Join(wd, execDir)
+	}
 	cmd.Dir = execDir
+	// cmd.Env = append(cmd.Env,
+	// 	"PATH="+execDir,
+	// )
+	pterm.Info.Println("工作目录 " + execDir)
 	cmdOut, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)
@@ -275,7 +120,7 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 			if readString == "" {
 				continue
 			}
-			o.Frame.GetBackendDisplay().Write(Info.Sprintln(readString))
+			o.Frame.GetBackendDisplay().Write(Info.Sprint(readString))
 		}
 	}()
 	cmdErr, err := cmd.StderrPipe()
@@ -291,7 +136,7 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 			if readString == "" {
 				continue
 			}
-			o.Frame.GetBackendDisplay().Write(Error.Sprintln(readString))
+			o.Frame.GetBackendDisplay().Write(Error.Sprint(readString))
 		}
 	}()
 	go func() {
@@ -323,6 +168,47 @@ func (o *OmegaSide) Inject(frame defines.MainFrame) {
 }
 
 func (o *OmegaSide) Activate() {
+	o.deployBasicLibrary()
+	if o.EnableOmegaPythonRuntime || o.EnableDotCSSimulator {
+		o.autoDeployPython = true
+	}
+	if o.EnableOmegaPythonRuntime {
+		o.StartUpCmds = append(o.StartUpCmds, OmegaSideProcessStartCmd{
+			Name:     "Python",
+			Cmd:      "[python] python_plugin_starter.py --server ws://[addr]/omega_side",
+			Remapper: map[string]string{},
+		})
+	}
+	if o.EnableDotCSSimulator {
+		o.StartUpCmds = append(o.StartUpCmds, OmegaSideProcessStartCmd{
+			Name:     "DotCS",
+			Cmd:      "[python] dotcs_emulator.py --server ws://[addr]/omega_side",
+			Remapper: map[string]string{},
+		})
+	}
+	if o.autoDeployPython {
+		needDeployPython := true
+		o.PossiblePythonExecPath = append(o.PossiblePythonExecPath, "interpreters/python/bin/python")
+		for _, possiblePath := range o.PossiblePythonExecPath {
+			if !path.IsAbs(possiblePath) {
+				if _, err := os.Stat(path.Join(o.getWorkingDir(), possiblePath)); err == nil {
+					needDeployPython = false
+					o.pythonPath = possiblePath
+					break
+				}
+			} else {
+				if _, err := os.Stat(possiblePath); err == nil {
+					needDeployPython = false
+					o.pythonPath = possiblePath
+					break
+				}
+			}
+		}
+		if needDeployPython {
+			o.deployPythonRuntime()
+		}
+	}
+	time.Sleep(5)
 	o.SideUp()
 	o.Frame.GetGameListener().SetOnAnyPacketCallBack(func(p packet.Packet) {
 		o.pushController.pushMCPkt(int(p.ID()), p)

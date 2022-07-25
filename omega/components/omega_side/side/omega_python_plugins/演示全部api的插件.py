@@ -159,8 +159,8 @@ def plugin(api:API):
         print(update.new_block_simple_define) # {'Name': 'stone', 'Val': 1}
         print(update.new_block_full_define) # {'found': True, 'name': 'minecraft:stone', 'props': {'stone_type': 'granite'}}
         
-    response=api.listen_block_update(cb=None,on_block_update=on_block_update)
-    print(response.ack) #True
+    # response=api.listen_block_update(cb=None,on_block_update=on_block_update)   // 太频繁了，自己解除注释看吧
+    # print(response.ack) #True
     
     # 获得手持物品的 runtime id 到描述的映射
     response=api.do_get_item_mapping(cb=None)
@@ -199,7 +199,7 @@ def plugin(api:API):
     def repeat_exec_func(msg1,msg2,msg3):
         print("这个函数又被执行了，"+msg1+" "+msg2+" "+msg3)
     # 在独立的线程中循环执行
-    api.execute_with_repeat(repeat_exec_func,"啊吧","啊吧吧","啊吧吧吧",repeat_time=2)
+    api.execute_with_repeat(repeat_exec_func,"啊吧","啊吧吧","啊吧吧吧",repeat_time=5)
     
     # 向群服互通的群发送一条消息
     response=api.do_send_qq_msg(msg=f"hello from omega python plugin",cb=None)

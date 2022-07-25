@@ -351,17 +351,3 @@ func (t *omegaSideTransporter) initMapping() {
 		},
 	}
 }
-
-func (p *pushController) pushMCPkt(pktID int, data interface{}) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
-	name := utils.PktIDInvMapping[pktID]
-	if waitors, hasK := p.typedPacketWaitor[pktID]; hasK {
-		for _, w := range waitors {
-			w.WriteJSON(ServerPush{ID0: 0, Type: "mcPkt", SubType: name, Data: data})
-		}
-	}
-	for _, w := range p.anyPacketWaitor {
-		w.WriteJSON(ServerPush{ID0: 0, Type: "mcPkt", SubType: name, Data: data})
-	}
-}

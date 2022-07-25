@@ -1,12 +1,13 @@
-import os,sys 
-from collections import defaultdict
-from typing import *
-import time 
-
 # Omega DotCS Emulator By 2401PT
 # Omega DotCS Emulator 是为了在 Omega 中高效运行 DotCS 社区版 插件的代码连接器和框架
 print("\033[32m正在启动 Omega DotCS Emulator By 2401PT\033[0m")
 print("\033[32mOmega DotCS Emulator 是用于在 Omega 中高效运行 DotCS 社区版插件的代码连接器和框架\033[0m")
+
+
+import os,sys 
+from collections import defaultdict
+from typing import *
+import time 
 
 start_time=time.time()
 class PluginCode(object):

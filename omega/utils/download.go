@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cheggaaa/pb"
@@ -139,5 +140,9 @@ func (o *SimpleDeployer) Deploy() (err error) {
 		sourceFileData = cacheFileData
 	}
 	reader := bytes.NewReader(sourceFileData)
-	return UnZip(reader, reader.Size(), o.TargetDeployDir)
+	if strings.HasSuffix(o.SourceFileURL, ".zip") {
+		return UnZip(reader, reader.Size(), o.TargetDeployDir)
+	} else {
+		return GZIPDecompress(bytes.NewReader(sourceFileData), o.TargetDeployDir)
+	}
 }
