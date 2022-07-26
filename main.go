@@ -665,28 +665,11 @@ func runClient(env *environment.PBEnvironment) {
 				})
 			}
 		case *packet.SubChunk:
-			//fmt.Printf("CHK\n")
-			//if(p.RequestResult!=packet.SubChunkRequestResultSuccess) {
-			//	fmt.Printf("SubChunk FAIL: %d\n", p.RequestResult)
-			//	break
-			//}
 			chunkData := chunkAssembler.OnNewSubChunk(p)
 			if chunkData != nil {
-				// fmt.Println("new chunk")
 				env.ChunkFeeder.(*global.ChunkFeeder).OnNewChunk(chunkData)
 				env.LRUMemoryChunkCacher.(*lru.LRUMemoryChunkCacher).Write(chunkData)
-				// if env.OmegaAdaptorHolder != nil {
-				// 	fmt.Println("new chunk")
-				// 	env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedChunkData(chunkData)
-				// 	continue
-				// }
 			}
-		// chunk := currentChunkConstructor.SubChunkArrived(p.Data, p.SubChunkX, p.SubChunkY, p.SubChunkZ)
-		// chunk==nil means that the chunk has not been constructed yet
-		// if chunk != nil {
-		// world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
-		// world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.SubChunkX, p.SubChunkZ}, chunk)
-		// }
 		case *packet.NetworkChunkPublisherUpdate:
 			// pterm.Info.Println("packet.NetworkChunkPublisherUpdate", p)
 			// missHash := []uint64{}
@@ -715,20 +698,6 @@ func runClient(env *environment.PBEnvironment) {
 				requests := chunkAssembler.GenRequestFromLevelChunk(p)
 				chunkAssembler.ScheduleRequest(requests)
 			}
-
-			// if args.ShouldEnableOmegaSystem() {
-			// 	global.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
-			// }
-			// currentChunkConstructor.BeginConstruction(p)
-			// //world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
-			// //world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
-			// // It seems that LevelChunk no longer returns full chunk data now.
-			// for i:=-4;i<=19;i++ {
-			// 	conn.WritePacket(&packet.SubChunkRequest {
-			// 		Dimension: 0,
-			// 		Position: protocol.SubChunkPos{p.Position[0],int32(i),p.Position[1]},
-			// 	})
-			// }
 		case *packet.UpdateBlock:
 			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
 			if h {
