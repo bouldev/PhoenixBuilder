@@ -1703,7 +1703,7 @@
         "使用DotCS社区版插件运行模拟器":true,
         "python解释器搜索路径":[
             "interpreters/python/bin/python",
-            "data/data/com.termux/files/usr/bin/python"
+            "/data/data/com.termux/files/usr/bin/python"
         ],
         "启动其他旁加载程序的指令": [
         ],
