@@ -304,9 +304,9 @@ func (g *GameCtrl) SayTo(target string, line string) {
 	}
 	content := ToJsonRawString(line)
 	if strings.HasPrefix(target, "@") {
-		g.SendCmd(fmt.Sprintf("tellraw %v %v", target, content))
+		g.SendWOCmd(fmt.Sprintf("tellraw %v %v", target, content))
 	} else {
-		g.SendCmd(fmt.Sprintf("tellraw \"%v\" %v", target, content))
+		g.SendWOCmd(fmt.Sprintf("tellraw \"%v\" %v", target, content))
 	}
 
 }
@@ -314,9 +314,9 @@ func (g *GameCtrl) SayTo(target string, line string) {
 func (g *GameCtrl) ActionBarTo(target string, line string) {
 	content := ToJsonRawString(line)
 	if strings.HasPrefix(target, "@") {
-		g.SendCmd(fmt.Sprintf("titleraw %v actionbar %v", target, content))
+		g.SendWOCmd(fmt.Sprintf("titleraw %v actionbar %v", target, content))
 	} else {
-		g.SendCmd(fmt.Sprintf("titleraw \"%v\" actionbar %v", target, content))
+		g.SendWOCmd(fmt.Sprintf("titleraw \"%v\" actionbar %v", target, content))
 	}
 
 }

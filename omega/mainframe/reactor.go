@@ -300,7 +300,7 @@ func (o *Reactor) onBootstrap() {
 	o.chunkAssembler = assembler.NewAssembler()
 	o.chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		o.o.adaptor.Write(pk)
-	}, time.Second/15, time.Minute*5)
+	}, time.Second/5, time.Minute*5)
 	memoryProvider := lru.NewLRUMemoryChunkCacher(8)
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)
