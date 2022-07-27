@@ -1,4 +1,4 @@
-#coding=utf-8
+# -*- coding: UTF-8 -*-
 import os,sys 
 from collections import defaultdict
 from typing import *
@@ -94,6 +94,8 @@ print("\033[32m正在将插件链接到单一进程中\033[0m")
 linker=Linker("omega_python_plugins")
 linker.scan_all_plugins()
 with open("linked_python_plugin.py","w",encoding="utf-8") as f:
+    f.write("# -*- coding: UTF-8 -*-\n")
+    f.write("orig_print=print\ndef alter_print(*args,**kwargs):\n\tkwargs['flush']=True\n\torig_print(*args,**kwargs)\nprint=orig_print\n")
     f.write(linker.dump_code())
     
 import linked_python_plugin

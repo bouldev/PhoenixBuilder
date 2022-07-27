@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/pterm/pterm"
+	"golang.org/x/text/encoding/simplifiedchinese"
 )
 
 type OmegaSideProcessStartCmd struct {
@@ -120,6 +121,13 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 				return
 			}
 			readString = strings.Trim(readString, "\n")
+			if runtime.GOOS == "windows" {
+				// gbk, _ := simplifiedchinese.GBK.NewEncoder().Bytes([]byte(readString))
+				readString, err = simplifiedchinese.GBK.NewDecoder().String(readString)
+				if err != nil {
+					pterm.Warning.Println(err)
+				}
+			}
 			if readString == "" {
 				continue
 			}
@@ -134,6 +142,13 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 			if err != nil || err == io.EOF {
 				Error.Println("已退出")
 				return
+			}
+			if runtime.GOOS == "windows" {
+				// gbk, _ := simplifiedchinese.GBK.NewEncoder().Bytes([]byte(readString))
+				readString, err = simplifiedchinese.GBK.NewDecoder().String(readString)
+				if err != nil {
+					pterm.Warning.Println(err)
+				}
 			}
 			readString = strings.Trim(readString, "\n")
 			if readString == "" {

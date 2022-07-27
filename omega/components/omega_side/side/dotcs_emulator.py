@@ -1,4 +1,4 @@
-#coding=utf-8
+# -*- coding: UTF-8 -*-
 # Omega DotCS Emulator By 2401PT
 # Omega DotCS Emulator 是为了在 Omega 中高效运行 DotCS 社区版 插件的代码连接器和框架
 print("\033[32m正在启动 Omega DotCS Emulator By 2401PT\033[0m")
@@ -182,6 +182,8 @@ for file_name in os.listdir(dotcs_plugins_dir):
         linker.add_dotcs_python_file(f.readlines(),file_name=file_name)
 linked_code=linker.generate_linked_code()
 with open("linked_dotcs_plugin.py","w",encoding="utf-8") as f:
+    f.write("# -*- coding: UTF-8 -*-\n")
+    f.write("orig_print=print\ndef alter_print(*args,**kwargs):\n\tkwargs['flush']=True\n\torig_print(*args,**kwargs)\nprint=orig_print\n")
     f.write(linked_code)
 print("\033[32m"+"开始启动 DotCS 社区版插件 ( DotCS 社区版作者为 7912)\033[0m")
 import linked_dotcs_plugin

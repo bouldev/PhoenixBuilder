@@ -11,6 +11,12 @@ from ..python3_omega_sync import API
 from ..python3_omega_sync import frame as omega
 from ..python3_omega_sync import bootstrap
 
+orig_print=print
+def alter_print(*args,**kwargs):
+    kwargs["flush"]=True
+    orig_print(*args,**kwargs)
+print=orig_print
+
 def color(text: str, output: bool = True, end: str = "\n", replace: bool = False, replaceByNext: bool = False) -> str:
     # 所有在omega 环境下print 出来的东西会自动变颜色，且会自动转为日志，所以这两个函数并没有什么意义
     if output:
