@@ -65,7 +65,7 @@ func main() {
 	pterm.Println(pterm.Yellow(I18n.T(I18n.Copyright_Notice_Bouldev)))
 	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
 
-	if !args.NoReadline() {
+	if !args.NoReadline()&&!args.ShouldEnableOmegaSystem() {
 		readline.InitReadline()
 	}
 

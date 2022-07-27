@@ -64,7 +64,7 @@ void print_help(const char *self_name) {
 	printf("\t--pack-scripts-to <path>: Specify the path for the output script package.\n");
 	printf("\t-N, --gamename <name>: Specify the game name to use interactive commands (e.g. get), instead of using the server provided one.\n");
 	printf("\t--ingame-response: Turn on the feature to listen to commands or give output in game.\n");
-	printf("\t--del-userdata: Remove user data and exit.");
+	printf("\t--del-userdata: Remove user data and exit.\n");
 	printf("\n");
 	printf("\t-O, --omega_system: Enable Omega System.\n");
 	printf("\n");
