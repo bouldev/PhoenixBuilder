@@ -44,6 +44,9 @@ func (o *Schedule) Init(cfg *defines.ComponentConfig) {
 	if o.actions, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"动作"}); err != nil {
 		panic(err)
 	}
+	if o.Duration < 0.05 {
+		panic(fmt.Sprintf("计划任务中存在周期小于 0.05 的项目: %v", o.Duration))
+	}
 }
 
 func (o *Schedule) Inject(frame defines.MainFrame) {
@@ -190,7 +193,10 @@ func (o *Schedule) Activate() {
 			o.doTick()
 		}()
 	} else {
-		time.Sleep(time.Duration(rand.Intn(int(time.Duration(o.Duration * float32(time.Second))))))
+		maxRandomSleepDelay := int(o.Duration * float32(time.Second))
+		if maxRandomSleepDelay > int(float32(time.Millisecond)) {
+			time.Sleep(time.Duration(rand.Intn(maxRandomSleepDelay)))
+		}
 		o.doTick()
 	}
 }
