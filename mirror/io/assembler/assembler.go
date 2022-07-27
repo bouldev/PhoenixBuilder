@@ -69,7 +69,7 @@ func (o *Assembler) AddPendingTask(pk *packet.LevelChunk) (exist bool) {
 	o.pendingTasks[cp] = &mirror.ChunkData{
 		Chunk:     chunk,
 		BlockNbts: make(map[define.CubePos]map[string]interface{}),
-		TimeStamp: time.Now().Unix(),
+		SyncTime:  time.Now().Unix(),
 		ChunkPos:  cp,
 	}
 	o.taskMu.Unlock()
@@ -119,7 +119,7 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 			}
 		}
 		// fmt.Printf("pending %v\n", len(o.pendingTasks))
-		chunkData.TimeStamp = time.Now().Unix()
+		chunkData.SyncTime = time.Now().Unix()
 		//emptySubChunkCounter:=0
 		for _, subChunk := range subs {
 			if subChunk.Invalid() {
