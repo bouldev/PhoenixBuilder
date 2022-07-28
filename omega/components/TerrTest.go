@@ -196,6 +196,9 @@ func (b *TerritoryTest) giveMember(name string) {
 func (b *TerritoryTest) protect() {
 	for {
 		time.Sleep(time.Duration(b.DelayTime) * time.Millisecond)
+		if len(b.Data) == 0 {
+			time.Sleep(time.Second * 3)
+		}
 		if len(b.Data) >= 1 {
 			for _k, _v := range b.Data {
 				k, v := _k, _v

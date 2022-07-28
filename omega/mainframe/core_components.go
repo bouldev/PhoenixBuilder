@@ -3,11 +3,13 @@ package mainframe
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -230,6 +232,32 @@ func (o *NoSQLDBUtil) Inject(frame defines.MainFrame) {
 	//})
 }
 
+type PerformaceAnalysis struct {
+	*BaseCoreComponent
+	startSuccess bool
+	pprofFp      *os.File
+}
+
+func (o *PerformaceAnalysis) Inject(frame defines.MainFrame) {
+	o.mainFrame = frame
+	pprofFp, err := os.OpenFile(o.omega.GetPath("cpu.prof"), os.O_RDWR|os.O_CREATE, 0644)
+	o.pprofFp = pprofFp
+	if err == nil {
+		if err := pprof.StartCPUProfile(pprofFp); err == nil {
+			o.startSuccess = true
+		}
+	}
+}
+
+func (o *PerformaceAnalysis) Stop() error {
+	if o.startSuccess {
+		fmt.Println("正在保存性能分析文件")
+		pprof.StopCPUProfile()
+		o.pprofFp.Close()
+	}
+	return nil
+}
+
 type NameRecord struct {
 	*BaseCoreComponent
 	Records           map[string]*collaborate.TYPE_NameEntry
@@ -394,7 +422,6 @@ func (o *KeepAlive) Activate() {
 			}
 		}
 	}()
-
 }
 
 func getCoreComponentsPool() map[string]func() defines.CoreComponent {
@@ -404,5 +431,6 @@ func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 		"数据库导入导出工具": func() defines.CoreComponent { return &NoSQLDBUtil{&BaseCoreComponent{}} },
 		"改名记录":      func() defines.CoreComponent { return &NameRecord{BaseCoreComponent: &BaseCoreComponent{}} },
 		"假死检测":      func() defines.CoreComponent { return &KeepAlive{BaseCoreComponent: &BaseCoreComponent{}} },
+		"性能分析":      func() defines.CoreComponent { return &PerformaceAnalysis{BaseCoreComponent: &BaseCoreComponent{}} },
 	}
 }
