@@ -349,5 +349,29 @@ func (t *omegaSideTransporter) initMapping() {
 				"ack": true,
 			})
 		},
+		"data.get_root_dir": func(args map[string]interface{}, writer func(interface{})) {
+			writer(map[string]interface{}{
+				"side":  t.side.getWorkingDir(),
+				"omega": t.side.Frame.GetStorageRoot(),
+			})
+		},
+		"data.list_dir": func(args map[string]interface{}, writer func(interface{})) {
+			// dir := args["dir"].(string)
+			// mode := "side"
+			// if _mode, hasK := args["mode"]; hasK {
+			// 	mode = _mode.(string)
+			// }
+			// if mode == "omega" {
+			// 	dir = path.Join(t.side.Frame.GetStorageRoot(), dir)
+			// } else {
+			// 	dir = path.Join(t.side.getWorkingDir(), dir)
+			// } else {
+			// 	writer(map[string]interface{}{
+			// 		"side":  t.side.getWorkingDir(),
+			// 		"omega": t.side.Frame.GetStorageRoot(),
+			// 	})
+			// }
+			// ioutil.ReadDir(dir)
+		},
 	}
 }

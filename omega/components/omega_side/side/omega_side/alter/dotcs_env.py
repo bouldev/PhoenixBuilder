@@ -467,3 +467,5 @@ def repeat_exec(cb:Callable,repeat_time):
 
 def listen_packet(cb:Callable[[dict],None],packet_id):
     api.listen_mc_packet(pkt_type=packet_id,cb=None,on_new_packet_cb=cb)
+
+install_lib=bootstrap.install_lib
