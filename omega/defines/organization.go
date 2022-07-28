@@ -96,6 +96,7 @@ type StorageAndLogProvider interface {
 	GetRelativeFileName(topic string) string
 	GetFileData(topic string) ([]byte, error)
 	GetJsonData(topic string, data interface{}) error
+	GetStorageRoot() string
 	GetWorldsDir() string
 	GetOmegaSideDir() string
 	WriteFileData(topic string, data []byte) error

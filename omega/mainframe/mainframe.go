@@ -100,6 +100,10 @@ func (o *Omega) GetPath(elem ...string) string {
 	return path.Join(o.storageRoot, path.Join(elem...))
 }
 
+func (o *Omega) GetStorageRoot() string {
+	return o.storageRoot
+}
+
 func (o *Omega) GetRelativeFileName(topic string) string {
 	return o.GetPath("data", topic)
 }

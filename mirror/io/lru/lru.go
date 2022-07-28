@@ -37,9 +37,11 @@ func (o *LRUMemoryChunkCacher) Get(pos define.ChunkPos) (data *mirror.ChunkData)
 		return nil
 	} else {
 		cd := o.FallBackProvider.Get(pos)
-		o.memoryChunks[pos] = cd
-		o.cacheMap[pos] = time.Now()
-		o.checkCacheSizeAndHandleFallBackNoLock()
+		if cd != nil {
+			o.memoryChunks[pos] = cd
+			o.cacheMap[pos] = time.Now()
+			o.checkCacheSizeAndHandleFallBackNoLock()
+		}
 		return cd
 	}
 }
