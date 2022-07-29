@@ -148,7 +148,7 @@ func (o *OmegaSide) handle(w http.ResponseWriter, r *http.Request) {
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		pterm.Error.Println("Omega Side WS Error:", err)
+		pterm.Error.Println("Omega side WS error:", err)
 		return
 	}
 	defer conn.Close()
@@ -160,7 +160,7 @@ func (o *OmegaSide) handle(w http.ResponseWriter, r *http.Request) {
 		_, data, err := conn.ReadMessage()
 		if err != nil {
 			if err != io.EOF {
-				pterm.Error.Println("A Omega Side Client Treminated")
+				pterm.Error.Println("An omega side client terminated")
 			}
 			return
 		}
