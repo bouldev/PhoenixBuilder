@@ -1,3 +1,5 @@
+// +build old__do_not_add_this_tag_
+
 package builder
 
 import (
@@ -10,33 +12,7 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 )
 
-/*
-#cgo LDFLAGS: -lz
-#include <stdint.h>
-extern unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char *path, int64_t beginX, int64_t beginY, int64_t beginZ);
-*/
-import "C"
-
-var lastChannelID uint=0
-var channelMap map[uint]chan *types.Module=map[uint]chan *types.Module{}
-
-//export builder_schematic_channel_input
-func builder_schematic_channel_input(channelID uint32, x int64, y int64, z int64, id uint8, data uint8) {
-	var b types.Block
-	b.Name = &BlockStr[int(id)]
-	b.Data = uint16(data)
-	blc:=channelMap[uint(channelID)]
-	blc <- &types.Module{Point: types.Position{int(x),int(y),int(z)}, Block: &b}
-}
-
 func Schematic(config *types.MainConfig, blc chan *types.Module) error {
-	channelMap[lastChannelID]=blc
-	gotChannelID:=lastChannelID
-	lastChannelID++
-	retval:=C.builder_schematic_process_schematic_file(C.uint(gotChannelID), C.CString(config.Path), C.long(config.Position.X), C.long(config.Position.Y), C.long(config.Position.Z))
-	delete(channelMap, gotChannelID)
-	fmt.Printf("RET %d\n",retval)
-	return nil
 	file, err:=bridge_path.ReadFile(config.Path)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
@@ -47,7 +23,6 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 		return err
 	}
 	defer gzip.Close()
-	
 	buffer, err := ioutil.ReadAll(gzip)
 
 	var SchematicModule struct {
