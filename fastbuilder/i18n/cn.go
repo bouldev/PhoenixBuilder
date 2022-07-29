@@ -15,6 +15,7 @@ var I18nDict_cn map[uint16]string = map[uint16]string{
 	Auth_ServerNotFound: "租赁服未找到，请检查租赁服是否对所有人开放。",
 	Auth_UnauthorizedRentalServerNumber: "对应租赁服号尚未授权，请前往用户中心进行授权。",
 	Auth_UserCombined: "该用户已经合并到另一个账户中，请使用新账户登录。",
+	Auth_FailedToRequestEntry_TryAgain: "未能请求租赁服入口，请稍后再试。",
 	BDump_Author: "作者",
 	BDump_EarlyEOFRightWhenOpening: "未能读取文件，因为文件过早结束，可能已经损坏。",
 	BDump_FailedToReadAuthorInfo: "未能读取作者信息，文件可能已损坏",

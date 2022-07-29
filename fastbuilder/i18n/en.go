@@ -15,6 +15,7 @@ var I18nDict_en map[uint16]string = map[uint16]string{
 	Auth_ServerNotFound: "Server not found, please check your server's public state",
 	Auth_UnauthorizedRentalServerNumber: "Unauthorized rental server number, please add it on your FastBuilder User Center.",
 	Auth_UserCombined: "Given user has been combined to another account, please login using another account's information.",
+	Auth_FailedToRequestEntry_TryAgain: "Failed to request server entry, please try again later.",
 	BDump_Author: "Author",
 	BDump_EarlyEOFRightWhenOpening: "Failed to read file, early EOF? File may be corrupted",
 	BDump_FailedToReadAuthorInfo: "Failed to read author info, file may be corrupted",

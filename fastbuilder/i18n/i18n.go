@@ -16,22 +16,26 @@ const (
 
 var SelectedLanguage = LanguageEnglish
 
+// !! IMPORTANT !! Please DO NOT change the order of items w/ prefix Auth_ !
+// New items can be added anywhere AFTER Auth_ items !
+
 const (
 	Special_Startup = iota
 	ACME_FailedToGetCommand
 	ACME_FailedToSeek
 	ACME_StructureErrorNotice
 	ACME_UnknownCommand
-	Auth_BackendError //5
+	Auth_BackendError // 5
 	Auth_FailedToRequestEntry // 6
-	Auth_HelperNotCreated //7
-	Auth_InvalidFBVersion //8
+	Auth_HelperNotCreated // 7
+	Auth_InvalidFBVersion // 8
 	Auth_InvalidHelperUsername // 9
-	Auth_InvalidToken //10
-	Auth_InvalidUser //11
+	Auth_InvalidToken // 10
+	Auth_InvalidUser // 11
 	Auth_ServerNotFound // 12
-	Auth_UnauthorizedRentalServerNumber //13
-	Auth_UserCombined //14
+	Auth_UnauthorizedRentalServerNumber // 13
+	Auth_UserCombined // 14
+	Auth_FailedToRequestEntry_TryAgain // 15
 	BDump_Author
 	BDump_EarlyEOFRightWhenOpening
 	BDump_FailedToReadAuthorInfo
