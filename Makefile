@@ -52,6 +52,9 @@ endif
 ifneq ($(wildcard ${HOME}/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64),)
 	TARGETS:=${TARGETS} openwrt-ipq40xx-generic-armv7
 endif
+ifneq ($(wildcard ${HOME}/openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64),)
+	TARGETS:=${TARGETS} openwrt-mt7622-arm64
+endif
 ifneq ($(wildcard ${HOME}/llvm),)
 	TARGETS:=${TARGETS} netbsd-executable freebsd-executable openbsd-executable
 	# Do other BSDs later
