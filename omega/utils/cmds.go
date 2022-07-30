@@ -145,7 +145,7 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 				conditional = true
 			}
 		}
-		cmd := FormatByReplacingOccurrences(a.Cmd, remapping)
+		cmd := "execute @s ~ ~ ~ "+FormatByReplacingOccurrences(a.Cmd, remapping)
 		matches := scoreTester.FindAllString(cmd, -1)
 		if len(matches) > 0 {
 			pairs := splitScoreFetchGroup(scoreboardFetchTarget, matches)
