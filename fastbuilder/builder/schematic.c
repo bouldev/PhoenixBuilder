@@ -138,6 +138,103 @@ static int seekToNextTag(const char *name, unsigned char type, gzFile file, int 
 	return seekToNextTag(name, type, file, origin);
 }
 
+static int readRequiredTags(gzFile file, int origin, unsigned short **storage, unsigned int nokoru) {
+	if(nokoru==EOF) {
+		nokoru=6;
+	}else if(nokoru==0) {
+		return 0;
+	}
+	if(origin==EOF) {
+		origin=gztell(file);
+	}else if(origin==gztell(file)) {
+		if(nokoru==3) {
+			**(storage+3)=0;
+			**(storage+4)=0;
+			**(storage+5)=0;
+			return 0;
+		}
+		return ERR_INVALID_SCHEMATIC_FILE;
+	}
+	if(gztell(file)==0) {
+		if(gzgetc(file)!=10) {
+			return ERR_INVALID_SCHEMATIC_FILE;
+		}
+		goIgnoreTagName(file);
+	}
+	int currentTag=gzgetc(file);
+	printf("[R] TAG %d\n",currentTag);
+	if(currentTag==0) {
+		gzseek(file, 0, SEEK_SET);
+		return readRequiredTags(file, origin, storage, nokoru);
+	}
+	if(currentTag!=2) {
+		goIgnoreTagName(file);
+		int err=goIgnoreTagWithType(file, currentTag);
+		if(err!=0) {
+			return err;
+		}
+		return readRequiredTags(file, origin, storage, nokoru);
+	}
+	uint16_t strLen;
+	gzread(file, &strLen, 2);
+	strLen=htons(strLen);
+	if(strLen!=9&&strLen!=6&&strLen!=5) {
+		gzseek(file, strLen, SEEK_CUR);
+		int err=goIgnoreTagWithType(file, currentTag);
+		if(err!=0) {
+			return err;
+		}
+		return readRequiredTags(file, origin, storage, nokoru);
+	}
+	char *currentTagName=malloc(strLen);
+	gzread(file, currentTagName, strLen);
+	if(strLen==9) {
+		if(memcmp(currentTagName, "WEOffsetX", strLen)==0) {
+			free(currentTagName);
+			gzread(file, *(storage+3), 2);
+			**(storage+3)=htons(**(storage+3));
+			return readRequiredTags(file, origin, storage, nokoru-1);
+		}else if(memcmp(currentTagName, "WEOffsetY", strLen)==0) {
+			free(currentTagName);
+			gzread(file, *(storage+4), 2);
+			**(storage+4)=htons(**(storage+4));
+			return readRequiredTags(file, origin, storage, nokoru-1);
+		}else if(memcmp(currentTagName, "WEOffsetZ", strLen)==0) {
+			free(currentTagName);
+			gzread(file, *(storage+5), 2);
+			**(storage+5)=htons(**(storage+5));
+			return readRequiredTags(file, origin, storage, nokoru-1);
+		}
+	}else if(strLen==6) {
+		if(memcmp(currentTagName, "Length", strLen)==0) {
+			free(currentTagName);
+			gzread(file, *(storage+1), 2);
+			**(storage+1)=htons(**(storage+1));
+			return readRequiredTags(file, origin, storage, nokoru-1);
+		}else if(memcmp(currentTagName, "Height", strLen)==0) {
+			free(currentTagName);
+			gzread(file, *(storage+2), 2);
+			**(storage+2)=htons(**(storage+2));
+			return readRequiredTags(file, origin, storage, nokoru-1);
+		}
+	}else{
+		if(memcmp(currentTagName, "Width", strLen)==0) {
+			free(currentTagName);
+			gzread(file, *storage, 2);
+			**storage=htons(**storage);
+			return readRequiredTags(file, origin, storage, nokoru-1);
+		}
+	}
+	free(currentTagName);
+	{
+		int err=goIgnoreTagWithType(file, currentTag);
+		if(err!=0) {
+			return err;
+		}
+	}
+	return readRequiredTags(file, origin, storage, nokoru);
+}
+
 extern void builder_schematic_channel_input(uint32_t channelID, int64_t x, int64_t y, int64_t z, unsigned char id, unsigned char data);
 
 unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char *path, int64_t beginX, int64_t beginY, int64_t beginZ) {
@@ -155,56 +252,15 @@ unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char 
 	uint16_t offset_x;
 	uint16_t offset_y;
 	uint16_t offset_z;
-	int err=seekToNextTag("Width", 2, file, EOF);
-	if(err) {
-		gzclose(file);
-		gzclose(data_file);
-		return err;
-	}
-	gzread(file, &width, 2);
-	err=seekToNextTag("Length", 2, file, EOF);
-	if(err) {
-		gzclose(file);
-		gzclose(data_file);
-		return err;
-	}
-	gzread(file, &length, 2);
-	err=seekToNextTag("Height", 2, file, EOF);
-	if(err) {
-		gzclose(file);
-		gzclose(data_file);
-		return err;
-	}
-	gzread(file, &height, 2);
-	width=htons(width);
-	length=htons(length);
-	height=htons(height);
-	err=seekToNextTag("WEOffsetX", 2, file, EOF);
-	if(!err) {
-		gzread(file, &offset_x, 2);
-		err=seekToNextTag("WEOffsetY", 2, file, EOF);
-		if(err) {
-			gzclose(file);
-			gzclose(data_file);
-			return ERR_INVALID_SCHEMATIC_FILE;
-		}
-		gzread(file, &offset_y, 2);
-		err=seekToNextTag("WEOffsetZ", 2, file, EOF);
-		if(err) {
-			gzclose(file);
-			gzclose(data_file);
-			return ERR_INVALID_SCHEMATIC_FILE;
-		}
-		gzread(file, &offset_z, 2);
-		offset_x=htons(offset_x);
-		offset_y=htons(offset_y);
-		offset_z=htons(offset_z);
-	}else{
-		printf("TRACE >> No WEOffset*\n");
-		offset_x=0;
-		offset_y=0;
-		offset_z=0;
-	}
+	unsigned short *storage[6]={
+		&width,
+		&length,
+		&height,
+		&offset_x,
+		&offset_y,
+		&offset_z
+	};
+	int err=readRequiredTags(file, EOF, storage, EOF);
 	printf("Width: %d\nLength: %d\nHeight: %d\n\nOffsetX: %d\nOffsetY: %d\nOffsetZ: %d\n",
 		width,length,height,offset_x,offset_y,offset_z);
 	err=seekToNextTag("Blocks", 7, file, EOF);
