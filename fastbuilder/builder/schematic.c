@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <zlib.h>
+#ifndef WIN32
 #include <arpa/inet.h>
+#else
+#include <winsock.h>
+#endif
 #include <string.h>
 #include <errno.h>
 
@@ -286,7 +290,6 @@ unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char 
 			for(unsigned int x=0;x<width;x++) {
 				int currentBlock=gzgetc(file);
 				if(currentBlock==EOF) {
-					printf("H %s\n",gzerror(data_file, &i));
 					gzclose(file);
 					gzclose(data_file);
 					return ERR_INVALID_SCHEMATIC_FILE;

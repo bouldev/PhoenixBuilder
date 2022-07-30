@@ -11,7 +11,11 @@ import (
 )
 
 /*
-#cgo LDFLAGS: -lz
+#cgo !windows LDFLAGS: -lz
+#cgo windows CFLAGS: -I${SRCDIR}/../../depends/zlib-1.2.12
+#cgo windows LDFLAGS: -L${SRCDIR}/../../depends/zlib-1.2.12/prebuilt
+#cgo windows,amd64 LDFLAGS: -lz-x86_64-windows -lws2_32
+#cgo windows,386 LDFLAGS: -lz-i686-windows -lws2_32
 #include <stdint.h>
 extern unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char *path, int64_t beginX, int64_t beginY, int64_t beginZ);
 */
@@ -33,7 +37,7 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 	channelMap[lastChannelID]=blc
 	gotChannelID:=lastChannelID
 	lastChannelID++
-	retval:=C.builder_schematic_process_schematic_file(C.uint(gotChannelID), C.CString(config.Path), C.long(config.Position.X), C.long(config.Position.Y), C.long(config.Position.Z))
+	retval:=C.builder_schematic_process_schematic_file(C.uint32_t(gotChannelID), C.CString(config.Path), C.int64_t(config.Position.X), C.int64_t(config.Position.Y), C.int64_t(config.Position.Z))
 	delete(channelMap, gotChannelID)
 	fmt.Printf("RET %d\n",retval)
 	return nil
