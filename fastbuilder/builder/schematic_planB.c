@@ -1,3 +1,5 @@
+// +build do_not_add_this_tag_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -308,9 +310,10 @@ unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char 
 	unsigned int realZ=0;
 	unsigned int realX=0;
 	for(unsigned int baseX=0;baseX<=width/16;baseX+=16) {
-		for(unsigned int y=0;y<height;y++) {
-			realX=baseX;
-			for(unsigned int chunkZ=0;chunkZ<chunksLength;chunkZ++) {
+		realX=baseX;
+		for(unsigned int chunkZ=0;chunkZ<chunksLength;chunkZ++) {
+			realZ=chunkZ*16;
+			for(unsigned int y=0;y<height;y++) {
 				for(unsigned int cz=0;cz<16;cz++) {
 					if(realZ>=length)break;
 					if(chunkZ!=0) {
@@ -339,8 +342,8 @@ unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char 
 					realZ++;
 					realX=baseX;
 				}
+				realZ=chunkZ*16;
 			}
-			realZ=0;
 		}
 	}
 	for(int i=0;i<16;i++) {
