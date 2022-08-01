@@ -11,11 +11,24 @@ import (
 )
 
 /*
-#cgo !windows LDFLAGS: -lz
+#cgo !windows,!darwin,!ios,!netbsd,!openbsd,!freebsd,!ish LDFLAGS: -lz
 #cgo windows CFLAGS: -I${SRCDIR}/../../depends/zlib-1.2.12
-#cgo windows LDFLAGS: -L${SRCDIR}/../../depends/zlib-1.2.12/prebuilt
+#cgo LDFLAGS: -L${SRCDIR}/../../depends/zlib-1.2.12/prebuilt
 #cgo windows,amd64 LDFLAGS: -lz-x86_64-windows -lws2_32
 #cgo windows,386 LDFLAGS: -lz-i686-windows -lws2_32
+#cgo darwin,!ios,amd64 LDFLAGS: -lz-x86_64-macos
+#cgo darwin,!ios,arm64 LDFLAGS: -lz-arm64-macos
+#cgo ios,arm64 LDFLAGS: -lz-arm64-ios
+#cgo ish LDFLAGS: -lz-ish
+#cgo netbsd,386 LDFLAGS: -lz-x86-netbsd
+#cgo netbsd,amd64 LDFLAGS: -lz-x86_64-netbsd
+#cgo netbsd,arm64 LDFLAGS: -lz-arm64-netbsd
+#cgo openbsd,386 LDFLAGS: -lz-x86-openbsd
+#cgo openbsd,amd64 LDFLAGS: -lz-x86_64-openbsd
+#cgo freebsd,386 LDFLAGS: -lz-x86-freebsd
+#cgo freebsd,amd64 LDFLAGS: -lz-x86_64-freebsd
+#cgo freebsd,arm64 LDFLAGS: -lz-arm64-freebsd
+
 #include <stdint.h>
 extern unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char *path, int64_t beginX, int64_t beginY, int64_t beginZ);
 */

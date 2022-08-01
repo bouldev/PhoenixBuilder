@@ -154,7 +154,7 @@ build/libexternal_functions_provider.dylib: build/ io/external_functions_provide
 build/phoenixbuilder-ios-static.a: build/ build/libexternal_functions_provider.dylib ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Lbuild -lexternal_functions_provider" CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -buildmode=c-archive -trimpath -ldflags "-s -w -extar ${THEOS}/toolchain/linux/iphone/bin/ar" -tags is_tweak,no_readline -o build/phoenixbuilder-ios-static.a
 build/phoenixbuilder-ish-executable: build/ ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC="${HOME}/i686-unknown-linux-musl/bin/i686-unknown-linux-musl-gcc --sysroot=`pwd`/depends/buildroot/ish" CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ish-executable
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC="${HOME}/i686-unknown-linux-musl/bin/i686-unknown-linux-musl-gcc --sysroot=`pwd`/depends/buildroot/ish" CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -tags "ish" -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ish-executable
 build/phoenixbuilder-macos-x86_64: build/ ${SRCS_GO}
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-x86_64
 build/phoenixbuilder-macos-arm64: build/ ${SRCS_GO}
