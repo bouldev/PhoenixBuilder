@@ -238,6 +238,7 @@ class MainFrame(object):
     def _on_error(self,ws, error):
         print_stack()
         print("ws error: ",error)
+        exit(0)
     
     def _on_resp(self,resp:ResponseMsg):
         self.api._on_resp(resp=EasyDict(resp))

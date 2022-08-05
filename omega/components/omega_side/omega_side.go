@@ -131,7 +131,7 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 			if readString == "" {
 				continue
 			}
-			o.Frame.GetBackendDisplay().Write(Info.Sprint(readString))
+			Info.Println(readString)
 		}
 	}()
 	cmdErr, err := cmd.StderrPipe()
@@ -154,7 +154,7 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 			if readString == "" {
 				continue
 			}
-			o.Frame.GetBackendDisplay().Write(Error.Sprint(readString))
+			Error.Println(readString)
 		}
 	}()
 	go func() {
