@@ -1,7 +1,7 @@
+set -e 
 cd `dirname $0`
 cd ..
 rm -rf binary
-set -e 
 mkdir binary
 
 PHOENIX_BUILDER_DIR=".."
@@ -50,4 +50,4 @@ echo $(get_hash ./binary/launcher-android) > ./binary/launcher-android.hash
 
 echo "$TIME_STAMP" >> ./binary/TIME_STAMP
 
-rsync -avP --delete ./binary/* FBOmega:/var/www/omega-storage/binary/
+rsync -aq --delete ./binary/* FBOmega:/var/www/omega-storage/binary/

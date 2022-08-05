@@ -77,7 +77,6 @@ func main() {
 			}()
 		}
 		wg.Wait()
-		fmt.Println("All tasks finished")
 	} else {
 		CompressSingleFile(*inFile, *outFile)
 	}

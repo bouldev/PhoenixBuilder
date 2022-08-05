@@ -30,7 +30,7 @@ ${LINUX_AMD64_EXEC}: ${LINUX_AMD64_CC} build/ ${SRCS_GO}
 .PHONY: ${LINUX_MCSM_AMD64_EXEC}
 ${LINUX_MCSM_AMD64_EXEC}: ${LINUX_AMD64_CC} build/ ${SRCS_GO}
 	@echo build $@
-	@${GO_CGO_FLAGS_COMMON} GOOS=linux GOARCH=amd64 CC=$< go build ${GO_BUILD_FLAGS_COMMON} -tags="mcsm" -o $@
+	@${GO_CGO_FLAGS_COMMON} GOOS=linux GOARCH=amd64 CC=$< go build ${GO_BUILD_FLAGS_COMMON} -tags=mcsm -o $@
 
 .PHONY: ${WINDOWS_AMD64_EXEC}
 ${WINDOWS_AMD64_EXEC}: ${WINDOWS_AMD64_CC} build/ ${SRCS_GO}
