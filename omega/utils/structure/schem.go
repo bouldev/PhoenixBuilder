@@ -122,7 +122,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 
 	width, height, length := int(schemData.Width), int(schemData.Height), int(schemData.Length)
 	blockData := schemData.blockData
-	blockChan := make(chan *IOBlock, 4096)
+	blockChan := make(chan *IOBlock, 10240)
 	stop := false
 	airRID := chunk.AirRID
 	fmt.Println(airRID)

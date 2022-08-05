@@ -58,7 +58,7 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 	if len(blocks) != int(Size[X])*int(Size[Y])*int(Size[Z]) {
 		return nil, nil, 0, fmt.Errorf("size check fail %v != %v", int(Size[X])*int(Size[Y])*int(Size[Z]), len(blocks))
 	}
-	blockChan := make(chan *IOBlock, 4096)
+	blockChan := make(chan *IOBlock, 10240)
 	airRID := chunk.AirRID
 	stop := false
 	infoSender(fmt.Sprintf("格式匹配成功,开始解析,尺寸 %v", Size))

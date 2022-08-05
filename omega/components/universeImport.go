@@ -138,7 +138,7 @@ func (o *UniverseImport) StartNewTask() {
 			suggestMinCacheChunks = 256
 		}
 		pterm.Info.Println("最大缓冲区块数量: ", suggestMinCacheChunks)
-		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeedWithReArrangeOnce(feeder, task.Offset, task.Progress, suggestMinCacheChunks, 16*16*16*24)
+		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeedWithReArrangeOnce(feeder, task.Offset, task.Progress, suggestMinCacheChunks, 16*16*16*24*3)
 		o.currentBuilder.finalFeeder = middleFeeder
 		o.currentBuilder.middleStopper = middleStopFn
 		o.currentBuilder.builder = builder

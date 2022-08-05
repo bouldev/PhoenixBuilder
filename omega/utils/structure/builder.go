@@ -32,16 +32,12 @@ func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 			return
 		}
 		xmove := block.Pos.X() - lastPos.X()
-		ymove := block.Pos.Y() - lastPos.Y()
 		zmove := block.Pos.Z() - lastPos.Z()
-		if (xmove*xmove + ymove*ymove + zmove*zmove) > 16*16 {
+		if (xmove*xmove + zmove*zmove) > 16*16 {
 			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2]))
 		}
 		lastPos = block.Pos
 		blk := chunk.RuntimeIDToLegacyBlock(block.RTID)
-		// if blk.Name == "air" {
-		// 	fmt.Println(block.RTID)
-		// }
 		if blk == nil {
 			continue
 		}
