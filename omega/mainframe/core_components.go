@@ -258,6 +258,30 @@ func (o *PerformaceAnalysis) Stop() error {
 	return nil
 }
 
+type OPCheck struct {
+	*BaseCoreComponent
+	checkDone bool
+}
+
+func (o *OPCheck) Inject(frame defines.MainFrame) {
+	o.mainFrame = frame
+	botUniqueID := frame.GetUQHolder().BotUniqueID
+	o.mainFrame.GetGameListener().SetOnTypedPacketCallBack(packet.IDAdventureSettings, func(p packet.Packet) {
+		if o.checkDone {
+			return
+		}
+		pk := p.(*packet.AdventureSettings)
+		if botUniqueID == pk.PlayerUniqueID {
+			if pk.PermissionLevel == packet.PermissionLevelOperator {
+				pterm.Success.Println("机器人OP 权限检测通过")
+			} else {
+				pterm.Error.Println("机器人不具备OP权限")
+				panic("机器人不具备 OP 权限")
+			}
+		}
+	})
+}
+
 type NameRecord struct {
 	*BaseCoreComponent
 	Records           map[string]*collaborate.TYPE_NameEntry
@@ -432,5 +456,6 @@ func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 		"改名记录":      func() defines.CoreComponent { return &NameRecord{BaseCoreComponent: &BaseCoreComponent{}} },
 		"假死检测":      func() defines.CoreComponent { return &KeepAlive{BaseCoreComponent: &BaseCoreComponent{}} },
 		"性能分析":      func() defines.CoreComponent { return &PerformaceAnalysis{BaseCoreComponent: &BaseCoreComponent{}} },
+		"OP权限自检":    func() defines.CoreComponent { return &OPCheck{BaseCoreComponent: &BaseCoreComponent{}} },
 	}
 }
