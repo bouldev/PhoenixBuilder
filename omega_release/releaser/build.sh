@@ -6,14 +6,6 @@ mkdir binary
 
 PHOENIX_BUILDER_DIR=".."
 TIME_STAMP=$(date '+%m%d%H%M')
-
-make -C ${PHOENIX_BUILDER_DIR} clean 
-make -C ${PHOENIX_BUILDER_DIR} build/phoenixbuilder build/phoenixbuilder-windows-executable-x86_64.exe build/phoenixbuilder-android-executable-arm64 build/phoenixbuilder-macos-x86_64 -j4
-cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder ./binary/fastbuilder-linux
-cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-windows-executable-x86_64.exe ./binary/fastbuilder-windows.exe
-cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-macos-x86_64 ./binary/fastbuilder-macos
-cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-android-executable-arm64 ./binary/fastbuilder-android
-
 function get_hash(){
     fileName=$1
     outstr="$(md5sum $fileName)"
@@ -21,6 +13,12 @@ function get_hash(){
     echo "$hashStr"
 }
 
+make -C ${PHOENIX_BUILDER_DIR} clean 
+make -C ${PHOENIX_BUILDER_DIR} linux-amd64 window-amd64 macos-amd64 android-arm64 -j4
+cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-linux-executable-x86_64 ./binary/fastbuilder-linux
+cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-windows-executable-x86_64.exe ./binary/fastbuilder-windows.exe
+cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-macos-amd64 ./binary/fastbuilder-macos
+cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-android-executable-arm64 ./binary/fastbuilder-android
 echo $(get_hash ./binary/fastbuilder-linux) > ./binary/fastbuilder-linux.hash
 echo $(get_hash ./binary/fastbuilder-windows.exe) > ./binary/fastbuilder-windows.hash
 echo $(get_hash ./binary/fastbuilder-macos) > ./binary/fastbuilder-macos.hash
@@ -39,18 +37,17 @@ go run ./compressor/main.go -in "\
         ./binary/fastbuilder-android.brotli\
     "
 
-# cp ./releaser/更新日志.txt ./binary
-cp ./releaser/install.sh ./binary
-cp ./releaser/dockerfile ./binary
-cp ./releaser/docker_bootstrap.sh ./binary
-echo "$TIME_STAMP" >> ./binary/TIME_STAMP
-
 make -C ./launcher clean
 make -C ./launcher all -j6
 cp ./launcher/build/* ./binary
+cp ./binary/launcher-linux ./binary/Linux版Omega启动器
+cp ./binary/launcher-windows.exe ./binary/Windows版Omega启动器.exe
+cp ./binary/launcher-macos ./binary/MacOS版Omega启动器
 echo $(get_hash ./binary/launcher-linux-mcsm) > ./binary/launcher-linux-mcsm.hash
 echo $(get_hash ./binary/launcher-linux) > ./binary/launcher-linux.hash
 echo $(get_hash ./binary/launcher-macos) > ./binary/launcher-macos.hash
 echo $(get_hash ./binary/launcher-android) > ./binary/launcher-android.hash
+
+echo "$TIME_STAMP" >> ./binary/TIME_STAMP
 
 rsync -avP --delete ./binary/* FBOmega:/var/www/omega-storage/binary/

@@ -1,57 +1,56 @@
-.PHONY: all current 
-TARGETS:=build/ current current-v8
-PACKAGETARGETS:=
-ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
-	ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
-		IOS_STRIP=/usr/bin/strip
-		LIPO=/usr/bin/lipo
-		LDID=/usr/bin/ldid
-		TARGETS:=${TARGETS} ios-executable ios-v8-executable ios-lib
-	else
-		IOS_STRIP=$(shell xcrun --sdk iphoneos -f strip)
-		IOS_OBJCOPY=$(shell xcrun --sdk iphoneos -f objcopy)
-		LDID=ldid2
-		LIPO=/usr/bin/lipo
-		TARGETS:=${TARGETS} macos ios-v8-executable ios-executable ios-lib
-	endif
-		PACKAGETARGETS:=${PACKAGETARGETS} package/ios
-else
-	IOS_STRIP=true
-	LDID=$${THEOS}/toolchain/linux/iphone/bin/ldid
-	LIPO=$${THEOS}/toolchain/linux/iphone/bin/lipo
-	IOS_OBJCOPY=$${THEOS}/toolchain/linux/iphone/bin/llvm-objcopy
-endif 
-
 SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go $(dir)/*.c))
 
-all: linux macos windows mcsm-linux mcsm-windows android
-linux: build/launcher-linux
-macos: build/launcher-macos
-windows: build/launcher-windows.exe
-android: build/launcher-android
-mcsm-linux: build/launcher-linux-mcsm
-mcsm-windows: build/launcher-windows-mcsm
+MACOS_AMD64_CC:=/usr/bin/clang 
+MACOS_ARM64_CC:=/usr/bin/clang
+WINDOWS_AMD64_CC:=/opt/homebrew/bin/x86_64-w64-mingw32-gcc
+LINUX_AMD64_CC:=/opt/homebrew/bin/x86_64-unknown-linux-gnu-gcc
 
-package: ${PACKAGETARGETS}
-release/:
-	mkdir -p release
+ANDROID_NDK_HOME:=$(shell brew --prefix)/share/android-ndk
+ANDROID_ARM64_CC:=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android21-clang
+
+LINUX_AMD64_EXEC:=build/launcher-linux
+MACOS_AMD64_EXEC:=build/launcher-macos
+WINDOWS_AMD64_EXEC:=build/launcher-windows.exe
+ANDROID_ARM64_EXEC:=build/launcher-android
+LINUX_MCSM_AMD64_EXEC:=build/launcher-linux-mcsm
+
+GO_CGO_FLAGS_COMMON :=CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1
+GO_BUILD_FLAGS_COMMON :=-trimpath -ldflags "-s -w"
+
+all: ${LINUX_AMD64_EXEC} ${MACOS_AMD64_EXEC} ${WINDOWS_AMD64_EXEC} ${ANDROID_ARM64_EXEC} ${LINUX_MCSM_AMD64_EXEC}
+
 build/:
 	mkdir build
-build/launcher-linux: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1  go build -trimpath -ldflags "-s -w" -o $@
-	cp build/launcher-linux build/Linux版Omega启动器
-build/launcher-linux-mcsm:
-	CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1  go build -trimpath -tags="mcsm" -ldflags "-s -w" -o $@
-build/launcher-windows-mcsm:
-	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -tags="mcsm" -ldflags "-s -w" -o $@
-	mv $@ build/Windows版MCSM特供Omega启动器.exe
-build/launcher-macos: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CC=`pwd`/macos CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o $@
-	cp $@ build/MacOS版Omega启动器
-build/launcher-windows.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o $@
-	mv $@ build/Windows版Omega启动器.exe
-build/launcher-android: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang CXX=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -extldflags -static-libstdc++" -o $@
+
+.PHONY: ${LINUX_AMD64_EXEC}
+${LINUX_AMD64_EXEC}: ${LINUX_AMD64_CC} build/ ${SRCS_GO}
+	@echo build $@
+	@${GO_CGO_FLAGS_COMMON} GOOS=linux GOARCH=amd64 CC=$< go build ${GO_BUILD_FLAGS_COMMON} -o $@
+
+.PHONY: ${LINUX_MCSM_AMD64_EXEC}
+${LINUX_MCSM_AMD64_EXEC}: ${LINUX_AMD64_CC} build/ ${SRCS_GO}
+	@echo build $@
+	@${GO_CGO_FLAGS_COMMON} GOOS=linux GOARCH=amd64 CC=$< go build ${GO_BUILD_FLAGS_COMMON} -tags="mcsm" -o $@
+
+.PHONY: ${WINDOWS_AMD64_EXEC}
+${WINDOWS_AMD64_EXEC}: ${WINDOWS_AMD64_CC} build/ ${SRCS_GO}
+	@echo build $@
+	@${GO_CGO_FLAGS_COMMON} GOOS=windows GOARCH=amd64 CC=$< go build ${GO_BUILD_FLAGS_COMMON} -o $@
+
+.PHONY: ${MACOS_AMD64_EXEC}
+${MACOS_AMD64_EXEC}: ${MACOS_AMD64_CC} build/ ${SRCS_GO}
+	@echo build $@
+	@${GO_CGO_FLAGS_COMMON} GOOS=darwin GOARCH=amd64 CC=$< go build ${GO_BUILD_FLAGS_COMMON} -o $@
+
+.PHONY: ${MACOS_ARM64_EXEC}
+${MACOS_ARM64_EXEC}: ${MACOS_ARM64_CC} build/ ${SRCS_GO}
+	@echo build $@
+	@${GO_CGO_FLAGS_COMMON} GOOS=darwin GOARCH=arm64 CC=$< go build ${GO_BUILD_FLAGS_COMMON} -o $@
+
+.PHONY: ${ANDROID_ARM64_EXEC}
+${ANDROID_ARM64_EXEC}: ${ANDROID_ARM64_CC} build/ ${SRCS_GO}
+	@echo build $@
+	@${GO_CGO_FLAGS_COMMON} GOOS=android GOARCH=arm64 CC=$< go build ${GO_BUILD_FLAGS_COMMON} -o $@
+
 clean:
 	rm -rf build/*
