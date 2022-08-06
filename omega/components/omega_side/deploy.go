@@ -124,9 +124,12 @@ func (o *OmegaSide) deployBasicLibrary() {
 
 func (o *OmegaSide) deployPythonRuntime() {
 	pterm.Warning.Printfln("开始自动部署 Python 插件开发和运行环境，根据你的网速，这可能要很久，但是放心，这仅会发生一次")
+	if utils.IsFile(path.Join(o.getCacheDir(), "Python解释器.zip")) {
+		os.Rename(path.Join(o.getCacheDir(), "Python解释器.zip"), path.Join(o.getCacheDir(), "Python解释器.tar.gz"))
+	}
 	if url, hasK := getDeployResourceURL(pythonExecEnv); hasK {
 		deployer := utils.SimpleDeployer{
-			CacheFilePath:      path.Join(o.getCacheDir(), "Python解释器.zip"),
+			CacheFilePath:      path.Join(o.getCacheDir(), "Python解释器.tar.gz"),
 			TargetDeployDir:    o.getWorkingDir(),
 			SourceFileURL:      url,
 			SourceFileMD5ByURL: url + ".hash",

@@ -25,8 +25,10 @@ def run_cmd_sync(cmd:List[str])->bool:
 class AutoRestartThreadContainer(threading.Thread):
     def __init__(self,entry:Callable,*args,exit_on_program_terminate:bool=True,auto_restart:bool=False,only_restart_on_err:bool=False,reduce_restart_freq:bool=True,reduce_lambda:Callable[[int],int]=lambda x:2**x):
         threading.Thread.__init__(self)
-        if not exit_on_program_terminate:
+        if exit_on_program_terminate:
             self.setDaemon(True)
+        else:
+            self.setDaemon(False)
         self.auto_restart = auto_restart
         self.only_restart_on_err=only_restart_on_err
         self.reduce_restart_freq=reduce_restart_freq

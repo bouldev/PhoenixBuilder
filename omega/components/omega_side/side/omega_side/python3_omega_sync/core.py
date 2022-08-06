@@ -1,4 +1,3 @@
-from ast import Call
 import time
 import json
 from threading import Event 
@@ -281,7 +280,7 @@ class MainFrame(object):
         self.is_running=True
         if addr is None:
             addr=omega_args.ws_server_addr
-        bootstrap.execute_func_in_thread_with_auto_restart(self.connect,addr)
+        bootstrap.execute_func_in_thread_with_auto_restart(self.connect,addr,exit_on_program_terminate=False)
         # self.connect(addr)
         
 frame=MainFrame()
