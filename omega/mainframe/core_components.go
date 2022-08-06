@@ -3,13 +3,11 @@ package mainframe
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
-	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -234,27 +232,27 @@ func (o *NoSQLDBUtil) Inject(frame defines.MainFrame) {
 
 type PerformaceAnalysis struct {
 	*BaseCoreComponent
-	startSuccess bool
-	pprofFp      *os.File
+	// startSuccess bool
+	// pprofFp      *os.File
 }
 
 func (o *PerformaceAnalysis) Inject(frame defines.MainFrame) {
-	o.mainFrame = frame
-	pprofFp, err := os.OpenFile(o.omega.GetPath("cpu.prof"), os.O_RDWR|os.O_CREATE, 0644)
-	o.pprofFp = pprofFp
-	if err == nil {
-		if err := pprof.StartCPUProfile(pprofFp); err == nil {
-			o.startSuccess = true
-		}
-	}
+	// o.mainFrame = frame
+	// pprofFp, err := os.OpenFile(o.omega.GetPath("cpu.prof"), os.O_RDWR|os.O_CREATE, 0644)
+	// o.pprofFp = pprofFp
+	// if err == nil {
+	// 	if err := pprof.StartCPUProfile(pprofFp); err == nil {
+	// 		o.startSuccess = true
+	// 	}
+	// }
 }
 
 func (o *PerformaceAnalysis) Stop() error {
-	if o.startSuccess {
-		fmt.Println("正在保存性能分析文件")
-		pprof.StopCPUProfile()
-		o.pprofFp.Close()
-	}
+	// if o.startSuccess {
+	// 	fmt.Println("正在保存性能分析文件")
+	// 	pprof.StopCPUProfile()
+	// 	o.pprofFp.Close()
+	// }
 	return nil
 }
 
