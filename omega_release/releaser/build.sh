@@ -14,11 +14,11 @@ function get_hash(){
 }
 
 make -C ${PHOENIX_BUILDER_DIR} clean 
-make -C ${PHOENIX_BUILDER_DIR} linux-amd64 window-amd64 macos-amd64 android-arm64 -j4
-cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-linux-executable-x86_64 ./binary/fastbuilder-linux
-cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-windows-executable-x86_64.exe ./binary/fastbuilder-windows.exe
+make -C ${PHOENIX_BUILDER_DIR} linux-amd64 windows-amd64 macos-amd64 android-arm64 -j4
+cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-linux-amd64 ./binary/fastbuilder-linux
+cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-windows-amd64.exe ./binary/fastbuilder-windows.exe
 cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-macos-amd64 ./binary/fastbuilder-macos
-cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-android-executable-arm64 ./binary/fastbuilder-android
+cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-android-arm64 ./binary/fastbuilder-android
 echo $(get_hash ./binary/fastbuilder-linux) > ./binary/fastbuilder-linux.hash
 echo $(get_hash ./binary/fastbuilder-windows.exe) > ./binary/fastbuilder-windows.hash
 echo $(get_hash ./binary/fastbuilder-macos) > ./binary/fastbuilder-macos.hash
