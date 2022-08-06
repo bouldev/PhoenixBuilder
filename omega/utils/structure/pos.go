@@ -111,6 +111,7 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 			}
 		}
 		reArrangerToDumperChan <- chunks
+		close(reArrangerToDumperChan)
 	}()
 
 	// dumper routine
@@ -197,6 +198,7 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 				}
 			}
 		}
+		close(outChan)
 	}()
 	return outChan, func() {
 		stop = true

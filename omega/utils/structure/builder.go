@@ -59,10 +59,13 @@ func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 	}
 	o.delayBlocksMu.RLock()
 	if len(o.delayBlocks) > 0 && !o.IgnoreNbt && !o.Stop {
+		o.delayBlocksMu.RUnlock()
 		time.Sleep(time.Duration(o.FinalWaitTime) * time.Second)
 		o.updateDelayBlocks(true)
+	} else {
+		o.delayBlocksMu.RUnlock()
 	}
-	o.delayBlocksMu.RUnlock()
+
 	o.ProgressUpdater(-1)
 }
 

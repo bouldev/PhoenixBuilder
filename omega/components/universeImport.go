@@ -271,7 +271,7 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 			return true
 		},
 	})
-	o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.onBlockUpdate)
+	// o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.onBlockUpdate)
 }
 
 func (o *UniverseImport) Activate() {
