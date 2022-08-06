@@ -170,6 +170,10 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 					for x := uint8(0); x < 16; x++ {
 						for z := uint8(0); z < 16; z++ {
 							for sy := uint8(0); sy < 16; sy++ {
+								if stop {
+									close(outChan)
+									return
+								}
 								y := subChunkI*16 + int16(sy) + int16(define.WorldRange[0])
 								blk := subChunk.Block(x, sy, z, 0)
 								if blk == air {

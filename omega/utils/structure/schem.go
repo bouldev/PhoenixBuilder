@@ -150,7 +150,6 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 				}
 			}
 		}
-		close(blockChan)
 	}()
 	return blockChan, func() {
 		stop = true

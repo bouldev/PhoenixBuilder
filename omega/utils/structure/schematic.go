@@ -95,7 +95,6 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 				}
 			}
 		}
-		close(blockChan)
 	}()
 	return blockChan, func() {
 		stop = true
