@@ -10,6 +10,7 @@ import (
 	"path"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
+	"phoenixbuilder/omega/utils"
 	"runtime"
 	"strings"
 
@@ -98,13 +99,6 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 	if err != nil {
 		panic(err)
 	}
-	Info := pterm.PrefixPrinter{
-		MessageStyle: &pterm.ThemeDefault.InfoMessageStyle,
-		Prefix: pterm.Prefix{
-			Style: &pterm.ThemeDefault.InfoPrefixStyle,
-			Text:  fmt.Sprintf("%v", subProcessName),
-		},
-	}
 	Error := pterm.PrefixPrinter{
 		MessageStyle: &pterm.ThemeDefault.ErrorMessageStyle,
 		Prefix: pterm.Prefix{
@@ -114,6 +108,9 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 	}
 	go func() {
 		reader := bufio.NewReader(cmdOut)
+		replacerRule := utils.GenerateMCColorReplacerRule()
+		replacerRule = append(replacerRule, "\n", "\x1b[m\n")
+		replacer := strings.NewReplacer(replacerRule...)
 		for {
 			readString, err := reader.ReadString('\n')
 			if err != nil || err == io.EOF {
@@ -131,7 +128,7 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 			if readString == "" {
 				continue
 			}
-			Info.Println(readString)
+			fmt.Println(replacer.Replace(readString))
 		}
 	}()
 	cmdErr, err := cmd.StderrPipe()

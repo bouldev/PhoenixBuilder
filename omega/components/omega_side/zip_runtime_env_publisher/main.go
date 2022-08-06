@@ -52,7 +52,7 @@ func GenHash(zipFile string) {
 	}
 }
 
-//rsync -avP --delete ./zip_out/* FBOmega:/var/www/omega-storage/omega_compoments_deploy_binary/
+// rsync -avP --delete ./zip_out/* FBOmega:/var/www/omega-storage/omega_compoments_deploy_binary/
 // zip -q -r zip_out/linux_amd64.python.zip ../plantform_specific_python/linux_amd64
 func main() {
 	var outDir = "zip_out"

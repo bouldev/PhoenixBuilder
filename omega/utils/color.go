@@ -74,7 +74,7 @@ var m = map[string]string{
 	italic: ansiItalic,
 }
 
-func GenerateMCColorReplacer() []string {
+func GenerateMCColorReplacerRule() []string {
 	var minecraftToANSI []string
 	for minecraftCode, ansiCode := range m {
 		minecraftToANSI = append(minecraftToANSI, minecraftCode, ansiCode)

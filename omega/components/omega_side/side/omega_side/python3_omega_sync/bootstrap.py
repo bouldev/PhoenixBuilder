@@ -13,7 +13,13 @@ def run_cmd_sync(cmd:List[str])->bool:
         line = p.stdout.readline()
         line = line.strip()
         if line:
-            print("\t",line.decode(encoding='utf-8'))  
+            try:
+                print("\t",line.decode(encoding='utf-8')) 
+            except Exception as e:
+                try:
+                    print("\t",line.decode(encoding='gbk')) 
+                except Exception as e:
+                    print("\t",line) 
     return p.returncode == 0
 
 class AutoRestartThreadContainer(threading.Thread):
