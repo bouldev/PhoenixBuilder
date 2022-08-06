@@ -50,4 +50,4 @@ echo $(get_hash ./binary/launcher-android) > ./binary/launcher-android.hash
 
 echo "$TIME_STAMP" >> ./binary/TIME_STAMP
 
-rsync -aq --delete ./binary/* FBOmega:/var/www/omega-storage/binary/
+rsync -avP --delete ./binary/* FBOmega:/var/www/omega-storage/binary/

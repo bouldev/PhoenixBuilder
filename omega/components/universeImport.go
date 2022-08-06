@@ -61,23 +61,20 @@ func (o *Importor) Activate() {
 	close(o.doneWaiter)
 }
 
-func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlock, stopFn func(), suggestMinCacheChunks int, err error) {
+func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlock, stopFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
 	suggestMinCacheChunks = 0
-	sender := func(s string) {
-		fmt.Println(s)
-	}
-	if blockFeeder, stopFn, _suggestMinCacheChunks, err := structure.DecodeSchem(data, sender); err == nil {
-		return blockFeeder, stopFn, _suggestMinCacheChunks, err
+	if blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err := structure.DecodeSchem(data, infoSender); err == nil {
+		return blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err
 	} else {
 		pterm.Warning.Printfln("文件无法被 schem 解析器解析，将尝试下一个解析器 (%v)", err)
 	}
 
-	if blockFeeder, stopFn, _suggestMinCacheChunks, err := structure.DecodeSchematic(data, func(s string) {}); err == nil {
-		return blockFeeder, stopFn, _suggestMinCacheChunks, err
+	if blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err := structure.DecodeSchematic(data, infoSender); err == nil {
+		return blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err
 	} else {
 		pterm.Warning.Printfln("文件无法被 schematic 解析器解析，将尝试下一个解析器 (%v)", err)
 	}
-	return nil, nil, 0, fmt.Errorf("无法找到合适的解析器")
+	return nil, nil, 0, 0, fmt.Errorf("无法找到合适的解析器")
 }
 
 func (o *UniverseImport) StartNewTask() {
@@ -97,7 +94,7 @@ func (o *UniverseImport) StartNewTask() {
 		o.data.CurrentTask = nil
 		return
 	}
-	if feeder, stopFn, suggestMinCacheChunks, err := o.getFrontEnd(data, func(s string) {
+	if feeder, stopFn, suggestMinCacheChunks, totalBlocks, err := o.getFrontEnd(data, func(s string) {
 		pterm.Info.Println(s)
 	}); err == nil {
 		baseProgress := task.Progress
@@ -111,6 +108,32 @@ func (o *UniverseImport) StartNewTask() {
 			speed:           o.ImportSpeed,
 		}
 		o.currentBuilder.doneWaiter = make(chan struct{})
+		progressUpdateInterval := o.ImportSpeed + 1
+		progressBar := pterm.DefaultProgressbar.WithTotal(totalBlocks).WithTitle("Task: " + task.Path)
+		lastProgress := 0
+		updateProgress := func(currBlock int) {
+			currProgress := 1 + baseProgress + currBlock
+			increasementProgress := currProgress - lastProgress
+			progressBar.Add(increasementProgress)
+			lastProgress = currProgress
+			task.Progress = currProgress
+			o.fileChange = true
+
+			// 因为 omega 启动器设计失误（每次读一行）我不得不这么做
+			fmt.Println()        // 下移一行（打出）
+			fmt.Print("\033[1A") // 回到上一行
+			fmt.Print("\033[K")  // 清除该行
+		}
+		ProgressUpdater := func(currBlock int) {
+			if currBlock == 0 {
+				pterm.Success.Printfln("可以开始导入了, 速度为 %v", o.ImportSpeed)
+				progressBar, _ = progressBar.Start()
+				updateProgress(currBlock)
+			}
+			if currBlock%progressUpdateInterval == 0 {
+				updateProgress(currBlock)
+			}
+		}
 		sender := o.Frame.GetGameControl().SendWOCmd
 		builder := &structure.Builder{
 			BlockCmdSender: func(cmd string) {
@@ -120,19 +143,9 @@ func (o *UniverseImport) StartNewTask() {
 			TpCmdSender: func(cmd string) {
 				o.Frame.GetGameControl().SendCmd(cmd)
 			},
-			ProgressUpdater: func(currBlock int) {
-				if currBlock == 0 {
-					pterm.Success.Println("优化完成，开始导入")
-				}
-				currProgress := baseProgress + currBlock
-				if currProgress%100 == 99 {
-					task.Progress = currProgress
-					fmt.Printf("\r task %v: %v blocks", task.Path, task.Progress)
-					o.fileChange = true
-				}
-			},
-			FinalWaitTime: 3,
-			IgnoreNbt:     o.IgnoreBlockNbt,
+			ProgressUpdater: ProgressUpdater,
+			FinalWaitTime:   3,
+			IgnoreNbt:       o.IgnoreBlockNbt,
 		}
 		if suggestMinCacheChunks < 256 {
 			suggestMinCacheChunks = 256

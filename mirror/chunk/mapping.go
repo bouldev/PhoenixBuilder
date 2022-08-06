@@ -327,7 +327,7 @@ var SchematicBlockMapping = []string{
 	"fence",
 	"fence",
 	"fence",
-	"dark_oak_fence",
+	"fence",
 	"acacia_fence_gate",
 	"spruce_door",
 	"birch_door",

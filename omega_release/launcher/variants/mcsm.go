@@ -4,7 +4,6 @@
 package variants
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -16,7 +15,7 @@ func IsMCSM() bool {
 }
 
 func PrintAuxReturn() {
-	fmt.Println("\b")
+	// fmt.Println("\b")
 }
 
 func PrintVariant() {

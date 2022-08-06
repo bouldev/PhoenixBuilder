@@ -34,7 +34,7 @@ func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 		xmove := block.Pos.X() - lastPos.X()
 		zmove := block.Pos.Z() - lastPos.Z()
 		if (xmove*xmove + zmove*zmove) > 16*16 {
-			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2]))
+			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
 		}
 		lastPos = block.Pos
 		blk := chunk.RuntimeIDToLegacyBlock(block.RTID)

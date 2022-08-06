@@ -1,7 +1,6 @@
 package lru
 
 import (
-	"fmt"
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/define"
 	"sort"
@@ -67,7 +66,7 @@ func (o *LRUMemoryChunkCacher) AdjustCacheLevel(level int) {
 
 func (o *LRUMemoryChunkCacher) checkCacheSizeAndHandleFallBackNoLock() {
 	if len(o.memoryChunks) > (1 << (o.cacheLevel + 1)) {
-		fmt.Println("release overflowed cached chunks")
+		// fmt.Println("release overflowed cached chunks")
 		cacheList := make(SortableTimes, 0)
 		for pos, t := range o.cacheMap {
 			cacheList = append(cacheList, &timePosPair{
