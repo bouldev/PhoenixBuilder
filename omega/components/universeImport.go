@@ -119,8 +119,8 @@ func (o *UniverseImport) StartNewTask() {
 			increasementProgress := currProgress - lastProgress
 			if increasementProgress > 0 {
 				progressBar.Add(increasementProgress)
-			} else {
-				pterm.Error.Println("Negative increasementProgress: %v=(1+%v+%v)-%v ", increasementProgress, baseProgress, currBlock, lastProgress)
+			} else if increasementProgress < 0 {
+				pterm.Error.Printfln("Negative increasementProgress: %v=(1+%v+%v)-%v ", increasementProgress, baseProgress, currBlock, lastProgress)
 			}
 
 			lastProgress = currProgress
