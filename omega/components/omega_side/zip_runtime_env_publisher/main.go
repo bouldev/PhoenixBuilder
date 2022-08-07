@@ -84,14 +84,15 @@ func main() {
 		return true
 	})
 	// DotCS 插件示例文件 （在 dotcs_plugins 文件夹消失时部署）
-	GenZip(srcDir, path.Join(outDir, "dotcs_plugins.zip"), func(filePath string, info os.FileInfo) (discard bool) {
-		if strings.Contains(filePath, ".DS_Store") {
-			return true
-		} else if strings.Contains(filePath, "dotcs_plugins") {
-			return false
-		}
-		return true
-	})
+	// GenZip(srcDir, path.Join(outDir, "dotcs_plugins.zip"), func(filePath string, info os.FileInfo) (discard bool) {
+	// 	if strings.Contains(filePath, ".DS_Store") {
+	// 		return true
+	// 	} else if strings.Contains(filePath, "dotcs_plugins") {
+	// 		return false
+	// 	}
+	// 	return true
+	// })
+	GenHash(path.Join(outDir, "dotcs_plugins.zip"))
 	// PlantformSpecific := "../plantform_specific"
 	// python 运行环境 conda create python=3.10 -p path--no-default-packages
 	// Linux_amd64 python 运行环境
