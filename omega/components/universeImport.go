@@ -80,6 +80,9 @@ func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (bl
 func (o *UniverseImport) StartNewTask() {
 	task := o.data.CurrentTask
 	path := task.Path
+	if task.Progress < 0 {
+		task.Progress = 0
+	}
 	pterm.Info.Printfln("尝试处理任务 %v 起点(%v %v %v) 从 %v 方块处开始导入", task.Path, task.Offset[0], task.Offset[1], task.Offset[2], task.Progress)
 	data := []byte{}
 	if fp, err := os.OpenFile(path, os.O_RDONLY, 0644); err == nil {
@@ -114,7 +117,12 @@ func (o *UniverseImport) StartNewTask() {
 		updateProgress := func(currBlock int) {
 			currProgress := 1 + baseProgress + currBlock
 			increasementProgress := currProgress - lastProgress
-			progressBar.Add(increasementProgress)
+			if increasementProgress > 0 {
+				progressBar.Add(increasementProgress)
+			} else {
+				pterm.Error.Println("Negative increasementProgress: %v=(1+%v+%v)-%v ", increasementProgress, baseProgress, currBlock, lastProgress)
+			}
+
 			lastProgress = currProgress
 			task.Progress = currProgress
 			o.fileChange = true
@@ -146,6 +154,7 @@ func (o *UniverseImport) StartNewTask() {
 			ProgressUpdater: ProgressUpdater,
 			FinalWaitTime:   3,
 			IgnoreNbt:       o.IgnoreBlockNbt,
+			InitPosGetter:   o.GetBotPos,
 		}
 		if suggestMinCacheChunks < 256 {
 			suggestMinCacheChunks = 256
@@ -180,6 +189,11 @@ func (o *UniverseImport) onBlockUpdate(pos define.CubePos, origRTID, currentRTID
 	if o.currentBuilder != nil {
 		o.currentBuilder.onBlockUpdate(pos, origRTID, currentRTID)
 	}
+}
+
+func (o *UniverseImport) GetBotPos() define.CubePos {
+	p := o.Frame.GetUQHolder().BotPos.Position
+	return define.CubePos{int(p.X()), int(p.Y()), int(p.Z())}
 }
 
 func (o *UniverseImport) onImport(cmds []string) (stop bool) {

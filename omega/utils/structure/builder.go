@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pterm/pterm"
 )
 
 type Builder struct {
@@ -18,6 +20,7 @@ type Builder struct {
 	FinalWaitTime   int
 	IgnoreNbt       bool
 	Stop            bool
+	InitPosGetter   func() define.CubePos
 }
 
 func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
@@ -26,13 +29,19 @@ func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 	counter := 0
 	delay := time.Duration((float64(1000) / float64(speed) * float64(time.Millisecond)))
 	ticker := time.NewTicker(delay)
-	lastPos := define.CubePos{0, 2401, 0}
+	lastPos := o.InitPosGetter()
+	pterm.Info.Printfln("DEBUG: Init Pos: %v", lastPos)
 	for block := range blocksIn {
 		if o.Stop {
 			return
 		}
 		xmove := block.Pos.X() - lastPos.X()
 		zmove := block.Pos.Z() - lastPos.Z()
+		if counter == 0 {
+			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
+			lastPos = block.Pos
+			time.Sleep(3 * time.Second)
+		}
 		if (xmove*xmove + zmove*zmove) > 16*16 {
 			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
 		}
