@@ -40,10 +40,15 @@ RUN mkdir -p /workspace && chown ${HOST_UID}:${HOST_GID} -R /workspace
 RUN echo "#!/bin/bash" >> /usr/bin/start \
     && echo "cd /workspace" >> /usr/bin/start \
     && echo "sleep 1" >> /usr/bin/start \
-    && echo "echo \"omega image version\""  >> /usr/bin/start \
+    && echo "clear" >> /usr/bin/start \
     && echo "if [ ! -f \"/workspace/fastbuilder\" ]; then" >> /usr/bin/start \
-    && echo "    echo unpacking default omega"  >> /usr/bin/start \
+    && echo "    echo 部署镜像默认 Omega"  >> /usr/bin/start \
     && echo "    cp /omega_cache/fastbuilder /workspace/fastbuilder" >> /usr/bin/start \
+    && echo "elif [ \"/omega_cache/fastbuilder\" -nt \"/workspace/fastbuilder\" ]; then" >> /usr/bin/start \
+    && echo "    echo 使用镜像统一更新的 Omega"  >> /usr/bin/start \
+    && echo "    cp /omega_cache/fastbuilder /workspace/fastbuilder" >> /usr/bin/start \
+    && echo "else" >> /usr/bin/start \
+    && echo "    echo 忽略镜像统一更新的 Omega"  >> /usr/bin/start \
     && echo "fi" >> /usr/bin/start \
     && echo "echo '启动Omega中...'" >> /usr/bin/start \
     && echo "omega_launcher" >> /usr/bin/start \

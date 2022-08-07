@@ -48,6 +48,9 @@ echo $(get_hash ./binary/launcher-linux) > ./binary/launcher-linux.hash
 echo $(get_hash ./binary/launcher-macos) > ./binary/launcher-macos.hash
 echo $(get_hash ./binary/launcher-android) > ./binary/launcher-android.hash
 
+cp ./releaser/dockerfile ./binary
+cp ./releaser/docker_bootstrap.sh ./binary
+
 echo "$TIME_STAMP" >> ./binary/TIME_STAMP
 
 rsync -avP --delete ./binary/* FBOmega:/var/www/omega-storage/binary/
