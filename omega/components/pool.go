@@ -143,6 +143,7 @@ func GetComponentsPool() map[string]func() defines.Component {
 		},
 		"第三方_by温柔_公会系统": func() defines.Component {
 			return &Guild{BasicComponent: &defines.BasicComponent{}}
+		},
 		"OmegaSide旁加载组件系统": func() defines.Component {
 			return &omega_side.OmegaSide{BasicComponent: &defines.BasicComponent{}}
 		},
