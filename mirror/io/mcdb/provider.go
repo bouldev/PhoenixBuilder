@@ -186,7 +186,7 @@ func (p *Provider) Get(pos define.ChunkPos) (data *mirror.ChunkData) {
 			}
 		}
 	}
-	cd.TimeStamp = p.loadTimeStamp(pos)
+	cd.SyncTime = p.loadTimeStamp(pos)
 	return cd
 }
 
@@ -246,7 +246,7 @@ func (p *Provider) Write(cd *mirror.ChunkData) error {
 	if err := p.saveBlockNBT(cd.ChunkPos, serializedNbt); err != nil {
 		return err
 	}
-	if err := p.saveTimeStamp(cd.ChunkPos, cd.TimeStamp); err != nil {
+	if err := p.saveTimeStamp(cd.ChunkPos, cd.SyncTime); err != nil {
 		return err
 	}
 	return nil

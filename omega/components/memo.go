@@ -24,7 +24,7 @@ type Memo struct {
 	LoginDelay        int      `json:"登录时延迟发送"`
 	Memos             map[string][]string
 	Usage             string `json:"提示信息"`
-	PlayerSearcher    collaborate.FUNC_GetPossibleName
+	PlayerSearcher    collaborate.FUNCTYPE_GET_POSSIBLE_NAME
 }
 
 func (me *Memo) send(playerName string) {
@@ -102,7 +102,7 @@ func (me *Memo) askForPlayer(chat *defines.GameChat) {
 		if name, cancel := utils.QueryForPlayerName(
 			me.Frame.GetGameControl(), chat.Name,
 			"",
-			(*me.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)); !cancel {
+			(*me.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)); !cancel {
 			me.askForMsg(chat.Name, name)
 		} else {
 			me.Frame.GetGameControl().SayTo(chat.Name, "已取消")
@@ -168,7 +168,7 @@ func (me *Memo) Inject(frame defines.MainFrame) {
 	if err != nil {
 		panic(err)
 	}
-	me.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)
+	me.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)
 }
 func (o *Memo) Signal(signal int) error {
 	switch signal {

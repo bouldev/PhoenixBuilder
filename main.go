@@ -14,7 +14,6 @@ import (
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
-	"phoenixbuilder/fastbuilder/menu"
 	"phoenixbuilder/fastbuilder/move"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/script_engine/bridge/script_holder"
@@ -23,12 +22,14 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/fastbuilder/utils"
-	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/io/commands"
 	"phoenixbuilder/io/special_tasks"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/io/assembler"
+	"phoenixbuilder/mirror/io/global"
+	"phoenixbuilder/mirror/io/lru"
 	"phoenixbuilder/omega/cli/embed"
 	"phoenixbuilder/omega/suggest"
 	"runtime"
@@ -60,11 +61,11 @@ func main() {
 	I18n.Init()
 
 	pterm.DefaultBox.Println(pterm.LightCyan("https://github.com/LNSSPsd/PhoenixBuilder"))
-	pterm.Println(pterm.Yellow("Contributors: Ruphane, CAIMEO, CMA2401PT"))
-	pterm.Println(pterm.Yellow("Copyright (c) FastBuilder DevGroup, Bouldev 2022"))
+	pterm.Println(pterm.Yellow(I18n.T(I18n.Copyright_Notice_Contrib)))
+	pterm.Println(pterm.Yellow(I18n.T(I18n.Copyright_Notice_Bouldev)))
 	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
 
-	if !args.NoReadline() {
+	if !args.NoReadline()&&!args.ShouldEnableOmegaSystem() {
 		readline.InitReadline()
 	}
 
@@ -78,12 +79,12 @@ func main() {
 		return
 	}
 	if !args.ShouldDisableHashCheck() {
-		fmt.Printf("Checking update, please wait...")
+		fmt.Printf(I18n.T(I18n.Notice_CheckUpdate))
 		hasUpdate, latestVersion := utils.CheckUpdate(args.GetFBVersion())
-		fmt.Printf("OK\n")
+		fmt.Printf(I18n.T(I18n.Notice_OK))
 		if hasUpdate {
-			fmt.Printf("A newer version (%s) of PhoenixBuilder is available.\n", latestVersion)
-			fmt.Printf("Please update.\n")
+			fmt.Printf(I18n.T(I18n.Notice_UpdateAvailable), latestVersion)
+			fmt.Printf(I18n.T(I18n.Notice_UpdateNotice))
 			// To ensure user won't ignore it directly, can be suppressed by command line argument.
 			os.Exit(0)
 		}
@@ -108,7 +109,7 @@ func main() {
 			}
 			token, err := json.Marshal(tokenstruct)
 			if err != nil {
-				fmt.Println("Failed to generate temp token")
+				fmt.Println(I18n.T(I18n.FBUC_Token_ErrOnGen))
 				fmt.Println(err)
 				return
 			}
@@ -201,19 +202,12 @@ func create_environment() *environment.PBEnvironment {
 	env.ScriptBridge = hostBridgeGamma
 	scriptHolder := script_holder.InitScriptHolder(env)
 	env.ScriptHolder = scriptHolder
-	/*if args.StartupScript() == "" {
-		hostBridgeGamma.HostRemoveBlock()
-	} else {
-		if scriptHolder.LoadScript(args.StartupScript(), env) {
-			hostBridgeGamma.HostWaitScriptBlock()
-		} else {
-			hostBridgeGamma.HostRemoveBlock()
-		}
-	}*/
 	if args.StartupScript() != "" {
 		scriptHolder.LoadScript(args.StartupScript(), env)
 	}
 	hostBridgeGamma.HostRemoveBlock()
+	env.LRUMemoryChunkCacher = lru.NewLRUMemoryChunkCacher(12)
+	env.ChunkFeeder = global.NewChunkFeeder()
 	return env
 }
 
@@ -248,14 +242,14 @@ func init_and_run_client(token string, code string, server_password string) {
 		}
 		tokenPath := loadTokenPath()
 		if fi, err := os.Create(tokenPath); err != nil {
-			fmt.Println("Error creating token file: ", err)
-			fmt.Println("Error ignored.")
+			fmt.Println(I18n.T(I18n.FBUC_Token_ErrOnCreate), err)
+			fmt.Println(I18n.T(I18n.ErrorIgnored))
 		} else {
 			env.LoginInfo.Token = token
 			_, err = fi.WriteString(token)
 			if err != nil {
-				fmt.Println("Error saving token: ", err)
-				fmt.Println("Error ignored.")
+				fmt.Println(I18n.T(I18n.FBUC_Token_ErrOnSave), err)
+				fmt.Println(I18n.T(I18n.ErrorIgnored))
 			}
 			fi.Close()
 			fi = nil
@@ -276,7 +270,7 @@ func runClient(env *environment.PBEnvironment) {
 		go func() {
 			<-connDeadline.C
 			if env.Connection == nil {
-				panic("connection not established after very long time")
+				panic(I18n.T(I18n.Crashed_No_Connection))
 			}
 		}()
 		fbauthclient := env.FBAuthClient.(*fbauth.Client)
@@ -285,6 +279,7 @@ func runClient(env *environment.PBEnvironment) {
 			Password:   env.LoginInfo.ServerPasscode,
 			Token:      env.LoginInfo.Token,
 			Client:     fbauthclient,
+			// EnableClientCache: true,
 		}
 		cconn, err := dialer.Dial("raknet", "")
 
@@ -347,13 +342,17 @@ func runClient(env *environment.PBEnvironment) {
 	conn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
 	})
+	// conn.WritePacket(&packet.ClientCacheStatus{
+	// 	Enabled: true,
+	// })
+
 	env.Connection = conn
 	env.UQHolder = uqHolder.NewUQHolder(conn.GameData().EntityRuntimeID)
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = uint64(time.Now().Sub(conn.GameData().ConnectTime).Milliseconds()) / 50
 
 	if args.ShouldEnableOmegaSystem() {
-		fmt.Println("Omega System Enabled!")
+		fmt.Println(I18n.T(I18n.Omega_Enabled))
 		embed.EnableOmegaSystem(env)
 	}
 
@@ -369,6 +368,13 @@ func runClient(env *environment.PBEnvironment) {
 	move.RuntimeID = conn.GameData().EntityRuntimeID
 
 	signalhandler.Install(conn, env)
+
+	chunkAssembler := assembler.NewAssembler()
+	// max 100 chunk request per second
+	chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
+		conn.WritePacket(pk)
+	}, time.Millisecond*20, time.Second*5)
+	// currentChunkConstructor := &world_provider.ChunkConstructor{}
 
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
@@ -455,35 +461,8 @@ func runClient(env *environment.PBEnvironment) {
 				resp := <-chann
 				fmt.Printf("%+v\n", resp)
 			}
-			if cmd == "menu" {
-				menu.OpenMenu(env)
-				fmt.Printf("OK\n")
-				continue
-			}
 			if cmd == "move" {
 				go func() {
-					/*var counter int=0
-					var direction bool=false
-					for{
-						if counter%20==0 {
-							//move.Jump()
-						}
-						if counter>280 {
-							counter=0
-							direction= !direction
-						}
-						if direction {
-							move.Move(-2+2*moveP/100,0,2*moveP/100)
-							time.Sleep(time.Second/20)
-							counter++
-							continue
-						}else{
-							move.Move(2*moveP/100,0,-2+2*moveP/100)
-							time.Sleep(time.Second/20)
-							counter++
-							continue
-						}
-					}*/
 					for {
 						move.Auto()
 						time.Sleep(time.Second / 20)
@@ -544,8 +523,14 @@ func runClient(env *environment.PBEnvironment) {
 		if env.ExternalConnectionHandler != nil {
 			env.ExternalConnectionHandler.(*external.ExternalConnectionHandler).PacketChannel <- data
 		}
-
+		// fmt.Println(omega_utils.PktIDInvMapping[int(pk.ID())])
 		switch p := pk.(type) {
+		// case *packet.ClientCacheMissResponse:
+		// 	pterm.Info.Println("ClientCacheMissResponse", p)
+		// case *packet.ClientCacheStatus:
+		// 	pterm.Info.Println("ClientCacheStatus", p)
+		// case *packet.ClientCacheBlobStatus:
+		// 	pterm.Info.Println("ClientCacheBlobStatus", p)
 		case *packet.PyRpc:
 			if args.NoPyRpc() {
 				break
@@ -679,12 +664,40 @@ func runClient(env *environment.PBEnvironment) {
 					ActionType:      protocol.PlayerActionRespawn,
 				})
 			}
-		case *packet.LevelChunk:
-			if args.ShouldEnableOmegaSystem() {
-				world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
+		case *packet.SubChunk:
+			chunkData := chunkAssembler.OnNewSubChunk(p)
+			if chunkData != nil {
+				env.ChunkFeeder.(*global.ChunkFeeder).OnNewChunk(chunkData)
+				env.LRUMemoryChunkCacher.(*lru.LRUMemoryChunkCacher).Write(chunkData)
 			}
-			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
-			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
+		case *packet.NetworkChunkPublisherUpdate:
+			// pterm.Info.Println("packet.NetworkChunkPublisherUpdate", p)
+			// missHash := []uint64{}
+			// hitHash := []uint64{}
+			// for i := uint64(0); i < 64; i++ {
+			// 	missHash = append(missHash, uint64(10184224921554030005+i))
+			// 	hitHash = append(hitHash, uint64(6346766690299427078-i))
+			// }
+			// conn.WritePacket(&packet.ClientCacheBlobStatus{
+			// 	MissHashes: missHash,
+			// 	HitHashes:  hitHash,
+			// })
+		case *packet.LevelChunk:
+			// pterm.Info.Println("LevelChunk", p.BlobHashes, len(p.BlobHashes), p.CacheEnabled)
+			// go func() {
+			// 	for {
+
+			// conn.WritePacket(&packet.ClientCacheBlobStatus{
+			// 	MissHashes: []uint64{p.BlobHashes[0] + 1},
+			// 	HitHashes:  []uint64{},
+			// })
+			// 		time.Sleep(100 * time.Millisecond)
+			// 	}
+			// }()
+			if exist := chunkAssembler.AddPendingTask(p); !exist {
+				requests := chunkAssembler.GenRequestFromLevelChunk(p)
+				chunkAssembler.ScheduleRequest(requests)
+			}
 		case *packet.UpdateBlock:
 			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
 			if h {
@@ -756,7 +769,7 @@ func readToken(path string) (string, error) {
 func loadTokenPath() string {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
+		fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
 		homedir = "."
 	}
 	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")

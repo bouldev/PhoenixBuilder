@@ -9,6 +9,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"phoenixbuilder/omega/utils/structure"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -60,27 +61,28 @@ func (o *Importor) Activate() {
 	close(o.doneWaiter)
 }
 
-func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlock, stopFn func(), err error) {
-	sender := func(s string) {
-		fmt.Println(s)
-	}
-	if blockFeeder, stopFn, err := structure.DecodeSchem(data, sender); err == nil {
-		return blockFeeder, stopFn, err
+func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlock, stopFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
+	suggestMinCacheChunks = 0
+	if blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err := structure.DecodeSchem(data, infoSender); err == nil {
+		return blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err
 	} else {
 		pterm.Warning.Printfln("文件无法被 schem 解析器解析，将尝试下一个解析器 (%v)", err)
 	}
 
-	if blockFeeder, stopFn, err := structure.DecodeSchematic(data, func(s string) {}); err == nil {
-		return blockFeeder, stopFn, err
+	if blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err := structure.DecodeSchematic(data, infoSender); err == nil {
+		return blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err
 	} else {
 		pterm.Warning.Printfln("文件无法被 schematic 解析器解析，将尝试下一个解析器 (%v)", err)
 	}
-	return nil, nil, fmt.Errorf("无法找到合适的解析器")
+	return nil, nil, 0, 0, fmt.Errorf("无法找到合适的解析器")
 }
 
 func (o *UniverseImport) StartNewTask() {
 	task := o.data.CurrentTask
 	path := task.Path
+	if task.Progress < 0 {
+		task.Progress = 0
+	}
 	pterm.Info.Printfln("尝试处理任务 %v 起点(%v %v %v) 从 %v 方块处开始导入", task.Path, task.Offset[0], task.Offset[1], task.Offset[2], task.Progress)
 	data := []byte{}
 	if fp, err := os.OpenFile(path, os.O_RDONLY, 0644); err == nil {
@@ -95,17 +97,51 @@ func (o *UniverseImport) StartNewTask() {
 		o.data.CurrentTask = nil
 		return
 	}
-	if feeder, stopFn, err := o.getFrontEnd(data, func(s string) {
+	if feeder, stopFn, suggestMinCacheChunks, totalBlocks, err := o.getFrontEnd(data, func(s string) {
 		pterm.Info.Println(s)
 	}); err == nil {
 		baseProgress := task.Progress
 		pterm.Success.Println("文件成功被解析,将开始优化导入顺序")
+		if runtime.GOOS == "windows" && o.ImportSpeed > 100 {
+			pterm.Error.Println("受限于windows计时器精度, 导入系统无法达到你指定的导入速度（和fb一样的问题），请考虑使用任意非windows系统（linux/macos/安卓/ios/使用linux的面板）实现导入")
+		}
 		o.currentBuilder = &Importor{
 			frontendStopper: stopFn,
 			task:            task,
 			speed:           o.ImportSpeed,
 		}
 		o.currentBuilder.doneWaiter = make(chan struct{})
+		progressUpdateInterval := o.ImportSpeed + 1
+		progressBar := pterm.DefaultProgressbar.WithTotal(totalBlocks).WithTitle("Task: " + task.Path)
+		lastProgress := 0
+		updateProgress := func(currBlock int) {
+			currProgress := 1 + baseProgress + currBlock
+			increasementProgress := currProgress - lastProgress
+			if increasementProgress > 0 {
+				progressBar.Add(increasementProgress)
+			} else {
+				pterm.Error.Println("Negative increasementProgress: %v=(1+%v+%v)-%v ", increasementProgress, baseProgress, currBlock, lastProgress)
+			}
+
+			lastProgress = currProgress
+			task.Progress = currProgress
+			o.fileChange = true
+
+			// 因为 omega 启动器设计失误（每次读一行）我不得不这么做
+			fmt.Println()        // 下移一行（打出）
+			fmt.Print("\033[1A") // 回到上一行
+			fmt.Print("\033[K")  // 清除该行
+		}
+		ProgressUpdater := func(currBlock int) {
+			if currBlock == 0 {
+				pterm.Success.Printfln("可以开始导入了, 速度为 %v", o.ImportSpeed)
+				progressBar, _ = progressBar.Start()
+				updateProgress(currBlock)
+			}
+			if currBlock%progressUpdateInterval == 0 {
+				updateProgress(currBlock)
+			}
+		}
 		sender := o.Frame.GetGameControl().SendWOCmd
 		builder := &structure.Builder{
 			BlockCmdSender: func(cmd string) {
@@ -115,21 +151,16 @@ func (o *UniverseImport) StartNewTask() {
 			TpCmdSender: func(cmd string) {
 				o.Frame.GetGameControl().SendCmd(cmd)
 			},
-			ProgressUpdater: func(currBlock int) {
-				if currBlock == 0 {
-					pterm.Success.Println("优化完成，开始导入")
-				}
-				currProgress := baseProgress + currBlock
-				if currProgress%100 == 99 {
-					task.Progress = currProgress
-					fmt.Printf("\r task %v: %v blocks", task.Path, task.Progress)
-					o.fileChange = true
-				}
-			},
-			FinalWaitTime: 3,
-			IgnoreNbt:     o.IgnoreBlockNbt,
+			ProgressUpdater: ProgressUpdater,
+			FinalWaitTime:   3,
+			IgnoreNbt:       o.IgnoreBlockNbt,
+			InitPosGetter:   o.GetBotPos,
 		}
-		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeedWithReArrangeOnce(feeder, task.Offset, task.Progress, 16*16)
+		if suggestMinCacheChunks < 256 {
+			suggestMinCacheChunks = 256
+		}
+		pterm.Info.Println("最大缓冲区块数量: ", suggestMinCacheChunks)
+		middleFeeder, middleStopFn := structure.AlterImportPosStartAndSpeedWithReArrangeOnce(feeder, task.Offset, task.Progress, suggestMinCacheChunks, 16*16*16*24*3)
 		o.currentBuilder.finalFeeder = middleFeeder
 		o.currentBuilder.middleStopper = middleStopFn
 		o.currentBuilder.builder = builder
@@ -158,6 +189,11 @@ func (o *UniverseImport) onBlockUpdate(pos define.CubePos, origRTID, currentRTID
 	if o.currentBuilder != nil {
 		o.currentBuilder.onBlockUpdate(pos, origRTID, currentRTID)
 	}
+}
+
+func (o *UniverseImport) GetBotPos() define.CubePos {
+	p := o.Frame.GetUQHolder().BotPos.Position
+	return define.CubePos{int(p.X()), int(p.Y()), int(p.Z())}
 }
 
 func (o *UniverseImport) onImport(cmds []string) (stop bool) {
@@ -262,7 +298,7 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 			return true
 		},
 	})
-	o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.onBlockUpdate)
+	// o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.onBlockUpdate)
 }
 
 func (o *UniverseImport) Activate() {

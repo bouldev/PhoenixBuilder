@@ -81,6 +81,10 @@ func (o *Omega) GetWorldsDir() string {
 	return path.Join(o.storageRoot, "worlds")
 }
 
+func (o *Omega) GetOmegaSideDir() string {
+	return path.Join(o.storageRoot, "side")
+}
+
 func (o *Omega) GetAllConfigs() []*defines.ComponentConfig {
 	return o.ComponentConfigs
 }
@@ -94,6 +98,10 @@ func (o *Omega) GetPath(elem ...string) string {
 		}
 	}
 	return path.Join(o.storageRoot, path.Join(elem...))
+}
+
+func (o *Omega) GetStorageRoot() string {
+	return o.storageRoot
 }
 
 func (o *Omega) GetRelativeFileName(topic string) string {
@@ -233,6 +241,10 @@ func (o *Omega) RedAlert(info string) {
 	o.redAlertLogger.Write(info)
 }
 
+func (o *Omega) FBEval(cmd string) {
+	o.adaptor.FBEval(cmd)
+}
+
 func (o *Omega) RegOnAlertHandler(cb func(info string)) {
 	o.redAlertHandlers = append(o.redAlertHandlers, cb)
 }
@@ -259,8 +271,13 @@ func (o *Omega) GetBotTaskScheduler() defines.BotTaskScheduler {
 func (o *Omega) Activate() {
 	defer o.Stop()
 	go func() {
-		for {
-			pkt := o.adaptor.Read()
+		packetFeeder := o.adaptor.GetPacketFeeder()
+		// chunkDataFeeder := o.adaptor.GetChunkFeeder()
+		for pkt := range packetFeeder {
+			// fmt.Println(utils.PktIDInvMapping[int(pkt.ID())])
+			// if pkt.ID() == packet.IDClientCacheMissResponse {
+			// 	pterm.Info.Println("IDClientCacheMissResponse ", pkt)
+			// }
 			if pkt == nil {
 				continue
 			}

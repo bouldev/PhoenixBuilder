@@ -37,6 +37,8 @@ type PBEnvironment struct {
 	CertSigning               bool
 	LocalKey                  string
 	LocalCert                 string
+	LRUMemoryChunkCacher      interface{}
+	ChunkFeeder               interface{}
 }
 
 func (env *PBEnvironment) Stop() {

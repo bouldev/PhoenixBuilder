@@ -71,7 +71,7 @@ func (w *ColorTranslateLogLineWrapper) Write(data string) {
 }
 
 func (w *ColorTranslateLogLineWrapper) Init() *ColorTranslateLogLineWrapper {
-	replacer := GenerateMCColorReplacer()
+	replacer := GenerateMCColorReplacerRule()
 	replacer = append(replacer, "\n", "\x1b[m\n")
 	w.Replace = strings.NewReplacer(replacer...)
 	return w

@@ -1,0 +1,32 @@
+{
+    "名称": "OmegaSide旁加载组件系统",
+    "描述": "加载自己编写的插件,语言不限,运行在omega_storage/side目录下,如果可能Omega将会自动部署运行环境",
+    "是否禁用": false,
+    "版本": "0.0.1",
+    "来源": "Built-In",
+    "配置": {
+        "玩家数据文件":"OmegaSide玩家数据文件.json",
+        "如果可以则使用这个http端口": "localhost:24011",
+        "只打开用于开发的Websocket端口而不启动任何插件":false,
+        "使用Omega标准Python插件框架":true,
+        "使用DotCS社区版插件运行模拟器":true,
+        "python解释器搜索路径":[
+            "interpreters/python/bin/python",
+            "data/data/com.termux/files/usr/bin/python"
+        ],
+        "启动其他旁加载程序的指令": [
+        ],
+        "启动其他旁加载程序的指令的例子": [
+            {
+                "旁加载功能名": "其他类型插件1",
+                "启动指令": "node example1.js [addr]",
+                "变更选项": {}
+            },
+            {
+                "旁加载功能名": "其他类型插件2",
+                "启动指令": "插件.exe",
+                "变更选项": {}
+            }
+        ]
+    }
+}

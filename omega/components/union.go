@@ -65,7 +65,7 @@ func (o *Union) executeCmds(player string, cmds []defines.Cmd) (success bool) {
 		if len(s) == 0 {
 			resultChan <- false
 		} else {
-			utils.LaunchCmdsArray(o.Frame.GetGameControl(), cmds, map[string]interface{}{
+			go utils.LaunchCmdsArray(o.Frame.GetGameControl(), cmds, map[string]interface{}{
 				"[player]": player,
 			}, o.Frame.GetBackendDisplay())
 			resultChan <- true

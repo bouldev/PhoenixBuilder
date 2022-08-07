@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/pterm/pterm"
 )
 
 type Builder struct {
@@ -18,25 +20,33 @@ type Builder struct {
 	FinalWaitTime   int
 	IgnoreNbt       bool
 	Stop            bool
+	InitPosGetter   func() define.CubePos
 }
 
 func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 	o.delayBlocks = make(map[define.CubePos]*IOBlock)
 	o.delayBlocksMu = sync.RWMutex{}
 	counter := 0
-	delay := time.Duration((float64(1000) / float64(speed)) * float64(time.Millisecond))
+	delay := time.Duration((float64(1000) / float64(speed) * float64(time.Millisecond)))
 	ticker := time.NewTicker(delay)
+	lastPos := o.InitPosGetter()
+	pterm.Info.Printfln("DEBUG: Init Pos: %v", lastPos)
 	for block := range blocksIn {
 		if o.Stop {
 			return
 		}
-		if counter%40 == 0 {
-			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2]))
+		xmove := block.Pos.X() - lastPos.X()
+		zmove := block.Pos.Z() - lastPos.Z()
+		if counter == 0 {
+			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
+			lastPos = block.Pos
+			time.Sleep(3 * time.Second)
 		}
+		if (xmove*xmove + zmove*zmove) > 16*16 {
+			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
+		}
+		lastPos = block.Pos
 		blk := chunk.RuntimeIDToLegacyBlock(block.RTID)
-		// if blk.Name == "air" {
-		// 	fmt.Println(block.RTID)
-		// }
 		if blk == nil {
 			continue
 		}
@@ -58,10 +68,13 @@ func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 	}
 	o.delayBlocksMu.RLock()
 	if len(o.delayBlocks) > 0 && !o.IgnoreNbt && !o.Stop {
+		o.delayBlocksMu.RUnlock()
 		time.Sleep(time.Duration(o.FinalWaitTime) * time.Second)
 		o.updateDelayBlocks(true)
+	} else {
+		o.delayBlocksMu.RUnlock()
 	}
-	o.delayBlocksMu.RUnlock()
+
 	o.ProgressUpdater(-1)
 }
 

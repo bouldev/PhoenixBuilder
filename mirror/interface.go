@@ -14,16 +14,16 @@ var TimeStampNotFound = time.Unix(0, 0).Unix()
 type ChunkData struct {
 	Chunk     *chunk.Chunk
 	BlockNbts map[define.CubePos]map[string]interface{}
-	TimeStamp int64
+	SyncTime  int64
 	ChunkPos  define.ChunkPos
 }
 
-func (cd *ChunkData) GetTime() time.Time {
-	return time.Unix(cd.TimeStamp, 0)
+func (cd *ChunkData) GetSyncTime() time.Time {
+	return time.Unix(cd.SyncTime, 0)
 }
 
-func (cd *ChunkData) SetTime(t time.Time) {
-	cd.TimeStamp = t.Unix()
+func (cd *ChunkData) SetSyncTime(t time.Time) {
+	cd.SyncTime = t.Unix()
 }
 
 type RidBlockWithNbt struct {

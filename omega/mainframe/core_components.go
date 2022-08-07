@@ -230,6 +230,56 @@ func (o *NoSQLDBUtil) Inject(frame defines.MainFrame) {
 	//})
 }
 
+type PerformaceAnalysis struct {
+	*BaseCoreComponent
+	// startSuccess bool
+	// pprofFp      *os.File
+}
+
+func (o *PerformaceAnalysis) Inject(frame defines.MainFrame) {
+	// o.mainFrame = frame
+	// pprofFp, err := os.OpenFile(o.omega.GetPath("cpu.prof"), os.O_RDWR|os.O_CREATE, 0644)
+	// o.pprofFp = pprofFp
+	// if err == nil {
+	// 	if err := pprof.StartCPUProfile(pprofFp); err == nil {
+	// 		o.startSuccess = true
+	// 	}
+	// }
+}
+
+func (o *PerformaceAnalysis) Stop() error {
+	// if o.startSuccess {
+	// 	fmt.Println("正在保存性能分析文件")
+	// 	pprof.StopCPUProfile()
+	// 	o.pprofFp.Close()
+	// }
+	return nil
+}
+
+type OPCheck struct {
+	*BaseCoreComponent
+	checkDone bool
+}
+
+func (o *OPCheck) Inject(frame defines.MainFrame) {
+	o.mainFrame = frame
+	botUniqueID := frame.GetUQHolder().BotUniqueID
+	o.mainFrame.GetGameListener().SetOnTypedPacketCallBack(packet.IDAdventureSettings, func(p packet.Packet) {
+		if o.checkDone {
+			return
+		}
+		pk := p.(*packet.AdventureSettings)
+		if botUniqueID == pk.PlayerUniqueID {
+			if pk.PermissionLevel == packet.PermissionLevelOperator {
+				pterm.Success.Println("机器人OP 权限检测通过")
+			} else {
+				pterm.Error.Println("机器人不具备OP权限")
+				panic("机器人不具备 OP 权限")
+			}
+		}
+	})
+}
+
 type NameRecord struct {
 	*BaseCoreComponent
 	Records           map[string]*collaborate.TYPE_NameEntry
@@ -323,7 +373,7 @@ func (o *NameRecord) Inject(frame defines.MainFrame) {
 		name = utils.ToPlainName(name)
 		o.update(name, ud.String())
 	})
-	var fn collaborate.FUNC_GetPossibleName
+	var fn collaborate.FUNCTYPE_GET_POSSIBLE_NAME
 	fn = o.GetPossibleName
 	(*o.mainFrame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME] = fn
 }
@@ -394,7 +444,6 @@ func (o *KeepAlive) Activate() {
 			}
 		}
 	}()
-
 }
 
 func getCoreComponentsPool() map[string]func() defines.CoreComponent {
@@ -404,5 +453,7 @@ func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 		"数据库导入导出工具": func() defines.CoreComponent { return &NoSQLDBUtil{&BaseCoreComponent{}} },
 		"改名记录":      func() defines.CoreComponent { return &NameRecord{BaseCoreComponent: &BaseCoreComponent{}} },
 		"假死检测":      func() defines.CoreComponent { return &KeepAlive{BaseCoreComponent: &BaseCoreComponent{}} },
+		"性能分析":      func() defines.CoreComponent { return &PerformaceAnalysis{BaseCoreComponent: &BaseCoreComponent{}} },
+		"OP权限自检":    func() defines.CoreComponent { return &OPCheck{BaseCoreComponent: &BaseCoreComponent{}} },
 	}
 }

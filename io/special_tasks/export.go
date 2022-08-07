@@ -4,8 +4,7 @@ package special_tasks
 
 import (
 	"fmt"
-	"phoenixbuilder/dragonfly/server/block/cube"
-	"phoenixbuilder/dragonfly/server/world"
+	"time"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -13,10 +12,15 @@ import (
 	"phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/task/fetcher"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/world_provider"
+	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/define"
+	"phoenixbuilder/mirror/io/global"
+	"phoenixbuilder/mirror/io/world"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/io/lru"
+	"phoenixbuilder/mirror/chunk"
 	"runtime"
 	"strconv"
 	"strings"
@@ -42,13 +46,16 @@ var ExportWaiter chan map[string]interface{}
 
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
 	cmdsender:=env.CommandSender
+	// WIP
+	//cmdsender.Output("Sorry, but compatibility works haven't been done yet, redirected to lexport.")
+	//return CreateLegacyExportTask(commandLine, env)
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err!=nil {
 		cmdsender.Output(fmt.Sprintf("Failed to parse command: %v",err))
 		return nil
 	}
-	cmdsender.Output("Sorry, but compatibility works haven't been done yet, please use lexport.")
-	return nil
+	//cmdsender.Output("Sorry, but compatibility works haven't been done yet, please use lexport.")
+	//return nil
 	beginPos := cfg.Position
 	endPos := cfg.End
 	startX,endX,startZ,endZ:=0,0,0,0
@@ -72,7 +79,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	hopPath,requiredChunks:=fetcher.PlanHopSwapPath(startX,startZ,endX,endZ,16)
 	chunkPool:=map[fetcher.ChunkPosDefine]fetcher.ChunkDefine{}
 	memoryCacheFetcher:=fetcher.CreateCacheHitFetcher(requiredChunks,chunkPool)
-	world_provider.GlobalLRUMemoryChunkCacher.Iter(func(pos world_provider.ChunkPosDefine, chunk world_provider.ChunkDefine) (stop bool) {
+	env.LRUMemoryChunkCacher.(*lru.LRUMemoryChunkCacher).Iter(func(pos define.ChunkPos, chunk *mirror.ChunkData) (stop bool) {
 		memoryCacheFetcher(fetcher.ChunkPosDefine{int(pos[0])*16,int(pos[1])*16},fetcher.ChunkDefine(chunk))
 		return false
 	})
@@ -87,9 +94,27 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		cmdsender.SendCommand(cmd,uid)
 	}
 	feedChan:=make(chan *fetcher.ChunkDefineWithPos,1024)
-	deRegFn:=world_provider.GlobalChunkFeeder.RegNewReader(func (pos world_provider.ChunkPosDefine,chunk world_provider.ChunkDefine)  {
-		feedChan<-&fetcher.ChunkDefineWithPos{Chunk: fetcher.ChunkDefine(chunk),Pos:fetcher.ChunkPosDefine{int(pos[0])*16,int(pos[1])*16}}
+	deRegFn:=env.ChunkFeeder.(*global.ChunkFeeder).RegNewReader(func (chunk *mirror.ChunkData)  {
+		feedChan<-&fetcher.ChunkDefineWithPos{Chunk: fetcher.ChunkDefine(chunk),Pos:fetcher.ChunkPosDefine{int(chunk.ChunkPos[0])*16,int(chunk.ChunkPos[1])*16}}
 	})
+	inHopping:=true
+	go func() {
+		return
+		yc:=23
+		for {
+			if(!inHopping) {
+				break
+			}
+			uuidval, _:=uuid.NewUUID()
+			yv:=(yc-4)*16+8
+			yc--
+			if yc<0 {
+				yc=23
+			}
+			cmdsender.SendCommand(fmt.Sprintf("tp @s ~ %d ~", yv),uuidval)
+			time.Sleep(time.Millisecond*50)
+		}
+	} ()
 	fmt.Println("Begin Fast Hopping")
 	fetcher.FastHopper(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,0.5,3)
 	fmt.Println("Fast Hopping Done")
@@ -99,6 +124,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	if len(hopPath)>0{
 		fetcher.FixMissing(teleportFn,feedChan,chunkPool,hopPath,requiredChunks,2,3)
 	}
+	inHopping=false
 	hasMissing:=false
 	for _,c:=range requiredChunks{
 		if !c.CachedMark{
@@ -109,13 +135,12 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	if !hasMissing{
 		pterm.Success.Println("all chunks successfully fetched!")
 	}
-	providerChunksMap:=make(map[world_provider.ChunkPosDefine]world_provider.ChunkDefine)
+	providerChunksMap:=make(map[define.ChunkPos]*mirror.ChunkData)
 	for _,chunk:=range chunkPool{
-		providerChunksMap[world_provider.ChunkPosDefine{chunk.Position[0],chunk.Position[1]}]=world_provider.ChunkDefine(chunk)
+		providerChunksMap[chunk.ChunkPos]=(*mirror.ChunkData)(chunk)
 	}
 	var offlineWorld *world.World
-	offlineWorld=world.New(&world_provider.StubLogger{},32)
-	offlineWorld.Provider(world_provider.NewOfflineWorldProvider(providerChunksMap))
+	offlineWorld=world.NewWorld(SimpleChunkProvider{providerChunksMap})
 
 	go func() {
 		defer func() {
@@ -126,17 +151,20 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		}()
 		cmdsender.Output("EXPORT >> Exporting...")
 		V:=(endPos.X-beginPos.X+1)*(endPos.Y-beginPos.Y+1)*(endPos.Z-beginPos.Z+1)
-		blocks:=make([]*types.RuntimeModule,V)
+		blocks:=make([]*types.Module,V)
 		counter:=0
 		for x:=beginPos.X; x<=endPos.X; x++ {
 			for z:=beginPos.Z; z<=endPos.Z; z++ {
 				for y:=beginPos.Y; y<=endPos.Y; y++ {
-					blk:=offlineWorld.Block(cube.Pos{x,y,z})
-					runtimeId:=world.LoadRuntimeID(blk)
-					if runtimeId==world_provider.AirRuntimeId {
+					runtimeId, found:=offlineWorld.Block(define.CubePos{x,y,z})
+					if !found {
+						fmt.Printf("WARNING %d %d %d not found\n", x, y, z)
+					}
+					//block, item:=blk.EncodeBlock()
+					block, item, _ := chunk.RuntimeIDToState(runtimeId)
+					if block=="minecraft:air" {
 						continue
 					}
-					block, item:=blk.EncodeBlock()
 					var cbdata *types.CommandBlockData = nil
 					var chestData *types.ChestData = nil
 					if(block=="chest"||strings.Contains(block,"shulker_box")) {
@@ -213,8 +241,12 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							NeedRedstone: nrb,
 						}
 					}
-					blocks[counter]=&types.RuntimeModule {
-						BlockRuntimeId: runtimeId,
+					lb:=chunk.RuntimeIDToLegacyBlock(runtimeId)
+					blocks[counter]=&types.Module {
+						Block: &types.Block {
+							Name: &lb.Name,
+							Data: uint16(lb.Val),
+						},
 						CommandBlockData: cbdata,
 						ChestData: chestData,
 						Point: types.Position {
@@ -229,7 +261,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		}
 		blocks=blocks[:counter]
 		runtime.GC()
-		out:=bdump.BDump {
+		out:=bdump.BDumpLegacy {
 			Blocks: blocks,
 		}
 		if(strings.LastIndex(cfg.Path,".bdx")!=len(cfg.Path)-4||len(cfg.Path)<4) {

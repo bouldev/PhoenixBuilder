@@ -50,6 +50,13 @@ func (o *BackToHQ) back(chat *defines.GameChat) bool {
 						"[bot]":    "\"" + o.Frame.GetUQHolder().GetBotName() + "\"",
 					}),
 				)
+				<-time.NewTimer(time.Second / 2).C
+				o.Frame.GetGameControl().SendCmd(
+					utils.FormatByReplacingOccurrences(o.ToHQ, map[string]interface{}{
+						"[player]": "\"" + chat.Name + "\"",
+						"[bot]":    "\"" + o.Frame.GetUQHolder().GetBotName() + "\"",
+					}),
+				)
 			}()
 		})
 	return true

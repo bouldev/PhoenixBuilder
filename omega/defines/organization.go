@@ -96,7 +96,9 @@ type StorageAndLogProvider interface {
 	GetRelativeFileName(topic string) string
 	GetFileData(topic string) ([]byte, error)
 	GetJsonData(topic string, data interface{}) error
+	GetStorageRoot() string
 	GetWorldsDir() string
+	GetOmegaSideDir() string
 	WriteFileData(topic string, data []byte) error
 	WriteJsonData(topic string, data interface{}) error
 	WriteJsonDataWithTMP(topic string, tmpSuffix string, data interface{}) error
@@ -222,4 +224,5 @@ type MainFrame interface {
 	GetBotTaskScheduler() BotTaskScheduler
 	GetWorld() *world.World
 	GetWorldProvider() mirror.ChunkProvider
+	FBEval(cmd string)
 }

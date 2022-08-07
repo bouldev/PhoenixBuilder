@@ -83,21 +83,22 @@ func (b *TerritoryTest) Activate() {
 	go b.protect()
 }
 
-/*
-func (b *TerritoryTest) Signal(signal int) error {
+func (o *TerritoryTest) TerritoryTest(signal int) error {
 	switch signal {
 	case defines.SIGNAL_DATA_CHECKPOINT:
-
-			return b.Frame.WriteJsonDataWithTMP("地皮信息.json", ".ckpt", &b.Data)
-
+		if o.fileChange {
+			o.fileChange = false
+			return o.Frame.WriteJsonDataWithTMP("地皮信息.json", ".ckpt", o.Data)
+		}
 	}
 	return nil
-}*/
+}
 
 func (b *TerritoryTest) Stop() error {
 	fmt.Print("开始保存地皮插件信息")
-	return b.Frame.WriteJsonData("地皮信息.json", b.Data)
+	return b.Frame.WriteJsonDataWithTMP("地皮信息.json", ".final", b.Data)
 }
+
 func (b *TerritoryTest) Center(chat *defines.GameChat) bool {
 
 	msg := "§b§l[输入对应数字]\n1:§e购买地皮\n§b2:§e返回地皮\n§b3:§e授予白名单\n§b4:§e删除白名单\n§b5:§e删除自己地皮"
@@ -132,6 +133,7 @@ func (b *TerritoryTest) delectTerr(name string) {
 	if _, ok := b.Data[name]; ok {
 		msg := b.KeyWord["删除地皮成功提示"]
 		delete(b.Data, name)
+		b.fileChange = true
 		b.Frame.GetGameControl().SayTo("@a[name=\""+name+"\"]", msg)
 	} else {
 		b.Frame.GetGameControl().SayTo("@a[name=\""+name+"\"]", "§e[错误]§b你没有地皮")
@@ -156,6 +158,7 @@ func (b *TerritoryTest) delectMember(name string) {
 					msgs := b.KeyWord["删除白名单成功提示"]
 					msgs = b.FormateMsg(msgs, "删除对象", b.Data[NewChat.Name].Member[num])
 					b.Data[NewChat.Name].Member = append(b.Data[NewChat.Name].Member[:num], b.Data[NewChat.Name].Member[num+1:]...)
+					b.fileChange = true
 					b.Frame.GetGameControl().SayTo("@a[name=\""+NewChat.Name+"\"]", msgs)
 				} else {
 					b.Frame.GetGameControl().SayTo("@a[name=\""+NewChat.Name+"\"]", "【警告】输入的数字超过了最大")
@@ -179,6 +182,7 @@ func (b *TerritoryTest) giveMember(name string) {
 		b.Frame.GetGameControl().SayTo("@a[name=\""+name+"\"]", "§b§l请输入你要授权人的名字")
 		if b.Frame.GetGameControl().SetOnParamMsg(name, func(NewChat *defines.GameChat) (catch bool) {
 			b.Data[NewChat.Name].Member = append(b.Data[NewChat.Name].Member, NewChat.Msg[0])
+			b.fileChange = true
 			b.Frame.GetGameControl().SayTo("@a[name=\""+NewChat.Name+"\"]", "§a§l已对对方授权\n授权名字:"+NewChat.Msg[0])
 			return true
 		}) == nil {
@@ -191,7 +195,10 @@ func (b *TerritoryTest) giveMember(name string) {
 }
 func (b *TerritoryTest) protect() {
 	for {
-
+		time.Sleep(time.Duration(b.DelayTime) * time.Millisecond)
+		if len(b.Data) == 0 {
+			time.Sleep(time.Second * 3)
+		}
 		if len(b.Data) >= 1 {
 			for _k, _v := range b.Data {
 				k, v := _k, _v
@@ -261,6 +268,7 @@ func (b *TerritoryTest) WriteJsonDatas(name string, Range []int, price string) (
 		Range:  Range,
 		Member: make([]string, 1),
 	}
+	b.fileChange = true
 	//fmt.Print(b.Data[name], "\n")
 	fmt.Print(b.BuyCmds)
 	for _, v := range b.BuyCmds {

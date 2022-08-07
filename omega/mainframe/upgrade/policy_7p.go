@@ -138,3 +138,19 @@ func Policy_12(root string) {
 		setMigrationVersion(root, 583)
 	}
 }
+
+func Policy_13(root string) {
+	if version, err := checkMigrationVersion(root); err == nil && version < 781 {
+		updateComponentConfig(root, "OmegaSide旁加载组件系统", func(c *defines.ComponentConfig) {
+			pathsInterface := c.Configs["python解释器搜索路径"]
+			paths := pathsInterface.([]interface{})
+			for i, path := range paths {
+				if path.(string) == "data/data/com.termux/files/usr/bin/python" {
+					paths[i] = "/data/data/com.termux/files/usr/bin/python"
+				}
+			}
+			c.Configs["python解释器搜索路径"] = paths
+		})
+		setMigrationVersion(root, 781)
+	}
+}

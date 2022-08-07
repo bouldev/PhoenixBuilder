@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
@@ -46,6 +48,7 @@ type QGroupLink struct {
 	sendChan                  chan string
 	connectionFalseHintReduce int
 	cqStartPrintErr           bool
+	loginTruncated            bool
 }
 
 func (cq *QGroupLink) cqStartPrintErrRoutine() {
@@ -361,6 +364,11 @@ func (b *QGroupLink) Inject(frame defines.MainFrame) {
 	b.connect()
 	<-b.initLock
 	b.Frame.GetBackendDisplay().Write("Q群链接组件: 连接成功")
+	var collaborate_func collaborate.FUNC_SEND_TO_GROUP
+	collaborate_func = func(msg string) {
+		b.sendQQMessage(msg)
+	}
+	(*b.Frame.GetContext())[collaborate.INTERFACE_SEND_TO_GROUP] = collaborate_func
 	hint := "[群服互通]: 连接成功"
 	if b.FilterQQToServerMsgByHead != "" {
 		hint += "\n QQ->MC: 消息开头必须为" + b.FilterQQToServerMsgByHead
@@ -385,6 +393,18 @@ func (b *QGroupLink) Inject(frame defines.MainFrame) {
 	}
 	b.sendQQMessage(hint)
 	b.Frame.GetGameListener().SetGameChatInterceptor(b.onNewGameMsg)
+	b.Frame.GetGameListener().AppendLogoutInfoCallback(func(entry protocol.PlayerListEntry) {
+		player := b.Frame.GetGameControl().GetPlayerKitByUUID(entry.UUID)
+		if player != nil {
+			b.sendQQMessage(fmt.Sprintf("%v 离开了游戏", player.GetRelatedUQ().Username))
+		}
+	})
+	b.Frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
+		if b.loginTruncated {
+			name := utils.ToPlainName(entry.Username)
+			b.sendQQMessage(fmt.Sprintf("%v 进入了游戏", name))
+		}
+	})
 }
 
 func (b *QGroupLink) Stop() error {
@@ -397,5 +417,6 @@ func (b *QGroupLink) Signal(signal int) error {
 }
 
 func (b *QGroupLink) Activate() {
-
+	time.Sleep(time.Second * 5)
+	b.loginTruncated = true
 }

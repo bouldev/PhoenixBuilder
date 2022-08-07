@@ -107,21 +107,58 @@ jobs:
         tar xf llvm.tar.xz
         rm llvm.tar.xz
         mv llvm/14.0.6 ~/llvm
-    - name: Cache Openwrt SDK
-      id: cache-openwrt-sdk
+    - name: Cache iSH GCC
+      id: cache-ish-gcc
       uses: actions/cache@v3
       with:
-        key: openwrt-sdk-cache
+        key: ish-gcc-cache
+        path: ~/i686-unknown-linux-musl
+    - name: Download iSH GCC
+      if: steps.cache-ish-gcc.outputs.cache-hit != 'true'
+      run: |
+        wget -q https://github.com/Torrekie/homebrew-core/releases/download/i686-unknown-linux-musl/i686-unknown-linux-musl.tar.xz
+        tar xf i686-unknown-linux-musl.tar.xz
+        rm i686-unknown-linux-musl.tar.xz
+        mv i686-unknown-linux-musl ~/
+    - name: Cache Openwrt mt7620 SDK
+      id: cache-openwrt-mt7620-sdk
+      uses: actions/cache@v3
+      with:
+        key: openwrt-sdk-mt7620-cache
         path: ~/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64
-    - name: Download Openwrt SDK
-      if: steps.cache-openwrt-sdk.outputs.cache-hit != 'true'
+    - name: Download Openwrt mt7620 SDK
+      if: steps.cache-openwrt-mt7620-sdk.outputs.cache-hit != 'true'
       run: |
         wget -q https://archive.openwrt.org/releases/21.02.2/targets/ramips/mt7620/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         tar -xJf openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         rm openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         mv openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64 ~/
-    - name: Soft link Openwrt SDK
-      run: ln -s ~/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64 openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64
+    - name: Cache Openwrt ipq40xx-generic SDK
+      id: cache-openwrt-ipq40xx-generic-sdk
+      uses: actions/cache@v3
+      with:
+        key: openwrt-sdk-ipq40xx-generic-cache
+        path: ~/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64
+    - name: Download Openwrt ipq40xx-generic SDK
+      if: steps.cache-openwrt-ipq40xx-generic-sdk.outputs.cache-hit != 'true'
+      run: |
+        wget -q https://downloads.openwrt.org/releases/22.03.0-rc4/targets/ipq40xx/generic/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+        tar -xJf openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+        rm openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
+        mv openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64 ~/
+    - name: Cache Openwrt mt7622 SDK
+      id: cache-openwrt-mt7622-sdk
+      uses: actions/cache@v3
+      with:
+        key: openwrt-sdk-mediatek-mt7622-cache
+        path: ~/openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64
+    - name: Download Openwrt mt7622 SDK
+      if: steps.cache-openwrt-mt7622-sdk.outputs.cache-hit != 'true'
+      run: |
+        wget -q https://downloads.openwrt.org/releases/22.03.0-rc4/targets/mediatek/mt7622/openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+        tar -xJf openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+        rm openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64.tar.xz
+        mv openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64 ~/
     - name: Pre-Build & configure go-raknet
       run: |
         make current
@@ -132,7 +169,7 @@ jobs:
     - name: Build
       run: |
         export THEOS=~/theos
-        make
+        make all
     - name: Package for specific platforms
       run: |
         export THEOS=~/theos
@@ -143,7 +180,7 @@ jobs:
         cd fyne-gui/android_wrapper
         go build
         cd ..
-        make
+        make all
         #node simpleappend.js
         ls -lh build/>release.txt
         mv release.txt build/release-list.txt

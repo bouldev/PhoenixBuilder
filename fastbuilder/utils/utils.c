@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-
 int compareVersion(char *latestVersion,char *currentVersion) {
 	char *latestVersionParts[3];
 	int vpi=1;
@@ -18,7 +17,7 @@ int compareVersion(char *latestVersion,char *currentVersion) {
 	int lvPatch=atoi(latestVersionParts[2]);
 	char *currentVersionParts[3];
 	vpi=1;
-	currentVersionParts[0]=latestVersion;
+	currentVersionParts[0]=currentVersion;
 	for(char *p=currentVersion;*p!=0;p++) {
 		if(*p<'0'||*p>'9') {
 			if(vpi>=3)break;
@@ -32,14 +31,12 @@ int compareVersion(char *latestVersion,char *currentVersion) {
 	int cPatch=atoi(currentVersionParts[2]);
 	free(latestVersion);
 	free(currentVersion);
-	if(cMajor>=lvMajor) {
-		if(cMinor>=lvMinor) {
-			if(cPatch>=lvPatch) {
-				return 0;
-			}
-			return 1;
-		}
+	if(cMajor<lvMajor) {
+		return 1;
+	}else if(cMinor<lvMinor) {
+		return 1;
+	}else if(cPatch<lvPatch) {
 		return 1;
 	}
-	return 1;
+	return 0;
 }

@@ -9,7 +9,7 @@ import (
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
-	"phoenixbuilder/mirror/io"
+	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/mirror/io/lru"
 	"phoenixbuilder/mirror/io/mcdb"
 	"phoenixbuilder/mirror/io/world"
@@ -33,6 +33,7 @@ func (o *Reactor) SetGameMenuEntry(entry *defines.GameMenuEntry) {
 			},
 		)
 	}
+	o.freshMenu()
 }
 
 func (o *Reactor) gameMenuEntryToStdInterceptor(entry *defines.GameMenuEntry) func(chat *defines.GameChat) (stop bool) {
@@ -231,23 +232,38 @@ func (r *Reactor) React(pkt packet.Packet) {
 		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
 		r.CurrentWorld.SetBlockNbt(cubePos, p.NBTData)
 	case *packet.LevelChunk:
+		// fmt.Println("packet packet.LevelChunk")
 		// TODO Check if level chunk decode is affected by 0 -> -64
 		// TODO remove this line after runtime id mapping update
-		return
-		chunkData := io.NEMCPacketToChunkData(p)
-		if chunkData == nil {
-			break
+		if exist := r.chunkAssembler.AddPendingTask(p); !exist {
+			requests := r.chunkAssembler.GenRequestFromLevelChunk(p)
+			r.chunkAssembler.ScheduleRequest(requests)
 		}
-		if err := r.CurrentWorldProvider.Write(chunkData); err != nil {
-			o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
-		} else {
-			//fmt.Println("saving chunk @ ", p.ChunkX<<4, p.ChunkZ<<4)
-		}
-		for _, cb := range o.Reactor.OnLevelChunkData {
-			cb(chunkData)
-		}
+		// if err := r.CurrentWorldProvider.Write(chunkData); err != nil {
+		// 	o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
+		// } else {
+		// 	//fmt.Println("saving chunk @ ", p.ChunkX<<4, p.ChunkZ<<4)
+		// }
+		// for _, cb := range o.Reactor.OnLevelChunkData {
+		// 	cb(chunkData)
+		// }
 	case *packet.SubChunk:
-		// fmt.Println("SubChunk Packet")
+		// fmt.Println(p.SubChunkX, p.SubChunkY, p.SubChunkZ)
+		// fmt.Println("packet packet.SubChunk")
+		chunkData := r.chunkAssembler.OnNewSubChunk(p)
+		if chunkData != nil {
+			if err := r.CurrentWorldProvider.Write(chunkData); err != nil {
+				o.GetBackendDisplay().Write("Decode Chunk Error " + err.Error())
+			} else {
+				// fmt.Println("saving chunk @ ", chunkData.ChunkPos.X()<<4, chunkData.ChunkPos.Z()<<4)
+			}
+			for _, cb := range o.Reactor.OnLevelChunkData {
+				cb(chunkData)
+			}
+		}
+	case *packet.NetworkChunkPublisherUpdate:
+		r.chunkAssembler.CancelQueueByPublishUpdate(p)
+		// fmt.Println("packet.NetworkChunkPublisherUpdate", p)
 	}
 	for _, cb := range r.OnAnyPacketCallBack {
 		cb(pkt)
@@ -272,6 +288,8 @@ type Reactor struct {
 	CurrentWorldProvider      mirror.ChunkProvider
 	CurrentWorld              *world.World
 	MirrorAvailable           bool
+	freshMenu                 func()
+	chunkAssembler            *assembler.Assembler
 }
 
 func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
@@ -279,6 +297,10 @@ func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
 }
 
 func (o *Reactor) onBootstrap() {
+	o.chunkAssembler = assembler.NewAssembler()
+	o.chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
+		o.o.adaptor.Write(pk)
+	}, time.Second/5, time.Minute*5)
 	memoryProvider := lru.NewLRUMemoryChunkCacher(8)
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)
@@ -309,7 +331,6 @@ func (o *Reactor) onBootstrap() {
 	}
 	o.CurrentWorldProvider = memoryProvider
 	o.CurrentWorld = world.NewWorld(o.CurrentWorldProvider)
-
 	o.o.CloseFns = append(o.o.CloseFns, func() error {
 		fmt.Println("正在将世界缓存写入文件")
 		memoryProvider.Close()
@@ -339,5 +360,6 @@ func newReactor(o *Omega) *Reactor {
 		OnTypedPacketCallBacks:    make(map[uint32][]func(packet.Packet), 0),
 		OnFirstSeePlayerCallback:  make([]func(string), 0),
 		OnLevelChunkData:          make([]func(cd *mirror.ChunkData), 0),
+		freshMenu:                 func() {},
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func QueryForPlayerName(ctrl defines.GameControl, src string, dst string, searchFn collaborate.FUNC_GetPossibleName) (name string, cancel bool) {
+func QueryForPlayerName(ctrl defines.GameControl, src string, dst string, searchFn collaborate.FUNCTYPE_GET_POSSIBLE_NAME) (name string, cancel bool) {
 	termCtx := make(chan bool)
 	var hint []string
 	var resolver func(params []string) (int, bool, error)

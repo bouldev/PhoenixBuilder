@@ -28,7 +28,7 @@ type SchemFileStructrue struct {
 	BlockEntities []map[string]interface{}
 }
 
-func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBlock, cancelFn func(), err error) {
+func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBlock, cancelFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -38,7 +38,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	err = ErrImportFormateNotSupport
 	hasGzipHeader := false
 	if len(data) < 2 {
-		return nil, nil, err
+		return nil, nil, 0, 0, err
 	}
 	if data[0] == 0x1f && data[1] == 0x8b {
 		hasGzipHeader = true
@@ -49,7 +49,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	} else {
 		dataFeeder, err = gzip.NewReader(bytes.NewReader(data))
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, 0, 0, err
 		}
 	}
 	nbtDecoder := nbt.NewDecoder(dataFeeder)
@@ -58,7 +58,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	_, err = nbtDecoder.Decode(&schemData)
 	infoSender("解压缩成功")
 	if err != nil || schemData.BlockDataIn == nil || len(schemData.BlockDataIn) == 0 {
-		return nil, nil, ErrImportFormateNotSupport
+		return nil, nil, 0, 0, ErrImportFormateNotSupport
 	}
 
 	// convertBlockData := reflect.ValueOf(schemData.BlockDataIn)
@@ -94,7 +94,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	for i := 0; i < dataLen; i++ {
 		rv := convertOffset.Index(i)
 		if !rv.CanInt() {
-			return nil, nil, fmt.Errorf("cannot convert offset %v to int, please contact 2401PT", rv)
+			return nil, nil, 0, 0, fmt.Errorf("cannot convert offset %v to int, please contact 2401PT", rv)
 		}
 		schemData.offset[i] = int(rv.Int())
 	}
@@ -110,7 +110,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	}
 	fmt.Printf("schem file size %v %v %v\n", schemData.Width, schemData.Height, schemData.Length)
 	if len(schemData.blockData) != int(schemData.Height)*int(schemData.Width)*int(schemData.Length) {
-		return nil, nil, fmt.Errorf("size check fail %v != %v", schemData.Width*schemData.Height*schemData.Length, len(schemData.blockData))
+		return nil, nil, 0, 0, fmt.Errorf("size check fail %v != %v", schemData.Width*schemData.Height*schemData.Length, len(schemData.blockData))
 	}
 
 	Nbts := make(map[define.CubePos]map[string]interface{})
@@ -122,11 +122,16 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 
 	width, height, length := int(schemData.Width), int(schemData.Height), int(schemData.Length)
 	blockData := schemData.blockData
-	blockChan := make(chan *IOBlock, 4096)
+	blockChan := make(chan *IOBlock, 10240)
 	stop := false
 	airRID := chunk.AirRID
-	fmt.Println(airRID)
-	infoSender(fmt.Sprintf("格式匹配成功,开始解析,尺寸 [%v, %v, %v]", width, height, length))
+	blocksCounter := 0
+	for _, blk := range blockData {
+		if paletteMapping[int32(blk)] != airRID {
+			blocksCounter++
+		}
+	}
+	infoSender(fmt.Sprintf("格式匹配成功,开始解析,尺寸 [%v, %v, %v] 方块数量 %v\n", width, height, length))
 	go func() {
 		defer func() {
 			close(blockChan)
@@ -153,5 +158,5 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	}()
 	return blockChan, func() {
 		stop = true
-	}, nil
+	}, (suggestMinCacheChunks / 16) + 1, blocksCounter, nil
 }

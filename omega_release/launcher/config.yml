@@ -1,0 +1,48 @@
+account:
+  uin: [QQ账号]
+  password:  [QQ密码]
+  encrypt: false
+  status: 0
+  relogin: 
+    delay: 3
+    interval: 3
+    max-times: 0 
+  use-sso-address: true
+  allow-temp-session: false
+heartbeat:
+  interval: 5
+message:
+  post-format: string
+  ignore-invalid-cqcode: true
+  force-fragment: false
+  fix-url: false
+  proxy-rewrite: ''
+  report-self-message: false
+  remove-reply-at: false
+  extra-reply-data: false
+  skip-mime-scan: false
+output:
+  log-level: warn
+  log-aging: 15
+  log-force-new: true
+  log-colorful: true
+  debug: false
+default-middlewares: &default
+  access-token: ''
+  filter: ''
+  rate-limit:
+    enabled: false
+    frequency: 1
+    bucket: 1
+database:
+  leveldb:
+    enable: true
+  cache:
+    image: data/image.db
+    video: data/video.db
+servers:
+  - ws:
+      host: 127.0.0.1
+      port: 6700
+      middlewares:
+        <<: *default 

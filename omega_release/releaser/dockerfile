@@ -1,0 +1,53 @@
+FROM ubuntu:20.04 AS Downloader
+RUN export DEBIAN_FRONTEND=noninteractive && export DEBIAN_FRONTEND=teletype \
+    && sed -i 's/archive.ubuntu.com/mirrors.bfsu.edu.cn/g' /etc/apt/sources.list \
+    && apt-get update -yq && apt-get install --fix-missing -yq --no-install-recommends \
+    curl \
+    software-properties-common \
+    libreadline-dev \
+    && apt clean -yq && apt autoclean -yq && apt autoremove -yq && rm -rf /var/lib/apt/lists/*
+RUN mkdir /omega && mkdir /omega_bin
+ARG TIME_STAMP=default
+ARG OMEGA_SOURCE=""
+RUN curl $OMEGA_SOURCE/launcher-linux-mcsm -o /omega_bin/launcher-linux-mcsm
+RUN curl $OMEGA_SOURCE/fastbuilder-linux -o /omega/fastbuilder
+
+FROM ubuntu:20.04
+RUN export DEBIAN_FRONTEND=noninteractive && export DEBIAN_FRONTEND=teletype \
+    && sed -i 's/archive.ubuntu.com/mirrors.bfsu.edu.cn/g' /etc/apt/sources.list \
+    && apt-get update -yq && apt-get install --fix-missing -yq --no-install-recommends\
+    ca-certificates \
+    && apt clean -yq && apt autoclean -yq && apt autoremove -yq && rm -rf /var/lib/apt/lists/*
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+RUN echo 'Asia/Shanghai' >/etc/timezone
+
+ARG HOST_USER=omega 
+ARG HOST_UID=1001
+ARG HOST_GID=1001
+RUN if [ "${HOST_USER}" != "root" ]; then groupadd ${HOST_USER} -g ${HOST_GID} ;fi 
+RUN if [ "${HOST_USER}" != "root" ]; then useradd --shell /bin/bash  -u ${HOST_UID} -g ${HOST_GID} -o -c "" -M ${HOST_USER} ;fi 
+COPY --from=Downloader --chown=${HOST_UID}:${HOST_GID} /usr/lib/x86_64-linux-gnu/libreadline.so.8 /usr/lib/x86_64-linux-gnu/libreadline.so.8
+COPY --from=Downloader --chown=${HOST_UID}:${HOST_GID} /omega_bin/launcher-linux-mcsm /usr/bin/omega_launcher
+COPY --from=Downloader --chown=${HOST_UID}:${HOST_GID} /omega /omega_cache
+RUN mkdir -p /home/${HOST_USER}/.config && mkdir -p /home/${HOST_USER}/.config/fastbuilder \
+    && echo -n 'zh_CN' > /home/${HOST_USER}/.config/fastbuilder/language \
+    && mkdir -p /root/.config && mkdir -p /root/.config/fastbuilder \
+    && echo -n 'zh_CN' > /root/.config/fastbuilder/language \
+    && chmod +x /usr/bin/omega_launcher \
+    && chmod +x /omega_cache/fastbuilder \
+    && chown ${HOST_UID}:${HOST_GID} -R /home/${HOST_USER}
+RUN mkdir -p /workspace && chown ${HOST_UID}:${HOST_GID} -R /workspace
+RUN echo "#!/bin/bash" >> /usr/bin/start \
+    && echo "cd /workspace" >> /usr/bin/start \
+    && echo "sleep 1" >> /usr/bin/start \
+    && echo "echo \"omega image version\""  >> /usr/bin/start \
+    && echo "if [ ! -f \"/workspace/fastbuilder\" ]; then" >> /usr/bin/start \
+    && echo "    echo unpacking default omega"  >> /usr/bin/start \
+    && echo "    cp /omega_cache/fastbuilder /workspace/fastbuilder" >> /usr/bin/start \
+    && echo "fi" >> /usr/bin/start \
+    && echo "echo '启动Omega中...'" >> /usr/bin/start \
+    && echo "omega_launcher" >> /usr/bin/start \
+    && chmod +x /bin/start
+WORKDIR /workspace
+USER ${HOST_USER}
+ENTRYPOINT [ "/bin/start" ]

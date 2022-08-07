@@ -10,7 +10,38 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 )
 
+/*
+#cgo !windows LDFLAGS: -L${SRCDIR}/../../depends/stub -lz
+#cgo windows CFLAGS: -I${SRCDIR}/../../depends/zlib-1.2.12
+#cgo LDFLAGS: -L${SRCDIR}/../../depends/zlib-1.2.12/prebuilt
+#cgo windows,amd64 LDFLAGS: -lz-x86_64-windows -lws2_32
+#cgo windows,386 LDFLAGS: -lz-i686-windows -lws2_32
+#cgo !windows CFLAGS: -I${SRCDIR}/../../depends/zlib-1.2.12
+#include <stdint.h>
+extern unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char *path, int64_t beginX, int64_t beginY, int64_t beginZ);
+*/
+import "C"
+
+var lastChannelID uint=0
+var channelMap map[uint]chan *types.Module=map[uint]chan *types.Module{}
+
+//export builder_schematic_channel_input
+func builder_schematic_channel_input(channelID uint32, x int64, y int64, z int64, id uint8, data uint8) {
+	var b types.Block
+	b.Name = &BlockStr[int(id)]
+	b.Data = uint16(data)
+	blc:=channelMap[uint(channelID)]
+	blc <- &types.Module{Point: types.Position{int(x),int(y),int(z)}, Block: &b}
+}
+
 func Schematic(config *types.MainConfig, blc chan *types.Module) error {
+	channelMap[lastChannelID]=blc
+	gotChannelID:=lastChannelID
+	lastChannelID++
+	retval:=C.builder_schematic_process_schematic_file(C.uint32_t(gotChannelID), C.CString(config.Path), C.int64_t(config.Position.X), C.int64_t(config.Position.Y), C.int64_t(config.Position.Z))
+	delete(channelMap, gotChannelID)
+	fmt.Printf("RET %d\n",retval)
+	return nil
 	file, err:=bridge_path.ReadFile(config.Path)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
@@ -21,6 +52,7 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 		return err
 	}
 	defer gzip.Close()
+	
 	buffer, err := ioutil.ReadAll(gzip)
 
 	var SchematicModule struct {

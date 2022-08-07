@@ -31,6 +31,17 @@ printf "\033[33mFastBuilder Phoenix Installer v%s\033[0m\n" "${SCRIPT_VERSION}"
 printf "\033[33mBouldev 2022, Copyrights Reserved.\033[0m\n"
 printf "\033[32mStarting installation progress...\033[0m\n"
 
+# Check whether uname(1) GNU or BSD
+UNAME_GET_OSNAME="uname -s"
+for uname_prog in "uname" "guname"; do
+  which ${uname_prog} > /dev/null 2>&1
+  if [ $? == 0 ]; then
+    if [ $(${uname_prog} --version &> /dev/null; echo $?) == 0 ]; then
+      UNAME_GET_OSNAME="${uname_prog} -o"
+    fi
+  fi
+done
+
 # Check permissions and prefix
 echo "Checking permissons..."
 if [ "${DESTDIR}" ]; then
@@ -48,7 +59,7 @@ if [ ${LOCAL} ]; then
   printf "A folder named \"fastbuilder\" will be created under %s\n" "${HOME}"
   PREFIX="${HOME}/fastbuilder"
   ROOT_REQUIRED="0"
-elif [[ $(uname -o) == "Android" ]] && [[ $(apt install &> /dev/null; echo $?) == 0 ]]; then
+elif [[ $(${UNAME_GET_OSNAME}) == "Android" ]] && [[ $(apt install &> /dev/null; echo $?) == 0 ]]; then
   # No need of root on Termux
   printf "\033[32mRunning under Android Termux (APT does not require root)\033[0m\n"
   ROOT_REQUIRED="1"
@@ -189,7 +200,7 @@ FILE_ARCH=""
 
 BINARY_INSTALL="0"
 
-if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) == "Android" ]]; then
+if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(${UNAME_GET_OSNAME}) == "Android" ]]; then
   # We do not provide .deb packages for Android X86 currently
   if [[ ${ROOT_REQUIRED} == "1" ]] && [[ ${ARCH} != "x86" ]] && [[ ${ARCH} != "x86_64" ]] && [[ $(dpkg --version &> /dev/null; echo $?) == 0 ]]; then
     if [[ $(dpkg -L pro.fastbuilder.phoenix-android &> /dev/null; echo $?) == 0 ]]; then
@@ -254,7 +265,7 @@ elif [[ ${SYSTEM_NAME} == "NetBSD" ]] || [[ ${SYSTEM_NAME} == "FreeBSD" ]] || [[
   FILE_TYPE=""
   FILE_ARCH="${ARCH}"
   BINARY_INSTALL="1"
-elif [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(uname -o) != "Android" ]]; then
+elif [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(${UNAME_GET_OSNAME}) != "Android" ]]; then
   # Finally, Linux
   echo     "NOTE: We only provide x86_64 and arm64 executables currently, if"
   echo     "      you need prebuilts for other architectures, issue at"

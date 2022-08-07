@@ -42,8 +42,8 @@ SRCS_GO := $(foreach dir, $(shell find . -type d), $(wildcard $(dir)/*.go $(dir)
 
 CGO_DEF := "-DFB_VERSION=\"$(FBVERSION)\" -DFBGUI_VERSION=\"$(GUIVERSION)\" -DFB_COMMIT=\"$(shell git log -1 --format=format:"%h")\" -DFB_COMMIT_LONG=\"$(shell git log -1 --format=format:"%H")\""
 
-all: ${TARGETS}
 current: build/phoenixbuilder
+all: ${TARGETS}
 ios-executable: build/phoenixbuilder-ios-executable
 ios-app: build/phoenixbuilder-ios-app.ipa
 macos-executable: build/phoenixbuilder-macos
@@ -61,7 +61,7 @@ build/phoenixbuilder: build/ ${SRCS_GO}
 #build/phoenixbuilder-aarch64: build/ ${SRCS_GO}
 #	CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -tags fyne_gui -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
 build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Wl,-undefined,dynamic_lookup -Wl,-platform_version,2,11.0,14.5" CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -tags "fyne_gui ios" -trimpath -ldflags "-s -w -extldflags \"-Wl,-platform_version,2,11.0,14.5 platform_helper/assets/isOSVersionAtLeast_provider.m\"" -o build/phoenixbuilder-ios-executable
+	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-framework Foundation" CC="`pwd`/archs/ios.sh -Wno-deprecated-declarations" CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -tags "fyne_gui ios" -trimpath -ldflags "-s -w -extldflags \"platform_helper/assets/isOSVersionAtLeast_provider.m\"" -o build/phoenixbuilder-ios-executable
 	${LDID} -Sios-ent.xml build/phoenixbuilder-ios-executable
 	${IOS_STRIP} build/phoenixbuilder-ios-executable
 build/phoenixbuilder-ios-app.ipa: build/ build/phoenixbuilder-ios-executable

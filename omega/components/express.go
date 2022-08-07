@@ -38,7 +38,7 @@ type Express struct {
 	PackagePlatform   []int  `json:"打包平台"`
 	SelectCmd         string `json:"物品转移器"`
 	Record            ExpressInfo
-	PlayerSearcher    collaborate.FUNC_GetPossibleName
+	PlayerSearcher    collaborate.FUNCTYPE_GET_POSSIBLE_NAME
 }
 
 func (o *Express) formatPackage(idx int) string {
@@ -107,7 +107,7 @@ func (o *Express) post(srcPlayer, dstPlayer, hint string) {
 			o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 				if output.SuccessCount != 0 {
 					o.Frame.GetGameControl().SayTo(srcPlayer, "打包成功！将在目标玩家上线时送到")
-					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] 0 -40 0", ox, oy, oz))
+					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] ~ -80 ~", ox, oy, oz))
 					o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v->%v: 寄出 %v (%v)", srcPlayer, dstPlayer, hint, packageName))
 					if _, hask := o.Record.Packages[dstPlayer]; !hask {
 						o.Record.Packages[dstPlayer] = make([]*packageRecord, 0)
@@ -152,7 +152,7 @@ func (o *Express) queryPlayer(chat *defines.GameChat) bool {
 		if name, cancel := utils.QueryForPlayerName(
 			o.Frame.GetGameControl(), chat.Name,
 			"",
-			(*o.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)); !cancel {
+			(*o.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)); !cancel {
 			o.askForPackage(chat.Name, name)
 		} else {
 			o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
@@ -207,10 +207,11 @@ func (o *Express) Inject(frame defines.MainFrame) {
 	if err != nil {
 		panic(err)
 	}
-	o.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNC_GetPossibleName)
+	o.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)
 }
 
 func (o *Express) Activate() {
+	time.Sleep(3 * time.Second)
 	ox, oy, oz := o.PackagePlatform[0], o.PackagePlatform[1], o.PackagePlatform[2]
 	for h := -1; h < 0; h++ {
 		for wx := -1; wx < 2; wx++ {
@@ -223,7 +224,8 @@ func (o *Express) Activate() {
 						func(output *packet.CommandOutput) {
 							//fmt.Println(output)
 							if len(output.OutputMessages) > 0 && strings.Contains(output.OutputMessages[0].Message, "outOfWorld") {
-								panic(pterm.Error.Sprintf("打包平台 %v 不在常加载区内！请修改打包平台位置或者设为常加载区", o.PackagePlatform))
+								pterm.Warning.Println("打包平台(快递系统) %v 不在常加载区内！请修改打包平台位置或者设为常加载区,\n例如输入: /tickingarea add %v 0 %v %v 0 %v",
+									o.PackagePlatform, o.PackagePlatform[0]-1, o.PackagePlatform[2]-1, o.PackagePlatform[0]+1, o.PackagePlatform[2]+1)
 							}
 							if output.SuccessCount != 0 {
 								o.Frame.GetGameControl().SendCmd(fmt.Sprintf("setblock %v %v %v sealantern", x, y, z))

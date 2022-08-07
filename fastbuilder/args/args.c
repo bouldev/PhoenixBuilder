@@ -2,6 +2,12 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
+#include <dirent.h>
+#include <errno.h>
+#ifndef PATH_MAX
+#include <limits.h>
+#endif
+#include <sys/types.h>
 
 #ifndef FB_VERSION
 #define FB_VERSION "(CUSTOM)"
@@ -58,6 +64,7 @@ void print_help(const char *self_name) {
 	printf("\t--pack-scripts-to <path>: Specify the path for the output script package.\n");
 	printf("\t-N, --gamename <name>: Specify the game name to use interactive commands (e.g. get), instead of using the server provided one.\n");
 	printf("\t--ingame-response: Turn on the feature to listen to commands or give output in game.\n");
+	printf("\t--del-userdata: Remove user data and exit.\n");
 	printf("\n");
 	printf("\t-O, --omega_system: Enable Omega System.\n");
 	printf("\n");
@@ -124,6 +131,65 @@ void quickcopy(char **target_ptr) {
 	memcpy(*target_ptr, optarg, length);
 }
 
+#ifdef DT_UNKNOWN
+
+void rmdir_recursive(char *path) {
+	char *pathend=path+strlen(path);
+	DIR *fbdir=opendir(path);
+	if(!fbdir) {
+		if(errno==ENOENT) {
+			return;
+		}
+		fprintf(stderr, "Failed to open directory [%s]: %s\n", path, strerror(errno));
+		exit(1);
+	}
+	struct dirent *dir_ent;
+	while((dir_ent=readdir(fbdir))!=NULL) {
+		if(dir_ent->d_type==DT_UNKNOWN) {
+			fprintf(stderr, "Found file with unknown type: %s\n", path);
+			exit(2);
+		}
+		if(dir_ent->d_type!=DT_DIR) {
+			sprintf(pathend,"%s",dir_ent->d_name);
+			remove(path);
+		}else{
+			if((dir_ent->d_name[0]=='.'&&dir_ent->d_name[1]==0)||(dir_ent->d_name[0]=='.'&&dir_ent->d_name[1]=='.'&&dir_ent->d_name[2]==0)){
+				continue;
+			}
+			sprintf(pathend,"%s/",dir_ent->d_name);
+			rmdir_recursive(path);
+			remove(path);
+		}
+	}
+	closedir(fbdir);
+	*pathend=0;
+}
+
+#else
+
+void go_rmdir_recursive(char *path);
+void rmdir_recursive(char *path) {
+	go_rmdir_recursive(path);
+}
+
+#endif
+
+void config_cleanup() {
+	char *home_dir=getenv("HOME");
+	if(home_dir==NULL) {
+		fprintf(stderr, "Failed to obtain user's home directory, using \".\" instead.\n");
+		home_dir=".";
+	}
+	char *buf=malloc(PATH_MAX);
+	sprintf(buf, "%s", home_dir);
+	char *concat_start=buf+strlen(buf);
+	sprintf(concat_start,"/.config/fastbuilder/");
+	rmdir_recursive(buf);
+	remove(buf);
+	free(buf);
+	exit(0);
+}
+
 int _parse_args(int argc, char **argv) {
 	while(1) {
 		static struct option opts[]={
@@ -151,6 +217,7 @@ int _parse_args(int argc, char **argv) {
 			{"omega_system", no_argument, 0, 'O'}, // 21
 			{"gamename", required_argument, 0, 'N'}, // 22
 			{"ingame-response", no_argument, 0, 0}, // 23
+			{"del-userdata", no_argument, 0, 0}, // 24
 			{0, 0, 0, 0}
 		};
 		int option_index;
@@ -218,6 +285,9 @@ int _parse_args(int argc, char **argv) {
 				break;
 			case 23:
 				ingame_response=1;
+				break;
+			case 24:
+				config_cleanup();
 				break;
 			};
 			break;

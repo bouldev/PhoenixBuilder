@@ -25,13 +25,13 @@ func (pk *SubChunkRequest) Marshal(w *protocol.Writer) {
 	w.Varint32(&pk.Dimension)
 	w.SubChunkPos(&pk.Position)
 
-	count := uint32(len(pk.Offsets))
+	/*count := uint32(len(pk.Offsets))
 	w.Uint32(&count)
 	for _, offset := range pk.Offsets {
 		w.Int8(&offset[0])
 		w.Int8(&offset[1])
 		w.Int8(&offset[2])
-	}
+	}*/
 }
 
 // Unmarshal ...

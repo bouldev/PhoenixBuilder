@@ -1,7 +1,6 @@
 package fetcher
 
-import "phoenixbuilder/minecraft/protocol/packet"
-
+import "phoenixbuilder/mirror"
 
 type ChunkPosDefine [2]int
 
@@ -18,7 +17,7 @@ type ExportedChunkPos struct {
 
 type ExportedChunksMap map[ChunkPosDefine]*ExportedChunkPos
 
-type ChunkDefine *packet.LevelChunk
+type ChunkDefine *mirror.ChunkData
 
 type ChunkDefineWithPos struct{
 	Chunk ChunkDefine

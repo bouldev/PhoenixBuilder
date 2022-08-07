@@ -67,8 +67,8 @@ func (o *IntrusionDetectSystem) Init(cfg *defines.ComponentConfig) {
 		rc.compiledItemNameRegex = *regexp.MustCompile(rc.Item)
 		rc.compiledValueRegex = *regexp.MustCompile(rc.RegexString)
 	}
-	if o.EnablePatrol && o.Patrol > 0 && o.Patrol < 10 {
-		panic("巡逻时间太短，至少应该设为 10")
+	if o.EnablePatrol && o.Patrol > 0 && o.Patrol < 90 {
+		panic("巡逻时间太短，至少应该设为 90")
 	}
 }
 
@@ -283,6 +283,7 @@ func (o *IntrusionDetectSystem) onSeePlayer(pk *packet.AddPlayer) {
 }
 
 func (o *IntrusionDetectSystem) Activate() {
+	o.Frame.GetGameControl().SendCmd(fmt.Sprintf("effect @s invisibility %v 1 true", o.Patrol*2))
 	if o.EnablePatrol && o.Patrol > 0 {
 		go func() {
 			count := 0
@@ -293,11 +294,11 @@ func (o *IntrusionDetectSystem) Activate() {
 						Name: fmt.Sprintf("Portal %v", count),
 						ActivateFn: func() {
 							utils.GetPlayerList(o.Frame.GetGameControl(), "@r[rm=100]", func(players []string) {
+								o.Frame.GetGameControl().SendCmd(fmt.Sprintf("effect @s invisibility %v 1 true", o.Patrol*2))
 								if len(players) > 0 {
 									player := players[0]
-									o.Frame.GetGameControl().SendCmd(fmt.Sprintf("effect @s invisibility %v 1 true", o.Patrol))
 									o.Frame.GetGameControl().SendCmd("tp @s \"" + player + "\"")
-									o.Frame.GetGameControl().SendCmd("tp @s ~ 256 ~")
+									o.Frame.GetGameControl().SendCmd("tp @s ~ 320 ~")
 								}
 							})
 						},

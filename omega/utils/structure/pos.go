@@ -43,23 +43,26 @@ func AlterImportPosStartAndSpeed(inChan chan *IOBlock, offset define.CubePos, st
 	}
 }
 
-func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset define.CubePos, startFrom int, outChanLen int) (outChan chan *IOBlock, stopFn func()) {
+func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset define.CubePos, startFrom int, outChanLen int, suggestMinCacheChunks int) (outChan chan *IOBlock, stopFn func()) {
 	outChan = make(chan *IOBlock, outChanLen)
 	stop := false
+	air := chunk.AirRID
+	counter := 0
+
+	reArrangerToDumperChan := make(chan map[define.ChunkPos]*mirror.ChunkData, 2)
+
+	// reArranger go routine
 	go func() {
-		counter := 0
-		for {
-			if stop {
-				return
-			}
-			if counter < startFrom {
-				counter++
-				<-inChan
-			} else {
-				break
-			}
-		}
 		chunks := make(map[define.ChunkPos]*mirror.ChunkData)
+		lastChunkPos := define.ChunkPos{0, 0}
+		lastChunk := &mirror.ChunkData{
+			Chunk:     chunk.New(chunk.AirRID, define.Range{-64, 319}),
+			BlockNbts: make(map[define.CubePos]map[string]interface{}),
+			ChunkPos:  lastChunkPos,
+		}
+		chunks[lastChunkPos] = lastChunk
+
+		// define set block function
 		setBlock := func(b *IOBlock) {
 			pos := b.Pos
 			if pos.OutOfYBounds() {
@@ -68,23 +71,52 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 				return
 			}
 			chunkPos := define.ChunkPos{int32(pos[0] >> 4), int32(pos[2] >> 4)}
-			c, hasK := chunks[chunkPos]
-			if !hasK {
-				// chunk=&mirror.ChunkData{}
-				c = &mirror.ChunkData{
-					Chunk:     chunk.New(chunk.AirRID, define.Range{-64, 319}),
-					BlockNbts: make(map[define.CubePos]map[string]interface{}),
-					ChunkPos:  chunkPos,
+			if chunkPos != lastChunkPos {
+				c, hasK := chunks[chunkPos]
+				if !hasK {
+					// chunk=&mirror.ChunkData{}
+					c = &mirror.ChunkData{
+						Chunk:     chunk.New(chunk.AirRID, define.Range{-64, 319}),
+						BlockNbts: make(map[define.CubePos]map[string]interface{}),
+						ChunkPos:  chunkPos,
+					}
+					chunks[chunkPos] = c
 				}
-				chunks[chunkPos] = c
+				lastChunk = c
+				lastChunkPos = chunkPos
 			}
-			c.Chunk.SetBlock(uint8(pos[0]), int16(pos[1]), uint8(pos[2]), 0, b.RTID)
+			lastChunk.Chunk.SetBlock(uint8(pos[0]), int16(pos[1]), uint8(pos[2]), 0, b.RTID)
 			if b.NBT != nil {
-				c.BlockNbts[b.Pos] = b.NBT
+				lastChunk.BlockNbts[b.Pos] = b.NBT
 			}
 		}
-		air := chunk.AirRID
-		dumpAllChunks := func() {
+
+		// do rearrange
+		for b := range inChan {
+			if stop {
+				close(reArrangerToDumperChan)
+				return
+			}
+			b.Pos = b.Pos.Add(offset)
+			setBlock(b)
+			if len(chunks) > suggestMinCacheChunks {
+				reArrangerToDumperChan <- chunks
+				chunks = make(map[define.ChunkPos]*mirror.ChunkData)
+				lastChunkPos = define.ChunkPos{0, 0}
+				lastChunk = &mirror.ChunkData{
+					Chunk:     chunk.New(chunk.AirRID, define.Range{-64, 319}),
+					BlockNbts: make(map[define.CubePos]map[string]interface{}),
+					ChunkPos:  lastChunkPos,
+				}
+			}
+		}
+		reArrangerToDumperChan <- chunks
+		close(reArrangerToDumperChan)
+	}()
+
+	// dumper routine
+	go func() {
+		for chunks := range reArrangerToDumperChan {
 			chunkXs := make([]int, 0)
 			chunkZs := make([]int, 0)
 			for chunkPos, _ := range chunks {
@@ -138,12 +170,20 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 					for x := uint8(0); x < 16; x++ {
 						for z := uint8(0); z < 16; z++ {
 							for sy := uint8(0); sy < 16; sy++ {
+								if stop {
+									close(outChan)
+									return
+								}
 								y := subChunkI*16 + int16(sy) + int16(define.WorldRange[0])
 								blk := subChunk.Block(x, sy, z, 0)
 								if blk == air {
 									continue
 								}
 								p := define.CubePos{int(x) + int(chunkPos[0])*16, int(y), int(z) + int(chunkPos[1])*16}
+								if counter < startFrom {
+									counter++
+									continue
+								}
 								if nbt, hasK := nbts[p]; hasK {
 									outChan <- &IOBlock{
 										Pos:  p,
@@ -161,28 +201,7 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 					}
 				}
 			}
-			chunks = make(map[define.ChunkPos]*mirror.ChunkData)
 		}
-		for _b := range inChan {
-			b := _b
-			if stop {
-				return
-			}
-			b.Pos = b.Pos.Add(offset)
-			if b.NBT != nil {
-				delete(b.NBT, "x")
-				delete(b.NBT, "y")
-				delete(b.NBT, "z")
-			} else {
-				setBlock(b)
-				if len(chunks) > 256 {
-					// fmt.Println("batch dump chunks")
-					dumpAllChunks()
-				}
-			}
-		}
-		// fmt.Println("dumping")
-		dumpAllChunks()
 		close(outChan)
 	}()
 	return outChan, func() {

@@ -5,19 +5,12 @@ package readline
 
 /*
 #cgo CFLAGS: -I${SRCDIR}/../../depends/readline-master/include
-#cgo LDFLAGS: -L${SRCDIR}/../../depends/readline-master/prebuilt -L${SRCDIR}/../../depends/ncurses-6.3-20220319/prebuilt
-#cgo !android,!darwin,!ios,!windows,!netbsd,!use_aarch64_linux_rl LDFLAGS: -lreadline
-#cgo use_aarch64_linux_rl LDFLAGS: -lreadline-aarch64-linux -lncurses-aarch64-linux
-#cgo android,arm LDFLAGS: -lreadline-armv7-android -lncurses-arm-android
-#cgo android,arm64 LDFLAGS: -lreadline-aarch64-android -lncurses-aarch64-android
-#cgo android,386 LDFLAGS: -lreadline-i686-android -lncurses-i686-android
-#cgo android,amd64 LDFLAGS: -lreadline-x86_64-android -lncurses-x86_64-android
+#cgo LDFLAGS: -L${SRCDIR}/../../depends/stub -L${SRCDIR}/../../depends/readline-master/prebuilt -L${SRCDIR}/../../depends/ncurses-6.3-20220319/prebuilt
+#cgo !native,!darwin,!ios,!windows LDFLAGS: -lreadline
 #cgo darwin,!ios,arm64 LDFLAGS: -lreadline-aarch64-macos -lncurses
 #cgo darwin,amd64 LDFLAGS: -lreadline-x86_64-macos -lncurses
 #cgo ios,arm64 LDFLAGS: -lreadline-aarch64-ios -lncurses
 #cgo netbsd LDFLAGS: -lreadline -lterminfo
-#cgo windows,386 LDFLAGS: -lreadline-i686-mingw32
-#cgo windows,amd64 LDFLAGS: -lreadline-x86_64-mingw32
 extern char **strengthenStringArray(const char **source, int entries);
 extern char *doReadline();
 extern void init_readline();

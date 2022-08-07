@@ -26,6 +26,7 @@ var LegacyBlocks []*LegacyBlock
 var LegacyRuntimeIDs = map[LegacyBlockHash]uint32{}
 
 var JavaToRuntimeID func(javaBlockStr string) (runtimeID uint32, found bool)
+var JavaStrToRuntimeIDMapping map[string]uint32
 
 const (
 	// SubChunkVersion is the current version of the written sub chunks, specifying the format they are
@@ -326,7 +327,7 @@ var SchematicBlockMapping = []string{
 	"fence",
 	"fence",
 	"fence",
-	"dark_oak_fence",
+	"fence",
 	"acacia_fence_gate",
 	"spruce_door",
 	"birch_door",
@@ -437,29 +438,29 @@ func InitMapping(mappingInData []byte) {
 
 	nemcToVal := mappingIn.NEMCRidToVal
 	nemcToName := mappingIn.NEMCToName
-	legacyBlocks := make([]*LegacyBlock, len(Blocks))
+	LegacyBlocks = make([]*LegacyBlock, len(Blocks))
 	for rid, _ := range Blocks {
-		legacyBlocks[rid] = &LegacyBlock{Name: "", Val: 0}
+		LegacyBlocks[rid] = &LegacyBlock{Name: "", Val: 0}
 	}
 	for nemcRid, Rid := range nemcToMCRIDMapping {
-		if legacyBlocks[Rid].Name != "" {
+		if LegacyBlocks[Rid].Name != "" {
 			continue
 		}
 		val := nemcToVal[nemcRid]
 		if nemcRid == int(NEMCAirRID) {
 			continue
 		}
-		legacyBlocks[Rid].Val = val
-		legacyBlocks[Rid].Name = nemcToName[nemcRid]
+		LegacyBlocks[Rid].Val = val
+		LegacyBlocks[Rid].Name = nemcToName[nemcRid]
 	}
 	for rid, _ := range Blocks {
-		if legacyBlocks[rid].Name == "" {
-			legacyBlocks[rid].Name = "air"
+		if LegacyBlocks[rid].Name == "" {
+			LegacyBlocks[rid].Name = "air"
 		}
 	}
-	legacyBlocks[AirRID].Name = "air"
-	legacyBlocks[AirRID].Val = 0
-	for rid, block := range legacyBlocks {
+	LegacyBlocks[AirRID].Name = "air"
+	LegacyBlocks[AirRID].Val = 0
+	for rid, block := range LegacyBlocks {
 		LegacyRuntimeIDs[LegacyBlockHash{name: block.Name, data: block.Val}] = uint32(rid)
 	}
 	LegacyRuntimeIDs[LegacyBlockHash{name: "air", data: 0}] = AirRID
@@ -479,8 +480,9 @@ func InitMapping(mappingInData []byte) {
 		}
 	}
 	RuntimeIDToLegacyBlock = func(runtimeID uint32) (legacyBlock *LegacyBlock) {
-		return legacyBlocks[runtimeID]
+		return LegacyBlocks[runtimeID]
 	}
+	JavaStrToRuntimeIDMapping = mappingIn.JavaToRid
 	JavaToRuntimeID = func(javaBlockStr string) (runtimeID uint32, found bool) {
 		if rtid, hasK := mappingIn.JavaToRid[javaBlockStr]; hasK {
 			return rtid, true

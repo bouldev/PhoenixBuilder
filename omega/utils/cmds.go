@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
@@ -117,6 +118,7 @@ func splitScoreFetchGroup(defaultTarget string, targets []string) [][]string {
 var scoreTester = regexp.MustCompile(`\[score<.*?>\]`)
 
 func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map[string]interface{}, logger defines.LineDst) {
+	needPeekSendingRateReduce := len(cmds) > 8
 	scoreboardFetchTarget := ""
 	if target, hasK := remapping["[player]"]; hasK {
 		if strTarget, success := target.(string); success {
@@ -134,6 +136,8 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 		}
 		if a.SleepBefore != 0 {
 			time.Sleep(time.Duration(a.SleepBefore * float32(time.Second)))
+		} else if needPeekSendingRateReduce {
+			time.Sleep(time.Millisecond * time.Duration(rand.Intn(10)))
 		}
 		conditional := false
 		if i+1 != len(cmds) {
@@ -168,7 +172,7 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 		if (a.Record == "" || a.Record == "无" || a.Record == "空") && !conditional {
 			ctrl.SendCmd(cmd)
 		} else {
-			waitChan := make(chan bool)
+			waitChan := make(chan bool, 1)
 			onResponse := func(output *packet.CommandOutput) {
 				if output.SuccessCount == 0 {
 					waitChan <- false
@@ -190,6 +194,8 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 		}
 		if a.Sleep != 0 {
 			time.Sleep(time.Duration(a.Sleep * float32(time.Second)))
+		} else if needPeekSendingRateReduce {
+			time.Sleep(time.Millisecond * time.Duration(rand.Intn(10)))
 		}
 	}
 }

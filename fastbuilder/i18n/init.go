@@ -15,7 +15,8 @@ func Init() {
 	}else{
 		content, err:=ioutil.ReadFile(config)
 		if (err != nil) {
-			panic("Language config file isn't accessible")
+			fmt.Printf("WARNING: Language config file isn't accessible\n")
+			I18nDict=LangDict["en_US"]
 			return
 		}
 		langCode:=string(content)

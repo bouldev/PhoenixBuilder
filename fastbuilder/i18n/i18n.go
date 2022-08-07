@@ -16,124 +16,138 @@ const (
 
 var SelectedLanguage = LanguageEnglish
 
+// !! IMPORTANT !! Please DO NOT change the order of items w/ prefix Auth_ !
+// New items can be added anywhere AFTER Auth_ items !
+
 const (
 	Special_Startup = iota
-	Copyright_Notice_Headline
-	Copyright_Notice_Line_1
-	Copyright_Notice_Line_2
-	Copyright_Notice_Line_3
-	Copyright_Notice_Line_4 // Not used
-	Crashed_Tip
-	Crashed_StackDump_And_Error
-	Crashed_OS_Windows
-	EnterPasswordForFBUC
-	FBUC_LoginFailed
-	ServerCodeTrans
+	ACME_FailedToGetCommand
+	ACME_FailedToSeek
+	ACME_StructureErrorNotice
+	ACME_UnknownCommand
+	Auth_BackendError // 5
+	Auth_FailedToRequestEntry // 6
+	Auth_HelperNotCreated // 7
+	Auth_InvalidFBVersion // 8
+	Auth_InvalidHelperUsername // 9
+	Auth_InvalidToken // 10
+	Auth_InvalidUser // 11
+	Auth_ServerNotFound // 12
+	Auth_UnauthorizedRentalServerNumber // 13
+	Auth_UserCombined // 14
+	Auth_FailedToRequestEntry_TryAgain // 15
+	BDump_Author
+	BDump_EarlyEOFRightWhenOpening
+	BDump_FailedToReadAuthorInfo
+	BDump_FileNotSigned
+	BDump_FileSigned
+	BDump_NotBDX_Invheader
+	BDump_NotBDX_Invinnerheader
+	BDump_SignedVerifying
+	BDump_VerificationFailedFor
+	CommandNotFound
 	ConnectionEstablished
-	InvalidPosition
-	PositionGot
-	PositionGot_End
+	Copyright_Notice_Bouldev
+	Copyright_Notice_Contrib
+	Crashed_No_Connection
+	Crashed_OS_Windows
+	Crashed_StackDump_And_Error
+	Crashed_Tip
+	CurrentDefaultDelayMode
+	CurrentTasks
+	DelayModeSet
+	DelayModeSet_DelayAuto
+	DelayModeSet_ThresholdAuto
+	DelaySet
+	DelaySetUnavailableUnderNoneMode
+	DelayThreshold_OnlyDiscrete
+	DelayThreshold_Set
+	ERRORStr
+	EnterPasswordForFBUC
 	Enter_FBUC_Username
 	Enter_Rental_Server_Code
 	Enter_Rental_Server_Password
+	ErrorIgnored
+	FBUC_LoginFailed
+	FBUC_Token_ErrOnCreate
+	FBUC_Token_ErrOnGen
+	FBUC_Token_ErrOnRemove
+	FBUC_Token_ErrOnSave
+	FileCorruptedError
+	Get_Warning
+	IgnoredStr
+	InvalidFileError
+	InvalidPosition
+	Lang_Config_ErrOnCreate
+	Lang_Config_ErrOnSave
+	LanguageName
+	LanguageUpdated
+	Logout_Done
+	Menu_BackButton
+	Menu_Cancel
+	Menu_CurrentPath
+	Menu_ExcludeCommandsOption
+	Menu_GetEndPos
+	Menu_GetPos
+	Menu_InvalidateCommandsOption
+	Menu_Quit
+	Menu_StrictModeOption
 	NotAnACMEFile
-	UnsupportedACMEVersion
-	ACME_FailedToSeek
-	ACME_FailedToGetCommand
-	ACME_StructureErrorNotice
-	ACME_UnknownCommand
-	SysError_NoTranslation // Do not add a translation for it!
-	SysError_HasTranslation
+	Notice_CheckUpdate
+	Notice_OK
+	Notice_UpdateAvailable
+	Notice_UpdateNotice
+	Notify_NeedOp
+	Notify_TurnOnCmdFeedBack
+	Omega_Enabled
+	Parsing_UnterminatedEscape
+	Parsing_UnterminatedQuotedString
+	PositionGot
+	PositionGot_End
+	PositionSet
+	PositionSet_End
+	QuitCorrectly
+	Sch_FailedToResolve
+	SelectLanguageOnConsole
+	ServerCodeTrans
+	SimpleParser_Int_ParsingFailed
+	SimpleParser_InvEnum
+	SimpleParser_Invalid_decider
+	SimpleParser_Too_few_args
 	SysError_EACCES
 	SysError_EBUSY
 	SysError_EINVAL
 	SysError_EISDIR
 	SysError_ENOENT
 	SysError_ETXTBSY
-	BDump_EarlyEOFRightWhenOpening
-	BDump_NotBDX_Invheader
-	InvalidFileError
-	BDump_SignedVerifying
-	BDump_VerificationFailedFor
-	ERRORStr
-	IgnoredStr
-	BDump_FileSigned
-	BDump_FileNotSigned
-	BDump_NotBDX_Invinnerheader
-	BDump_FailedToReadAuthorInfo
-	FileCorruptedError
-	BDump_Author
-	CommandNotFound
-	Sch_FailedToResolve
-	SimpleParser_Too_few_args
-	SimpleParser_Invalid_decider
-	SimpleParser_Int_ParsingFailed
-	SimpleParser_InvEnum
-	QuitCorrectly
-	PositionSet
-	PositionSet_End
-	DelaySetUnavailableUnderNoneMode
-	CurrentDefaultDelayMode
-	DelaySet
-	DelayModeSet
-	DelayModeSet_DelayAuto
-	DelayModeSet_ThresholdAuto
-	DelayThreshold_OnlyDiscrete
-	DelayThreshold_Set
-	CurrentTasks
-	TaskStateLine
-	TaskTotalCount
+	SysError_HasTranslation
+	SysError_NoTranslation // Do not add a translation for it!
+	TaskCreated
+	TaskDisplayModeSet
+	TaskFailedToParseCommand
 	TaskNotFoundMessage
 	TaskPausedNotice
 	TaskResumedNotice
+	TaskStateLine
 	TaskStoppedNotice
-	Task_SetDelay_Unavailable
-	Task_DelaySet
 	TaskTTeIuKoto
-	TaskTypeSwitchedTo
-	TaskDisplayModeSet
-	TaskCreated
-	Menu_GetPos
-	Menu_GetEndPos
-	Menu_Quit
-	Menu_Cancel
-	Menu_ExcludeCommandsOption
-	Menu_InvalidateCommandsOption
-	Menu_StrictModeOption
-	Menu_BackButton
-	Menu_CurrentPath
-	Parsing_UnterminatedQuotedString
-	Parsing_UnterminatedEscape
-	Get_Warning
-	LanguageName
-	TaskTypeUnknown
-	TaskTypeRunning
-	TaskTypePaused
-	TaskTypeDied
+	TaskTotalCount
 	TaskTypeCalculating
+	TaskTypeDied
+	TaskTypePaused
+	TaskTypeRunning
 	TaskTypeSpecialTaskBreaking
-	TaskFailedToParseCommand
+	TaskTypeSwitchedTo
+	TaskTypeUnknown
 	Task_D_NothingGenerated
+	Task_DelaySet
+	Task_ResumeBuildFrom
+	Task_SetDelay_Unavailable
 	Task_Summary_1
 	Task_Summary_2
 	Task_Summary_3
-	Logout_Done
-	FailedToRemoveToken
-	SelectLanguageOnConsole
-	LanguageUpdated
-	Auth_ServerNotFound // 104
-	Auth_FailedToRequestEntry // 105
-	Auth_InvalidHelperUsername // 106
-	Auth_BackendError //107
-	Auth_UnauthorizedRentalServerNumber //108
-	Auth_HelperNotCreated //109
-	Auth_InvalidUser //110
-	Auth_InvalidToken //111
-	Auth_UserCombined //112
-	Auth_InvalidFBVersion //113
-	Notify_TurnOnCmdFeedBack
-	Notify_NeedOp
-	Task_ResumeBuildFrom
+	UnsupportedACMEVersion
+	Warning_UserHomeDir
 )
 
 var LangDict map[string]map[uint16]string = map[string]map[uint16]string {
@@ -180,13 +194,13 @@ func SelectLanguage() {
 		break
 	}
 	if file,err:=os.Create(config);err!=nil {
-		fmt.Println("Error creating language config file: %v",err)
-		fmt.Println("Error ignored.")
+		fmt.Println(T(Lang_Config_ErrOnCreate),err)
+		fmt.Println(T(ErrorIgnored))
 	}else{
 		_, err = file.WriteString(SelectedLanguage)
 		if(err!=nil) {
-			fmt.Println("Error saving language config: %v",err)
-			fmt.Println("Error ignored.")
+			fmt.Println(T(Lang_Config_ErrOnSave),err)
+			fmt.Println(T(ErrorIgnored))
 		}
 		file.Close()
 	}
@@ -195,7 +209,7 @@ func SelectLanguage() {
 func UpdateLanguage() {
 	langdict, aru := LangDict[SelectedLanguage]
 	if(!aru) {
-		panic("Updating to a language that doesn't exist")
+		panic("Updating to a language that not currently provided")
 		return
 	}
 	I18nDict=langdict

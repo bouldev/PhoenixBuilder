@@ -16,10 +16,12 @@ import (
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/function"
 	fbtask "phoenixbuilder/fastbuilder/task"
-	"phoenixbuilder/fastbuilder/world_provider"
 	"phoenixbuilder/io/commands"
+	"phoenixbuilder/mirror/io/global"
+	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/io/lru"
 
 	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/args"
@@ -209,6 +211,8 @@ func (s *Session) beforeStart() (err error) {
 	env.UQHolder = nil
 	env.ActivateTaskStatus = make(chan bool)
 	env.TaskHolder = fbtask.NewTaskHolder()
+	env.LRUMemoryChunkCacher=lru.NewLRUMemoryChunkCacher(12)
+	env.ChunkFeeder=global.NewChunkFeeder()
 	env.FunctionHolder = function.NewFunctionHolder(env)
 	env.LoginInfo = environment.LoginInfo{
 		Token:          s.Config.FBToken,
@@ -217,6 +221,8 @@ func (s *Session) beforeStart() (err error) {
 	}
 	authClient := fbauth.CreateClient(env)
 	env.FBAuthClient = authClient
+	env.LRUMemoryChunkCacher=lru.NewLRUMemoryChunkCacher(12)
+	env.ChunkFeeder=global.NewChunkFeeder()
 
 	if s.Config.FBToken == "" {
 		// we need to get a token
@@ -404,6 +410,7 @@ func (s *Session) routine(c chan string) {
 			}
 		}
 	}()
+	chunkAssembler := assembler.NewAssembler()
 
 	// A loop that reads packets from the connection until it is closed.
 	env := s.env
@@ -544,12 +551,17 @@ func (s *Session) routine(c chan string) {
 					ActionType:      protocol.PlayerActionRespawn,
 				})
 			}
-		case *packet.LevelChunk:
-			if args.ShouldEnableOmegaSystem() {
-				world_provider.GlobalLRUMemoryChunkCacher.AdjustCacheLevel(7)
+		case *packet.SubChunk:
+			chunkData := chunkAssembler.OnNewSubChunk(p)
+			if chunkData != nil {
+				env.ChunkFeeder.(*global.ChunkFeeder).OnNewChunk(chunkData)
+				env.LRUMemoryChunkCacher.(*lru.LRUMemoryChunkCacher).Write(chunkData)
 			}
-			world_provider.GlobalLRUMemoryChunkCacher.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
-			world_provider.GlobalChunkFeeder.OnNewChunk(world_provider.ChunkPosDefine{p.Position.X(), p.Position.Z()}, p)
+		case *packet.LevelChunk:
+			if exist := chunkAssembler.AddPendingTask(p); !exist {
+				requests := chunkAssembler.GenRequestFromLevelChunk(p)
+				chunkAssembler.ScheduleRequest(requests)
+			}
 		case *packet.UpdateBlock:
 			channel, h := env.CommandSender.GetBlockUpdateSubscribeMap().LoadAndDelete(p.Position)
 			if h {

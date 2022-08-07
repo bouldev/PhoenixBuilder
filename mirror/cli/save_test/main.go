@@ -84,8 +84,8 @@ func main() {
 		}
 		decodedChunks = append(decodedChunks, &mirror.ChunkData{
 			Chunk: c, BlockNbts: nbts,
-			ChunkPos:  define.ChunkPos{chunkPacket.X, chunkPacket.Z},
-			TimeStamp: time.Now().Unix(),
+			ChunkPos: define.ChunkPos{chunkPacket.X, chunkPacket.Z},
+			SyncTime: time.Now().Unix(),
 		})
 	}
 	provider, err := mcdb.New("testout", opt.FlateCompression)

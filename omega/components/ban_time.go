@@ -124,7 +124,7 @@ func (o *BanTime) kick(name string) {
 		h = fmt.Sprintf("%v", int(duration.Hours())%24)
 		d = fmt.Sprintf("%v", int(duration.Hours())/24)
 	}
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.KickCmd, map[string]interface{}{
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.KickCmd, map[string]interface{}{
 		"[player]": name,
 		"[day]":    d,
 		"[hour]":   h,

@@ -85,3 +85,9 @@ analyze/
 omega_storage
 docker
 sdks/
+
+plantform_specific_interperters
+dotcs_plugins
+
+*.tar.gz
+omega_release/binary

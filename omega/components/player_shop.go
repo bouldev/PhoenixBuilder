@@ -77,7 +77,7 @@ func (o *PlayerShop) executeCmds(player string, mapping map[string]interface{}, 
 		if len(s) == 0 {
 			resultChan <- false
 		} else {
-			utils.LaunchCmdsArray(o.Frame.GetGameControl(), cmds, mapping, o.Frame.GetBackendDisplay())
+			go utils.LaunchCmdsArray(o.Frame.GetGameControl(), cmds, mapping, o.Frame.GetBackendDisplay())
 			resultChan <- true
 		}
 	})
@@ -365,7 +365,7 @@ func (o *PlayerShop) tryGetAmountAndCurrentInStr(in string) (amount int, currenc
 func (o *PlayerShop) onSale(good *PlayerShopDataGood) {
 	shouldGet := int(math.Floor(float64(good.Price) * (float64(1) - o.Tax)))
 	totalTax := good.Price - shouldGet
-	utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnSale, map[string]interface{}{
+	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnSale, map[string]interface{}{
 		"[player]": "\"" + good.Src + "\"",
 		"[商品]":     good.Name,
 		"[价格]":     good.Price,
@@ -391,7 +391,7 @@ func (o *PlayerShop) packupGood(good *PlayerShopDataGood) {
 				good.StructureName, sx, sy, sz, ex, ey, ez)
 			o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, func(output *packet.CommandOutput) {
 				if output.SuccessCount != 0 {
-					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] ~ -40 ~", ox, oy, oz))
+					o.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @e[r=3,x=%v,y=%v,z=%v] ~ -80 ~", ox, oy, oz))
 					if m, err := json.Marshal(good); err == nil {
 						descStr := string(m)
 						o.Frame.GetBackendDisplay().Write("出售物品，信息: " + descStr)
@@ -430,7 +430,7 @@ func (o *PlayerShop) askForGoods(playerName, goodName string, price int, currenc
 		o.packupGood(g)
 		return true
 	}) == nil {
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep3, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep3, map[string]interface{}{
 			"[player]": "\"" + playerName + "\"",
 		}, o.Frame.GetBackendDisplay())
 	}
@@ -452,7 +452,7 @@ func (o *PlayerShop) askForGoodPrice(playerName, goodName string) {
 		o.askForGoods(playerName, goodName, price, currency)
 		return true
 	}) == nil {
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep2, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep2, map[string]interface{}{
 			"[player]": "\"" + playerName + "\"",
 		}, o.Frame.GetBackendDisplay())
 	}
@@ -464,7 +464,7 @@ func (o *PlayerShop) askForGoodName(name string) {
 		o.askForGoodPrice(name, goodName)
 		return true
 	}) == nil {
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep1, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCanSaleStep1, map[string]interface{}{
 			"[player]": "\"" + name + "\"",
 		}, o.Frame.GetBackendDisplay())
 	}
@@ -473,11 +473,11 @@ func (o *PlayerShop) askForGoodName(name string) {
 func (o *PlayerShop) onSaleTrigger(chat *defines.GameChat) (stop bool) {
 	stop = true
 	go func() {
-		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.PreExecuteCmdsOnSale, map[string]interface{}{
+		go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.PreExecuteCmdsOnSale, map[string]interface{}{
 			"[player]": "\"" + chat.Name + "\"",
 		}, o.Frame.GetBackendDisplay())
 		if !<-utils.CheckPlayerMatchSelector(o.Frame.GetGameControl(), chat.Name, o.SaleAuthSelector) {
-			utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCannotSale, map[string]interface{}{
+			go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.HintOnCannotSale, map[string]interface{}{
 				"[player]": "\"" + chat.Name + "\"",
 			}, o.Frame.GetBackendDisplay())
 			return
@@ -500,6 +500,7 @@ func (o *PlayerShop) Signal(signal int) error {
 }
 
 func (o *PlayerShop) Activate() {
+	time.Sleep(3 * time.Second)
 	ox, oy, oz := o.PackagePlatform[0], o.PackagePlatform[1], o.PackagePlatform[2]
 	for h := -1; h < 0; h++ {
 		for wx := -1; wx < 2; wx++ {
@@ -512,7 +513,8 @@ func (o *PlayerShop) Activate() {
 						func(output *packet.CommandOutput) {
 							//fmt.Println(output)
 							if len(output.OutputMessages) > 0 && strings.Contains(output.OutputMessages[0].Message, "outOfWorld") {
-								panic(pterm.Error.Sprintf("打包平台 %v 不在常加载区内！请修改打包平台位置或者设为常加载区", o.PackagePlatform))
+								pterm.Warning.Println("打包平台(玩家商店) %v 不在常加载区内！请修改打包平台位置或者设为常加载区,\n例如输入: /tickingarea add %v 0 %v %v 0 %v",
+									o.PackagePlatform, o.PackagePlatform[0]-1, o.PackagePlatform[2]-1, o.PackagePlatform[0]+1, o.PackagePlatform[2]+1)
 							}
 							if output.SuccessCount != 0 {
 								o.Frame.GetGameControl().SendCmd(fmt.Sprintf("setblock %v %v %v sealantern", x, y, z))

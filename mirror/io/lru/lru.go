@@ -1,7 +1,6 @@
 package lru
 
 import (
-	"fmt"
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/define"
 	"sort"
@@ -36,7 +35,13 @@ func (o *LRUMemoryChunkCacher) Get(pos define.ChunkPos) (data *mirror.ChunkData)
 	} else if o.FallBackProvider == nil {
 		return nil
 	} else {
-		return o.FallBackProvider.Get(pos)
+		cd := o.FallBackProvider.Get(pos)
+		if cd != nil {
+			o.memoryChunks[pos] = cd
+			o.cacheMap[pos] = time.Now()
+			o.checkCacheSizeAndHandleFallBackNoLock()
+		}
+		return cd
 	}
 }
 
@@ -59,15 +64,9 @@ func (o *LRUMemoryChunkCacher) AdjustCacheLevel(level int) {
 	o.cacheLevel = level
 }
 
-func (o *LRUMemoryChunkCacher) Write(data *mirror.ChunkData) error {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	o.cacheMap[data.ChunkPos] = time.Now()
-	o.memoryChunks[data.ChunkPos] = data
-	// count++
-	// fmt.Println(count," ",pos)
+func (o *LRUMemoryChunkCacher) checkCacheSizeAndHandleFallBackNoLock() {
 	if len(o.memoryChunks) > (1 << (o.cacheLevel + 1)) {
-		fmt.Println("release overflowed cached chunks")
+		// fmt.Println("release overflowed cached chunks")
 		cacheList := make(SortableTimes, 0)
 		for pos, t := range o.cacheMap {
 			cacheList = append(cacheList, &timePosPair{
@@ -85,6 +84,16 @@ func (o *LRUMemoryChunkCacher) Write(data *mirror.ChunkData) error {
 			delete(o.cacheMap, pair.p)
 		}
 	}
+}
+
+func (o *LRUMemoryChunkCacher) Write(data *mirror.ChunkData) error {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.cacheMap[data.ChunkPos] = time.Now()
+	o.memoryChunks[data.ChunkPos] = data
+	o.checkCacheSizeAndHandleFallBackNoLock()
+	// count++
+	// fmt.Println(count," ",pos)
 	return nil
 }
 

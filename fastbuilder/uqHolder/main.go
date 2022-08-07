@@ -106,6 +106,7 @@ type UQHolder struct {
 	InventoryContent           map[uint32][]protocol.ItemInstance
 	PlayerHotBar               packet.PlayerHotBar
 	// AvailableCommands   packet.AvailableCommands
+	BotPos                PosRepresent
 	BotOnGround           bool
 	BotHealth             int32
 	CommandRelatedEnums   []*packet.UpdateSoftEnum
@@ -384,6 +385,13 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	case *packet.MovePlayer:
 		if p.EntityRuntimeID == uq.BotRuntimeID {
 			uq.BotOnGround = p.OnGround
+			uq.BotPos = PosRepresent{
+				Position:       p.Position,
+				Pitch:          p.Pitch,
+				Yaw:            p.Yaw,
+				HeadYaw:        p.HeadYaw,
+				LastUpdateTick: p.Tick,
+			}
 		}
 		e := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
 		e.LastPosInfo = PosRepresent{
@@ -396,6 +404,8 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		e.LastUpdateTick = p.Tick
 		uq.UpdateTick(p.Tick)
 	case *packet.CorrectPlayerMovePrediction:
+		uq.BotPos.Position = p.Position
+		uq.BotPos.LastUpdateTick = p.Tick
 		uq.GetEntityByRuntimeID(uq.BotRuntimeID).LastPosInfo.Position = p.Position
 		uq.GetEntityByRuntimeID(uq.BotRuntimeID).LastPosInfo.LastUpdateTick = p.Tick
 		uq.GetEntityByRuntimeID(uq.BotRuntimeID).LastUpdateTick = p.Tick

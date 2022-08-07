@@ -41,7 +41,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 			commandSender:=env.CommandSender
 			homedir, err := os.UserHomeDir()
 			if err != nil {
-				bridge_fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
+				bridge_fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
 				homedir="."
 			}
 			fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
@@ -49,7 +49,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 			token := filepath.Join(fbconfigdir,"fbtoken")
 			err = os.Remove(token)
 			if(err!=nil) {
-				commandSender.Output(fmt.Sprintf(I18n.T(I18n.FailedToRemoveToken),err))
+				commandSender.Output(fmt.Sprintf(I18n.T(I18n.FBUC_Token_ErrOnRemove),err))
 				return
 			}
 			commandSender.Output(I18n.T(I18n.Logout_Done))
