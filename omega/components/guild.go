@@ -33,7 +33,10 @@ type Guild struct {
 	TargetOfSetGuildLb     string                `json:"可设置公会权限的选择器"`
 	TriggersOfSetGuidb     string                `json:"设置公会权限触发词"`
 	PersonScoreTitle       map[string]string     `json:"显示个人信息所需计分板"`
-	GuildData              map[string]*GuildDatas
+	NoGuild                [][]int               `json:"禁止设置公会坐标"`
+	TriggersOfOp           string                `json:"隐藏菜单触发词"`
+
+	GuildData map[string]*GuildDatas
 }
 type Commodity struct {
 	name      string   `json:"商品名字"`
@@ -50,6 +53,7 @@ type GuildDatas struct {
 	Range        []int
 	announcement []string
 	Pos          []int
+	CenterPos    []int
 	Power        int
 }
 type User struct {
@@ -134,7 +138,8 @@ func (b *Guild) Center(chat *defines.GameChat) bool {
 			case "3":
 				b.MasterMenu(NewChat.Name)
 			case "4":
-				b.BackGuild(NewChat.Name)
+				b.sayto(chat.Name, "抱歉尚未做好")
+				//b.BackGuild(NewChat.Name)
 			case "5":
 				b.GetPerson(NewChat.Name)
 			case b.TriggersOfSetGuidb:
@@ -144,14 +149,18 @@ func (b *Guild) Center(chat *defines.GameChat) bool {
 					if ok {
 						for _, j := range list {
 							if j == NewChat.Name {
+
 								b.setGuildPower(NewChat.Name)
 							}
 						}
 
 					}
 				}()
-
+			case b.TriggersOfOp:
+				fmt.Print("执行")
+				b.setOpMenu(NewChat.Name)
 			}
+
 		}
 
 		return true
@@ -160,17 +169,153 @@ func (b *Guild) Center(chat *defines.GameChat) bool {
 	}
 	return false
 }
+
+//更方便输出
+func (b *Guild) sayto(name string, str string) {
+	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), str)
+}
+
+//规范输出公会名字菜单 name 为发送对象 str为格式 theGuilMap为列表 [i]为数字 [公会名字]]
+func (b *Guild) formateGuildNameMenu(name string, str string, theGuildMap map[string]string) {
+	menu := ""
+	for k, v := range theGuildMap {
+		msg := b.FormateMsg(str, "i", k)
+		msg = b.FormateMsg(msg, "公会名字", v)
+		menu = menu + msg + "\n"
+	}
+	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), menu)
+}
+
+//返回公会详细信息
+func (b *Guild) getGuildDataD(name string, guildname string, data GuildDatas) {
+	msg := b.KeyTitle["op隐藏菜单公会详细信息显示"]
+	msg = b.FormateMsg(msg, "公会名字", guildname)
+	msg = b.FormateMsg(msg, "会长", data.Master)
+	memberstr := ""
+	if len(data.Member) > 0 {
+		//n为成员名字
+		for n, _ := range data.Member {
+			memberstr = memberstr + n + ","
+		}
+	}
+	msg = b.FormateMsg(msg, "成员", memberstr)
+
+	msg = b.FormateMsg(msg, "权限", strconv.Itoa(data.Power))
+	msg = b.FormateMsg(msg, "中心坐标", fmt.Sprintf("%v %v %v", strconv.Itoa(data.CenterPos[0]), strconv.Itoa(data.CenterPos[1]), strconv.Itoa(data.CenterPos[2])))
+	msg = b.FormateMsg(msg, "起始坐标", fmt.Sprintf("%v %v %v", strconv.Itoa(data.Pos[0]), "-65", strconv.Itoa(data.Pos[2])))
+	Range := b.GuildRange[strconv.Itoa(data.Power)]
+	msg = b.FormateMsg(msg, "终点坐标", fmt.Sprintf("%v %v %v", strconv.Itoa(data.Pos[0]+Range[0]), "400", strconv.Itoa(data.Pos[2]+Range[1])))
+	b.sayto(name, msg)
+}
+
+//查询公会信息
+func (b *Guild) findGuildData(name string) {
+	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), "[输入要寻找的公会名字]")
+	theGuildMap := b.getGuildMap()
+	b.formateGuildNameMenu(name, b.KeyTitle["设置公会权限菜单模板"], theGuildMap)
+	b.Frame.GetGameControl().SetOnParamMsg(name, func(newchat *defines.GameChat) (catch bool) {
+		if len(newchat.Msg) > 0 {
+			if guildname, ok := theGuildMap[newchat.Msg[0]]; ok {
+				data := b.GuildData[guildname]
+				//发送
+				b.getGuildDataD(name, guildname, *data)
+			} else {
+				b.sayto(name, "[请输入有效数字]")
+			}
+		}
+		return true
+	})
+}
+
+//改变公会的数据
+func (b *Guild) chargeGuildData(name string) {
+	b.sayto(name, "[输入想要修改的公会名字]")
+	theGuildMap := b.getGuildMap()
+	b.formateGuildNameMenu(name, b.KeyTitle["设置公会权限菜单模板"], theGuildMap)
+	b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
+		if len(chat.Msg) > 0 {
+			if guildname, ok := theGuildMap[chat.Msg[0]]; ok {
+				b.sayto(name, "[输入想要修改的权限]\n0 :删除领地\n1 :修改领地权限")
+				b.Frame.GetGameControl().SetOnParamMsg(name, func(newchat *defines.GameChat) (catch bool) {
+					if len(newchat.Msg) > 0 {
+						switch newchat.Msg[0] {
+						case "0":
+							delete(b.GuildData, guildname)
+							b.sayto(name, "[删除成功]")
+						case "1":
+							b.sayto(name, "[输入权限等级]")
+							b.Frame.GetGameControl().SetOnParamMsg(name, func(Newchat *defines.GameChat) (catch bool) {
+								if len(Newchat.Msg) > 0 {
+									if newchat.Msg[0] == "1" || newchat.Msg[0] == "2" || newchat.Msg[0] == "3" || newchat.Msg[0] == "4" {
+										b.GuildData[guildname].Power, _ = strconv.Atoi(Newchat.Msg[0])
+										b.sayto(name, "[修改成功]")
+									} else {
+										b.sayto(name, "【输入有效数字】")
+									}
+								}
+								return true
+							})
+						}
+
+					}
+					return true
+				})
+			} else {
+				b.sayto(name, "[请输入有效数字]")
+			}
+		}
+		return true
+	})
+}
+
+//设置op权限菜单
+func (b *Guild) setOpMenu(name string) {
+	go func() {
+		n := <-b.GetPlayerName(b.TargetOfSetGuildLb)
+		fmt.Println("n", n)
+		for _, v := range n {
+			if v == name {
+				b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), b.KeyTitle["op隐藏菜单"])
+				b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
+					if len(chat.Msg) > 0 {
+						switch chat.Msg[0] {
+						case "0":
+							b.findGuildData(chat.Name)
+						case "1":
+							b.chargeGuildData(chat.Name)
+						}
+
+					}
+
+					return true
+				})
+
+			}
+
+		}
+
+	}()
+
+}
+
+//获取公会名字以及对应的号数key为号 v为公会
+func (b *Guild) getGuildMap() (List map[string]string) {
+	list := make(map[string]string)
+	num := 0
+	for k, _ := range b.GuildData {
+		list[strconv.Itoa(num)] = k
+		num++
+	}
+	return list
+}
+
+//设置公会权限
 func (b *Guild) setGuildPower(name string) {
 	list := make(map[string]string)
 	msg := "[输入对应的数字进行操纵]"
 	if len(b.GuildData) > 0 {
 		//获取公会名字并成列表给用户并让它选择
-		num := 0
-		for k, _ := range b.GuildData {
-			list[strconv.Itoa(num)] = k
-			msg = msg + "\n" + k
-			num++
-		}
+
 		b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), msg)
 		b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
 			if len(chat.Msg) > 0 {
@@ -273,7 +418,6 @@ func (b *Guild) FlushedPower(target string) {
 		}
 
 	}()
-
 }
 
 //设置他人权限
@@ -497,6 +641,14 @@ func (b *Guild) MasterMenu(name string) {
 							}
 						case "4":
 							b.kickMember(n, chat.Name)
+						case "5":
+							delete(b.GuildData, n)
+							b.sayto(name, "[删除成功]")
+						case "6":
+							b.getGuildDataD(name, n, *b.GuildData[n])
+						case "7":
+
+							b.DeleteGuildMember(name, *b.GuildData[n])
 						}
 
 					} else {
@@ -508,6 +660,33 @@ func (b *Guild) MasterMenu(name string) {
 
 			return true
 		})
+	}
+
+}
+
+//删除指定成员
+func (b *Guild) DeleteGuildMember(master string, data GuildDatas) {
+	if len(data.Member) > 0 {
+		b.sayto(master, "[删除指定成员]")
+		listOfMember := make(map[string]string)
+		num := 0
+		for k, _ := range data.Member {
+			listOfMember[strconv.Itoa(num)] = k
+		}
+		b.formateGuildNameMenu(master, b.KeyTitle["设置公会权限菜单模板"], listOfMember)
+		b.Frame.GetGameControl().SetOnParamMsg(master, func(chat *defines.GameChat) (catch bool) {
+			if len(chat.Msg) > 0 {
+				if n, ok := listOfMember[chat.Msg[0]]; ok {
+					delete(data.Member, n)
+					b.sayto(master, "[删除成功]")
+				} else {
+					b.sayto(master, "[输入有效数字]")
+				}
+			}
+			return true
+		})
+	} else {
+		b.sayto(master, "[无成员]")
 	}
 
 }
@@ -577,29 +756,12 @@ func (b *Guild) ProtectGuildCentry() {
 				j = b.FormateMsg(j, "公会名字", GuildName)
 				j = b.FormateMsg(j, "领地范围内非会员", str)
 				//fmt.Println("j:", j)
-				switch v.Power {
-				case 1:
-					Dx := b.GuildRange["1"][0]
-					Dz := b.GuildRange["1"][1]
-					j = b.FormateMsg(j, "Dx", strconv.Itoa(Dx))
-					j = b.FormateMsg(j, "Dz", strconv.Itoa(Dz))
-				case 2:
-					Dx := b.GuildRange["2"][0]
-					Dz := b.GuildRange["2"][1]
-					j = b.FormateMsg(j, "Dx", strconv.Itoa(Dx))
-					j = b.FormateMsg(j, "Dz", strconv.Itoa(Dz))
-				case 3:
-					Dx := b.GuildRange["3"][0]
-					Dz := b.GuildRange["3"][1]
-					j = b.FormateMsg(j, "Dx", strconv.Itoa(Dx))
-					j = b.FormateMsg(j, "Dz", strconv.Itoa(Dz))
-				case 4:
-					Dx := b.GuildRange["4"][0]
-					Dz := b.GuildRange["4"][1]
-					j = b.FormateMsg(j, "Dx", strconv.Itoa(Dx))
-					j = b.FormateMsg(j, "Dz", strconv.Itoa(Dz))
 
-				}
+				Dx := b.GuildRange[strconv.Itoa(v.Power)][0]
+				Dz := b.GuildRange[strconv.Itoa(v.Power)][1]
+				j = b.FormateMsg(j, "Dx", strconv.Itoa(Dx))
+				j = b.FormateMsg(j, "Dz", strconv.Itoa(Dz))
+
 				//fmt.Println("141 指令:", j)
 				b.Frame.GetGameControl().SendCmd(j)
 			}
@@ -643,17 +805,23 @@ func (b *Guild) TpBack(name string) bool {
 		if v.Master == name {
 			msg := b.FormateMsg(b.KeyTitle["返回地皮时提示词"], "公会名字", k)
 			b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), msg)
-			b.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @a[name=\"%v\"] %v %v %v", name, v.Pos[0], v.Pos[1], v.Pos[2]))
+			fmt.Print("centerpos", v.CenterPos)
+			fmt.Print(fmt.Sprintf("tp @a[name=\"%v\"] %v %v %v", name, v.CenterPos[0], v.CenterPos[1], v.CenterPos[2]))
+			b.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @a[name=\"%v\"] %v %v %v", name, v.CenterPos[0], v.CenterPos[1], v.CenterPos[2]))
 			return true
 		}
-		for i, _ := range v.Member {
-			if i == name {
-				msg := b.FormateMsg(b.KeyTitle["返回地皮时提示词"], "公会名字", k)
-				b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), msg)
-				b.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @a[name=\"%v\"] %v %v %v", name, v.Pos[0], v.Pos[1], v.Pos[2]))
-				return true
+		if len(v.Member) > 0 {
+			for i, _ := range v.Member {
+				if i == name {
+					msg := b.FormateMsg(b.KeyTitle["返回地皮时提示词"], "公会名字", k)
+					fmt.Print("centerpos", v.CenterPos)
+					b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), msg)
+					b.Frame.GetGameControl().SendCmd(fmt.Sprintf("tp @a[name=\"%v\"] %v %v %v", name, v.CenterPos[0], v.CenterPos[1], v.CenterPos[2]))
+					return true
+				}
 			}
 		}
+
 	}
 	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), b.KeyTitle["无地皮时提示"])
 	return false
@@ -671,6 +839,7 @@ func (b *Guild) DeleteMember(name string) {
 
 }
 
+//检测是否
 //写入公会信息
 func (b *Guild) WriteGuildData(name string, guildName string) {
 	k, v := b.CheckIsMaster(name)
@@ -684,9 +853,9 @@ func (b *Guild) WriteGuildData(name string, guildName string) {
 				//fmt.Println("b.guildrange:", b.GuildRange)
 				//fmt.Println("强制转换:", int(b.GuildRange["4"][0]/2))
 				StarPos := []int{
-					PosOf[0] - int(b.GuildRange["4"][0]/2),
+					PosOf[0] - int(b.GuildRange[strconv.Itoa(b.GuildFristPower)][0]/2),
 					PosOf[1],
-					PosOf[2] - int(b.GuildRange["4"][1]/2),
+					PosOf[2] - int(b.GuildRange[strconv.Itoa(b.GuildFristPower)][1]/2),
 				}
 				fmt.Println("satrPos:", StarPos)
 				if len(b.GuildData) > 0 {
@@ -713,6 +882,13 @@ func (b *Guild) WriteGuildData(name string, guildName string) {
 
 							b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), "§c§l[错误] §e附近有他人公会")
 							return false
+						} else if len(b.NoGuild) > 0 {
+							for _, nopos := range b.NoGuild {
+								if b.CheckIsoverlap(StarPos, b.GuildRange["4"], nopos, b.GuildRange["4"]) {
+									return false
+								}
+							}
+
 						}
 
 					}
@@ -725,18 +901,25 @@ func (b *Guild) WriteGuildData(name string, guildName string) {
 						//fmt.Print("---test--137\n")
 						b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), fmt.Sprintf("§b[扣除成功]§e 消费§l§a%v %v", b.DictScore["购买计分板名字"], b.Price))
 						//初始化各种信息
-
+						Ranges := b.GuildRange[strconv.Itoa(b.GuildFristPower)]
 						b.GuildData[guildName] = &GuildDatas{
-							Master: name,
-							Member: make(map[string]*GuildDtails),
-							Pos:    StarPos,
-							Range:  b.GuildRange["1"],
-							Power:  b.GuildFristPower,
+							Master:    name,
+							Member:    make(map[string]*GuildDtails),
+							Pos:       StarPos,
+							CenterPos: PosOf,
+							Range:     Ranges,
+							Power:     b.GuildFristPower,
 						}
 
 						b.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players set @a[name=\"%v\"] %v 4", name, b.DictScore["权限计分板"]))
 						b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), "§b§l[购买成功] 获取公会")
-						fmt.Printf("信息:会长:%v\n成员:%v\n坐标:%v\n范围:%v\n", b.GuildData[guildName].Master, b.GuildData[guildName].Member, b.GuildData[guildName].Pos, b.GuildData[guildName].Range)
+						msg := b.FormateMsg(b.KeyTitle["购买领地后提示"], "公会名字", guildName)
+						msg = b.FormateMsg(msg, "起点坐标", strconv.Itoa(StarPos[0])+" -70 "+strconv.Itoa(StarPos[2]))
+						msg = b.FormateMsg(msg, "终点坐标", strconv.Itoa(StarPos[0]+Ranges[0])+" 400 "+strconv.Itoa(StarPos[2]+Ranges[1]))
+						msg = b.FormateMsg(msg, "中心坐标", strconv.Itoa(PosOf[0])+" "+strconv.Itoa(PosOf[1])+" "+strconv.Itoa(PosOf[2]))
+						b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), msg)
+						fmt.Println(msg)
+						//fmt.Printf("信息:会长:%v\n成员:%v\n坐标:%v\n范围:%v\n", b.GuildData[guildName].Master, b.GuildData[guildName].Member, b.GuildData[guildName].Pos, b.GuildData[guildName].Range)
 					} else {
 						b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), fmt.Sprintf("§c[扣除失败] 原因未知 请让腐竹检查配置文件是否正确"))
 					}
