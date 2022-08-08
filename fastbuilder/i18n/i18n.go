@@ -97,6 +97,7 @@ const (
 	Menu_StrictModeOption
 	NotAnACMEFile
 	Notice_CheckUpdate
+	Notice_iSH_Location_Service
 	Notice_OK
 	Notice_UpdateAvailable
 	Notice_UpdateNotice

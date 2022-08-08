@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/configuration"
@@ -64,6 +65,17 @@ func main() {
 	pterm.Println(pterm.Yellow(I18n.T(I18n.Copyright_Notice_Contrib)))
 	pterm.Println(pterm.Yellow(I18n.T(I18n.Copyright_Notice_Bouldev)))
 	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
+
+	// iSH.app specific, for foreground ability
+	if _, err := os.Stat("/dev/location"); err == nil {
+		// Call location service
+		pterm.Println(pterm.Yellow(I18n.T(I18n.Notice_iSH_Location_Service)))
+		cmd := exec.Command("ash", "-c", "cat /dev/location > /dev/null &")
+		err := cmd.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	if !args.NoReadline()&&!args.ShouldEnableOmegaSystem() {
 		readline.InitReadline()

@@ -74,6 +74,7 @@ var I18nDict_zh_HK map[uint16]string = map[uint16]string{
 	Menu_StrictModeOption:               "嚴格模式",
 	NotAnACMEFile:                       "所提供的文檔不是ACME結構文檔",
 	Notice_CheckUpdate:                  "正在檢查更新，這可能需要一些時間…",
+	Notice_iSH_Location_Service:         "您正在使用iSH模擬器，位置權限需要用於維持後台運作，除此之外沒有任何定位數據被紀錄或使用，您可以隨時關閉它。",
 	Notice_OK:                           "完成\n",
 	Notice_UpdateAvailable:              "有新的PhoenixBuilder版本（%s）可用。\n",
 	Notice_UpdateNotice:                 "請更新本應用程式。\n",

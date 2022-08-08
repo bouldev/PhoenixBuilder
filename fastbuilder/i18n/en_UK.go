@@ -73,6 +73,7 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	Menu_Quit:                           "Quit Programme",
 	Menu_StrictModeOption:               "Strict Mode",
 	NotAnACMEFile:                       "Invalid file, not an ACME structure.",
+	Notice_iSH_Location_Service:         "You are using iSH simulator, location service is required for foreground, no location data will be saved or used. You can terminate it anytime.",
 	Notice_CheckUpdate:                  "Checking update, please wait...",
 	Notice_OK:                           "OK\n",
 	Notice_UpdateAvailable:              "A newer version (%s) of PhoenixBuilder is available.\n",
