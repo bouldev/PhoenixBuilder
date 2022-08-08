@@ -11,11 +11,15 @@ import (
 )
 
 /*
-#cgo !windows LDFLAGS: -L${SRCDIR}/../../depends/stub -lz
+#cgo !windows,!darwin,!ios,!ish LDFLAGS: -L${SRCDIR}/../../depends/stub -lz
 #cgo windows CFLAGS: -I${SRCDIR}/../../depends/zlib-1.2.12
 #cgo LDFLAGS: -L${SRCDIR}/../../depends/zlib-1.2.12/prebuilt
 #cgo windows,amd64 LDFLAGS: -lz-x86_64-windows -lws2_32
 #cgo windows,386 LDFLAGS: -lz-i686-windows -lws2_32
+#cgo darwin,!ios,amd64 LDFLAGS: -lz-x86_64-macos
+#cgo darwin,!ios,arm64 LDFLAGS: -lz-arm64-macos
+#cgo ios,arm64 LDFLAGS: -lz-arm64-ios
+#cgo ish LDFLAGS: -lz-ish
 #cgo !windows CFLAGS: -I${SRCDIR}/../../depends/zlib-1.2.12
 #include <stdint.h>
 extern unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char *path, int64_t beginX, int64_t beginY, int64_t beginZ);
