@@ -73,7 +73,7 @@ func main() {
 		cmd := exec.Command("ash", "-c", "cat /dev/location > /dev/null &")
 		err := cmd.Start()
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
 	}
 
