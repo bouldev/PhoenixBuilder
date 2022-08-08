@@ -14,6 +14,6 @@ docker build \
     --build-arg TIME_STAMP=$TIME_STAMP \
     --build-arg OMEGA_SOURCE=$OMEGA_SOURECE \
     -t omega/omega:current omega_docker
-#docker image prune -f
+docker rmi -f $(docker images -f dangling=true -q)
 rm -rf omega_docker
 echo "镜像创建/更新成功,镜像名: omega/omega:current "

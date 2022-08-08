@@ -7,10 +7,6 @@ RUN export DEBIAN_FRONTEND=noninteractive && export DEBIAN_FRONTEND=teletype \
     libreadline-dev \
     && apt clean -yq && apt autoclean -yq && apt autoremove -yq && rm -rf /var/lib/apt/lists/*
 RUN mkdir /omega && mkdir /omega_bin
-ARG TIME_STAMP=default
-ARG OMEGA_SOURCE=""
-RUN curl $OMEGA_SOURCE/launcher-linux-mcsm -o /omega_bin/launcher-linux-mcsm
-RUN curl $OMEGA_SOURCE/fastbuilder-linux -o /omega/fastbuilder
 RUN curl https://mirrors.bfsu.edu.cn/anaconda/miniconda/Miniconda3-py39_4.9.2-Linux-x86_64.sh -o miniconda.sh \
     && /bin/bash miniconda.sh -b -p /opt/conda \
     && rm miniconda.sh \
@@ -34,6 +30,10 @@ RUN curl https://mirrors.bfsu.edu.cn/anaconda/miniconda/Miniconda3-py39_4.9.2-Li
     && . /etc/profile \
     && conda -V \
     && conda create -y -p /workspace/omega_storage/side/interpreters/python/ python=3.10 
+ARG TIME_STAMP=default
+ARG OMEGA_SOURCE=""
+RUN curl $OMEGA_SOURCE/launcher-linux-mcsm -o /omega_bin/launcher-linux-mcsm
+RUN curl $OMEGA_SOURCE/fastbuilder-linux -o /omega/fastbuilder
 
 FROM ubuntu:20.04
 RUN export DEBIAN_FRONTEND=noninteractive && export DEBIAN_FRONTEND=teletype \
