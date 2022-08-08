@@ -156,7 +156,7 @@ func (o *UniverseImport) StartNewTask() {
 			IgnoreNbt:       o.IgnoreBlockNbt,
 			InitPosGetter:   o.GetBotPos,
 		}
-		if suggestMinCacheChunks < 256 {
+		if suggestMinCacheChunks == 0 {
 			suggestMinCacheChunks = 256
 		}
 		pterm.Info.Println("最大缓冲区块数量: ", suggestMinCacheChunks)

@@ -131,7 +131,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 			blocksCounter++
 		}
 	}
-	infoSender(fmt.Sprintf("格式匹配成功,开始解析,尺寸 [%v, %v, %v] 方块数量 %v\n", width, height, length))
+	infoSender(fmt.Sprintf("格式匹配成功,开始解析,尺寸 [%v, %v, %v] 方块数量 %v\n", width, height, length, blocksCounter))
 	go func() {
 		defer func() {
 			close(blockChan)
@@ -158,5 +158,5 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	}()
 	return blockChan, func() {
 		stop = true
-	}, (suggestMinCacheChunks / 16) + 1, blocksCounter, nil
+	}, (width / 16) + 2, blocksCounter, nil
 }

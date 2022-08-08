@@ -120,5 +120,5 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 	}()
 	return blockChan, func() {
 		stop = true
-	}, (suggestMinCacheChunks / 16) + 1, blocksCounter, nil
+	}, (Size[X] / 16) + 2, blocksCounter, nil
 }
