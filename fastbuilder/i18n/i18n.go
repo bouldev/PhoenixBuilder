@@ -97,6 +97,7 @@ const (
 	Notice_OK
 	Notice_UpdateAvailable
 	Notice_UpdateNotice
+	Notice_ZLIB_CVE
 	Notify_NeedOp
 	Notify_TurnOnCmdFeedBack
 	Omega_Enabled

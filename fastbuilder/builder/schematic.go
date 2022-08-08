@@ -4,6 +4,8 @@ import (
 	"compress/gzip"
 	"fmt"
 	"github.com/Tnze/go-mc/nbt"
+	"github.com/hashicorp/go-version"
+	"github.com/pterm/pterm"
 	"io/ioutil"
 	bridge_path "phoenixbuilder/fastbuilder/builder/path"
 	"phoenixbuilder/fastbuilder/i18n"
@@ -22,6 +24,7 @@ import (
 #cgo ish LDFLAGS: -lz-ish
 #cgo !windows CFLAGS: -I${SRCDIR}/../../depends/zlib-1.2.12
 #include <stdint.h>
+extern const char *zlibVersion(void);
 extern unsigned char builder_schematic_process_schematic_file(uint32_t channelID, char *path, int64_t beginX, int64_t beginY, int64_t beginZ);
 */
 import "C"
@@ -39,6 +42,13 @@ func builder_schematic_channel_input(channelID uint32, x int64, y int64, z int64
 }
 
 func Schematic(config *types.MainConfig, blc chan *types.Module) error {
+	// Check zlib version
+	zlib_safe, err := version.NewVersion("1.2.12")
+	zlib_current, err := version.NewVersion(C.GoString(C.zlibVersion()))
+	if zlib_current.LessThan(zlib_safe) {
+		pterm.Println(pterm.Yellow(I18n.T(I18n.Notice_ZLIB_CVE)))
+	}
+
 	channelMap[lastChannelID]=blc
 	gotChannelID:=lastChannelID
 	lastChannelID++

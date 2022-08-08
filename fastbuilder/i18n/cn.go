@@ -77,6 +77,7 @@ var I18nDict_cn map[uint16]string = map[uint16]string{
 	Notice_OK: "完成\n",
 	Notice_UpdateAvailable: "有新的PhoenixBuilder版本（%s）可用。\n",
 	Notice_UpdateNotice: "请更新本软件。\n",
+	Notice_ZLIB_CVE: "您的zlib版本（%s）包含已被证实的严重漏洞，我们建议您更新它，以免发生意外",
 	Notify_NeedOp:                       "需要 OP 权限以正常工作。",
 	Notify_TurnOnCmdFeedBack:            "需要 sendcommandfeedback 为 true，我们已经为你打开该选项，使用完后请按需关闭",
 	Omega_Enabled: "Omega系统已启用！",
