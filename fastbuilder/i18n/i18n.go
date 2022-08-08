@@ -10,11 +10,14 @@ import (
 )
 
 const (
-	LanguageEnglish = "en_US"
+	LanguageEnglish_US = "en_US"
+	LanguageEnglish_UK = "en_UK"
 	LanguageSimplifiedChinese = "zh_CN"
+	LanguageTraditionalChinese = "zh_HK"
+	LanguageTaiwanChinese = "zh_TW"
 )
 
-var SelectedLanguage = LanguageEnglish
+var SelectedLanguage = LanguageEnglish_US
 
 // !! IMPORTANT !! Please DO NOT change the order of items w/ prefix Auth_ !
 // New items can be added anywhere AFTER Auth_ items !
@@ -152,8 +155,11 @@ const (
 )
 
 var LangDict map[string]map[uint16]string = map[string]map[uint16]string {
-	LanguageEnglish: I18nDict_en,
-	LanguageSimplifiedChinese: I18nDict_cn,
+	LanguageEnglish_US: I18nDict_en_US,
+	LanguageEnglish_UK: I18nDict_en_UK,
+	LanguageSimplifiedChinese: I18nDict_zh_CN,
+	LanguageTraditionalChinese: I18nDict_zh_HK,
+	LanguageTaiwanChinese: I18nDict_zh_TW,
 }
 
 var I18nDict map[uint16]string
@@ -222,7 +228,7 @@ func UpdateLanguage() {
 func T(code uint16) string {
 	r, has := I18nDict[code]
 	if !has {
-		r,has=I18nDict_en[code]
+		r,has=I18nDict_en_US[code]
 		if !has {
 			return "???"
 		}

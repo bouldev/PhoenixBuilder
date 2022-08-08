@@ -1,6 +1,6 @@
 package I18n
 
-var I18nDict_cn map[uint16]string = map[uint16]string{
+var I18nDict_zh_CN map[uint16]string = map[uint16]string{
 	ACME_FailedToGetCommand: "未能读取ACME命令",
 	ACME_FailedToSeek: "无效ACME文件，因为seek操作失败了。",
 	ACME_StructureErrorNotice: "文件结构错误",

@@ -1,6 +1,6 @@
 package I18n
 
-var I18nDict_en map[uint16]string = map[uint16]string{
+var I18nDict_en_US map[uint16]string = map[uint16]string{
 	ACME_FailedToGetCommand: "Failed to get acme command.",
 	ACME_FailedToSeek: "Invalid acme file since seek was failed.",
 	ACME_StructureErrorNotice: "Invalid structure",
