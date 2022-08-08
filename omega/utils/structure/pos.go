@@ -167,6 +167,26 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 					if subChunk.Empty() {
 						continue
 					}
+					subChunkY := subChunkI*16 + int16(define.WorldRange[0])
+					subChunkX := int(chunkPos[0]) * 16
+					subChunkZ := int(chunkPos[1]) * 16
+					subChunkStorage := subChunk.Layer(0)
+					blk := subChunkStorage.At(0, 0, 0)
+					// fmt.Println(subChunkStorage.Palette().Len(), subChunkStorage.IsPerIndexWithBitSizeUnder32Same(), blk)
+					if subChunkStorage.Palette().Len() == 2 && subChunkStorage.IsPerIndexWithBitSizeUnder32Same() && blk != air {
+						// fmt.Println("fast dump")
+						p := define.CubePos{int(subChunkX), int(subChunkY), int(subChunkZ)}
+						if counter < startFrom {
+							counter += 16 * 16 * 16
+						} else {
+							outChan <- &IOBlock{
+								Pos:      p,
+								RTID:     blk,
+								Expand16: true,
+							}
+						}
+						continue
+					}
 					for x := uint8(0); x < 16; x++ {
 						for z := uint8(0); z < 16; z++ {
 							for sy := uint8(0); sy < 16; sy++ {
@@ -174,12 +194,11 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 									close(outChan)
 									return
 								}
-								y := subChunkI*16 + int16(sy) + int16(define.WorldRange[0])
-								blk := subChunk.Block(x, sy, z, 0)
+								blk = subChunkStorage.At(x, sy, z)
 								if blk == air {
 									continue
 								}
-								p := define.CubePos{int(x) + int(chunkPos[0])*16, int(y), int(z) + int(chunkPos[1])*16}
+								p := define.CubePos{int(x) + subChunkX, int(subChunkY + int16(sy)), int(z) + subChunkZ}
 								if counter < startFrom {
 									counter++
 									continue

@@ -112,19 +112,18 @@ func (o *UniverseImport) StartNewTask() {
 		}
 		o.currentBuilder.doneWaiter = make(chan struct{})
 		progressUpdateInterval := o.ImportSpeed + 1
-		progressBar := pterm.DefaultProgressbar.WithTotal(totalBlocks).WithTitle("Task: " + task.Path)
-		lastProgress := 0
+		if totalBlocks == 0 {
+			totalBlocks = 1
+		}
+		progressBar := pterm.DefaultProgressbar.WithTotal(totalBlocks - 1).WithTitle("Task: " + task.Path)
+		lastBlock := 0
 		updateProgress := func(currBlock int) {
-			currProgress := 1 + baseProgress + currBlock
-			increasementProgress := currProgress - lastProgress
+			increasementProgress := currBlock - lastBlock
+			lastBlock = currBlock
 			if increasementProgress > 0 {
 				progressBar.Add(increasementProgress)
-			} else if increasementProgress < 0 {
-				pterm.Error.Printfln("Negative increasementProgress: %v=(1+%v+%v)-%v ", increasementProgress, baseProgress, currBlock, lastProgress)
 			}
-
-			lastProgress = currProgress
-			task.Progress = currProgress
+			task.Progress = baseProgress + currBlock
 			o.fileChange = true
 
 			// 因为 omega 启动器设计失误（每次读一行）我不得不这么做
@@ -136,9 +135,10 @@ func (o *UniverseImport) StartNewTask() {
 			if currBlock == 0 {
 				pterm.Success.Printfln("可以开始导入了, 速度为 %v", o.ImportSpeed)
 				progressBar, _ = progressBar.Start()
-				updateProgress(currBlock)
-			}
-			if currBlock%progressUpdateInterval == 0 {
+				if baseProgress > 0 {
+					progressBar.Add(baseProgress)
+				}
+			} else if currBlock-lastBlock > progressUpdateInterval {
 				updateProgress(currBlock)
 			}
 		}
@@ -148,7 +148,7 @@ func (o *UniverseImport) StartNewTask() {
 				// fmt.Println(cmd)
 				sender(cmd)
 			},
-			TpCmdSender: func(cmd string) {
+			NormalCmdSender: func(cmd string) {
 				o.Frame.GetGameControl().SendCmd(cmd)
 			},
 			ProgressUpdater: ProgressUpdater,

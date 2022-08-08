@@ -108,6 +108,28 @@ func (storage *PalettedStorage) paletteIndex(x, y, z byte) uint16 {
 	return uint16((w >> bitOffset) & storage.indexMask)
 }
 
+func (storage *PalettedStorage) IsPerIndexWithBitSizeUnder32Same() bool {
+	firstU32 := storage.indices[0]
+	if storage.bitsPerIndex <= uint32BitSize {
+		testNumber := byte(uint32BitSize) / byte(storage.bitsPerIndex)
+		firstVal := firstU32 & storage.indexMask
+		for i := byte(0); i < byte(testNumber); i++ {
+			bitOffset := i * byte(storage.bitsPerIndex)
+			if ((firstU32 >> bitOffset) & storage.indexMask) != firstVal {
+				return false
+			}
+		}
+	} else {
+		return false
+	}
+	for _, value := range storage.indices {
+		if firstU32 != value {
+			return false
+		}
+	}
+	return true
+}
+
 // setPaletteIndex sets the palette index at a given x, y and z to paletteIndex. This index should point
 // to a value in the PalettedStorage's Palette.
 func (storage *PalettedStorage) setPaletteIndex(x, y, z byte, i uint16) {

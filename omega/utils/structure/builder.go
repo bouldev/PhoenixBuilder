@@ -15,7 +15,7 @@ type Builder struct {
 	delayBlocks     map[define.CubePos]*IOBlock
 	delayBlocksMu   sync.RWMutex
 	BlockCmdSender  func(cmd string)
-	TpCmdSender     func(cmd string)
+	NormalCmdSender func(cmd string)
 	ProgressUpdater func(currBlock int)
 	FinalWaitTime   int
 	IgnoreNbt       bool
@@ -38,23 +38,31 @@ func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 		xmove := block.Pos.X() - lastPos.X()
 		zmove := block.Pos.Z() - lastPos.Z()
 		if counter == 0 {
-			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
+			o.NormalCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
 			lastPos = block.Pos
 			time.Sleep(3 * time.Second)
 		}
-		if (xmove*xmove + zmove*zmove) > 16*16 {
-			o.TpCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
+		if (xmove*xmove) > 16*16 || (zmove*zmove) > 16*16 {
+			o.NormalCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
+			lastPos = block.Pos
 		}
-		lastPos = block.Pos
+
 		blk := chunk.RuntimeIDToLegacyBlock(block.RTID)
 		if blk == nil {
 			continue
 		}
-		cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)
-		o.BlockCmdSender(cmd)
 		o.ProgressUpdater(counter)
-
-		counter++
+		if block.Expand16 {
+			cmd := fmt.Sprintf("fill %v %v %v %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], block.Pos[0]+15, block.Pos[1]+15, block.Pos[2]+15, strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
+			// fmt.Println("fast fill")
+			o.NormalCmdSender(cmd)
+			counter += 4096
+			time.Sleep(time.Millisecond * 200)
+		} else {
+			cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
+			o.BlockCmdSender(cmd)
+			counter++
+		}
 		<-ticker.C
 		if block.NBT != nil && !o.IgnoreNbt {
 			o.delayBlocksMu.Lock()
