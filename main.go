@@ -694,6 +694,9 @@ func runClient(env *environment.PBEnvironment) {
 			// 		time.Sleep(100 * time.Millisecond)
 			// 	}
 			// }()
+			if fbtask.CheckHasWorkingTask(env) {
+				break
+			}
 			if exist := chunkAssembler.AddPendingTask(p); !exist {
 				requests := chunkAssembler.GenRequestFromLevelChunk(p)
 				chunkAssembler.ScheduleRequest(requests)

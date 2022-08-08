@@ -352,6 +352,16 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	return task
 }
 
+func CheckHasWorkingTask(env *environment.PBEnvironment) bool {
+	holder:=env.TaskHolder.(*TaskHolder)
+	has:=false
+	holder.TaskMap.Range(func (_tid interface{}, _v interface{}) bool {
+		has=true
+		return false
+	})
+	return has
+}
+
 func InitTaskStatusDisplay(env *environment.PBEnvironment) {
 	holder:=env.TaskHolder.(*TaskHolder)
 	go func() {
