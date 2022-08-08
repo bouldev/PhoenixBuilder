@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
@@ -79,21 +80,21 @@ func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (bl
 
 func (o *UniverseImport) StartNewTask() {
 	task := o.data.CurrentTask
-	path := task.Path
+	filePath := task.Path
 	if task.Progress < 0 {
 		task.Progress = 0
 	}
 	pterm.Info.Printfln("尝试处理任务 %v 起点(%v %v %v) 从 %v 方块处开始导入", task.Path, task.Offset[0], task.Offset[1], task.Offset[2], task.Progress)
 	data := []byte{}
-	if fp, err := os.OpenFile(path, os.O_RDONLY, 0644); err == nil {
+	if fp, err := os.OpenFile(filePath, os.O_RDONLY, 0644); err == nil {
 		data, err = ioutil.ReadAll(fp)
 		if err != nil {
-			pterm.Error.Printfln("无法读取文件 %v 的数据 (%v)", path, err)
+			pterm.Error.Printfln("无法读取文件 %v 的数据 (%v)", filePath, err)
 			o.data.CurrentTask = nil
 			return
 		}
 	} else {
-		pterm.Error.Printfln("无法读取文件 %v 的数据 (%v)", path, err)
+		pterm.Error.Printfln("无法读取文件 %v 的数据 (%v)", filePath, err)
 		o.data.CurrentTask = nil
 		return
 	}
@@ -115,8 +116,10 @@ func (o *UniverseImport) StartNewTask() {
 		if totalBlocks == 0 {
 			totalBlocks = 1
 		}
-		progressBar := pterm.DefaultProgressbar.WithTotal(totalBlocks - 1).WithTitle("Task: " + task.Path)
+		taskName := path.Base(filePath)
+		progressBar := pterm.DefaultProgressbar.WithTotal(totalBlocks - 1).WithTitle(taskName)
 		lastBlock := 0
+		startTime := time.Now()
 		updateProgress := func(currBlock int) {
 			increasementProgress := currBlock - lastBlock
 			lastBlock = currBlock
@@ -125,15 +128,17 @@ func (o *UniverseImport) StartNewTask() {
 			}
 			task.Progress = baseProgress + currBlock
 			o.fileChange = true
-
+			metricDuration := time.Since(startTime).Seconds()
+			realSpeed := float64(currBlock) / metricDuration
 			// 因为 omega 启动器设计失误（每次读一行）我不得不这么做
-			fmt.Println()        // 下移一行（打出）
-			fmt.Print("\033[1A") // 回到上一行
-			fmt.Print("\033[K")  // 清除该行
+			fmt.Printf(" 实际速度: %.1f\n", realSpeed) // 下移一行（打出）
+			fmt.Print("\033[1A")                   // 回到上一行
+			fmt.Print("\033[K")                    // 清除该行
 		}
 		ProgressUpdater := func(currBlock int) {
 			if currBlock == 0 {
 				pterm.Success.Printfln("可以开始导入了, 速度为 %v", o.ImportSpeed)
+				startTime = time.Now()
 				progressBar, _ = progressBar.Start()
 				if baseProgress > 0 {
 					progressBar.Add(baseProgress)
@@ -166,9 +171,9 @@ func (o *UniverseImport) StartNewTask() {
 		o.currentBuilder.builder = builder
 		o.Frame.GetBotTaskScheduler().CommitUrgentTask(o.currentBuilder)
 		<-o.currentBuilder.doneWaiter
-		pterm.Success.Printfln("\n导入完成 %v ", path)
+		pterm.Success.Printfln("\n导入完成 %v ", filePath)
 	} else {
-		pterm.Error.Println("无法解析文件 %v ", path)
+		pterm.Error.Println("无法解析文件 %v ", filePath)
 	}
 	o.data.CurrentTask = nil
 }
