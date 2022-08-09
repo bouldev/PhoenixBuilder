@@ -130,7 +130,7 @@ func (o *UniverseImport) StartNewTask() {
 			o.fileChange = true
 			metricDuration := time.Since(startTime).Seconds()
 			realSpeed := float64(currBlock) / metricDuration
-			fmt.Printf(" 实际速度: %.1f\n", realSpeed)
+			fmt.Printf(" 实际速度: %.1f", realSpeed)
 		}
 		ProgressUpdater := func(currBlock int) {
 			if currBlock == 0 {
