@@ -76,12 +76,12 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 			continue
 		}
 		if currOffset == 0 {
-			blockLen++
 			schemData.blockData[blockLen] = uint16(currentByte)
-		} else {
 			blockLen++
+		} else {
 			currLowByte |= uint16((currentByte)&127) << (currOffset * 7)
 			schemData.blockData[blockLen] = currLowByte
+			blockLen++
 			currLowByte = 0
 			currOffset = 0
 		}

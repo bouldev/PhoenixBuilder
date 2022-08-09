@@ -47,6 +47,7 @@ import (
 	"phoenixbuilder/fastbuilder/external"
 	"phoenixbuilder/fastbuilder/readline"
 	_ "phoenixbuilder/io"
+	_ "phoenixbuilder/plantform_specific/fix_timer"
 )
 
 func main() {
@@ -77,7 +78,7 @@ func main() {
 		}
 	}
 
-	if !args.NoReadline()&&!args.ShouldEnableOmegaSystem() {
+	if !args.NoReadline() && !args.ShouldEnableOmegaSystem() {
 		readline.InitReadline()
 	}
 
