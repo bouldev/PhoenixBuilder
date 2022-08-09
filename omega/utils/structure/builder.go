@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -12,7 +13,7 @@ import (
 )
 
 type Builder struct {
-	delayBlocks     map[define.CubePos]*IOBlock
+	delayBlocks     map[define.CubePos]*IOBlockForBuilder
 	delayBlocksMu   sync.RWMutex
 	BlockCmdSender  func(cmd string)
 	NormalCmdSender func(cmd string)
@@ -23,12 +24,30 @@ type Builder struct {
 	InitPosGetter   func() define.CubePos
 }
 
-func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
-	o.delayBlocks = make(map[define.CubePos]*IOBlock)
+func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int) {
+	o.delayBlocks = make(map[define.CubePos]*IOBlockForBuilder)
 	o.delayBlocksMu = sync.RWMutex{}
 	counter := 0
-	delay := time.Duration((float64(1000) / float64(speed) * float64(time.Millisecond)))
-	ticker := time.NewTicker(delay)
+	var doDelay func()
+	if runtime.GOOS == "windows" {
+		delay := time.Duration((float64(100*1000) / float64(speed) * float64(time.Millisecond)))
+		ticker := time.NewTicker(delay)
+		oneHunredCounter := 0
+		doDelay = func() {
+			if oneHunredCounter == 100 {
+				<-ticker.C
+				oneHunredCounter = 0
+			}
+			oneHunredCounter++
+		}
+	} else {
+		delay := time.Duration((float64(1000) / float64(speed) * float64(time.Millisecond)))
+		ticker := time.NewTicker(delay)
+		doDelay = func() {
+			<-ticker.C
+		}
+	}
+
 	lastPos := o.InitPosGetter()
 	pterm.Info.Printfln("DEBUG: Init Pos: %v", lastPos)
 	for block := range blocksIn {
@@ -63,7 +82,7 @@ func (o *Builder) Build(blocksIn chan *IOBlock, speed int) {
 			o.BlockCmdSender(cmd)
 			counter++
 		}
-		<-ticker.C
+		doDelay()
 		if block.NBT != nil && !o.IgnoreNbt {
 			o.delayBlocksMu.Lock()
 			o.delayBlocks[block.Pos] = block
