@@ -1,5 +1,10 @@
 package utils
 
+import (
+	"io"
+	"strings"
+)
+
 const (
 	black      = "§0"
 	darkBlue   = "§1"
@@ -80,4 +85,22 @@ func GenerateMCColorReplacerRule() []string {
 		minecraftToANSI = append(minecraftToANSI, minecraftCode, ansiCode)
 	}
 	return minecraftToANSI
+}
+
+type MCColorReplacerWriter struct {
+	writer   io.Writer
+	replacer *strings.Replacer
+}
+
+func (o *MCColorReplacerWriter) Write(p []byte) (n int, err error) {
+	return o.writer.Write([]byte(o.replacer.Replace(string(p))))
+}
+
+func GenerateMCColorReplacerWriter(writer io.Writer) io.Writer {
+	replacerRule := GenerateMCColorReplacerRule()
+	replacer := strings.NewReplacer(replacerRule...)
+	return &MCColorReplacerWriter{
+		writer:   writer,
+		replacer: replacer,
+	}
 }

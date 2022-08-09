@@ -1,11 +1,12 @@
 package structure
 
 import (
-	"fmt"
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"sort"
+
+	"github.com/pterm/pterm"
 )
 
 func AlterImportPosStartAndSpeed(inChan chan *IOBlock, offset define.CubePos, startFrom int, outChanLen int) (outChan chan *IOBlock, stopFn func()) {
@@ -66,7 +67,7 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 		setBlock := func(b *IOBlock) {
 			pos := b.Pos
 			if pos.OutOfYBounds() {
-				fmt.Println(pos)
+				pterm.Warning.Printfln("位于 %v 的方块超出高度上限", pos)
 				// Fast way out.
 				return
 			}

@@ -1,7 +1,6 @@
 package omega_side
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -56,7 +55,7 @@ func (o *OmegaSide) OnMCPkt(pktID int, data interface{}) {
 	o.pushController.pushMCPkt(pktID, data)
 }
 
-func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[string]string, execDir string) {
+func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[string]string, execDir string) (err error) {
 	for k, v := range remapping {
 		cmdStr = strings.ReplaceAll(cmdStr, k, v)
 	}
@@ -95,75 +94,30 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 	// 	"PATH="+execDir,
 	// )
 	pterm.Info.Println("工作目录 " + execDir)
-	cmdOut, err := cmd.StdoutPipe()
+
+	// cmd Stdout
+	var cmdOut io.Reader
+	cmdOut, err = cmd.StdoutPipe()
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("get std out pipe of %v fail, error %v", subProcessName, err)
 	}
-	Error := pterm.PrefixPrinter{
-		MessageStyle: &pterm.ThemeDefault.ErrorMessageStyle,
-		Prefix: pterm.Prefix{
-			Style: &pterm.ThemeDefault.ErrorPrefixStyle,
-			Text:  fmt.Sprintf("%v错误", subProcessName),
-		},
+	if runtime.GOOS == "windows" {
+		cmdOut = simplifiedchinese.GBK.NewDecoder().Reader(cmdOut)
 	}
-	go func() {
-		reader := bufio.NewReader(cmdOut)
-		replacerRule := utils.GenerateMCColorReplacerRule()
-		replacerRule = append(replacerRule, "\n", "\x1b[m\n")
-		replacer := strings.NewReplacer(replacerRule...)
-		for {
-			readString, err := reader.ReadString('\n')
-			if err != nil || err == io.EOF {
-				// Info.Println("已退出")
-				return
-			}
-			readString = strings.Trim(readString, "\n")
-			if runtime.GOOS == "windows" {
-				// gbk, _ := simplifiedchinese.GBK.NewEncoder().Bytes([]byte(readString))
-				readString, err = simplifiedchinese.GBK.NewDecoder().String(readString)
-				if err != nil {
-					pterm.Warning.Println(err)
-				}
-			}
-			if readString == "" {
-				continue
-			}
-			fmt.Println(replacer.Replace(readString))
-		}
-	}()
+	go io.Copy(utils.GenerateMCColorReplacerWriter(os.Stdout), cmdOut)
+
+	// cmd Std err
 	cmdErr, err := cmd.StderrPipe()
-	go func() {
-		reader := bufio.NewReader(cmdErr)
-		for {
-			readString, err := reader.ReadString('\n')
-			if err != nil || err == io.EOF {
-				Error.Println("已退出")
-				return
-			}
-			if runtime.GOOS == "windows" {
-				// gbk, _ := simplifiedchinese.GBK.NewEncoder().Bytes([]byte(readString))
-				readString, err = simplifiedchinese.GBK.NewDecoder().String(readString)
-				if err != nil {
-					pterm.Warning.Println(err)
-				}
-			}
-			readString = strings.Trim(readString, "\n")
-			if readString == "" {
-				continue
-			}
-			Error.Println(readString)
-		}
-	}()
-	go func() {
-		err = cmd.Start()
-		if err != nil {
-			Error.Println(err)
-		}
-		err = cmd.Wait()
-		if err != nil {
-			Error.Println(err)
-		}
-	}()
+	if err != nil {
+		return fmt.Errorf("get std err pipe of %v fail, error %v", subProcessName, err)
+	}
+	go io.Copy(os.Stderr, cmdErr)
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
+	go cmd.Wait()
+	return nil
 }
 
 func (o *OmegaSide) Init(cfg *defines.ComponentConfig) {

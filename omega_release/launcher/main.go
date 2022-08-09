@@ -591,45 +591,13 @@ func RunOmega(cfg *BotConfig) {
 		pterm.Success.Println("如果Omega崩溃了，它会在最长 30 秒后自动重启")
 		omegaRunning = true
 
-		stopped := false
 		go func() {
-			reader := bufio.NewReader(omega_out)
-			for {
-				readString, err := reader.ReadString('\n')
-				if err != nil || err == io.EOF {
-					fmt.Println(readString)
-					pterm.Warning.Println("Omega 已退出")
-					return
-				}
-				fmt.Print(readString)
-			}
+			io.Copy(os.Stdout, omega_out)
 		}()
 		go func() {
-			reader := bufio.NewReader(omega_error)
-			for {
-				readString, err := reader.ReadString('\n')
-				if err != nil || err == io.EOF {
-					pterm.Error.Println("Omega 出现错误: " + readString)
-					pterm.Error.Println("Omega 已退出")
-					return
-				}
-				pterm.Error.Print("Omega 出现错误: " + readString)
-			}
+			io.Copy(os.Stderr, omega_error)
 		}()
-
-		go func() {
-			for {
-				s := <-readC
-				if stopped {
-					readC <- s
-					return
-				}
-				omega_in.Write([]byte(s + "\n"))
-				if strings.TrimSpace(s) == "stop" {
-					doExit = true
-				}
-			}
-		}()
+		cmd.Stdin = os.Stdin
 
 		err = cmd.Start()
 		if err != nil {
@@ -646,9 +614,8 @@ func RunOmega(cfg *BotConfig) {
 			break
 		}
 		omegaRunning = false
-		stopped = true
 		pterm.Warning.Println("Omega将在最长 30 秒后自动重启")
-		time.Sleep(10)
+		time.Sleep(15)
 		<-t.C
 	}
 }

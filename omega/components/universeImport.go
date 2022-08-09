@@ -130,10 +130,7 @@ func (o *UniverseImport) StartNewTask() {
 			o.fileChange = true
 			metricDuration := time.Since(startTime).Seconds()
 			realSpeed := float64(currBlock) / metricDuration
-			// 因为 omega 启动器设计失误（每次读一行）我不得不这么做
-			fmt.Printf(" 实际速度: %.1f\n", realSpeed) // 下移一行（打出）
-			fmt.Print("\033[1A")                   // 回到上一行
-			fmt.Print("\033[K")                    // 清除该行
+			fmt.Printf(" 实际速度: %.1f\n", realSpeed)
 		}
 		ProgressUpdater := func(currBlock int) {
 			if currBlock == 0 {
