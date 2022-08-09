@@ -12,7 +12,7 @@ import (
 	"github.com/pterm/pterm"
 )
 
-func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IOBlock, cancelFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
+func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IOBlockForDecoder, cancelFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -59,7 +59,7 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 	if len(blocks) != int(Size[X])*int(Size[Y])*int(Size[Z]) {
 		return nil, nil, 0, 0, fmt.Errorf("size check fail %v != %v", int(Size[X])*int(Size[Y])*int(Size[Z]), len(blocks))
 	}
-	blockChan := make(chan *IOBlock, 10240)
+	blockChan := make(chan *IOBlockForDecoder, 10240)
 	airRID := chunk.AirRID
 	lightBlockRID, found := chunk.LegacyBlockToRuntimeID("light_block", 0)
 	if !found {
@@ -78,7 +78,7 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 			close(blockChan)
 		}()
 		width, height, length := Size[X], Size[Y], Size[Z]
-		index, name, data := 0, "", uint8(0)
+		index, name, data := 0, "", uint16(0)
 		rtid, found := uint32(0), false
 		x, y, z := 0, 0, 0
 		blkSchematicID := byte(0)
@@ -95,7 +95,7 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 						continue
 					}
 					name = chunk.SchematicBlockMapping[blkSchematicID]
-					data = uint8(values[index])
+					data = uint16(values[index])
 					rtid, found = chunk.LegacyBlockToRuntimeID(name, data)
 					if !found {
 						rtid, found = chunk.LegacyBlockToRuntimeID(name, 0)
@@ -110,9 +110,9 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 						// fmt.Printf("%v,%v,%v\t", name, data, rtid)
 					}
 					if rtid != airRID {
-						blockChan <- &IOBlock{Pos: define.CubePos{x, y, z}, RTID: rtid}
+						blockChan <- &IOBlockForDecoder{Pos: define.CubePos{x, y, z}, RTID: rtid}
 					} else {
-						blockChan <- &IOBlock{Pos: define.CubePos{x, y, z}, RTID: lightBlockRID}
+						blockChan <- &IOBlockForDecoder{Pos: define.CubePos{x, y, z}, RTID: lightBlockRID}
 					}
 				}
 			}

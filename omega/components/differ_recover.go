@@ -26,7 +26,7 @@ type DifferRecover struct {
 	BackUpName                    string   `json:"备份存档名"`
 	Operators                     []string `json:"授权使用者"`
 	currentProvider, ckptProvider mirror.ChunkReader
-	delayBlocks                   map[define.CubePos]*structure.IOBlock
+	delayBlocks                   map[define.CubePos]*structure.IOBlockForBuilder
 	delayBlocksMu                 sync.Mutex
 }
 
@@ -40,7 +40,7 @@ func (o *DifferRecover) Init(cfg *defines.ComponentConfig) {
 }
 
 //TODO Check if differ recover is affected by 0 -> -64
-func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.ChunkReader, pos define.CubePos, distance int) chan *structure.IOBlock {
+func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.ChunkReader, pos define.CubePos, distance int) chan *structure.IOBlockForBuilder {
 	computeRequiredChunks := func(pos define.CubePos, distance int) (requiredChunks []define.ChunkPos) {
 		// chunkX, ChunkZ := int(math.Floor(float64(pos[0]/16))), int(math.Floor(float64(pos[2]/16)))
 		chunkSX, chunkSZ := (pos[0]-distance-1)/16, (pos[2]-distance-1)/16
@@ -54,7 +54,7 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 		return requiredChunks
 	}
 	chunksToFix := computeRequiredChunks(pos, distance)
-	repairChan := make(chan *structure.IOBlock, 10240)
+	repairChan := make(chan *structure.IOBlockForBuilder, 10240)
 	go func() {
 		for _, chunkPos := range chunksToFix {
 			ckpt := ckptProvider.Get(chunkPos)
@@ -77,7 +77,7 @@ func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.Chunk
 							realBlock := current.Chunk.Block(x, y, z, 0)
 							if targetBlock != realBlock {
 								p := define.CubePos{int(x) + int(chunkPos[0])*16, int(y), int(z) + int(chunkPos[1])*16}
-								b := &structure.IOBlock{Pos: p, RTID: targetBlock}
+								b := &structure.IOBlockForBuilder{Pos: p, RTID: targetBlock}
 								if nbt, hasK := nbts[p]; hasK {
 									b.NBT = nbt
 									// fmt.Println("A: ", b.blockNbt)
@@ -156,7 +156,7 @@ func (o *DifferRecover) onTrigger(chat *defines.GameChat) (stop bool) {
 				currentPos := define.CubePos{_currentPos[0], _currentPos[1], _currentPos[2]}
 				blocksToFix := o.GetBlocksPipe(o.currentProvider, o.ckptProvider, currentPos, distance)
 				counter := 0
-				o.delayBlocks = make(map[define.CubePos]*structure.IOBlock)
+				o.delayBlocks = make(map[define.CubePos]*structure.IOBlockForBuilder)
 				o.delayBlocksMu = sync.Mutex{}
 				t := time.NewTicker(time.Millisecond * time.Duration(o.Speed))
 				sender := o.Frame.GetGameControl().SendWOCmd

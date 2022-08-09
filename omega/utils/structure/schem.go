@@ -28,7 +28,7 @@ type SchemFileStructrue struct {
 	BlockEntities []map[string]interface{}
 }
 
-func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBlock, cancelFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
+func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBlockForDecoder, cancelFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -122,7 +122,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 
 	width, height, length := int(schemData.Width), int(schemData.Height), int(schemData.Length)
 	blockData := schemData.blockData
-	blockChan := make(chan *IOBlock, 10240)
+	blockChan := make(chan *IOBlockForDecoder, 10240)
 	stop := false
 	airRID := chunk.AirRID
 	blocksCounter := 0
@@ -151,7 +151,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 						continue
 					}
 					p = define.CubePos{x, y, z}
-					blockChan <- &IOBlock{Pos: p, RTID: blkRTID, NBT: Nbts[p]}
+					blockChan <- &IOBlockForDecoder{Pos: p, RTID: blkRTID, NBT: Nbts[p]}
 				}
 			}
 		}

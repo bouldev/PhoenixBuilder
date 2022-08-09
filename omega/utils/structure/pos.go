@@ -9,43 +9,43 @@ import (
 	"github.com/pterm/pterm"
 )
 
-func AlterImportPosStartAndSpeed(inChan chan *IOBlock, offset define.CubePos, startFrom int, outChanLen int) (outChan chan *IOBlock, stopFn func()) {
-	outChan = make(chan *IOBlock, outChanLen)
-	stop := false
-	go func() {
-		counter := 0
-		for {
-			if stop {
-				return
-			}
-			if counter < startFrom {
-				counter++
-				<-inChan
-			} else {
-				break
-			}
-		}
-		for b := range inChan {
-			if stop {
-				return
-			}
-			b.Pos = b.Pos.Add(offset)
-			if b.NBT != nil {
-				delete(b.NBT, "x")
-				delete(b.NBT, "y")
-				delete(b.NBT, "z")
-			}
-			outChan <- b
-		}
-		close(outChan)
-	}()
-	return outChan, func() {
-		stop = true
-	}
-}
+// func AlterImportPosStartAndSpeed(inChan chan *IOBlockForDecoder, offset define.CubePos, startFrom int, outChanLen int) (outChan chan *IOBlockForBuilder, stopFn func()) {
+// 	outChan = make(chan *IOBlockForBuilder, outChanLen)
+// 	stop := false
+// 	go func() {
+// 		counter := 0
+// 		for {
+// 			if stop {
+// 				return
+// 			}
+// 			if counter < startFrom {
+// 				counter++
+// 				<-inChan
+// 			} else {
+// 				break
+// 			}
+// 		}
+// 		for b := range inChan {
+// 			if stop {
+// 				return
+// 			}
+// 			b.Pos = b.Pos.Add(offset)
+// 			if b.NBT != nil {
+// 				delete(b.NBT, "x")
+// 				delete(b.NBT, "y")
+// 				delete(b.NBT, "z")
+// 			}
+// 			outChan <- b
+// 		}
+// 		close(outChan)
+// 	}()
+// 	return outChan, func() {
+// 		stop = true
+// 	}
+// }
 
-func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset define.CubePos, startFrom int, outChanLen int, suggestMinCacheChunks int) (outChan chan *IOBlock, stopFn func()) {
-	outChan = make(chan *IOBlock, outChanLen)
+func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlockForDecoder, offset define.CubePos, startFrom int, outChanLen int, suggestMinCacheChunks int) (outChan chan *IOBlockForBuilder, stopFn func()) {
+	outChan = make(chan *IOBlockForBuilder, outChanLen)
 	stop := false
 	air := chunk.AirRID
 	counter := 0
@@ -64,7 +64,7 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 		chunks[lastChunkPos] = lastChunk
 
 		// define set block function
-		setBlock := func(b *IOBlock) {
+		setBlock := func(b *IOBlockForDecoder) {
 			pos := b.Pos
 			if pos.OutOfYBounds() {
 				pterm.Warning.Printfln("位于 %v 的方块超出高度上限", pos)
@@ -180,7 +180,7 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 						if counter < startFrom {
 							counter += 16 * 16 * 16
 						} else {
-							outChan <- &IOBlock{
+							outChan <- &IOBlockForBuilder{
 								Pos:      p,
 								RTID:     blk,
 								Expand16: true,
@@ -205,13 +205,13 @@ func AlterImportPosStartAndSpeedWithReArrangeOnce(inChan chan *IOBlock, offset d
 									continue
 								}
 								if nbt, hasK := nbts[p]; hasK {
-									outChan <- &IOBlock{
+									outChan <- &IOBlockForBuilder{
 										Pos:  p,
 										RTID: blk,
 										NBT:  nbt,
 									}
 								} else {
-									outChan <- &IOBlock{
+									outChan <- &IOBlockForBuilder{
 										Pos:  p,
 										RTID: blk,
 									}

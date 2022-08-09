@@ -42,7 +42,7 @@ type UniverseImport struct {
 type Importor struct {
 	frontendStopper func()
 	middleStopper   func()
-	finalFeeder     chan *structure.IOBlock
+	finalFeeder     chan *structure.IOBlockForBuilder
 	builder         *structure.Builder
 	task            *universeImportTask
 	doneWaiter      chan struct{}
@@ -61,7 +61,7 @@ func (o *Importor) Activate() {
 	close(o.doneWaiter)
 }
 
-func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlock, stopFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
+func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlockForDecoder, stopFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
 	suggestMinCacheChunks = 0
 	if blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err := structure.DecodeSchem(data, infoSender); err == nil {
 		return blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err
