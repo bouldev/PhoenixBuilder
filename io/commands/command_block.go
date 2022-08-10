@@ -1,3 +1,4 @@
+//go:build !is_tweak
 // +build !is_tweak
 
 package commands
@@ -20,5 +21,6 @@ func (sender *CommandSender) UpdateCommandBlock(x int32,y int32,z int32,d *types
 		Name: d.CustomName,
 		TickDelay: d.TickDelay,
 		ExecuteOnFirstTick: d.ExecuteOnFirstTick,
+		ShouldTrackOutput: d.TrackOutput,
 	})
 }
