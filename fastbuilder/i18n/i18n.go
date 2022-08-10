@@ -41,6 +41,16 @@ const (
 	Auth_FailedToRequestEntry_TryAgain // 15
 	BDump_Author
 	BDump_EarlyEOFRightWhenOpening
+	BDump_FailedToGetCmd1
+	BDump_FailedToGetCmd2
+	BDump_FailedToGetCmd4
+	BDump_FailedToGetCmd6
+	BDump_FailedToGetCmd7_0
+	BDump_FailedToGetCmd7_1
+	BDump_FailedToGetCmd10
+	BDump_FailedToGetCmd11
+	BDump_FailedToGetCmd12
+	BDump_FailedToGetConstructCmd
 	BDump_FailedToReadAuthorInfo
 	BDump_FileNotSigned
 	BDump_FileSigned
@@ -48,6 +58,7 @@ const (
 	BDump_NotBDX_Invinnerheader
 	BDump_SignedVerifying
 	BDump_VerificationFailedFor
+	BDump_Warn_Reserved
 	CommandNotFound
 	ConnectionEstablished
 	Copyright_Notice_Bouldev
@@ -71,6 +82,7 @@ const (
 	Enter_Rental_Server_Code
 	Enter_Rental_Server_Password
 	ErrorIgnored
+	Error_MapY_Exceed
 	FBUC_LoginFailed
 	FBUC_Token_ErrOnCreate
 	FBUC_Token_ErrOnGen

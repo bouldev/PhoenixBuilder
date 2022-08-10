@@ -108,7 +108,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 		prevCmd = int(curcmdbuf[0])
 		_, err := br.Read(curcmdbuf)
 		if err != nil {
-			return fmt.Errorf("Failed to get construction command, file may be corrupted")
+			return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetConstructCmd))
 		}
 		cmd := curcmdbuf[0]
 		if cmd == 88 {
@@ -117,7 +117,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 		if cmd == 1 {
 			bstr, err := ReadBrString(br)
 			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos:0], file may be corrupted!")
+				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd1))
 			}
 			blocksStrPool = append(blocksStrPool, bstr)
 			continue
@@ -125,7 +125,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			rdst := make([]byte, 2)
 			_, err := br.Read(rdst)
 			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos1], file may be corrupted")
+				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd2))
 			}
 			jumpval := binary.BigEndian.Uint16(rdst)
 			brushPosition[0] += int(jumpval)
@@ -139,7 +139,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			rdst := make([]byte, 2)
 			_, err := br.Read(rdst)
 			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos2], file may be corrupted")
+				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd4))
 			}
 			jumpval := binary.BigEndian.Uint16(rdst)
 			brushPosition[1] += int(jumpval)
@@ -151,7 +151,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			rdst := make([]byte, 2)
 			_, err := br.Read(rdst)
 			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos3], file may be corrupted")
+				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd6))
 			}
 			jumpval := binary.BigEndian.Uint16(rdst)
 			brushPosition[2] += int(jumpval)
@@ -159,12 +159,12 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			rdst := make([]byte, 2)
 			_, err := br.Read(rdst)
 			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos4], file may be corrupted")
+				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd7_0))
 			}
 			blockId := binary.BigEndian.Uint16(rdst)
 			_, err = br.Read(rdst)
 			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos5], file may be corrupted")
+				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd7_1))
 			}
 			if int(blockId) >= len(blocksStrPool) {
 				bridge_fmt.Printf("WARNING: BlockID exceeded BlockPool\n")
@@ -191,7 +191,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			rdst := make([]byte, 4)
 			_, err := br.Read(rdst)
 			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos6], file may be corrupted")
+				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd10))
 			}
 			jumpval := binary.BigEndian.Uint32(rdst)
 			brushPosition[0] += int(jumpval)
@@ -201,7 +201,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			rdst := make([]byte, 4)
 			_, err := br.Read(rdst)
 			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos7], file may be corrupted")
+				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd11))
 			}
 			jumpval := binary.BigEndian.Uint32(rdst)
 			brushPosition[1] += int(jumpval)
@@ -210,12 +210,12 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			rdst := make([]byte, 4)
 			_, err := br.Read(rdst)
 			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos8], file may be corrupted")
+				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd12))
 			}
 			jumpval := binary.BigEndian.Uint32(rdst)
 			brushPosition[2] += int(jumpval)
 		} else if cmd == 13 {
-			bridge_fmt.Printf("WARNING: BDump/Import: Use of reserved command\n")
+			bridge_fmt.Printf(I18n.T(I18n.BDump_Warn_Reserved))
 		} else if cmd == 14 {
 			brushPosition[0]++
 		} else if cmd == 15 {

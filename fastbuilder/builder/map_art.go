@@ -213,12 +213,8 @@ func MapArt(config *types.MainConfig, blc chan *types.Module) error {
 	MapZ := config.MapZ
 	MapY := config.MapY
 	if MapY != 0 {
-		//fmt.Println("3D Map Currently Not Support")
-		//return fmt.Errorf("3D Map Currently Not Support")
-		if MapY < 20 {
-			return fmt.Errorf("In 3DMap, MapY should be in [20~255] (Your Input=%v)", MapY)
-		} else if MapY > 255 {
-			return fmt.Errorf("In 3DMap, MapY should be in [20~255] (Your Input=%v)", MapY)
+		if MapY < 20 || MapY > 255 {
+			return fmt.Errorf(I18n.T(I18n.Error_MapY_Exceed), MapY)
 		}
 
 	}

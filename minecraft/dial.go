@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
+	"phoenixbuilder/fastbuilder/i18n"
 	"crypto/x509"
 	"fmt"
 	"path/filepath"
@@ -124,7 +125,7 @@ func (d Dialer) DialContext(ctx context.Context, network, address string) (conn 
 			if (code == -3) {
 				homedir, err := os.UserHomeDir()
 				if err != nil {
-					fmt.Println("WARNING - Failed to obtain the user's home directory. made homedir=\".\";")
+					fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
 					homedir="."
 				}
 				fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
