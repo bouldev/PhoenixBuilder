@@ -268,6 +268,14 @@ func (o *Omega) GetBotTaskScheduler() defines.BotTaskScheduler {
 	return o.scheduler
 }
 
+func (o *Omega) AllowChunkRequestCache() {
+	o.Reactor.chunkAssembler.AllowCache()
+}
+
+func (o *Omega) NoChunkRequestCache() {
+	o.Reactor.chunkAssembler.NoCache()
+}
+
 func (o *Omega) Activate() {
 	defer o.Stop()
 	go func() {

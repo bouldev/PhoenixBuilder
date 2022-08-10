@@ -6,11 +6,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"phoenixbuilder/omega/utils/structure"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pterm/pterm"
@@ -61,23 +63,70 @@ func (o *Importor) Activate() {
 	close(o.doneWaiter)
 }
 
-func (o *UniverseImport) getFrontEnd(data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlockForDecoder, stopFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
+func (o *UniverseImport) getFrontEnd(fileName string, data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlockForDecoder, stopFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
 	suggestMinCacheChunks = 0
-	if blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err := structure.DecodeSchem(data, infoSender); err == nil {
-		return blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err
-	} else {
-		pterm.Warning.Printfln("文件无法被 schem 解析器解析，将尝试下一个解析器 (%v)", err)
-	}
 
-	if blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err := structure.DecodeSchematic(data, infoSender); err == nil {
-		return blockFeeder, stopFn, _suggestMinCacheChunks, totalBlocks, err
+	tryBDX := func() bool {
+		if blockFeeder, stopFn, suggestMinCacheChunks, totalBlocks, err = structure.DecodeBDX(data, infoSender); err == nil {
+			return true
+		} else {
+			pterm.Warning.Printfln("文件无法被 bdx 解析器解析，将尝试下一个解析器 (%v)", err)
+			return false
+		}
+	}
+	trySchem := func() bool {
+		if blockFeeder, stopFn, suggestMinCacheChunks, totalBlocks, err = structure.DecodeSchem(data, infoSender); err == nil {
+			return true
+		} else {
+			pterm.Warning.Printfln("文件无法被 schem 解析器解析，将尝试下一个解析器 (%v)", err)
+			return false
+		}
+	}
+	trySchematic := func() bool {
+		if blockFeeder, stopFn, suggestMinCacheChunks, totalBlocks, err = structure.DecodeSchematic(data, infoSender); err == nil {
+			return true
+		} else {
+			pterm.Warning.Printfln("文件无法被 schematic 解析器解析，将尝试下一个解析器 (%v)", err)
+			return false
+		}
+	}
+	if strings.Contains(fileName, ".bdx") {
+		if tryBDX() {
+			return
+		}
+		if trySchem() {
+			return
+		}
+		if trySchematic() {
+			return
+		}
+	} else if strings.Contains(fileName, ".schematic") {
+		if trySchematic() {
+			return
+		}
+		if tryBDX() {
+			return
+		}
+		if trySchem() {
+			return
+		}
 	} else {
-		pterm.Warning.Printfln("文件无法被 schematic 解析器解析，将尝试下一个解析器 (%v)", err)
+		if trySchem() {
+			return
+		}
+		if trySchematic() {
+			return
+		}
+		if tryBDX() {
+			return
+		}
 	}
 	return nil, nil, 0, 0, fmt.Errorf("无法找到合适的解析器")
 }
 
 func (o *UniverseImport) StartNewTask() {
+	// o.Frame.NoChunkRequestCache()
+	// o.Frame.GetGameControl().SendCmd("gamerule commandblocks enabled false ")
 	task := o.data.CurrentTask
 	filePath := task.Path
 	if task.Progress < 0 {
@@ -85,6 +134,7 @@ func (o *UniverseImport) StartNewTask() {
 	}
 	pterm.Info.Printfln("尝试处理任务 %v 起点(%v %v %v) 从 %v 方块处开始导入", task.Path, task.Offset[0], task.Offset[1], task.Offset[2], task.Progress)
 	data := []byte{}
+	fileName := path.Base(task.Path)
 	if fp, err := os.OpenFile(filePath, os.O_RDONLY, 0644); err == nil {
 		data, err = ioutil.ReadAll(fp)
 		if err != nil {
@@ -97,7 +147,7 @@ func (o *UniverseImport) StartNewTask() {
 		o.data.CurrentTask = nil
 		return
 	}
-	if feeder, stopFn, suggestMinCacheChunks, totalBlocks, err := o.getFrontEnd(data, func(s string) {
+	if feeder, stopFn, suggestMinCacheChunks, totalBlocks, err := o.getFrontEnd(fileName, data, func(s string) {
 		pterm.Info.Println(s)
 	}); err == nil {
 		baseProgress := task.Progress
@@ -113,6 +163,9 @@ func (o *UniverseImport) StartNewTask() {
 			totalBlocks = 1
 		}
 		taskName := path.Base(filePath)
+		if len(taskName) > 10 {
+			taskName = taskName[:10]
+		}
 		progressBar := pterm.DefaultProgressbar.WithTotal(totalBlocks - 1).WithTitle(taskName)
 		lastBlock := 0
 		startTime := time.Now()
@@ -153,6 +206,7 @@ func (o *UniverseImport) StartNewTask() {
 			FinalWaitTime:   3,
 			IgnoreNbt:       o.IgnoreBlockNbt,
 			InitPosGetter:   o.GetBotPos,
+			Ctrl:            o.Frame.GetGameControl(),
 		}
 		if suggestMinCacheChunks == 0 {
 			suggestMinCacheChunks = 256
@@ -165,6 +219,7 @@ func (o *UniverseImport) StartNewTask() {
 		o.Frame.GetBotTaskScheduler().CommitUrgentTask(o.currentBuilder)
 		<-o.currentBuilder.doneWaiter
 		pterm.Success.Printfln("\n导入完成 %v ", filePath)
+		// o.Frame.AllowChunkRequestCache()
 	} else {
 		pterm.Error.Println("无法解析文件 %v ", filePath)
 	}
@@ -173,6 +228,10 @@ func (o *UniverseImport) StartNewTask() {
 
 func (o *Importor) onBlockUpdate(pos define.CubePos, origRTID, currentRTID uint32) {
 	o.builder.OnBlockUpdate(pos, origRTID, currentRTID)
+}
+
+func (o *Importor) onLevelChunk(cd *mirror.ChunkData) {
+	o.builder.OnLevelChunk(cd)
 }
 
 func (o *UniverseImport) Init(cfg *defines.ComponentConfig) {
@@ -296,7 +355,14 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 			return true
 		},
 	})
-	// o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.onBlockUpdate)
+	o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.onBlockUpdate)
+	o.Frame.GetGameListener().SetOnLevelChunkCallBack(o.OnLevelChunk)
+}
+
+func (o *UniverseImport) OnLevelChunk(cd *mirror.ChunkData) {
+	if o.currentBuilder != nil {
+		o.currentBuilder.onLevelChunk(cd)
+	}
 }
 
 func (o *UniverseImport) Activate() {

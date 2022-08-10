@@ -6,6 +6,7 @@ import (
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strconv"
@@ -232,6 +233,7 @@ type GameCtrl struct {
 	//playerNameDB        defines.NoSqlDB
 	//playerStorageDB     defines.NoSqlDB
 	PlayerPermission map[string]map[string]bool
+	onBlockActorCbs  map[define.CubePos]func(define.CubePos, *packet.BlockActorData)
 }
 
 func (g *GameCtrl) GetPlayerKit(name string) defines.PlayerKit {
@@ -387,6 +389,49 @@ func (g *GameCtrl) onCommandFeedbackOn() {
 	}
 }
 
+func (g *GameCtrl) onBlockActor(p *packet.BlockActorData) {
+	pos := define.CubePos{int(p.Position.X()), int(p.Position.Y()), int(p.Position.Z())}
+	if cb, found := g.onBlockActorCbs[pos]; found {
+		delete(g.onBlockActorCbs, pos)
+		cb(pos, p)
+	}
+}
+
+func (g *GameCtrl) PlaceCommandBlock(pos define.CubePos, commandBlockName string, commandBlockData int,
+	withMove, withAirPrePlace bool, updatePacket *packet.CommandBlockUpdate,
+	onDone func(done bool), timeOut time.Duration) {
+	done := make(chan bool)
+	go func() {
+		select {
+		case <-time.NewTimer(timeOut).C:
+			onDone(false)
+		case <-done:
+		}
+	}()
+	go func() {
+		if withMove {
+			g.SendCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
+			time.Sleep(100 * time.Millisecond)
+		}
+		if withAirPrePlace {
+			cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], "air", 0)
+			g.SendWOCmd(cmd)
+			time.Sleep(100 * time.Millisecond)
+		}
+		cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], strings.Replace(commandBlockName, "minecraft:", "", 1), commandBlockData)
+		g.SendWOCmd(cmd)
+		g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
+			g.SendCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
+			// time.Sleep(50 * time.Millisecond)
+			g.SendMCPacket(updatePacket)
+			g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
+				onDone(true)
+				done <- true
+			}
+		}
+	}()
+}
+
 func (g *GameCtrl) onCommandFeedBackOff() {
 	if g.ExpectedCmdFeedBack {
 		g.turnOnFeedBack()
@@ -453,6 +498,7 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		perPlayerStorage:    make(map[string]*PlayerKitOmega),
 		//playerNameDB:        o.GetNoSqlDB("playerNameDB"),
 		//playerStorageDB:     o.GetNoSqlDB("playerStorageDB"),
+		onBlockActorCbs: make(map[define.CubePos]func(define.CubePos, *packet.BlockActorData)),
 	}
 	err := o.GetJsonData("playerPermission.json", &c.PlayerPermission)
 	if err != nil {

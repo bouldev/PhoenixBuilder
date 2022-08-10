@@ -162,7 +162,7 @@ func (r *Reactor) Throw(chat *defines.GameChat) {
 }
 
 func (r *Reactor) React(pkt packet.Packet) {
-	// fmt.Println("PacketID ", pkt.ID())
+	// fmt.Println("PacketID ", pkt.ID(), pkt)
 	choked := make(chan struct{})
 	defer func() {
 		// fmt.Println("Handled ")
@@ -219,7 +219,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 		p.Flags &= 0xf
 		if (p.Flags != packet.BlockUpdateNetwork && p.Flags != (packet.BlockUpdateNetwork|packet.BlockUpdateNeighbours)) || p.Layer != 0 {
 			// fmt.Println(p, chunk.RuntimeIDToLegacyBlock(MCRTID))
-			break
+			// break
 		}
 		// fmt.Println(p, chunk.RuntimeIDToLegacyBlock(MCRTID))
 		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
@@ -227,8 +227,13 @@ func (r *Reactor) React(pkt packet.Packet) {
 			for _, cb := range r.BlockUpdateListeners {
 				cb(cubePos, origBlockRTID, MCRTID)
 			}
+		} else {
+			for _, cb := range r.BlockUpdateListeners {
+				cb(cubePos, chunk.AirRID, MCRTID)
+			}
 		}
 	case *packet.BlockActorData:
+		o.GameCtrl.onBlockActor(p)
 		cubePos := define.CubePos{int(p.Position[0]), int(p.Position[1]), int(p.Position[2])}
 		r.CurrentWorld.SetBlockNbt(cubePos, p.NBTData)
 	case *packet.LevelChunk:

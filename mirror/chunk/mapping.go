@@ -17,7 +17,7 @@ var RuntimeIDToState func(runtimeID uint32) (name string, properties map[string]
 var RuntimeIDToBlock func(runtimeID uint32) (block *GeneralBlock, found bool)
 var NEMCRuntimeIDToStandardRuntimeID func(nemcRuntimeID uint32) (runtimeID uint32)
 var RuntimeIDToLegacyBlock func(runtimeID uint32) (legacyBlock *LegacyBlock)
-var LegacyBlockToRuntimeID func(name string, data uint8) (runtimeID uint32, found bool)
+var LegacyBlockToRuntimeID func(name string, data uint16) (runtimeID uint32, found bool)
 var AirRID uint32
 var NEMCAirRID uint32
 var stateRuntimeIDs = map[StateHash]uint32{}
@@ -56,7 +56,7 @@ type GeneralBlock struct {
 
 type LegacyBlock struct {
 	Name string
-	Val  byte
+	Val  uint16
 }
 
 func (b GeneralBlock) EncodeBlock() (string, map[string]any) {
@@ -69,7 +69,7 @@ type StateHash struct {
 
 type LegacyBlockHash struct {
 	name string
-	data uint8
+	data uint16
 }
 
 func hashProperties(properties map[string]interface{}) string {
@@ -433,7 +433,7 @@ func InitMapping(mappingInData []byte) {
 		return uint32(nemcToMCRIDMapping[nemcRuntimeID])
 	}
 	if NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID) != AirRID {
-		panic(fmt.Errorf("Air rid not matching: %d vs %d.", NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID), AirRID))
+		panic(fmt.Errorf("air rid not matching: %d vs %d", NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID), AirRID))
 	}
 
 	nemcToVal := mappingIn.NEMCRidToVal
@@ -450,7 +450,7 @@ func InitMapping(mappingInData []byte) {
 		if nemcRid == int(NEMCAirRID) {
 			continue
 		}
-		LegacyBlocks[Rid].Val = val
+		LegacyBlocks[Rid].Val = uint16(val)
 		LegacyBlocks[Rid].Name = nemcToName[nemcRid]
 	}
 	for rid, _ := range Blocks {
@@ -464,7 +464,7 @@ func InitMapping(mappingInData []byte) {
 		LegacyRuntimeIDs[LegacyBlockHash{name: block.Name, data: block.Val}] = uint32(rid)
 	}
 	LegacyRuntimeIDs[LegacyBlockHash{name: "air", data: 0}] = AirRID
-	LegacyBlockToRuntimeID = func(name string, data uint8) (runtimeID uint32, found bool) {
+	LegacyBlockToRuntimeID = func(name string, data uint16) (runtimeID uint32, found bool) {
 		if rtid, hasK := LegacyRuntimeIDs[LegacyBlockHash{name: name, data: data}]; !hasK {
 			return AirRID, false
 		} else {

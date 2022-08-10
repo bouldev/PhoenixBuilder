@@ -7,6 +7,7 @@ import (
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/mirror/io/world"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -127,6 +128,9 @@ type GameControl interface {
 	GetPlayerKit(name string) PlayerKit
 	GetPlayerKitByUUID(ud uuid.UUID) PlayerKit
 	SetOnParamMsg(string, func(chat *GameChat) (catch bool)) error
+	PlaceCommandBlock(pos define.CubePos, commandBlockName string, commandBlockData int,
+		withMove, withAirPrePlace bool, updatePacket *packet.CommandBlockUpdate,
+		onDone func(done bool), timeOut time.Duration)
 }
 
 type PlayerKit interface {
@@ -225,4 +229,6 @@ type MainFrame interface {
 	GetWorld() *world.World
 	GetWorldProvider() mirror.ChunkProvider
 	FBEval(cmd string)
+	AllowChunkRequestCache()
+	NoChunkRequestCache()
 }

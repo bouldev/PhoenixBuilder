@@ -23,6 +23,7 @@ type Assembler struct {
 	requestQueue     map[define.ChunkPos][]*packet.SubChunkRequest
 	centerChunk      *define.ChunkPos
 	radius           int32
+	allowCache       bool
 }
 
 func NewAssembler() *Assembler {
@@ -54,6 +55,24 @@ func (o *Assembler) GenRequestFromLevelChunk(pk *packet.LevelChunk) (requests []
 		})
 	}
 	return requests
+}
+
+func (o *Assembler) NoCache() {
+	o.queueMu.Lock()
+	o.taskMu.Lock()
+	o.allowCache = false
+	o.visitTime = make(map[define.ChunkPos]time.Time)
+	o.requestQueue = make(map[define.ChunkPos][]*packet.SubChunkRequest)
+	o.pendingTasks = make(map[define.ChunkPos]*mirror.ChunkData)
+	for len(o.chunkRequestChan) > 0 {
+		<-o.chunkRequestChan
+	}
+	o.taskMu.Unlock()
+	o.queueMu.Unlock()
+}
+
+func (o *Assembler) AllowCache() {
+	o.allowCache = true
 }
 
 func (o *Assembler) AddPendingTask(pk *packet.LevelChunk) (exist bool) {
@@ -178,15 +197,17 @@ func (o *Assembler) CreateRequestScheduler(writeFn func(pk *packet.SubChunkReque
 			if pendingTasksNum > 512 {
 				pterm.Warning.Printf("chunk request queue too long, pending %v tasks\n", pendingTasksNum*16)
 			}
-			o.taskMu.RLock()
-			if visitTime, hasK := o.visitTime[cp]; hasK {
-				if time.Since(visitTime) < validCacheTime {
-					o.taskMu.RUnlock()
-					o.queueMu.RLock()
-					continue
+			if o.allowCache {
+				o.taskMu.RLock()
+				if visitTime, hasK := o.visitTime[cp]; hasK {
+					if time.Since(visitTime) < validCacheTime {
+						o.taskMu.RUnlock()
+						o.queueMu.RLock()
+						continue
+					}
 				}
+				o.taskMu.RUnlock()
 			}
-			o.taskMu.RUnlock()
 			for _, request := range requests {
 				writeFn(request)
 				<-t.C
