@@ -59,16 +59,20 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 	stop := false
 	go func() {
 		defer close(blockChan)
+		cmd := uint8(0)
 		for {
+			if brushPosition[1] > 200 {
+				fmt.Println("error!", cmd)
+			}
 			if stop {
 				break
 			}
-			_, err = br.Read(curcmdbuf)
-			if err != nil {
+			n, err := br.Read(curcmdbuf)
+			if err != nil || n != 1 {
 				infoSender("Failed to get construction command, file may be corrupted")
 				return
 			}
-			cmd := curcmdbuf[0]
+			cmd = curcmdbuf[0]
 			if cmd == 88 {
 				return
 			}
@@ -86,6 +90,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos1], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint16(rdst)
 				brushPosition[0] += int(jumpval)
@@ -100,6 +105,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos2], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint16(rdst)
 				brushPosition[1] += int(jumpval)
@@ -112,6 +118,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos3], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint16(rdst)
 				brushPosition[2] += int(jumpval)
@@ -120,13 +127,16 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos4], file may be corrupted")
+					return
 				}
 				blockId := binary.BigEndian.Uint16(rdst)
-				_, err = br.Read(rdst)
+				blockDataBytes := make([]byte, 2)
+				_, err = br.Read(blockDataBytes)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos5], file may be corrupted")
+					return
 				}
-				blockData := binary.BigEndian.Uint16(rdst)
+				blockData := binary.BigEndian.Uint16(blockDataBytes)
 				blockChan <- &IOBlockForDecoder{
 					Pos:  brushPosition,
 					RTID: legacyRunTimeIDRemapper.GetRTID(blockId, blockData),
@@ -140,6 +150,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos6], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint32(rdst)
 				brushPosition[0] += int(jumpval)
@@ -150,6 +161,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos7], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint32(rdst)
 				brushPosition[1] += int(jumpval)
@@ -159,6 +171,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos8], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint32(rdst)
 				brushPosition[2] += int(jumpval)
@@ -181,6 +194,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos9], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint16(rdst)
 				brushPosition[0] += int(int16(jumpval))
@@ -189,6 +203,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos10], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint32(rdst)
 				brushPosition[0] += int(int32(jumpval))
@@ -197,6 +212,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos11], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint16(rdst)
 				brushPosition[1] += int(int16(jumpval))
@@ -205,6 +221,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos12], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint32(rdst)
 				brushPosition[1] += int(int32(jumpval))
@@ -213,6 +230,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos13], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint16(rdst)
 				brushPosition[2] += int(int16(jumpval))
@@ -221,6 +239,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos14], file may be corrupted")
+					return
 				}
 				jumpval := binary.BigEndian.Uint32(rdst)
 				brushPosition[2] += int(int32(jumpval))
@@ -229,28 +248,34 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos15], file may be corrupted")
+					return
 				}
 				cbmode := binary.BigEndian.Uint32(fbuf)
 				command, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos16], file may be corrupted")
+					return
 				}
 				cusname, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos17], file may be corrupted")
+					return
 				}
 				lasout, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos18], file may be corrupted")
+					return
 				}
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos19], file may be corrupted")
+					return
 				}
 				tickdelay := int32(binary.BigEndian.Uint32(fbuf))
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos20], file may be corrupted")
+					return
 				}
 				blockName := "command_block"
 				switch cbmode {
@@ -282,11 +307,13 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos4], file may be corrupted")
+					return
 				}
 				blockId := binary.BigEndian.Uint16(rdst)
 				_, err = br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos5], file may be corrupted")
+					return
 				}
 				blockData := binary.BigEndian.Uint16(rdst)
 				rtid := legacyRunTimeIDRemapper.GetRTID(blockId, blockData)
@@ -294,28 +321,34 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos15], file may be corrupted")
+					return
 				}
 				_ = binary.BigEndian.Uint32(fbuf)
 				command, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos16], file may be corrupted")
+					return
 				}
 				cusname, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos17], file may be corrupted")
+					return
 				}
 				lasout, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos18], file may be corrupted")
+					return
 				}
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos19], file may be corrupted")
+					return
 				}
 				tickdelay := int32(binary.BigEndian.Uint32(fbuf))
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos20], file may be corrupted")
+					return
 				}
 				commandBlockNbt := map[string]interface{}{
 					"id":                 "CommandBlock",
@@ -338,34 +371,41 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err = br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos5], file may be corrupted")
+					return
 				}
 				blockData := binary.BigEndian.Uint16(rdst)
 				fbuf := make([]byte, 4)
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos15], file may be corrupted")
+					return
 				}
 				cbmode := binary.BigEndian.Uint32(fbuf)
 				command, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos16], file may be corrupted")
+					return
 				}
 				cusname, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos17], file may be corrupted")
+					return
 				}
 				lasout, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos18], file may be corrupted")
+					return
 				}
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos19], file may be corrupted")
+					return
 				}
 				tickdelay := int32(binary.BigEndian.Uint32(fbuf))
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos20], file may be corrupted")
+					return
 				}
 				blockName := "command_block"
 				switch cbmode {
@@ -397,6 +437,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos21], file may be corrupted")
+					return
 				}
 				brushPosition[0] += int(int8(rdst[0]))
 			} else if cmd == 29 {
@@ -404,6 +445,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos22], file may be corrupted")
+					return
 				}
 				brushPosition[1] += int(int8(rdst[0]))
 			} else if cmd == 30 {
@@ -411,6 +453,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(rdst)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos23], file may be corrupted")
+					return
 				}
 				brushPosition[2] += int(int8(rdst[0]))
 			} else if cmd == 31 {
@@ -418,6 +461,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err := br.Read(poolId)
 				if err != nil {
 					infoSender("Failed to get pool id, file may be corrupted.")
+					return
 				}
 				var pool []*types.ConstBlock
 				if poolId[0] == 117 {
@@ -426,6 +470,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 					pool = world_provider.RuntimeIdArray_2_1_10
 				} else {
 					infoSender("This file is using an unknown runtime id pool, we're unable to resolve it.")
+					return
 				}
 				runtimeIdPoolUsing = NewRuntimeIDConvertor()
 				runtimeIdPoolUsing.ConvertFN = func(u uint32) uint32 {
@@ -441,6 +486,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err = br.Read(runtimeIdMem)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos24], file may be corrupted")
+					return
 				}
 				runtimeId := uint32(binary.BigEndian.Uint16(runtimeIdMem))
 				blockChan <- &IOBlockForDecoder{
@@ -452,6 +498,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err = br.Read(runtimeIdMem)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos24], file may be corrupted")
+					return
 				}
 				runtimeId := binary.BigEndian.Uint32(runtimeIdMem)
 				blockChan <- &IOBlockForDecoder{
@@ -473,28 +520,34 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos a15], file may be corrupted")
+					return
 				}
 				_ = binary.BigEndian.Uint32(fbuf)
 				command, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos a16], file may be corrupted")
+					return
 				}
 				cusname, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos a 17], file may be corrupted")
+					return
 				}
 				lasout, err := ReadBrString(br)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos a18], file may be corrupted")
+					return
 				}
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos a19], file may be corrupted")
+					return
 				}
 				tickdelay := int32(binary.BigEndian.Uint32(fbuf))
 				_, err = br.Read(fbuf)
 				if err != nil {
 					infoSender("Failed to get argument for cmd[pos a20], file may be corrupted")
+					return
 				}
 				commandBlockNbt := map[string]interface{}{
 					"id":                 "CommandBlock",
@@ -513,9 +566,55 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 					NBT:  commandBlockNbt,
 				}
 			} else if cmd == 37 || cmd == 38 {
-				// Ignore Chest
+				// var runtimeId uint32
+				if cmd == 37 {
+					rIdBuf := make([]byte, 2)
+					_, err = br.Read(rIdBuf)
+					// runtimeId = uint32(binary.BigEndian.Uint16(rIdBuf))
+				} else {
+					rIdBuf := make([]byte, 4)
+					_, err = br.Read(rIdBuf)
+					// runtimeId = binary.BigEndian.Uint32(rIdBuf)
+				}
+				slotCountCon := make([]byte, 1)
+				br.Read(slotCountCon)
+				// chest := make(types.ChestData, slotCountCon[0])
+				for i := uint8(0); i < slotCountCon[0]; i++ {
+					_, _ = ReadBrString(br)
+					countcon := make([]byte, 1)
+					damageBuf := make([]byte, 2)
+					slotcon := make([]byte, 1)
+					br.Read(countcon)
+					br.Read(damageBuf)
+					br.Read(slotcon)
+					// damageVal := binary.BigEndian.Uint16(damageBuf)
+					// chest[i] = types.ChestSlot{
+					// 	Name:   itemname,
+					// 	Count:  countcon[0],
+					// 	Damage: damageVal,
+					// 	Slot:   slotcon[0],
+					// }
+				}
+				// pos := types.Position{
+				// 	X: brushPosition[0] + config.Position.X,
+				// 	Y: brushPosition[1] + config.Position.Y,
+				// 	Z: brushPosition[2] + config.Position.Z,
+				// }
+				// blc <- &types.Module{
+				// 	Block: runtimeIdPoolUsing[runtimeId].Take(),
+				// 	Point: pos,
+				// }
+				// for _, slot := range chest {
+				// 	slotcopy := types.ChestSlot(slot)
+				// 	blc <- &types.Module{
+				// 		ChestSlot: &slotcopy,
+				// 		Point:     pos,
+				// 	}
+				// }
 			} else {
-				err = fmt.Errorf("unimplemented method found : %d", cmd)
+				// fmt.Println("ERROR!")
+				infoSender(fmt.Sprintf("unimplemented method found : %d", cmd))
+				return
 			}
 		}
 	}()
@@ -548,7 +647,14 @@ func DecodeBDX(data []byte, infoSender func(string)) (blockFeeder chan *IOBlockF
 		err = ErrImportFormateNotSupport
 		return
 	}
-	br := brotli.NewReader(file)
+
+	bro := brotli.NewReader(file)
+	br := &bytes.Buffer{}
+	filelen, _ := br.ReadFrom(bro)
+	if filelen == 0 {
+		err = fmt.Errorf("cannnot use brotli for decompress")
+		return
+	}
 	infoSender("正在检查 BDX 文件，需要消耗大量时间")
 	author, blockChan, _, err := handleBDXCMD(br, func(s string) {
 		err = fmt.Errorf(s)
@@ -574,7 +680,9 @@ func DecodeBDX(data []byte, infoSender func(string)) (blockFeeder chan *IOBlockF
 		infoSender("author: " + author)
 		file = bytes.NewBuffer(data)
 		checkAndGetBDXHeader(file)
-		br = brotli.NewReader(file)
+		bro := brotli.NewReader(file)
+		br := &bytes.Buffer{}
+		_, _ = br.ReadFrom(bro)
 		_, blockChan, stopFn, _ := handleBDXCMD(br, func(s string) {})
 		return blockChan, stopFn, (maxX-minX)/16 + 2, blockCounter, nil
 	}
