@@ -63,3 +63,5 @@ require (
 	golang.org/x/text v0.3.7
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
+
+replace github.com/Tnze/go-mc v1.17.0 => ./depends/go-mc@v1.17.0
