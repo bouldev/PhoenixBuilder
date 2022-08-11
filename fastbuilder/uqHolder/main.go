@@ -535,7 +535,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	case *packet.InventoryTransaction:
 	// not supported, plan to support
 	case *packet.ActorEvent:
-	// no plan to support the followings
+	// no plan to support following
 	case *packet.LevelChunk:
 	case *packet.NetworkChunkPublisherUpdate:
 	case *packet.BiomeDefinitionList:

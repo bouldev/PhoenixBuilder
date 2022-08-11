@@ -20,7 +20,7 @@ Screen Shots:
 
 ![image](Screenshots/md.png "Markdown")
 
-Additonal Tips:
+Additional Tips:
 ---
 Created by FontCreator
 

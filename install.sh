@@ -43,7 +43,7 @@ for uname_prog in "uname" "guname"; do
 done
 
 # Check permissions and prefix
-echo "Checking permissons..."
+echo "Checking permissions..."
 if [ "${DESTDIR}" ]; then
   printf "\033[33mFound DESTDIR: %s\033[0m\n" "${DESTDIR}"
   PREFIX="${DESTDIR}"
@@ -78,7 +78,7 @@ else
   quit_installer 1
 fi
 
-# Basic informations
+# Basic information
 echo "Fetching basic info..."
 SYSTEM_NAME=$(uname)
 KERNEL_VERSION=$(uname -r)
@@ -234,7 +234,7 @@ elif [ ${MACHINE} == "ios" ]; then
     echo "Requesting FastBuilder Phoenix for ${ARCH} iOS..."
     FB_PREFIX="pro.fastbuilder.phoenix"
     FILE_TYPE=".deb"
-    # iOS does not seperate architectures, iphoneos-arm for all
+    # iOS does not separate architectures, iphoneos-arm for all
     FILE_ARCH="iphoneos-arm"
   elif [ ${ARCH} != "arm64" ]; then
     printf "\033[31mFastBuilder no longer support ${ARCH} iOS! Stopping.\033[0m\n"
@@ -367,7 +367,7 @@ if [[ ${BINARY_INSTALL} == "1" ]]; then
   else
     report_error ${DL_RET}
   fi
-  # Explictly perform chmod
+  # Explicitly perform chmod
   chmod +x "${PREFIX}"/./fastbuilder-temp/fastbuilder
   if [ ${ROOT_REQUIRED} == "1" ]; then
     ${INSTALL} "${PREFIX}"/./fastbuilder-temp/fastbuilder ${BINDIR}
@@ -397,12 +397,12 @@ else
   else
     report_error ${DL_RET}
   fi
-  # When installer.sh have root priviledges, it will install packages directly through dpkg
+  # When installer.sh have root privileges, it will install packages directly through dpkg
   if [ ${ROOT_REQUIRED} == "1" ]; then
     printf "Installing deb package...\n"
     dpkg -i "${PREFIX}"/./fastbuilder-temp/fastbuilder.deb
     if [ $? != 0 ]; then
-      printf "\033[31mSome errors occured when calling Debian Packager.\nYou may want to run \"dpkg --configure -a\" to fix some problems.\033[0m\n"
+      printf "\033[31mSome errors occurred when calling Debian Packager.\nYou may want to run \"dpkg --configure -a\" to fix some problems.\033[0m\n"
       quit_installer 1
     fi
     LAUNCH_CMD="fastbuilder"

@@ -313,7 +313,7 @@ class TAG_Long_Array(BaseTag):
     def to_py(self):
         return (self.name,self.value)
 
-# The TAG_* types have the convienient property of being continuous.
+# The TAG_* types have the convenient property of being continuous.
 # The code is written in such a way that if this were to no longer be
 # true in the future, _tags can simply be replaced with a dict().
 _tags = (

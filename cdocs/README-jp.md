@@ -64,7 +64,7 @@ Please ensure that you have the abilities mentioned above, if you encountered pr
 3. Enter the number of the <ruby><rb>rental server</rb><rp>(</rp><rt style="font-size:80%;">租赁服</rt><rp>)</rp></ruby> that you want to use FastBuilder on.(note: The rental server should accept the entrance of **any <ruby><rb>level</rb><rp>(</rp><rt style="font-size:80%;">等级</rt><rp>)</rp></ruby>**'s player, satisfy it by turning off "<ruby><rb>player entrance level requirement</rb><rp>(</rp><rt style="font-size:80%;">玩家等级准入要求</rt><rp>)</rp></ruby>" toggle in the server settings interface)
 4. Set a nickname of the <ruby><rb>helper user</rb><rp>(</rp><rt style="font-size:80%;">辅助用户</rt><rp>)</rp></ruby>, then click **[<ruby><rb>Create</rb><rp>(</rp><rt style="font-size:80%;">生成</rt><rp>)</rp></ruby>]** to create one.
 
-That's all for the completion of necessary informations, and the following content is the steps of installation, different platforms have different solutions, please find your own platform:
+That's all for the completion of necessary information, and the following content is the steps of installation, different platforms have different solutions, please find your own platform:
 
 #### Steps for Installation
 
@@ -217,7 +217,7 @@ Each mode has its own advantages and disadvantages, please handle is as you thin
   delay set <Delay:int> # Sets the default packet sending delay. The unit in continuous mode is microsecond and it's second in discrete mode.
   ```
 
-- Set whether to show the progress (show informations like the percentage of construction, total block count, and the instantaneous velocity. default:`true`)
+- Set whether to show the progress (show information like the percentage of construction, total block count, and the instantaneous velocity. default:`true`)
 
   ```shell
   progress <value:bool>

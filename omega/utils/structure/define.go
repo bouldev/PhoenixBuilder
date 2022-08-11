@@ -31,4 +31,4 @@ type CommandBlockNBT struct {
 	Data               int32 `nbt:"data"`
 }
 
-var ErrImportFormateNotSupport = errors.New("formate not support")
+var ErrImportFormatNotSupport = errors.New("format unsupported")

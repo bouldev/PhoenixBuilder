@@ -1,6 +1,6 @@
 engine.message("hello from part2.js");
 // External values are not accessible, exporting a function requiring them if you're
-// intrested in them
+// interested in them
 let impv;
 
 module.exports={

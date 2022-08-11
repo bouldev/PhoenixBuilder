@@ -35,7 +35,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 			err = fmt.Errorf("unknown error %v", r)
 		}
 	}()
-	err = ErrImportFormateNotSupport
+	err = ErrImportFormatNotSupport
 	hasGzipHeader := false
 	if len(data) < 2 {
 		return nil, nil, 0, 0, err
@@ -58,7 +58,7 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	_, err = nbtDecoder.Decode(&schemData)
 	infoSender("解压缩成功")
 	if err != nil || schemData.BlockDataIn == nil || len(schemData.BlockDataIn) == 0 {
-		return nil, nil, 0, 0, ErrImportFormateNotSupport
+		return nil, nil, 0, 0, ErrImportFormatNotSupport
 	}
 
 	// convertBlockData := reflect.ValueOf(schemData.BlockDataIn)

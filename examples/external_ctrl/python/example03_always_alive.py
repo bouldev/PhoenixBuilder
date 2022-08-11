@@ -89,7 +89,7 @@ work_thread.start()
 while True:
     time.sleep(0.1)
     if (not config.recv_thread_alive) or (False in config.working_threads_alive.keys()):
-        print('sub process crashed! tring to restart connection...')
+        print('sub process crashed! trying to restart connection...')
         while True:
             time.sleep(3)
             try:

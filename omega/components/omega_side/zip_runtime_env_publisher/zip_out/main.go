@@ -69,7 +69,7 @@ func decompress(src io.Reader, absoluteDst string) error {
 			if _, err := io.Copy(fileToWrite, tr); err != nil {
 				return err
 			}
-			// manually close here after each file operation; defering would cause each file close
+			// manually close here after each file operation; deferring would cause each file close
 			// to wait until all operations have completed.
 			fileToWrite.Close()
 		default:

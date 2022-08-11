@@ -376,7 +376,7 @@ func (g *GameCtrl) SendWOCmd(cmd string) {
 
 // onCommandFeedbackOnCmds is called by reactor to send commands by that need feedback
 func (g *GameCtrl) onCommandFeedbackOn() {
-	// fmt.Println("recv sendcommandfeedback ture")
+	// fmt.Println("recv sendcommandfeedback true")
 	g.CurrentCmdFeedBack = true
 	g.CmdFeedBackOnSent = false
 	pkts := g.NeedFeedBackPackets
@@ -453,7 +453,7 @@ func (g *GameCtrl) onNewCommandFeedBack(p *packet.CommandOutput) {
 }
 
 func (g *GameCtrl) turnOnFeedBack() {
-	//fmt.Println("send sendcommandfeedback ture")
+	//fmt.Println("send sendcommandfeedback true")
 	g.SendCmd("gamerule sendcommandfeedback true")
 	g.CmdFeedBackOnSent = true
 }

@@ -54,7 +54,7 @@ class AutoRestartThreadContainer(threading.Thread):
                 self.last_crash_counter+=1
                 if err!=None and self.reduce_restart_freq:
                     delay_time=self.reduce_lambda(self.last_crash_counter)
-                print(f"Tread Terminate, "+f"because of error {err}, " if err is not None else ""+f"and will restart on {delay_time}s")
+                print(f"Thread terminated, "+f"because of error {err}, " if err is not None else ""+f"and will restart on {delay_time}s")
                 if delay_time>0:time.sleep(delay_time)
 
 def execute_func_in_thread_with_auto_restart(func:Callable,*args,exit_on_program_terminate:bool=True,

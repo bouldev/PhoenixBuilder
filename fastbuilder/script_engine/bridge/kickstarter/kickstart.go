@@ -28,7 +28,7 @@ func LoadScript(scriptPath string, hb bridge.HostBridge) (func(), error) {
 		return nil, fmt.Errorf("Empty script path!")
 	}
 	fmt.Printf("Loading script: %s\n", scriptPath)
-	fmt.Printf("JS engine vesion: %v\n", script_engine.JSVERSION)
+	fmt.Printf("JS engine version: %v\n", script_engine.JSVERSION)
 	var script *v8.UnboundScript
 	var scriptName string
 
@@ -100,7 +100,7 @@ func LoadScript(scriptPath string, hb bridge.HostBridge) (func(), error) {
 			e := err.(*v8.JSError) // JavaScript errors will be returned as the JSError struct
 			fmt.Printf("Script %s ran into a runtime error, stack dump:\n", scriptPath)
 			fmt.Println(e.Message)    // the message of the exception thrown
-			fmt.Println(e.Location)   // the filename, line number and the column where the error occured
+			fmt.Println(e.Location)   // the filename, line number and the column where the error occurred
 			fmt.Println(e.StackTrace) // the full stack trace of the error, if available
 		}
 		//fmt.Printf("Script %s Successfully Loaded, Additional info(%v)\n",scriptPath,finalVal)

@@ -93,7 +93,7 @@ def one_sender_multiworkers(conn:socket,recv_func:Callable,workers:dict=None,res
                 print('sub process crashed! quitting...') 
                 exit(-1)
             else:
-                print('sub process crashed! tring to restart connection...')
+                print('sub process crashed! trying to restart connection...')
                 while True:
                     time.sleep(1)
                     try:

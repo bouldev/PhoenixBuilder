@@ -193,7 +193,7 @@ func (s *Session) beforeStart() (err error) {
 	defer func() {
 		r := recover()
 		if r != nil {
-			err = fmt.Errorf("Session Start Fail, because a panic occoured: \n%v", r)
+			err = fmt.Errorf("Session Start Fail, because a panic occurred: \n%v", r)
 		}
 	}()
 
@@ -364,7 +364,7 @@ func (s *Session) routine(c chan string) {
 		// hidden in the code
 		r := recover()
 		if r != nil {
-			terminateReason = fmt.Sprintf("Session terminated\n because a panic occoured in routine: \n%v", r)
+			terminateReason = fmt.Sprintf("Session terminated\n because a panic occurred in routine: \n%v", r)
 		} else {
 			platform_helper.StopBackground()
 		}
@@ -378,7 +378,7 @@ func (s *Session) routine(c chan string) {
 			// hidden in the code
 			r := recover()
 			if r != nil {
-				terminateReason = fmt.Sprintf("Session terminated\n because a panic occoured in Process Function: \n%v", r)
+				terminateReason = fmt.Sprintf("Session terminated\n because a panic occurred in Process Function: \n%v", r)
 			}
 			s.close()
 			c <- terminateReason

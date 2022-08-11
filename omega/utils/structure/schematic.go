@@ -19,7 +19,7 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 			err = fmt.Errorf("unknown error %v", r)
 		}
 	}()
-	err = ErrImportFormateNotSupport
+	err = ErrImportFormatNotSupport
 	var dataFeeder io.Reader
 	dataFeeder, err = gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
@@ -46,14 +46,14 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 	_, err = nbtDecoder.Decode(&schematicData)
 	infoSender("解压缩成功")
 	if err != nil {
-		// fmt.Println("fail in formate check", err, schematicData)
-		return nil, nil, 0, 0, ErrImportFormateNotSupport
+		// fmt.Println("fail in format check", err, schematicData)
+		return nil, nil, 0, 0, ErrImportFormatNotSupport
 	}
 	blocks := schematicData.Blocks
 	values := schematicData.Data
 	if schematicData.Blocks == nil || len(blocks) == 0 || schematicData.Data == nil || len(values) == 0 {
-		// fmt.Println("fail in formate check", err, schematicData)
-		return nil, nil, 0, 0, ErrImportFormateNotSupport
+		// fmt.Println("fail in format check", err, schematicData)
+		return nil, nil, 0, 0, ErrImportFormatNotSupport
 	}
 	Size := [3]int{int(schematicData.Width), int(schematicData.Height), int(schematicData.Length)}
 	X, Y, Z := 0, 1, 2

@@ -644,7 +644,7 @@ func DecodeBDX(data []byte, infoSender func(string)) (blockFeeder chan *IOBlockF
 	file := bytes.NewBuffer(data)
 	err = checkAndGetBDXHeader(file)
 	if err != nil {
-		err = ErrImportFormateNotSupport
+		err = ErrImportFormatNotSupport
 		return
 	}
 
