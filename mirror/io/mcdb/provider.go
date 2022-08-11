@@ -88,6 +88,18 @@ func (p *Provider) initDefaultLevelDat() {
 	p.D.StorageVersion = 8
 	p.D.Generator = 1
 	p.D.Abilities.WalkSpeed = 0.1
+	p.D.Abilities.AttackMobs = true
+	p.D.Abilities.AttackPlayers = true
+	p.D.Abilities.Mine = true
+	p.D.Abilities.DoorsAndSwitches = true
+	p.D.Abilities.FlySpeed = 0.05
+	p.D.Abilities.Flying = false
+	p.D.Abilities.InstantBuild = true
+	p.D.Abilities.Mine = true
+	p.D.Abilities.OpenContainers = true
+	p.D.Abilities.Teleport = true
+	p.D.Abilities.WalkSpeed = 0.1
+	p.D.Abilities.OP = true
 	p.D.PVP = false
 	p.D.WorldStartCount = 1
 	p.D.RandomTickSpeed = 1
@@ -100,7 +112,6 @@ func (p *Provider) initDefaultLevelDat() {
 	p.D.SpawnZ = 0
 	p.D.SpawnY = 330
 	p.D.ShowCoordinates = true
-	p.D.Abilities.OP = true
 	p.D.Difficulty = 1 //peaceful
 	p.D.DoWeatherCycle = true
 	p.D.RainLevel = 1.0
@@ -301,7 +312,7 @@ func (p *Provider) saveAuxInfo() (err error) {
 		return fmt.Errorf("error opening level.dat file: %w", err)
 	}
 	buf := bytes.NewBuffer(nil)
-	_ = binary.Write(buf, binary.LittleEndian, int32(3))
+	_ = binary.Write(buf, binary.LittleEndian, int32(9))
 	nbtData, err := nbt.MarshalEncoding(p.D, nbt.LittleEndian)
 	if err != nil {
 		return fmt.Errorf("error encoding level.dat to NBT: %w", err)
