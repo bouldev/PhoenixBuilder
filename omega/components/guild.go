@@ -98,10 +98,12 @@ func (b *Guild) Activate() {
 	//fmt.Print(b.GetPlayerPos(), "\n")
 	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.DictScore["权限计分板"] + "dummy omega权限计分板")
 	b.Frame.GetGameControl().SendCmd("scoreboard objectives add " + b.DictScore["购买公会计分板"] + " dummy 公会购买货币")
-	for {
-		time.Sleep(time.Duration(b.DelayTime) * time.Second)
-		b.ProtectGuildCentry()
-	}
+	go func() {
+		for {
+			time.Sleep(time.Duration(b.DelayTime) * time.Second)
+			b.ProtectGuildCentry()
+		}
+	}()
 
 }
 func (b *Guild) Stop() error {
@@ -117,12 +119,7 @@ func (b *Guild) Signal(signal int) error {
 	return nil
 }
 
-//
-//-----------------------分界线-----------------------------------
-//
-//
-//
-//
+// -----------------------分界线-----------------------------------
 func (b *Guild) Center(chat *defines.GameChat) bool {
 	fmt.Print(b.MenuGuild, "\n")
 	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", chat.Name), b.FormateMenu(b.Usage, b.MenuGuild))
@@ -170,12 +167,12 @@ func (b *Guild) Center(chat *defines.GameChat) bool {
 	return false
 }
 
-//更方便输出
+// 更方便输出
 func (b *Guild) sayto(name string, str string) {
 	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), str)
 }
 
-//规范输出公会名字菜单 name 为发送对象 str为格式 theGuilMap为列表 [i]为数字 [公会名字]]
+// 规范输出公会名字菜单 name 为发送对象 str为格式 theGuilMap为列表 [i]为数字 [公会名字]]
 func (b *Guild) formateGuildNameMenu(name string, str string, theGuildMap map[string]string) {
 	menu := ""
 	for k, v := range theGuildMap {
@@ -186,7 +183,7 @@ func (b *Guild) formateGuildNameMenu(name string, str string, theGuildMap map[st
 	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), menu)
 }
 
-//返回公会详细信息
+// 返回公会详细信息
 func (b *Guild) getGuildDataD(name string, guildname string, data GuildDatas) {
 	msg := b.KeyTitle["op隐藏菜单公会详细信息显示"]
 	msg = b.FormateMsg(msg, "公会名字", guildname)
@@ -208,7 +205,7 @@ func (b *Guild) getGuildDataD(name string, guildname string, data GuildDatas) {
 	b.sayto(name, msg)
 }
 
-//查询公会信息
+// 查询公会信息
 func (b *Guild) findGuildData(name string) {
 	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), "[输入要寻找的公会名字]")
 	theGuildMap := b.getGuildMap()
@@ -227,7 +224,7 @@ func (b *Guild) findGuildData(name string) {
 	})
 }
 
-//改变公会的数据
+// 改变公会的数据
 func (b *Guild) chargeGuildData(name string) {
 	b.sayto(name, "[输入想要修改的公会名字]")
 	theGuildMap := b.getGuildMap()
@@ -268,7 +265,7 @@ func (b *Guild) chargeGuildData(name string) {
 	})
 }
 
-//设置op权限菜单
+// 设置op权限菜单
 func (b *Guild) setOpMenu(name string) {
 	go func() {
 		n := <-b.GetPlayerName(b.TargetOfSetGuildLb)
@@ -298,7 +295,7 @@ func (b *Guild) setOpMenu(name string) {
 
 }
 
-//获取公会名字以及对应的号数key为号 v为公会
+// 获取公会名字以及对应的号数key为号 v为公会
 func (b *Guild) getGuildMap() (List map[string]string) {
 	list := make(map[string]string)
 	num := 0
@@ -309,7 +306,7 @@ func (b *Guild) getGuildMap() (List map[string]string) {
 	return list
 }
 
-//设置公会权限
+// 设置公会权限
 func (b *Guild) setGuildPower(name string) {
 	list := make(map[string]string)
 	msg := "[输入对应的数字进行操纵]"
@@ -349,7 +346,7 @@ func (b *Guild) setGuildPower(name string) {
 	}
 }
 
-//商城
+// 商城
 func (b *Guild) StarGuild(name string) {
 	//判断对方公会是否达到对应级别
 	if k, v, _ := b.CheckInGuild(name); v {
@@ -403,7 +400,7 @@ func (b *Guild) StarGuild(name string) {
 	}
 }
 
-//刷新指定的选择器的公会权限分数
+// 刷新指定的选择器的公会权限分数
 func (b *Guild) FlushedPower(target string) {
 
 	go func() {
@@ -420,7 +417,7 @@ func (b *Guild) FlushedPower(target string) {
 	}()
 }
 
-//设置他人权限
+// 设置他人权限
 func (b *Guild) SetOtherPower(SourceName string, name string, guildName string) {
 	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", SourceName), "[请输入赋予权限等级]")
 	b.Frame.GetGameControl().SetOnParamMsg(SourceName, func(chat *defines.GameChat) (catch bool) {
@@ -454,7 +451,7 @@ func (b *Guild) SetOtherPower(SourceName string, name string, guildName string) 
 
 }
 
-//邀请他人
+// 邀请他人
 func (b *Guild) Invite(guildNmae string, name string, AllPLayer map[string]string) {
 	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), b.FormateMsg(b.KeyTitle["邀请对方进入公会时提示"], "公会名字", guildNmae))
 	b.Frame.GetGameControl().SetOnParamMsg(name, func(Newschat *defines.GameChat) (catch bool) {
@@ -493,7 +490,7 @@ func (b *Guild) kickMember(guildName string, source string) {
 	})
 }
 
-//设置特殊区域
+// 设置特殊区域
 func (b *Guild) setSpPlace(name string, guildName string) {
 	b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
 		go func() {
@@ -537,12 +534,12 @@ func (b *Guild) setSpPlace(name string, guildName string) {
 	})
 }
 
-//格式化输出
+// 格式化输出
 func (b *Guild) FromatePrint(msg string, T string) {
 	fmt.Print(fmt.Sprintf("----------------\n[%v]  :   %v\n-------------------\n", T, msg))
 }
 
-//会长菜单&&管理员菜单
+// 会长菜单&&管理员菜单
 func (b *Guild) MasterMenu(name string) {
 	msg := b.KeyTitle["管理菜单显示"]
 	//fmt.Print(msg)
@@ -664,7 +661,7 @@ func (b *Guild) MasterMenu(name string) {
 
 }
 
-//删除指定成员
+// 删除指定成员
 func (b *Guild) DeleteGuildMember(master string, data GuildDatas) {
 	if len(data.Member) > 0 {
 		b.sayto(master, "[删除指定成员]")
@@ -691,7 +688,7 @@ func (b *Guild) DeleteGuildMember(master string, data GuildDatas) {
 
 }
 
-//获取公会排名
+// 获取公会排名
 func (b *Guild) BackGuild(name string) {
 
 }
@@ -799,7 +796,7 @@ func (b *Guild) ProtectGuildCentry() {
 	}
 }
 
-//让指定的name返回领地
+// 让指定的name返回领地
 func (b *Guild) TpBack(name string) bool {
 	for k, v := range b.GuildData {
 		if v.Master == name {
@@ -827,7 +824,7 @@ func (b *Guild) TpBack(name string) bool {
 	return false
 }
 
-//删除公会成员
+// 删除公会成员
 func (b *Guild) DeleteMember(name string) {
 	if len(b.GuildData) > 0 {
 		for _, v := range b.GuildData {
@@ -839,8 +836,8 @@ func (b *Guild) DeleteMember(name string) {
 
 }
 
-//检测是否
-//写入公会信息
+// 检测是否
+// 写入公会信息
 func (b *Guild) WriteGuildData(name string, guildName string) {
 	k, v := b.CheckIsMaster(name)
 	if k == false {
@@ -936,7 +933,7 @@ func (b *Guild) WriteGuildData(name string, guildName string) {
 	}
 }
 
-//检查坐标是否在某个公会的领地范围内
+// 检查坐标是否在某个公会的领地范围内
 func (b *Guild) CheckInGuildPlace(guildName string, pos []int) bool {
 	fmt.Println("pos:", pos)
 	fmt.Println("guildpos:", b.GuildData[guildName].Pos)
@@ -950,13 +947,13 @@ func (b *Guild) CheckInGuildPlace(guildName string, pos []int) bool {
 	return false
 }
 
-//正则表达检查字符串是否为数字
+// 正则表达检查字符串是否为数字
 func (b *Guild) CheckIsNum(str string) bool {
 	ok, _ := regexp.MatchString("^\\+?[1-9][0-9]*$", str)
 	return ok
 }
 
-//检查是否在公会内 如果存在则返回对应权限与公会名字 true 不存在则返回"" false -1
+// 检查是否在公会内 如果存在则返回对应权限与公会名字 true 不存在则返回"" false -1
 func (b *Guild) CheckInGuild(name string) (guildname string, ok bool, Power int) {
 	for k, v := range b.GuildData {
 		//如果是会长
@@ -973,7 +970,7 @@ func (b *Guild) CheckInGuild(name string) (guildname string, ok bool, Power int)
 
 }
 
-//检查name是否为某个公会的会长 如果是则返回true guildname
+// 检查name是否为某个公会的会长 如果是则返回true guildname
 func (b *Guild) CheckIsMaster(name string) (yes bool, GuidName string) {
 	//fmt.Println("启动")
 	//defer fmt.Print("结束")
@@ -986,7 +983,7 @@ func (b *Guild) CheckIsMaster(name string) (yes bool, GuidName string) {
 	return false, ""
 }
 
-//检查公会名字是否重合
+// 检查公会名字是否重合
 func (b *Guild) ChecklGuildName(name string) (yes bool) {
 	if len(b.GuildData) > 0 {
 		for k, _ := range b.GuildData {
@@ -999,7 +996,7 @@ func (b *Guild) ChecklGuildName(name string) (yes bool) {
 	return false
 }
 
-//购买公会
+// 购买公会
 func (b *Guild) BuyGuild(name string) {
 	b.Frame.GetGameControl().SendCmdAndInvokeOnResponse(b.FormateMsg(b.FormateMsg(b.FormateMsg(fmt.Sprintf("testfor %v", b.TartgetBuy), "player", name), "购买计分板", b.DictScore["购买公会计分板"]), "价格", b.Price), func(output *packet.CommandOutput) {
 		fmt.Println("outputmessage : ", output.OutputMessages)
@@ -1026,7 +1023,7 @@ func (b *Guild) BuyGuild(name string) {
 	})
 }
 
-//格式化菜单 第一个参数是菜单的名字 第二个是菜单内容所对应的格式用map来存储
+// 格式化菜单 第一个参数是菜单的名字 第二个是菜单内容所对应的格式用map来存储
 func (b *Guild) FormateMenu(name string, list map[string]string) (str string) {
 	//fmt.Print(list, "\n")
 	msg := name + "\n"
@@ -1046,7 +1043,7 @@ func (b *Guild) FormateMenu(name string, list map[string]string) (str string) {
 
 }
 
-//替换指定的信息
+// 替换指定的信息
 func (b *Guild) FormateMsg(str string, re string, afterstr string) (newstr string) {
 
 	res := regexp.MustCompile("\\[" + re + "\\]")
@@ -1054,7 +1051,7 @@ func (b *Guild) FormateMsg(str string, re string, afterstr string) (newstr strin
 
 }
 
-//获取所有人的积分 返回通道
+// 获取所有人的积分 返回通道
 func (b *Guild) GetScore() (PlayerScoreList chan map[string]map[string]int) {
 
 	cmd := "scoreboard players list @a"
@@ -1086,7 +1083,7 @@ func (b *Guild) GetScore() (PlayerScoreList chan map[string]map[string]int) {
 
 }
 
-//检查一个数组是否有某个元素
+// 检查一个数组是否有某个元素
 func (b *Guild) CheckArr(arr []interface{}, str interface{}) (IsIn bool) {
 	if len(arr) == 0 {
 		fmt.Print("数组为空")
@@ -1108,7 +1105,7 @@ func (b *Guild) CheckArr(arr []interface{}, str interface{}) (IsIn bool) {
 
 }
 
-//获取指定限制器的玩家名字 返回通道值
+// 获取指定限制器的玩家名字 返回通道值
 func (b *Guild) GetPlayerName(name string) (listChan chan map[string]string) {
 
 	var Users User

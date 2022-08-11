@@ -147,5 +147,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"OmegaSide旁加载组件系统": func() defines.Component {
 			return &omega_side.OmegaSide{BasicComponent: &defines.BasicComponent{}}
 		},
+		"第三方_by温柔_优化版本雪球菜单组件": func() defines.Component {
+			return &SnowMenu{BasicComponent: &defines.BasicComponent{}}
+		},
 	}
 }
