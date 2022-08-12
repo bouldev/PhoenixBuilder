@@ -117,6 +117,9 @@ func (w *World) SetBlockNbt(pos define.CubePos, nbt map[string]interface{}) (suc
 		w.lastChunk = c
 		w.lastPos = chunkPos
 	}
+	if c == nil {
+		return false
+	}
 	if nbtBlockPos, success := define.GetCubePosFromNBT(nbt); success {
 		if c.BlockNbts == nil {
 			c.BlockNbts = make(map[define.CubePos]map[string]interface{})
@@ -139,6 +142,9 @@ func (w *World) SetBlockWithNbt(pos define.CubePos, rtid uint32, nbt map[string]
 		c = w.chunk(chunkPos)
 		w.lastChunk = c
 		w.lastPos = chunkPos
+	}
+	if c == nil {
+		return false
 	}
 	x, y, z := uint8(pos[0]), int16(pos[1]), uint8(pos[2])
 	c.Chunk.SetBlock(x, y, z, 0, rtid)
