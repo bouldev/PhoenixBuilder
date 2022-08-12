@@ -1,6 +1,7 @@
 package components
 
 import (
+	"phoenixbuilder/omega/components/guild"
 	"phoenixbuilder/omega/components/omega_side"
 	"phoenixbuilder/omega/components/qqGroupLink"
 	"phoenixbuilder/omega/components/woodaxe"
@@ -142,7 +143,7 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &TerritoryTest{BasicComponent: &defines.BasicComponent{}}
 		},
 		"第三方_by温柔_公会系统": func() defines.Component {
-			return &Guild{BasicComponent: &defines.BasicComponent{}}
+			return &guild.Guild{BasicComponent: &defines.BasicComponent{}}
 		},
 		"OmegaSide旁加载组件系统": func() defines.Component {
 			return &omega_side.OmegaSide{BasicComponent: &defines.BasicComponent{}}

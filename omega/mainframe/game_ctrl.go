@@ -9,7 +9,6 @@ import (
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -28,13 +27,34 @@ type PlayerKitOmega struct {
 	Permission      map[string]bool
 }
 
+type Query struct {
+	Position *Pos   `json:"position"`
+	Uuid     string `json:"uniqueId"`
+}
+
+type Pos struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
+}
+
 func (p *PlayerKitOmega) HasPermission(key string) bool {
 	if auth, hasK := p.Permission[key]; hasK && auth {
 		return true
 	}
 	return false
 }
-
+func (b *PlayerKitOmega) GetPlayerNameByUUid(Theuuid string) string {
+	UUID, err := uuid.Parse(Theuuid)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if player := b.ctrl.GetPlayerKitByUUID(UUID); player != nil {
+		username := player.GetRelatedUQ().Username
+		return username
+	}
+	return ""
+}
 func (p *PlayerKitOmega) GetPos(selector string) chan []int {
 	s := utils.FormatByReplacingOccurrences(selector, map[string]interface{}{
 		"[player]": "\"" + p.name + "\"",
@@ -48,28 +68,34 @@ func (p *PlayerKitOmega) GetPos(selector string) chan []int {
 		sent = true
 		c <- d
 	}
-	p.ctrl.SendCmdAndInvokeOnResponseWithFeedback("execute "+s+" ~~~ tp @s ~~~", func(output *packet.CommandOutput) {
-		// fmt.Println(output)
-		if output.SuccessCount > 0 && len(output.OutputMessages) > 0 {
-			if len(output.OutputMessages[0].Parameters) == 4 {
-				params := output.OutputMessages[0].Parameters[1:]
-				X, err := strconv.ParseFloat(params[0], 32)
-				if err != nil {
-					send(nil)
-					return
+	p.ctrl.SendCmdAndInvokeOnResponse("querytarget "+s, func(output *packet.CommandOutput) {
+		//fmt.Println(output.OutputMessages)
+		//list := make(map[string][]int64)
+		if output.SuccessCount > 0 {
+			for _, v := range output.OutputMessages {
+				//fmt.Println("v.message:")
+				for _, j := range v.Parameters {
+					//fmt.Println("\nj:", j)
+
+					all := []Query{}
+					err := json.Unmarshal([]byte(j), &all)
+					if err != nil {
+						fmt.Printf("err=%v", err)
+					}
+					for _, u := range all {
+						//fmt.Println("q:", q, "\nu:", u.Position)
+
+						send([]int{
+							int(u.Position.X),
+							int(u.Position.Y),
+							int(u.Position.Z),
+						})
+
+					}
+
 				}
-				Y, err := strconv.ParseFloat(params[1], 32)
-				if err != nil {
-					send(nil)
-					return
-				}
-				Z, err := strconv.ParseFloat(params[2], 32)
-				if err != nil {
-					send(nil)
-					return
-				}
-				send([]int{int(X), int(Y), int(Z)})
 			}
+
 		}
 		send(nil)
 	})
