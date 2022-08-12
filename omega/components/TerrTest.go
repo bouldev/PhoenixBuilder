@@ -254,17 +254,21 @@ func (b *TerritoryTest) TpBackTerritorys(name string) {
 //写入用户信息
 func (b *TerritoryTest) WriteJsonDatas(name string, Range []int, price string) (suss bool) {
 
-	Pos := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+	_pos := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+	pos := []int{}
+	if _pos != nil {
+		pos = []int{_pos.X(), _pos.Y(), _pos.Z()}
+	}
 	if len(b.Data) >= 1 {
 		for _, v := range b.Data {
-			if b.CheckIsoverlap(Pos, Range, v.Pos, v.Range) {
+			if b.CheckIsoverlap(pos, Range, v.Pos, v.Range) {
 				b.Frame.GetGameControl().SayTo("@a[name=\""+name+"\"]", "[购买失败] 附近有其他地皮")
 				return false
 			}
 		}
 	}
 	b.Data[name] = &TerritoryData{
-		Pos:    Pos,
+		Pos:    pos,
 		Range:  Range,
 		Member: make([]string, 1),
 	}

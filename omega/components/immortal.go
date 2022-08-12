@@ -97,7 +97,7 @@ func (o *Immortal) intercept(chat *defines.GameChat) bool {
 			//fmt.Println(victim)
 			pos := <-o.Frame.GetGameControl().GetPlayerKit(victim).GetPos(o.Selector)
 			if pos != nil {
-				o.doRespawn(victim, pos)
+				o.doRespawn(victim, []int{pos.X(), pos.Y(), pos.Z()})
 			}
 		}()
 	}

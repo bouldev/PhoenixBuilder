@@ -184,13 +184,13 @@ func (o *Portal) doAdd(name string, posName string) {
 		if ps, hasK := o.positions[name]; hasK {
 			ps[posName] = &PortalEntry{
 				Time: utils.TimeToString(time.Now()),
-				Pos:  pos,
+				Pos:  []int{pos.X(), pos.Y(), pos.Z()},
 			}
 		} else {
 			o.positions[name] = map[string]*PortalEntry{
 				posName: &PortalEntry{
 					Time: utils.TimeToString(time.Now()),
-					Pos:  pos,
+					Pos:  []int{pos.X(), pos.Y(), pos.Z()},
 				},
 			}
 		}

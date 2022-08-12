@@ -282,16 +282,23 @@ func (b *Guild) setSpPlace(name string, guildName string) {
 
 	b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
 		go func() {
-			starPosSp := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+			_starPosSp := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+			starPosSp := []int{}
+			if _starPosSp != nil {
+				starPosSp = []int{_starPosSp.X(), _starPosSp.Y(), _starPosSp.Z()}
+			}
 			fmt.Println("starPosSp:", starPosSp)
 			if b.CheckInGuildPlace(guildName, starPosSp) {
 				b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), fmt.Sprintf("[确定坐标] %v %v %v \n[终点坐标确定] 在终点输入任意字", strconv.Itoa(starPosSp[0]), strconv.Itoa(starPosSp[1]), strconv.Itoa(starPosSp[2])))
 				b.Frame.GetGameControl().SetOnParamMsg(name, func(Newchat *defines.GameChat) (catch bool) {
 					fmt.Print(Newchat.Name, "\n")
 					go func() {
-						EndPos := <-b.Frame.GetGameControl().GetPlayerKit(Newchat.Name).GetPos("@a[name=[player]]")
+						_EndPos := <-b.Frame.GetGameControl().GetPlayerKit(Newchat.Name).GetPos("@a[name=[player]]")
+						EndPos := []int{}
+						if _EndPos != nil {
+							EndPos = []int{_EndPos.X(), _EndPos.Y(), _EndPos.Z()}
+						}
 						fmt.Println("endpos:", EndPos)
-
 						if b.CheckInGuildPlace(guildName, EndPos) {
 							b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", Newchat.Name), "请输入特殊区域名字")
 							b.Frame.GetGameControl().SetOnParamMsg(Newchat.Name, func(Newchats *defines.GameChat) (catch bool) {
@@ -554,7 +561,12 @@ func (b *Guild) RegisteredWithoutTerr(name string, guildName string) {
 func (b *Guild) Registered(name string, guildName string) {
 	go func() bool {
 		//获取坐标
-		PosOf := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+		_PosOf := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+		PosOf := []int{}
+		if _PosOf != nil {
+			PosOf = []int{_PosOf.X(), _PosOf.Y(), _PosOf.Z()}
+		}
+
 		//fmt.Println("posO:", PosOf)
 		if len(PosOf) > 0 {
 			//fmt.Println("b.guildrange:", b.GuildRange)

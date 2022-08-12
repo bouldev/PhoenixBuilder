@@ -27,17 +27,6 @@ type PlayerKitOmega struct {
 	Permission      map[string]bool
 }
 
-type Query struct {
-	Position *Pos   `json:"position"`
-	Uuid     string `json:"uniqueId"`
-}
-
-type Pos struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-	Z float64 `json:"z"`
-}
-
 func (p *PlayerKitOmega) HasPermission(key string) bool {
 	if auth, hasK := p.Permission[key]; hasK && auth {
 		return true
@@ -55,19 +44,28 @@ func (b *PlayerKitOmega) GetPlayerNameByUUid(Theuuid string) string {
 	}
 	return ""
 }
-func (p *PlayerKitOmega) GetPos(selector string) chan []int {
+func (p *PlayerKitOmega) GetPos(selector string) chan *define.CubePos {
 	s := utils.FormatByReplacingOccurrences(selector, map[string]interface{}{
 		"[player]": "\"" + p.name + "\"",
 	})
-	c := make(chan []int)
+	c := make(chan *define.CubePos)
 	sent := false
-	send := func(d []int) {
+	send := func(d *define.CubePos) {
 		if sent {
 			return
 		}
 		sent = true
 		c <- d
 	}
+	var QueryResults []struct {
+		Position *struct {
+			X float64 `json:"x"`
+			Y float64 `json:"y"`
+			Z float64 `json:"z"`
+		} `json:"position"`
+		Uuid string `json:"uniqueId"`
+	}
+
 	p.ctrl.SendCmdAndInvokeOnResponse("querytarget "+s, func(output *packet.CommandOutput) {
 		//fmt.Println(output.OutputMessages)
 		//list := make(map[string][]int64)
@@ -76,23 +74,17 @@ func (p *PlayerKitOmega) GetPos(selector string) chan []int {
 				//fmt.Println("v.message:")
 				for _, j := range v.Parameters {
 					//fmt.Println("\nj:", j)
-
-					all := []Query{}
-					err := json.Unmarshal([]byte(j), &all)
+					err := json.Unmarshal([]byte(j), &QueryResults)
 					if err != nil {
-						fmt.Printf("err=%v", err)
+						send(nil)
 					}
-					for _, u := range all {
-						//fmt.Println("q:", q, "\nu:", u.Position)
-
-						send([]int{
+					for _, u := range QueryResults {
+						send(&define.CubePos{
 							int(u.Position.X),
 							int(u.Position.Y),
 							int(u.Position.Z),
 						})
-
 					}
-
 				}
 			}
 

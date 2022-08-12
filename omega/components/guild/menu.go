@@ -123,7 +123,11 @@ func (b *Guild) setTpPos(name string) {
 	func() {
 		guildname, _, powernum := b.CheckInGuild(name)
 		if powernum == 4 {
-			pos := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+			_pos := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+			pos := []int{}
+			if _pos != nil {
+				pos = []int{_pos.X(), _pos.Y(), _pos.Z()}
+			}
 			if b.GuildData[guildname].IsTerr {
 				if b.CheckInGuildPlace(guildname, pos) {
 					b.GuildData[guildname].CenterPos = pos
@@ -132,7 +136,6 @@ func (b *Guild) setTpPos(name string) {
 					b.sayto(name, b.KeyTitle["有地皮时未站在地皮范围内设置传送点提示词"])
 				}
 			} else {
-
 				b.GuildData[guildname].CenterPos = pos
 				b.sayto(name, b.KeyTitle["传送坐标设置成功提示词"])
 			}

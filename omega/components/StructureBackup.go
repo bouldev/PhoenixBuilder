@@ -111,7 +111,7 @@ func (o *StructureBackup) requestPos(user, structureName string, idx int) {
 		if _, hasK := o.Structures.User[user]; !hasK {
 			o.Structures.User[user] = map[string]*StructureEntry{}
 		}
-		o.doBackup(user, structureName, pos, idx)
+		o.doBackup(user, structureName, []int{pos.X(), pos.Y(), pos.Z()}, idx)
 	}()
 }
 

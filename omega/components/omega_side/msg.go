@@ -217,14 +217,17 @@ func (t *omegaSideTransporter) initMapping() {
 			limit := args["limit"].(string)
 			go func() {
 				pos := <-t.side.Frame.GetGameControl().GetPlayerKit(player).GetPos(limit)
-				get := false
 				if pos != nil {
-					get = true
+					writer(map[string]interface{}{
+						"success": true,
+						"pos":     []int{pos.X(), pos.Y(), pos.Z()},
+					})
+				} else {
+					writer(map[string]interface{}{
+						"success": false,
+						"pos":     nil,
+					})
 				}
-				writer(map[string]interface{}{
-					"success": get,
-					"pos":     pos,
-				})
 			}()
 		},
 		"player.set_data": func(args map[string]interface{}, writer func(interface{})) {

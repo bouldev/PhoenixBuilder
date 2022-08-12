@@ -150,7 +150,7 @@ type PlayerKit interface {
 	HasPermission(key string) bool
 	SetPermission(key string, b bool)
 
-	GetPos(string) chan []int
+	GetPos(selector string) chan *define.CubePos
 }
 
 // 与游戏的交互接口，如何捕获和处理游戏的数据包和消息
