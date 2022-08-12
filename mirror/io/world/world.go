@@ -7,7 +7,9 @@ import (
 )
 
 type World struct {
-	provider mirror.ChunkProvider
+	provider  mirror.ChunkProvider
+	lastPos   define.ChunkPos
+	lastChunk *mirror.ChunkData
 }
 
 func (w *World) chunk(pos define.ChunkPos) *mirror.ChunkData {
@@ -22,7 +24,14 @@ func (w *World) Block(pos define.CubePos) (rtid uint32, found bool) {
 		return chunk.AirRID, false
 	}
 	chunkPos := define.ChunkPos{int32(pos[0] >> 4), int32(pos[2] >> 4)}
-	c := w.chunk(chunkPos)
+	var c *mirror.ChunkData
+	if w.lastChunk != nil && w.lastPos == chunkPos {
+		c = w.lastChunk
+	} else {
+		c = w.chunk(chunkPos)
+		w.lastChunk = c
+		w.lastPos = chunkPos
+	}
 	if c == nil {
 		return chunk.AirRID, false
 	}
@@ -37,7 +46,14 @@ func (w *World) BlockWithNbt(pos define.CubePos) (rtid uint32, nbt map[string]in
 		return chunk.AirRID, nil, false
 	}
 	chunkPos := define.ChunkPos{int32(pos[0] >> 4), int32(pos[2] >> 4)}
-	c := w.chunk(chunkPos)
+	var c *mirror.ChunkData
+	if w.lastChunk != nil && w.lastPos == chunkPos {
+		c = w.lastChunk
+	} else {
+		c = w.chunk(chunkPos)
+		w.lastChunk = c
+		w.lastPos = chunkPos
+	}
 	if c == nil {
 		return chunk.AirRID, nil, false
 	}
@@ -70,7 +86,14 @@ func (w *World) UpdateBlock(pos define.CubePos, rtid uint32) (origBlockRTID uint
 		return chunk.AirRID, false
 	}
 	chunkPos := define.ChunkPos{int32(pos[0] >> 4), int32(pos[2] >> 4)}
-	c := w.chunk(chunkPos)
+	var c *mirror.ChunkData
+	if w.lastChunk != nil && w.lastPos == chunkPos {
+		c = w.lastChunk
+	} else {
+		c = w.chunk(chunkPos)
+		w.lastChunk = c
+		w.lastPos = chunkPos
+	}
 	if c == nil {
 		return chunk.AirRID, false
 	}
@@ -86,9 +109,13 @@ func (w *World) SetBlockNbt(pos define.CubePos, nbt map[string]interface{}) (suc
 		return false
 	}
 	chunkPos := define.ChunkPos{int32(pos[0] >> 4), int32(pos[2] >> 4)}
-	c := w.chunk(chunkPos)
-	if c == nil {
-		return false
+	var c *mirror.ChunkData
+	if w.lastChunk != nil && w.lastPos == chunkPos {
+		c = w.lastChunk
+	} else {
+		c = w.chunk(chunkPos)
+		w.lastChunk = c
+		w.lastPos = chunkPos
 	}
 	if nbtBlockPos, success := define.GetCubePosFromNBT(nbt); success {
 		if c.BlockNbts == nil {
@@ -105,9 +132,13 @@ func (w *World) SetBlockWithNbt(pos define.CubePos, rtid uint32, nbt map[string]
 		return false
 	}
 	chunkPos := define.ChunkPos{int32(pos[0] >> 4), int32(pos[2] >> 4)}
-	c := w.chunk(chunkPos)
-	if c == nil {
-		return false
+	var c *mirror.ChunkData
+	if w.lastChunk != nil && w.lastPos == chunkPos {
+		c = w.lastChunk
+	} else {
+		c = w.chunk(chunkPos)
+		w.lastChunk = c
+		w.lastPos = chunkPos
 	}
 	x, y, z := uint8(pos[0]), int16(pos[1]), uint8(pos[2])
 	c.Chunk.SetBlock(x, y, z, 0, rtid)

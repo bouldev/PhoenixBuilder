@@ -11,6 +11,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"phoenixbuilder/omega/utils/structure"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -263,7 +264,46 @@ func (o *UniverseImport) onImport(cmds []string) (stop bool) {
 		return true
 	}
 	path := cmds[0]
-	path = o.Frame.GetRelativeFileName(path)
+	if runtime.GOOS == "windows" {
+		if (!utils.IsDir(path)) && (!utils.IsFile(path)) {
+			pathAlter := strings.ReplaceAll(path, "/", "\\")
+			if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
+				pathAlter := strings.ReplaceAll(path, "//", "\\")
+				if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
+					pathAlter := strings.ReplaceAll(path, "//", "/")
+					if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
+						pathAlter = strings.ReplaceAll(path, "/", "//")
+						if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
+							pathAlter = strings.ReplaceAll(path, "\\", "/")
+							if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
+								pathAlter = strings.ReplaceAll(path, "\\", "//")
+								if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
+									// 这总不能还是斜杠的问题了吧？！
+									path = o.Frame.GetRelativeFileName(path)
+								} else {
+									path = pathAlter
+								}
+							} else {
+								path = pathAlter
+							}
+						} else {
+							path = pathAlter
+						}
+					} else {
+						path = pathAlter
+					}
+				} else {
+					path = pathAlter
+				}
+			} else {
+				path = pathAlter
+			}
+		}
+	} else if !strings.HasPrefix(path, "/") {
+		if (!utils.IsDir(path)) && (!utils.IsFile(path)) {
+			path = o.Frame.GetRelativeFileName(path)
+		}
+	}
 	find, _, errStack := utils.GetFileNotFindStack(path)
 	if !find {
 		pterm.Error.Println("文件 %v 无法找到，具体问题如下：", path)

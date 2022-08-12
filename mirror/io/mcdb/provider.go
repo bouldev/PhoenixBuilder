@@ -39,24 +39,25 @@ func New(dir string, compression opt.Compression) (*Provider, error) {
 	_ = os.MkdirAll(filepath.Join(dir, "db"), 0777)
 
 	p := &Provider{dir: dir}
-	if _, err := os.Stat(filepath.Join(dir, "level.dat")); os.IsNotExist(err) {
-		// A level.dat was not currently present for the world.
-		p.initDefaultLevelDat()
-	} else {
-		f, err := ioutil.ReadFile(filepath.Join(dir, "level.dat"))
-		if err != nil {
-			return nil, fmt.Errorf("error opening level.dat file: %w", err)
-		}
-		// The first 8 bytes are a useless header (version and length): We don't need it.
-		if len(f) < 8 {
-			// The file did not have enough content, meaning it is corrupted. We return an error.
-			return nil, fmt.Errorf("level.dat exists but has no data")
-		}
-		if err := nbt.UnmarshalEncoding(f[8:], &p.D, nbt.LittleEndian); err != nil {
-			return nil, fmt.Errorf("error decoding level.dat NBT: %w", err)
-		}
-		p.D.WorldStartCount++
-	}
+	// if _, err := os.Stat(filepath.Join(dir, "level.dat")); os.IsNotExist(err) {
+	// 	// A level.dat was not currently present for the world.
+	// 	p.initDefaultLevelDat()
+	// } else {
+	// 	f, err := ioutil.ReadFile(filepath.Join(dir, "level.dat"))
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("error opening level.dat file: %w", err)
+	// 	}
+	// 	// The first 8 bytes are a useless header (version and length): We don't need it.
+	// 	if len(f) < 8 {
+	// 		// The file did not have enough content, meaning it is corrupted. We return an error.
+	// 		return nil, fmt.Errorf("level.dat exists but has no data")
+	// 	}
+	// 	if err := nbt.UnmarshalEncoding(f[8:], &p.D, nbt.LittleEndian); err != nil {
+	// 		return nil, fmt.Errorf("error decoding level.dat NBT: %w", err)
+	// 	}
+	// 	p.D.WorldStartCount++
+	// }
+	p.initDefaultLevelDat()
 
 	if db, err := leveldb.OpenFile(
 		filepath.Join(dir, "db"), &opt.Options{
@@ -334,7 +335,7 @@ func (p *Provider) saveAuxInfo() (err error) {
 
 // Close closes the provider, saving any file that might need to be saved, such as the level.dat.
 func (p *Provider) Close() error {
-	p.initDefaultLevelDat()
+	// p.initDefaultLevelDat()
 	p.saveAuxInfo()
 	return p.DB.Close()
 }
