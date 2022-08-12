@@ -162,7 +162,9 @@ func (b *SnowMenu) GetScore(target string) (PlayerScoreList chan map[string]map[
 
 // 获取指定限制器的玩家名字 返回通道值 key 为玩家名字 v为号数()
 func (b *SnowMenu) GetPlayerName(name string) (listChan chan map[string]string) {
-
+	type User struct {
+		Name []string `json:"victim"`
+	}
 	var Users User
 	//var UsersListChan chan []string
 	UsersListChan := make(chan map[string]string, 2)
