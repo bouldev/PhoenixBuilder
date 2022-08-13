@@ -31,7 +31,7 @@ func EncodeMCWorld(chunks map[define.ChunkPos]*mirror.ChunkData, startPos, endPo
 	provider.Close()
 
 	structureNameWithPos := fmt.Sprintf("%v@%v,%v,%v.mcworld", structureName, startPos.X(), startPos.Y(), startPos.Z())
-	fp, err = os.OpenFile(structureNameWithPos, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	fp, err = os.OpenFile(path.Join(targetDir, structureNameWithPos), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
 		return err
 	}

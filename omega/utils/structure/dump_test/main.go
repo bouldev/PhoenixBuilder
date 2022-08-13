@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	_ "embed"
+
 	"github.com/df-mc/goleveldb/leveldb/opt"
 )
 
@@ -52,6 +54,7 @@ func AcquireData(hopPath *structure.ExportHopPosMap, allRequiredChunks *structur
 	chunks := make(map[define.ChunkPos]*mirror.ChunkData)
 	for pos, _ := range *allRequiredChunks {
 		if cd := provider.Get(pos); cd != nil {
+			// fmt.Println(cd.BlockNbts)
 			chunks[pos] = cd
 			allRequiredChunks.Hit(pos)
 		} else {
@@ -64,8 +67,33 @@ func AcquireData(hopPath *structure.ExportHopPosMap, allRequiredChunks *structur
 	return chunks, nil
 }
 
+type SchemFileStructrue struct {
+	Palette       map[string]int32
+	Metadata      map[string]interface{}
+	DataVersion   int32
+	BlockDataIn   []byte      `nbt:"BlockData"`
+	OffsetIn      interface{} `nbt:"Offset"`
+	blockData     []uint16
+	offset        []int
+	PaletteMax    int32
+	Version       int32
+	Length        int16
+	Height        int16
+	Width         int16
+	BlockEntities []map[string]interface{}
+}
+
+//go:embed 3.schem
+var data []byte
+
 func main() {
-	cmdStr := "save test -3 -5 7 103 69 137"
+
+	_, _, _, _, err := structure.DecodeSchem(data, func(s string) {})
+	if err != nil {
+		panic(err)
+	}
+
+	cmdStr := "save test -3 -5 7 106 205 137"
 	cmds := strings.Split(cmdStr, " ")
 	startPos, endPos, structureName, err := ParseSaveCmd(cmds)
 	if err != nil {
@@ -88,6 +116,10 @@ func main() {
 	}
 
 	err = structure.EncodeMCWorld(chunks, startPos, endPos, structureName, overallCacheDir)
+	if err != nil {
+		panic(err)
+	}
+	err = structure.EncodeSchem(chunks, startPos, endPos, structureName, overallCacheDir)
 	if err != nil {
 		panic(err)
 	}

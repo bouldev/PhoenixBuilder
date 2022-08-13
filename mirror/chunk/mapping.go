@@ -27,6 +27,8 @@ var LegacyRuntimeIDs = map[LegacyBlockHash]uint32{}
 
 var JavaToRuntimeID func(javaBlockStr string) (runtimeID uint32, found bool)
 var JavaStrToRuntimeIDMapping map[string]uint32
+var RuntimeIDToJava func(runtimeID uint32) (javaBlockStr string, found bool)
+var RuntimeIDToJavaStrMapping map[uint32]string
 
 const (
 	// SubChunkVersion is the current version of the written sub chunks, specifying the format they are
@@ -490,6 +492,18 @@ func InitMapping(mappingInData []byte) {
 			return AirRID, false
 		}
 	}
+	RuntimeIDToJavaStrMapping = make(map[uint32]string)
+	for javaStr, rtid := range mappingIn.JavaToRid {
+		RuntimeIDToJavaStrMapping[rtid] = javaStr
+	}
+	RuntimeIDToJava = func(runtimeID uint32) (javaBlockStr string, found bool) {
+		if javaBlockStr, hasK := RuntimeIDToJavaStrMapping[runtimeID]; hasK {
+			return javaBlockStr, true
+		} else {
+			return "minecraft:air", false
+		}
+	}
+
 }
 
 //go:embed blockmapping_nemc_2_2_15_mc_1_19.gob.brotli

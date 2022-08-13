@@ -62,3 +62,37 @@ func (o *RuntimeIDConvertor) Convert(orig uint32) uint32 {
 		return rtid
 	}
 }
+
+type RuntimeIDToPaletteConvertor struct {
+	quickCache       map[uint32]uint32
+	Palette          []string
+	paletteLookUp    map[string]uint32
+	AcquirePaletteFN func(uint32) string
+}
+
+func NewRuntimeIDToPaletteConvertor() *RuntimeIDToPaletteConvertor {
+	return &RuntimeIDToPaletteConvertor{
+		quickCache:       map[uint32]uint32{},
+		Palette:          make([]string, 0),
+		paletteLookUp:    make(map[string]uint32),
+		AcquirePaletteFN: nil,
+	}
+}
+
+func (o *RuntimeIDToPaletteConvertor) Convert(rtid uint32) uint32 {
+	if paletteI, found := o.quickCache[rtid]; found {
+		return paletteI
+	} else {
+		name := o.AcquirePaletteFN(rtid)
+		paletteI := uint32(0)
+		if _paletteI, found := o.paletteLookUp[name]; found {
+			paletteI = _paletteI
+		} else {
+			paletteI = uint32(len(o.Palette))
+			o.Palette = append(o.Palette, name)
+			o.paletteLookUp[name] = paletteI
+		}
+		o.quickCache[rtid] = paletteI
+		return paletteI
+	}
+}
