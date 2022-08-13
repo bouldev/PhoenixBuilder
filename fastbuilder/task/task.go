@@ -106,6 +106,7 @@ func (task *Task) Resume() {
 	if task.Type == types.TaskTypeAsync {
 		task.AsyncInfo.Total -= task.AsyncInfo.Built
 		task.AsyncInfo.Built = 0
+		task.AsyncInfo.BeginTime=time.Now()
 	}
 	task.State = TaskStateRunning
 	task.ContinueLock.Unlock()
@@ -207,6 +208,12 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				bridge_fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n", skipBlocks)
 			}
 			for _, blk := range blocks {
+				if (skipBlocks!=0&&task.AsyncInfo.Built == skipBlocks-1) {
+					skipBlocks=0
+					task.AsyncInfo.Total-=task.AsyncInfo.Built
+					task.AsyncInfo.Built=0
+					continue
+				}
 				if task.AsyncInfo.Built >= skipBlocks {
 					blockschannel <- blk
 				}
