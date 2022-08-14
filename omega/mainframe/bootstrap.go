@@ -11,7 +11,6 @@ import (
 	"path"
 	"phoenixbuilder/omega/components"
 	"phoenixbuilder/omega/defines"
-	"phoenixbuilder/omega/mainframe/upgrade"
 	"phoenixbuilder/omega/utils"
 	"strings"
 	"time"
@@ -222,7 +221,7 @@ func CompressLogs(root string, startThres, endThres int) error {
 	return nil
 }
 
-func (o *Omega) bootstrapDirs() {
+func (o *Omega) bootstrapRootDir() string {
 	o.storageRoot = "omega_storage"
 	// android
 	if utils.IsDir("/sdcard/Download/omega_storage") {
@@ -243,7 +242,10 @@ func (o *Omega) bootstrapDirs() {
 			panic(err)
 		}
 	}
-	o.readConfig()
+	return o.storageRoot
+}
+
+func (o *Omega) bootstrapDirs() {
 	dataDir := o.GetPath("data")
 	if !utils.IsDir(dataDir) {
 		fmt.Println("创建数据文件夹: " + dataDir)
@@ -291,12 +293,8 @@ func (o *Omega) bootstrapComponents() (success bool) {
 		}
 	}()
 	total := len(o.ComponentConfigs)
-	coreComponentsLoaded := map[string]bool{}
 	corePool := getCoreComponentsPool()
 	builtInPool := components.GetComponentsPool()
-	for n, _ := range corePool {
-		coreComponentsLoaded[n] = false
-	}
 	for i, cfg := range o.ComponentConfigs {
 		I := i + 1
 		Name := cfg.Name
@@ -313,7 +311,6 @@ func (o *Omega) bootstrapComponents() (success bool) {
 				o.backendLogger.Write("没有找到核心组件: " + Name)
 				panic("没有找到核心组件: " + Name)
 			} else {
-				coreComponentsLoaded[Name] = true
 				_component := componentFn()
 				_component.SetSystem(o)
 				component = _component
@@ -330,23 +327,18 @@ func (o *Omega) bootstrapComponents() (success bool) {
 		component.Inject(NewBox(o, Name))
 		o.Components = append(o.Components, component)
 	}
-	for n, l := range coreComponentsLoaded {
-		if !l {
-			panic(fmt.Errorf("核心组件 (Core) 必须被加载, 但是 %v 被配置为不加载", n))
-		}
-	}
 	return true
 }
 
 func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
-	fmt.Println("开始配置升级检测")
-	upgrade.Upgrade()
-	fmt.Println("开始预处理任务")
+	rootDir := o.bootstrapRootDir()
+	fmt.Printf("根目录为: %v， 开始分配存储目录\n", rootDir)
 	o.bootstrapDirs()
 	o.adaptor = adaptor
 	o.uqHolder = adaptor.GetInitUQHolderCopy()
 	fmt.Println("开始空间回收任务: 日志压缩")
 	CompressLogs(o.storageRoot, 7, 3)
+
 	o.backendLogger = &BackEndLogger{
 		loggers: []defines.LineDst{
 			o.GetLogger("后台信息.log"),
@@ -362,22 +354,29 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 			}},
 		},
 	}
+	o.backendLogger.Write("日志系统已可用,开始激活主框架")
+
 	timeLocal := time.FixedZone("CST", 3600*8)
 	time.Local = timeLocal
-	o.backendLogger.Write("日志系统已可用,正在激活主框架...")
-	o.backendLogger.Write("加载组件中...")
+	o.backendLogger.Write("固定时区为 CST +8:00")
+
+	o.backendLogger.Write("启用 Omega Reactor 反应核心")
 	o.Reactor.onBootstrap()
-	if o.bootstrapComponents() == false {
-		o.Stop()
-		return
-	}
-	//o.backendLogger.Write("组件全部加载&配置完成, 正在将更新后的配置写回配置文件...")
-	//o.writeBackConfig()
-	o.configStageComplete()
+
+	o.backendLogger.Write("读取配置文件中...")
+	o.checkAndLoadConfig()
+
 	o.backendLogger.Write("启用 Game Ctrl 模块")
 	o.GameCtrl = newGameCtrl(o)
 
-	o.backendLogger.Write("开始激活组件并挂载后执行任务...")
+	o.backendLogger.Write("初始化组件 ...")
+
+	if !o.bootstrapComponents() {
+		o.Stop()
+		return
+	}
+
+	o.backendLogger.Write("激活组件并挂载组件 Post Process Task ...")
 	for _, component := range o.Components {
 		c := component
 		o.CloseFns = append(o.CloseFns, func() error {
@@ -385,26 +384,13 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 		})
 		go component.Activate()
 	}
-	//fmt.Println(o.CloseFns)
 	o.backendLogger.Write("全部完成，系统启动")
 	for _, p := range o.uqHolder.PlayersByEntityID {
 		for _, cb := range o.Reactor.OnFirstSeePlayerCallback {
 			cb(p.Username)
 		}
 	}
-	{
-		logo := GetLogo(LOGO_BOTH)
-		//banner := []string{
-		//	"┌───────────────────────────────────────────────────────────────────────┐",
-		//	"|   ██████  ███    ███ ███████  ██████   █████      ███    ██  ██████   |",
-		//	"|  ██    ██ ████  ████ ██      ██       ██   ██     ████   ██ ██        |",
-		//	"|  ██    ██ ██ ████ ██ █████   ██   ███ ███████     ██ ██  ██ ██   ███  |",
-		//	"|  ██    ██ ██  ██  ██ ██      ██    ██ ██   ██     ██  ██ ██ ██    ██  |",
-		//	"|   ██████  ██      ██ ███████  ██████  ██   ██     ██   ████  ██████   |",
-		//	"└───────────────────────────────────────────────────────────────────────┘",
-		//}
-		fmt.Println(strings.Join(logo, "\n"))
-	}
+	fmt.Println(strings.Join(GetLogo(LOGO_BOTH), "\n"))
 	pterm.Success.Println("OMEGA_ng 等待指令")
 	pterm.Success.Println("输入 ? 以获得帮助")
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"phoenixbuilder/omega/components"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 
@@ -20,7 +21,7 @@ var defaultConfigBytes []byte
 //go:embed default_components.json
 var defaultComponentsBytes []byte
 
-func (o *Omega) readConfig() {
+func (o *Omega) checkAndLoadConfig() {
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -48,62 +49,81 @@ func (o *Omega) readConfig() {
 			panic(err)
 		}
 	}
-	omegaConfig := utils.CollectOmegaConfig(root)
-	componentConfigs := []*defines.ComponentConfig{}
-	if componentConfigs = utils.CollectComponentConfigs(root); len(componentConfigs) == 0 {
-		if err := json.Unmarshal(defaultComponentsBytes, &componentConfigs); err != nil {
-			panic(err)
-		}
-		if err := utils.DeployComponentConfigs(componentConfigs, root); err != nil {
-			panic(err)
-		}
-	} else {
-		availableComponentConfigs := []*defines.ComponentConfig{}
-		newComponentConfigs := []*defines.ComponentConfig{}
-		groupedConfigs := map[string][]*defines.ComponentConfig{}
-		if err := json.Unmarshal(defaultComponentsBytes, &availableComponentConfigs); err != nil {
-			panic(err)
-		}
-		for _, c := range availableComponentConfigs {
-			if groupedConfigs[c.Name] == nil {
-				groupedConfigs[c.Name] = []*defines.ComponentConfig{c}
-			} else {
-				groupedConfigs[c.Name] = append(groupedConfigs[c.Name], c)
+	o.OmegaConfig = utils.CollectOmegaConfig(root)
+	{
+		componentConfigs := utils.CollectComponentConfigs(root)
+		if len(componentConfigs) == 0 {
+			// unpack all default configs
+			if err := json.Unmarshal(defaultComponentsBytes, &componentConfigs); err != nil {
+				panic(err)
 			}
+			if err := utils.DeployComponentConfigs(componentConfigs, root); err != nil {
+				panic(err)
+			}
+		} else {
+			// check for new configs
+			availableComponentConfigs := []*defines.ComponentConfig{}
+			newComponentConfigs := []*defines.ComponentConfig{}
+			groupedConfigs := map[string][]*defines.ComponentConfig{}
+			if err := json.Unmarshal(defaultComponentsBytes, &availableComponentConfigs); err != nil {
+				panic(err)
+			}
+			for _, c := range availableComponentConfigs {
+				if groupedConfigs[c.Name] == nil {
+					groupedConfigs[c.Name] = []*defines.ComponentConfig{c}
+				} else {
+					groupedConfigs[c.Name] = append(groupedConfigs[c.Name], c)
+				}
+			}
+			for _, c := range componentConfigs {
+				if groupedConfigs[c.Name] != nil {
+					delete(groupedConfigs, c.Name)
+				}
+			}
+			for _, group := range groupedConfigs {
+				for _, c := range group {
+					if c.Source == "Core" {
+						pterm.Success.Println("有新核心组件 " + c.Name + " 可用，已自动加入配置并[启用]")
+						c.Disabled = false
+					} else if c.Source == "Built-In" {
+						pterm.Success.Println("有新内置组件 " + c.Name + " 可用，已自动加入配置并[关闭]，请前往 omega_storage/配置/" + c.Name + " 打开")
+						c.Disabled = true
+					}
+					newComponentConfigs = append(newComponentConfigs, c)
+				}
+			}
+			if err := utils.DeployComponentConfigs(newComponentConfigs, root); err != nil {
+				panic(err)
+			}
+			if len(newComponentConfigs) > 0 {
+				pterm.Warning.Println("组件已变更...将重新加载")
+				componentConfigs = utils.CollectComponentConfigs(root)
+			}
+		}
+		// fix source
+		componentsSource := map[string]string{}
+		for name, _ := range getCoreComponentsPool() {
+			componentsSource[name] = "Core"
+		}
+		for name, _ := range components.GetComponentsPool() {
+			componentsSource[name] = "Built-In"
 		}
 		for _, c := range componentConfigs {
-			if groupedConfigs[c.Name] != nil {
-				delete(groupedConfigs, c.Name)
-			}
-		}
-		for _, group := range groupedConfigs {
-			for _, c := range group {
-				if c.Source == "Core" {
-					pterm.Success.Println("有新核心组件 " + c.Name + " 可用，已自动加入配置并[启用]")
-					c.Disabled = false
-				} else if c.Source == "Built-In" {
-					pterm.Success.Println("有新内置组件 " + c.Name + " 可用，已自动加入配置并[关闭]，请前往 omega_storage/配置/" + c.Name + " 打开")
-					c.Disabled = true
+			if source, found := componentsSource[c.Name]; found {
+				if source != c.Source {
+					c.Source = source
+					pterm.Error.Printfln("组件 %v 来源信息错误，现在已经更正为 %v", c.Name, c.Source)
+					c.Upgrade()
 				}
-				newComponentConfigs = append(newComponentConfigs, c)
+				if source == "Core" && c.Disabled {
+					c.Disabled = false
+					pterm.Error.Printfln("核心组件 %v 不可被禁用，现在已经打开了", c.Name)
+					c.Upgrade()
+				}
 			}
 		}
-		if err := utils.DeployComponentConfigs(newComponentConfigs, root); err != nil {
-			panic(err)
-		}
-		if len(newComponentConfigs) > 0 {
-			pterm.Warning.Println("组件已变更...将重新加载")
-			componentConfigs = utils.CollectComponentConfigs(root)
-		}
 	}
-	o.OmegaConfig = omegaConfig
-
-	for _, c := range componentConfigs {
-		if c.Source == "Core" && c.Disabled {
-			c.Disabled = false
-			pterm.Error.Printfln("核心组件 %v 不可被禁用，现在已经打开了", c.Name)
-		}
-	}
+	componentConfigs := utils.CollectComponentConfigs(root)
 	preferredOrder := map[string]int{
 		"假死检测":  0,
 		"返回主城":  1,
@@ -125,9 +145,7 @@ func (o *Omega) readConfig() {
 	}
 	reorderedConfig := []*defines.ComponentConfig{}
 	for _, group := range groupedOrder {
-		for _, c := range group {
-			reorderedConfig = append(reorderedConfig, c)
-		}
+		reorderedConfig = append(reorderedConfig, group...)
 	}
 	o.ComponentConfigs = reorderedConfig
 }

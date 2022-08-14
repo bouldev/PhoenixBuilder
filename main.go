@@ -461,7 +461,7 @@ func runClient(env *environment.PBEnvironment) {
 				}
 				continue
 			}
-			if !opPrivilegeGranted {
+			if !opPrivilegeGranted && !strings.HasPrefix(cmd, "exit") {
 				pterm.Error.Println(I18n.T(I18n.OpPrivilegeNotGrantedForOperation))
 				continue
 			}
@@ -526,6 +526,16 @@ func runClient(env *environment.PBEnvironment) {
 			}
 		}
 		if env.OmegaAdaptorHolder != nil {
+			if pk.ID() == packet.IDAdventureSettings {
+				p := pk.(*packet.AdventureSettings)
+				if conn.GameData().EntityUniqueID == p.PlayerUniqueID {
+					if p.PermissionLevel >= packet.PermissionLevelOperator {
+						opPrivilegeGranted = true
+					} else {
+						opPrivilegeGranted = false
+					}
+				}
+			}
 			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacket(pk)
 			continue
 		}

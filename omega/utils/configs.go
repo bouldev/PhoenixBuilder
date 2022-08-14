@@ -42,6 +42,9 @@ func CollectComponentConfigs(root string) (ComponentConfigs []*defines.Component
 		if err := GetJsonData(p, c); err != nil {
 			panic("处理[" + p + "]时出错" + err.Error())
 		}
+		c.SetUpgradeFn(func(cc *defines.ComponentConfig) error {
+			return WriteJsonData(p, cc)
+		})
 		ComponentConfigs = append(ComponentConfigs, c)
 	}
 	return ComponentConfigs

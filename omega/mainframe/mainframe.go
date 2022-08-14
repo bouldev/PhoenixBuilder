@@ -233,10 +233,6 @@ func (ftl *FuncsToLogger) Write(info string) {
 	}
 }
 
-func (o *Omega) configStageComplete() {
-	o.configStageCompleteFlag = true
-}
-
 func (o *Omega) RedAlert(info string) {
 	o.redAlertLogger.Write(info)
 }
@@ -280,12 +276,7 @@ func (o *Omega) Activate() {
 	defer o.Stop()
 	go func() {
 		packetFeeder := o.adaptor.GetPacketFeeder()
-		// chunkDataFeeder := o.adaptor.GetChunkFeeder()
 		for pkt := range packetFeeder {
-			// fmt.Println(utils.PktIDInvMapping[int(pkt.ID())])
-			// if pkt.ID() == packet.IDClientCacheMissResponse {
-			// 	pterm.Info.Println("IDClientCacheMissResponse ", pkt)
-			// }
 			if pkt == nil {
 				continue
 			}
@@ -369,7 +360,6 @@ func (o *Omega) Activate() {
 				o.adaptor.FBEval(cmd)
 			}()
 		case <-o.stopC:
-			// o.backendLogger.Write(pterm.Warning.Sprintln("后台指令分派器已退出"))
 			return
 		}
 	}

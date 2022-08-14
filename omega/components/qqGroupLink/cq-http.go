@@ -342,6 +342,7 @@ func (cq *QGroupLink) firstInitErr(err error) error {
 	pterm.Error.Println("首次连接到 CQ-HTTP 时出现错误" + err.Error())
 	fmt.Println(string(help))
 	pterm.Info.Println("请按上述说明配置CQ-HTTP，完成后重启 Omega系统，但是保持 CQ-HTTP 运行")
+	pterm.Info.Println("或者，建议的是，你可以使用 Omega 启动器 以自动配置群服互通，又简单又快捷")
 	pterm.Error.Println("如果您不主动关闭 Omega，3 分钟后将在没有群服互通功能的情况下继续运行 Omega")
 	time.Sleep(3 * time.Minute)
 	// return fmt.Errorf("群服互联插件需要配置")

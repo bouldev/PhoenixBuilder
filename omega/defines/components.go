@@ -8,6 +8,20 @@ type ComponentConfig struct {
 	Version     string                 `json:"版本"`
 	Source      string                 `json:"来源"`
 	Configs     map[string]interface{} `json:"配置"`
+	upgradeFn   func(*ComponentConfig) error
+}
+
+func (c *ComponentConfig) Upgrade() error {
+	return c.upgradeFn(c)
+}
+
+func (c *ComponentConfig) SetUpgradeFn(fn func(*ComponentConfig) error) (ok bool) {
+	if c.upgradeFn == nil {
+		c.upgradeFn = fn
+		return true
+	} else {
+		return false
+	}
 }
 
 // Component 描述了插件应该具有的接口

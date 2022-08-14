@@ -9,6 +9,7 @@ import (
 	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
+	"runtime"
 	"runtime/pprof"
 	"strings"
 	"time"
@@ -406,14 +407,7 @@ func (o *KeepAlive) Inject(frame defines.MainFrame) {
 	o.mainFrame = frame
 	o.mainFrame.GetGameListener().SetGameChatInterceptor(func(chat *defines.GameChat) (stop bool) {
 		o.replay = true
-		// if len(chat.Msg) > 0 && chat.Msg[0] == "alive" {
-
-		// }
-		if chat.Name == o.mainFrame.GetUQHolder().GetBotName() {
-			// fmt.Println("popOut")
-			return true
-		}
-		return false
+		return chat.Name == o.mainFrame.GetUQHolder().GetBotName()
 	})
 }
 
@@ -428,18 +422,19 @@ func (o *KeepAlive) Activate() {
 				o.replay = true
 			})
 			<-time.NewTimer(time.Second * time.Duration(o.Delay)).C
-			if o.replay == false {
+			if !o.replay {
 				o.mainFrame.GetBackendDisplay().Write("连接检查失败，疑似Omega假死，准备退出...")
 				o.omega.Stop()
 				fmt.Println("3秒后退出")
 				<-time.NewTimer(time.Second * 3).C
+				restartHint := "while true; do ./fastbuilder -c 租赁服号 --omega_system; sleep 30; done\n"
+				if runtime.GOOS == "windows" {
+					restartHint = "for /l %i in (0,0,1) do @fastbuilder-windows.exe --omega_system -c 租赁服号 & @TIMEOUT /T 30 /NOBREAK\n"
+				}
 				panic("Omega 假死，已退出...\n" +
-					"可以使用启动器保持自动重连，或者： \n" +
-					"可以配合如下启动指令使 Omega 系统自动循环重启 (注意，延迟不得小于30秒，否则可能被封号)\n" +
-					"对于windows系统： \n" +
-					"for /l %i in (0,0,1) do @fastbuilder-windows.exe --omega_system -c 租赁服号 & @TIMEOUT /T 30 /NOBREAK\n" +
-					"对于其他系统：\n" +
-					"while true; ./fastbuilder -c 租赁服号 --omega_system; sleep 30; done\n",
+					"建议使用 Omega 启动器以实现自动断线重连\n" +
+					"或者可以配合如下启动指令使 Omega 系统自动循环重启 (注意，延迟不得小于30秒，否则可能被封号)\n" +
+					restartHint,
 				)
 			}
 		}
