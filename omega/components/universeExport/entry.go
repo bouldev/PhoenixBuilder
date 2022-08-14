@@ -169,7 +169,7 @@ func (o *Exporter) Activate() {
 		} else {
 			pterm.Success.Printfln("schem 文件生成成功")
 		}
-		targetDir := path.Join("Omega导出", structureName)
+		targetDir := path.Join(o.frame.GetStorageRoot(), "Omega导出", structureName)
 		if utils.IsDir(targetDir) {
 			tmpDir := targetDir
 			i := 1
@@ -179,7 +179,7 @@ func (o *Exporter) Activate() {
 			}
 			targetDir = tmpDir
 		}
-		os.MkdirAll("Omega导出", 0755)
+		os.MkdirAll(path.Join(o.frame.GetStorageRoot(), "Omega导出"), 0755)
 		if err := os.Rename(overallCacheDir, targetDir); err == nil {
 			pterm.Success.Printfln("导出已经成功，文件位于 %v", targetDir)
 		} else {
