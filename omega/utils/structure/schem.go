@@ -13,6 +13,8 @@ import (
 	"phoenixbuilder/mirror/io/memory"
 	"phoenixbuilder/mirror/io/world"
 
+	standard_nbt "phoenixbuilder/minecraft/nbt"
+
 	"github.com/Tnze/go-mc/nbt"
 )
 
@@ -20,6 +22,22 @@ type WEOffset struct {
 	WEOffsetX int32
 	WEOffsetY int32
 	WEOffsetZ int32
+}
+
+type NbtBlocks []map[string]interface{}
+
+func (n NbtBlocks) TagType() byte {
+	return nbt.TagList
+}
+
+func (n NbtBlocks) Encode(w io.Writer) error {
+	buf := bytes.NewBuffer([]byte{})
+	if err := standard_nbt.NewEncoderWithEncoding(buf, standard_nbt.BigEndian).Encode(n); err != nil {
+		return err
+	} else {
+		_, err := w.Write(buf.Bytes()[3:])
+		return err
+	}
 }
 
 type SchemFileStructrue struct {
@@ -34,28 +52,27 @@ type SchemFileStructrue struct {
 	Length        int16
 	Height        int16
 	Width         int16
-	BlockEntities []map[string]interface{}
+	BlockEntities NbtBlocks
 }
 
-func convertNbtPos(nbt map[string]interface{}, sx, sy, sz int32) (pos []int32, success bool) {
-	pos = make([]int32, 3)
+func convertNbtPos(nbt map[string]interface{}, sx, sy, sz int32) (pos [3]int32, success bool) {
 	if v, found := nbt["x"]; found {
 		delete(nbt, "x")
 		pos[0] = v.(int32) - sx
 	} else {
-		return nil, false
+		return pos, false
 	}
 	if v, found := nbt["y"]; found {
 		delete(nbt, "y")
 		pos[1] = v.(int32) - sy
 	} else {
-		return nil, false
+		return pos, false
 	}
 	if v, found := nbt["z"]; found {
 		delete(nbt, "z")
 		pos[2] = v.(int32) - sz
 	} else {
-		return nil, false
+		return pos, false
 	}
 	return pos, true
 }
@@ -75,7 +92,7 @@ func EncodeSchem(chunks map[define.ChunkPos]*mirror.ChunkData, startPos, endPos 
 		Length:        int16(endPos.Z()) - int16(startPos.Z()),
 		Height:        int16(endPos.Y()) - int16(startPos.Y()),
 		Width:         int16(endPos.X()) - int16(startPos.X()),
-		BlockEntities: make([]map[string]interface{}, 0),
+		BlockEntities: NbtBlocks{},
 	}
 	numBlocks := (uint64(endPos.X()-startPos.X()) * uint64(endPos.Y()-startPos.Y()) * uint64(endPos.Z()-startPos.Z()))
 	if numBlocks >= 1<<31 {
@@ -89,7 +106,7 @@ func EncodeSchem(chunks map[define.ChunkPos]*mirror.ChunkData, startPos, endPos 
 	x8, y8, z8 := 0, 0, 0
 	rtid, blockNbt := chunk.AirRID, make(map[string]interface{})
 	paletteI := uint32(0)
-	BlockEntities := make([]map[string]interface{}, 0)
+	BlockEntities := NbtBlocks{}
 	writerBlocks := bytes.NewBuffer(make([]byte, 0, uint32(float64(numBlocks)*1.3)))
 
 	//	if currentByte&128 != 0 {
@@ -151,10 +168,11 @@ func EncodeSchem(chunks map[define.ChunkPos]*mirror.ChunkData, startPos, endPos 
 									// nameSplit := strings.Split(name, "[")
 									// if len(nameSplit) > 1 {
 									// 	blockNbt["Id"] = nameSplit[0]
-									BlockEntities = append(BlockEntities, blockNbt)
+
 									if blockNbt["id"] == "CommandBlock" {
 										blockNbt["Id"] = "minecraft:command_block"
 									}
+									BlockEntities = append(BlockEntities, blockNbt)
 									// }
 								}
 							}
@@ -162,7 +180,6 @@ func EncodeSchem(chunks map[define.ChunkPos]*mirror.ChunkData, startPos, endPos 
 					}
 				}
 			}
-
 		}
 	}
 	schemFile.BlockDataIn = writerBlocks.Bytes()
@@ -181,6 +198,8 @@ func EncodeSchem(chunks map[define.ChunkPos]*mirror.ChunkData, startPos, endPos 
 	defer fp.Close()
 	writer := gzip.NewWriter(fp)
 	defer writer.Close()
+	// nbtEncoder := standard_nbt.NewEncoderWithEncoding(writer, standard_nbt.BigEndian)
+	// err = nbtEncoder.EncodeWithRootTag(*schemFile, "Schematic")
 	err = nbt.NewEncoder(writer).Encode(*schemFile, "Schematic")
 	if err != nil {
 		return err
@@ -215,8 +234,8 @@ func DecodeSchem(data []byte, infoSender func(string)) (blockFeeder chan *IOBloc
 	nbtDecoder := nbt.NewDecoder(dataFeeder)
 	var schemData SchemFileStructrue
 	infoSender("解压缩数据，将消耗大量内存")
-	_, err = nbtDecoder.Decode(&schemData)
-	if err != nil || schemData.BlockDataIn == nil || len(schemData.BlockDataIn) == 0 {
+	rootTag, err := nbtDecoder.Decode(&schemData)
+	if rootTag != "Schematic" || err != nil || schemData.BlockDataIn == nil || len(schemData.BlockDataIn) == 0 {
 		return nil, nil, 0, 0, ErrImportFormatNotSupport
 	}
 	infoSender("解压缩成功")

@@ -12,6 +12,21 @@ import (
 	"github.com/pterm/pterm"
 )
 
+type SchematicFileStructure struct {
+	Blocks           []byte                   `nbt:"Blocks"`
+	Data             []byte                   `nbt:"Data"`
+	Width            int16                    `nbt:"Width"`
+	Length           int16                    `nbt:"Length"`
+	Height           int16                    `nbt:"Height"`
+	WEOffsetX        int                      `nbt:"WEOffsetX"`
+	WEOffsetY        int                      `nbt:"WEOffsetY"`
+	WEOffsetZ        int                      `nbt:"WEOffsetZ"`
+	TileTicks        []interface{}            `nbt:"TileTicks"`
+	Materials        string                   `nbt:"Materials"`
+	ItemStackVersion uint8                    `nbt:"itemStackVersion"`
+	BlockEntities    []map[string]interface{} `nbt:"TileEntities"`
+}
+
 func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IOBlockForDecoder, cancelFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
 	defer func() {
 		r := recover()
@@ -28,22 +43,10 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 	}
 
 	nbtDecoder := nbt.NewDecoder(dataFeeder)
-	var schematicData struct {
-		Blocks           []byte                   `nbt:"Blocks"`
-		Data             []byte                   `nbt:"Data"`
-		Width            int16                    `nbt:"Width"`
-		Length           int16                    `nbt:"Length"`
-		Height           int16                    `nbt:"Height"`
-		WEOffsetX        int                      `nbt:"WEOffsetX"`
-		WEOffsetY        int                      `nbt:"WEOffsetY"`
-		WEOffsetZ        int                      `nbt:"WEOffsetZ"`
-		TileTicks        []interface{}            `nbt:"TileTicks"`
-		Materials        string                   `nbt:"Materials"`
-		ItemStackVersion uint8                    `nbt:"itemStackVersion"`
-		BlockEntities    []map[string]interface{} `nbt:"TileEntities"`
-	}
+
 	infoSender("解压缩数据，将消耗大量内存")
-	_, err = nbtDecoder.Decode(&schematicData)
+	schematicData := &SchematicFileStructure{}
+	_, err = nbtDecoder.Decode(schematicData)
 	infoSender("解压缩成功")
 	if err != nil {
 		// fmt.Println("fail in format check", err, schematicData)

@@ -1,9 +1,17 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"path"
+	standard_nbt "phoenixbuilder/minecraft/nbt"
+
+	"github.com/Tnze/go-mc/nbt"
+
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/mirror/io/mcdb"
@@ -83,17 +91,49 @@ type SchemFileStructrue struct {
 	BlockEntities []map[string]interface{}
 }
 
-//go:embed 3.schem
 var data []byte
+
+type NbtBlocks []map[string]interface{}
+
+func (n NbtBlocks) TagType() byte {
+	return nbt.TagList
+}
+
+func (n NbtBlocks) Encode(w io.Writer) error {
+	buf := bytes.NewBuffer([]byte{})
+	if err := standard_nbt.NewEncoderWithEncoding(buf, standard_nbt.BigEndian).Encode(n); err != nil {
+		return err
+	} else {
+		fmt.Println("C", buf.Bytes())
+		_, err := w.Write(buf.Bytes()[3:])
+		return err
+	}
+}
 
 func main() {
 
-	_, _, _, _, err := structure.DecodeSchem(data, func(s string) {})
-	if err != nil {
-		panic(err)
-	}
+	// target := NbtBlocks{
+	// 	{"Pos": []int32{3, 2, 1}, "a": int32(2)},
+	// 	{"i": int32(2), "b": int32(3)},
+	// }
+	// buf1 := bytes.NewBuffer([]byte{})
+	// encoder1 := standard_nbt.NewEncoderWithEncoding(buf1, standard_nbt.BigEndian)
+	// encoder1.Encode(target)
+	// fmt.Printf("A %v\n", buf1.Bytes())
 
-	cmdStr := "save test -3 -5 7 106 205 137"
+	// buf2 := bytes.NewBuffer([]byte{})
+	// encoder2 := nbt.NewEncoder(buf2)
+	// encoder2.Encode(target, "")
+	// fmt.Printf("D %v\n", buf2.Bytes())
+
+	// var anyData interface{}
+	// _, err := nbt.NewDecoder(bytes.NewBuffer(buf2.Bytes())).Decode(&anyData)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(anyData)
+
+	cmdStr := "save test_with_block_entities -3 -5 7 106 205 137"
 	cmds := strings.Split(cmdStr, " ")
 	startPos, endPos, structureName, err := ParseSaveCmd(cmds)
 	if err != nil {
@@ -115,12 +155,39 @@ func main() {
 		panic(err)
 	}
 
-	err = structure.EncodeMCWorld(chunks, startPos, endPos, structureName, overallCacheDir)
-	if err != nil {
-		panic(err)
-	}
+	// err = structure.EncodeMCWorld(chunks, startPos, endPos, structureName, overallCacheDir)
+	// if err != nil {
+	// 	panic(err)
+	// }
 	err = structure.EncodeSchem(chunks, startPos, endPos, structureName, overallCacheDir)
 	if err != nil {
 		panic(err)
 	}
+
+	fp, err := os.OpenFile("/Users/dai/projects/PhoenixBuilder/omega/utils/structure/dump_test/omega_export_cache/test_with_block_entities/test_with_block_entities.schem", os.O_RDONLY, 0755)
+	if err != nil {
+		panic(err)
+	}
+	// data, err = ioutil.ReadAll(fp)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// _, _, _, _, err = structure.DecodeSchem(data, func(s string) {})
+	// if err != nil {
+	// 	panic(err)
+	// }
+	var anyData interface{}
+	data, err = ioutil.ReadAll(fp)
+	if err != nil {
+		panic(err)
+	}
+	dataFeeder, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		panic(err)
+	}
+	err = standard_nbt.NewDecoderWithEncoding(dataFeeder, standard_nbt.BigEndian).Decode(&anyData)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(anyData)
 }

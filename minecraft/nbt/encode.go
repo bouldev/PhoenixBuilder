@@ -48,6 +48,11 @@ func (e *Encoder) Encode(v interface{}) error {
 	return e.marshal(val, "")
 }
 
+func (e *Encoder) EncodeWithRootTag(v interface{}, root string) error {
+	val := reflect.ValueOf(v)
+	return e.marshal(val, root)
+}
+
 // Marshal encodes an object to its NBT representation and returns it as a byte slice. It uses the
 // NetworkLittleEndian NBT encoding. To use a specific encoding, use MarshalEncoding.
 //
