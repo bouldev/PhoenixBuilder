@@ -291,12 +291,12 @@ func (o *Omega) bootstrapComponents() (success bool) {
 		}
 	}()
 	total := len(o.ComponentConfigs)
-	// coreComponentsLoaded := map[string]bool{}
+	coreComponentsLoaded := map[string]bool{}
 	corePool := getCoreComponentsPool()
 	builtInPool := components.GetComponentsPool()
-	// for n, _ := range corePool {
-	// 	coreComponentsLoaded[n] = false
-	// }
+	for n, _ := range corePool {
+		coreComponentsLoaded[n] = false
+	}
 	for i, cfg := range o.ComponentConfigs {
 		I := i + 1
 		Name := cfg.Name
@@ -313,7 +313,7 @@ func (o *Omega) bootstrapComponents() (success bool) {
 				o.backendLogger.Write("没有找到核心组件: " + Name)
 				panic("没有找到核心组件: " + Name)
 			} else {
-				// coreComponentsLoaded[Name] = true
+				coreComponentsLoaded[Name] = true
 				_component := componentFn()
 				_component.SetSystem(o)
 				component = _component
@@ -330,11 +330,11 @@ func (o *Omega) bootstrapComponents() (success bool) {
 		component.Inject(NewBox(o, Name))
 		o.Components = append(o.Components, component)
 	}
-	// for n, l := range coreComponentsLoaded {
-	// 	if !l {
-	// 		panic(fmt.Errorf("核心组件 (Core) 必须被加载, 但是 %v 被配置为不加载", n))
-	// 	}
-	// }
+	for n, l := range coreComponentsLoaded {
+		if !l {
+			panic(fmt.Errorf("核心组件 (Core) 必须被加载, 但是 %v 被配置为不加载", n))
+		}
+	}
 	return true
 }
 
