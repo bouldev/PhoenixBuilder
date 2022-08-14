@@ -295,6 +295,7 @@ func (o *Omega) bootstrapComponents() (success bool) {
 	total := len(o.ComponentConfigs)
 	corePool := getCoreComponentsPool()
 	builtInPool := components.GetComponentsPool()
+	beforeActivateFNs := map[string]func() error{}
 	for i, cfg := range o.ComponentConfigs {
 		I := i + 1
 		Name := cfg.Name
@@ -326,6 +327,13 @@ func (o *Omega) bootstrapComponents() (success bool) {
 		component.Init(cfg)
 		component.Inject(NewBox(o, Name))
 		o.Components = append(o.Components, component)
+		beforeActivateFNs[cfg.Name] = component.BeforeActivate
+	}
+	for name, beforeActivate := range beforeActivateFNs {
+		err := beforeActivate()
+		if err != nil {
+			panic(fmt.Errorf("组件: %v 激活前任务出现错误: %v", name, err))
+		}
 	}
 	return true
 }
@@ -386,7 +394,7 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	}
 	o.backendLogger.Write("全部完成，系统启动")
 	for _, p := range o.uqHolder.PlayersByEntityID {
-		for _, cb := range o.Reactor.OnFirstSeePlayerCallback {
+		for _, cb := range o.Reactor.OnKnownPlayerExistCallback {
 			cb(p.Username)
 		}
 	}

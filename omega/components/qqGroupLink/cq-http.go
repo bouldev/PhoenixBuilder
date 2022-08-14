@@ -417,6 +417,10 @@ func (b *QGroupLink) Signal(signal int) error {
 	return nil
 }
 
+func (b *QGroupLink) BeforeActivate() error {
+	return nil
+}
+
 func (b *QGroupLink) Activate() {
 	time.Sleep(time.Second * 5)
 	b.loginTruncated = true

@@ -160,7 +160,7 @@ type GameListener interface {
 	SetGameMenuEntry(entry *GameMenuEntry)
 	SetGameChatInterceptor(func(chat *GameChat) (stop bool))
 	SetOnLevelChunkCallBack(fn func(cd *mirror.ChunkData))
-	AppendOnFirstSeePlayerCallback(cb func(string))
+	AppendOnKnownPlayerExistCallback(cb func(string))
 	AppendLoginInfoCallback(cb func(entry protocol.PlayerListEntry))
 	AppendLogoutInfoCallback(cb func(entry protocol.PlayerListEntry))
 	Throw(chat *GameChat)

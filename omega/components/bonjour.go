@@ -53,7 +53,7 @@ func (b *Bonjour) Activate() {
 	}
 	b.logger.Write(fmt.Sprintf("当前已经在线玩家: %v", existingPlayers))
 	go func() {
-		time.Sleep(10)
+		time.Sleep(5 * time.Second)
 		b.newCome = true
 	}()
 

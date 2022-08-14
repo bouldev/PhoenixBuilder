@@ -31,6 +31,10 @@ func (c *BaseCoreComponent) Signal(signal int) error {
 	return nil
 }
 
+func (bc *BaseCoreComponent) BeforeActivate() error {
+	return nil
+}
+
 func (c *BaseCoreComponent) Activate() {}
 
 func (c *BaseCoreComponent) Stop() error { return nil }

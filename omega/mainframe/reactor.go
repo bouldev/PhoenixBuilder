@@ -203,7 +203,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.PlayerList:
 		if p.ActionType == packet.PlayerListActionAdd {
 			for _, e := range p.Entries {
-				for _, cb := range r.OnFirstSeePlayerCallback {
+				for _, cb := range r.OnKnownPlayerExistCallback {
 					cb(e.Username)
 				}
 			}
@@ -281,24 +281,24 @@ func (r *Reactor) React(pkt packet.Packet) {
 }
 
 type Reactor struct {
-	o                         *Omega
-	OnAnyPacketCallBack       []func(packet.Packet)
-	OnTypedPacketCallBacks    map[uint32][]func(packet.Packet)
-	OnLevelChunkData          []func(cd *mirror.ChunkData)
-	GameMenuEntries           []*defines.GameMenuEntry
-	BlockUpdateListeners      []func(pos define.CubePos, origRTID uint32, currentRTID uint32)
-	GameChatInterceptors      []func(chat *defines.GameChat) (stop bool)
-	GameChatFinalInterceptors []func(chat *defines.GameChat) (stop bool)
-	OnFirstSeePlayerCallback  []func(string)
-	CurrentWorldProvider      mirror.ChunkProvider
-	CurrentWorld              *world.World
-	MirrorAvailable           bool
-	freshMenu                 func()
-	chunkAssembler            *assembler.Assembler
+	o                          *Omega
+	OnAnyPacketCallBack        []func(packet.Packet)
+	OnTypedPacketCallBacks     map[uint32][]func(packet.Packet)
+	OnLevelChunkData           []func(cd *mirror.ChunkData)
+	GameMenuEntries            []*defines.GameMenuEntry
+	BlockUpdateListeners       []func(pos define.CubePos, origRTID uint32, currentRTID uint32)
+	GameChatInterceptors       []func(chat *defines.GameChat) (stop bool)
+	GameChatFinalInterceptors  []func(chat *defines.GameChat) (stop bool)
+	OnKnownPlayerExistCallback []func(string)
+	CurrentWorldProvider       mirror.ChunkProvider
+	CurrentWorld               *world.World
+	MirrorAvailable            bool
+	freshMenu                  func()
+	chunkAssembler             *assembler.Assembler
 }
 
-func (o *Reactor) AppendOnFirstSeePlayerCallback(cb func(string)) {
-	o.OnFirstSeePlayerCallback = append(o.OnFirstSeePlayerCallback, cb)
+func (o *Reactor) AppendOnKnownPlayerExistCallback(cb func(string)) {
+	o.OnKnownPlayerExistCallback = append(o.OnKnownPlayerExistCallback, cb)
 }
 
 func (o *Reactor) onBootstrap() {
@@ -357,14 +357,14 @@ func (o *Omega) GetWorldProvider() mirror.ChunkProvider {
 
 func newReactor(o *Omega) *Reactor {
 	return &Reactor{
-		o:                         o,
-		GameMenuEntries:           make([]*defines.GameMenuEntry, 0),
-		GameChatInterceptors:      make([]func(chat *defines.GameChat) (stop bool), 0),
-		GameChatFinalInterceptors: make([]func(chat *defines.GameChat) (stop bool), 0),
-		OnAnyPacketCallBack:       make([]func(packet2 packet.Packet), 0),
-		OnTypedPacketCallBacks:    make(map[uint32][]func(packet.Packet), 0),
-		OnFirstSeePlayerCallback:  make([]func(string), 0),
-		OnLevelChunkData:          make([]func(cd *mirror.ChunkData), 0),
-		freshMenu:                 func() {},
+		o:                          o,
+		GameMenuEntries:            make([]*defines.GameMenuEntry, 0),
+		GameChatInterceptors:       make([]func(chat *defines.GameChat) (stop bool), 0),
+		GameChatFinalInterceptors:  make([]func(chat *defines.GameChat) (stop bool), 0),
+		OnAnyPacketCallBack:        make([]func(packet2 packet.Packet), 0),
+		OnTypedPacketCallBacks:     make(map[uint32][]func(packet.Packet), 0),
+		OnKnownPlayerExistCallback: make([]func(string), 0),
+		OnLevelChunkData:           make([]func(cd *mirror.ChunkData), 0),
+		freshMenu:                  func() {},
 	}
 }

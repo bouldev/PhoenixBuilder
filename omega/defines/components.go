@@ -30,6 +30,7 @@ func (c *ComponentConfig) SetUpgradeFn(fn func(*ComponentConfig) error) (ok bool
 type Component interface {
 	Init(cfg *ComponentConfig)
 	Inject(frame MainFrame)
+	BeforeActivate() error
 	Activate()
 	Stop() error
 	Signal(int) error
@@ -60,6 +61,10 @@ func (bc *BasicComponent) Init(cfg *ComponentConfig) {
 func (bc *BasicComponent) Inject(frame MainFrame) {
 	bc.Frame = frame
 	bc.Listener = frame.GetGameListener()
+}
+
+func (bc *BasicComponent) BeforeActivate() error {
+	return nil
 }
 
 func (bc *BasicComponent) Activate() {
