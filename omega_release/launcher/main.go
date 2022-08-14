@@ -609,9 +609,9 @@ func RunOmega(cfg *BotConfig) {
 			fmt.Println(err)
 		}
 		if time.Since(startTime) > time.Minute*3 {
-			restartTime++
-		} else {
 			restartTime = 0
+		} else {
+			restartTime++
 		}
 		if doExit {
 			pterm.Success.Println("上方错误可忽略")
@@ -626,10 +626,10 @@ func RunOmega(cfg *BotConfig) {
 			pterm.Warning.Printfln("Omega将在 %v 秒后自动重启", sleepTime.Seconds())
 		} else {
 			sleepTime = (1 << restartTime) * 30 * time.Second
-			if sleepTime>time.Minute*30{
-				sleepTime=time.Minute*30
+			if sleepTime > time.Minute*30 {
+				sleepTime = time.Minute * 30
 			}
-			pterm.Warning.Printfln("程序连续第 %v 次崩溃，Omega将在 %v 秒后自动重启", restartTime, sleepTime.SSeconds()
+			pterm.Warning.Printfln("程序连续第 %v 次崩溃，Omega将在 %v 秒后自动重启", restartTime, sleepTime.Seconds())
 		}
 	}
 }
