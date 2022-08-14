@@ -36,6 +36,7 @@ type UniverseImport struct {
 	FileName           string   `json:"断点续导记录文件"`
 	AutoContinueImport bool     `json:"Omega启动时是否自动继续导入"`
 	IgnoreBlockNbt     bool     `json:"忽略方块nbt信息"`
+	BoostRate          float64  `json:"超频加速比"`
 	fileChange         bool
 	needDecision       bool
 	data               *UniverseImportData
@@ -50,6 +51,7 @@ type Importor struct {
 	task            *universeImportTask
 	doneWaiter      chan struct{}
 	speed           int
+	boostSleepTime  time.Duration
 }
 
 func (o *Importor) cancel() {
@@ -60,7 +62,7 @@ func (o *Importor) cancel() {
 
 func (o *Importor) Activate() {
 	pterm.Info.Printfln("开始处理任务 %v 起点(%v %v %v) 从 %v 方块处开始导入", o.task.Path, o.task.Offset[0], o.task.Offset[1], o.task.Offset[2], o.task.Progress)
-	o.builder.Build(o.finalFeeder, o.speed)
+	o.builder.Build(o.finalFeeder, o.speed, o.boostSleepTime)
 	close(o.doneWaiter)
 }
 
@@ -153,10 +155,12 @@ func (o *UniverseImport) StartNewTask() {
 	}); err == nil {
 		baseProgress := task.Progress
 		pterm.Success.Println("文件成功被解析,将开始优化导入顺序")
+		boostSleepTime := time.Duration(float64(time.Second) * ((4096.) / (o.BoostRate * float64(o.ImportSpeed))))
 		o.currentBuilder = &Importor{
 			frontendStopper: stopFn,
 			task:            task,
 			speed:           o.ImportSpeed,
+			boostSleepTime:  boostSleepTime,
 		}
 		o.currentBuilder.doneWaiter = make(chan struct{})
 		progressUpdateInterval := o.ImportSpeed + 1
@@ -236,6 +240,12 @@ func (o *Importor) onLevelChunk(cd *mirror.ChunkData) {
 }
 
 func (o *UniverseImport) Init(cfg *defines.ComponentConfig) {
+	if cfg.Version == "0.0.1" {
+		cfg.Configs["超频加速比"] = 10
+		cfg.Configs["忽略方块nbt信息"] = false
+		cfg.Version = "0.0.2"
+		cfg.Upgrade()
+	}
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

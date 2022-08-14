@@ -33,7 +33,7 @@ type deferAction struct {
 	action func()
 }
 
-func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int) {
+func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepTime time.Duration) {
 	o.delayBlocks = make(map[define.CubePos]*IOBlockForBuilder)
 	// o.delayBlocksMu = sync.Mutex{}
 	counter := 0
@@ -148,7 +148,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int) {
 			// fmt.Println("fast fill")
 			o.NormalCmdSender(cmd)
 			counter += 4096
-			time.Sleep(time.Millisecond * 200)
+			time.Sleep(boostSleepTime)
 		} else {
 			if block.NBT != nil && !o.IgnoreNbt && block.NBT["id"] == "CommandBlock" {
 				// cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
