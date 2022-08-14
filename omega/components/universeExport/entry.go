@@ -180,8 +180,9 @@ func (o *Exporter) Activate() {
 			targetDir = tmpDir
 		}
 		os.MkdirAll(path.Join(o.frame.GetStorageRoot(), "Omega导出"), 0755)
-		if err := os.Rename(overallCacheDir, targetDir); err == nil {
+		if err := utils.CopyDirectory(overallCacheDir, targetDir); err == nil {
 			pterm.Success.Printfln("导出已经成功，文件位于 %v", targetDir)
+			os.RemoveAll(overallCacheDir)
 		} else {
 			pterm.Success.Printfln("导出已经成功，文件位于 %v (%v)", overallCacheDir, err)
 		}
