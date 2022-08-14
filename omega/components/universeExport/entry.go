@@ -238,7 +238,7 @@ func (o *Exporter) doHop(
 				return
 			}
 		case <-maxTimer.C:
-			pterm.Info.Println("no new chunk arrived in min hop time after last chunk arrived, quit hop point")
+			pterm.Info.Println("no new chunk arrived in max hop time after last chunk arrived, quit hop point")
 			return
 		case <-o.feedChan:
 			maxTimer = time.NewTimer(time.Duration(int(float32(time.Second) * minWaitTime)))
