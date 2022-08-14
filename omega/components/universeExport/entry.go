@@ -75,8 +75,7 @@ func (o *Exporter) Activate() {
 	o.allRequiredChunks = allRequiredChunks
 	o.chunks = make(map[define.ChunkPos]*mirror.ChunkData)
 
-	progressBar := pterm.DefaultProgressbar.WithTotal(len(*allRequiredChunks)).WithTitle(structureName)
-	progressBar.Start()
+	progressBar, _ := pterm.DefaultProgressbar.WithTotal(len(*allRequiredChunks)).WithTitle(structureName).Start()
 	startTime := time.Now()
 	hitCount := 0
 	o.updateHit = func(pos define.ChunkPos) bool {
@@ -86,7 +85,7 @@ func (o *Exporter) Activate() {
 			metricDuration := time.Since(startTime).Seconds()
 			realSpeed := float64(hitCount) / metricDuration
 			progressBar.Title = structureName + fmt.Sprintf(" 实际速度 %.2f", realSpeed)
-			progressBar.Add(1)
+			progressBar.Increment()
 			return true
 		} else {
 			return false
@@ -297,6 +296,7 @@ func (o *UniverseExport) StartNewTask() {
 	o.Frame.GetBotTaskScheduler().CommitUrgentTask(o.currentExporter)
 	<-o.currentExporter.doneWaiter
 	o.data.CurrentTask = nil
+	o.currentExporter = nil
 }
 
 func parseSaveCmd(cmds []string) (startPos, endPos define.CubePos, structureName string, err error) {
