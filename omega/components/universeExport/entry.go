@@ -71,7 +71,7 @@ func (o *Exporter) Activate() {
 	startPos := o.task.StartPos
 	endPos := o.task.EndPos
 	structureName := o.task.StructureName
-	hopPath, allRequiredChunks := structure.PlanHopSwapPath(startPos.X(), startPos.Z(), endPos.X(), endPos.Z(), 12)
+	hopPath, allRequiredChunks := structure.PlanHopSwapPath(startPos.X(), startPos.Z(), endPos.X(), endPos.Z(), 11)
 	o.allRequiredChunks = allRequiredChunks
 	o.chunks = make(map[define.ChunkPos]*mirror.ChunkData)
 
@@ -124,6 +124,7 @@ func (o *Exporter) Activate() {
 			cd := o.frame.GetWorldProvider().GetWithNoFallBack(pos)
 			if cd != nil {
 				o.provider.Write(cd)
+				o.chunks[pos] = cd
 			}
 			// fmt.Println("Cached")
 			continue
@@ -199,12 +200,19 @@ func (o *Exporter) Activate() {
 
 	o.listening = true
 	o.feedChan = make(chan bool, 10240)
-	for _, hp := range *hopPath {
-		pterm.Warning.Println("now hop to: ", hp.Pos)
-		o.doHop(func(x, z int) {
-			o.frame.GetGameControl().SendCmd(fmt.Sprintf("tp @s %v 320 %v", x, z))
-		}, hp, 10, 0.5, 3)
+	for i := 1; i <= 3; i++ {
+		for _, hp := range *hopPath {
+			pterm.Warning.Println("now hop to: ", hp.Pos)
+			o.doHop(func(x, z int) {
+				o.frame.GetGameControl().SendCmd(fmt.Sprintf("tp @s %v 320 %v", x, z))
+			}, hp, 10*float32(i), 0.5*float32(i), 5*float32(i))
+		}
+		if len(*hopPath) == 0 || i == 3 {
+			break
+		}
+		pterm.Error.Printfln("区块没有完全获取成功，重试 %v/%v", i, 2)
 	}
+
 	if len(*hopPath) == 0 {
 		PrintSuccessAndWriteFile()
 		return
@@ -214,7 +222,7 @@ func (o *Exporter) Activate() {
 				pterm.Error.Printfln("未能获得区块 %v", pos)
 			}
 		}
-		pterm.Error.Printfln("导出失败")
+		pterm.Error.Printfln("导出失败,您可以使用完全相同的指令再次尝试导出，会使用这次的缓存加速")
 		if o.provider != nil {
 			o.provider.Close()
 		}
