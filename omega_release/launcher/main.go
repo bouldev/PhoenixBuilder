@@ -558,7 +558,6 @@ func RunOmega(cfg *BotConfig) {
 			readC <- s
 		}
 	}()
-	t := time.NewTicker(30 * time.Second)
 	signalchannel := make(chan os.Signal)
 	signal.Notify(signalchannel, os.Interrupt)
 	signal.Notify(signalchannel, syscall.SIGTERM)
@@ -574,7 +573,9 @@ func RunOmega(cfg *BotConfig) {
 			os.Exit(0)
 		}
 	}()
+	restartTime := 0
 	for {
+		startTime := time.Now()
 		cmd = exec.Command(GetOmegaExecName(), args...)
 		omega_out, err := cmd.StdoutPipe()
 		if err != nil {
@@ -607,6 +608,11 @@ func RunOmega(cfg *BotConfig) {
 		if err != nil {
 			fmt.Println(err)
 		}
+		if time.Since(startTime) > time.Minute*3 {
+			restartTime++
+		} else {
+			restartTime = 0
+		}
 		if doExit {
 			pterm.Success.Println("上方错误可忽略")
 			pterm.Success.Println("保存完毕，程序退出")
@@ -614,9 +620,17 @@ func RunOmega(cfg *BotConfig) {
 			break
 		}
 		omegaRunning = false
-		pterm.Warning.Println("Omega将在最长 30 秒后自动重启")
-		time.Sleep(15)
-		<-t.C
+		var sleepTime time.Duration
+		if restartTime == 0 {
+			sleepTime = time.Second*30 - time.Since(startTime)
+			pterm.Warning.Printfln("Omega将在 %v 秒后自动重启", sleepTime.Seconds())
+		} else {
+			sleepTime = (1 << restartTime) * 30 * time.Second
+			if sleepTime>time.Minute*30{
+				sleepTime=time.Minute*30
+			}
+			pterm.Warning.Printfln("程序连续第 %v 次崩溃，Omega将在 %v 秒后自动重启", restartTime, sleepTime.SSeconds()
+		}
 	}
 }
 
