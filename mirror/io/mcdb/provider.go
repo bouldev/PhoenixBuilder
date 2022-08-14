@@ -182,6 +182,10 @@ func (p *Provider) loadTimeStamp(position define.ChunkPos) (timeStamp int64) {
 	return int64(binary.LittleEndian.Uint64(data))
 }
 
+func (o *Provider) GetWithNoFallBack(pos define.ChunkPos) (data *mirror.ChunkData) {
+	return o.Get(pos)
+}
+
 func (p *Provider) Get(pos define.ChunkPos) (data *mirror.ChunkData) {
 	cd := &mirror.ChunkData{}
 	cd.ChunkPos = pos

@@ -77,12 +77,21 @@ func (o *Omega) GetUQHolder() *uqHolder.UQHolder {
 	return o.uqHolder
 }
 
-func (o *Omega) GetWorldsDir() string {
-	return path.Join(o.storageRoot, "worlds")
+func (o *Omega) GetWorldsDir(elem ...string) string {
+	return o.GetPath("worlds", path.Join(elem...))
 }
 
-func (o *Omega) GetOmegaSideDir() string {
-	return path.Join(o.storageRoot, "side")
+func (o *Omega) GetOmegaSideDir(elem ...string) string {
+	return o.GetPath("side", path.Join(elem...))
+}
+
+func (o *Omega) GetOmegaCacheDir(elem ...string) string {
+	for _, ele := range elem {
+		if strings.HasPrefix(ele, "/") || strings.Contains(ele, "..") {
+			panic(fmt.Errorf("为了安全考虑，路径开头不能为 / 且不能包含 .."))
+		}
+	}
+	return path.Join("omega_cache", path.Join(elem...))
 }
 
 func (o *Omega) GetAllConfigs() []*defines.ComponentConfig {

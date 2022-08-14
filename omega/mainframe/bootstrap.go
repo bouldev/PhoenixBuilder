@@ -281,6 +281,13 @@ func (o *Omega) bootstrapDirs() {
 			panic(err)
 		}
 	}
+	omegaCacheDir := o.GetOmegaCacheDir()
+	if !utils.IsDir(omegaCacheDir) {
+		fmt.Println("创建 Omega Cache 文件夹: " + omegaSideDir)
+		if err := utils.MakeDirP(omegaCacheDir); err != nil {
+			panic(err)
+		}
+	}
 }
 
 func (o *Omega) bootstrapComponents() (success bool) {

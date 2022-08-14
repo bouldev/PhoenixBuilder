@@ -184,7 +184,7 @@ func (o *UniverseImport) StartNewTask() {
 			o.fileChange = true
 			metricDuration := time.Since(startTime).Seconds()
 			realSpeed := float64(currBlock) / metricDuration
-			fmt.Printf(" 实际速度: %.1f", realSpeed)
+			progressBar.Title = taskName + fmt.Sprintf(" 实际速度 %d", int(realSpeed))
 		}
 		ProgressUpdater := func(currBlock int) {
 			if currBlock == 0 {
@@ -223,10 +223,10 @@ func (o *UniverseImport) StartNewTask() {
 		o.currentBuilder.builder = builder
 		o.Frame.GetBotTaskScheduler().CommitUrgentTask(o.currentBuilder)
 		<-o.currentBuilder.doneWaiter
-		pterm.Success.Printfln("\n导入完成 %v ", filePath)
+		pterm.Success.Printfln("导入完成 %v ", filePath)
 		// o.Frame.AllowChunkRequestCache()
 	} else {
-		pterm.Error.Println("无法解析文件 %v ", filePath)
+		pterm.Error.Printfln("无法解析文件 %v, %v", filePath, err)
 	}
 	o.data.CurrentTask = nil
 }
@@ -374,7 +374,7 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 			Triggers:     o.Triggers,
 			ArgumentHint: "[路径] [x] [y] [z]",
 			FinalTrigger: false,
-			Usage:        "导入建筑(目前仅支持 schem，其他文件类型将在后续加入)",
+			Usage:        "导入建筑，支持 bdx schem schmatic",
 		},
 		OptionalOnTriggerFn: o.onImport,
 	})
@@ -405,8 +405,8 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 			return true
 		},
 	})
-	o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.onBlockUpdate)
-	o.Frame.GetGameListener().SetOnLevelChunkCallBack(o.OnLevelChunk)
+	// o.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(o.onBlockUpdate)
+	// o.Frame.GetGameListener().SetOnLevelChunkCallBack(o.OnLevelChunk)
 }
 
 func (o *UniverseImport) OnLevelChunk(cd *mirror.ChunkData) {

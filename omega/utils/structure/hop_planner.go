@@ -32,7 +32,7 @@ func (o *ExportHopPosMap) Squeeze() *ExportHopPosMap {
 	return o
 }
 
-func (o *ExportedChunksMap) Hit(pos define.ChunkPos) {
+func (o *ExportedChunksMap) Hit(pos define.ChunkPos) bool {
 	if c, hasK := (*o)[pos]; hasK {
 		c.CachedMark = true
 		allCached := true
@@ -49,6 +49,9 @@ func (o *ExportedChunksMap) Hit(pos define.ChunkPos) {
 			}
 			delete(*c.MasterHopMap, masterHopPos)
 		}
+		return true
+	} else {
+		return false
 	}
 }
 

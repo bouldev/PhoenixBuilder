@@ -31,6 +31,10 @@ func (o *MemoryChunkHolder) Get(pos define.ChunkPos) (data *mirror.ChunkData) {
 	}
 }
 
+func (o *MemoryChunkHolder) GetWithNoFallBack(pos define.ChunkPos) (data *mirror.ChunkData) {
+	return o.Get(pos)
+}
+
 func (o *MemoryChunkHolder) Write(data *mirror.ChunkData) error {
 	o.mu.Lock()
 	defer o.mu.Unlock()

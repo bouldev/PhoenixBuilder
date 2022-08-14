@@ -98,8 +98,9 @@ type StorageAndLogProvider interface {
 	GetFileData(topic string) ([]byte, error)
 	GetJsonData(topic string, data interface{}) error
 	GetStorageRoot() string
-	GetWorldsDir() string
-	GetOmegaSideDir() string
+	GetWorldsDir(elem ...string) string
+	GetOmegaSideDir(elem ...string) string
+	GetOmegaCacheDir(elem ...string) string
 	WriteFileData(topic string, data []byte) error
 	WriteJsonData(topic string, data interface{}) error
 	WriteJsonDataWithTMP(topic string, tmpSuffix string, data interface{}) error
