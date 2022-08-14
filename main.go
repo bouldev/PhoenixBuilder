@@ -438,6 +438,7 @@ func runClient(env *environment.PBEnvironment) {
 			fmt.Println("Capture On: FastBuilder > ", captureOutputFileName)
 		}
 	}
+	opPrivilegeGranted := false
 	go func() {
 		if args.NoReadline() {
 			return
@@ -458,6 +459,11 @@ func runClient(env *environment.PBEnvironment) {
 					captureFp = nil
 					fmt.Println("Capture Closed")
 				}
+				continue
+			}
+			if !opPrivilegeGranted {
+				pterm.Error.Println(I18n.T(I18n.OpPrivilegeNotGrantedForOperation))
+				continue
 			}
 			if cmd[0] == '.' {
 				ud, _ := uuid.NewUUID()
@@ -538,6 +544,14 @@ func runClient(env *environment.PBEnvironment) {
 		}
 		// fmt.Println(omega_utils.PktIDInvMapping[int(pk.ID())])
 		switch p := pk.(type) {
+		case *packet.AdventureSettings:
+			if conn.GameData().EntityUniqueID == p.PlayerUniqueID {
+				if p.PermissionLevel >= packet.PermissionLevelOperator {
+					opPrivilegeGranted = true
+				} else {
+					opPrivilegeGranted = false
+				}
+			}
 		// case *packet.ClientCacheMissResponse:
 		// 	pterm.Info.Println("ClientCacheMissResponse", p)
 		// case *packet.ClientCacheStatus:

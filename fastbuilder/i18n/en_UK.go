@@ -93,6 +93,7 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	Notice_ZLIB_CVE:                     "Your zlib version (%s) is too old since it contains confirmed CVE vulnerability, updating suggested",
 	Notify_NeedOp:                       "FastBuilder requires operator privilege.",
 	Notify_TurnOnCmdFeedBack:            "FastBuilder requires gamerule sendcommandfeedback to be true, we have already turn it on, and remember to turn it off",
+	OpPrivilegeNotGrantedForOperation:   "Op privilege not granted for this operation, please grant bot op privilege",
 	Omega_Enabled:                       "Omega System Enabled!",
 	Parsing_UnterminatedEscape:          "Unterminated escape",
 	Parsing_UnterminatedQuotedString:    "Unterminated quoted string",

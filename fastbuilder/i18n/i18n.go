@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	LanguageEnglish_US = "en_US"
-	LanguageEnglish_UK = "en_UK"
-	LanguageSimplifiedChinese = "zh_CN"
+	LanguageEnglish_US         = "en_US"
+	LanguageEnglish_UK         = "en_UK"
+	LanguageSimplifiedChinese  = "zh_CN"
 	LanguageTraditionalChinese = "zh_HK"
-	LanguageTaiwanChinese = "zh_TW"
+	LanguageTaiwanChinese      = "zh_TW"
 )
 
 var SelectedLanguage = LanguageEnglish_US
@@ -28,17 +28,17 @@ const (
 	ACME_FailedToSeek
 	ACME_StructureErrorNotice
 	ACME_UnknownCommand
-	Auth_BackendError // 5
-	Auth_FailedToRequestEntry // 6
-	Auth_HelperNotCreated // 7
-	Auth_InvalidFBVersion // 8
-	Auth_InvalidHelperUsername // 9
-	Auth_InvalidToken // 10
-	Auth_InvalidUser // 11
-	Auth_ServerNotFound // 12
+	Auth_BackendError                   // 5
+	Auth_FailedToRequestEntry           // 6
+	Auth_HelperNotCreated               // 7
+	Auth_InvalidFBVersion               // 8
+	Auth_InvalidHelperUsername          // 9
+	Auth_InvalidToken                   // 10
+	Auth_InvalidUser                    // 11
+	Auth_ServerNotFound                 // 12
 	Auth_UnauthorizedRentalServerNumber // 13
-	Auth_UserCombined // 14
-	Auth_FailedToRequestEntry_TryAgain // 15
+	Auth_UserCombined                   // 14
+	Auth_FailedToRequestEntry_TryAgain  // 15
 	BDump_Author
 	BDump_EarlyEOFRightWhenOpening
 	BDump_FailedToGetCmd1
@@ -117,6 +117,7 @@ const (
 	Notify_NeedOp
 	Notify_TurnOnCmdFeedBack
 	Omega_Enabled
+	OpPrivilegeNotGrantedForOperation
 	Parsing_UnterminatedEscape
 	Parsing_UnterminatedQuotedString
 	PositionGot
@@ -167,59 +168,59 @@ const (
 	Warning_UserHomeDir
 )
 
-var LangDict map[string]map[uint16]string = map[string]map[uint16]string {
-	LanguageEnglish_US: I18nDict_en_US,
-	LanguageEnglish_UK: I18nDict_en_UK,
-	LanguageSimplifiedChinese: I18nDict_zh_CN,
+var LangDict map[string]map[uint16]string = map[string]map[uint16]string{
+	LanguageEnglish_US:         I18nDict_en_US,
+	LanguageEnglish_UK:         I18nDict_en_UK,
+	LanguageSimplifiedChinese:  I18nDict_zh_CN,
 	LanguageTraditionalChinese: I18nDict_zh_HK,
-	LanguageTaiwanChinese: I18nDict_zh_TW,
+	LanguageTaiwanChinese:      I18nDict_zh_TW,
 }
 
 var I18nDict map[uint16]string
 
 func ShouldDisplaySpecial() bool {
-	_, has:=I18nDict[Special_Startup]
+	_, has := I18nDict[Special_Startup]
 	return has
 }
 
 func HasTranslationFor(transtype uint16) bool {
-	_, has:=I18nDict[transtype]
+	_, has := I18nDict[transtype]
 	return has
 }
 
 func SelectLanguage() {
-	config:=loadConfigPath()
-	curLangDict:=make(map[uint16]string)
+	config := loadConfigPath()
+	curLangDict := make(map[uint16]string)
 	{
-		i:=1
-		for lang:=range LangDict {
-			curLangDict[uint16(i)]=lang
-			fmt.Printf("[%d] %s\n",i,LangDict[lang][LanguageName])
+		i := 1
+		for lang := range LangDict {
+			curLangDict[uint16(i)] = lang
+			fmt.Printf("[%d] %s\n", i, LangDict[lang][LanguageName])
 			i++
 		}
 	}
-	reader:=bufio.NewReader(os.Stdin)
+	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Printf("(ID): ") // No \n
 		inp, _ := reader.ReadString('\n')
-		inpl:=strings.TrimRight(inp,"\r\n")
+		inpl := strings.TrimRight(inp, "\r\n")
 		parsedInt, err := strconv.Atoi(inpl)
-		if(err!=nil) {
+		if err != nil {
 			continue
 		}
-		if(parsedInt<=0||parsedInt>len(curLangDict)) {
+		if parsedInt <= 0 || parsedInt > len(curLangDict) {
 			continue
 		}
-		SelectedLanguage=curLangDict[uint16(parsedInt)]
+		SelectedLanguage = curLangDict[uint16(parsedInt)]
 		break
 	}
-	if file,err:=os.Create(config);err!=nil {
-		fmt.Println(T(Lang_Config_ErrOnCreate),err)
+	if file, err := os.Create(config); err != nil {
+		fmt.Println(T(Lang_Config_ErrOnCreate), err)
 		fmt.Println(T(ErrorIgnored))
-	}else{
+	} else {
 		_, err = file.WriteString(SelectedLanguage)
-		if(err!=nil) {
-			fmt.Println(T(Lang_Config_ErrOnSave),err)
+		if err != nil {
+			fmt.Println(T(Lang_Config_ErrOnSave), err)
 			fmt.Println(T(ErrorIgnored))
 		}
 		file.Close()
@@ -228,20 +229,18 @@ func SelectLanguage() {
 
 func UpdateLanguage() {
 	langdict, aru := LangDict[SelectedLanguage]
-	if(!aru) {
+	if !aru {
 		panic("Updating to a language that not currently provided")
 		return
 	}
-	I18nDict=langdict
-	fmt.Printf("%s\n",T(LanguageUpdated))
+	I18nDict = langdict
+	fmt.Printf("%s\n", T(LanguageUpdated))
 }
-
-
 
 func T(code uint16) string {
 	r, has := I18nDict[code]
 	if !has {
-		r,has=I18nDict_en_US[code]
+		r, has = I18nDict_en_US[code]
 		if !has {
 			return "???"
 		}
@@ -253,10 +252,10 @@ func loadConfigPath() string {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Println("[PLUGIN] WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n")
-		homedir="."
+		homedir = "."
 	}
 	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
 	os.MkdirAll(fbconfigdir, 0755)
-	file:=filepath.Join(fbconfigdir,"language")
+	file := filepath.Join(fbconfigdir, "language")
 	return file
 }

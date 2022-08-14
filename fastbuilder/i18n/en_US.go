@@ -94,6 +94,7 @@ var I18nDict_en_US map[uint16]string = map[uint16]string{
 	Notify_NeedOp:                       "FastBuilder requires operator privilege.",
 	Notify_TurnOnCmdFeedBack:            "FastBuilder requires gamerule sendcommandfeedback to be true, we have already turn it on, and remember to turn it off",
 	Omega_Enabled:                       "Omega System Enabled!",
+	OpPrivilegeNotGrantedForOperation:   "Op privilege not granted for this operation, please grant bot op privilege",
 	Parsing_UnterminatedEscape:          "Unterminated escape",
 	Parsing_UnterminatedQuotedString:    "Unterminated quoted string",
 	PositionGot:                         "Position got",
