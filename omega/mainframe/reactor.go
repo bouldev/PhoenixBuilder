@@ -301,11 +301,15 @@ func (o *Reactor) AppendOnKnownPlayerExistCallback(cb func(string)) {
 	o.OnKnownPlayerExistCallback = append(o.OnKnownPlayerExistCallback, cb)
 }
 
+func (o *Reactor) GetChunkAssembler() *assembler.Assembler {
+	return o.chunkAssembler
+}
+
 func (o *Reactor) onBootstrap() {
-	o.chunkAssembler = assembler.NewAssembler()
+	o.chunkAssembler = assembler.NewAssembler(assembler.REQUEST_NORMAL, time.Minute*5)
 	o.chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		o.o.adaptor.Write(pk)
-	}, time.Millisecond*40, time.Minute*3)
+	})
 	memoryProvider := lru.NewLRUMemoryChunkCacher(14)
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)

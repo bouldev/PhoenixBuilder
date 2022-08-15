@@ -7,6 +7,7 @@ import (
 	"path"
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/define"
+	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/mirror/io/mcdb"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
@@ -67,7 +68,9 @@ type TeleportFn func(x, z int)
 func (o *Exporter) Activate() {
 	defer func() {
 		close(o.doneWaiter)
+		o.frame.GetGameListener().GetChunkAssembler().AdjustSendPeriod(assembler.REQUEST_NORMAL)
 	}()
+	o.frame.GetGameListener().GetChunkAssembler().AdjustSendPeriod(assembler.REQUEST_AGGRESSIVE)
 	startPos := o.task.StartPos
 	endPos := o.task.EndPos
 	structureName := o.task.StructureName

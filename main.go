@@ -382,11 +382,11 @@ func runClient(env *environment.PBEnvironment) {
 
 	signalhandler.Install(conn, env)
 
-	chunkAssembler := assembler.NewAssembler()
+	chunkAssembler := assembler.NewAssembler(assembler.REQUEST_AGGRESSIVE, time.Second*5)
 	// max 100 chunk request per second
 	chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		conn.WritePacket(pk)
-	}, time.Millisecond*20, time.Second*5)
+	})
 	// currentChunkConstructor := &world_provider.ChunkConstructor{}
 
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
