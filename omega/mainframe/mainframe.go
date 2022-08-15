@@ -48,7 +48,8 @@ type Omega struct {
 	Components              []defines.Component
 	configStageCompleteFlag bool
 
-	scheduler *OmegaBotTaskScheduler
+	scheduler            *OmegaBotTaskScheduler
+	QuerySensitiveInfoFN func(defines.SensitiveInfoType) (string, error)
 }
 
 func NewOmega() *Omega {
@@ -67,6 +68,10 @@ func NewOmega() *Omega {
 	o.Reactor = newReactor(o)
 	o.ctx = &map[string]interface{}{}
 	return o
+}
+
+func (o *Omega) QuerySensitiveInfo(key defines.SensitiveInfoType) (string, error) {
+	return o.QuerySensitiveInfoFN(key)
 }
 
 func (o *Omega) GetContext() *map[string]interface{} {

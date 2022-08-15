@@ -349,6 +349,7 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	rootDir := o.bootstrapRootDir()
 	fmt.Printf("根目录为: %v， 开始分配存储目录\n", rootDir)
 	o.bootstrapDirs()
+	o.QuerySensitiveInfoFN = adaptor.QuerySensitiveInfo
 	o.adaptor = adaptor
 	o.uqHolder = adaptor.GetInitUQHolderCopy()
 	fmt.Println("开始空间回收任务: 日志压缩")

@@ -175,6 +175,7 @@ type GameListener interface {
 // 安全事件发送和处理，比如某插件发现有玩家在恶意修改设置
 // 而另一个插件则在 QQ 群里通知这个事件的发生
 type SecurityEventIO interface {
+	QuerySensitiveInfo(SensitiveInfoType) (string, error)
 	RedAlert(info string)
 	RegOnAlertHandler(cb func(info string))
 }
