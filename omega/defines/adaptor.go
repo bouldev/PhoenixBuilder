@@ -6,6 +6,13 @@ import (
 	"phoenixbuilder/mirror"
 )
 
+type SensitiveInfoType string
+
+const (
+	SENSITIVE_INFO_USERNAME_HASH    = SensitiveInfoType("USER_NAME_HASH")
+	SENSITIVE_INFO_SERVER_CODE_HASH = SensitiveInfoType("RENTAL_SERVER_CODE")
+)
+
 // ConnectionAdaptor 描述了这个租赁服框架在被移植时还需要哪些接口
 // GetBackendCommandFeeder 描述的是后台的命令行输入
 // 如果可以保证从连接MC开始的每一个包都能通过 Read 获得，
@@ -14,6 +21,7 @@ import (
 // 则必须从远程获得该信息，以保证状态信息的同步
 // 如果连接断开，应该调用 System.Stop() 并销毁 System
 type ConnectionAdaptor interface {
+	QuerySensitiveInfo(SensitiveInfoType) (string, error)
 	GetPacketFeeder() chan packet.Packet
 	Write(packet.Packet)
 	GetInitUQHolderCopy() *uqHolder.UQHolder

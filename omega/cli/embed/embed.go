@@ -1,6 +1,7 @@
 package embed
 
 import (
+	"crypto/md5"
 	"fmt"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
@@ -8,7 +9,9 @@ import (
 	"phoenixbuilder/minecraft"
 	mc_packet "phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
+	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/mainframe"
+	"strings"
 	"time"
 )
 
@@ -60,6 +63,28 @@ func (ea *EmbeddedAdaptor) FeedChunkData(cd *mirror.ChunkData) {
 
 func (ea *EmbeddedAdaptor) GetChunkFeeder() chan *mirror.ChunkData {
 	return ea.ChunkDataFeeder
+}
+
+func (ea *EmbeddedAdaptor) QuerySensitiveInfo(key defines.SensitiveInfoType) (result string, err error) {
+	rawVal := ""
+	switch key {
+	case defines.SENSITIVE_INFO_SERVER_CODE_HASH:
+		rawVal = ea.env.ServerCode
+	case defines.SENSITIVE_INFO_USERNAME_HASH:
+		_frags := strings.Split(ea.env.FBUCUsername, "|")
+		if len(_frags) > 0 {
+			rawVal = _frags[0]
+		}
+	}
+	if rawVal == "" {
+		return "", fmt.Errorf("no result")
+	} else {
+		cvt := func(in [16]byte) []byte {
+			return in[:16]
+		}
+		hashedBytes := cvt(md5.Sum([]byte(rawVal)))
+		return fmt.Sprintf("%x", hashedBytes), nil
+	}
 }
 
 func EnableOmegaSystem(env *environment.PBEnvironment) *EmbeddedAdaptor {
