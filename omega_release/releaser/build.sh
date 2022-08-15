@@ -12,7 +12,7 @@ function get_hash(){
     hashStr="$(echo $outstr | cut -d' ' -f1)"
     echo "$hashStr"
 }
-
+git log -50 --color --reverse > ${PHOENIX_BUILDER_DIR}/omega/mainframe/update.log
 make -C ${PHOENIX_BUILDER_DIR} clean 
 make -C ${PHOENIX_BUILDER_DIR} linux-amd64 windows-amd64 macos-amd64 android-arm64 -j4
 cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-linux-amd64 ./binary/fastbuilder-linux
@@ -24,6 +24,8 @@ echo $(get_hash ./binary/fastbuilder-windows.exe) > ./binary/fastbuilder-windows
 echo $(get_hash ./binary/fastbuilder-macos) > ./binary/fastbuilder-macos.hash
 echo $(get_hash ./binary/fastbuilder-android) > ./binary/fastbuilder-android.hash
 cat ./binary/*.hash > ./binary/all.hash
+rm ${PHOENIX_BUILDER_DIR}/omega/mainframe/update.log
+touch ${PHOENIX_BUILDER_DIR}/omega/mainframe/update.log
 
 go run ./compressor/main.go -in "\
         ./binary/fastbuilder-linux,\
@@ -48,8 +50,10 @@ echo $(get_hash ./binary/launcher-linux) > ./binary/launcher-linux.hash
 echo $(get_hash ./binary/launcher-macos) > ./binary/launcher-macos.hash
 echo $(get_hash ./binary/launcher-android) > ./binary/launcher-android.hash
 
+cp ./releaser/install.sh ./binary
 cp ./releaser/dockerfile ./binary
 cp ./releaser/docker_bootstrap.sh ./binary
+git log -50 --reverse > ./binary/update.log
 
 echo "$TIME_STAMP" >> ./binary/TIME_STAMP
 
