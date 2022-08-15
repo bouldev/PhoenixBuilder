@@ -80,6 +80,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 	// var lastDelayBlock *IOBlockForBuilder
 	fallBackActions := make(map[define.CubePos]func())
 	fallBackActionsMu := sync.Mutex{}
+	moveTicker := time.NewTicker(time.Millisecond * 50)
 	for block := range blocksIn {
 		if o.Stop {
 			return
@@ -94,6 +95,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 		if (xmove*xmove) > 16*16 || (zmove*zmove) > 16*16 {
 			o.NormalCmdSender(fmt.Sprintf("tp @s %v %v %v", block.Pos[0], 320, block.Pos[2]))
 			lastPos = block.Pos
+			<-moveTicker.C
 
 			// 	if !o.IgnoreNbt && lastDelayBlock != nil {
 			// 		counter := 0

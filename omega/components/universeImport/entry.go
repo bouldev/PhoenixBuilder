@@ -1,12 +1,14 @@
-package components
+package universe_import
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"path"
 	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
@@ -16,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/disintegration/imaging"
 	"github.com/pterm/pterm"
 )
 
@@ -273,50 +276,50 @@ func (o *UniverseImport) onImport(cmds []string) (stop bool) {
 		pterm.Error.Printfln("导入指令格式不正确，应该为 %v [路径] [x] [y] [z]", o.Triggers[0])
 		return true
 	}
-	path := cmds[0]
+	filePath := cmds[0]
 	if runtime.GOOS == "windows" {
-		if (!utils.IsDir(path)) && (!utils.IsFile(path)) {
-			pathAlter := strings.ReplaceAll(path, "/", "\\")
+		if (!utils.IsDir(filePath)) && (!utils.IsFile(filePath)) {
+			pathAlter := strings.ReplaceAll(filePath, "/", "\\")
 			if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
-				pathAlter := strings.ReplaceAll(path, "//", "\\")
+				pathAlter := strings.ReplaceAll(filePath, "//", "\\")
 				if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
-					pathAlter := strings.ReplaceAll(path, "//", "/")
+					pathAlter := strings.ReplaceAll(filePath, "//", "/")
 					if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
-						pathAlter = strings.ReplaceAll(path, "/", "//")
+						pathAlter = strings.ReplaceAll(filePath, "/", "//")
 						if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
-							pathAlter = strings.ReplaceAll(path, "\\", "/")
+							pathAlter = strings.ReplaceAll(filePath, "\\", "/")
 							if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
-								pathAlter = strings.ReplaceAll(path, "\\", "//")
+								pathAlter = strings.ReplaceAll(filePath, "\\", "//")
 								if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
 									// 这总不能还是斜杠的问题了吧？！
-									path = o.Frame.GetRelativeFileName(path)
+									filePath = o.Frame.GetRelativeFileName(filePath)
 								} else {
-									path = pathAlter
+									filePath = pathAlter
 								}
 							} else {
-								path = pathAlter
+								filePath = pathAlter
 							}
 						} else {
-							path = pathAlter
+							filePath = pathAlter
 						}
 					} else {
-						path = pathAlter
+						filePath = pathAlter
 					}
 				} else {
-					path = pathAlter
+					filePath = pathAlter
 				}
 			} else {
-				path = pathAlter
+				filePath = pathAlter
 			}
 		}
-	} else if !strings.HasPrefix(path, "/") {
-		if (!utils.IsDir(path)) && (!utils.IsFile(path)) {
-			path = o.Frame.GetRelativeFileName(path)
+	} else if !strings.HasPrefix(filePath, "/") {
+		if (!utils.IsDir(filePath)) && (!utils.IsFile(filePath)) {
+			filePath = o.Frame.GetRelativeFileName(filePath)
 		}
 	}
-	find, _, errStack := utils.GetFileNotFindStack(path)
+	find, _, errStack := utils.GetFileNotFindStack(filePath)
 	if !find {
-		pterm.Error.Println("文件 %v 无法找到，具体问题如下：", path)
+		pterm.Error.Println("文件 %v 无法找到，具体问题如下：", filePath)
 		for _, l := range errStack {
 			pterm.Error.Println(l)
 		}
@@ -341,11 +344,47 @@ func (o *UniverseImport) onImport(cmds []string) (stop bool) {
 	} else {
 		start[2] = i
 	}
-	o.data.QueuedTasks = append(o.data.QueuedTasks, &universeImportTask{
-		Path:     path,
-		Offset:   start,
-		Progress: 0,
-	})
+	fp, err := os.OpenFile(filePath, os.O_RDONLY, 0755)
+	if err != nil {
+		pterm.Error.Println("文件 %v 无法打开，具体问题为: %v", filePath, err)
+	} else {
+		defer fp.Close()
+		img, err := imaging.Decode(fp)
+		if err != nil {
+			o.data.QueuedTasks = append(o.data.QueuedTasks, &universeImportTask{
+				Path:     filePath,
+				Offset:   start,
+				Progress: 0,
+			})
+		} else {
+			// is an image
+			go func() {
+				dir := o.Frame.GetOmegaNormalCacheDir("image_import", path.Base(filePath))
+				os.MkdirAll(dir, 0755)
+				staructureFile, err := PreProcessImage(img, dir, cmds[4:])
+				if err != nil {
+					pterm.Error.Println(err)
+				} else {
+					suggestX := int(math.Round(float64(start.X())/64.)) * 64
+					suggestZ := int(math.Round(float64(start.Z())/64)) * 64
+					if (suggestX/64)%2 == 0 {
+						suggestX += 64
+					}
+					if (suggestZ/64)%2 == 0 {
+						suggestZ += 64
+					}
+					if suggestX != start.X() || suggestZ != start.Z() {
+						pterm.Warning.Printfln("对于地图画，建议将导入点设为 %v %v %v", suggestX, start.Y(), suggestZ)
+					}
+					o.data.QueuedTasks = append(o.data.QueuedTasks, &universeImportTask{
+						Path:     staructureFile,
+						Offset:   start,
+						Progress: 0,
+					})
+				}
+			}()
+		}
+	}
 	return true
 }
 
@@ -372,7 +411,7 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 	o.Frame.SetBackendMenuEntry(&defines.BackendMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
-			ArgumentHint: "[路径] [x] [y] [z]",
+			ArgumentHint: "[路径] [x] [y] [z]  (对于图片而言，应该为 [路径] [x] [y] [z] [x方向地图数] [z方向地图数])",
 			FinalTrigger: false,
 			Usage:        "导入建筑，支持 bdx schem schmatic",
 		},
@@ -416,6 +455,13 @@ func (o *UniverseImport) OnLevelChunk(cd *mirror.ChunkData) {
 }
 
 func (o *UniverseImport) Activate() {
+	time.Sleep(3 * time.Second)
+	for _, block := range chunk.ColorTable {
+		time.Sleep(100 * time.Millisecond)
+		o.Frame.GetGameControl().SendCmd("tp @s ~ ~ ~1")
+		// o.Frame.GetGameControl().SendCmd(fmt.Sprintf("setblock ~~-1~ %v %v", "wool", 0))
+		o.Frame.GetGameControl().SendCmd(fmt.Sprintf("setblock ~~~ %v %v", block.Block.Name, block.Block.Val))
+	}
 	t := time.NewTicker(time.Second)
 	for range t.C {
 		if o.needDecision {
@@ -444,6 +490,7 @@ func (o *UniverseImport) Activate() {
 			o.fileChange = true
 		}
 	}
+
 }
 
 func (o *UniverseImport) Signal(signal int) error {

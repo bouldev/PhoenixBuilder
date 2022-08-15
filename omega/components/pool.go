@@ -5,6 +5,7 @@ import (
 	"phoenixbuilder/omega/components/omega_side"
 	"phoenixbuilder/omega/components/qqGroupLink"
 	universe_export "phoenixbuilder/omega/components/universeExport"
+	universe_import "phoenixbuilder/omega/components/universeImport"
 	"phoenixbuilder/omega/components/woodaxe"
 	"phoenixbuilder/omega/defines"
 )
@@ -138,7 +139,7 @@ func GetComponentsPool() map[string]func() defines.Component {
 			return &RemoveBlock{BasicComponent: &defines.BasicComponent{}}
 		},
 		"统一导入系统": func() defines.Component {
-			return &UniverseImport{BasicComponent: &defines.BasicComponent{}}
+			return &universe_import.UniverseImport{BasicComponent: &defines.BasicComponent{}}
 		},
 		"第三方_by温柔_地皮组件": func() defines.Component {
 			return &TerritoryTest{BasicComponent: &defines.BasicComponent{}}

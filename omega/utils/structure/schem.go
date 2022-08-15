@@ -51,7 +51,7 @@ type SchemFileStructrue struct {
 	Version       int32            // 2
 	Length        int16
 	Height        int16
-	Width         int16
+	Width         int16 //x
 	BlockEntities NbtBlocks
 }
 
@@ -81,12 +81,12 @@ func EncodeSchem(chunks map[define.ChunkPos]*mirror.ChunkData, startPos, endPos 
 	schemFile := &SchemFileStructrue{
 		Palette: make(map[string]int32),
 		Metadata: WEOffset{
-			WEOffsetX: int32(startPos.X()),
-			WEOffsetY: int32(endPos.Y()),
-			WEOffsetZ: int32(startPos.Z()),
+			WEOffsetX: 0,
+			WEOffsetY: 0,
+			WEOffsetZ: 0,
 		},
 		DataVersion:   2975,
-		Offset:        []int32{int32(startPos.X()), int32(startPos.Y()), int32(startPos.Z())},
+		Offset:        []int32{0, 0, 0},
 		PaletteMax:    0,
 		Version:       2,
 		Length:        int16(endPos.Z()) - int16(startPos.Z()),

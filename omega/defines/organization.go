@@ -101,6 +101,7 @@ type StorageAndLogProvider interface {
 	GetWorldsDir(elem ...string) string
 	GetOmegaSideDir(elem ...string) string
 	GetOmegaCacheDir(elem ...string) string
+	GetOmegaNormalCacheDir(elem ...string) string
 	WriteFileData(topic string, data []byte) error
 	WriteJsonData(topic string, data interface{}) error
 	WriteJsonDataWithTMP(topic string, tmpSuffix string, data interface{}) error

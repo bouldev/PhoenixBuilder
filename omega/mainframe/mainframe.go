@@ -94,6 +94,15 @@ func (o *Omega) GetOmegaCacheDir(elem ...string) string {
 	return path.Join("omega_cache", path.Join(elem...))
 }
 
+func (o *Omega) GetOmegaNormalCacheDir(elem ...string) string {
+	for _, ele := range elem {
+		if strings.HasPrefix(ele, "/") || strings.Contains(ele, "..") {
+			panic(fmt.Errorf("为了安全考虑，路径开头不能为 / 且不能包含 .."))
+		}
+	}
+	return path.Join(o.storageRoot, path.Join(elem...))
+}
+
 func (o *Omega) GetAllConfigs() []*defines.ComponentConfig {
 	return o.ComponentConfigs
 }
