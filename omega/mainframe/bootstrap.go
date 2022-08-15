@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
+	_ "embed"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -345,7 +346,13 @@ func (o *Omega) bootstrapComponents() (success bool) {
 	return true
 }
 
+//go:embed update.log
+var updateInfo []byte
+
 func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
+	if len(updateInfo) > 10 {
+		pterm.DefaultBox.WithTitle(pterm.FgBlue.Sprintf("更新日志(最近 50 次更新)")).WithTitleBottomRight().WithRightPadding(0).WithBottomPadding(0).Println(string(updateInfo))
+	}
 	rootDir := o.bootstrapRootDir()
 	fmt.Printf("根目录为: %v， 开始分配存储目录\n", rootDir)
 	o.bootstrapDirs()
@@ -409,4 +416,7 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	fmt.Println(strings.Join(GetLogo(LOGO_BOTH), "\n"))
 	pterm.Success.Println("OMEGA_ng 等待指令")
 	pterm.Success.Println("输入 ? 以获得帮助")
+	if len(updateInfo) > 10 {
+		pterm.Success.Println("您可在最上方看到更新信息")
+	}
 }

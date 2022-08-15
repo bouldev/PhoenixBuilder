@@ -54,11 +54,7 @@ func LookForPossibleRepo() error {
 				}
 			}
 		}()
-		select {
-		case <-successCtx:
-			return nil
-		case <-time.NewTimer(time.Millisecond * 100).C:
-		}
+		time.Sleep(3 * time.Millisecond)
 	}
 	select {
 	case <-successCtx:
@@ -690,7 +686,7 @@ func GetRemoteOmegaHash() string {
 	default:
 		panic("未知平台" + GetPlantform())
 	}
-	fmt.Println(url)
+	// fmt.Println(url)
 	hashBytes := utils.DownloadMicroContent(url)
 	return string(hashBytes)
 }
@@ -735,7 +731,7 @@ func DownloadOmega() {
 	default:
 		panic("未知平台" + GetPlantform())
 	}
-	fmt.Println(url)
+	// fmt.Println(url)
 	compressedData := utils.DownloadSmallContent(url)
 	var execBytes []byte
 	var err error
