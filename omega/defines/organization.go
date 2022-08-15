@@ -6,6 +6,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/define"
+	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/mirror/io/world"
 	"time"
 
@@ -157,6 +158,7 @@ type PlayerKit interface {
 
 // 与游戏的交互接口，如何捕获和处理游戏的数据包和消息
 type GameListener interface {
+	GetChunkAssembler() *assembler.Assembler
 	SetOnAnyPacketCallBack(func(packet.Packet))
 	SetOnTypedPacketCallBack(uint32, func(packet.Packet))
 	SetGameMenuEntry(entry *GameMenuEntry)

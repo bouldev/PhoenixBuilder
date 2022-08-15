@@ -10,6 +10,7 @@ import (
 	"phoenixbuilder/mirror"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
+	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"phoenixbuilder/omega/utils/structure"
@@ -55,6 +56,7 @@ type Importor struct {
 	doneWaiter      chan struct{}
 	speed           int
 	boostSleepTime  time.Duration
+	frame           defines.MainFrame
 }
 
 func (o *Importor) cancel() {
@@ -65,7 +67,9 @@ func (o *Importor) cancel() {
 
 func (o *Importor) Activate() {
 	pterm.Info.Printfln("开始处理任务 %v 起点(%v %v %v) 从 %v 方块处开始导入", o.task.Path, o.task.Offset[0], o.task.Offset[1], o.task.Offset[2], o.task.Progress)
+	o.frame.GetGameListener().GetChunkAssembler().AdjustSendPeriod(assembler.REQUEST_LAZY)
 	o.builder.Build(o.finalFeeder, o.speed, o.boostSleepTime)
+	o.frame.GetGameListener().GetChunkAssembler().AdjustSendPeriod(assembler.REQUEST_NORMAL)
 	close(o.doneWaiter)
 }
 
@@ -164,6 +168,7 @@ func (o *UniverseImport) StartNewTask() {
 			task:            task,
 			speed:           o.ImportSpeed,
 			boostSleepTime:  boostSleepTime,
+			frame:           o.Frame,
 		}
 		o.currentBuilder.doneWaiter = make(chan struct{})
 		progressUpdateInterval := o.ImportSpeed + 1

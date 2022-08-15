@@ -24,9 +24,11 @@ type Assembler struct {
 	centerChunk      *define.ChunkPos
 	radius           int32
 	allowCache       bool
+	validCacheTime   time.Duration
+	sendPeriod       time.Duration
 }
 
-func NewAssembler() *Assembler {
+func NewAssembler(sendPeriod time.Duration, validCacheTime time.Duration) *Assembler {
 	airRID, ok := chunk.StateToRuntimeID("minecraft:air", nil)
 	if !ok {
 		panic("cannot find air runtime ID")
@@ -42,8 +44,24 @@ func NewAssembler() *Assembler {
 		centerChunk:      nil,
 		radius:           10,
 	}
+	a.AdjustSendPeriod(sendPeriod)
+	a.AdjustValidCacheTime(validCacheTime)
 	return a
 
+}
+
+const (
+	REQUEST_AGGRESSIVE = time.Millisecond * 40
+	REQUEST_NORMAL     = time.Millisecond * 500
+	REQUEST_LAZY       = time.Microsecond * 1000
+)
+
+func (o *Assembler) AdjustValidCacheTime(d time.Duration) {
+	o.validCacheTime = d
+}
+
+func (o *Assembler) AdjustSendPeriod(d time.Duration) {
+	o.sendPeriod = d / 24
 }
 
 func (o *Assembler) GenRequestFromLevelChunk(pk *packet.LevelChunk) (requests []*packet.SubChunkRequest) {
@@ -184,12 +202,12 @@ func (o *Assembler) CancelQueueByPublishUpdate(p *packet.NetworkChunkPublisherUp
 	o.queueMu.Unlock()
 }
 
-func (o *Assembler) CreateRequestScheduler(writeFn func(pk *packet.SubChunkRequest), sendPeriod time.Duration, validCacheTime time.Duration) {
+func (o *Assembler) CreateRequestScheduler(writeFn func(pk *packet.SubChunkRequest)) {
 	tickerAwaked := false
 	// 16 * 16 256 ~ 420 chunks
 	requestSender := func() {
 		// pterm.Info.Println("ticker awaked")
-		t := time.NewTicker(sendPeriod / 24)
+		lastCheckPointTime := time.Now()
 		o.queueMu.RLock()
 		for cp, requests := range o.requestQueue {
 			pendingTasksNum := len(o.requestQueue)
@@ -200,7 +218,7 @@ func (o *Assembler) CreateRequestScheduler(writeFn func(pk *packet.SubChunkReque
 			if o.allowCache {
 				o.taskMu.RLock()
 				if visitTime, hasK := o.visitTime[cp]; hasK {
-					if time.Since(visitTime) < validCacheTime {
+					if time.Since(visitTime) < o.validCacheTime {
 						o.taskMu.RUnlock()
 						o.queueMu.RLock()
 						continue
@@ -210,7 +228,8 @@ func (o *Assembler) CreateRequestScheduler(writeFn func(pk *packet.SubChunkReque
 			}
 			for _, request := range requests {
 				writeFn(request)
-				<-t.C
+				time.Sleep(time.Until(lastCheckPointTime.Add(o.sendPeriod)))
+				lastCheckPointTime = time.Now()
 			}
 			o.queueMu.Lock()
 			delete(o.requestQueue, cp)
