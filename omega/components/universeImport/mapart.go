@@ -59,7 +59,7 @@ func init() {
 		}
 		javaBlock, found := chunk.RuntimeIDToJava(rtid)
 		if !found {
-			javaBlock = fmt.Sprintf("omega:as_runtime_id[%v]", rtid)
+			javaBlock = fmt.Sprintf("omega:as_legacy_block[name=%v,val=%v]", cdata.Block.Name, cdata.Block.Val)
 		}
 		rtidJ, found := chunk.JavaToRuntimeID(javaBlock)
 		if !found || rtidJ != rtid {
@@ -271,7 +271,8 @@ func PreProcessImage(img image.Image, dir string, cmds []string) (structureFile 
 		if found {
 			return javaStr
 		} else {
-			return fmt.Sprintf("omega:as_runtime_id[%v]", u)
+			block := chunk.RuntimeIDToLegacyBlock(u)
+			return fmt.Sprintf("omega:as_legacy_block[name=%v,val=%v]", block.Name, block.Val)
 		}
 
 	}

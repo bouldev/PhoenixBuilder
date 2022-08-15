@@ -449,7 +449,7 @@ var ColorTable = []ColorBlock{
 	{Block: &LegacyBlock{Name: "diamond_block", Val: 0}, Color: colorful.Color{102, 173, 169}},
 	{Block: &LegacyBlock{Name: "farmland", Val: 0}, Color: colorful.Color{116, 88, 65}},
 	{Block: &LegacyBlock{Name: "ice", Val: 0}, Color: colorful.Color{149, 149, 231}},
-	{Block: &LegacyBlock{Name: "pumpkin", Val: 1}, Color: colorful.Color{189, 122, 62}},
+	{Block: &LegacyBlock{Name: "pumpkin", Val: 0}, Color: colorful.Color{189, 122, 62}},
 	{Block: &LegacyBlock{Name: "monster_egg", Val: 1}, Color: colorful.Color{153, 156, 169}},
 	{Block: &LegacyBlock{Name: "red_mushroom_block", Val: 0}, Color: colorful.Color{131, 53, 50}},
 	// {Block: &LegacyBlock{Name: "vine", Val: 1}, Color: colorful.Color{68, 89, 34}},
@@ -560,6 +560,8 @@ func InitMapping(mappingInData []byte) {
 		return LegacyBlocks[runtimeID]
 	}
 	numberRegex := regexp.MustCompile(`\d+`)
+	legacyBlockNameRegex := regexp.MustCompile(`name=.+,`)
+	legacyBlockValRegex := regexp.MustCompile(`val=.+]`)
 	JavaStrToRuntimeIDMapping = mappingIn.JavaToRid
 	JavaToRuntimeID = func(javaBlockStr string) (runtimeID uint32, found bool) {
 		if rtid, hasK := mappingIn.JavaToRid[javaBlockStr]; hasK {
@@ -568,9 +570,30 @@ func InitMapping(mappingInData []byte) {
 			matchs := numberRegex.FindAllString(javaBlockStr, 1)
 			if len(matchs) > 0 {
 				if rtid, err := strconv.Atoi(string(matchs[0])); err == nil {
+					mappingIn.JavaToRid[javaBlockStr] = uint32(rtid)
 					return uint32(rtid), true
 				}
 			}
+			mappingIn.JavaToRid[javaBlockStr] = AirRID
+		} else if strings.HasPrefix(javaBlockStr, "omega:as_legacy_block[") {
+			name := "air"
+			matchs := legacyBlockNameRegex.FindAllString(javaBlockStr, 1)
+			if len(matchs) > 0 {
+				name = matchs[0]
+				name = name[5 : len(name)-1]
+			}
+			matchs = legacyBlockValRegex.FindAllString(javaBlockStr, 1)
+			if len(matchs) > 0 {
+				if val, err := strconv.Atoi(string(matchs[0][4 : len(matchs[0])-1])); err == nil {
+					rtid, found := LegacyBlockToRuntimeID(name, uint16(val))
+					if found {
+						mappingIn.JavaToRid[javaBlockStr] = uint32(rtid)
+						return uint32(rtid), true
+					}
+
+				}
+			}
+			mappingIn.JavaToRid[javaBlockStr] = AirRID
 		}
 		return AirRID, false
 	}
