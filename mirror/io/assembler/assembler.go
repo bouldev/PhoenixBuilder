@@ -53,7 +53,7 @@ func NewAssembler(sendPeriod time.Duration, validCacheTime time.Duration) *Assem
 const (
 	REQUEST_AGGRESSIVE = time.Millisecond * 40
 	REQUEST_NORMAL     = time.Millisecond * 500
-	REQUEST_LAZY       = time.Microsecond * 1000
+	REQUEST_LAZY       = time.Millisecond * 10000
 )
 
 func (o *Assembler) AdjustValidCacheTime(d time.Duration) {

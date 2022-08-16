@@ -39,6 +39,8 @@ type UniverseExport struct {
 	Triggers           []string `json:"后台触发词"`
 	FileName           string   `json:"断点续导记录文件"`
 	AutoContinueImport bool     `json:"Omega启动时是否自动继续导出"`
+	ContinueTriggers   []string `json:"继续导出的触发词"`
+	CancelTriggers     []string `json:"取消导出的触发词"`
 	fileChange         bool
 	needDecision       bool
 	currentExporter    *Exporter
@@ -386,7 +388,7 @@ func (o *UniverseExport) Inject(frame defines.MainFrame) {
 		o.needDecision = true
 		o.Frame.SetBackendMenuEntry(&defines.BackendMenuEntry{
 			MenuEntry: defines.MenuEntry{
-				Triggers:     []string{"恢复导出"},
+				Triggers:     o.ContinueTriggers,
 				ArgumentHint: "",
 				FinalTrigger: false,
 				Usage:        "从之前的断点继续导出",
@@ -399,10 +401,10 @@ func (o *UniverseExport) Inject(frame defines.MainFrame) {
 	}
 	o.Frame.SetBackendMenuEntry(&defines.BackendMenuEntry{
 		MenuEntry: defines.MenuEntry{
-			Triggers:     []string{"取消导出"},
+			Triggers:     o.CancelTriggers,
 			ArgumentHint: "",
 			FinalTrigger: false,
-			Usage:        "取消所有导处任务",
+			Usage:        "取消所有导出任务",
 		},
 		OptionalOnTriggerFn: func(cmds []string) (stop bool) {
 			o.cancelAll()
@@ -420,6 +422,12 @@ func (o *UniverseExport) OnLevelChunk(cd *mirror.ChunkData) {
 }
 
 func (o *UniverseExport) Init(cfg *defines.ComponentConfig) {
+	if cfg.Version == "0.0.1" {
+		cfg.Configs["继续导出的触发词"] = []string{"继续导出"}
+		cfg.Configs["取消导出的触发词"] = []string{"取消导出"}
+		cfg.Version = "0.0.2"
+		cfg.Upgrade()
+	}
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

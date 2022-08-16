@@ -40,6 +40,8 @@ type UniverseImport struct {
 	AutoContinueImport bool     `json:"Omega启动时是否自动继续导入"`
 	IgnoreBlockNbt     bool     `json:"忽略方块nbt信息"`
 	BoostRate          float64  `json:"超频加速比"`
+	ContinueTriggers   []string `json:"继续导入的触发词"`
+	CancelTriggers     []string `json:"取消导入的触发词"`
 	fileChange         bool
 	needDecision       bool
 	data               *UniverseImportData
@@ -253,6 +255,12 @@ func (o *UniverseImport) Init(cfg *defines.ComponentConfig) {
 		cfg.Version = "0.0.2"
 		cfg.Upgrade()
 	}
+	if cfg.Version == "0.0.2" {
+		cfg.Configs["继续导入的触发词"] = []string{"继续导入"}
+		cfg.Configs["取消导入的触发词"] = []string{"取消导入"}
+		cfg.Version = "0.0.3"
+		cfg.Upgrade()
+	}
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {
@@ -425,7 +433,7 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 		o.needDecision = true
 		o.Frame.SetBackendMenuEntry(&defines.BackendMenuEntry{
 			MenuEntry: defines.MenuEntry{
-				Triggers:     []string{"断点续导"},
+				Triggers:     o.ContinueTriggers,
 				ArgumentHint: "",
 				FinalTrigger: false,
 				Usage:        "从之前的断点继续导入",
@@ -438,7 +446,7 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 	}
 	o.Frame.SetBackendMenuEntry(&defines.BackendMenuEntry{
 		MenuEntry: defines.MenuEntry{
-			Triggers:     []string{"取消导入"},
+			Triggers:     o.CancelTriggers,
 			ArgumentHint: "",
 			FinalTrigger: false,
 			Usage:        "取消所有导入任务",
