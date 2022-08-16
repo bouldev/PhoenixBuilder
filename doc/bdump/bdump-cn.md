@@ -162,7 +162,7 @@ db 'E'
 其中，`5240` 指的是 `正在燃烧的熔炉` 在 `ID` 为 `117` 的 `运行时ID方块池` 中的 `ID` ， 第一个 `2` 指的是要向 `正在燃烧的熔炉` 载入 `2` 次数据， `apple\x00` 指的是要放入 `苹果` ，`3` 指的是 `苹果` 的数量为 `3` ，首个 `(unsigned short)0` 指的是要放入的 `苹果` 的 `物品数据值` 为 `0` ，第二个 `(unsigned char)0` 指的是把 `苹果` 放在第 `1` 个槽位，`diamond\x00` 指的是要放入 `钻石` ，`64` 指的是 `钻石` 的数量为 `64` ，第三个 `(unsigned short)0` 指的是要放入的 `钻石` 的 `物品数据值` 为 `0` ，第二个 `2` 指的是把 `钻石` 放在第 `3` 个槽位。
 
 
-您可以在 [PhoenixBuilder/tree/main/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources) 查看 `运行时ID方块池` 。<br>
+您可以在 [PhoenixBuilder/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources) 查看 `运行时ID方块池` 。<br>
 本样例采用的是 [PhoenixBuilder/resources/blockRuntimeIDs/netease/runtimeIds_117.json](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/resources/blockRuntimeIDs/netease/runtimeIds_117.json) 所述之版本。
 ## 签名
 
