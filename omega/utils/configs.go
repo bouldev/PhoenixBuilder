@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"phoenixbuilder/omega/defines"
 	"strings"
@@ -18,7 +19,9 @@ func DeployComponentConfigs(ComponentConfigs []*defines.ComponentConfig, root st
 		} else {
 			counter[cfg.Name] = 1
 		}
-		p := path.Join(root, "配置", fmt.Sprintf("组件-%v-%v.json", cfg.Name, i))
+		name := cfg.Name
+		name = strings.ReplaceAll(name, "::", "__")
+		p := path.Join(root, "配置", fmt.Sprintf("组件-%v-%v.json", name, i))
 		if err := WriteJsonData(p, cfg); err != nil {
 			return err
 		}
@@ -35,6 +38,10 @@ func CollectComponentConfigs(root string) (ComponentConfigs []*defines.Component
 	ComponentConfigs = []*defines.ComponentConfig{}
 	for _, entry := range entries {
 		if !strings.HasPrefix(entry.Name(), "组件") || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		if strings.Contains(entry.Name(), "::") {
+			os.Remove(path.Join(root, "配置", entry.Name()))
 			continue
 		}
 		p := path.Join(root, "配置", entry.Name())
