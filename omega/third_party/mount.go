@@ -38,7 +38,8 @@ func mountComponents(nameSpace NameSpace, Components map[string]defines.Componen
 		panic(err)
 	}
 	DefaultConfigsMap := map[string]*defines.ComponentConfig{}
-	for _, cfg := range DefaultConfigs {
+	for _, _cfg := range DefaultConfigs {
+		cfg := _cfg
 		cfg.Disabled = true
 		cfg.Source = string(nameSpace)
 		cfg.Name = string(nameSpace) + "::" + cfg.Name
