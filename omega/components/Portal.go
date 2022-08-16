@@ -25,6 +25,7 @@ type Portal struct {
 	ListTrigger   []string `json:"列出存档点触发词"`
 	Selector      string   `json:"条件选择器"`
 	positions     map[string]map[string]*PortalEntry
+	queryNameFn   collaborate.FUNCTYPE_GET_POSSIBLE_NAME
 }
 
 func (o *Portal) Init(cfg *defines.ComponentConfig) {
@@ -38,13 +39,22 @@ func (o *Portal) markFileChange() {
 	o.fileChange = true
 }
 
+func (o *Portal) BeforeActivate() (err error) {
+	possibleNames, hasK := o.Frame.GetContext(collaborate.INTERFACE_POSSIBLE_NAME)
+	if !hasK {
+		panic(fmt.Errorf("collaborate interface %v not found", collaborate.INTERFACE_POSSIBLE_NAME))
+	}
+	o.queryNameFn = possibleNames.(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)
+	return nil
+}
+
 func (o *Portal) getPlayerPositions(name string) map[string]*PortalEntry {
 	if ps, hasK := o.positions[name]; hasK {
 		return ps
 	} else {
 		// check rename
-		possibleNames := (*o.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)(name, 0)
-		for _, nameEntry := range possibleNames {
+
+		for _, nameEntry := range o.queryNameFn(name, 0) {
 			if nameEntry.Entry.CurrentName != name {
 				continue
 			}

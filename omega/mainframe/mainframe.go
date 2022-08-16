@@ -29,7 +29,7 @@ type Omega struct {
 	storageRoot string
 
 	uqHolder *uqHolder.UQHolder
-	ctx      *map[string]interface{}
+	ctx      map[string]interface{}
 
 	backendLogger    defines.LineDst
 	redAlertLogger   defines.LineDst
@@ -66,7 +66,7 @@ func NewOmega() *Omega {
 		scheduler:    NewOmegaBotTaskScheduler(),
 	}
 	o.Reactor = newReactor(o)
-	o.ctx = &map[string]interface{}{}
+	o.ctx = map[string]interface{}{}
 	return o
 }
 
@@ -74,8 +74,12 @@ func (o *Omega) QuerySensitiveInfo(key defines.SensitiveInfoType) (string, error
 	return o.QuerySensitiveInfoFN(key)
 }
 
-func (o *Omega) GetContext() *map[string]interface{} {
-	return o.ctx
+func (o *Omega) GetGlobalContext(key string) (entry interface{}) {
+	return o.ctx[key]
+}
+
+func (o *Omega) SetGlobalContext(key string, entry interface{}) {
+	o.ctx[key] = entry
 }
 
 func (o *Omega) GetUQHolder() *uqHolder.UQHolder {

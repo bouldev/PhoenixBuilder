@@ -369,7 +369,7 @@ func (b *QGroupLink) Inject(frame defines.MainFrame) {
 	collaborate_func = func(msg string) {
 		b.sendQQMessage(msg)
 	}
-	(*b.Frame.GetContext())[collaborate.INTERFACE_SEND_TO_GROUP] = collaborate_func
+	b.Frame.SetContext(collaborate.INTERFACE_SEND_TO_GROUP, collaborate_func)
 	hint := "[群服互通]: 连接成功"
 	if b.FilterQQToServerMsgByHead != "" {
 		hint += "\n QQ->MC: 消息开头必须为" + b.FilterQQToServerMsgByHead

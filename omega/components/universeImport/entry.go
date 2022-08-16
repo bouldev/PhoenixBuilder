@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"phoenixbuilder/mirror"
-	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/omega/defines"
@@ -460,13 +459,6 @@ func (o *UniverseImport) OnLevelChunk(cd *mirror.ChunkData) {
 }
 
 func (o *UniverseImport) Activate() {
-	time.Sleep(3 * time.Second)
-	for _, block := range chunk.ColorTable {
-		time.Sleep(100 * time.Millisecond)
-		o.Frame.GetGameControl().SendCmd("tp @s ~ ~ ~1")
-		// o.Frame.GetGameControl().SendCmd(fmt.Sprintf("setblock ~~-1~ %v %v", "wool", 0))
-		o.Frame.GetGameControl().SendCmd(fmt.Sprintf("setblock ~~~ %v %v", block.Block.Name, block.Block.Val))
-	}
 	t := time.NewTicker(time.Second)
 	for range t.C {
 		if o.needDecision {
