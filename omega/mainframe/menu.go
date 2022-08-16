@@ -44,7 +44,7 @@ type Menu struct {
 func (m *Menu) popup() {
 	me := pterm.Prefix{
 		Text:  "",
-		Style: &pterm.ThemeDefault.SuccessPrefixStyle,
+		Style: pterm.NewStyle(pterm.BgLightBlue, pterm.FgLightWhite, pterm.Bold),
 	}
 	toWidth := func(s string, w int) string {
 		if len(s) > w {
@@ -55,27 +55,7 @@ func (m *Menu) popup() {
 		return strings.Repeat(" ", h) + s + strings.Repeat(" ", e)
 	}
 	pterm.NewStyle(pterm.BgDarkGray, pterm.FgLightWhite, pterm.Bold).
-		Println(toWidth("后台指令菜单", 126))
-	for i, e := range m.omega.BackendMenuEntries {
-		//me.Text = toWidth(strings.Join(e.Triggers, " / "), 30)
-		me.Text = toWidth(fmt.Sprintf("%d", i+1), 4)
-		s := pterm.BgGray.Sprint(pterm.Bold.Sprintf("%v %v", e.Triggers[0], e.ArgumentHint)) + e.Usage
-		alters := []string{}
-		for _, t := range e.Triggers {
-			if t == e.Triggers[0] {
-				continue
-			}
-			alters = append(alters, fmt.Sprintf("%v", t))
-		}
-		if len(alters) > 1 {
-			s += "\n\t- 或者: " + strings.Join(alters, "/")
-		}
-		(&pterm.PrefixPrinter{Prefix: me}).Println(s)
-	}
-	me.Text = toWidth("exit", 4)
-	(&pterm.PrefixPrinter{Prefix: me}).Println(pterm.BgGray.Sprint(pterm.Bold.Sprintf("exit ")) + "关闭系统")
-	pterm.NewStyle(pterm.BgDarkGray, pterm.FgLightWhite, pterm.Bold).
-		Println(toWidth("游戏菜单", 124))
+		Println(toWidth("游戏菜单", 80))
 	triggerWords := m.omega.OmegaConfig.Trigger.TriggerWords
 	defaultTrigger := m.omega.OmegaConfig.Trigger.DefaultTigger
 
@@ -85,11 +65,13 @@ func (m *Menu) popup() {
 		pterm.Info.Println("默认触发词: ", defaultTrigger, " 可用触发词: [", strings.Join(triggerWords, "/ "), "]")
 	}
 
-	for i, e := range m.omega.Reactor.GameMenuEntries {
-		me.Text = toWidth(fmt.Sprintf("%d", i+1), 4)
+	primary := pterm.NewStyle(pterm.FgBlue, pterm.BgDefault, pterm.Bold)
+
+	for _, e := range m.omega.Reactor.GameMenuEntries {
+		me.Text = toWidth("->", 4)
 		//me.Text = toWidth(fmt.Sprintf("%v %v", defaultTrigger, e.Triggers[0]), 30)
 		head := fmt.Sprintf("%v %v %v", defaultTrigger, e.Triggers[0], e.ArgumentHint)
-		s := pterm.Bold.Sprint(pterm.BgGray.Sprint(head)) + " " + e.Usage
+		s := primary.Sprint(head) + ": \n    " + e.Usage
 		alters := []string{}
 		for _, t := range e.Triggers {
 			if t == e.Triggers[0] {
@@ -98,13 +80,35 @@ func (m *Menu) popup() {
 			alters = append(alters, fmt.Sprintf("%v %v", defaultTrigger, t))
 		}
 		if len(alters) > 1 {
-			s += "\n\t- 或者: " + strings.Join(alters, "/")
+			s += "\n    或者: " + strings.Join(alters, "/")
 		}
 		(&pterm.PrefixPrinter{Prefix: me}).Println(s)
 	}
 	if len(m.omega.Reactor.GameMenuEntries) == 0 {
 		pterm.Warning.Println("没有可用项")
 	}
+
+	pterm.NewStyle(pterm.BgDarkGray, pterm.FgLightWhite, pterm.Bold).
+		Println(toWidth("后台指令菜单", 80))
+	for _, e := range m.omega.BackendMenuEntries {
+		//me.Text = toWidth(strings.Join(e.Triggers, " / "), 30)
+		// me.Text = toWidth(fmt.Sprintf("%d", i+1), 4)
+		me.Text = toWidth("->", 4)
+		s := primary.Sprint(pterm.Bold.Sprintf("%v %v", e.Triggers[0], e.ArgumentHint)) + ": \n    " + e.Usage
+		alters := []string{}
+		for _, t := range e.Triggers {
+			if t == e.Triggers[0] {
+				continue
+			}
+			alters = append(alters, fmt.Sprintf("%v", t))
+		}
+		if len(alters) > 1 {
+			s += "\n    或者: " + strings.Join(alters, "/")
+		}
+		(&pterm.PrefixPrinter{Prefix: me}).Println(s)
+	}
+	// me.Text = toWidth("-", 4)
+	(&pterm.PrefixPrinter{Prefix: me}).Println(primary.Sprint(pterm.Bold.Sprintf("exit ")) + ": \n    关闭系统")
 	pterm.NewStyle(pterm.BgDarkGray, pterm.FgLightWhite, pterm.Bold).
 		Println(toWidth("", 120))
 }
