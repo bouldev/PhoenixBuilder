@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/omega/defines"
-	"phoenixbuilder/omega/third_part/example"
+	"phoenixbuilder/omega/third_party/example"
 )
 
 type NameSpace string
