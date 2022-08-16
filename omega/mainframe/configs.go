@@ -8,7 +8,9 @@ import (
 	"path/filepath"
 	"phoenixbuilder/omega/components"
 	"phoenixbuilder/omega/defines"
+	third_part_omega_components "phoenixbuilder/omega/third_part"
 	"phoenixbuilder/omega/utils"
+	"strings"
 
 	"github.com/pterm/pterm"
 )
@@ -51,42 +53,63 @@ func (o *Omega) checkAndLoadConfig() {
 	}
 	o.OmegaConfig = utils.CollectOmegaConfig(root)
 	{
-		componentConfigs := utils.CollectComponentConfigs(root)
-		if len(componentConfigs) == 0 {
+		existComponentConfigs := utils.CollectComponentConfigs(root)
+		if len(existComponentConfigs) == 0 {
 			// unpack all default configs
-			if err := json.Unmarshal(defaultComponentsBytes, &componentConfigs); err != nil {
+			if err := json.Unmarshal(defaultComponentsBytes, &existComponentConfigs); err != nil {
 				panic(err)
 			}
-			if err := utils.DeployComponentConfigs(componentConfigs, root); err != nil {
+			if err := utils.DeployComponentConfigs(existComponentConfigs, root); err != nil {
+				panic(err)
+			}
+			thirdPartConfigs := make([]*defines.ComponentConfig, 0)
+			for _, g := range third_part_omega_components.GetAllThirdPartComponents() {
+				for _, c := range g.DefaultConfigs {
+					thirdPartConfigs = append(thirdPartConfigs, c)
+				}
+			}
+			if err := utils.DeployComponentConfigs(thirdPartConfigs, root); err != nil {
 				panic(err)
 			}
 		} else {
 			// check for new configs
-			availableComponentConfigs := []*defines.ComponentConfig{}
+			defaultComponentConfigs := []*defines.ComponentConfig{}
 			newComponentConfigs := []*defines.ComponentConfig{}
-			groupedConfigs := map[string][]*defines.ComponentConfig{}
-			if err := json.Unmarshal(defaultComponentsBytes, &availableComponentConfigs); err != nil {
+			groupedDefaultConfigs := map[string][]*defines.ComponentConfig{}
+			if err := json.Unmarshal(defaultComponentsBytes, &defaultComponentConfigs); err != nil {
 				panic(err)
 			}
-			for _, c := range availableComponentConfigs {
-				if groupedConfigs[c.Name] == nil {
-					groupedConfigs[c.Name] = []*defines.ComponentConfig{c}
+			for _, c := range defaultComponentConfigs {
+				if groupedDefaultConfigs[c.Name] == nil {
+					groupedDefaultConfigs[c.Name] = []*defines.ComponentConfig{c}
 				} else {
-					groupedConfigs[c.Name] = append(groupedConfigs[c.Name], c)
+					groupedDefaultConfigs[c.Name] = append(groupedDefaultConfigs[c.Name], c)
 				}
 			}
-			for _, c := range componentConfigs {
-				if groupedConfigs[c.Name] != nil {
-					delete(groupedConfigs, c.Name)
+			for _, g := range third_part_omega_components.GetAllThirdPartComponents() {
+				for _, c := range g.DefaultConfigs {
+					if groupedDefaultConfigs[c.Name] == nil {
+						groupedDefaultConfigs[c.Name] = []*defines.ComponentConfig{c}
+					} else {
+						groupedDefaultConfigs[c.Name] = append(groupedDefaultConfigs[c.Name], c)
+					}
 				}
 			}
-			for _, group := range groupedConfigs {
+			for _, c := range existComponentConfigs {
+				if groupedDefaultConfigs[c.Name] != nil {
+					delete(groupedDefaultConfigs, c.Name)
+				}
+			}
+			for _, group := range groupedDefaultConfigs {
 				for _, c := range group {
 					if c.Source == "Core" {
 						pterm.Success.Println("有新核心组件 " + c.Name + " 可用，已自动加入配置并[启用]")
 						c.Disabled = false
 					} else if c.Source == "Built-In" {
 						pterm.Success.Println("有新内置组件 " + c.Name + " 可用，已自动加入配置并[关闭]，请前往 omega_storage/配置/" + c.Name + " 打开")
+						c.Disabled = true
+					} else if strings.HasPrefix(c.Source, "第三方::") {
+						pterm.Success.Println("有新第三方组件 " + c.Name + " 可用，已自动加入配置并[关闭]，请前往 omega_storage/配置/" + c.Name + " 打开")
 						c.Disabled = true
 					}
 					newComponentConfigs = append(newComponentConfigs, c)
@@ -97,7 +120,7 @@ func (o *Omega) checkAndLoadConfig() {
 			}
 			if len(newComponentConfigs) > 0 {
 				pterm.Warning.Println("组件已变更...将重新加载")
-				componentConfigs = utils.CollectComponentConfigs(root)
+				existComponentConfigs = utils.CollectComponentConfigs(root)
 			}
 		}
 		// fix source
@@ -108,7 +131,7 @@ func (o *Omega) checkAndLoadConfig() {
 		for name, _ := range components.GetComponentsPool() {
 			componentsSource[name] = "Built-In"
 		}
-		for _, c := range componentConfigs {
+		for _, c := range existComponentConfigs {
 			if source, found := componentsSource[c.Name]; found {
 				if source != c.Source {
 					c.Source = source
@@ -131,6 +154,7 @@ func (o *Omega) checkAndLoadConfig() {
 		"设置重生点": 3,
 		"玩家自杀":  4,
 	}
+	thirdPart := make([]*defines.ComponentConfig, 0)
 	groupedOrder := make([][]*defines.ComponentConfig, len(preferredOrder)+1)
 	for i := range groupedOrder {
 		groupedOrder[i] = make([]*defines.ComponentConfig, 0)
@@ -139,6 +163,8 @@ func (o *Omega) checkAndLoadConfig() {
 	for _, c := range componentConfigs {
 		if gi, hask := preferredOrder[c.Name]; hask {
 			groupedOrder[gi] = append(groupedOrder[gi], c)
+		} else if strings.HasPrefix(c.Name, "第三方::") {
+			thirdPart = append(thirdPart, c)
 		} else {
 			groupedOrder[defaultI] = append(groupedOrder[defaultI], c)
 		}
@@ -147,5 +173,6 @@ func (o *Omega) checkAndLoadConfig() {
 	for _, group := range groupedOrder {
 		reorderedConfig = append(reorderedConfig, group...)
 	}
+	reorderedConfig = append(reorderedConfig, thirdPart...)
 	o.ComponentConfigs = reorderedConfig
 }

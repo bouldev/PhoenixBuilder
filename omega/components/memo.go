@@ -97,12 +97,21 @@ func (me *Memo) askForMsg(srcPlayer, dstPlayer string) {
 //	}
 //}
 
+func (o *Memo) BeforeActivate() (err error) {
+	possibleNames, hasK := o.Frame.GetContext(collaborate.INTERFACE_POSSIBLE_NAME)
+	if !hasK {
+		panic(fmt.Errorf("collaborate interface %v not found", collaborate.INTERFACE_POSSIBLE_NAME))
+	}
+	o.PlayerSearcher = possibleNames.(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)
+	return nil
+}
+
 func (me *Memo) askForPlayer(chat *defines.GameChat) {
 	go func() {
 		if name, cancel := utils.QueryForPlayerName(
 			me.Frame.GetGameControl(), chat.Name,
 			"",
-			(*me.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)); !cancel {
+			me.PlayerSearcher); !cancel {
 			me.askForMsg(chat.Name, name)
 		} else {
 			me.Frame.GetGameControl().SayTo(chat.Name, "已取消")
@@ -168,7 +177,6 @@ func (me *Memo) Inject(frame defines.MainFrame) {
 	if err != nil {
 		panic(err)
 	}
-	me.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)
 }
 func (o *Memo) Signal(signal int) error {
 	switch signal {

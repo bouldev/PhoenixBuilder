@@ -345,7 +345,7 @@ func (t *omegaSideTransporter) initMapping() {
 		},
 		"send_qq_msg": func(args map[string]interface{}, writer func(interface{})) {
 			msg := args["msg"].(string)
-			if send_func, hasK := (*t.side.Frame.GetContext())[collaborate.INTERFACE_SEND_TO_GROUP]; hasK {
+			if send_func, hasK := t.side.Frame.GetContext(collaborate.INTERFACE_SEND_TO_GROUP); hasK {
 				send_func.(collaborate.FUNC_SEND_TO_GROUP)(msg)
 			}
 			writer(map[string]interface{}{

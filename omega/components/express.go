@@ -152,7 +152,7 @@ func (o *Express) queryPlayer(chat *defines.GameChat) bool {
 		if name, cancel := utils.QueryForPlayerName(
 			o.Frame.GetGameControl(), chat.Name,
 			"",
-			(*o.Frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)); !cancel {
+			o.PlayerSearcher); !cancel {
 			o.askForPackage(chat.Name, name)
 		} else {
 			o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
@@ -207,7 +207,15 @@ func (o *Express) Inject(frame defines.MainFrame) {
 	if err != nil {
 		panic(err)
 	}
-	o.PlayerSearcher = (*frame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME].(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)
+}
+
+func (o *Express) BeforeActivate() (err error) {
+	possibleNames, hasK := o.Frame.GetContext(collaborate.INTERFACE_POSSIBLE_NAME)
+	if !hasK {
+		panic(fmt.Errorf("collaborate interface %v not found", collaborate.INTERFACE_POSSIBLE_NAME))
+	}
+	o.PlayerSearcher = possibleNames.(collaborate.FUNCTYPE_GET_POSSIBLE_NAME)
+	return nil
 }
 
 func (o *Express) Activate() {

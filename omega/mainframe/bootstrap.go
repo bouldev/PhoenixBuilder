@@ -12,6 +12,7 @@ import (
 	"path"
 	"phoenixbuilder/omega/components"
 	"phoenixbuilder/omega/defines"
+	third_part_omega_components "phoenixbuilder/omega/third_part"
 	"phoenixbuilder/omega/utils"
 	"strings"
 	"time"
@@ -303,8 +304,17 @@ func (o *Omega) bootstrapComponents() (success bool) {
 	total := len(o.ComponentConfigs)
 	corePool := getCoreComponentsPool()
 	builtInPool := components.GetComponentsPool()
+	thirdPartPool := make(map[string]defines.Component)
+	thirdPartNameSpace := make(map[string]string, 0)
+	for _, g := range third_part_omega_components.GetAllThirdPartComponents() {
+		for n, c := range g.Components {
+			thirdPartPool[n] = c
+			thirdPartNameSpace[n] = string(g.NameSpace)
+		}
+	}
 	beforeActivateFNs := map[string]func() error{}
 	for i, cfg := range o.ComponentConfigs {
+		nameSpace := ""
 		I := i + 1
 		Name := cfg.Name
 		Version := cfg.Version
@@ -331,9 +341,19 @@ func (o *Omega) bootstrapComponents() (success bool) {
 			} else {
 				component = componentFn()
 			}
+		} else if strings.HasPrefix(Source, "第三方::") {
+
+			if _component, hasK := thirdPartPool[Name]; !hasK {
+				pterm.Error.Println("没有找到第三方组件: " + Name)
+				continue
+			} else {
+				component = _component
+				nameSpace = thirdPartNameSpace[Name]
+			}
 		}
 		component.Init(cfg)
-		component.Inject(NewBox(o, Name))
+
+		component.Inject(NewBox(o, Name, nameSpace))
 		o.Components = append(o.Components, component)
 		beforeActivateFNs[cfg.Name] = component.BeforeActivate
 	}

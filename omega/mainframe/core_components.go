@@ -380,7 +380,7 @@ func (o *NameRecord) Inject(frame defines.MainFrame) {
 	})
 	var fn collaborate.FUNCTYPE_GET_POSSIBLE_NAME
 	fn = o.GetPossibleName
-	(*o.mainFrame.GetContext())[collaborate.INTERFACE_POSSIBLE_NAME] = fn
+	o.mainFrame.SetContext(collaborate.INTERFACE_POSSIBLE_NAME, fn)
 }
 
 func (o *NameRecord) Activate() {
