@@ -12,7 +12,7 @@ import (
 	"path"
 	"phoenixbuilder/omega/components"
 	"phoenixbuilder/omega/defines"
-	third_part_omega_components "phoenixbuilder/omega/third_part"
+	third_party_omega_components "phoenixbuilder/omega/third_party"
 	"phoenixbuilder/omega/utils"
 	"strings"
 	"time"
@@ -306,7 +306,7 @@ func (o *Omega) bootstrapComponents() (success bool) {
 	builtInPool := components.GetComponentsPool()
 	thirdPartPool := make(map[string]defines.Component)
 	thirdPartNameSpace := make(map[string]string, 0)
-	for _, g := range third_part_omega_components.GetAllThirdPartComponents() {
+	for _, g := range third_party_omega_components.GetAllThirdPartComponents() {
 		for n, c := range g.Components {
 			thirdPartPool[n] = c
 			thirdPartNameSpace[n] = string(g.NameSpace)

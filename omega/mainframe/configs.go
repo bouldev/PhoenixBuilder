@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"phoenixbuilder/omega/components"
 	"phoenixbuilder/omega/defines"
-	third_part_omega_components "phoenixbuilder/omega/third_part"
+	third_party_omega_components "phoenixbuilder/omega/third_party"
 	"phoenixbuilder/omega/utils"
 	"strings"
 
@@ -63,7 +63,7 @@ func (o *Omega) checkAndLoadConfig() {
 				panic(err)
 			}
 			thirdPartConfigs := make([]*defines.ComponentConfig, 0)
-			for _, g := range third_part_omega_components.GetAllThirdPartComponents() {
+			for _, g := range third_party_omega_components.GetAllThirdPartComponents() {
 				for _, c := range g.DefaultConfigs {
 					thirdPartConfigs = append(thirdPartConfigs, c)
 				}
@@ -86,7 +86,7 @@ func (o *Omega) checkAndLoadConfig() {
 					groupedDefaultConfigs[c.Name] = append(groupedDefaultConfigs[c.Name], c)
 				}
 			}
-			for _, g := range third_part_omega_components.GetAllThirdPartComponents() {
+			for _, g := range third_party_omega_components.GetAllThirdPartComponents() {
 				for _, c := range g.DefaultConfigs {
 					if groupedDefaultConfigs[c.Name] == nil {
 						groupedDefaultConfigs[c.Name] = []*defines.ComponentConfig{c}
