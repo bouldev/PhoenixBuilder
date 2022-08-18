@@ -438,7 +438,6 @@ func runClient(env *environment.PBEnvironment) {
 			fmt.Println("Capture On: FastBuilder > ", captureOutputFileName)
 		}
 	}
-	opPrivilegeGranted := false
 	go func() {
 		if args.NoReadline() {
 			return
@@ -459,10 +458,6 @@ func runClient(env *environment.PBEnvironment) {
 					captureFp = nil
 					fmt.Println("Capture Closed")
 				}
-				continue
-			}
-			if !opPrivilegeGranted && !strings.HasPrefix(cmd, "exit") {
-				pterm.Error.Println(I18n.T(I18n.OpPrivilegeNotGrantedForOperation))
 				continue
 			}
 			if cmd[0] == '.' {
@@ -526,16 +521,6 @@ func runClient(env *environment.PBEnvironment) {
 			}
 		}
 		if env.OmegaAdaptorHolder != nil {
-			if pk.ID() == packet.IDAdventureSettings {
-				p := pk.(*packet.AdventureSettings)
-				if conn.GameData().EntityUniqueID == p.PlayerUniqueID {
-					if p.PermissionLevel >= packet.PermissionLevelOperator {
-						opPrivilegeGranted = true
-					} else {
-						opPrivilegeGranted = false
-					}
-				}
-			}
 			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacket(pk)
 			continue
 		}
@@ -554,20 +539,6 @@ func runClient(env *environment.PBEnvironment) {
 		}
 		// fmt.Println(omega_utils.PktIDInvMapping[int(pk.ID())])
 		switch p := pk.(type) {
-		case *packet.AdventureSettings:
-			if conn.GameData().EntityUniqueID == p.PlayerUniqueID {
-				if p.PermissionLevel >= packet.PermissionLevelOperator {
-					opPrivilegeGranted = true
-				} else {
-					opPrivilegeGranted = false
-				}
-			}
-		// case *packet.ClientCacheMissResponse:
-		// 	pterm.Info.Println("ClientCacheMissResponse", p)
-		// case *packet.ClientCacheStatus:
-		// 	pterm.Info.Println("ClientCacheStatus", p)
-		// case *packet.ClientCacheBlobStatus:
-		// 	pterm.Info.Println("ClientCacheBlobStatus", p)
 		case *packet.PyRpc:
 			if args.NoPyRpc() {
 				break
