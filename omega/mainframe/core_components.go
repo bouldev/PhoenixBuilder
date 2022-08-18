@@ -277,9 +277,8 @@ func (o *OPCheck) Inject(frame defines.MainFrame) {
 		}
 		pk := p.(*packet.AdventureSettings)
 		if botUniqueID == pk.PlayerUniqueID {
-			if pk.PermissionLevel == packet.PermissionLevelOperator {
-			} else {
-				panic("机器人不具备OP权限，请首先启动 FB （不启动 Omega）并授予机器人 OP 权限")
+			if pk.PermissionLevel != packet.PermissionLevelOperator {
+				pterm.Warning.Println("警告：机器人不具备OP权限")
 			}
 		}
 	})

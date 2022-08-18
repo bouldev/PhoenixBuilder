@@ -94,7 +94,6 @@ var I18nDict_zh_CN map[uint16]string = map[uint16]string{
 	Notify_NeedOp:                       "需要 OP 权限以正常工作。",
 	Notify_TurnOnCmdFeedBack:            "需要 sendcommandfeedback 为 true，我们已经为你打开该选项，使用完后请按需关闭",
 	Omega_Enabled:                       "Omega系统已启用！",
-	OpPrivilegeNotGrantedForOperation:   "未授予机器人 OP 权限，请授予 OP 权限后再进行此操作",
 	Parsing_UnterminatedEscape:          "转义未终止",
 	Parsing_UnterminatedQuotedString:    "字符串引号部分未终止",
 	PositionGot:                         "已获得到起点坐标",
