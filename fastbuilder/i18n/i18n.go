@@ -117,6 +117,8 @@ const (
 	Notify_NeedOp
 	Notify_TurnOnCmdFeedBack
 	Omega_Enabled
+	Omega_WaitingForOP
+	OpPrivilegeNotGrantedForOperation
 	Parsing_UnterminatedEscape
 	Parsing_UnterminatedQuotedString
 	PositionGot

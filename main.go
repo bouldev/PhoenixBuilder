@@ -366,9 +366,17 @@ func runClient(env *environment.PBEnvironment) {
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = uint64(time.Now().Sub(conn.GameData().ConnectTime).Milliseconds()) / 50
 
+	opPrivilegeGranted := false
+	opPrivilegeGrantedWaitor := make(chan struct{})
+	opPrivilegeGrantedWaitorClosed := false
+
 	if args.ShouldEnableOmegaSystem() {
-		fmt.Println(I18n.T(I18n.Omega_Enabled))
-		embed.EnableOmegaSystem(env)
+		go func() {
+			fmt.Println(I18n.T(I18n.Omega_WaitingForOP))
+			<-opPrivilegeGrantedWaitor
+			fmt.Println(I18n.T(I18n.Omega_Enabled))
+			embed.EnableOmegaSystem(env)
+		}()
 	}
 
 	commandSender := commands.InitCommandSender(env)
@@ -440,6 +448,7 @@ func runClient(env *environment.PBEnvironment) {
 			fmt.Println("Capture On: FastBuilder > ", captureOutputFileName)
 		}
 	}
+
 	go func() {
 		if args.NoReadline() {
 			return
@@ -460,6 +469,10 @@ func runClient(env *environment.PBEnvironment) {
 					captureFp = nil
 					fmt.Println("Capture Closed")
 				}
+				continue
+			}
+			if !opPrivilegeGranted && !strings.HasPrefix(cmd, "exit") {
+				pterm.Error.Println(I18n.T(I18n.OpPrivilegeNotGrantedForOperation))
 				continue
 			}
 			if cmd[0] == '.' {
@@ -522,6 +535,21 @@ func runClient(env *environment.PBEnvironment) {
 				panic("dump to capture file fail " + err.Error())
 			}
 		}
+
+		if pk.ID() == packet.IDAdventureSettings {
+			p := pk.(*packet.AdventureSettings)
+			if conn.GameData().EntityUniqueID == p.PlayerUniqueID {
+				if p.PermissionLevel >= packet.PermissionLevelOperator {
+					opPrivilegeGranted = true
+					if !opPrivilegeGrantedWaitorClosed {
+						close(opPrivilegeGrantedWaitor)
+						opPrivilegeGrantedWaitorClosed = true
+					}
+				} else {
+					opPrivilegeGranted = false
+				}
+			}
+		}
 		if env.OmegaAdaptorHolder != nil {
 			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacket(pk)
 			continue
@@ -541,6 +569,20 @@ func runClient(env *environment.PBEnvironment) {
 		}
 		// fmt.Println(omega_utils.PktIDInvMapping[int(pk.ID())])
 		switch p := pk.(type) {
+		// case *packet.AdventureSettings:
+		// 	if conn.GameData().EntityUniqueID == p.PlayerUniqueID {
+		// 		if p.PermissionLevel >= packet.PermissionLevelOperator {
+		// 			opPrivilegeGranted = true
+		// 		} else {
+		// 			opPrivilegeGranted = false
+		// 		}
+		// 	}
+		// case *packet.ClientCacheMissResponse:
+		// 	pterm.Info.Println("ClientCacheMissResponse", p)
+		// case *packet.ClientCacheStatus:
+		// 	pterm.Info.Println("ClientCacheStatus", p)
+		// case *packet.ClientCacheBlobStatus:
+		// 	pterm.Info.Println("ClientCacheBlobStatus", p)
 		case *packet.PyRpc:
 			if args.NoPyRpc() {
 				break

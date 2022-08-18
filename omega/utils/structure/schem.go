@@ -95,8 +95,9 @@ func EncodeSchem(chunks map[define.ChunkPos]*mirror.ChunkData, startPos, endPos 
 		BlockEntities: NbtBlocks{},
 	}
 	numBlocks := (uint64(endPos.X()-startPos.X()) * uint64(endPos.Y()-startPos.Y()) * uint64(endPos.Z()-startPos.Z()))
-	if numBlocks >= uint64(uint64(1)<<uint64(31)) {
-		return fmt.Errorf("too many blocks!")
+	NearlyTheMaxOfInt32 := uint64(2147483647)
+	if numBlocks >= NearlyTheMaxOfInt32 {
+		return fmt.Errorf("too many blocks! max %v, you want %v", 2147483647, numBlocks)
 	}
 	memoryHolder := memory.NewMemoryChunkCacher(chunks)
 	srcWorld := world.NewWorld(memoryHolder)
