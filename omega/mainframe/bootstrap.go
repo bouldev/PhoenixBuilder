@@ -319,11 +319,17 @@ func (o *Omega) bootstrapComponents() (success bool) {
 		Name := cfg.Name
 		Version := cfg.Version
 		Source := cfg.Source
+		NameShort := cfg.Name
+		SourceShort := Source
+		if strings.HasPrefix(SourceShort, "第三方::") {
+			SourceShort = "第三方"
+			NameShort = strings.Replace(NameShort, "第三方::", "", 1)
+		}
 		if cfg.Disabled {
-			o.backendLogger.Write(pterm.Warning.Sprintf("\t跳过加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
+			o.backendLogger.Write(pterm.Warning.Sprintf("\t跳过加载组件 %3d/%3d [%v] %v@%v", I, total, SourceShort, NameShort, Version))
 			continue
 		}
-		o.backendLogger.Write(pterm.Success.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", I, total, Source, Name, Version))
+		o.backendLogger.Write(pterm.Success.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", I, total, SourceShort, NameShort, Version))
 		var component defines.Component
 		if Source == "Core" {
 			if componentFn, hasK := corePool[Name]; !hasK {
@@ -342,7 +348,6 @@ func (o *Omega) bootstrapComponents() (success bool) {
 				component = componentFn()
 			}
 		} else if strings.HasPrefix(Source, "第三方::") {
-
 			if _component, hasK := thirdPartPool[Name]; !hasK {
 				pterm.Error.Println("没有找到第三方组件: " + Name)
 				continue
@@ -352,7 +357,6 @@ func (o *Omega) bootstrapComponents() (success bool) {
 			}
 		}
 		component.Init(cfg)
-
 		component.Inject(NewBox(o, Name, nameSpace))
 		o.Components = append(o.Components, component)
 		beforeActivateFNs[cfg.Name] = component.BeforeActivate
