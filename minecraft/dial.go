@@ -6,27 +6,27 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/x509"
 	"encoding/base64"
-	"github.com/google/uuid"
-	"github.com/sandertv/go-raknet"
-	"phoenixbuilder/minecraft/internal/resource"
-	"phoenixbuilder/minecraft/protocol"
-	"phoenixbuilder/minecraft/protocol/login"
-	"phoenixbuilder/minecraft/protocol/packet"
 	"io/ioutil"
 	"log"
 	rand2 "math/rand"
 	"net"
-	"os"
+	"phoenixbuilder/minecraft/internal/resource"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/login"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"strconv"
 	"strings"
 	"time"
-	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
-	"phoenixbuilder/fastbuilder/i18n"
-	"crypto/x509"
-	"fmt"
-	"path/filepath"
+
+	"github.com/google/uuid"
+	"github.com/sandertv/go-raknet"
 )
+
+type GameAuthenticator interface {
+	GetAccess(publicKey []byte) (address string, chainInfo string, err error)
+}
 
 // Dialer allows specifying specific settings for connection to a Minecraft server.
 // The zero value of Dialer is used for the package level Dial function.
@@ -42,14 +42,8 @@ type Dialer struct {
 	// XUID of the player.
 	// The IdentityData object is obtained using Minecraft auth if Email and Password are set. If not, the
 	// object provided here is used, or a default one if left empty.
-	IdentityData login.IdentityData
-
-	// FBUC Token
-	Token string
-	// FBUC Auth Client
-	Client *fbauth.Client
-	ServerCode string
-	Password string
+	IdentityData  login.IdentityData
+	Authenticator GameAuthenticator
 
 	// PacketFunc is called whenever a packet is read from or written to the connection returned when using
 	// Dialer.Dial(). It includes packets that are otherwise covered in the connection sequence, such as the
@@ -77,18 +71,18 @@ func Dial(network, address string) (*Conn, error) {
 // typically "raknet". A Conn is returned which may be used to receive packets from and send packets to.
 // If a connection is not established before the timeout ends, DialTimeout returns an error.
 // DialTimeout uses a zero value of Dialer to initiate the connection.
-func DialTimeout(network, address string, timeout time.Duration) (*Conn, error) {
+func DialTimeout(network string, timeout time.Duration) (*Conn, error) {
 	var d Dialer
-	return d.DialTimeout(network, address, timeout)
+	return d.DialTimeout(network, timeout)
 }
 
 // DialContext dials a Minecraft connection to the address passed over the network passed. The network is
 // typically "raknet". A Conn is returned which may be used to receive packets from and send packets to.
 // If a connection is not established before the context passed is cancelled, DialContext returns an error.
 // DialContext uses a zero value of Dialer to initiate the connection.
-func DialContext(ctx context.Context, network, address string) (*Conn, error) {
+func DialContext(ctx context.Context, network string) (*Conn, error) {
 	var d Dialer
-	return d.DialContext(ctx, network, address)
+	return d.DialContext(ctx, network)
 }
 
 // Dial dials a Minecraft connection to the address passed over the network passed. The network is typically
@@ -96,51 +90,56 @@ func DialContext(ctx context.Context, network, address string) (*Conn, error) {
 func (d Dialer) Dial(network, address string) (*Conn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
-	return d.DialContext(ctx, network, address)
+	return d.DialContext(ctx, network)
 }
 
 // DialTimeout dials a Minecraft connection to the address passed over the network passed. The network is
 // typically "raknet". A Conn is returned which may be used to receive packets from and send packets to.
 // If a connection is not established before the timeout ends, DialTimeout returns an error.
-func (d Dialer) DialTimeout(network, address string, timeout time.Duration) (*Conn, error) {
+func (d Dialer) DialTimeout(network string, timeout time.Duration) (*Conn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	return d.DialContext(ctx, network, address)
+	return d.DialContext(ctx, network)
 }
 
 // DialContext dials a Minecraft connection to the address passed over the network passed. The network is
 // typically "raknet". A Conn is returned which may be used to receive packets from and send packets to.
 // If a connection is not established before the context passed is cancelled, DialContext returns an error.
-func (d Dialer) DialContext(ctx context.Context, network, address string) (conn *Conn, err error) {
+func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, err error) {
 	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
+	address, chainData, err := d.Authenticator.GetAccess(data)
+	if err != nil {
+		return nil, err
+	}
 
-	var chainData string
-	if d.ServerCode != "" {
-		data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
-		pubKeyData := base64.StdEncoding.EncodeToString(data)
-		chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token)
-		chainAndAddr := strings.Split(chainAddr,"|")
-		
-		if err != nil {
-			if (code == -3) {
-				homedir, err := os.UserHomeDir()
-				if err != nil {
-					fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
-					homedir="."
-				}
-				fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
-				os.MkdirAll(fbconfigdir, 0755)
-				token := filepath.Join(fbconfigdir,"fbtoken")
-				os.Remove(token)
-			}
-			return nil, err
-		}
-		chainData = chainAndAddr[0]
-		address = chainAndAddr[1]
-	}
-	if d.ErrorLog == nil {
-		d.ErrorLog = log.New(os.Stderr, "", log.LstdFlags)
-	}
+	// var chainData string
+	// if d.ServerCode != "" {
+	// 	data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
+	// 	pubKeyData := base64.StdEncoding.EncodeToString(data)
+	// 	chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token)
+	// 	chainAndAddr := strings.Split(chainAddr, "|")
+
+	// 	if err != nil {
+	// 		if code == -3 {
+	// 			homedir, err := os.UserHomeDir()
+	// 			if err != nil {
+	// 				fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
+	// 				homedir = "."
+	// 			}
+	// 			fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
+	// 			os.MkdirAll(fbconfigdir, 0755)
+	// 			token := filepath.Join(fbconfigdir, "fbtoken")
+	// 			os.Remove(token)
+	// 		}
+	// 		return nil, err
+	// 	}
+	// 	chainData = chainAndAddr[0]
+	// 	address = chainAndAddr[1]
+	// }
+	// if d.ErrorLog == nil {
+	// 	d.ErrorLog = log.New(os.Stderr, "", log.LstdFlags)
+	// }
 	var netConn net.Conn
 
 	switch network {

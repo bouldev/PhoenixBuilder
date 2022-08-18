@@ -288,10 +288,12 @@ func runClient(env *environment.PBEnvironment) {
 		}()
 		fbauthclient := env.FBAuthClient.(*fbauth.Client)
 		dialer := minecraft.Dialer{
-			ServerCode: env.LoginInfo.ServerCode, //strings.TrimRight(serverCode, "\r\n"),
-			Password:   env.LoginInfo.ServerPasscode,
-			Token:      env.LoginInfo.Token,
-			Client:     fbauthclient,
+			Authenticator: fbauth.NewAccessWrapper(
+				fbauthclient,
+				env.LoginInfo.ServerCode,
+				env.LoginInfo.ServerPasscode,
+				env.LoginInfo.Token,
+			),
 			// EnableClientCache: true,
 		}
 		cconn, err := dialer.Dial("raknet", "")
