@@ -52,6 +52,13 @@ func (o *Omega) checkAndLoadConfig() {
 		}
 	}
 	o.OmegaConfig = utils.CollectOmegaConfig(root)
+	if o.OmegaConfig.MigrationVersion < 895 {
+		// TODO: remove migration
+		o.OmegaConfig.MigrationVersion = 895
+		if err := utils.Migration895(root); err == nil {
+			utils.DeployOmegaConfig(o.OmegaConfig, root)
+		}
+	}
 	{
 		existComponentConfigs := utils.CollectComponentConfigs(root)
 		if len(existComponentConfigs) == 0 {
