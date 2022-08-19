@@ -3,13 +3,130 @@ package guild
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
+	"time"
+
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/pterm/pterm"
 )
+
+// 公会组件的获取yscore名字
+func (b *Guild) GetYsCoreNameListOfGuild() (yscoreList map[string]string, isget bool) {
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Get("https://pans-1259150973.cos-website.ap-shanghai.myqcloud.com")
+	if err != nil {
+		fmt.Println(err)
+		return nil, false
+	}
+	defer resp.Body.Close()
+	body, _ := ioutil.ReadAll(resp.Body)
+	//fmt.Println("getYsCoreName:", string(body))
+	arr := strings.Split(string(body), " ")
+	list := make(map[string]string)
+	for _, v := range arr {
+		list[v] = ""
+	}
+	return list, true
+}
+
+// 发送一级保护指令
+func (b *Guild) sendFirsetCmds(user string, guildname string) {
+	_guildname, ok, _ := b.CheckInGuild(user)
+	if !ok && _guildname != guildname {
+		for _, v := range b.FistCmds {
+			v = b.FormateMsg(v, "player", user)
+			v = b.FormateMsg(v, "starPos", fmt.Sprintf("%v %v %v", strconv.Itoa(b.GuildData[guildname].Pos[0]), "-60", strconv.Itoa(b.GuildData[guildname].Pos[2])))
+			v = b.FormateMsg(v, "endPos", fmt.Sprintf("%v %v %v", strconv.Itoa(b.GuildData[guildname].Pos[0]+b.GuildData[guildname].Range[0]), "400", strconv.Itoa(b.GuildData[guildname].Pos[2]+b.GuildData[guildname].Range[1])))
+			b.CmdSender(v)
+			fmt.Println("test")
+		}
+
+	}
+}
+
+// 获取全部人的坐标
+func (b *Guild) GetPos(target string) chan map[string][]int {
+	type PosTemp struct {
+		X float64 `json:"x"`
+		Y float64 `json:"y"`
+		Z float64 `json:"z"`
+	}
+	type QueryTemp struct {
+		Pos  PosTemp `json:"position"`
+		Uuid string  `json:"uniqueId"`
+	}
+
+	namePosChan := make(chan map[string][]int, 1)
+	b.Frame.GetGameControl().SendCmdAndInvokeOnResponse("querytarget "+target, func(output *packet.CommandOutput) {
+		//fmt.Println(output.OutputMessages)
+		list := make(map[string][]int)
+		if output.SuccessCount > 0 {
+			for _, v := range output.OutputMessages {
+				for _, i := range v.Parameters {
+					Query := []*QueryTemp{}
+					err := json.Unmarshal([]byte(i), &Query)
+					if err != nil {
+						pterm.Info.Printfln(err.Error())
+					}
+					for _, k := range Query {
+						UUID, err := uuid.Parse(k.Uuid)
+						if err != nil {
+							pterm.Info.Printfln(err.Error())
+						}
+						if player := b.Frame.GetGameControl().GetPlayerKitByUUID(UUID); player != nil {
+							userName := player.GetRelatedUQ().Username
+							list[userName] = []int{
+								int(k.Pos.X),
+								int(k.Pos.Y),
+								int(k.Pos.Z),
+							}
+						}
+
+					}
+
+				}
+
+			}
+
+		}
+		namePosChan <- list
+
+	})
+	return namePosChan
+}
+
+// guild独特的验证系统
+func (b *Guild) CreateNameHashOfGuild() bool {
+
+	//fmt.Println("test")
+	name, err := b.Frame.QuerySensitiveInfo(defines.SENSITIVE_INFO_USERNAME_HASH)
+	if err != nil {
+		fmt.Println("[错误]")
+		return false
+	}
+
+	list, isoks := b.GetYsCoreNameListOfGuild()
+	if !isoks {
+		fmt.Println(fmt.Errorf("抱歉 获取白名单失败 或许是网络超时 已自动关闭公会组件的yscore会员配置"))
+		b.IsYsCore = false
+	}
+	if _, isok := list[name]; !isok && name != "7ae3a9082d616b157077687c89e71c86" {
+		fmt.Println(fmt.Errorf("抱歉 你不是白名单用户 已自动关闭公会组件的yscore会员配置"))
+		b.IsYsCore = false
+	}
+
+	return true
+}
 
 // 检查name是否为某个公会的会长 如果是则返回true guildname
 func (b *Guild) CheckIsMaster(name string) (yes bool, GuidName string) {
@@ -112,8 +229,8 @@ func (b *Guild) CheckIsoverlap(pos []int, Epos []int, Spos []int, SEpos []int) (
 
 // 检查坐标是否在某个公会的领地范围内
 func (b *Guild) CheckInGuildPlace(guildName string, pos []int) bool {
-	fmt.Println("pos:", pos)
-	fmt.Println("guildpos:", b.GuildData[guildName].Pos)
+	//fmt.Println("pos:", pos)
+	//fmt.Println("guildpos:", b.GuildData[guildName].Pos)
 	x := b.GuildData[guildName].Pos[0]
 	z := b.GuildData[guildName].Pos[2]
 	dx := b.GuildData[guildName].Pos[0] + b.GuildData[guildName].Range[0]
@@ -282,23 +399,25 @@ func (b *Guild) setSpPlace(name string, guildName string) {
 
 	b.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
 		go func() {
-			_starPosSp := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
-			starPosSp := []int{}
-			if _starPosSp != nil {
-				starPosSp = []int{_starPosSp.X(), _starPosSp.Y(), _starPosSp.Z()}
+			starPosSps := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
+			fmt.Println("starPosSp:", starPosSps)
+			starPosSp := []int{
+				starPosSps.X(),
+				starPosSps.Y(),
+				starPosSps.Z(),
 			}
-			fmt.Println("starPosSp:", starPosSp)
 			if b.CheckInGuildPlace(guildName, starPosSp) {
 				b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), fmt.Sprintf("[确定坐标] %v %v %v \n[终点坐标确定] 在终点输入任意字", strconv.Itoa(starPosSp[0]), strconv.Itoa(starPosSp[1]), strconv.Itoa(starPosSp[2])))
 				b.Frame.GetGameControl().SetOnParamMsg(name, func(Newchat *defines.GameChat) (catch bool) {
 					fmt.Print(Newchat.Name, "\n")
 					go func() {
-						_EndPos := <-b.Frame.GetGameControl().GetPlayerKit(Newchat.Name).GetPos("@a[name=[player]]")
-						EndPos := []int{}
-						if _EndPos != nil {
-							EndPos = []int{_EndPos.X(), _EndPos.Y(), _EndPos.Z()}
+						EndPoss := <-b.Frame.GetGameControl().GetPlayerKit(Newchat.Name).GetPos("@a[name=[player]]")
+						fmt.Println("endpos:", EndPoss)
+						EndPos := []int{
+							EndPoss.X(),
+							EndPoss.Y(),
+							EndPoss.Z(),
 						}
-						fmt.Println("endpos:", EndPos)
 						if b.CheckInGuildPlace(guildName, EndPos) {
 							b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", Newchat.Name), "请输入特殊区域名字")
 							b.Frame.GetGameControl().SetOnParamMsg(Newchat.Name, func(Newchats *defines.GameChat) (catch bool) {
@@ -547,11 +666,14 @@ func (b *Guild) getGuildDataD(name string, guildname string, data GuildDatas) {
 // 写入公会信息不带领地
 func (b *Guild) RegisteredWithoutTerr(name string, guildName string) {
 	b.GuildData[guildName] = &GuildDatas{
-		Master: name,
-		Member: make(map[string]*GuildDtails),
-		Power:  b.GuildFristPower,
-		IsTerr: false,
+		Master:        name,
+		Member:        make(map[string]*GuildDtails),
+		Power:         b.GuildFristPower,
+		IsTerr:        false,
+		GuildRankings: len(b.GuildData) + 1, //顺序排列
 	}
+	b.CmdSender(fmt.Sprintf("scoreboard players remove @a[name=\"%v\"] %v %v", name, b.DictScore["购买公会计分板"], b.Price))
+	b.sayto(name, fmt.Sprintf("§b[扣除成功]§e 消费§l§a%v %v", b.DictScore["购买计分板名字"], b.Price))
 	fmt.Println("[提示] ", name, " ", "创建成功", b.GuildData[guildName])
 	b.sayto(name, "[购买成功]")
 	//b.sayto(name,)
@@ -561,13 +683,13 @@ func (b *Guild) RegisteredWithoutTerr(name string, guildName string) {
 func (b *Guild) Registered(name string, guildName string) {
 	go func() bool {
 		//获取坐标
-		_PosOf := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
-		PosOf := []int{}
-		if _PosOf != nil {
-			PosOf = []int{_PosOf.X(), _PosOf.Y(), _PosOf.Z()}
-		}
-
+		PosOfs := <-b.Frame.GetGameControl().GetPlayerKit(name).GetPos("@a[name=[player]]")
 		//fmt.Println("posO:", PosOf)
+		PosOf := []int{
+			PosOfs.X(),
+			PosOfs.Y(),
+			PosOfs.Z(),
+		}
 		if len(PosOf) > 0 {
 			//fmt.Println("b.guildrange:", b.GuildRange)
 			//fmt.Println("强制转换:", int(b.GuildRange["4"][0]/2))
@@ -622,13 +744,14 @@ func (b *Guild) Registered(name string, guildName string) {
 					//初始化各种信息
 					Ranges := b.GuildRange[strconv.Itoa(b.GuildFristPower)]
 					b.GuildData[guildName] = &GuildDatas{
-						Master:    name,
-						Member:    make(map[string]*GuildDtails),
-						Pos:       StarPos,
-						CenterPos: PosOf,
-						Range:     Ranges,
-						Power:     b.GuildFristPower,
-						IsTerr:    true,
+						Master:        name,
+						Member:        make(map[string]*GuildDtails),
+						Pos:           StarPos,
+						CenterPos:     PosOf,
+						Range:         Ranges,
+						Power:         b.GuildFristPower,
+						IsTerr:        true,
+						GuildRankings: len(b.GuildData) + 1, //让公会顺序排列
 					}
 
 					b.Frame.GetGameControl().SendCmd(fmt.Sprintf("scoreboard players set @a[name=\"%v\"] %v 4", name, b.DictScore["权限计分板"]))
@@ -674,4 +797,21 @@ func (b *Guild) setGuildPower(guildname string, num string) {
 // 发送菜单
 func (b *Guild) sendMenu(name, str string) {
 	b.Frame.GetGameControl().SayTo(fmt.Sprintf("@a[name=\"%v\"]", name), str)
+}
+
+// 检查到是工会成员然后分数木有的则加分加为公会的排名分数
+func (b *Guild) RefreshTheScore() {
+	list := <-b.GetScore()
+	for k, v := range list {
+		guildname, ok, _ := b.CheckInGuild(k)
+		if ok {
+			if _, isok := v[b.DictScore["公会同步积分计分板"]]; isok == false {
+				b.CmdSender(fmt.Sprintf("scoreboard players set %v %v %v", k, b.DictScore["公会同步积分计分板"], strconv.Itoa(b.GuildData[guildname].GuildRankings)))
+			}
+		} else if _, isok := v[b.DictScore["公会同步积分计分板"]]; isok {
+			b.CmdSender(fmt.Sprintf("scoreboard players reset %v %v ", k, b.DictScore["公会同步积分计分板"]))
+			fmt.Println("刷新退出公会成员成功")
+		}
+	}
+
 }

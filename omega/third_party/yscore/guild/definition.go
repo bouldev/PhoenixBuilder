@@ -7,9 +7,7 @@ import (
 type Guild struct {
 	*defines.BasicComponent
 	FistCmds               []string              `json:"一级保护指令"`
-	ScendCmds              []string              `json:"二级保护指令"`
-	MemberName             map[string]string     `json:"成员等级称呼"`
-	Guild                  map[string]string     `json:"公会等级称呼"`
+	FistCmdTarget          string                `json:"一级保护触发选择器"`
 	ThePermissionsOfGuild  map[string]int        `json:"最低公会等级可开启的功能"`
 	ThePermissionsOfMember map[string]int        `json:"最低权限可使用功能"`
 	Triggers               []string              `json:"触发词"`
@@ -30,8 +28,13 @@ type Guild struct {
 	IsNeedTerr             bool                  `json:"是否需要自带领地"`
 	UpgradePrice           map[string]string     `json:"每次公会升级为下一级所需贡献值"`
 	IsAllowKick            bool                  `json:"是否允许公会可以kick"`
-	GuildData              map[string]*GuildDatas
+	IsYsCore               bool                  `json:"是否开启yscore专属公会"`
+	YsCoreDefines          *Yscore               `json:"yscore会员配置"`
+
+	BuffList  map[string]*Buff
+	GuildData map[string]*GuildDatas
 }
+
 type Commodity struct {
 	name      string   `json:"商品名字"`
 	IdName    string   `json:"商品英文"`
@@ -41,20 +44,27 @@ type Commodity struct {
 	CheckCmds string   `json:"购买时检测指令"`
 }
 type GuildDatas struct {
-	Master       string
-	Member       map[string]*GuildDtails //记得初始化（）
-	SpPlace      map[string][]int        //[起点x 起点y 起点z dx dy dz]
-	Range        []int
-	announcement []string
-	Pos          []int
-	CenterPos    []int
-	IsTerr       bool
-	Power        int
+	AllyData        map[string]string
+	PendingAlly     map[string]string
+	YscoreScore     int //公会点
+	Master          string
+	Member          map[string]*GuildDtails //记得初始化（）
+	SpPlace         map[string][]int        //[起点x 起点y 起点z dx dy dz]
+	Range           []int
+	Pos             []int
+	CenterPos       []int
+	IsTerr          bool
+	Power           int
+	ApplicationList []string
+	GuildRankings   int              //在计分板内分数（）
+	HolyRelics      string           //圣遗物
+	TpPos           map[string][]int //公会传送点
 }
 type User struct {
 	Name []string `json:"victim"`
 }
 type GuildDtails struct {
-	Permistion string
-	title      []string
+	Announcement string
+	Permistion   string
+	title        []string
 }
