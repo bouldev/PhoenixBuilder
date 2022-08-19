@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/third_party/example"
+	"phoenixbuilder/omega/third_party/sunlife"
+	"phoenixbuilder/omega/third_party/yscore"
 )
 
 type NameSpace string
@@ -15,6 +17,7 @@ type ComponentsGroup struct {
 	DefaultConfigs map[string]*defines.ComponentConfig
 }
 
+// 插件组
 var componentsGroups map[NameSpace]ComponentsGroup
 
 func GetAllThirdPartComponents() map[NameSpace]ComponentsGroup {
@@ -58,4 +61,6 @@ func mountComponents(nameSpace NameSpace, Components map[string]defines.Componen
 
 func init() {
 	mountComponents(example.NAMESPACE, example.Components, example.DefaultComponentConfigByte)
+	mountComponents(yscore.NAMESPACE, yscore.Components, yscore.DefaultComponentConfigByte)
+	mountComponents(sunlife.NAMESPACE, sunlife.Components, sunlife.DefaultComponentConfigByte)
 }
