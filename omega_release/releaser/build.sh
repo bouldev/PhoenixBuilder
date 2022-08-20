@@ -14,14 +14,18 @@ function get_hash(){
 }
 git log -50 --color --reverse > ${PHOENIX_BUILDER_DIR}/omega/mainframe/update.log
 make -C ${PHOENIX_BUILDER_DIR} clean 
-make -C ${PHOENIX_BUILDER_DIR} linux-amd64 windows-amd64 macos-amd64 android-arm64 -j4
+make -C ${PHOENIX_BUILDER_DIR} linux-amd64 linux-arm64 windows-amd64 macos-amd64 macos-arm64 android-arm64 -j8
 cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-linux-amd64 ./binary/fastbuilder-linux
+cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-linux-arm64 ./binary/fastbuilder-linux-arm64
 cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-windows-amd64.exe ./binary/fastbuilder-windows.exe
 cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-macos-amd64 ./binary/fastbuilder-macos
+cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-macos-arm64 ./binary/fastbuilder-macos-arm64
 cp ${PHOENIX_BUILDER_DIR}/build/phoenixbuilder-android-arm64 ./binary/fastbuilder-android
 echo $(get_hash ./binary/fastbuilder-linux) > ./binary/fastbuilder-linux.hash
+echo $(get_hash ./binary/fastbuilder-linux-arm64) > ./binary/fastbuilder-linux.hash
 echo $(get_hash ./binary/fastbuilder-windows.exe) > ./binary/fastbuilder-windows.hash
 echo $(get_hash ./binary/fastbuilder-macos) > ./binary/fastbuilder-macos.hash
+echo $(get_hash ./binary/fastbuilder-macos-arm64) > ./binary/fastbuilder-macos-arm64.hash
 echo $(get_hash ./binary/fastbuilder-android) > ./binary/fastbuilder-android.hash
 cat ./binary/*.hash > ./binary/all.hash
 rm ${PHOENIX_BUILDER_DIR}/omega/mainframe/update.log
@@ -29,13 +33,17 @@ touch ${PHOENIX_BUILDER_DIR}/omega/mainframe/update.log
 
 go run ./compressor/main.go -in "\
         ./binary/fastbuilder-linux,\
+        ./binary/fastbuilder-linux-arm64,\
         ./binary/fastbuilder-windows.exe,\
         ./binary/fastbuilder-macos,\
+        ./binary/fastbuilder-macos-arm64,\
         ./binary/fastbuilder-android\
     " -out "\
         ./binary/fastbuilder-linux.brotli,\
+        ./binary/fastbuilder-linux-arm64.brotli, \
         ./binary/fastbuilder-windows.exe.brotli,\
         ./binary/fastbuilder-macos.brotli,\
+         ./binary/fastbuilder-macos-arm64.brotli,\
         ./binary/fastbuilder-android.brotli\
     "
 
@@ -58,3 +66,6 @@ git log -50 --reverse > ./binary/update.log
 echo "$TIME_STAMP" >> ./binary/TIME_STAMP
 
 rsync -avP --delete ./binary/* FBOmega:/var/www/omega-storage/binary/
+
+cp ./releaser/install-cos1.sh ./binary/install.sh
+./releaser/cos1 -d ./binary
