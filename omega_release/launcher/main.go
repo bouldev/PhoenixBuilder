@@ -157,6 +157,9 @@ func AcquireQGroupLinkConfig() string {
 		return QGroupLinkCoinfigPath
 	}
 	cfgPath := path.Join(GetOmegaStorageDir(), "配置")
+	if !utils.IsDir(cfgPath) {
+		return ""
+	}
 	if err := filepath.Walk(cfgPath, func(filePath string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
@@ -249,6 +252,9 @@ func CQHttpLoadHelper() (isImport bool) {
 
 func CQHttpEnablerHelper() {
 	qGroupLinkCfgPath := AcquireQGroupLinkConfig()
+	if qGroupLinkCfgPath == "" {
+		return
+	}
 	qGroupLinkCfg := &ComponentConfig{}
 	if err := utils.GetJsonData(qGroupLinkCfgPath, &qGroupLinkCfg); err != nil {
 		pterm.Error.Println(err)
