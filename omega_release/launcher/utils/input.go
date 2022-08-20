@@ -3,6 +3,7 @@ package utils
 import (
 	"bufio"
 	"os"
+	"strconv"
 	"strings"
 
 	. "omega_launcher/variants"
@@ -28,6 +29,22 @@ func GetValidInput() string {
 			continue
 		}
 		return s
+	}
+}
+
+func GetValidInt() int {
+	for {
+		s := GetInput()
+		if s == "" {
+			pterm.Error.Println("无效输入，输入不能为空")
+			continue
+		}
+		v, err := strconv.Atoi(s)
+		if err != nil {
+			pterm.Error.Println("无效输入，输入必须为数字")
+			continue
+		}
+		return v
 	}
 }
 

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -108,6 +109,7 @@ func GetJsonData(fname string, ptr interface{}) error {
 	if data == nil || len(data) == 0 {
 		return nil
 	}
+	data = bytes.Trim(data, "\xef\xbb\xbf")
 	err = json.Unmarshal(data, ptr)
 	if err != nil {
 		return err

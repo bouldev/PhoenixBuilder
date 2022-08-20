@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -103,34 +104,79 @@ func main() {
 		if err := os.Chdir(GetCurrentDir()); err != nil {
 			panic(err)
 		}
-		if utils.IsDir(GetOmegaStorageDir()) {
 			CQHttpEnablerHelper()
-		}
 		StartOmegaHelper()
 	} else {
 		RunFB()
 	}
 }
 
-func FindQGroupLinkConfigPath() string {
-	cfgPath := path.Join(GetOmegaStorageDir(), "配置")
-	entries, err := ioutil.ReadDir(cfgPath)
-	if err != nil {
-		return ""
-	}
-	for _, entry := range entries {
-		if !strings.HasPrefix(entry.Name(), "组件") || !strings.HasSuffix(entry.Name(), ".json") {
-			continue
-		}
-		if strings.Contains(entry.Name(), "群服互通") {
-			return path.Join(cfgPath, entry.Name())
-		}
-	}
-	return ""
+type QGroupLink struct {
+	Address                   string                        `json:"CQHTTP正向Websocket代理地址"`
+	GameMessageFormat         string                        `json:"游戏消息格式化模版"`
+	QQMessageFormat           string                        `json:"Q群消息格式化模版"`
+	Groups                    map[string]int64              `json:"链接的Q群"`
+	Selector                  string                        `json:"游戏内可以听到QQ消息的玩家的选择器"`
+	NoBotMsg                  bool                          `json:"不要转发机器人的消息"`
+	ChatOnly                  bool                          `json:"只转发聊天消息"`
+	MuteIgnored               bool                          `json:"屏蔽其他群的消息"`
+	FilterQQToServerMsgByHead string                        `json:"仅仅转发开头为以下特定字符的消息到服务器"`
+	FilterServerToQQMsgByHead string                        `json:"仅仅转发开头为以下特定字符的消息到QQ"`
+	AllowedCmdExecutor        map[int64]bool                `json:"允许这些人透过QQ执行命令"`
+	AllowdFakeCmdExecutor     map[int64]map[string][]string `json:"允许这些人透过QQ执行伪命令"`
+	DenyCmds                  map[string]string             `json:"屏蔽这些指令"`
 }
 
-func ComputeQGroupLinkConfigPath() string {
-	return path.Join(GetOmegaStorageDir(), "配置", "组件-群服互通-1.json")
+type ComponentConfig struct {
+	Name        string      `json:"名称"`
+	Description string      `json:"描述"`
+	Disabled    bool        `json:"是否禁用"`
+	Version     string      `json:"版本"`
+	Source      string      `json:"来源"`
+	Configs     *QGroupLink `json:"配置"`
+	upgradeFn   func(*ComponentConfig) error
+}
+
+func (c *ComponentConfig) Upgrade() error {
+	return c.upgradeFn(c)
+}
+
+func (c *ComponentConfig) SetUpgradeFn(fn func(*ComponentConfig) error) (ok bool) {
+	if c.upgradeFn == nil {
+		c.upgradeFn = fn
+		return true
+	} else {
+		return false
+	}
+}
+
+var QGroupLinkCoinfigPath string
+
+func AcquireQGroupLinkConfig() string {
+	if QGroupLinkCoinfigPath != "" {
+		return QGroupLinkCoinfigPath
+	}
+	cfgPath := path.Join(GetOmegaStorageDir(), "配置")
+	if err := filepath.Walk(cfgPath, func(filePath string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			return nil
+	}
+		fileBaseName := path.Base(filePath)
+		if !strings.HasPrefix(fileBaseName, "组件") || !strings.HasSuffix(fileBaseName, ".json") {
+			return nil
+		}
+		c := &ComponentConfig{}
+		if err := utils.GetJsonData(filePath, c); err != nil {
+			return fmt.Errorf("处理[" + filePath + "]时出错" + err.Error())
+		}
+		if c.Name == "群服互通" {
+			QGroupLinkCoinfigPath = filePath
+	}
+		return nil
+	}); err != nil {
+		panic(err)
+}
+	return QGroupLinkCoinfigPath
 }
 
 func GetOmegaStorageDir() string {
@@ -149,9 +195,6 @@ func GetCQHttpDir() string {
 //go:embed config.yml
 var defaultConfigBytes []byte
 
-//go:embed 组件-群服互通-1.json
-var defaultQGroupLinkConfigByte []byte
-
 func CQHttpLoadHelper() (isImport bool) {
 	fileName := path.Join(GetOmegaStorageDir(), "上传这个文件到云服务器以使用云服务器的群服互通.data")
 	if utils.IsFile(fileName) {
@@ -160,8 +203,6 @@ func CQHttpLoadHelper() (isImport bool) {
 			if fp != nil {
 				fp.Close()
 			}
-			pterm.Warning.Printfln("正在移除 %v", fileName)
-			os.Remove(fileName)
 		}()
 		unzipSize, err := utils.GetUnZipSize(fileName)
 		if err != nil {
@@ -196,11 +237,7 @@ func CQHttpLoadHelper() (isImport bool) {
 			if err := utils.UnZip(bytes.NewReader(zipData), unzipSize, GetCQHttpDir()); err != nil {
 				panic(err)
 			}
-			omegaConfigFile := FindQGroupLinkConfigPath()
-			if omegaConfigFile == "" {
-				omegaConfigFile = ComputeQGroupLinkConfigPath()
-			}
-			if _, err := utils.CopyFile(path.Join(GetCQHttpDir(), "组件-群服互通.json"), omegaConfigFile); err != nil {
+			if _, err := utils.CopyFile(path.Join(GetCQHttpDir(), "组件-群服互通.json"), AcquireQGroupLinkConfig()); err != nil {
 				panic(err)
 			}
 			pterm.Success.Println("导入应该成功了")
@@ -211,26 +248,21 @@ func CQHttpLoadHelper() (isImport bool) {
 }
 
 func CQHttpEnablerHelper() {
+	qGroupLinkCfgPath := AcquireQGroupLinkConfig()
+	qGroupLinkCfg := &ComponentConfig{}
+	if err := utils.GetJsonData(qGroupLinkCfgPath, &qGroupLinkCfg); err != nil {
+		pterm.Error.Println(err)
+		return
+	}
+	if qGroupLinkCfgPath == "" {
+		pterm.Info.Println("群服互通辅助配置程序将在第二次成功启动 Omega 时启用，现在是第一次启动 Omega")
+		return
+	}
 	isImport := CQHttpLoadHelper()
 	pterm.Info.Printf("要启用群服互通吗 要请输入 y 不要请输入 n ")
 	accept := utils.GetInputYN()
 	if !accept {
-		configFile := FindQGroupLinkConfigPath()
-		if configFile != "" {
-			config := map[string]interface{}{}
-			if err := utils.GetJsonData(configFile, &config); err == nil {
-				if b, hasK := config["是否禁用"]; hasK {
-					if disabled, ok := b.(bool); ok && !disabled {
-						pterm.Info.Printf("那么要关闭群服互通吗? 要请输入 y 不要请输入 n ")
-						doClose := utils.GetInputYN()
-						if doClose {
-							config["是否禁用"] = true
-							utils.WriteJsonData(configFile, config)
-						}
-					}
-				}
-			}
-		}
+		utils.WriteJsonData(qGroupLinkCfgPath, qGroupLinkCfg)
 		return
 	}
 	if !utils.IsFile(GetCqHttpExec()) {
@@ -240,7 +272,6 @@ func CQHttpEnablerHelper() {
 	}
 	utils.MakeDirP(GetCQHttpDir())
 	configFile := path.Join(GetCQHttpDir(), "config.yml")
-	omegaConfigFile := ComputeQGroupLinkConfigPath()
 	accept = true
 	if utils.IsFile(configFile) {
 		pterm.Info.Printf("要接受现有QQ号配置吗？要请输入 y 修改请输入 n ")
@@ -254,7 +285,7 @@ func CQHttpEnablerHelper() {
 			return
 		} else {
 			pterm.Warning.Println("将使用 " + configFile + " 的配置进行 QQ 登录，请不要修改这份文件，否则会出错")
-			pterm.Warning.Println("将使用 " + omegaConfigFile + " 的配置进行群服互通，您可以自行修改这份文件")
+			pterm.Warning.Println("将使用 " + qGroupLinkCfgPath + " 的配置进行群服互通，您可以自行修改这份文件")
 		}
 	} else {
 		pterm.Success.Println("如果你需要群服互通，请保证这行字能完整显示在一行中（你可以双指捏合缩放）-->|")
@@ -274,12 +305,14 @@ func CQHttpEnablerHelper() {
 			cfgStr = strings.ReplaceAll(cfgStr, "[QQ密码]", Passwd)
 			utils.WriteFileData(configFile, []byte(cfgStr))
 			pterm.Info.Printf("请输入想链接的群号: ")
-			GroupCode := utils.GetValidInput()
-			groupCfgStr := strings.ReplaceAll(string(defaultQGroupLinkConfigByte), "[群号]", GroupCode)
-			utils.WriteFileData(omegaConfigFile, []byte(groupCfgStr))
+			GroupCode := utils.GetValidInt()
+			for k, _ := range qGroupLinkCfg.Configs.Groups {
+				qGroupLinkCfg.Configs.Groups[k] = int64(GroupCode)
+			}
+			utils.WriteJsonData(qGroupLinkCfgPath, qGroupLinkCfg)
 		}
 		pterm.Warning.Println("将使用 " + configFile + " 的配置进行 QQ 登录，您可以自行修改这份文件")
-		pterm.Warning.Println("将使用 " + omegaConfigFile + " 的配置进行群服互通，您可以自行修改这份文件")
+		pterm.Warning.Println("将使用 " + qGroupLinkCfgPath + " 的配置进行群服互通，您可以自行修改这份文件")
 	}
 
 	if portNumber, err := utils.GetAvailablePort(); err != nil {
@@ -312,7 +345,7 @@ func PackCQHttpRunAuth(isImport bool) {
 		if err := utils.WriteFileData(uuidFile, []byte(uuid)); err != nil {
 			panic(err)
 		}
-		omegaConfigFile := FindQGroupLinkConfigPath()
+		omegaConfigFile := AcquireQGroupLinkConfig()
 		if _, err := utils.CopyFile(omegaConfigFile, path.Join(GetCQHttpDir(), "组件-群服互通.json")); err != nil {
 			panic(err)
 		}
@@ -335,18 +368,14 @@ func PackCQHttpRunAuth(isImport bool) {
 }
 
 func AlterPort(portNumber int) {
-	omegaConfigFile := FindQGroupLinkConfigPath()
+	qGroupLinkCfgPath := AcquireQGroupLinkConfig()
 	CQConfigFile := path.Join(GetCQHttpDir(), "config.yml")
-	if xp, err := regexp.Compile(`127.0.0.1:\d+`); err == nil {
-		if srcBytes, err := ioutil.ReadFile(omegaConfigFile); err == nil {
-			dstBytes := xp.ReplaceAll(srcBytes, []byte(fmt.Sprintf("127.0.0.1:%v", portNumber)))
-			if err := ioutil.WriteFile(omegaConfigFile, dstBytes, 0755); err != nil {
+	qGroupLinkCfg := &ComponentConfig{}
+	if err := utils.GetJsonData(qGroupLinkCfgPath, &qGroupLinkCfg); err != nil {
 				panic(err)
 			}
-		} else {
-			panic(err)
-		}
-	} else {
+	qGroupLinkCfg.Configs.Address = fmt.Sprintf("127.0.0.1:%v", portNumber)
+	if err := utils.WriteJsonData(qGroupLinkCfgPath, qGroupLinkCfg); err != nil {
 		panic(err)
 	}
 	if xp, err := regexp.Compile(`port.*:.*\d+`); err == nil {
