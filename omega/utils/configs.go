@@ -100,9 +100,6 @@ func Migration895(root string) (err error) {
 		os.MkdirAll(dir, 0755)
 		// }
 		for _, cfgName := range cfgs {
-			if runtime.GOOS == "windows" {
-				cfgName = strings.ReplaceAll(cfgName, "\\", "/")
-			}
 			p := path.Join(dir, path.Base(cfgName))
 			os.Rename(cfgName, p)
 		}
