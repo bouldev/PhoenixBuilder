@@ -162,18 +162,18 @@ db 'E'
 ```
 
 以下是关于上述用到的 `placeBlockWithChestData` 的相关解析。<br>
-|参数|解释|代码片段|
-|-|-|-|
-|`placeBlockWithChestData (unsigned int)5420`|在画笔所在位置放置一个 `正在燃烧的熔炉`<br/>因为 `正在燃烧的熔炉` 在 `ID` 为 `117` 的 `运行时ID方块池` 中的 `ID` 是 `5420` |`\x26\x00\x00\x15\x2c`|
-|`(unsigned char)2`|向 `正在燃烧的熔炉` 载入 `2` 次数据(载入 `2` 个 `ChestData` 结构体)|`\x02`|
-|`apple\x00`|放入 `苹果` |`apple\x00`|
-|`(unsigned char)3`|`苹果` 的数量为 `3`|`\x03`|
-|`(unsigned short)0`|`苹果` 的 `物品数据值` 为 `0`|`\x00\x00`|
-|`(unsigned char)0`|将 `苹果` 放在第 `1` 个槽位|`\x00`|
-|`diamond\x00`|放入 `钻石`|`diamond\x00`|
-|`(unsigned char)64`|`钻石` 的数量为 `64`|`\x40`|
-|`(unsigned short)0`|`钻石` 的 `物品数据值` 为 `0`|`\x00\x00`|
-|`(unsigned char)2`|将 `钻石` 放在第 `3` 个槽位|`\x02`|
+|参数|解释|代码片段|其他/备注|
+|-|-|-|-|
+|`placeBlockWithChestData (unsigned int)5420`|在画笔所在位置放置一个 `正在燃烧的熔炉`<br/>因为 `正在燃烧的熔炉` 在 `ID` 为 `117` 的 `运行时ID方块池` 中的 `ID` 是 `5420` |`\x26\x00\x00\x15\x2c`|`5420` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00\x00\x15\x2c`<br/>`unsigned int` 是 `正整数型` ，因此有 `4` 个字节|
+|`(unsigned char)2`|向 `正在燃烧的熔炉` 载入 `2` 次数据(载入 `2` 个 `ChestData` 结构体)|`\x02`|`2` 在 `16` 进制下，其 `大端字节序` 表达为 `\x02`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
+|`apple\x00`|放入 `苹果` |`apple\x00`|`char *` 是以 `\x00`(`UTF-8` 编码)结尾的字符串|
+|`(unsigned char)3`|`苹果` 的数量为 `3`|`\x03`|`3` 在 `16` 进制下，其 `大端字节序` 表达为 `\x03`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
+|`(unsigned short)0`|`苹果` 的 `物品数据值` 为 `0`|`\x00\x00`|`0` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00\x00`<br/>`unsigned short` 是 `无符号整型型` ，因此有 `2` 个字节|
+|`(unsigned char)0`|将 `苹果` 放在第 `1` 个槽位|`\x00`|`0` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
+|`diamond\x00`|放入 `钻石`|`diamond\x00`|`char *` 是以 `\x00`(`UTF-8` 编码)结尾的字符串|
+|`(unsigned char)64`|`钻石` 的数量为 `64`|`\x40`|`64` 在 `16` 进制下，其 `大端字节序` 表达为 `\x40`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
+|`(unsigned short)0`|`钻石` 的 `物品数据值` 为 `0`|`\x00\x00`|`0` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00\x00`<br/>`unsigned short` 是 `无符号整型型` ，因此有 `2` 个字节|
+|`(unsigned char)2`|将 `钻石` 放在第 `3` 个槽位|`\x02`|`2` 在 `16` 进制下，其 `大端字节序` 表达为 `\x02`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
 
 您可以在 [PhoenixBuilder/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources) 查看 `运行时ID方块池` 。<br>
 本样例采用的是 [PhoenixBuilder/resources/blockRuntimeIDs/netease/runtimeIds_117.json](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/resources/blockRuntimeIDs/netease/runtimeIds_117.json) 所述之版本。
