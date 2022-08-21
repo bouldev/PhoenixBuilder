@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"phoenixbuilder/omega/defines"
+	"runtime"
 	"strings"
 )
 
@@ -28,7 +29,7 @@ func DeployComponentConfigs(ComponentConfigs []*defines.ComponentConfig, root st
 		os.MkdirAll(dir, 0755)
 		// }
 		for i, cfg := range cfgs {
-			p := path.Join(dir, fmt.Sprintf("组件-%v-%v.json", name, i))
+			p := path.Join(dir, fmt.Sprintf("组件-%v-%v.json", name, i+1))
 			if err := WriteJsonData(p, cfg); err != nil {
 				return err
 			}
@@ -45,6 +46,9 @@ func CollectComponentConfigs(root string) (ComponentConfigs []*defines.Component
 	}
 	ComponentConfigs = []*defines.ComponentConfig{}
 	if err := filepath.Walk(d, func(filePath string, info fs.FileInfo, err error) error {
+		if runtime.GOOS == "windows" {
+			filePath = strings.ReplaceAll(filePath, "\\", "/")
+		}
 		if info.IsDir() {
 			return nil
 		}
@@ -96,6 +100,9 @@ func Migration895(root string) (err error) {
 		os.MkdirAll(dir, 0755)
 		// }
 		for _, cfgName := range cfgs {
+			if runtime.GOOS == "windows" {
+				cfgName = strings.ReplaceAll(cfgName, "\\", "/")
+			}
 			p := path.Join(dir, path.Base(cfgName))
 			os.Rename(cfgName, p)
 		}
