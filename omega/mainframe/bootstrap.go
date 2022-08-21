@@ -303,6 +303,10 @@ func (o *Omega) bootstrapComponents() (success bool) {
 	}()
 	total := len(o.ComponentConfigs)
 	corePool := getCoreComponentsPool()
+	coreComponentsLoaded := map[string]bool{}
+	for n, _ := range corePool {
+		coreComponentsLoaded[n] = false
+	}
 	builtInPool := components.GetComponentsPool()
 	thirdPartPool := make(map[string]defines.Component)
 	thirdPartNameSpace := make(map[string]string, 0)
@@ -336,6 +340,7 @@ func (o *Omega) bootstrapComponents() (success bool) {
 				o.backendLogger.Write("没有找到核心组件: " + Name)
 				panic("没有找到核心组件: " + Name)
 			} else {
+				coreComponentsLoaded[Name] = true
 				_component := componentFn()
 				_component.SetSystem(o)
 				component = _component
@@ -367,6 +372,11 @@ func (o *Omega) bootstrapComponents() (success bool) {
 			panic(fmt.Errorf("组件: %v 激活前任务出现错误: %v", name, err))
 		}
 	}
+	for n, l := range coreComponentsLoaded {
+		if !l {
+			panic(fmt.Errorf("核心组件 (Core) 必须被加载, 但是 %v 被配置为不加载", n))
+		}
+	}
 	return true
 }
 
@@ -375,7 +385,7 @@ var updateInfo []byte
 
 func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	if len(updateInfo) > 10 {
-		pterm.DefaultBox.WithTitle(pterm.FgBlue.Sprintf("更新日志(最近 50 次更新)")).WithTitleBottomRight().WithRightPadding(0).WithBottomPadding(0).Println(string(updateInfo))
+		pterm.DefaultBox.WithTitle(pterm.FgBlue.Sprintf("更新日志(最近 20 次更新)")).WithTitleBottomRight().WithRightPadding(0).WithBottomPadding(0).Println(string(updateInfo))
 	}
 	rootDir := o.bootstrapRootDir()
 	fmt.Printf("根目录为: %v， 开始分配存储目录\n", rootDir)
