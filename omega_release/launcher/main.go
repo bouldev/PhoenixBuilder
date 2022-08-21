@@ -20,6 +20,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -164,6 +165,9 @@ func AcquireQGroupLinkConfig() string {
 		if info.IsDir() {
 			return nil
 	}
+		if runtime.GOOS == "windows" {
+			filePath = strings.ReplaceAll(filePath, "\\", "/")
+		}
 		fileBaseName := path.Base(filePath)
 		if !strings.HasPrefix(fileBaseName, "组件") || !strings.HasSuffix(fileBaseName, ".json") {
 			return nil
