@@ -160,8 +160,20 @@ placeBlockWithChestData (unsigned int)5420, (unsigned char)2 , 'apple\x00', (uns
 end
 db 'E'
 ```
-其中，`5240` 指的是 `正在燃烧的熔炉` 在 `ID` 为 `117` 的 `运行时ID方块池` 中的 `ID` ， 第一个 `2` 指的是要向 `正在燃烧的熔炉` 载入 `2` 次数据， `apple\x00` 指的是要放入 `苹果` ，`3` 指的是 `苹果` 的数量为 `3` ，首个 `(unsigned short)0` 指的是要放入的 `苹果` 的 `物品数据值` 为 `0` ，第二个 `(unsigned char)0` 指的是把 `苹果` 放在第 `1` 个槽位，`diamond\x00` 指的是要放入 `钻石` ，`64` 指的是 `钻石` 的数量为 `64` ，第三个 `(unsigned short)0` 指的是要放入的 `钻石` 的 `物品数据值` 为 `0` ，第二个 `2` 指的是把 `钻石` 放在第 `3` 个槽位。
 
+以下是关于上述用到的 `placeBlockWithChestData` 的相关解析。<br>
+|参数|解释|代码片段|
+|-|-|-|
+|`placeBlockWithChestData (unsigned int)5420`|在画笔所在位置放置一个 `正在燃烧的熔炉`<br/>因为 `正在燃烧的熔炉` 在 `ID` 为 `117` 的 `运行时ID方块池` 中的 `ID` 是 `5420` |`\x26\x00\x00\x15\x2c`|
+|`(unsigned char)2`|向 `正在燃烧的熔炉` 载入 `2` 次数据(载入 `2` 个 `ChestData` 结构体)|`\x02`|
+|`apple\x00`|放入 `苹果` |`apple\x00`|
+|`(unsigned char)3`|`苹果` 的数量为 `3`|`\x03`|
+|`(unsigned short)0`|`苹果` 的 `物品数据值` 为 `0`|`\x00\x00`|
+|`(unsigned char)0`|将 `苹果` 放在第 `1` 个槽位|`\x00`|
+|`diamond\x00`|放入 `钻石`|`diamond\x00`|
+|`(unsigned char)64`|`钻石` 的数量为 `64`|`\x40`|
+|`(unsigned short)0`|`钻石` 的 `物品数据值` 为 `0`|`\x00\x00`|
+|`(unsigned char)2`|将 `钻石` 放在第 `3` 个槽位|`\x02`|
 
 您可以在 [PhoenixBuilder/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources) 查看 `运行时ID方块池` 。<br>
 本样例采用的是 [PhoenixBuilder/resources/blockRuntimeIDs/netease/runtimeIds_117.json](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/resources/blockRuntimeIDs/netease/runtimeIds_117.json) 所述之版本。
