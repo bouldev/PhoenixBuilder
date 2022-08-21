@@ -169,11 +169,11 @@ db 'E'
 |`apple\x00`|放入 `苹果` |`apple\x00`|`char *` 是以 `\x00`(`UTF-8` 编码)结尾的字符串|
 |`(unsigned char)3`|`苹果` 的数量为 `3`|`\x03`|`3` 在 `16` 进制下，其 `大端字节序` 表达为 `\x03`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
 |`(unsigned short)0`|`苹果` 的 `物品数据值` 为 `0`|`\x00\x00`|`0` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00\x00`<br/>`unsigned short` 是 `无符号短整型` ，因此有 `2` 个字节|
-|`(unsigned char)0`|将 `苹果` 放在第 `1` 个槽位|`\x00`|`0` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
+|`(unsigned char)0`|将 `苹果` 放在第 `1` 个槽位|`\x00`|`0` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节<br/>第一个槽位一般使用 `0` ，第二个槽位则为 `1` ，第三个槽位则为 `2` ，以此类推。|
 |`diamond\x00`|放入 `钻石`|`diamond\x00`|`char *` 是以 `\x00`(`UTF-8` 编码)结尾的字符串|
 |`(unsigned char)64`|`钻石` 的数量为 `64`|`\x40`|`64` 在 `16` 进制下，其 `大端字节序` 表达为 `\x40`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
 |`(unsigned short)0`|`钻石` 的 `物品数据值` 为 `0`|`\x00\x00`|`0` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00\x00`<br/>`unsigned short` 是 `无符号短整型` ，因此有 `2` 个字节|
-|`(unsigned char)2`|将 `钻石` 放在第 `3` 个槽位|`\x02`|`2` 在 `16` 进制下，其 `大端字节序` 表达为 `\x02`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
+|`(unsigned char)2`|将 `钻石` 放在第 `3` 个槽位|`\x02`|`2` 在 `16` 进制下，其 `大端字节序` 表达为 `\x02`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节<br/>第一个槽位一般使用 `0` ，第二个槽位则为 `1` ，第三个槽位则为 `2` ，以此类推。|
 
 您可以在 [PhoenixBuilder/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources) 查看 `运行时ID方块池` 。<br>
 本样例采用的是 [PhoenixBuilder/resources/blockRuntimeIDs/netease/runtimeIds_117.json](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/resources/blockRuntimeIDs/netease/runtimeIds_117.json) 所述之版本。
