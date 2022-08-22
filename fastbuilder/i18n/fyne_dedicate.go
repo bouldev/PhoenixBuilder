@@ -3,5 +3,5 @@
 package I18n
 
 func Init() {
-	I18nDict = I18nDict_cn
+	I18nDict = I18nDict_zh_CN
 }

@@ -255,10 +255,7 @@ func (s *Session) beforeStart() (err error) {
 			panic("Connection deadline exceeded")
 		}()
 		dialer := minecraft.Dialer{
-			ServerCode: env.LoginInfo.ServerCode,
-			Password:   env.LoginInfo.ServerPasscode,
-			Token:      env.LoginInfo.Token,
-			Client:     authClient,
+			Authenticator: fbauth.NewAccessWrapper(authClient, env.LoginInfo.ServerCode, env.LoginInfo.ServerPasscode, env.LoginInfo.Token),
 		}
 		cc, err := dialer.Dial("raknet", "")
 		if err != nil {
@@ -410,7 +407,7 @@ func (s *Session) routine(c chan string) {
 			}
 		}
 	}()
-	chunkAssembler := assembler.NewAssembler()
+	chunkAssembler := assembler.NewAssembler(assembler.REQUEST_AGGRESSIVE, time.Second*5)
 
 	// A loop that reads packets from the connection until it is closed.
 	env := s.env

@@ -11,6 +11,7 @@ require (
 	github.com/df-mc/goleveldb v1.1.9 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/pterm/pterm v0.12.29 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
