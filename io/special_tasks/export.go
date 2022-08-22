@@ -156,12 +156,12 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		for x:=beginPos.X; x<=endPos.X; x++ {
 			for z:=beginPos.Z; z<=endPos.Z; z++ {
 				for y:=beginPos.Y; y<=endPos.Y; y++ {
-					runtimeId, found:=offlineWorld.Block(define.CubePos{x,y,z})
+					runtimeId, item, found:=offlineWorld.BlockWithNbt(define.CubePos{x,y,z})
 					if !found {
 						fmt.Printf("WARNING %d %d %d not found\n", x, y, z)
 					}
 					//block, item:=blk.EncodeBlock()
-					block, item, _ := chunk.RuntimeIDToState(runtimeId)
+					block, static_item, _ := chunk.RuntimeIDToState(runtimeId)
 					if block=="minecraft:air" {
 						continue
 					}
@@ -202,13 +202,10 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 						aut:=item["auto"].(uint8)
 						trackoutput:=item["TrackOutput"].(uint8)
 						lo:=item["LastOutput"].(string)
-						//conditionalmode:=item["conditionalMode"].(uint8)
-						data:=item["data"].(int32)
-						var conb bool
-						if (data>>3)&1 == 1 {
+						conb_bit:=static_item["conditional_bit"].(uint8)
+						conb:=false
+						if conb_bit==1 {
 							conb=true
-						}else{
-							conb=false
 						}
 						var exeftb bool
 						if exeft==0 {
