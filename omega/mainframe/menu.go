@@ -6,6 +6,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
+	"time"
 
 	"github.com/pterm/pterm"
 )
@@ -137,6 +138,31 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 	available := []string{}
 	actions := []func(ctrl *defines.GameChat) bool{}
 	for _, e := range node.RealComponentEntry {
+		if e.Verification != nil && e.Verification.Enable {
+			if e.Verification.ByNameList != nil && len(e.Verification.ByNameList) > 0 {
+				found := false
+				for _, n := range e.Verification.ByNameList {
+					if n == chat.Name {
+						found = true
+						break
+					}
+				}
+				if !found {
+					continue
+				}
+			}
+			if e.Verification.BySelector != "" {
+				select {
+				case r := <-utils.CheckPlayerMatchSelector(m.mainFrame.GetGameControl(), chat.Name, e.Verification.BySelector):
+					if !r {
+						continue
+					}
+				case <-time.NewTimer(100 * time.Millisecond).C:
+					continue
+				}
+
+			}
+		}
 		currentI++
 		i := currentI
 		tmp := menuFmt

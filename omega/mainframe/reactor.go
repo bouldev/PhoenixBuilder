@@ -43,6 +43,31 @@ func (o *Reactor) gameMenuEntryToStdInterceptor(entry *defines.GameMenuEntry) fu
 		}
 		if trig, reducedCmds := utils.CanTrigger(chat.Msg, entry.Triggers, o.o.OmegaConfig.Trigger.AllowNoSpace,
 			o.o.OmegaConfig.Trigger.RemoveSuffixColor); trig {
+			if entry.Verification != nil && entry.Verification.Enable {
+				if entry.Verification.ByNameList != nil && len(entry.Verification.ByNameList) > 0 {
+					found := false
+					for _, n := range entry.Verification.ByNameList {
+						if n == chat.Name {
+							found = true
+							break
+						}
+					}
+					if !found {
+						return false
+					}
+				}
+				if entry.Verification.BySelector != "" {
+					select {
+					case r := <-utils.CheckPlayerMatchSelector(o.o.GameCtrl, chat.Name, entry.Verification.BySelector):
+						if !r {
+							return false
+						}
+					case <-time.NewTimer(100 * time.Millisecond).C:
+						return false
+					}
+
+				}
+			}
 			_c := chat
 			_c.Msg = reducedCmds
 			return entry.OptionalOnTriggerFn(_c)
@@ -168,18 +193,19 @@ func (r *Reactor) React(pkt packet.Packet) {
 		// fmt.Println("Handled ")
 		close(choked)
 	}()
-	go func() {
-		select {
-		case <-time.NewTimer(time.Second).C:
-			pterm.Error.Println("警告，您的配置文件似乎被您改错了，现在的配置文件使 omega 运行效率低下，甚至可能卡死\n请试着逐个关闭配置文件，以确认具体错误\n如果你很确定自己的配置没有错误，并且这段话出现了很多次 omega 却没有崩溃，那么原因是您的 CPU 性能不足")
-		case <-choked:
-		}
-	}()
 	o := r.o
 	if pkt == nil {
 		return
 	}
 	pktID := pkt.ID()
+	go func() {
+		select {
+		case <-time.NewTimer(time.Second).C:
+			pterm.Error.Println("警告，您的配置文件似乎被您改错了，现在的配置文件使 omega 运行效率低下，甚至可能卡死\n请试着逐个关闭配置文件，以确认具体错误\n如果你很确定自己的配置没有错误，并且这段话出现了很多次 omega 却没有崩溃，那么原因是您的 CPU 性能不足")
+			pterm.Error.Printfln("数据包类型为: %v", pktID)
+		case <-choked:
+		}
+	}()
 	switch p := pkt.(type) {
 	case *packet.Text:
 		// o.backendLogger.Write(fmt.Sprintf("%v(%v):%v", p.SourceName, p.TextType, p.Message))

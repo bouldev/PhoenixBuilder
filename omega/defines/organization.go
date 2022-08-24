@@ -67,9 +67,16 @@ type Currency struct {
 	ScoreboardName string `json:"记分板名"`
 }
 
+type VerificationRule struct {
+	Enable     bool     `json:"启用身份验证"`
+	BySelector string   `json:"依据选择器"`
+	ByNameList []string `json:"依据名字"`
+}
+
 type GameMenuEntry struct {
 	MenuEntry
 	OptionalOnTriggerFn func(chat *GameChat) (stop bool)
+	Verification        *VerificationRule
 }
 
 type BackendMenuEntry struct {

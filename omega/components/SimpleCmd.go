@@ -9,11 +9,12 @@ import (
 
 type SimpleCmd struct {
 	*defines.BasicComponent
-	Triggers     []string    `json:"触发词"`
-	FinalTrigger bool        `json:"总是触发"`
-	ArgumentHint string      `json:"参数描述"`
-	Usage        string      `json:"功能描述"`
-	CmdsIn       interface{} `json:"触发时执行指令"`
+	Triggers     []string                  `json:"触发词"`
+	FinalTrigger bool                      `json:"总是触发"`
+	ArgumentHint string                    `json:"参数描述"`
+	Usage        string                    `json:"功能描述"`
+	CmdsIn       interface{}               `json:"触发时执行指令"`
+	Verification *defines.VerificationRule `json:"可使用者身份验证"`
 	Cmds         []defines.Cmd
 }
 
@@ -65,6 +66,7 @@ func (sc *SimpleCmd) Inject(frame defines.MainFrame) {
 			Usage:        sc.Usage,
 			FinalTrigger: sc.FinalTrigger,
 		},
+		Verification:        sc.Verification,
 		OptionalOnTriggerFn: sc.activate,
 	})
 }

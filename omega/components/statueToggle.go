@@ -24,11 +24,12 @@ type StatusToggleLogic struct {
 
 type StatusToggle struct {
 	*defines.BasicComponent
-	Triggers        []string             `json:"触发词"`
-	Usage           string               `json:"提示信息"`
-	ArgumentHint    string               `json:"若需要参数则参数提示为"`
-	DefaultArgument string               `json:"没有给出参数时的默认参数"`
-	Logic           []*StatusToggleLogic `json:"按顺序匹配以下切换逻辑并执行第一个成功项"`
+	Triggers        []string                  `json:"触发词"`
+	Usage           string                    `json:"提示信息"`
+	ArgumentHint    string                    `json:"若需要参数则参数提示为"`
+	DefaultArgument string                    `json:"没有给出参数时的默认参数"`
+	Logic           []*StatusToggleLogic      `json:"按顺序匹配以下切换逻辑并执行第一个成功项"`
+	Verification    *defines.VerificationRule `json:"可使用者身份验证"`
 }
 
 func (o *StatusToggle) Init(cfg *defines.ComponentConfig) {
@@ -109,5 +110,6 @@ func (o *StatusToggle) Inject(frame defines.MainFrame) {
 			Usage:        o.Usage,
 		},
 		OptionalOnTriggerFn: o.onTrigger,
+		Verification:        o.Verification,
 	})
 }
