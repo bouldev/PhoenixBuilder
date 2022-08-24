@@ -412,6 +412,9 @@ func (o *KeepAlive) Inject(frame defines.MainFrame) {
 		o.replay = true
 		return chat.Name == o.mainFrame.GetUQHolder().GetBotName()
 	})
+	o.mainFrame.GetGameListener().SetOnAnyPacketCallBack(func(p packet.Packet) {
+		o.replay = true
+	})
 }
 
 func (o *KeepAlive) Activate() {
@@ -420,6 +423,10 @@ func (o *KeepAlive) Activate() {
 	go func() {
 		for {
 			<-t.C
+			if o.replay {
+				o.replay = false
+				continue
+			}
 			o.replay = false
 			o.mainFrame.GetGameControl().SendCmdAndInvokeOnResponse("w @s alive", func(output *packet.CommandOutput) {
 				o.replay = true
