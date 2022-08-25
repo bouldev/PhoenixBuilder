@@ -42,6 +42,8 @@ type UniverseImport struct {
 	BoostRate          float64  `json:"超频加速比"`
 	ContinueTriggers   []string `json:"继续导入的触发词"`
 	CancelTriggers     []string `json:"取消导入的触发词"`
+	TargetOfGetCmd     string   `json:"get指令的目标"`
+	PosInferredByGet   *define.CubePos
 	fileChange         bool
 	needDecision       bool
 	data               *UniverseImportData
@@ -184,6 +186,12 @@ func (o *UniverseImport) StartNewTask() {
 		lastBlock := 0
 		startTime := time.Now()
 		updateProgress := func(currBlock int) {
+			defer func() {
+				r := recover()
+				if r != nil {
+					pterm.Error.Println("请尝试让一行显示更多的字 (err %v)", r)
+				}
+			}()
 			increasementProgress := currBlock - lastBlock
 			lastBlock = currBlock
 			if increasementProgress > 0 {
@@ -261,6 +269,11 @@ func (o *UniverseImport) Init(cfg *defines.ComponentConfig) {
 		cfg.Version = "0.0.3"
 		cfg.Upgrade()
 	}
+	if cfg.Version == "0.0.3" {
+		cfg.Configs["get指令的目标"] = "2401PT"
+		cfg.Version = "0.0.4"
+		cfg.Upgrade()
+	}
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {
@@ -285,8 +298,14 @@ func (o *UniverseImport) onImport(cmds []string) (stop bool) {
 		o.cancelAll()
 	}
 	if len(cmds) < 4 {
-		pterm.Error.Printfln("导入指令格式不正确，应该为 %v [路径] [x] [y] [z]", o.Triggers[0])
-		return true
+		if o.PosInferredByGet == nil {
+			pterm.Error.Printfln("导入指令格式不正确，应该为 %v [路径] [x] [y] [z]", o.Triggers[0])
+			return true
+		} else {
+			_cmds := []string{cmds[0], fmt.Sprintf("%v", o.PosInferredByGet[0]), fmt.Sprintf("%v", o.PosInferredByGet[1]), fmt.Sprintf("%v", o.PosInferredByGet[2])}
+			_cmds = append(_cmds, cmds[1:]...)
+			cmds = _cmds
+		}
 	}
 	filePath := cmds[0]
 	if runtime.GOOS == "windows" {
@@ -400,6 +419,32 @@ func (o *UniverseImport) onImport(cmds []string) (stop bool) {
 	return true
 }
 
+func (o *UniverseImport) onGetCalled(cmds []string) (stop bool) {
+	target := o.TargetOfGetCmd
+	if len(cmds) > 0 {
+		target = cmds[0]
+	}
+	utils.GetPos(o.Frame.GetGameControl(), target, func(results []utils.QueryPosResult, err error) {
+		if err != nil {
+			pterm.Error.Printfln("无法获取名为 %v 目标的坐标, 请检查 %v 是否在服务器或者考虑调整设置, %v", target, target, err)
+		} else {
+			result := results[0]
+			if result.Position.X < 0 {
+				result.Position.X--
+			}
+			if result.Position.Z < 0 {
+				result.Position.Z--
+			}
+			result.Position.Y -= 1.6200103759765
+			if result.Position.Y < 0 {
+				result.Position.Y--
+			}
+			o.PosInferredByGet = &define.CubePos{int(result.Position.X), int(result.Position.Y), int(result.Position.Z)}
+			pterm.Info.Printfln("已经获得 %v 所在坐标 %v, 后续使用 load 指令时可以省略 [x] [y] [z]", target, o.PosInferredByGet)
+		}
+	})
+	return true
+}
 func (o *UniverseImport) cancelAll() {
 	if o.currentBuilder != nil {
 		o.currentBuilder.cancel()
@@ -428,6 +473,15 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 			Usage:        "导入建筑，支持 bdx schem schmatic",
 		},
 		OptionalOnTriggerFn: o.onImport,
+	})
+	o.Frame.SetBackendMenuEntry(&defines.BackendMenuEntry{
+		MenuEntry: defines.MenuEntry{
+			Triggers:     []string{"get", "Get", "GET"},
+			ArgumentHint: "[目标]",
+			FinalTrigger: false,
+			Usage:        "获取起始点",
+		},
+		OptionalOnTriggerFn: o.onGetCalled,
 	})
 	if !o.AutoContinueImport && (o.data.CurrentTask != nil || len(o.data.QueuedTasks) > 0) {
 		o.needDecision = true
