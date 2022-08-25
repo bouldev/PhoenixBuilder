@@ -204,6 +204,24 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 		// 	o.delayBlocksMu.Unlock()
 		// }
 	}
+	fallBackActionsMu.Lock()
+	if !o.IgnoreNbt && len(fallBackActions) > 0 {
+		fallBackActionsMu.Unlock()
+		time.Sleep(time.Second * 3)
+		fallBackActionsMu.Lock()
+		forceActions := make(map[define.CubePos]func())
+		for pos, actions := range fallBackActions {
+			forceActions[pos] = actions
+		}
+		fallBackActions = make(map[define.CubePos]func())
+		fallBackActionsMu.Unlock()
+		for pos, action := range fallBackActions {
+			pterm.Warning.Printfln("Force Execute Fallback Actions @ %v", pos)
+			action()
+		}
+	} else {
+		fallBackActionsMu.Unlock()
+	}
 	// o.delayBlocksMu.Lock()
 	// if len(o.delayBlocks) > 0 && !o.IgnoreNbt && !o.Stop {
 	// 	counter := 0

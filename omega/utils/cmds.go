@@ -272,3 +272,29 @@ func GetBlockAt(ctrl defines.GameControl, pos string, result func(outOfWorld boo
 		}
 	})
 }
+
+type QueryPosResult struct {
+	Dimension int `json:"dimension"`
+	Position  struct {
+		X float64 `json:"x"`
+		Y float64 `json:"y"`
+		Z float64 `json:"z"`
+	}
+	UniqueID string  `json:"uniqueId"`
+	YRot     float64 `json:"yRot"`
+}
+
+func GetPos(ctrl defines.GameControl, selector string, onResult func(results []QueryPosResult, err error)) {
+	ctrl.SendCmdAndInvokeOnResponse("querytarget "+selector, func(output *packet.CommandOutput) {
+		if output.SuccessCount > 0 {
+			results := []QueryPosResult{}
+			if err := json.Unmarshal([]byte(output.OutputMessages[0].Parameters[0]), &results); err != nil {
+				onResult(nil, err)
+			} else {
+				onResult(results, nil)
+			}
+		} else {
+			onResult(nil, fmt.Errorf("cmd fail %v", output.OutputMessages))
+		}
+	})
+}

@@ -278,7 +278,7 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 		}
 	}
 	msgText = GetRawTextFromCQMessage(msgText)
-	qqUserName := groupMsg.PrivateMessage.Sender.Nickname
+	qqUserName := groupMsg.Sender.Nickname
 
 	for gname, sourceGid := range cq.Groups {
 		if sourceGid == gid {

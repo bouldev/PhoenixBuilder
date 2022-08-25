@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
@@ -110,6 +111,9 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 			// 	return
 			// }
 			o.Frame.GetGameListener().SetGameChatInterceptor(func(chat *defines.GameChat) (stop bool) {
+				if chat.Type != packet.TextTypeChat {
+					return false
+				}
 				if err := sendJson(map[string]interface{}{
 					"data_type": "msg",
 					"data":      fmt.Sprintf("§7<§a%v§7> §7%v", chat.Name, strings.Join(chat.Msg, " ")),
