@@ -137,44 +137,46 @@ func (o *OmegaSide) Inject(frame defines.MainFrame) {
 }
 
 func (o *OmegaSide) Activate() {
-	o.deployBasicLibrary()
-	if o.EnableOmegaPythonRuntime || o.EnableDotCSSimulator {
-		o.autoDeployPython = true
-	}
-	if o.EnableOmegaPythonRuntime {
-		o.StartUpCmds = append(o.StartUpCmds, OmegaSideProcessStartCmd{
-			Name:     "Python",
-			Cmd:      "[python] python_plugin_starter.py --server ws://[addr]/omega_side",
-			Remapper: map[string]string{},
-		})
-	}
-	if o.EnableDotCSSimulator {
-		o.StartUpCmds = append(o.StartUpCmds, OmegaSideProcessStartCmd{
-			Name:     "DotCS",
-			Cmd:      "[python] dotcs_emulator.py --server ws://[addr]/omega_side",
-			Remapper: map[string]string{},
-		})
-	}
-	if o.autoDeployPython {
-		needDeployPython := true
-		o.PossiblePythonExecPath = append(o.PossiblePythonExecPath, "interpreters/python/bin/python", "interpreters/python/bin/python.exe")
-		for _, possiblePath := range o.PossiblePythonExecPath {
-			if !path.IsAbs(possiblePath) {
-				if _, err := os.Stat(path.Join(o.getWorkingDir(), possiblePath)); err == nil {
-					needDeployPython = false
-					o.pythonPath = possiblePath
-					break
-				}
-			} else {
-				if _, err := os.Stat(possiblePath); err == nil {
-					needDeployPython = false
-					o.pythonPath = possiblePath
-					break
+	if !o.DebugServerOnly {
+		o.deployBasicLibrary()
+		if o.EnableOmegaPythonRuntime || o.EnableDotCSSimulator {
+			o.autoDeployPython = true
+		}
+		if o.EnableOmegaPythonRuntime {
+			o.StartUpCmds = append(o.StartUpCmds, OmegaSideProcessStartCmd{
+				Name:     "Python",
+				Cmd:      "[python] python_plugin_starter.py --server ws://[addr]/omega_side",
+				Remapper: map[string]string{},
+			})
+		}
+		if o.EnableDotCSSimulator {
+			o.StartUpCmds = append(o.StartUpCmds, OmegaSideProcessStartCmd{
+				Name:     "DotCS",
+				Cmd:      "[python] dotcs_emulator.py --server ws://[addr]/omega_side",
+				Remapper: map[string]string{},
+			})
+		}
+		if o.autoDeployPython {
+			needDeployPython := true
+			o.PossiblePythonExecPath = append(o.PossiblePythonExecPath, "interpreters/python/bin/python", "interpreters/python/bin/python.exe")
+			for _, possiblePath := range o.PossiblePythonExecPath {
+				if !path.IsAbs(possiblePath) {
+					if _, err := os.Stat(path.Join(o.getWorkingDir(), possiblePath)); err == nil {
+						needDeployPython = false
+						o.pythonPath = possiblePath
+						break
+					}
+				} else {
+					if _, err := os.Stat(possiblePath); err == nil {
+						needDeployPython = false
+						o.pythonPath = possiblePath
+						break
+					}
 				}
 			}
-		}
-		if needDeployPython {
-			o.deployPythonRuntime()
+			if needDeployPython {
+				o.deployPythonRuntime()
+			}
 		}
 	}
 	o.SideUp()
