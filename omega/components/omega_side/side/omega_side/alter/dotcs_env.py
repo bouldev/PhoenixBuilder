@@ -17,7 +17,7 @@ def alter_print(*args,**kwargs):
     orig_print(*args,**kwargs)
 print=orig_print
 
-def color(text: str, output: bool = True, end: str = "\n", replace: bool = False, replaceByNext: bool = False) -> str:
+def color(text: str, output: bool = True, end: str = "\n", replace: bool = False, replaceByNext: bool = False,*args,**kwargs) -> str:
     # 所有在omega 环境下print 出来的东西会自动变颜色，且会自动转为日志，所以这两个函数并没有什么意义
     if output:
         print(("\r" if replace else "")+ text,end="" if replaceByNext else "\n")
