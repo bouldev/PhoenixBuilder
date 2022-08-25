@@ -33,6 +33,15 @@ type StatusToggle struct {
 }
 
 func (o *StatusToggle) Init(cfg *defines.ComponentConfig) {
+	if cfg.Version == "0.0.1" {
+		cfg.Version = "0.0.2"
+		cfg.Configs["可使用者身份验证"] = map[string]interface{}{
+			"启用身份验证": false,
+			"依据名字":   []string{"2401PT", "202PT"},
+		}
+		fmt.Println(cfg)
+		cfg.Upgrade()
+	}
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

@@ -138,6 +138,7 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 	available := []string{}
 	actions := []func(ctrl *defines.GameChat) bool{}
 	for _, e := range node.RealComponentEntry {
+		// pterm.Info.Println(e.Verification)
 		if e.Verification != nil && e.Verification.Enable {
 			if e.Verification.ByNameList != nil && len(e.Verification.ByNameList) > 0 {
 				found := false
@@ -154,13 +155,13 @@ func (m *Menu) popGameMenu(chat *defines.GameChat, node *MenuRenderNode) bool {
 			if e.Verification.BySelector != "" {
 				select {
 				case r := <-utils.CheckPlayerMatchSelector(m.mainFrame.GetGameControl(), chat.Name, e.Verification.BySelector):
+					// pterm.Warning.Println(r)
 					if !r {
 						continue
 					}
 				case <-time.NewTimer(100 * time.Millisecond).C:
 					continue
 				}
-
 			}
 		}
 		currentI++

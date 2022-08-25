@@ -321,9 +321,9 @@ func (o *Omega) Activate() {
 			}
 			if !uqHolderDelayUpdate {
 				o.uqHolder.Update(pkt)
-				o.Reactor.React(pkt)
+				go o.Reactor.React(pkt)
 			} else {
-				o.Reactor.React(pkt)
+				go o.Reactor.React(pkt)
 				o.uqHolder.Update(pkt)
 			}
 		}

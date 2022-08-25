@@ -10,6 +10,8 @@ import (
 	"phoenixbuilder/omega/defines"
 	"runtime"
 	"strings"
+
+	"github.com/pterm/pterm"
 )
 
 func DeployComponentConfigs(ComponentConfigs []*defines.ComponentConfig, root string) error {
@@ -61,6 +63,7 @@ func CollectComponentConfigs(root string) (ComponentConfigs []*defines.Component
 			return fmt.Errorf("处理[" + filePath + "]时出错" + err.Error())
 		}
 		c.SetUpgradeFn(func(cc *defines.ComponentConfig) error {
+			pterm.Info.Println("正在升级配置: ", filePath)
 			return WriteJsonData(filePath, cc)
 		})
 		ComponentConfigs = append(ComponentConfigs, c)

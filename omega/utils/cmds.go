@@ -217,6 +217,7 @@ func CheckPlayerMatchSelector(ctrl defines.GameControl, name, selector string) (
 	})
 	c := make(chan bool)
 	ctrl.SendCmdAndInvokeOnResponse(fmt.Sprintf("testfor %v", s), func(output *packet.CommandOutput) {
+		// pterm.Info.Println(output)
 		if output.SuccessCount != 0 {
 			c <- true
 		} else {
