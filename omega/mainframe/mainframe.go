@@ -303,30 +303,46 @@ func (o *Omega) Activate() {
 	defer o.Stop()
 	go func() {
 		packetFeeder := o.adaptor.GetPacketFeeder()
-		for pkt := range packetFeeder {
-			if pkt == nil {
-				continue
-			}
-			//fmt.Println(pkt)
-			if o.closed {
-				// o.backendLogger.Write(pterm.Warning.Sprintln("Game Packet Feeder & Reactor & UQHoder 已退出"))
-				return
-			}
-			uqHolderDelayUpdate := false
-			if pkt.ID() == packet.IDPlayerList {
-				pk := pkt.(*packet.PlayerList)
-				if pk.ActionType == packet.PlayerListActionRemove {
-					uqHolderDelayUpdate = true
+		delayPumper := make(chan packet.Packet, 10240)
+		go func() {
+			for pkt := range packetFeeder {
+				if pkt == nil {
+					continue
+				}
+				if o.closed {
+					close(delayPumper)
+					return
+				}
+				if pkt.ID() == packet.IDCommandOutput {
+					o.Reactor.React(pkt)
+				} else {
+					delayPumper <- pkt
 				}
 			}
-			if !uqHolderDelayUpdate {
-				o.uqHolder.Update(pkt)
-				go o.Reactor.React(pkt)
-			} else {
-				go o.Reactor.React(pkt)
-				o.uqHolder.Update(pkt)
+		}()
+		go func() {
+			for pkt := range delayPumper {
+				if o.closed {
+					// o.backendLogger.Write(pterm.Warning.Sprintln("Game Packet Feeder & Reactor & UQHoder 已退出"))
+					return
+				}
+				uqHolderDelayUpdate := false
+				if pkt.ID() == packet.IDPlayerList {
+					pk := pkt.(*packet.PlayerList)
+					if pk.ActionType == packet.PlayerListActionRemove {
+						uqHolderDelayUpdate = true
+					}
+				}
+				if !uqHolderDelayUpdate {
+					o.uqHolder.Update(pkt)
+					o.Reactor.React(pkt)
+				} else {
+					o.Reactor.React(pkt)
+					o.uqHolder.Update(pkt)
+				}
 			}
-		}
+		}()
+
 	}()
 	go func() {
 		if o.OmegaConfig.ShowMemUsagePeriod == 0 && o.OmegaConfig.MemLimit == 0 {

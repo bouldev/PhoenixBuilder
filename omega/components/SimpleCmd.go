@@ -2,7 +2,6 @@ package components
 
 import (
 	"encoding/json"
-	"fmt"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
@@ -20,14 +19,12 @@ type SimpleCmd struct {
 }
 
 func (sc *SimpleCmd) Init(cfg *defines.ComponentConfig) {
-	fmt.Println(cfg)
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"
 		cfg.Configs["可使用者身份验证"] = map[string]interface{}{
 			"启用身份验证": false,
 			"依据名字":   []string{"2401PT", "202PT"},
 		}
-		fmt.Println(cfg)
 		cfg.Upgrade()
 	}
 	m, _ := json.Marshal(cfg.Configs)
