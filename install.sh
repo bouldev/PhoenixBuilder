@@ -207,6 +207,7 @@ if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(${UNAME_GET_OSNAME}) == "Android" ]];
       FB_VER=$(dpkg-query --showformat='${Version}' --show pro.fastbuilder.phoenix-android)
       printf "\033[32mFound previously installed FastBuilder, Version: ${FB_VER}\033[0m\n"
     fi
+    apt remove pro.fastbuilder.phoenix-android -y
     echo "Requesting FastBuilder Phoenix for Android ${ARCH}..."
     FB_PREFIX="pro.fastbuilder.phoenix-android"
     FILE_TYPE=".deb"
@@ -386,6 +387,23 @@ else
     printf "${FB_VER}\n"
   else
     report_error ${DL_RET}
+  fi
+  printf "Downloading dependencies...\n"
+  if [ $(${UNAME_GET_OSNAME}) == "Android" ]; then
+    READLINE_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/r/readline/readline_8.1.1_${FILE_ARCH}.deb"
+    ZLIB_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/z/zlib/zlib_1.2.12_${FILE_ARCH}.deb"
+    printf "Downloading dependencies...\n"
+    ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/readline.deb ${READLINE_LINK}
+    ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/zlib.deb ${ZLIB_LINK}
+    DL_RET=$?
+    if [ ${DL_RET} == 0 ]; then
+      printf "Installing dependencies...\n"
+      dpkg -i "${PREFIX}"/./fastbuilder-temp/readline.deb "${PREFIX}"/./fastbuilder-temp/zlib.deb
+      if [ $? != 0 ]; then
+        printf "\033[31mSome errors occurred when calling Debian Packager.\nYou may want to run \"dpkg --configure -a\" to fix some problems.\033[0m\n"
+        quit_installer 1
+      fi
+    fi
   fi
   printf "Downloading FastBuilder package...\n"
   # Repeat FB_LINK

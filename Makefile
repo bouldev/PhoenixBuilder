@@ -252,7 +252,6 @@ package/ios: build/phoenixbuilder-ios-executable release/
 	Name: FastBuilder Phoenix (Alpha)\n\
 	Version: $(VERSION)\n\
 	Architecture: iphoneos-arm\n\
-	Depends: libreadline8, zlib1g\n\
 	Maintainer: Ruphane\n\
 	Author: Bouldev <admin@boul.dev>\n\
 	Section: Games\n\
@@ -270,7 +269,7 @@ package/android-armv7: build/phoenixbuilder-android-executable-armv7 release/
 	Name: FastBuilder Phoenix (Alpha)\n\
 	Version: $(VERSION)\n\
 	Architecture: arm\n\
-	Depends: libreadline8, zlib1g\n\
+	Depends: libreadline8 | readline (>= 8.0.0), zlib | zlib1g\n\
 	Maintainer: Ruphane\n\
 	Author: Bouldev <admin@boul.dev>\n\
 	Section: Games\n\
@@ -285,7 +284,7 @@ package/android-arm64: build/phoenixbuilder-android-executable-arm64 release/
 	Name: FastBuilder Phoenix (Alpha)\n\
 	Version: $(VERSION)\n\
 	Architecture: aarch64\n\
-	Depends: libreadline8, zlib1g\n\
+	Depends: libreadline8 | readline (>= 8.0.0), zlib | zlib1g\n\
 	Maintainer: Ruphane\n\
 	Author: Bouldev <admin@boul.dev>\n\
 	Section: Games\n\
