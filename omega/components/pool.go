@@ -155,5 +155,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"统一导出系统": func() defines.Component {
 			return &universe_export.UniverseExport{BasicComponent: &defines.BasicComponent{}}
 		},
+		"服服互通": func() defines.Component {
+			return &SeverToServerChatRoom{BasicComponent: &defines.BasicComponent{}}
+		},
 	}
 }
