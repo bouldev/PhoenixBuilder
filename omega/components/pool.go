@@ -158,5 +158,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"服服互通": func() defines.Component {
 			return &SeverToServerChatRoom{BasicComponent: &defines.BasicComponent{}}
 		},
+		"数据包捕获": func() defines.Component {
+			return &Capture{BasicComponent: &defines.BasicComponent{}}
+		},
 	}
 }
