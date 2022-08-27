@@ -108,8 +108,11 @@ func (o *LRUMemoryChunkCacher) Write(data *mirror.ChunkData) error {
 }
 
 func (o *LRUMemoryChunkCacher) Close() {
+	// pterm.Info.Println(o.memoryChunks)
 	for _, chunk := range o.memoryChunks {
-		o.Write(chunk)
+		if o.OverFlowHolder != nil {
+			o.OverFlowHolder.Write(chunk)
+		}
 	}
 }
 
