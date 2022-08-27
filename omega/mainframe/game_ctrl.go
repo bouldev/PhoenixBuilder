@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pterm/pterm"
 )
 
 type PlayerKitOmega struct {
@@ -238,7 +239,109 @@ func (p *PlayerKitOmega) GetRelatedUQ() *uqHolder.Player {
 	return nil
 }
 
+type timeCmdPair struct {
+	time time.Time
+	cmd  string
+}
+type PacketOutAnalyzer struct {
+	WriteFn                  func(p packet.Packet)
+	packetSendStats          map[time.Time]map[uint32]int
+	packetSendStatsTimeStamp []time.Time
+	mu                       sync.Mutex
+	currentFiveSecondStats   map[uint32]int
+	cmdMapLastInterval       []timeCmdPair
+	cmdMapThisInterval       []timeCmdPair
+}
+
+func NewPacketOutAnalyzer(writeFn func(p packet.Packet)) *PacketOutAnalyzer {
+	p := &PacketOutAnalyzer{
+		WriteFn:                  writeFn,
+		packetSendStats:          make(map[time.Time]map[uint32]int),
+		packetSendStatsTimeStamp: make([]time.Time, 0),
+		mu:                       sync.Mutex{},
+		currentFiveSecondStats:   make(map[uint32]int),
+		cmdMapLastInterval:       make([]timeCmdPair, 0),
+		cmdMapThisInterval:       make([]timeCmdPair, 0),
+	}
+	go func() {
+		t := time.NewTicker(time.Second * 5)
+		cmdInfoCounter := 0
+		for _ = range t.C {
+			cmdInfoCounter++
+			t := time.Now()
+			p.mu.Lock()
+			p.packetSendStatsTimeStamp = append(p.packetSendStatsTimeStamp, t)
+			p.packetSendStats[t] = p.currentFiveSecondStats
+			p.currentFiveSecondStats = make(map[uint32]int)
+			if len(p.packetSendStats) > (60 / 5) {
+				timeStampToDrop := p.packetSendStatsTimeStamp[0]
+				p.packetSendStatsTimeStamp = p.packetSendStatsTimeStamp[1:]
+				delete(p.packetSendStats, timeStampToDrop)
+			}
+			if cmdInfoCounter > 12 {
+				cmdInfoCounter = 0
+				p.cmdMapLastInterval = p.cmdMapThisInterval
+				p.cmdMapThisInterval = make([]timeCmdPair, 0)
+			}
+			p.mu.Unlock()
+		}
+	}()
+	return p
+}
+
+func (o *PacketOutAnalyzer) PrintAnalysis() string {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	infoStr := "最近一分钟机器人发送数据包的统计信息:\n"
+	perStripInfoStrAll := ""
+	allPacketsStats := make(map[uint32]int)
+	for _, t := range o.packetSendStatsTimeStamp {
+		count := 0
+		secondsBefore := time.Since(t).Seconds()
+		perStripInfoStr := fmt.Sprintf("%.2f ~ %.2f 秒前发送数据包的统计信息:\n", secondsBefore-5, secondsBefore)
+		for pkName, pkCount := range o.packetSendStats[t] {
+			perStripInfoStr += fmt.Sprintf("\t%v: %v\n", utils.PktIDInvMapping[int(pkName)], pkCount)
+			allPacketsStats[pkName] += pkCount
+			count += pkCount
+		}
+		perStripInfoStrAll += perStripInfoStr + fmt.Sprintf("共计 %v 个数据包\n", count)
+	}
+	count := 0
+	for pkName, pkCount := range allPacketsStats {
+		infoStr += fmt.Sprintf("\t%v: %v\n", utils.PktIDInvMapping[int(pkName)], pkCount)
+		count += pkCount
+	}
+	infoStr += fmt.Sprintf("共计 %v 个数据包\n", count) + perStripInfoStrAll
+	return infoStr
+}
+
+func (o *PacketOutAnalyzer) GenSendedCmdList() string {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	records := make([]string, 0)
+	for _, p := range o.cmdMapLastInterval {
+		sendTime := time.Since(p.time).Seconds()
+		records = append(records, fmt.Sprintf("%.2f秒前发送指令: %v", sendTime, p.cmd))
+	}
+	for _, p := range o.cmdMapThisInterval {
+		sendTime := time.Since(p.time).Seconds()
+		records = append(records, fmt.Sprintf("%.2f秒前发送指令: %v", sendTime, p.cmd))
+	}
+	return strings.Join(records, "\n")
+}
+
+func (o *PacketOutAnalyzer) Write(p packet.Packet) {
+	o.mu.Lock()
+	if p.ID() == packet.IDCommandRequest {
+		o.cmdMapThisInterval = append(o.cmdMapThisInterval, timeCmdPair{time.Now(), p.(*packet.CommandRequest).CommandLine})
+	}
+	o.currentFiveSecondStats[p.ID()]++
+	o.mu.Unlock()
+	o.WriteFn(p)
+}
+
 type GameCtrl struct {
+	analyzer            *PacketOutAnalyzer
 	WriteFn             func(packet packet.Packet)
 	ExpectedCmdFeedBack bool
 	CurrentCmdFeedBack  bool
@@ -250,8 +353,9 @@ type GameCtrl struct {
 	perPlayerStorage    map[string]*PlayerKitOmega
 	//playerNameDB        defines.NoSqlDB
 	//playerStorageDB     defines.NoSqlDB
-	PlayerPermission map[string]map[string]bool
-	onBlockActorCbs  map[define.CubePos]func(define.CubePos, *packet.BlockActorData)
+	PlayerPermission      map[string]map[string]bool
+	onBlockActorCbs       map[define.CubePos]func(define.CubePos, *packet.BlockActorData)
+	placeCommandBlockLock sync.Mutex
 }
 
 func (g *GameCtrl) GetPlayerKit(name string) defines.PlayerKit {
@@ -439,14 +543,21 @@ func (g *GameCtrl) PlaceCommandBlock(pos define.CubePos, commandBlockName string
 		cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], strings.Replace(commandBlockName, "minecraft:", "", 1), commandBlockData)
 		g.SendWOCmd(cmd)
 		g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
-			g.SendCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
-			// time.Sleep(50 * time.Millisecond)
-			g.SendMCPacket(updatePacket)
-			g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
-				onDone(true)
-				done <- true
-			}
+			go func() {
+				g.placeCommandBlockLock.Lock()
+				g.SendCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
+				time.Sleep(50 * time.Millisecond)
+				pterm.Info.Println(updatePacket)
+				g.SendMCPacket(updatePacket)
+				g.placeCommandBlockLock.Unlock()
+				g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
+					pterm.Info.Println(updatePacket)
+					onDone(true)
+					done <- true
+				}
+			}()
 		}
+
 	}()
 }
 
@@ -505,8 +616,9 @@ func (g *GameCtrl) SetOnParamMsg(name string, cb func(chat *defines.GameChat) (c
 }
 
 func newGameCtrl(o *Omega) *GameCtrl {
+	analyzer := NewPacketOutAnalyzer(o.adaptor.Write)
 	c := &GameCtrl{
-		WriteFn:             o.adaptor.Write,
+		WriteFn:             analyzer.Write,
 		ExpectedCmdFeedBack: o.OmegaConfig.CommandFeedBackByDefault,
 		CurrentCmdFeedBack:  false,
 		uuidLock:            sync.Mutex{},
@@ -516,8 +628,10 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		perPlayerStorage:    make(map[string]*PlayerKitOmega),
 		//playerNameDB:        o.GetNoSqlDB("playerNameDB"),
 		//playerStorageDB:     o.GetNoSqlDB("playerStorageDB"),
-		onBlockActorCbs: make(map[define.CubePos]func(define.CubePos, *packet.BlockActorData)),
+		onBlockActorCbs:       make(map[define.CubePos]func(define.CubePos, *packet.BlockActorData)),
+		placeCommandBlockLock: sync.Mutex{},
 	}
+	c.analyzer = analyzer
 	err := o.GetJsonData("playerPermission.json", &c.PlayerPermission)
 	if err != nil {
 		panic(err)
@@ -530,6 +644,7 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		return o.WriteJsonData("playerPermission.json", c.PlayerPermission)
 	})
 	c.toExpectedFeedBackStatus()
+	c.SendCmd("gamemode c @s")
 	return c
 }
 
