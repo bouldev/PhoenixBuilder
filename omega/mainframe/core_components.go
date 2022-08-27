@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
-	"runtime"
 	"runtime/pprof"
 	"strings"
 	"time"
@@ -393,9 +393,11 @@ func (o *NameRecord) Activate() {
 
 type KeepAlive struct {
 	*BaseCoreComponent
-	Schedule int `json:"检测周期"`
-	Delay    int `json:"最大延迟"`
-	replay   bool
+	Schedule   int `json:"检测周期"`
+	Delay      int `json:"最大延迟"`
+	replay     bool
+	lastPacket packet.Packet
+	lastTime   time.Time
 }
 
 func (o *KeepAlive) Init(cfg *defines.ComponentConfig) {
@@ -408,12 +410,27 @@ func (o *KeepAlive) Init(cfg *defines.ComponentConfig) {
 
 func (o *KeepAlive) Inject(frame defines.MainFrame) {
 	o.mainFrame = frame
-	o.mainFrame.GetGameListener().SetGameChatInterceptor(func(chat *defines.GameChat) (stop bool) {
-		o.replay = true
-		return chat.Name == o.mainFrame.GetUQHolder().GetBotName()
-	})
 	o.mainFrame.GetGameListener().SetOnAnyPacketCallBack(func(p packet.Packet) {
 		o.replay = true
+		o.lastPacket = p
+		o.lastTime = time.Now()
+	})
+	o.mainFrame.SetBackendMenuEntry(&defines.BackendMenuEntry{
+		MenuEntry: defines.MenuEntry{
+			Triggers:     []string{"packet_analysis"},
+			ArgumentHint: "",
+			FinalTrigger: false,
+			Usage:        "显示最近发包情况",
+		},
+		OptionalOnTriggerFn: func(cmds []string) (stop bool) {
+			pterm.Info.Println(o.omega.GameCtrl.analyzer.PrintAnalysis())
+			fname := path.Join(o.omega.GetStorageRoot(), "最后发送的指令记录.txt")
+			if fp, err := os.OpenFile(fname, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0755); err == nil {
+				fp.WriteString(o.omega.GameCtrl.analyzer.GenSendedCmdList())
+				o.mainFrame.GetBackendDisplay().Write("最后发送的指令记录保存在 " + fname)
+			}
+			return true
+		},
 	})
 }
 
@@ -426,26 +443,35 @@ func (o *KeepAlive) Activate() {
 			if o.replay {
 				o.replay = false
 				continue
-			}
-			o.replay = false
-			o.mainFrame.GetGameControl().SendCmdAndInvokeOnResponse("w @s alive", func(output *packet.CommandOutput) {
-				o.replay = true
-			})
-			<-time.NewTimer(time.Second * time.Duration(o.Delay)).C
-			if !o.replay {
-				o.mainFrame.GetBackendDisplay().Write("连接检查失败，疑似Omega假死，准备退出...")
-				o.omega.Stop()
-				fmt.Println("3秒后退出")
-				<-time.NewTimer(time.Second * 3).C
-				restartHint := "while true; do ./fastbuilder -c 租赁服号 --omega_system; sleep 30; done\n"
-				if runtime.GOOS == "windows" {
-					restartHint = "for /l %i in (0,0,1) do @fastbuilder-windows.exe --omega_system -c 租赁服号 & @TIMEOUT /T 30 /NOBREAK\n"
+			} else {
+				o.mainFrame.GetGameControl().SendCmdAndInvokeOnResponse("list", func(output *packet.CommandOutput) {
+					o.replay = true
+				})
+				<-time.NewTimer(time.Second * time.Duration(o.Delay)).C
+				if !o.replay {
+					o.mainFrame.GetBackendDisplay().Write("连接检查失败，疑似Omega假死，准备退出...")
+					if o.lastPacket == nil {
+						o.mainFrame.GetBackendDisplay().Write("自启动以来没有收到任何数据包")
+					} else {
+						o.mainFrame.GetBackendDisplay().Write(fmt.Sprintf("最后收到的数据包距现在 %v, 类型 %v 数据 %v", time.Since(o.lastTime), utils.PktIDInvMapping[int(o.lastPacket.ID())], o.lastPacket))
+					}
+					o.mainFrame.GetBackendDisplay().Write("以下为最后发送数据包的统计信息:")
+					o.mainFrame.GetBackendDisplay().Write(o.omega.GameCtrl.analyzer.PrintAnalysis())
+					fname := path.Join(o.omega.GetStorageRoot(), "最后发送的指令记录.txt")
+					if fp, err := os.OpenFile(fname, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0755); err == nil {
+						fp.WriteString(o.omega.GameCtrl.analyzer.GenSendedCmdList())
+						o.mainFrame.GetBackendDisplay().Write("最后发送的指令记录保存在 " + fname)
+					}
+					o.omega.Stop()
+					fmt.Println("3秒后退出")
+					<-time.NewTimer(time.Second * 3).C
+					// restartHint := "while true; do ./fastbuilder -c 租赁服号 --omega_system; sleep 30; done\n"
+					// if runtime.GOOS == "windows" {
+					// 	restartHint = "for /l %i in (0,0,1) do @fastbuilder-windows.exe --omega_system -c 租赁服号 & @TIMEOUT /T 30 /NOBREAK\n"
+					// }
+					panic("Omega 假死，已退出...\n" +
+						"建议使用 Omega 启动器以实现自动断线重连\n")
 				}
-				panic("Omega 假死，已退出...\n" +
-					"建议使用 Omega 启动器以实现自动断线重连\n" +
-					"或者可以配合如下启动指令使 Omega 系统自动循环重启 (注意，延迟不得小于30秒，否则可能被封号)\n" +
-					restartHint,
-				)
 			}
 		}
 	}()

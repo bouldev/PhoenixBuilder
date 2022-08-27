@@ -202,7 +202,7 @@ func (r *Reactor) React(pkt packet.Packet) {
 		select {
 		case <-time.NewTimer(time.Second).C:
 			pterm.Error.Println("警告，您的配置文件似乎被您改错了，现在的配置文件使 omega 运行效率低下，甚至可能卡死\n请试着逐个关闭配置文件，以确认具体错误\n如果你很确定自己的配置没有错误，并且这段话出现了很多次 omega 却没有崩溃，那么原因是您的 CPU 性能不足")
-			pterm.Error.Printfln("数据包类型为: %v", pktID)
+			pterm.Error.Printfln("数据包类型为: %v", utils.PktIDInvMapping[int(pktID)])
 		case <-choked:
 		}
 	}()
@@ -336,7 +336,7 @@ func (o *Reactor) onBootstrap() {
 	o.chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		o.o.adaptor.Write(pk)
 	})
-	memoryProvider := lru.NewLRUMemoryChunkCacher(14)
+	memoryProvider := lru.NewLRUMemoryChunkCacher(10)
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)
 	if err != nil {
