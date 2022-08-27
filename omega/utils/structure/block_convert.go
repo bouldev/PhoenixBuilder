@@ -8,12 +8,16 @@ import (
 type DoubleValueLegacyBlockToRuntimeIDMapper struct {
 	palatteIDToBlockNameMapping map[uint16]string
 	quickCache                  map[uint32]uint32
+	// AuxHash                     map[chunk.LegacyBlockHash]uint32
+	// AuxOffset                   int
 }
 
 func NewDoubleValueLegacyBlockToRuntimeIDMapper() *DoubleValueLegacyBlockToRuntimeIDMapper {
 	return &DoubleValueLegacyBlockToRuntimeIDMapper{
 		palatteIDToBlockNameMapping: map[uint16]string{},
 		quickCache:                  map[uint32]uint32{},
+		// AuxHash:                     map[chunk.LegacyBlockHash]uint32{},
+		// AuxOffset:                   len(chunk.Blocks) + 1,
 	}
 
 }
@@ -24,20 +28,29 @@ func (o *DoubleValueLegacyBlockToRuntimeIDMapper) AddBlockNamePalette(paletteID 
 }
 
 func (o *DoubleValueLegacyBlockToRuntimeIDMapper) GetRTID(blockPaletteID uint16, data uint16) (rtid uint32) {
+	// pterm.Info.Println(blockPaletteID, data)
 	quickCacheID := uint32(blockPaletteID)<<16 | uint32(data)
 	if rtid, ok := o.quickCache[quickCacheID]; ok {
+		// pterm.Info.Println(rtid)
 		return rtid
 	}
 	blockName, found := o.palatteIDToBlockNameMapping[blockPaletteID]
 	if !found {
 		o.quickCache[quickCacheID] = chunk.AirRID
+		// pterm.Info.Println("Air")
 		return chunk.AirRID
 	}
 	if rtid, found := chunk.LegacyBlockToRuntimeID(blockName, data); found {
+		// pterm.Info.Println("Put", rtid)
 		o.quickCache[quickCacheID] = rtid
 		return rtid
 	} else {
+		if rtid, found := chunk.LegacyBlockToRuntimeID(blockName, 0); found {
+			o.quickCache[quickCacheID] = rtid
+			return rtid
+		}
 		o.quickCache[quickCacheID] = chunk.AirRID
+		// pterm.Info.Println("Air2")
 		return chunk.AirRID
 	}
 }

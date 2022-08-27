@@ -180,7 +180,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 							fallBackActionsMu.Unlock()
 						}
 					}, time.Second*3)
-					for time.Since(placeStart) < time.Millisecond*20 {
+					for time.Since(placeStart) < time.Millisecond*50 {
 						if !quickDone {
 							time.Sleep(time.Millisecond)
 						} else {
