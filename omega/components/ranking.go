@@ -306,6 +306,13 @@ func (o *Ranking) freshScoreboardDisplay(records []*scoreRecord) {
 			}
 		}
 	}
+	for name, _ := range oldMaintainer {
+		if _, found := objectsToUpdate[name]; !found {
+			if _, found = objectsUnchanged[name]; !found {
+				objectsToRemove = append(objectsToRemove, name)
+			}
+		}
+	}
 
 	// pterm.Info.Println("Remove: ", objectsToRemove)
 	// pterm.Info.Println("Update: ", objectsToUpdate)
@@ -315,7 +322,6 @@ func (o *Ranking) freshScoreboardDisplay(records []*scoreRecord) {
 	}
 	for name, val := range objectsToUpdate {
 		o.Frame.GetGameControl().SendWOCmd(fmt.Sprintf("scoreboard players set %v %v %v", name, o.ScoreBoardRender.TargetDisplayScoreboard, val))
-		delete(newMaintained, name)
 	}
 
 	o.auxData.MaintainedNames = newMaintained
