@@ -7,6 +7,7 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -305,6 +306,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		r := recover()
 		if r != nil {
 			fmt.Println("UQHolder Update Error: ", r)
+			debug.PrintStack()
 		}
 	}()
 	switch p := pk.(type) {
@@ -347,6 +349,9 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		}
 	case *packet.AdventureSettings:
 		player := uq.PlayersByEntityID[p.PlayerUniqueID]
+		if player == nil {
+			player = &Player{}
+		}
 		player.PropertiesFlag = p.Flags
 		player.CommandPermissionLevel = p.CommandPermissionLevel
 		player.ActionPermissions = p.ActionPermissions
