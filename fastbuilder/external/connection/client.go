@@ -3,13 +3,14 @@ package connection
 import (
 	"bytes"
 	"fmt"
-	"github.com/google/uuid"
 	"io"
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	mc_packet "phoenixbuilder/minecraft/protocol/packet"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var ErrSendOnClosedConnection = fmt.Errorf("send on closed connection")
