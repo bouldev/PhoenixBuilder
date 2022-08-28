@@ -87,15 +87,14 @@ func (ea *EmbeddedAdaptor) QuerySensitiveInfo(key defines.SensitiveInfoType) (re
 	}
 }
 
-func EnableOmegaSystem(env *environment.PBEnvironment) *EmbeddedAdaptor {
+func EnableOmegaSystem(env *environment.PBEnvironment) (*EmbeddedAdaptor, func()) {
 	ea := &EmbeddedAdaptor{
 		env:              env,
 		BackendCmdFeeder: make(chan string, 1024),
 		PacketFeeder:     make(chan mc_packet.Packet, 1024),
 		ChunkDataFeeder:  make(chan *mirror.ChunkData, 1024),
 	}
-	fmt.Println("Starting Omega in 1 Seconds")
-	time.Sleep(time.Millisecond * 10)
+
 	omega := mainframe.NewOmega()
 	omega.Bootstrap(ea)
 	env.OmegaHolder = omega
@@ -103,6 +102,9 @@ func EnableOmegaSystem(env *environment.PBEnvironment) *EmbeddedAdaptor {
 	env.Destructors = append(env.Destructors, func() {
 		omega.Stop()
 	})
-	go omega.Activate()
-	return ea
+	return ea, func() {
+		fmt.Println("Starting Omega in 1 Seconds")
+		time.Sleep(time.Millisecond * 10)
+		omega.Activate()
+	}
 }

@@ -242,6 +242,7 @@ type MainFrame interface {
 	GetBotTaskScheduler() BotTaskScheduler
 	GetWorld() *world.World
 	GetWorldProvider() mirror.ChunkProvider
+	GetScoreboardHolder() *ScoreBoardHolder
 	FBEval(cmd string)
 	AllowChunkRequestCache()
 	NoChunkRequestCache()

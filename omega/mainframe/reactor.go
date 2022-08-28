@@ -187,7 +187,13 @@ func (r *Reactor) Throw(chat *defines.GameChat) {
 }
 
 func (r *Reactor) React(pkt packet.Packet) {
-	// fmt.Println("PacketID ", pkt.ID(), pkt)
+	// if pkt.ID() == packet.IDSubChunk || pkt.ID() == packet.IDLevelChunk {
+
+	// } else {
+	// 	M, _ := json.Marshal(pkt)
+	// 	fmt.Println("PacketID ", utils.PktIDInvMapping[int(pkt.ID())], string(M))
+	// }
+
 	choked := make(chan struct{})
 	defer func() {
 		// fmt.Println("Handled ")
@@ -207,6 +213,10 @@ func (r *Reactor) React(pkt packet.Packet) {
 		}
 	}()
 	switch p := pkt.(type) {
+	case *packet.SetDisplayObjective:
+		r.scoreboardHolder.UpdateFromSetDisplayPacket(p)
+	case *packet.SetScore:
+		r.scoreboardHolder.UpdateFromScorePacket(p)
 	case *packet.Text:
 		// o.backendLogger.Write(fmt.Sprintf("%v(%v):%v", p.SourceName, p.TextType, p.Message))
 		chat := o.convertTextPacket(p)
@@ -321,6 +331,7 @@ type Reactor struct {
 	MirrorAvailable            bool
 	freshMenu                  func()
 	chunkAssembler             *assembler.Assembler
+	scoreboardHolder           *defines.ScoreBoardHolder
 }
 
 func (o *Reactor) AppendOnKnownPlayerExistCallback(cb func(string)) {
@@ -385,6 +396,10 @@ func (o *Omega) GetWorldProvider() mirror.ChunkProvider {
 	return o.Reactor.CurrentWorldProvider
 }
 
+func (o *Omega) GetScoreboardHolder() *defines.ScoreBoardHolder {
+	return o.Reactor.scoreboardHolder
+}
+
 func newReactor(o *Omega) *Reactor {
 	return &Reactor{
 		o:                          o,
@@ -396,5 +411,9 @@ func newReactor(o *Omega) *Reactor {
 		OnKnownPlayerExistCallback: make([]func(string), 0),
 		OnLevelChunkData:           make([]func(cd *mirror.ChunkData), 0),
 		freshMenu:                  func() {},
+		scoreboardHolder:           nil,
 	}
 }
+
+// /scoreboard objectives setdisplay sidebar time
+// /scoreboard objectives setdisplay sidebar time2

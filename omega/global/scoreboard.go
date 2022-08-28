@@ -1,6 +1,7 @@
 package global
 
 import (
+	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
 	"strconv"
@@ -38,7 +39,7 @@ func UpdateScore(ctrl defines.GameControl, allowDuration time.Duration, onUpdate
 
 			for _, msg := range output.OutputMessages {
 				if !msg.Success {
-					return
+					continue
 				}
 				if len(msg.Parameters) == 2 {
 					_currentPlayer := msg.Parameters[1]
@@ -59,26 +60,23 @@ func UpdateScore(ctrl defines.GameControl, allowDuration time.Duration, onUpdate
 						players[currentPlayer] = val
 					}
 				} else {
-					return
+					continue
 				}
 			}
 			return fetchResult
 		}
-		var result map[string]map[string]int
-		if result = fetch(output); result == nil {
-			// fmt.Println("cannot get scoreboard result")
-			result = map[string]map[string]int{}
+		if result := fetch(output); result == nil {
+			fmt.Println("cannot get scoreboard result")
 		} else {
-			// fmt.Println(result)
+			rankingLastFetchResult = result
+			rankingLastFetchTime = time.Now()
+			onUpdateDone(rankingLastFetchResult)
+			rankingWaiterLock.Lock()
+			for _, cb := range rankingWaiter {
+				cb(rankingLastFetchResult)
+			}
+			rankingWaiter = nil
+			rankingWaiterLock.Unlock()
 		}
-		rankingLastFetchResult = result
-		rankingLastFetchTime = time.Now()
-		onUpdateDone(rankingLastFetchResult)
-		rankingWaiterLock.Lock()
-		for _, cb := range rankingWaiter {
-			cb(rankingLastFetchResult)
-		}
-		rankingWaiter = nil
-		rankingWaiterLock.Unlock()
 	})
 }

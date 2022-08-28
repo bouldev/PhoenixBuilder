@@ -393,6 +393,7 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 	o.QuerySensitiveInfoFN = adaptor.QuerySensitiveInfo
 	o.adaptor = adaptor
 	o.uqHolder = adaptor.GetInitUQHolderCopy()
+	o.Reactor.scoreboardHolder = defines.NewScoreBoardHolder(o.uqHolder)
 	fmt.Println("开始空间回收任务: 日志压缩")
 	CompressLogs(o.storageRoot, 7, 3)
 

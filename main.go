@@ -371,11 +371,13 @@ func runClient(env *environment.PBEnvironment) {
 	opPrivilegeGrantedWaitorClosed := false
 
 	if args.ShouldEnableOmegaSystem() {
+		// <-confirmWaitor
+		_, activateFn := embed.EnableOmegaSystem(env)
 		go func() {
 			fmt.Println(I18n.T(I18n.Omega_WaitingForOP))
 			<-opPrivilegeGrantedWaitor
 			fmt.Println(I18n.T(I18n.Omega_Enabled))
-			embed.EnableOmegaSystem(env)
+			activateFn()
 		}()
 	}
 
