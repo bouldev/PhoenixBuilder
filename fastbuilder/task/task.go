@@ -282,12 +282,11 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				if curblock.Block != nil {
 					commands_generator.SetBlockRequest(request, curblock, cfg)
-					nuuid:=uuid.New()
 					if !isFastMode {
 						//<-time.After(time.Second)
 						wc := make(chan bool)
 						(*cmdsender.GetBlockUpdateSubscribeMap()).Store(protocol.BlockPos{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)}, wc)
-						cmdsender.SendWSCommand(*request, nuuid)
+						cmdsender.SendSizukanaCommand(*request)
 						select {
 						case <-wc:
 							break
@@ -296,7 +295,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 						}
 						close(wc)
 					} else {
-						cmdsender.SendWSCommand(*request, nuuid)
+						cmdsender.SendSizukanaCommand(*request)
 					}
 				}
 				cbdata := curblock.CommandBlockData
@@ -318,13 +317,11 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 				cmdsender.UpdateCommandBlock(int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z), cbdata)
 			} else if curblock.ChestSlot != nil {
-				uuid_val:=uuid.New()
 				commands_generator.ReplaceItemRequest(request, curblock, cfg)
-				cmdsender.SendWSCommand(*request, uuid_val)
+				cmdsender.SendSizukanaCommand(*request)
 			} else {
 				commands_generator.SetBlockRequest(request, curblock, cfg)
-				uuid_val:=uuid.New()
-				err := cmdsender.SendWSCommand(*request, uuid_val)
+				err := cmdsender.SendSizukanaCommand(*request)
 				if err != nil {
 					panic(err)
 				}
