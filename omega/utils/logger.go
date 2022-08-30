@@ -82,8 +82,8 @@ func (w *ColorTranslateLogLineWrapper) Close() error {
 }
 
 func NewIOColorTranslateLogger(w io.Writer) *ColorTranslateLogLineWrapper {
-	log_ := log.New(w, "", log.Ldate|log.Ltime)
-	log_.SetFlags(log.Ldate | log.Ltime)
+	log_ := log.New(w, "", log.Ltime)
+	log_.SetFlags(log.Ltime)
 	l := &ColorTranslateLogLineWrapper{
 		log:     log_,
 		closeFn: func() error { return nil },

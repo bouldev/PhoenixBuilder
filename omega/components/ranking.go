@@ -458,6 +458,7 @@ func (o *Ranking) Stop() error {
 
 func (o *Ranking) Activate() {
 	t := time.NewTicker(time.Second * time.Duration(o.Period))
+	<-t.C
 	go func() {
 		time.Sleep(time.Second * 3)
 		for {
