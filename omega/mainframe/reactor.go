@@ -127,7 +127,7 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 	rawName := p.SourceName
 	name := utils.ToPlainName(rawName)
 	msg := ""
-	specialTrigged := false
+	// specialTrigged := false
 	if p.TextType == packet.TextTypeWhisper {
 		if strings.HasPrefix(p.Message, "CBOMG:") {
 			frags := strings.Split(p.Message, ":")
@@ -140,7 +140,7 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 					if p.Username == _name {
 						name = _name
 						msg = _msg
-						specialTrigged = true
+						// specialTrigged = true
 						break
 					}
 				}
@@ -167,9 +167,9 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 		o.OmegaConfig.Trigger.AllowNoSpace,
 		o.OmegaConfig.Trigger.RemoveSuffixColor,
 	)
-	if specialTrigged {
-		c.FrameWorkTriggered = true
-	}
+	// if specialTrigged {
+	// 	c.FrameWorkTriggered = true
+	// }
 	return c
 }
 func (o *Reactor) GetTriggerWord() string {
