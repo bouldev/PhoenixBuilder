@@ -249,7 +249,7 @@ func (o *SimpleNovelReader) showPage(pk defines.PlayerKit, book []string, bookDa
 		if len(chat.Msg) < 1 {
 			pk.Say("无法理解的输入")
 			go o.showPage(pk, book, bookData, tailLine)
-			return true
+			return false
 		}
 		m := chat.Msg[0]
 		if m == "退出" {
@@ -272,7 +272,7 @@ func (o *SimpleNovelReader) showPage(pk defines.PlayerKit, book []string, bookDa
 		} else {
 			pk.Say("无法理解的输入")
 			go o.showPage(pk, book, bookData, tailLine)
-			return true
+			return false
 		}
 	})
 }
@@ -387,7 +387,15 @@ func (o *SimpleNovelReader) Inject(frame defines.MainFrame) {
 			} else {
 				bookName := strings.ReplaceAll(info.Name(), ".txt", "")
 				o.bookOrder = append(o.bookOrder, bookName)
-				o.books[bookName] = strings.Split(string(data), "\n")
+				cleanUpData := []string{}
+				for _, l := range strings.Split(string(data), "\n") {
+					if l == "" {
+						continue
+					} else {
+						cleanUpData = append(cleanUpData, l)
+					}
+				}
+				o.books[bookName] = cleanUpData
 			}
 		}
 		return nil
