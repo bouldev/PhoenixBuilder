@@ -36,7 +36,10 @@ type GameChat struct {
 	Type               byte
 	FrameWorkTriggered bool
 	FallBack           bool
-	Aux                interface{}
+	RawMsg             string
+	RawName            string
+	RawParameters      []string
+	// Aux                interface{}
 }
 
 type MenuEntry struct {
@@ -129,6 +132,7 @@ type BackendInteract interface {
 // 另一种扩展方式是定义新插件并暴露接口
 type GameControl interface {
 	SayTo(target string, msg string)
+	RawSayTo(target string, msg string)
 	ActionBarTo(target string, msg string)
 	TitleTo(target string, msg string)
 	SubTitleTo(target string, msg string)
@@ -147,6 +151,7 @@ type GameControl interface {
 
 type PlayerKit interface {
 	Say(msg string)
+	RawSay(msg string)
 	ActionBar(msg string)
 	Title(msg string)
 	SubTitle(msg string)

@@ -90,9 +90,8 @@ func (o *Immortal) intercept(chat *defines.GameChat) bool {
 	if chat.Type == packet.TextTypeRaw || chat.Type == packet.TextTypeChat {
 		return false
 	}
-	pkt := chat.Aux.(*packet.Text)
-	if strings.Contains(pkt.Message, "death") && len(pkt.Parameters) > 0 {
-		victim := pkt.Parameters[0]
+	if strings.Contains(chat.RawMsg, "death") && len(chat.RawParameters) > 0 {
+		victim := chat.RawParameters[0]
 		go func() {
 			//fmt.Println(victim)
 			pos := <-o.Frame.GetGameControl().GetPlayerKit(victim).GetPos(o.Selector)
