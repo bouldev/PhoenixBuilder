@@ -124,16 +124,42 @@ func (o *Reactor) AppendLogoutInfoCallback(cb func(entry protocol.PlayerListEntr
 }
 
 func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
-	name := p.SourceName
-	name = utils.ToPlainName(name)
+	rawName := p.SourceName
+	name := utils.ToPlainName(rawName)
+	msg := ""
+	specialTrigged := false
+	if p.TextType == packet.TextTypeWhisper {
+		if strings.HasPrefix(p.Message, "CBOMG:") {
+			frags := strings.Split(p.Message, ":")
+			if len(frags) > 2 {
+				_name := strings.TrimSpace(frags[1])
+				_msg := strings.TrimSpace(strings.Join(frags[2:], ":"))
+				pterm.Warning.Println(_name, _msg)
+				for _, p := range o.uqHolder.PlayersByEntityID {
+					pterm.Warning.Println(p.Username)
+					if p.Username == _name {
+						name = _name
+						msg = _msg
+						specialTrigged = true
+						break
+					}
+				}
+			}
+		}
 
-	msg := strings.TrimSpace(p.Message)
+	}
+	if msg == "" {
+		msg = strings.TrimSpace(p.Message)
+	}
+
 	msgs := utils.GetStringContents(msg)
 	c := &defines.GameChat{
-		Name: name,
-		Msg:  msgs,
-		Type: p.TextType,
-		Aux:  p,
+		Name:          name,
+		Msg:           msgs,
+		Type:          p.TextType,
+		RawMsg:        p.Message,
+		RawName:       rawName,
+		RawParameters: p.Parameters,
 	}
 	c.FrameWorkTriggered, c.Msg = utils.CanTrigger(
 		msgs,
@@ -141,6 +167,9 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 		o.OmegaConfig.Trigger.AllowNoSpace,
 		o.OmegaConfig.Trigger.RemoveSuffixColor,
 	)
+	if specialTrigged {
+		c.FrameWorkTriggered = true
+	}
 	return c
 }
 func (o *Reactor) GetTriggerWord() string {
