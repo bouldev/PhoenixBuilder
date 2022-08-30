@@ -214,6 +214,10 @@ func (p *PlayerKitOmega) Say(msg string) {
 	p.ctrl.SayTo(p.name, msg)
 }
 
+func (p *PlayerKitOmega) RawSay(msg string) {
+	p.ctrl.RawSayTo(p.name, msg)
+}
+
 func (p *PlayerKitOmega) ActionBar(msg string) {
 	p.ctrl.ActionBarTo(p.name, msg)
 }
@@ -432,7 +436,18 @@ func (g *GameCtrl) SayTo(target string, line string) {
 	} else {
 		g.SendWOCmd(fmt.Sprintf("tellraw \"%v\" %v", target, content))
 	}
+}
 
+func (g *GameCtrl) RawSayTo(target string, line string) {
+	if line == "" {
+		return
+	}
+	content := line
+	if strings.HasPrefix(target, "@") {
+		g.SendWOCmd(fmt.Sprintf("tell %v %v", target, content))
+	} else {
+		g.SendWOCmd(fmt.Sprintf("tell \"%v\" %v", target, content))
+	}
 }
 
 func (g *GameCtrl) ActionBarTo(target string, line string) {

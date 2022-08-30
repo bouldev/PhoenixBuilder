@@ -161,5 +161,8 @@ func GetComponentsPool() map[string]func() defines.Component {
 		"数据包捕获": func() defines.Component {
 			return &Capture{BasicComponent: &defines.BasicComponent{}}
 		},
+		"小说阅读器": func() defines.Component {
+			return &SimpleNovelReader{BasicComponent: &defines.BasicComponent{}}
+		},
 	}
 }
