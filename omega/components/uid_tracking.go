@@ -81,10 +81,7 @@ func (o *UIDTracking) Inject(frame defines.MainFrame) {
 	o.Frame.GetGameListener().AppendLogoutInfoCallback(func(entry protocol.PlayerListEntry) {
 		o.mu.Lock()
 		defer o.mu.Unlock()
-		if _, hasK := o.IsTracking[entry.EntityUniqueID]; hasK {
-			// fmt.Println("Remove Tracking", entry.EntityUniqueID)
-			delete(o.IsTracking, entry.EntityUniqueID)
-		}
+		delete(o.IsTracking, entry.EntityUniqueID)
 	})
 }
 
@@ -132,9 +129,12 @@ func (o *UIDTracking) RequestPlayerUID(name string) int {
 			resultWaitor <- newVal
 		}
 	})
-	r := <-resultWaitor
-	// fmt.Println(r)
-	return r
+	select {
+	case r := <-resultWaitor:
+		return r
+	case <-time.NewTimer(time.Second * 2).C:
+		return 0
+	}
 }
 
 func (o *UIDTracking) doAssignPlayerUID(currentUID int, name string, UUID uuid.UUID) {
@@ -145,25 +145,26 @@ func (o *UIDTracking) doAssignPlayerUID(currentUID int, name string, UUID uuid.U
 		"[uid+1]":  currentUID + 1,
 	}
 	// pterm.Info.Println(replacement)
-	go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeUidAsign, replacement, o.Frame.GetBackendDisplay())
-	assignCmd := utils.FormatByReplacingOccurrences(o.UidAsignCmd, replacement)
-	o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(assignCmd, func(output *packet.CommandOutput) {
-		// fmt.Println(output)
-		if output.SuccessCount == 0 || len(output.OutputMessages) == 0 || len(output.OutputMessages[0].Parameters) != 3 {
-			pterm.Error.Printf("执行指令 %v 出现错误 %v, 无法为玩家分配 uid\n", assignCmd, output)
-			return
-		} else {
-			uid, err := strconv.Atoi(output.OutputMessages[0].Parameters[2])
-			if err != nil {
-				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("解析下一个待分配 uid时出错 %v", err))
+	go func() {
+		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeUidAsign, replacement, o.Frame.GetBackendDisplay())
+		assignCmd := utils.FormatByReplacingOccurrences(o.UidAsignCmd, replacement)
+		o.Frame.GetGameControl().SendCmdAndInvokeOnResponse(assignCmd, func(output *packet.CommandOutput) {
+			// fmt.Println(output)
+			if output.SuccessCount == 0 || len(output.OutputMessages) == 0 || len(output.OutputMessages[0].Parameters) != 3 {
+				pterm.Error.Printf("执行指令 %v 出现错误 %v, 无法为玩家分配 uid\n", assignCmd, output)
 				return
+			} else {
+				uid, err := strconv.Atoi(output.OutputMessages[0].Parameters[2])
+				if err != nil {
+					o.Frame.GetBackendDisplay().Write(fmt.Sprintf("解析下一个待分配 uid时出错 %v", err))
+					return
+				}
+				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("新玩家 UID 分配记录 %v %v %v", name, UUID.String(), uid))
+				o.CommitUID(name, UUID, uid)
+				go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsAfterUidAsign, replacement, o.Frame.GetBackendDisplay())
 			}
-			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("新玩家 UID 分配记录 %v %v %v", name, UUID.String(), uid))
-			o.CommitUID(name, UUID, uid)
-			go utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsAfterUidAsign, replacement, o.Frame.GetBackendDisplay())
-		}
-	})
-
+		})
+	}()
 }
 
 func (o *UIDTracking) AssignPlayerUID(name string, UUID uuid.UUID, uid int) {
@@ -229,11 +230,7 @@ func (o *UIDTracking) onNewPlayer(entry protocol.PlayerListEntry) {
 							return
 						}
 					} else {
-						// fmt.Println("Stop Trcking " + entry.Username)
-						if _, hasK := o.IsTracking[entry.EntityUniqueID]; hasK {
-							// fmt.Println("Remove Tracking", entry.EntityUniqueID)
-							delete(o.IsTracking, entry.EntityUniqueID)
-						}
+						delete(o.IsTracking, entry.EntityUniqueID)
 						return
 					}
 				}
