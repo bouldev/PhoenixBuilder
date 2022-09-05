@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
@@ -71,8 +72,8 @@ func (o *StructureBackup) doBackup(user, structureName string, pos []int, idx in
 	halfH := o.BackupHeight / 2
 	startPos := []int{pos[0] - halfS, pos[1] - halfH, pos[2] - halfS}
 	endPos := []int{pos[0] + halfS, pos[1] + halfH, pos[2] + halfS}
-	if startPos[1] < 1 || startPos[1] > 254 || endPos[1] < 1 || endPos[1] > 254 {
-		allL, allH := 1+halfH, 254-halfH
+	if startPos[1] <= define.WorldRange.Min()+1 || startPos[1] >= define.WorldRange.Max()-1 || endPos[1] < define.WorldRange.Min()+1 || endPos[1] > define.WorldRange.Max()-1 {
+		allL, allH := define.WorldRange.Min()+2+halfH, define.WorldRange.Max()-2-halfH
 		o.Frame.GetGameControl().SayTo(user, fmt.Sprintf("不能备份...你必须位于高度 %v ~ %v 之间", allL, allH))
 		return
 	}
