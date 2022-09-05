@@ -127,7 +127,7 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 	rawName := p.SourceName
 	name := utils.ToPlainName(rawName)
 	msg := ""
-	// specialTrigged := false
+	specialTriggered := false
 	if p.TextType == packet.TextTypeWhisper {
 		if strings.HasPrefix(p.Message, "CBOMG:") {
 			frags := strings.Split(p.Message, ":")
@@ -136,11 +136,11 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 				_msg := strings.TrimSpace(strings.Join(frags[2:], ":"))
 				pterm.Warning.Println(_name, _msg)
 				for _, p := range o.uqHolder.PlayersByEntityID {
-					pterm.Warning.Println(p.Username)
+					// pterm.Warning.Println(p.Username)
 					if p.Username == _name {
 						name = _name
 						msg = _msg
-						// specialTrigged = true
+						specialTriggered = true
 						break
 					}
 				}
@@ -148,7 +148,7 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 		}
 
 	}
-	if msg == "" {
+	if !specialTriggered {
 		msg = strings.TrimSpace(p.Message)
 	}
 
@@ -167,9 +167,9 @@ func (o *Omega) convertTextPacket(p *packet.Text) *defines.GameChat {
 		o.OmegaConfig.Trigger.AllowNoSpace,
 		o.OmegaConfig.Trigger.RemoveSuffixColor,
 	)
-	// if specialTrigged {
-	// 	c.FrameWorkTriggered = true
-	// }
+	if specialTriggered {
+		c.Type = packet.TextTypeChat
+	}
 	return c
 }
 func (o *Reactor) GetTriggerWord() string {
@@ -249,10 +249,12 @@ func (r *Reactor) React(pkt packet.Packet) {
 	case *packet.Text:
 		// o.backendLogger.Write(fmt.Sprintf("%v(%v):%v", p.SourceName, p.TextType, p.Message))
 		chat := o.convertTextPacket(p)
-		if p.TextType == packet.TextTypeWhisper && o.OmegaConfig.Trigger.AllowWisper {
-			chat.FrameWorkTriggered = true
+		if chat.Type == packet.TextTypeWhisper && (!o.OmegaConfig.Trigger.AllowWisper) {
+			break
+		} else {
+			r.Throw(chat)
 		}
-		r.Throw(chat)
+
 	case *packet.GameRulesChanged:
 		for _, rule := range p.GameRules {
 			// o.backendLogger.Write(fmt.Sprintf("game rule update %v => %v", rule.Name, rule.Value))
