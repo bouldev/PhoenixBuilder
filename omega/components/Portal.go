@@ -17,20 +17,45 @@ type PortalEntry struct {
 
 type Portal struct {
 	*defines.BasicComponent
-	fileChange    bool
-	FileName      string   `json:"存档点记录文件名"`
-	SaveTrigger   []string `json:"保存存档点触发词"`
-	RemoveTrigger []string `json:"删除存档点触发词"`
-	LoadTrigger   []string `json:"返回存档点触发词"`
-	ListTrigger   []string `json:"列出存档点触发词"`
-	Selector      string   `json:"条件选择器"`
-	positions     map[string]map[string]*PortalEntry
-	queryNameFn   collaborate.FUNCTYPE_GET_POSSIBLE_NAME
+	fileChange       bool
+	FileName         string      `json:"存档点记录文件名"`
+	CmdsBeforeSaveIn interface{} `json:"玩家保存前执行的指令"`
+	cmdsBeforeSave   []defines.Cmd
+	SaveTrigger      []string    `json:"保存存档点触发词"`
+	SaveUsage        string      `json:"保存存档点功能的提示信息"`
+	RemoveTrigger    []string    `json:"删除存档点触发词"`
+	RemoveUsage      string      `json:"删除存档点功能的提示信息"`
+	CmdsBeforeLoadIn interface{} `json:"玩家返回前执行的指令"`
+	cmdsBeforeLoad   []defines.Cmd
+	LoadTrigger      []string `json:"返回存档点触发词"`
+	LoadUsage        string   `json:"返回存档点功能的提示信息"`
+	ListTrigger      []string `json:"列出存档点触发词"`
+	ListUsage        string   `json:"列出存档点功能的提示信息"`
+	Selector         string   `json:"条件选择器"`
+	positions        map[string]map[string]*PortalEntry
+	queryNameFn      collaborate.FUNCTYPE_GET_POSSIBLE_NAME
 }
 
 func (o *Portal) Init(cfg *defines.ComponentConfig) {
+	if cfg.Version == "0.0.1" {
+		cfg.Configs["保存存档点功能的提示信息"] = "以某个名字保存当前的地点"
+		cfg.Configs["删除存档点功能的提示信息"] = "移除一个保存的地点"
+		cfg.Configs["列出存档点功能的提示信息"] = "显示所有可以去的地点"
+		cfg.Configs["返回存档点功能的提示信息"] = "前往指定的地点"
+		cfg.Configs["玩家保存前执行的指令"] = []string{}
+		cfg.Configs["玩家返回前执行的指令"] = []string{}
+		cfg.Version = "0.0.2"
+		cfg.Upgrade()
+	}
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
+		panic(err)
+	}
+	var err error
+	if o.cmdsBeforeSave, err = utils.ParseAdaptiveCmd(o.CmdsBeforeSaveIn); err != nil {
+		panic(err)
+	}
+	if o.cmdsBeforeLoad, err = utils.ParseAdaptiveCmd(o.CmdsBeforeLoadIn); err != nil {
 		panic(err)
 	}
 }
@@ -101,6 +126,9 @@ func (o *Portal) list(chat *defines.GameChat) bool {
 func (o *Portal) doTP(name string, pos string) bool {
 	ps := o.getPlayerPositions(name)
 	goPS := func(n string, p *PortalEntry) bool {
+		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeLoad, map[string]interface{}{
+			"[player]": "\"" + name + "\"",
+		}, o.Frame.GetBackendDisplay())
 		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 前往地点 %v: %v", name, n, p))
 		s := utils.FormatByReplacingOccurrences(o.Selector, map[string]interface{}{
 			"[player]": "\"" + name + "\"",
@@ -186,6 +214,9 @@ func (o *Portal) doRemove(name string, pos string) bool {
 func (o *Portal) doAdd(name string, posName string) {
 	pk := o.Frame.GetGameControl().GetPlayerKit(name)
 	go func() {
+		utils.LaunchCmdsArray(o.Frame.GetGameControl(), o.cmdsBeforeSave, map[string]interface{}{
+			"[player]": "\"" + name + "\"",
+		}, o.Frame.GetBackendDisplay())
 		pos := <-pk.GetPos(o.Selector)
 		if pos == nil {
 			pk.Say("添加失败")
@@ -300,7 +331,7 @@ func (o *Portal) Inject(frame defines.MainFrame) {
 			Triggers:     o.ListTrigger,
 			ArgumentHint: "",
 			FinalTrigger: false,
-			Usage:        "显示所有可以去的地点",
+			Usage:        o.ListUsage,
 		},
 		OptionalOnTriggerFn: o.list,
 	})
@@ -309,7 +340,7 @@ func (o *Portal) Inject(frame defines.MainFrame) {
 			Triggers:     o.RemoveTrigger,
 			ArgumentHint: "[地点]",
 			FinalTrigger: false,
-			Usage:        "移除一个保存的地点",
+			Usage:        o.RemoveUsage,
 		},
 		OptionalOnTriggerFn: o.remove,
 	})
@@ -318,7 +349,7 @@ func (o *Portal) Inject(frame defines.MainFrame) {
 			Triggers:     o.SaveTrigger,
 			ArgumentHint: "[地点名]",
 			FinalTrigger: false,
-			Usage:        "以某个名字保存当前的地点",
+			Usage:        o.SaveUsage,
 		},
 		OptionalOnTriggerFn: o.add,
 	})
@@ -327,7 +358,7 @@ func (o *Portal) Inject(frame defines.MainFrame) {
 			Triggers:     o.LoadTrigger,
 			ArgumentHint: "[地点名]",
 			FinalTrigger: false,
-			Usage:        "前往指定的地点",
+			Usage:        o.LoadUsage,
 		},
 		OptionalOnTriggerFn: o.tp,
 	})
