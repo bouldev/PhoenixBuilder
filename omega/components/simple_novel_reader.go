@@ -385,6 +385,11 @@ func (o *SimpleNovelReader) Inject(frame defines.MainFrame) {
 			if data, err := os.ReadFile(path); err != nil {
 				return err
 			} else {
+				data, err = utils.AutoConvertTextToUtf8(data)
+				if err != nil {
+					pterm.Error.Println("无法自动修正编码格式")
+					err = nil
+				}
 				bookName := strings.ReplaceAll(info.Name(), ".txt", "")
 				o.bookOrder = append(o.bookOrder, bookName)
 				cleanUpData := []string{}
