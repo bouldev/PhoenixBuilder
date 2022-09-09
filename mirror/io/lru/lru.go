@@ -9,6 +9,7 @@ import (
 )
 
 type LRUMemoryChunkCacher struct {
+	eagerWrite       bool
 	cacheLevel       int
 	cacheMap         map[define.ChunkPos]time.Time
 	memoryChunks     map[define.ChunkPos]*mirror.ChunkData
@@ -87,8 +88,10 @@ func (o *LRUMemoryChunkCacher) checkCacheSizeAndHandleFallBackNoLock() {
 		sort.Sort(cacheList)
 		for i := 0; i < 1<<o.cacheLevel; i++ {
 			pair := cacheList[i]
-			if o.OverFlowHolder != nil {
-				o.OverFlowHolder.Write(o.memoryChunks[pair.p])
+			if !o.eagerWrite {
+				if o.OverFlowHolder != nil {
+					o.OverFlowHolder.Write(o.memoryChunks[pair.p])
+				}
 			}
 			delete(o.memoryChunks, pair.p)
 			delete(o.cacheMap, pair.p)
@@ -101,6 +104,11 @@ func (o *LRUMemoryChunkCacher) Write(data *mirror.ChunkData) error {
 	defer o.mu.Unlock()
 	o.cacheMap[data.ChunkPos] = time.Now()
 	o.memoryChunks[data.ChunkPos] = data
+	if o.eagerWrite {
+		if o.OverFlowHolder != nil {
+			o.OverFlowHolder.Write(data)
+		}
+	}
 	o.checkCacheSizeAndHandleFallBackNoLock()
 	// count++
 	// fmt.Println(count," ",pos)
@@ -108,6 +116,9 @@ func (o *LRUMemoryChunkCacher) Write(data *mirror.ChunkData) error {
 }
 
 func (o *LRUMemoryChunkCacher) Close() {
+	if o.eagerWrite {
+		return
+	}
 	// pterm.Info.Println(o.memoryChunks)
 	for _, chunk := range o.memoryChunks {
 		if o.OverFlowHolder != nil {
@@ -117,8 +128,9 @@ func (o *LRUMemoryChunkCacher) Close() {
 }
 
 // suggest level 12 (4096)
-func NewLRUMemoryChunkCacher(level int) *LRUMemoryChunkCacher {
+func NewLRUMemoryChunkCacher(level int, eagerWrite bool) *LRUMemoryChunkCacher {
 	cacher := &LRUMemoryChunkCacher{}
+	cacher.eagerWrite = eagerWrite
 	cacher.cacheLevel = level
 	cacher.cacheMap = make(map[define.ChunkPos]time.Time)
 	cacher.memoryChunks = make(map[define.ChunkPos]*mirror.ChunkData)

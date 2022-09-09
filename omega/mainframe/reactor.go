@@ -220,7 +220,10 @@ func (r *Reactor) React(pkt packet.Packet) {
 
 	// } else {
 	// 	M, _ := json.Marshal(pkt)
-	// 	fmt.Println("PacketID ", utils.PktIDInvMapping[int(pkt.ID())], string(M))
+	// 	m := string(M)
+	// 	if strings.Contains(m, "Skin") || strings.Contains(m, "skin") {
+	// 		fmt.Println("PacketID ", utils.PktIDInvMapping[int(pkt.ID())], m)
+	// 	}
 	// }
 
 	choked := make(chan struct{})
@@ -378,7 +381,7 @@ func (o *Reactor) onBootstrap() {
 	o.chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		o.o.adaptor.Write(pk)
 	})
-	memoryProvider := lru.NewLRUMemoryChunkCacher(10)
+	memoryProvider := lru.NewLRUMemoryChunkCacher(9, true)
 	worldDir := path.Join(o.o.GetWorldsDir(), "current")
 	fileProvider, err := mcdb.New(worldDir, opt.FlateCompression)
 	if err != nil {
