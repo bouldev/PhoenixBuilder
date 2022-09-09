@@ -219,7 +219,7 @@ func create_environment() *environment.PBEnvironment {
 		scriptHolder.LoadScript(args.StartupScript(), env)
 	}
 	hostBridgeGamma.HostRemoveBlock()
-	env.LRUMemoryChunkCacher = lru.NewLRUMemoryChunkCacher(12)
+	env.LRUMemoryChunkCacher = lru.NewLRUMemoryChunkCacher(12, false)
 	env.ChunkFeeder = global.NewChunkFeeder()
 	return env
 }
