@@ -309,6 +309,9 @@ func (o *UniverseImport) onImport(cmds []string) (stop bool) {
 	}
 	filePath := cmds[0]
 	if runtime.GOOS == "windows" {
+		if strings.HasPrefix(filePath, "\"") || strings.HasSuffix(filePath, "\"") {
+			filePath = strings.Trim(filePath, "\"")
+		}
 		if (!utils.IsDir(filePath)) && (!utils.IsFile(filePath)) {
 			pathAlter := strings.ReplaceAll(filePath, "/", "\\")
 			if (!utils.IsDir(pathAlter)) && (!utils.IsFile(pathAlter)) {
@@ -346,6 +349,9 @@ func (o *UniverseImport) onImport(cmds []string) (stop bool) {
 	} else if !strings.HasPrefix(filePath, "/") {
 		if (!utils.IsDir(filePath)) && (!utils.IsFile(filePath)) {
 			filePath = o.Frame.GetRelativeFileName(filePath)
+			if (!utils.IsDir(filePath)) && (!utils.IsFile(filePath)) {
+				filePath = path.Join(o.Frame.GetStorageRoot(), filePath)
+			}
 		}
 	}
 	find, _, errStack := utils.GetFileNotFindStack(filePath)
