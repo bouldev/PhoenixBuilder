@@ -145,9 +145,9 @@ def getTarget(sth: str, timeout= 1) -> list:
 
 
 def getScore(scoreboardNameToGet: str, targetNameToGet: str):
-    msgs = sendcmd("/scoreboard players list %s" % targetNameToGet, True).OutputMessages
+    msgs = sendwscmd("/scoreboard players list %s" % targetNameToGet, True).OutputMessages
     player_scoreboard_result = defaultdict(dict)
-    scoreboard_palyer_result = defaultdict(dict)
+    scoreboard_player_result = defaultdict(dict)
     current_player_name=""
     for msg in msgs:
         msg_type = msg.Message
@@ -161,15 +161,15 @@ def getScore(scoreboardNameToGet: str, targetNameToGet: str):
             scoreboard_name = msg.Parameters[2]
             targetScore = int(msg.Parameters[0])
             player_scoreboard_result[current_player_name][scoreboard_name] = targetScore
-            scoreboard_palyer_result[scoreboard_name][current_player_name] = targetScore
-    if not(player_scoreboard_result or scoreboard_palyer_result):
+            scoreboard_player_result[scoreboard_name][current_player_name] = targetScore
+    if not(player_scoreboard_result or scoreboard_player_result):
         raise Exception("Failed to get the score.")
     try:
         if targetNameToGet == "*" or targetNameToGet.startswith("@"):
             if scoreboardNameToGet == "*":
-                return [player_scoreboard_result, scoreboard_palyer_result]
+                return [player_scoreboard_result, scoreboard_player_result]
             else:
-                return scoreboard_palyer_result[scoreboardNameToGet]
+                return scoreboard_player_result[scoreboardNameToGet]
         else:
             if scoreboardNameToGet == "*":
                 return player_scoreboard_result[targetNameToGet]

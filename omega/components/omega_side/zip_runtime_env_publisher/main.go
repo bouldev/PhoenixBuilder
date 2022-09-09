@@ -95,12 +95,12 @@ func main() {
 	GenHash(path.Join(outDir, "dotcs_plugins.zip"))
 	// PlantformSpecific := "../plantform_specific"
 	// python 运行环境 conda create python=3.10 -p path--no-default-packages
-	// Linux_amd64 python 运行环境
-	GenHash(path.Join(outDir, "linux_amd64.python.tar.gz"))
-	// MacOS_amd64 python 运行环境
-	GenHash(path.Join(outDir, "macos_amd64.python.tar.gz"))
-	// // MacOS_arm64 python 运行环境
-	GenHash(path.Join(outDir, "macos_arm64.python.tar.gz"))
-	// // Windows_amd64 python 运行环境
-	GenHash(path.Join(outDir, "windows_amd64.python.tar.gz"))
+	// // Linux_amd64 python 运行环境
+	// GenHash(path.Join(outDir, "linux_amd64.python.tar.gz"))
+	// // MacOS_amd64 python 运行环境
+	// GenHash(path.Join(outDir, "macos_amd64.python.tar.gz"))
+	// // // MacOS_arm64 python 运行环境
+	// GenHash(path.Join(outDir, "macos_arm64.python.tar.gz"))
+	// // // Windows_amd64 python 运行环境
+	// GenHash(path.Join(outDir, "windows_amd64.python.tar.gz"))
 }

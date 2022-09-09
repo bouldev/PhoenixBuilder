@@ -10,7 +10,7 @@ import (
 	"github.com/pterm/pterm"
 )
 
-var site = "https://omega.fastbuilder.pro/omega_compoments_deploy_binary/"
+var site = "https://omega-1259160345.cos.ap-nanjing.myqcloud.com/omega_compoments_deploy_binary/"
 
 type deployItemType int
 
@@ -78,7 +78,7 @@ func (o *OmegaSide) deployBasicLibrary() {
 			SourceFileMD5ByURL: url + ".hash",
 		}
 		if err := deployer.Deploy(); err != nil {
-			panic("自动部署失败: " + err.Error())
+			pterm.Error.Println("自动部署失败: " + err.Error())
 		}
 	} else {
 		pterm.Warning.Println("无法在你的设备中自动部署 Omega Side 旁加载插件运行相关库，你将无法使用 Omega 标准 Python 插件和 DotCS 社区版插件")
@@ -94,7 +94,7 @@ func (o *OmegaSide) deployBasicLibrary() {
 				SourceFileMD5ByURL: url + ".hash",
 			}
 			if err := deployer.Deploy(); err != nil {
-				panic("自动部署失败: " + err.Error())
+				pterm.Error.Println("自动部署失败: " + err.Error())
 			}
 			pterm.Success.Printfln("已经自动将Omega标准Python插件例子下载到 %v 中，你也可以将其他使用 Omega 标准 Python插件放入其中", targetDir)
 		} else {
@@ -112,7 +112,7 @@ func (o *OmegaSide) deployBasicLibrary() {
 				SourceFileMD5ByURL: url + ".hash",
 			}
 			if err := deployer.Deploy(); err != nil {
-				panic("自动部署失败: " + err.Error())
+				pterm.Error.Println("自动部署失败: " + err.Error())
 			}
 			pterm.Success.Printfln("已经自动将DotCS社区版插件例子下载到 %v 中，你也可以将其他DotCS社区版插件放入其中", targetDir)
 		} else {
@@ -135,7 +135,7 @@ func (o *OmegaSide) deployPythonRuntime() {
 			SourceFileMD5ByURL: url + ".hash",
 		}
 		if err := deployer.Deploy(); err != nil {
-			panic("自动部署失败: " + err.Error())
+			pterm.Error.Println("自动部署失败: " + err.Error())
 		}
 		pterm.Success.Printfln("已经自动准备Python解释器")
 		o.pythonPath = "interpreters/python/bin/python"
