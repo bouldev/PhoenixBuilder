@@ -196,7 +196,7 @@ func safeDecode(pktByte []byte) (pkt mc_packet.Packet) {
 	pktID := uint32(pktByte[0])
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(pktID, "decode fail")
+			// fmt.Println(pktID, "decode fail")
 		}
 		return
 	}()
