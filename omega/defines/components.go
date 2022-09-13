@@ -2,17 +2,26 @@ package defines
 
 // ComponentConfig 描述了 插件 的配置内容，必须保证可被 yaml 正确处理
 type ComponentConfig struct {
-	Name        string                 `json:"名称"`
-	Description string                 `json:"描述"`
-	Disabled    bool                   `json:"是否禁用"`
-	Version     string                 `json:"版本"`
-	Source      string                 `json:"来源"`
-	Configs     map[string]interface{} `json:"配置"`
-	upgradeFn   func(*ComponentConfig) error
+	Name          string                 `json:"名称"`
+	Description   string                 `json:"描述"`
+	Disabled      bool                   `json:"是否禁用"`
+	Version       string                 `json:"版本"`
+	Source        string                 `json:"来源"`
+	Configs       map[string]interface{} `json:"配置"`
+	attachedField map[string]string
+	upgradeFn     func(*ComponentConfig) error
 }
 
 func (c *ComponentConfig) Upgrade() error {
 	return c.upgradeFn(c)
+}
+
+func (c *ComponentConfig) SetAttachedField(d map[string]string) {
+	c.attachedField = d
+}
+
+func (c *ComponentConfig) GetAttachedField() (d map[string]string) {
+	return c.attachedField
 }
 
 func (c *ComponentConfig) SetUpgradeFn(fn func(*ComponentConfig) error) (ok bool) {

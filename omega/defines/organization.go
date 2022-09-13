@@ -136,7 +136,9 @@ type GameControl interface {
 	ActionBarTo(target string, msg string)
 	TitleTo(target string, msg string)
 	SubTitleTo(target string, msg string)
+	SendBytes([]byte)
 	SendCmd(cmd string)
+	SendCmdWithUUID(cmd string, ud uuid.UUID, ws bool)
 	SendWOCmd(cmd string)
 	SendCmdAndInvokeOnResponse(string, func(output *packet.CommandOutput))
 	SendCmdAndInvokeOnResponseWithFeedback(string, func(output *packet.CommandOutput))
@@ -174,6 +176,7 @@ type PlayerKit interface {
 type GameListener interface {
 	GetChunkAssembler() *assembler.Assembler
 	SetOnAnyPacketCallBack(func(packet.Packet))
+	SetOnAnyPacketBytesCallBack(func([]byte))
 	SetOnTypedPacketCallBack(uint32, func(packet.Packet))
 	SetGameMenuEntry(entry *GameMenuEntry)
 	SetGameChatInterceptor(func(chat *GameChat) (stop bool))
