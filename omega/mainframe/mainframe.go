@@ -303,7 +303,7 @@ func (o *Omega) Activate() {
 	defer o.Stop()
 	go func() {
 		packetFeeder := o.adaptor.GetPacketFeeder()
-		delayPumper := make(chan packet.Packet, 10240)
+		delayPumper := make(chan *defines.CombinedPacket, 10240)
 		go func() {
 			for pkt := range packetFeeder {
 				if pkt == nil {
@@ -313,7 +313,7 @@ func (o *Omega) Activate() {
 					close(delayPumper)
 					return
 				}
-				if pkt.ID() == packet.IDCommandOutput {
+				if pkt.P.ID() == packet.IDCommandOutput {
 					o.Reactor.React(pkt)
 				} else {
 					delayPumper <- pkt
@@ -321,7 +321,8 @@ func (o *Omega) Activate() {
 			}
 		}()
 		go func() {
-			for pkt := range delayPumper {
+			for cbPacket := range delayPumper {
+				pkt := cbPacket.P
 				if o.closed {
 					// o.backendLogger.Write(pterm.Warning.Sprintln("Game Packet Feeder & Reactor & UQHoder 已退出"))
 					return
@@ -335,9 +336,9 @@ func (o *Omega) Activate() {
 				}
 				if !uqHolderDelayUpdate {
 					o.uqHolder.Update(pkt)
-					o.Reactor.React(pkt)
+					o.Reactor.React(cbPacket)
 				} else {
-					o.Reactor.React(pkt)
+					o.Reactor.React(cbPacket)
 					o.uqHolder.Update(pkt)
 				}
 			}

@@ -1736,15 +1736,17 @@
     "名称": "OmegaSide旁加载组件系统",
     "描述": "加载自己编写的插件,语言不限,运行在omega_storage/side目录下,如果可能Omega将会自动部署运行环境",
     "是否禁用": true,
-    "版本": "0.0.1",
+    "版本": "0.0.2",
     "来源": "Built-In",
     "配置": {
       "玩家数据文件": "OmegaSide玩家数据文件.json",
       "如果可以则使用这个http端口": "localhost:24011",
       "只打开用于开发的Websocket端口而不启动任何插件": false,
-      "使用Omega标准Python插件框架": true,
-      "使用DotCS社区版插件运行模拟器": true,
+      "使用原生DotCS社区版环境": false,
+      "使用Omega标准Python插件框架": false,
+      "使用DotCS社区版插件运行模拟器": false,
       "python解释器搜索路径": [
+        "/opt/python/bin/python",
         "interpreters/python/bin/python",
         "/data/data/com.termux/files/usr/bin/python"
       ],
@@ -1929,6 +1931,20 @@
           "say 发现 [player] 使用爱丽克丝皮肤"
         ]
       }
+    }
+  },
+  {
+    "名称": "数据包捕获",
+    "描述": "捕获特定的数据包用以分析和研究",
+    "是否禁用": true,
+    "版本": "0.0.2",
+    "来源": "Built-In",
+    "配置": {
+      "文件名": "捕获.txt",
+      "目标数据包类型": [
+        "IDPlayerList",
+        "IDUpdateSoftEnum"
+      ]
     }
   }
 ]
