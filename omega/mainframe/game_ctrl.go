@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/pterm/pterm"
 )
 
 type PlayerKitOmega struct {
@@ -248,7 +247,7 @@ type timeCmdPair struct {
 	cmd  string
 }
 type PacketOutAnalyzer struct {
-	WriteFn                  func(p packet.Packet)
+	WriteFn                  func(p packet.Packet) (err error)
 	packetSendStats          map[time.Time]map[uint32]int
 	packetSendStatsTimeStamp []time.Time
 	mu                       sync.Mutex
@@ -257,7 +256,7 @@ type PacketOutAnalyzer struct {
 	cmdMapThisInterval       []timeCmdPair
 }
 
-func NewPacketOutAnalyzer(writeFn func(p packet.Packet)) *PacketOutAnalyzer {
+func NewPacketOutAnalyzer(writeFn func(p packet.Packet) (err error)) *PacketOutAnalyzer {
 	p := &PacketOutAnalyzer{
 		WriteFn:                  writeFn,
 		packetSendStats:          make(map[time.Time]map[uint32]int),
@@ -334,19 +333,20 @@ func (o *PacketOutAnalyzer) GenSendedCmdList() string {
 	return strings.Join(records, "\n")
 }
 
-func (o *PacketOutAnalyzer) Write(p packet.Packet) {
+func (o *PacketOutAnalyzer) Write(p packet.Packet) error {
 	o.mu.Lock()
 	if p.ID() == packet.IDCommandRequest {
 		o.cmdMapThisInterval = append(o.cmdMapThisInterval, timeCmdPair{time.Now(), p.(*packet.CommandRequest).CommandLine})
 	}
 	o.currentFiveSecondStats[p.ID()]++
 	o.mu.Unlock()
-	o.WriteFn(p)
+	return o.WriteFn(p)
 }
 
 type GameCtrl struct {
 	analyzer            *PacketOutAnalyzer
-	WriteFn             func(packet packet.Packet)
+	WriteBytesFn        func([]byte) error
+	WriteFn             func(packet packet.Packet) error
 	ExpectedCmdFeedBack bool
 	CurrentCmdFeedBack  bool
 	CmdFeedBackOnSent   bool
@@ -504,6 +504,10 @@ func (g *GameCtrl) SendCmd(cmd string) {
 	g.WriteFn(g.packCmdWithUUID(cmd, ud, true))
 }
 
+func (g *GameCtrl) SendCmdWithUUID(cmd string, ud uuid.UUID, ws bool) {
+	g.WriteFn(g.packCmdWithUUID(cmd, ud, ws))
+}
+
 func (g *GameCtrl) SendWOCmd(cmd string) {
 	g.WriteFn(&packet.SettingsCommand{
 		CommandLine:    cmd,
@@ -562,11 +566,9 @@ func (g *GameCtrl) PlaceCommandBlock(pos define.CubePos, commandBlockName string
 				g.placeCommandBlockLock.Lock()
 				g.SendCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
 				time.Sleep(50 * time.Millisecond)
-				pterm.Info.Println(updatePacket)
 				g.SendMCPacket(updatePacket)
 				g.placeCommandBlockLock.Unlock()
 				g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
-					pterm.Info.Println(updatePacket)
 					onDone(true)
 					done <- true
 				}
@@ -621,6 +623,10 @@ func (g *GameCtrl) SendMCPacket(p packet.Packet) {
 	g.WriteFn(p)
 }
 
+func (g *GameCtrl) SendBytes(data []byte) {
+	g.WriteBytesFn(data)
+}
+
 func (g *GameCtrl) SetOnParamMsg(name string, cb func(chat *defines.GameChat) (catch bool)) error {
 	player := g.GetPlayerKit(name)
 	if player != nil {
@@ -634,6 +640,7 @@ func newGameCtrl(o *Omega) *GameCtrl {
 	analyzer := NewPacketOutAnalyzer(o.adaptor.Write)
 	c := &GameCtrl{
 		WriteFn:             analyzer.Write,
+		WriteBytesFn:        o.adaptor.WriteBytes,
 		ExpectedCmdFeedBack: o.OmegaConfig.CommandFeedBackByDefault,
 		CurrentCmdFeedBack:  false,
 		uuidLock:            sync.Mutex{},

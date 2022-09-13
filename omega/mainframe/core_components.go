@@ -423,6 +423,7 @@ func (o *KeepAlive) Inject(frame defines.MainFrame) {
 			Usage:        "显示最近发包情况",
 		},
 		OptionalOnTriggerFn: func(cmds []string) (stop bool) {
+			pterm.Info.Println(o.omega.Reactor.analyzer.PrintAnalysis())
 			pterm.Info.Println(o.omega.GameCtrl.analyzer.PrintAnalysis())
 			fname := path.Join(o.omega.GetStorageRoot(), "最后发送的指令记录.txt")
 			if fp, err := os.OpenFile(fname, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0755); err == nil {

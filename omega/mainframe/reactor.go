@@ -16,6 +16,7 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/df-mc/goleveldb/leveldb/opt"
@@ -82,6 +83,10 @@ func (o *Reactor) SetGameChatInterceptor(f func(chat *defines.GameChat) (stop bo
 
 func (o *Reactor) SetOnAnyPacketCallBack(cb func(packet.Packet)) {
 	o.OnAnyPacketCallBack = append(o.OnAnyPacketCallBack, cb)
+}
+
+func (o *Reactor) SetOnAnyPacketBytesCallBack(cb func([]byte)) {
+	o.OnPacketBytesCbs = append(o.OnPacketBytesCbs, cb)
 }
 
 func (o *Reactor) SetOnTypedPacketCallBack(pktID uint32, cb func(packet.Packet)) {
@@ -215,7 +220,12 @@ func (r *Reactor) Throw(chat *defines.GameChat) {
 	}
 }
 
-func (r *Reactor) React(pkt packet.Packet) {
+func (r *Reactor) React(cbPacket *defines.CombinedPacket) {
+	pkt := cbPacket.P
+	for _, cb := range r.OnPacketBytesCbs {
+		cb(cbPacket.D)
+	}
+	r.analyzer.Update(pkt)
 	// if pkt.ID() == packet.IDSubChunk || pkt.ID() == packet.IDLevelChunk {
 
 	// } else {
@@ -352,6 +362,8 @@ func (r *Reactor) React(pkt packet.Packet) {
 
 type Reactor struct {
 	o                          *Omega
+	analyzer                   *PacketInAnalyzer
+	OnPacketBytesCbs           []func([]byte)
 	OnAnyPacketCallBack        []func(packet.Packet)
 	OnTypedPacketCallBacks     map[uint32][]func(packet.Packet)
 	OnLevelChunkData           []func(cd *mirror.ChunkData)
@@ -434,9 +446,81 @@ func (o *Omega) GetScoreboardHolder() *defines.ScoreBoardHolder {
 	return o.Reactor.scoreboardHolder
 }
 
+type PacketInAnalyzer struct {
+	packetSendStats          map[time.Time]map[uint32]int
+	packetSendStatsTimeStamp []time.Time
+	mu                       sync.Mutex
+	currentFiveSecondStats   map[uint32]int
+}
+
+func NewPacketInAnalyzer() *PacketInAnalyzer {
+	p := &PacketInAnalyzer{
+		packetSendStats:          make(map[time.Time]map[uint32]int),
+		packetSendStatsTimeStamp: make([]time.Time, 0),
+		mu:                       sync.Mutex{},
+		currentFiveSecondStats:   make(map[uint32]int),
+	}
+	go func() {
+		t := time.NewTicker(time.Second * 5)
+		cmdInfoCounter := 0
+		for _ = range t.C {
+			cmdInfoCounter++
+			t := time.Now()
+			p.mu.Lock()
+			p.packetSendStatsTimeStamp = append(p.packetSendStatsTimeStamp, t)
+			p.packetSendStats[t] = p.currentFiveSecondStats
+			p.currentFiveSecondStats = make(map[uint32]int)
+			if len(p.packetSendStats) > (600 / 5) {
+				timeStampToDrop := p.packetSendStatsTimeStamp[0]
+				p.packetSendStatsTimeStamp = p.packetSendStatsTimeStamp[1:]
+				delete(p.packetSendStats, timeStampToDrop)
+			}
+			p.mu.Unlock()
+		}
+	}()
+	return p
+}
+
+func (o *PacketInAnalyzer) PrintAnalysis() string {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	infoStr := "最近十分钟机器人收到数据包的统计信息:\n"
+	perStripInfoStrAll := ""
+	allPacketsStats := make(map[uint32]int)
+	for _, t := range o.packetSendStatsTimeStamp {
+		count := 0
+		secondsBefore := time.Since(t).Seconds()
+		perStripInfoStr := fmt.Sprintf("%.2f ~ %.2f 秒前发送数据包的统计信息:\n", secondsBefore-5, secondsBefore)
+		for pkName, pkCount := range o.packetSendStats[t] {
+			pktName := utils.PktIDInvMapping[int(pkName)]
+			if pktName == "" {
+				pktName = fmt.Sprintf("type_%v", pktName)
+			}
+			perStripInfoStr += fmt.Sprintf("\t%v: %v\n", pktName, pkCount)
+			allPacketsStats[pkName] += pkCount
+			count += pkCount
+		}
+		perStripInfoStrAll += perStripInfoStr + fmt.Sprintf("共计 %v 个数据包\n", count)
+	}
+	count := 0
+	for pkName, pkCount := range allPacketsStats {
+		infoStr += fmt.Sprintf("\t%v: %v\n", utils.PktIDInvMapping[int(pkName)], pkCount)
+		count += pkCount
+	}
+	infoStr += fmt.Sprintf("共计 %v 个数据包\n", count) + perStripInfoStrAll
+	return infoStr
+}
+
+func (o *PacketInAnalyzer) Update(p packet.Packet) {
+	o.mu.Lock()
+	o.currentFiveSecondStats[p.ID()]++
+	o.mu.Unlock()
+}
+
 func newReactor(o *Omega) *Reactor {
 	return &Reactor{
 		o:                          o,
+		analyzer:                   NewPacketInAnalyzer(),
 		GameMenuEntries:            make([]*defines.GameMenuEntry, 0),
 		GameChatInterceptors:       make([]func(chat *defines.GameChat) (stop bool), 0),
 		GameChatFinalInterceptors:  make([]func(chat *defines.GameChat) (stop bool), 0),
