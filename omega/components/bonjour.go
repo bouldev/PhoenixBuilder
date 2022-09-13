@@ -11,11 +11,13 @@ import (
 
 type Bonjour struct {
 	*defines.BasicComponent
-	Delay      int           `json:"登录时延迟发送" yaml:"登录时延迟发送"`
-	loginCmds  []defines.Cmd `json:"登录时发送指令" yaml:"登录时发送指令"`
-	logoutCmds []defines.Cmd `json:"登出时发送指令" yaml:"登出时发送指令"`
-	logger     defines.LineDst
-	newCome    bool
+	Delay        int         `json:"登录时延迟发送"`
+	LoginCmdsIn  interface{} `json:"登录时发送指令"`
+	LogoutCmdsIn interface{} `json:"登出时发送指令"`
+	loginCmds    []defines.Cmd
+	logoutCmds   []defines.Cmd
+	logger       defines.LineDst
+	newCome      bool
 }
 
 func (b *Bonjour) Init(cfg *defines.ComponentConfig) {
@@ -24,10 +26,10 @@ func (b *Bonjour) Init(cfg *defines.ComponentConfig) {
 		panic(err)
 	}
 	var err error
-	if b.loginCmds, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"登录时发送指令"}); err != nil {
+	if b.loginCmds, err = utils.ParseAdaptiveCmd(b.LoginCmdsIn); err != nil {
 		panic(err)
 	}
-	if b.logoutCmds, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"登出时发送指令"}); err != nil {
+	if b.logoutCmds, err = utils.ParseAdaptiveCmd(b.LogoutCmdsIn); err != nil {
 		panic(err)
 	}
 }

@@ -10,10 +10,11 @@ import (
 
 type BackToHQ struct {
 	*defines.BasicComponent
-	Triggers       []string      `json:"触发词"`
-	ToAnchor       string        `json:"世界锚点"`
-	ToHQ           string        `json:"主城锚点"`
-	cmdsBeforeBack []defines.Cmd `json:"回城前执行"`
+	Triggers         []string `json:"触发词"`
+	ToAnchor         string   `json:"世界锚点"`
+	ToHQ             string   `json:"主城锚点"`
+	cmdsBeforeBack   []defines.Cmd
+	CmdsBeforeBackIn interface{} `json:"回城前执行"`
 }
 
 func (o *BackToHQ) Init(cfg *defines.ComponentConfig) {
@@ -23,7 +24,7 @@ func (o *BackToHQ) Init(cfg *defines.ComponentConfig) {
 	}
 	var err error
 	if v, hask := cfg.Configs["回城前执行"]; hask && v != nil {
-		if o.cmdsBeforeBack, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"回城前执行"}); err != nil {
+		if o.cmdsBeforeBack, err = utils.ParseAdaptiveCmd(o.CmdsBeforeBackIn); err != nil {
 			panic(err)
 		}
 	}

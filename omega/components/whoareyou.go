@@ -14,7 +14,8 @@ import (
 type WhoAreYou struct {
 	*defines.BasicComponent
 	react         []defines.Cmd
-	Tag           string `json:"添加标签"`
+	ReactIn       interface{} `json:"反制"`
+	Tag           string      `json:"添加标签"`
 	checkTag      string
 	checkRngMark1 string
 	checkRngMark2 string
@@ -30,7 +31,7 @@ func (o *WhoAreYou) Init(cfg *defines.ComponentConfig) {
 	if err != nil {
 		panic(err)
 	}
-	o.react, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"反制"})
+	o.react, err = utils.ParseAdaptiveCmd(o.ReactIn)
 	if err != nil {
 		panic(err)
 	}

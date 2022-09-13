@@ -27,9 +27,10 @@ type RegexCheck struct {
 
 type IntrusionDetectSystem struct {
 	*defines.BasicComponent
-	EnableK32Detect bool          `json:"启用32k手持物品检测"`
-	K32Threshold    int           `json:"32k手持物品附魔等级阈值"`
-	k32Response     []defines.Cmd `json:"32k手持物品反制"`
+	EnableK32Detect bool `json:"启用32k手持物品检测"`
+	K32Threshold    int  `json:"32k手持物品附魔等级阈值"`
+	k32Response     []defines.Cmd
+	K32ResponseIn   interface{}   `json:"32k手持物品反制"`
 	Patrol          int           `json:"随机巡逻(秒)"`
 	EnablePatrol    bool          `json:"启用随机巡逻"`
 	RegexCheckers   []*RegexCheck `json:"使用以下正则表达式检查"`
@@ -59,7 +60,7 @@ func (o *IntrusionDetectSystem) Init(cfg *defines.ComponentConfig) {
 	if err != nil {
 		panic(err)
 	}
-	o.k32Response, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"32k手持物品反制"})
+	o.k32Response, err = utils.ParseAdaptiveCmd(o.K32ResponseIn)
 	if err != nil {
 		panic(err)
 	}

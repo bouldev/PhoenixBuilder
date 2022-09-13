@@ -13,11 +13,12 @@ import (
 
 type Schedule struct {
 	*defines.BasicComponent
-	Name            string        `json:"任务"`
-	Duration        float32       `json:"周期"`
-	StartTimeInReal string        `json:"第一次启动的现实时间"`
-	actions         []defines.Cmd `json:"动作"`
-	LogFile         string        `json:"结果记录文件"`
+	Name            string  `json:"任务"`
+	Duration        float32 `json:"周期"`
+	StartTimeInReal string  `json:"第一次启动的现实时间"`
+	actions         []defines.Cmd
+	ActionsIn       interface{} `json:"动作"`
+	LogFile         string      `json:"结果记录文件"`
 	logger          defines.LineDst
 	stopC           chan struct{}
 }
@@ -41,7 +42,7 @@ func (o *Schedule) Init(cfg *defines.ComponentConfig) {
 	//		panic(fmt.Errorf("结果记录 仅 可为\"空\"/\"成功次数\"/\"完整结果\"之一，你的设置是: %v", a))
 	//	}
 	//}
-	if o.actions, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"动作"}); err != nil {
+	if o.actions, err = utils.ParseAdaptiveCmd(o.ActionsIn); err != nil {
 		panic(err)
 	}
 	if o.Duration < 0.05 {

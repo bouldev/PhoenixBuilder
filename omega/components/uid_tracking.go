@@ -22,19 +22,21 @@ type UIDRecord struct {
 
 type UIDTracking struct {
 	*defines.BasicComponent
-	fileChange         bool
-	FileName           string        `json:"记录文件"`
-	PlayerUIDFetchCmd  string        `json:"获取某玩家的uid的指令"`
-	AuxUidAssign       bool          `json:"是否让Omega完成uid分配"`
-	UidFetchCmd        string        `json:"让Omega分配uid时获取最后一个被分配的uid的指令"`
-	UidAsignCmd        string        `json:"让Omega分配uid时为某玩家分配uid的指令"`
-	cmdsBeforeUidAsign []defines.Cmd `json:"为某玩家分配uid前的准备工作"`
-	cmdsAfterUidAsign  []defines.Cmd `json:"为某玩家分配uid的后续工作"`
-	Delay              int           `json:"玩家上线的延迟时间"`
-	DiskUUIDs          map[string]*UIDRecord
-	AllUids            map[uuid.UUID]int
-	IsTracking         map[int64]bool
-	mu                 sync.Mutex
+	fileChange           bool
+	FileName             string `json:"记录文件"`
+	PlayerUIDFetchCmd    string `json:"获取某玩家的uid的指令"`
+	AuxUidAssign         bool   `json:"是否让Omega完成uid分配"`
+	UidFetchCmd          string `json:"让Omega分配uid时获取最后一个被分配的uid的指令"`
+	UidAsignCmd          string `json:"让Omega分配uid时为某玩家分配uid的指令"`
+	cmdsBeforeUidAsign   []defines.Cmd
+	cmdsAfterUidAsign    []defines.Cmd
+	CmdsBeforeUidAsignIn interface{} `json:"为某玩家分配uid前的准备工作"`
+	CmdsAfterUidAsignIn  interface{} `json:"为某玩家分配uid的后续工作"`
+	Delay                int         `json:"玩家上线的延迟时间"`
+	DiskUUIDs            map[string]*UIDRecord
+	AllUids              map[uuid.UUID]int
+	IsTracking           map[int64]bool
+	mu                   sync.Mutex
 }
 
 func (o *UIDTracking) Init(cfg *defines.ComponentConfig) {
@@ -43,12 +45,10 @@ func (o *UIDTracking) Init(cfg *defines.ComponentConfig) {
 		panic(err)
 	}
 	var err error
-	if o.cmdsBeforeUidAsign, err = utils.ParseAdaptiveJsonCmd(cfg.Configs,
-		[]string{"为某玩家分配uid前的准备工作"}); err != nil {
+	if o.cmdsBeforeUidAsign, err = utils.ParseAdaptiveCmd(o.cmdsBeforeUidAsign); err != nil {
 		panic(err)
 	}
-	if o.cmdsAfterUidAsign, err = utils.ParseAdaptiveJsonCmd(cfg.Configs,
-		[]string{"为某玩家分配uid的后续工作"}); err != nil {
+	if o.cmdsAfterUidAsign, err = utils.ParseAdaptiveCmd(o.cmdsAfterUidAsign); err != nil {
 		panic(err)
 	}
 	o.mu = sync.Mutex{}

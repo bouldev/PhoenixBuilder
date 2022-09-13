@@ -12,9 +12,10 @@ import (
 
 type MobSpawnerScan struct {
 	*defines.BasicComponent
-	FilterHas      []string      `json:"如果包含以下关键词则清除"`
-	FilterHasnt    []string      `json:"如果不包含以下关键词之一则清除"`
-	cleanUpActions []defines.Cmd `json:"违规刷怪笼反制"`
+	FilterHas        []string `json:"如果包含以下关键词则清除"`
+	FilterHasnt      []string `json:"如果不包含以下关键词之一则清除"`
+	cleanUpActions   []defines.Cmd
+	CleanUpActionsIn interface{} `json:"违规刷怪笼反制"`
 }
 
 func (o *MobSpawnerScan) needRemove(l string) bool {
@@ -42,7 +43,7 @@ func (o *MobSpawnerScan) Init(cfg *defines.ComponentConfig) {
 	if err != nil {
 		panic(err)
 	}
-	o.cleanUpActions, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"违规刷怪笼反制"})
+	o.cleanUpActions, err = utils.ParseAdaptiveCmd(o.CleanUpActionsIn)
 	if err != nil {
 		panic(err)
 	}

@@ -19,6 +19,7 @@ type ShutUp struct {
 	statisticWords map[string]int
 	statisticMsgs  map[string]int
 	shutupCmds     []defines.Cmd
+	ShutupCmdsIn   interface{} `json:"发言过快反制"`
 }
 
 func (o *ShutUp) Init(cfg *defines.ComponentConfig) {
@@ -29,7 +30,7 @@ func (o *ShutUp) Init(cfg *defines.ComponentConfig) {
 	o.statisticMsgs = map[string]int{}
 	o.statisticWords = map[string]int{}
 	var err error
-	o.shutupCmds, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"发言过快反制"})
+	o.shutupCmds, err = utils.ParseAdaptiveCmd(o.ShutupCmdsIn)
 	if err != nil {
 		panic(err)
 	}

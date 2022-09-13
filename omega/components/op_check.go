@@ -16,11 +16,12 @@ type nameEntry struct {
 
 type OpCheck struct {
 	*defines.BasicComponent
-	OPS            []string `json:"管理员昵称"`
-	fileChange     bool
-	FileName       string        `json:"管理员改名记录文件"`
-	fakeOPResponse []defines.Cmd `json:"假管理反制"`
-	Records        map[string]*nameEntry
+	OPS              []string `json:"管理员昵称"`
+	fileChange       bool
+	FileName         string `json:"管理员改名记录文件"`
+	fakeOPResponse   []defines.Cmd
+	FakeOPResponseIn interface{} `json:"假管理反制"`
+	Records          map[string]*nameEntry
 }
 
 func (o *OpCheck) Init(cfg *defines.ComponentConfig) {
@@ -29,7 +30,7 @@ func (o *OpCheck) Init(cfg *defines.ComponentConfig) {
 	if err != nil {
 		panic(err)
 	}
-	o.fakeOPResponse, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"假管理反制"})
+	o.fakeOPResponse, err = utils.ParseAdaptiveCmd(o.FakeOPResponseIn)
 	if err != nil {
 		panic(err)
 	}

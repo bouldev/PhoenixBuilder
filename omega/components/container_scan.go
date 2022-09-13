@@ -19,9 +19,10 @@ import (
 
 type ContainerScan struct {
 	*defines.BasicComponent
-	EnableK32Detect    bool                   `json:"启用32容器检测"`
-	K32Threshold       int                    `json:"32k物品附魔等级阈值"`
-	k32Response        []defines.Cmd          `json:"32k容器反制"`
+	EnableK32Detect    bool `json:"启用32容器检测"`
+	K32Threshold       int  `json:"32k物品附魔等级阈值"`
+	k32Response        []defines.Cmd
+	K32ResponsIn       interface{}            `json:"32k容器反制"`
 	RegexCheckers      []*ContainerRegexCheck `json:"使用以下正则表达式检查"`
 	needFetchBlockName bool
 	regexTaskQueue     []func()
@@ -49,7 +50,7 @@ func (o *ContainerScan) Init(cfg *defines.ComponentConfig) {
 	if err != nil {
 		panic(err)
 	}
-	o.k32Response, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"32k容器反制"})
+	o.k32Response, err = utils.ParseAdaptiveCmd(o.K32ResponsIn)
 	if err != nil {
 		panic(err)
 	}

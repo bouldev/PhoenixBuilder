@@ -15,9 +15,10 @@ import (
 
 type RedStoneUpdateLimit struct {
 	*defines.BasicComponent
-	MaxUpdatePer10Second int           `json:"10s内最多允许的变化次数"`
-	execeedResponse      []defines.Cmd `json:"刷新过快的反制"`
-	BlockNames           []string      `json:"方块名里包含这些关键词时即检查"`
+	MaxUpdatePer10Second int `json:"10s内最多允许的变化次数"`
+	execeedResponse      []defines.Cmd
+	ExeceedResponseIn    interface{} `json:"刷新过快的反制"`
+	BlockNames           []string    `json:"方块名里包含这些关键词时即检查"`
 	redstoneRidCache     map[uint32]bool
 	mu                   sync.Mutex
 	updateRecord         map[protocol.BlockPos]int
@@ -29,7 +30,7 @@ func (o *RedStoneUpdateLimit) Init(cfg *defines.ComponentConfig) {
 	if err != nil {
 		panic(err)
 	}
-	o.execeedResponse, err = utils.ParseAdaptiveJsonCmd(cfg.Configs, []string{"刷新过快的反制"})
+	o.execeedResponse, err = utils.ParseAdaptiveCmd(o.ExeceedResponseIn)
 	if err != nil {
 		panic(err)
 	}
