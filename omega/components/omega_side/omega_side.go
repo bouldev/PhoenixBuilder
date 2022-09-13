@@ -7,7 +7,9 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/components/omega_side/direct"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"runtime"
@@ -25,10 +27,12 @@ type OmegaSideProcessStartCmd struct {
 
 type OmegaSide struct {
 	*defines.BasicComponent
+	directLink               *direct.ExternalConnectionHandler
 	PreferPort               string   `json:"如果可以则使用这个http端口"`
 	DebugServerOnly          bool     `json:"只打开用于开发的Websocket端口而不启动任何插件"`
 	EnableOmegaPythonRuntime bool     `json:"使用Omega标准Python插件框架"`
 	EnableDotCSSimulator     bool     `json:"使用DotCS社区版插件运行模拟器"`
+	EnablePureDotCSEnv       bool     `json:"使用原生DotCS社区版环境"`
 	PossiblePythonExecPath   []string `json:"python解释器搜索路径"`
 	autoDeployPython         bool
 	pythonPath               string
@@ -121,6 +125,19 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 }
 
 func (o *OmegaSide) Init(cfg *defines.ComponentConfig) {
+	if cfg.Version == "0.0.1" {
+		cfg.Configs["使用原生DotCS社区版环境"] = false
+		cfg.Configs["使用Omega标准Python插件框架"] = false
+		cfg.Configs["使用DotCS社区版插件运行模拟器"] = false
+		cfg.Version = "0.0.2"
+		cfg.Upgrade()
+		panic("Omega Side 配置已然更新，请重启以确认")
+	}
+	if cfg.Version == "0.0.2" {
+		cfg.Configs["python解释器搜索路径"] = append([]interface{}{"/opt/python/bin/python"}, cfg.Configs["python解释器搜索路径"].([]interface{})...)
+		cfg.Version = "0.0.3"
+		cfg.Upgrade()
+	}
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)
@@ -139,6 +156,9 @@ func (o *OmegaSide) Inject(frame defines.MainFrame) {
 func (o *OmegaSide) Activate() {
 	if !o.DebugServerOnly {
 		o.deployBasicLibrary()
+		if o.EnablePureDotCSEnv {
+			o.autoDeployPython = true
+		}
 		if o.EnableOmegaPythonRuntime || o.EnableDotCSSimulator {
 			o.autoDeployPython = true
 		}
@@ -163,7 +183,7 @@ func (o *OmegaSide) Activate() {
 				if !path.IsAbs(possiblePath) {
 					if _, err := os.Stat(path.Join(o.getWorkingDir(), possiblePath)); err == nil {
 						needDeployPython = false
-						o.pythonPath = possiblePath
+						o.pythonPath = path.Join(o.getWorkingDir(), possiblePath)
 						break
 					}
 				} else {
@@ -177,7 +197,35 @@ func (o *OmegaSide) Activate() {
 			if needDeployPython {
 				o.deployPythonRuntime()
 			}
+			if o.pythonPath == "" {
+				panic("python not found")
+			}
+			if !path.IsAbs(o.pythonPath) {
+				o.pythonPath, _ = filepath.Abs(o.pythonPath)
+			}
+			fmt.Println(o.pythonPath)
 		}
+	}
+	var directPortNum int
+	var err error
+	if o.EnablePureDotCSEnv {
+
+		if directPortNum, err = utils.GetAvailablePort(); err != nil {
+			panic(err)
+		}
+
+		externHandler, err := direct.ListenExt(o.Frame, fmt.Sprintf("0.0.0.0:%v", directPortNum))
+		if err != nil {
+			panic(err)
+		}
+		o.Frame.GetGameListener().SetOnAnyPacketBytesCallBack(func(b []byte) {
+			externHandler.PacketChannel <- b
+		})
+		o.directLink = externHandler
+
+	}
+	if o.EnablePureDotCSEnv {
+		o.StartPureDotCSEnv(o.pythonPath, directPortNum)
 	}
 	o.SideUp()
 	o.Frame.GetGameListener().SetOnAnyPacketCallBack(func(p packet.Packet) {

@@ -10,6 +10,7 @@ import (
 	"github.com/pterm/pterm"
 )
 
+// TODO: get repo url from server
 var site = "https://omega-1259160345.cos.ap-nanjing.myqcloud.com/omega_compoments_deploy_binary/"
 
 type deployItemType int
@@ -22,6 +23,7 @@ const (
 	omegaPythonPluginExamples                                   // omega_python_plugins 文件夹消失时 且启动 omega python 时部署
 	dotcsPluginExamples                                         // 与上面的类似
 	pythonExecEnv                                               // python 运行环境
+	pureDotcsEnv
 )
 
 // entry name, platform code
@@ -34,6 +36,9 @@ var deployList = map[deployItemType]map[utils.PREPARED_PLATFORM_MARK]string{
 	},
 	dotcsPluginExamples: {
 		utils.PLATFORM_ALL: site + "dotcs_plugins.zip",
+	},
+	pureDotcsEnv: {
+		utils.PLATFORM_ALL: site + "pure_dotcs.zip",
 	},
 	pythonExecEnv: {
 		utils.PLATFORM_LINUX_AMD64:   site + "linux_amd64.python.tar.gz",
@@ -70,25 +75,10 @@ func (o *OmegaSide) deployBasicLibrary() {
 	os.MkdirAll(o.getWorkingDir(), 0755)
 	targetDeployDir := o.getWorkingDir()
 	cacheDir := o.getCacheDir()
-	if url, hasK := getDeployResourceURL(basicOmegaRuntimeLibsAndDevelopGuide); hasK {
-		deployer := utils.SimpleDeployer{
-			CacheFilePath:      path.Join(cacheDir, "Omega运行相关库.zip"),
-			TargetDeployDir:    targetDeployDir,
-			SourceFileURL:      url,
-			SourceFileMD5ByURL: url + ".hash",
-		}
-		if err := deployer.Deploy(); err != nil {
-			pterm.Error.Println("自动部署失败: " + err.Error())
-		}
-	} else {
-		pterm.Warning.Println("无法在你的设备中自动部署 Omega Side 旁加载插件运行相关库，你将无法使用 Omega 标准 Python 插件和 DotCS 社区版插件")
-	}
-
-	targetDir := path.Join(targetDeployDir, "omega_python_plugins")
-	if !utils.IsDir(targetDir) {
-		if url, hasK := getDeployResourceURL(omegaPythonPluginExamples); hasK {
+	if o.EnableOmegaPythonRuntime || o.EnableDotCSSimulator {
+		if url, hasK := getDeployResourceURL(basicOmegaRuntimeLibsAndDevelopGuide); hasK {
 			deployer := utils.SimpleDeployer{
-				CacheFilePath:      path.Join(cacheDir, "Omega标准Python插件例子.zip"),
+				CacheFilePath:      path.Join(cacheDir, "Omega运行相关库.zip"),
 				TargetDeployDir:    targetDeployDir,
 				SourceFileURL:      url,
 				SourceFileMD5ByURL: url + ".hash",
@@ -96,30 +86,68 @@ func (o *OmegaSide) deployBasicLibrary() {
 			if err := deployer.Deploy(); err != nil {
 				pterm.Error.Println("自动部署失败: " + err.Error())
 			}
-			pterm.Success.Printfln("已经自动将Omega标准Python插件例子下载到 %v 中，你也可以将其他使用 Omega 标准 Python插件放入其中", targetDir)
 		} else {
-			pterm.Warning.Println("无法在你的设备中自动部署Omega标准Python插件例子")
+			pterm.Warning.Println("无法在你的设备中自动部署 Omega Side 旁加载插件运行相关库，你将无法使用 Omega 标准 Python 插件和 DotCS 社区版插件")
 		}
 	}
 
-	targetDir = path.Join(targetDeployDir, "dotcs_plugins")
-	if !utils.IsDir(targetDir) {
-		if url, hasK := getDeployResourceURL(dotcsPluginExamples); hasK {
+	if o.EnableOmegaPythonRuntime {
+		targetDir := path.Join(targetDeployDir, "omega_python_plugins")
+		if !utils.IsDir(targetDir) {
+			if url, hasK := getDeployResourceURL(omegaPythonPluginExamples); hasK {
+				deployer := utils.SimpleDeployer{
+					CacheFilePath:      path.Join(cacheDir, "Omega标准Python插件例子.zip"),
+					TargetDeployDir:    targetDeployDir,
+					SourceFileURL:      url,
+					SourceFileMD5ByURL: url + ".hash",
+				}
+				if err := deployer.Deploy(); err != nil {
+					pterm.Error.Println("自动部署失败: " + err.Error())
+				}
+				pterm.Success.Printfln("已经自动将Omega标准Python插件例子下载到 %v 中，你也可以将其他使用 Omega 标准 Python插件放入其中", targetDir)
+			} else {
+				pterm.Warning.Println("无法在你的设备中自动部署Omega标准Python插件例子")
+			}
+		}
+
+	}
+
+	if o.EnableDotCSSimulator {
+		targetDir := path.Join(targetDeployDir, "dotcs_plugins")
+		if !utils.IsDir(targetDir) {
+			if url, hasK := getDeployResourceURL(dotcsPluginExamples); hasK {
+				deployer := utils.SimpleDeployer{
+					CacheFilePath:      path.Join(cacheDir, "DotCS社区版插件例子.zip"),
+					TargetDeployDir:    targetDeployDir,
+					SourceFileURL:      url,
+					SourceFileMD5ByURL: url + ".hash",
+				}
+				if err := deployer.Deploy(); err != nil {
+					pterm.Error.Println("自动部署失败: " + err.Error())
+				}
+				pterm.Success.Printfln("已经自动将DotCS社区版插件例子下载到 %v 中，你也可以将其他DotCS社区版插件放入其中", targetDir)
+			} else {
+				pterm.Warning.Println("无法在你的设备中自动部署DotCS社区版插件例子")
+			}
+		}
+	}
+	if o.EnablePureDotCSEnv {
+		targetDir := path.Join(targetDeployDir, "dotcs")
+		if url, hasK := getDeployResourceURL(pureDotcsEnv); hasK {
 			deployer := utils.SimpleDeployer{
-				CacheFilePath:      path.Join(cacheDir, "DotCS社区版插件例子.zip"),
-				TargetDeployDir:    targetDeployDir,
+				CacheFilePath:      path.Join(cacheDir, "原生DotCS环境.zip"),
+				TargetDeployDir:    targetDir,
 				SourceFileURL:      url,
 				SourceFileMD5ByURL: url + ".hash",
 			}
 			if err := deployer.Deploy(); err != nil {
 				pterm.Error.Println("自动部署失败: " + err.Error())
 			}
-			pterm.Success.Printfln("已经自动将DotCS社区版插件例子下载到 %v 中，你也可以将其他DotCS社区版插件放入其中", targetDir)
+			pterm.Success.Printfln("已经自动DotCS社区版环境部署到 %v 中，其应该与DotCS具有相同的结构", targetDir)
 		} else {
-			pterm.Warning.Println("无法在你的设备中自动部署DotCS社区版插件例子")
+			pterm.Warning.Println("无法在你的设备中自动部署DotCS社区版环境")
 		}
 	}
-
 }
 
 func (o *OmegaSide) deployPythonRuntime() {
