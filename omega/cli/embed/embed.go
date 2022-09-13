@@ -18,7 +18,7 @@ import (
 type EmbeddedAdaptor struct {
 	env              *environment.PBEnvironment
 	BackendCmdFeeder chan string
-	PacketFeeder     chan mc_packet.Packet
+	PacketFeeder     chan *defines.CombinedPacket
 	ChunkDataFeeder  chan *mirror.ChunkData
 }
 
@@ -30,11 +30,11 @@ func (ea *EmbeddedAdaptor) GetBackendCommandFeeder() chan string {
 	return ea.BackendCmdFeeder
 }
 
-func (ea *EmbeddedAdaptor) FeedPacket(pkt mc_packet.Packet) {
-	ea.PacketFeeder <- pkt
+func (ea *EmbeddedAdaptor) FeedPacketAndByte(pkt mc_packet.Packet, data []byte) {
+	ea.PacketFeeder <- &defines.CombinedPacket{P: pkt, D: data}
 }
 
-func (ea *EmbeddedAdaptor) GetPacketFeeder() chan mc_packet.Packet {
+func (ea *EmbeddedAdaptor) GetPacketFeeder() chan *defines.CombinedPacket {
 	return ea.PacketFeeder
 }
 
@@ -49,8 +49,13 @@ func (rc *EmbeddedAdaptor) GetInitUQHolderCopy() *uqHolder.UQHolder {
 	return newHolder
 }
 
-func (rc *EmbeddedAdaptor) Write(pkt mc_packet.Packet) {
-	rc.env.Connection.(*minecraft.Conn).WritePacket(pkt)
+func (rc *EmbeddedAdaptor) Write(pkt mc_packet.Packet) (err error) {
+	return rc.env.Connection.(*minecraft.Conn).WritePacket(pkt)
+}
+
+func (rc *EmbeddedAdaptor) WriteBytes(data []byte) (err error) {
+	_, err = rc.env.Connection.(*minecraft.Conn).Write(data)
+	return err
 }
 
 func (rc *EmbeddedAdaptor) FBEval(cmd string) {
@@ -91,7 +96,7 @@ func EnableOmegaSystem(env *environment.PBEnvironment) (*EmbeddedAdaptor, func()
 	ea := &EmbeddedAdaptor{
 		env:              env,
 		BackendCmdFeeder: make(chan string, 1024),
-		PacketFeeder:     make(chan mc_packet.Packet, 1024),
+		PacketFeeder:     make(chan *defines.CombinedPacket, 1024),
 		ChunkDataFeeder:  make(chan *mirror.ChunkData, 1024),
 	}
 
