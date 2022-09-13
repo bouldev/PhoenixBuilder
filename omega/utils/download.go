@@ -140,6 +140,7 @@ func (o *SimpleDeployer) Deploy() (err error) {
 		sourceFileData = cacheFileData
 	}
 	reader := bytes.NewReader(sourceFileData)
+	os.MkdirAll(o.TargetDeployDir, 0755)
 	if strings.HasSuffix(o.SourceFileURL, ".zip") {
 		return UnZip(reader, reader.Size(), o.TargetDeployDir)
 	} else {
