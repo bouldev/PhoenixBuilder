@@ -59,12 +59,14 @@ func CollectComponentConfigs(root string) (ComponentConfigs []*defines.Component
 			return nil
 		}
 		c := &defines.ComponentConfig{}
-		if err := GetJsonData(filePath, c); err != nil {
+		attachments := make(map[string]map[string]string)
+		if attachments, err = GetJsonDataWithAttachment(filePath, c); err != nil {
 			return fmt.Errorf("处理[" + filePath + "]时出错" + err.Error())
 		}
+		c.SetAttachedField(attachments["fields"])
 		c.SetUpgradeFn(func(cc *defines.ComponentConfig) error {
 			pterm.Info.Println("正在升级配置: ", filePath)
-			return WriteJsonData(filePath, cc)
+			return WriteJsonDataWithAttachment(filePath, cc, attachments)
 		})
 		ComponentConfigs = append(ComponentConfigs, c)
 		return nil
@@ -72,42 +74,6 @@ func CollectComponentConfigs(root string) (ComponentConfigs []*defines.Component
 		panic(err)
 	}
 	return ComponentConfigs
-}
-
-func Migration895(root string) (err error) {
-	origFileMap := map[string][]string{}
-	entries, err := ioutil.ReadDir(path.Join(root, "配置"))
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		if !strings.HasPrefix(entry.Name(), "组件") || !strings.HasSuffix(entry.Name(), ".json") {
-			continue
-		}
-		p := path.Join(root, "配置", entry.Name())
-		c := &defines.ComponentConfig{}
-		if err := GetJsonData(p, c); err != nil {
-			return err
-		}
-		if origFileMap[c.Name] == nil {
-			origFileMap[c.Name] = make([]string, 0)
-		}
-		origFileMap[c.Name] = append(origFileMap[c.Name], p)
-	}
-	for componentName, cfgs := range origFileMap {
-		// if len(cfgs) > 0 || IsDir(path.Join(root, "配置", name)) {
-		subFolders := strings.Split(componentName, "::")
-		// if len(cfgs) > 1 || IsDir(path.Join(root, "配置", name)) {
-		dir := path.Join(root, "配置", path.Join(subFolders...))
-		// dir := path.Join(root, "配置", name)
-		os.MkdirAll(dir, 0755)
-		// }
-		for _, cfgName := range cfgs {
-			p := path.Join(dir, path.Base(cfgName))
-			os.Rename(cfgName, p)
-		}
-	}
-	return nil
 }
 
 func DeployOmegaConfig(cfg *defines.OmegaConfig, root string) error {
