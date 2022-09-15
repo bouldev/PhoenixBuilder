@@ -553,7 +553,7 @@ func runClient(env *environment.PBEnvironment) {
 			}
 		}
 		if env.OmegaAdaptorHolder != nil {
-			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacket(pk)
+			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacketAndByte(pk, data)
 			continue
 		}
 		env.UQHolder.(*uqHolder.UQHolder).Update(pk)
