@@ -136,17 +136,17 @@ func runInteractiveClient(token string) {
 		panic("Failed to load token")
 	}
 	core.InitClient(env)
-	go core.EnterReadlineThread(env)
+	go core.EnterReadlineThread(env,nil)
 	defer core.DestroyClient(env)
-	core.EnterWorkerThread(env)
+	core.EnterWorkerThread(env,nil)
 }
 
 func init_and_run_debug_client() {
 	env := core.InitDebugEnvironment()
 	core.InitClient(env)
-	go core.EnterReadlineThread(env)
+	go core.EnterReadlineThread(env,nil)
 	defer core.DestroyClient(env)
-	core.EnterWorkerThread(env)
+	core.EnterWorkerThread(env,nil)
 }
 
 func getInput() (string, error) {
