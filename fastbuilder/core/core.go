@@ -42,6 +42,8 @@ import (
 	"phoenixbuilder/fastbuilder/readline"
 )
 
+var PassFatal bool = false
+
 func create_environment() *environment.PBEnvironment {
 	env := &environment.PBEnvironment{}
 	env.UQHolder = nil
@@ -256,7 +258,7 @@ func InitClient(env *environment.PBEnvironment) {
 	return
 }
 
-func EnterReadlineThread(env *environment.PBEnvironment) {
+func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	if args.NoReadline() {
 		return
 	}
@@ -264,6 +266,13 @@ func EnterReadlineThread(env *environment.PBEnvironment) {
 	commandSender:=env.CommandSender.(*commands.CommandSender)
 	functionHolder:=env.FunctionHolder.(*function.FunctionHolder)
 	for {
+		if(breaker!=nil) {
+			select {
+			case <-breaker:
+				return
+			default:
+			}
+		}
 		cmd := readline.Readline(env)
 		if len(cmd) == 0 {
 			continue
@@ -311,7 +320,7 @@ func EnterReadlineThread(env *environment.PBEnvironment) {
 	}
 }
 
-func EnterWorkerThread(env *environment.PBEnvironment) {
+func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	conn:=env.Connection.(*minecraft.Conn)
 	hostBridgeGamma:=env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	commandSender:=env.CommandSender.(*commands.CommandSender)
@@ -324,6 +333,13 @@ func EnterWorkerThread(env *environment.PBEnvironment) {
 	})
 	// currentChunkConstructor := &world_provider.ChunkConstructor{}
 	for {
+		if(breaker!=nil) {
+			select {
+			case <-breaker:
+				return
+			default:
+			}
+		}
 		pk, data, err := conn.ReadPacketAndBytes()
 		if err != nil {
 			panic(err)
@@ -584,6 +600,9 @@ func loadTokenPath() string {
 }
 
 func Fatal() {
+	if PassFatal {
+		return
+	}
 	if err := recover(); err != nil {
 		if !args.NoReadline() {
 			readline.HardInterrupt()

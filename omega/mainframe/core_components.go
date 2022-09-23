@@ -278,7 +278,7 @@ func (o *OPCheck) Inject(frame defines.MainFrame) {
 		pk := p.(*packet.AdventureSettings)
 		if botUniqueID == pk.PlayerUniqueID {
 			if pk.PermissionLevel != packet.PermissionLevelOperator {
-				pterm.Warning.Println("警告：机器人不具备OP权限")
+				pterm.Warning.Println("警告：机器人不具备 OP 权限")
 			}
 		}
 	})
