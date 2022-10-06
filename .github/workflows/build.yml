@@ -229,6 +229,6 @@ jobs:
         FBIP: ${{ secrets.FBIP }}
       run: |
         echo "put fb-upload.tar.gz">~/a
-        sftp -i ~/fbkey -b ~/a $FBUSER@$FBIP
-        ssh -i ~/fbkey $FBUSER@$FBIP "mkdir -p fbbinaries;mv fb-upload.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rmdir build;rm -rf /var/www/storage/*;mv * /var/www/storage/;cd ..;rmdir fbbinaries"
+        sftp -P 8964 -i ~/fbkey -b ~/a $FBUSER@$FBIP
+        ssh -i ~/fbkey $FBUSER@$FBIP -p 8964 "mkdir -p fbbinaries;mv fb-upload.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rmdir build;rm -rf /var/www/storage/*;mv * /var/www/storage/;cd ..;rmdir fbbinaries"
 
