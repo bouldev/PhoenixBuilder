@@ -390,8 +390,9 @@ else
   fi
   printf "Downloading dependencies...\n"
   if [ $(${UNAME_GET_OSNAME}) == "Android" ]; then
-    READLINE_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/r/readline/readline_8.1.1_${FILE_ARCH}.deb"
-    ZLIB_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/z/zlib/zlib_1.2.12_${FILE_ARCH}.deb"
+    # We need a livecheck script here!
+    READLINE_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/r/readline/readline_8.2.0_${FILE_ARCH}.deb"
+    ZLIB_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/z/zlib/zlib_1.2.12-1_${FILE_ARCH}.deb"
     printf "Downloading dependencies...\n"
     ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/readline.deb ${READLINE_LINK}
     ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/zlib.deb ${ZLIB_LINK}
