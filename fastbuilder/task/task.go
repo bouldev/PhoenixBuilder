@@ -216,6 +216,8 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 				if task.AsyncInfo.Built >= skipBlocks {
 					blockschannel <- blk
+				}else if skipBlocks!=0 {
+					skipBlocks=0
 				}
 				task.AsyncInfo.Built++
 			}

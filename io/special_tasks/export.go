@@ -21,6 +21,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror/io/lru"
 	"phoenixbuilder/mirror/chunk"
+	"runtime/debug"
 	"runtime"
 	"strconv"
 	"strings"
@@ -146,6 +147,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		defer func() {
 			r:=recover()
 			if r!=nil{
+				debug.PrintStack()
 				fmt.Println("go routine @ fastbuilder.task export crashed ",r)
 			}
 		}()
