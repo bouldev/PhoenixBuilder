@@ -32,9 +32,9 @@ type ServerPush struct {
 	Data    interface{} `json:"data"`
 }
 
-// - 错误数据包 (仅在插件发来的数据包不符合协议的时候由omega框架发送，
-// 	收到这个数据包代表程序设计存在问题，因此，不收到这个数据包并不代表执行成功)
-// 	{"client":c,"violate":true,"data":{"err":reason}}
+//   - 错误数据包 (仅在插件发来的数据包不符合协议的时候由omega框架发送，
+//     收到这个数据包代表程序设计存在问题，因此，不收到这个数据包并不代表执行成功)
+//     {"client":c,"violate":true,"data":{"err":reason}}
 type RespViolatePkt struct {
 	Err string `json:"err"`
 }
@@ -143,7 +143,7 @@ func (t *omegaSideTransporter) initMapping() {
 					Usage:        usage,
 				},
 				OptionalOnTriggerFn: func(chat *defines.GameChat) (stop bool) {
-					t.conn.WriteJSON(ServerPush{
+					t.writeToConn(ServerPush{
 						ID0:     0,
 						Type:    "menuTriggered",
 						SubType: subType,
@@ -264,7 +264,7 @@ func (t *omegaSideTransporter) initMapping() {
 		},
 		"reg_login": func(args map[string]interface{}, writer func(interface{})) {
 			t.side.Frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
-				t.conn.WriteJSON(ServerPush{
+				t.writeToConn(ServerPush{
 					ID0:     0,
 					Type:    "playerLogin",
 					SubType: "",
@@ -279,14 +279,14 @@ func (t *omegaSideTransporter) initMapping() {
 			t.side.Frame.GetGameListener().AppendLogoutInfoCallback(func(entry protocol.PlayerListEntry) {
 				player := t.side.Frame.GetGameControl().GetPlayerKitByUUID(entry.UUID)
 				if player != nil {
-					t.conn.WriteJSON(ServerPush{
+					t.writeToConn(ServerPush{
 						ID0:     0,
 						Type:    "playerLogout",
 						SubType: "",
 						Data:    SimplifiedPlayerInfo{player.GetRelatedUQ().Username, 0, player.GetRelatedUQ().UUID.String(), player.GetRelatedUQ().EntityUniqueID},
 					})
 				} else {
-					t.conn.WriteJSON(ServerPush{
+					t.writeToConn(ServerPush{
 						ID0:     0,
 						Type:    "playerLogout",
 						SubType: "",
@@ -302,7 +302,7 @@ func (t *omegaSideTransporter) initMapping() {
 			t.side.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(func(pos define.CubePos, origRTID, currentRTID uint32) {
 				oname, oprop, ofound := chunk.RuntimeIDToState(origRTID)
 				cname, cprop, cfound := chunk.RuntimeIDToState(currentRTID)
-				t.conn.WriteJSON(ServerPush{
+				t.writeToConn(ServerPush{
 					ID0:     0,
 					Type:    "blockUpdate",
 					SubType: "",

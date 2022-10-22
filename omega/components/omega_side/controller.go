@@ -13,6 +13,10 @@ import (
 	"github.com/pterm/pterm"
 )
 
+var (
+	wsmu sync.Mutex
+)
+
 type pushController struct {
 	side              *OmegaSide
 	subClientCount    int
@@ -86,11 +90,15 @@ func (p *pushController) pushMCPkt(pktID int, data interface{}) {
 	name := utils.PktIDInvMapping[pktID]
 	if waitors, hasK := p.typedPacketWaitor[pktID]; hasK {
 		for _, w := range waitors {
+			wsmu.Lock()
 			w.WriteJSON(ServerPush{ID0: 0, Type: "mcPkt", SubType: name, Data: data})
+			wsmu.Unlock()
 		}
 	}
 	for _, w := range p.anyPacketWaitor {
+		wsmu.Lock()
 		w.WriteJSON(ServerPush{ID0: 0, Type: "mcPkt", SubType: name, Data: data})
+		wsmu.Unlock()
 	}
 }
 
@@ -116,6 +124,13 @@ func newTransporter(p *pushController, conn *websocket.Conn) *omegaSideTransport
 
 func (t *omegaSideTransporter) regPkt(pktId int) {
 	t.controller.regPushType(t.subClinetId, pktId, t.conn)
+}
+
+func (t *omegaSideTransporter) writeToConn(data interface{}) error {
+	wsmu.Lock()
+	defer wsmu.Unlock()
+	err := t.conn.WriteJSON(data)
+	return err
 }
 
 func (t *omegaSideTransporter) response(data []byte, writeFn func(interface{}) error) {
@@ -164,7 +179,7 @@ func (o *OmegaSide) handle(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
-		transportor.response(data, conn.WriteJSON)
+		transportor.response(data, transportor.writeToConn)
 	}
 }
 
