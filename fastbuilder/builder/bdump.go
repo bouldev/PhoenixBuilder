@@ -671,10 +671,17 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 					Point:     pos,
 				}
 			}
+		} else if(cmd==39){
+			lenBuf := make([]byte, 4)
+			_, err = br.Read(lenBuf)
+			len := binary.BigEndian.Uint32(lenBuf)
+			ignoreBuf := make([]byte, len)
+			br.Read(ignoreBuf)
+			fmt.Printf("WARNING: BDump/Import: Reserved command 39 (#83)\n")
 		} else {
 			bridge_fmt.Printf("WARNING: BDump/Import: Unimplemented method found : %d\n", cmd)
 			bridge_fmt.Printf("WARNING: BDump/Import: Previous command is: %d\n", prevCmd)
-			bridge_fmt.Printf("WARNING: BDump/Import: Trying to ignore, it will probably cause an error!\n")
+			bridge_fmt.Printf("WARNING: BDump/Import: Trying to ignore, it may probably cause an error!\n")
 		}
 	}
 	return nil
