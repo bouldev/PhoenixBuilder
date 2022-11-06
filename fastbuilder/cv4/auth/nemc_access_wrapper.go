@@ -29,9 +29,6 @@ func (aw *AccessWrapper) GetAccess(publicKey []byte) (address string, chainInfo 
 	pubKeyData := base64.StdEncoding.EncodeToString(publicKey)
 	chainAddr, code, err := aw.Client.Auth(aw.ServerCode, aw.Password, pubKeyData, aw.Token)
 	chainAndAddr := strings.Split(chainAddr, "|")
-	if chainAndAddr == nil || len(chainAndAddr) != 2 {
-		return "", "", fmt.Errorf(I18n.T(I18n.Auth_FailedToRequestEntry_TryAgain))
-	}
 	if err != nil {
 		if code == -3 {
 			homedir, err := os.UserHomeDir()
@@ -45,6 +42,9 @@ func (aw *AccessWrapper) GetAccess(publicKey []byte) (address string, chainInfo 
 			os.Remove(token)
 		}
 		return "", "", err
+	}
+	if chainAndAddr == nil || len(chainAndAddr) != 2 {
+		return "", "", fmt.Errorf(I18n.T(I18n.Auth_FailedToRequestEntry_TryAgain))
 	}
 	chainInfo = chainAndAddr[0]
 	address = chainAndAddr[1]
