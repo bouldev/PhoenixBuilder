@@ -1,4 +1,4 @@
-name: Build binaries
+name: Build binaries and Upload to Release
 
 on:
   push:
@@ -12,20 +12,24 @@ jobs:
   linux-build:
     runs-on: ubuntu-22.04
     steps:
+      
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
         submodules: recursive
+      
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: 1.18
+      
     - name: Cache NDK
       id: cache-ndk
       uses: actions/cache@v3
       with:
         key: android-ndk-r20b-cache
         path: ~/android-ndk-r20b
+      
     - name: Set up NDK
       if: steps.cache-ndk.outputs.cache-hit != 'true'
       uses: nttld/setup-ndk@v1
@@ -33,21 +37,26 @@ jobs:
       with:
         ndk-version: r20b
         add-to-path: false
+      
     - name: Move NDK
       if: steps.cache-ndk.outputs.cache-hit != 'true'
       run: mv ${{ steps.setup-ndk.outputs.ndk-path }} ${HOME}/android-ndk-r20b
+      
     - name: Install compilers
       run: |
         sudo apt update
         sudo apt install gcc-mingw-w64-i686 gcc-mingw-w64-x86-64 gcc gcc-aarch64-linux-gnu libgl1-mesa-dev xorg-dev -y
+      
     - name: Setup theos's dependencies
-      run: sudo apt install fakeroot git perl unzip build-essential libtinfo5 libplist-utils brotli
+      run: sudo apt install fakeroot git perl zip unzip build-essential libtinfo5 libplist-utils brotli
+      
     - name: Cache theos and toolchain
       id: cache-theos
       uses: actions/cache@v3
       with:
         key: theos-with-ios-and-macos-sdk-plus-ios-toolchain-cache
         path: ~/theos
+      
     - name: Clone theos
       if: steps.cache-theos.outputs.cache-hit != 'true'
       uses: actions/checkout@v2
@@ -55,6 +64,7 @@ jobs:
         submodules: 'recursive'
         repository: 'theos/theos'
         path: 'theos'
+      
     - name: Setup theos
       if: steps.cache-theos.outputs.cache-hit != 'true'
       run: |
@@ -72,6 +82,7 @@ jobs:
         unzip -q master.zip -d $TMP
         mv $TMP/sdks-master/*.sdk $THEOS/sdks
         rm -r master.zip $TMP
+      
     - name: Download macOS SDK
       if: steps.cache-theos.outputs.cache-hit != 'true'
       run: |
@@ -89,17 +100,20 @@ jobs:
     #    mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
     #    rm -rf $GITHUB_WORKSPACE/macOS-sdks
     # Debian/Ubuntu provided LLVM only support native targets, using Homebrew prebuilt for all targets
+      
     - name: Setup LLVM dependencies
       run: |
         sudo apt install libedit2 libxml2 libncursesw6 binutils elfutils
         wget -q http://ftp.debian.org/debian/pool/main/libf/libffi/libffi8_3.4.2-4_amd64.deb
         sudo dpkg -i libffi8_3.4.2-4_amd64.deb
+      
     - name: Cache LLVM
       id: cache-llvm
       uses: actions/cache@v3
       with:
         key: llvm-cache
         path: ~/llvm
+      
     - name: Download LLVM
       if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: |
@@ -107,12 +121,14 @@ jobs:
         tar xf llvm.tar.xz
         rm llvm.tar.xz
         mv llvm/14.0.6 ~/llvm
+      
     - name: Cache iSH GCC
       id: cache-ish-gcc
       uses: actions/cache@v3
       with:
         key: ish-gcc-cache
         path: ~/i686-unknown-linux-musl
+      
     - name: Download iSH GCC
       if: steps.cache-ish-gcc.outputs.cache-hit != 'true'
       run: |
@@ -120,12 +136,14 @@ jobs:
         tar xf i686-unknown-linux-musl.tar.xz
         rm i686-unknown-linux-musl.tar.xz
         mv i686-unknown-linux-musl ~/
+      
     - name: Cache Openwrt mt7620 SDK
       id: cache-openwrt-mt7620-sdk
       uses: actions/cache@v3
       with:
         key: openwrt-sdk-mt7620-cache
         path: ~/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64
+      
     - name: Download Openwrt mt7620 SDK
       if: steps.cache-openwrt-mt7620-sdk.outputs.cache-hit != 'true'
       run: |
@@ -133,12 +151,14 @@ jobs:
         tar -xJf openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         rm openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         mv openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64 ~/
+      
     - name: Cache Openwrt ipq40xx-generic SDK
       id: cache-openwrt-ipq40xx-generic-sdk
       uses: actions/cache@v3
       with:
         key: openwrt-sdk-ipq40xx-generic-cache
         path: ~/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64
+      
     - name: Download Openwrt ipq40xx-generic SDK
       if: steps.cache-openwrt-ipq40xx-generic-sdk.outputs.cache-hit != 'true'
       run: |
@@ -146,12 +166,14 @@ jobs:
         tar -xJf openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
         rm openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
         mv openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64 ~/
+      
     - name: Cache Openwrt mt7622 SDK
       id: cache-openwrt-mt7622-sdk
       uses: actions/cache@v3
       with:
         key: openwrt-sdk-mediatek-mt7622-cache
         path: ~/openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64
+      
     - name: Download Openwrt mt7622 SDK
       if: steps.cache-openwrt-mt7622-sdk.outputs.cache-hit != 'true'
       run: |
@@ -159,6 +181,11 @@ jobs:
         tar -xJf openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64.tar.xz
         rm openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64.tar.xz
         mv openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64 ~/
+      
+    - name: Set build time
+      id: build_time
+      run: echo "build_time=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+      
     - name: Pre-Build & configure go-raknet
       run: |
         make current
@@ -166,14 +193,17 @@ jobs:
         chmod 0644 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
         sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go>~/conn.go
         cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
+      
     - name: Build
       run: |
         export THEOS=~/theos
         make all
+      
     - name: Package for specific platforms
       run: |
         export THEOS=~/theos
         make package
+      
     - name: Build GUI applications
       run: |
         export THEOS=~/theos
@@ -188,6 +218,7 @@ jobs:
         rm -f build/phoenixbuilder-macos-arm64 build/phoenixbuilder-macos-x86_64
         mv build ../build/gui
         cd ..
+        
     - name: Pack binaries
       run: |
         mv release/*.deb build/
@@ -196,6 +227,29 @@ jobs:
         cp version build/version.txt
         cp install.sh build/install.sh
         tar -czf fb-upload.tar.gz build
+        zip -r -9 fb-upload.zip build
+        
+    - name: Set release version
+      id: release_version
+      run: echo "release_version=$(cat build/version)"  >> $GITHUB_OUTPUT
+
+    - name: GH Release
+      uses: softprops/action-gh-release@v0.1.14
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.build_time.outputs.build_time }}-v${{ steps.release_version.outputs.release_version }}
+        files: |
+          fb-upload.zip
+          fb-upload.tar.gz
+          build/*
+      
+    - name: Upload bin directory
+      uses: actions/upload-artifact@main
+      with:
+        name: fb-upload
+        path: build
+
     #- name: Generate index files for storage over github
     #  run: node index_generator.js build
     #- name: Deploy to storage
@@ -215,18 +269,22 @@ jobs:
     #    git commit -m "Auto update" -a
     #    git push
     #    cd ..
+
     - name: Load Key
       env:
         FBKEY: ${{ secrets.FBKEY }}
+      if: ${{ env.FBKEY != '' }}
       run: |
         echo "$FBKEY">~/fbkey
         mkdir -p ~/.ssh
         printf "StrictHostKeyChecking no\nUserKnownHostsFile /dev/null">~/.ssh/config
         chmod 0600 ~/fbkey
+
     - name: Upload binaries and publish
       env:
         FBUSER: ${{ secrets.FBUSER }}
         FBIP: ${{ secrets.FBIP }}
+      if: ${{ env.FBUSER != '' && env.FBIP != '' }}
       run: |
         echo "put fb-upload.tar.gz">~/a
         sftp -P 8964 -i ~/fbkey -b ~/a $FBUSER@$FBIP
