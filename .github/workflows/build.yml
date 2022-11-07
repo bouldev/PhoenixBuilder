@@ -212,9 +212,10 @@ jobs:
         cd ..
         make all
         #node simpleappend.js
+        rename s/phoenixbuilder/phoenixbuilder-gui/ build/phoenixbuilder*
         ls -lh build/>release.txt
-        mv release.txt build/release-list.txt
-        cp version build/version.txt
+        mv release.txt build/release-list-gui.txt
+        cp version build/version-gui.txt
         rm -f build/phoenixbuilder-macos-arm64 build/phoenixbuilder-macos-x86_64
         mv build ../build/gui
         cd ..
@@ -228,7 +229,6 @@ jobs:
         cp install.sh build/install.sh
         tar -czf fb-upload.tar.gz build
         zip -r -9 fb-upload.zip build
-        rename s/phoenixbuilder/phoenixbuilder-gui/ build/gui/phoenixbuilder*
         
     - name: Set release version
       id: release_version
@@ -244,7 +244,7 @@ jobs:
           fb-upload.zip
           fb-upload.tar.gz
           build/*
-          build/gui/phoenixbuilder*
+          build/gui/*
       
     - name: Upload bin directory
       uses: actions/upload-artifact@main
