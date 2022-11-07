@@ -13,7 +13,7 @@ import (
 )
 
 /*
-#cgo !windows,!darwin,!ios,!ish LDFLAGS: -L${SRCDIR}/../../depends/stub -lz
+#cgo !windows,!darwin,!ios,!ish,!android LDFLAGS: -L${SRCDIR}/../../depends/stub -lz
 #cgo windows CFLAGS: -I${SRCDIR}/../../depends/zlib-1.2.12
 #cgo LDFLAGS: -L${SRCDIR}/../../depends/zlib-1.2.12/prebuilt
 #cgo windows,amd64 LDFLAGS: -lz-x86_64-windows -lws2_32
@@ -22,6 +22,10 @@ import (
 #cgo darwin,!ios,arm64 LDFLAGS: -lz-arm64-macos
 #cgo ios,arm64 LDFLAGS: -lz-arm64-ios
 #cgo ish LDFLAGS: -lz-ish
+#cgo android,arm LDFLAGS: -lz-armv7a-android
+#cgo android,arm64 LDFLAGS: -lz-arm64-android
+#cgo android,386 LDFLAGS: -lz-i686-android
+#cgo android,amd64 LDFLAGS: -lz-x86_64-android
 #cgo !windows CFLAGS: -I${SRCDIR}/../../depends/zlib-1.2.12
 #include <stdint.h>
 extern const char *zlibVersion(void);
