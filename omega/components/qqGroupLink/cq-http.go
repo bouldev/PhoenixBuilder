@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
 	"net/url"
 	"phoenixbuilder/minecraft/protocol"
@@ -172,6 +173,8 @@ func (cq *QGroupLink) connect() chan int {
 }
 
 func (cq *QGroupLink) InterceptCmdMsg(uid int64, msg string) (stop bool) {
+	// 接收的消息含有HTML转义字符，在使用前需要进行处理，否则诸如 /testfor @a[tag=a] 的指令会出现错误
+	msg = html.UnescapeString(msg)
 	cmds := []string{}
 	if allowed, hasK := cq.AllowedCmdExecutor[uid]; hasK && allowed && strings.HasPrefix(msg, "/") {
 		if strings.HasPrefix(msg, "/权限") {
@@ -219,7 +222,7 @@ func (cq *QGroupLink) InterceptCmdMsg(uid int64, msg string) (stop bool) {
 		}
 	}
 	if len(cmds) == 0 {
-		return false
+		return strings.HasPrefix(msg, "/")
 	} else {
 		result := ""
 		cmdI := 1
