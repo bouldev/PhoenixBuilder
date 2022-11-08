@@ -239,14 +239,14 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ steps.build_time.outputs.build_time }}-v${{ steps.release_version.outputs.release_version }}
+        tag_name: v${{ steps.release_version.outputs.release_version }}
         files: |
           fb-upload.zip
           fb-upload.tar.gz
           build/*
           build/gui/*
       
-    - name: Upload bin directory
+    - name: Upload build directory to Action Artifact
       uses: actions/upload-artifact@main
       with:
         name: fb-upload
