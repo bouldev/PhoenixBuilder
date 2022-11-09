@@ -245,12 +245,6 @@ jobs:
           fb-upload.tar.gz
           build/*
           build/gui/*
-      
-    - name: Upload build directory to Action Artifact
-      uses: actions/upload-artifact@main
-      with:
-        name: fb-upload
-        path: build
 
     #- name: Generate index files for storage over github
     #  run: node index_generator.js build
