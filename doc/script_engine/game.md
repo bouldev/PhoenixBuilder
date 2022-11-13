@@ -1,10 +1,9 @@
 # Game
-
 ## `game.eval(command)`
 * `command` `<string>` PhoenixBuilder's command
 
 `game.eval()` executes a PhoenixBuilder's command.
-```
+```javascript
 game.eval("get");
 game.eval("round -r 10");
 ```
@@ -13,7 +12,7 @@ game.eval("round -r 10");
 * `command` `<string>`
 
 `game.oneShotCommand()` executes a Minecraft command without waiting for response.
-```
+```javascript
 game.oneShotCommand("kill @a");
 ```
 

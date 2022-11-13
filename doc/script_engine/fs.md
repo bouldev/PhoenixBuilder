@@ -1,5 +1,4 @@
 # File System
-
 ## `fs.containerPath`
 * Type: `<string>`
 

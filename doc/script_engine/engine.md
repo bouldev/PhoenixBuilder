@@ -1,11 +1,10 @@
 # Engine
-
 ## `engine.setName(name)`
 ** Warning: For a script package, this shouldn't be called since the name will be set automatically **
 * `name` `<string>` The display name for the script.
 
 Display name will be attached as the prefix of the script's output to user.
-```
+```javascript
 engine.setName("My Script");
 ```
 ## `engine.waitConnectionSync()`
