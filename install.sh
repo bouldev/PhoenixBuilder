@@ -1,18 +1,18 @@
 #!/bin/bash
 
 # Bouldev 2021
-# This script is for auto select FastBuilder release prebuilts,
+# This script is for auto selecting PhoenixBuilder release prebuilts,
 # not for native compiling.
 #
-# If you did not found any matched release version for your
+# If you did not find any matched release version for your
 # operating systems or machines, please contact us by email:
 # <support at boul dot dev>
 
 # Planned support: macOS, iOS, Android, Linux (Debian, Ubuntu)
 #=============================================================#
 
-# Define functions to properly exit
-# This were designed to delete temp files after script ends
+# Define functions to exit properly
+# This is designed to delete temp files after script ends
 trap ctrl_c INT
 
 function quit_installer() {
@@ -21,14 +21,14 @@ function quit_installer() {
 }
 
 function ctrl_c() {
-  printf "\n\033[33mUser forced exit, performing clenup steps...\033[0m\n"
+  printf "\n\033[33mUser forced to exit, performing cleanup steps...\033[0m\n"
   quit_installer 1
 }
 
 # Start
 SCRIPT_VERSION="0.0.2"
 printf "\033[33mFastBuilder Phoenix Installer v%s\033[0m\n" "${SCRIPT_VERSION}"
-printf "\033[33mBouldev 2022, Copyrights Reserved.\033[0m\n"
+printf "\033[33mBouldev 2022, Copyrighted.\033[0m\n"
 printf "\033[32mStarting installation progress...\033[0m\n"
 
 # Check whether uname(1) GNU or BSD
@@ -64,6 +64,7 @@ elif [[ $(${UNAME_GET_OSNAME}) == "Android" ]] && [[ $(apt install &> /dev/null;
   printf "\033[32mRunning under Android Termux (APT does not require root)\033[0m\n"
   ROOT_REQUIRED="1"
 elif [[ $(id -u) == 0 ]]; then
+  printf "\033[31mWARNING: Is is not recommended to install things by scripts in a normal Linux distribution, they may mess up your environment.\033[0m\n"
   if [ ${SUDO_UID} ]; then
     printf "\033[32mRunning under sudo privileges\033[0m\n"
   else
@@ -72,7 +73,8 @@ elif [[ $(id -u) == 0 ]]; then
   fi
 else
   printf "\033[31mRoot privilege required!\033[0m\n"
-  printf "\033[31mPlease run this installer under root\033[0m\n"
+  printf "\033[31mPlease run this installer under root permission\033[0m\n"
+  printf "\033[31mIs is not recommended to install things by scripts in a normal Linux distribution, they may mess up your environment.\033[0m\n"
   printf "\033[31mOr prepend LOCAL=1 before command\033[0m\n"
   printf "\033[31mTo install FastBuilder without root access.\033[0m\n"
   quit_installer 1
