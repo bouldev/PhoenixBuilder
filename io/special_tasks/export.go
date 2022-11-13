@@ -169,7 +169,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 					}
 					var cbdata *types.CommandBlockData = nil
 					var chestData *types.ChestData = nil
-					if(block=="chest"||strings.Contains(block,"shulker_box")) {
+					/*if(block=="chest"||block=="minecraft:chest"||strings.Contains(block,"shulker_box")) {
 						content:=item["Items"].([]interface{})
 						chest:=make(types.ChestData, len(content))
 						for index, iface := range content {
@@ -187,23 +187,66 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							}
 						}
 						chestData=&chest
-					}
+					}*/
+					// TODO ^ Hope someone could help me to do that, just like what I did below ^
 					if strings.Contains(block,"command_block") {
+						/*
+							=========
+							Reference
+							=========
+							Types for command blocks are checked by their names
+							Whether a command block is conditional is checked through its data value.
+							THEY ARE NOT INCLUDED IN NBT DATA.
+							
+							normal
+							\x01\x00\x00\x00\x00\x01\x00\x00\x00\bsay test\"\x00\x00\x00\x00\x01\xfa\xcd\x03\x00\x00
+							===
+							tick 60
+							\x01\x00\x00\x00\x00\x01\x00\x00\x00\bsay test\"\x00\x00\x00\x00\x01\xfa\xcd\x03x\x00
+							===
+							no tracking output, tick 62
+							\x01\x00\x00\x00\x00\x01\x00\x00\x00\bsay test\"\x00\x00\x00\x00\x00\xfa\xcd\x03|\x00
+							===
+							tick 62, custom name = "***"
+							\x01\x00\x00\x00\x00\x01\x00\x00\x00\bsay test\"\x00\x03***\x00\x00\x01\xfa\xcd\x03|\x00
+							===
+							tick 62, w/ error output, executeonfirsttick
+							\x01\x00\x00\x00\x00\x01\x00\x00\x00\tdsay test\"\x00\x00\x17commands.generic.syntax\x06\x00\x04dsay\x05 test\x01\xfa\xcd\x03|\x01
+							===
+							same with above, but will not execute on first tick
+							\x01\x00\x00\x00\x00\x01\x00\x00\x00\tdsay test\"\x00\x00\x17commands.generic.syntax\x06\x00\x04dsay\x05 test\x01\xfa\xcd\x03|\x00
+							===
+							normal, noredstone
+							\x01\x00\x00\x00\x01\x01\x00\x00\x00\bsay test\"\x02\x00\x00\x00\x01\xfa\xcd\x03\x00\x00
+						*/
+						__tag:=[]byte(item["__tag"].(string))
+						//fmt.Printf("CMDBLK %#v\n\n",item["__tag"])
 						var mode uint32
-						if(block=="command_block"){
+						if(block=="command_block"||block=="minecraft:command_block"){
 							mode=packet.CommandBlockImpulse
-						}else if(block=="repeating_command_block"){
+						}else if(block=="repeating_command_block"||block=="minecraft:repeating_command_block"){
 							mode=packet.CommandBlockRepeating
-						}else if(block=="chain_command_block"){
+						}else if(block=="chain_command_block"||block=="minecraft:chain_command_block"){
 							mode=packet.CommandBlockChain
 						}
-						cmd:=item["Command"].(string)
-						cusname:=item["CustomName"].(string)
-						exeft:=item["ExecuteOnFirstTick"].(uint8)
-						tickdelay:=item["TickDelay"].(int32)
-						aut:=item["auto"].(uint8)
-						trackoutput:=item["TrackOutput"].(uint8)
-						lo:=item["LastOutput"].(string)
+						len_tag:=len(__tag)
+						tickdelay:=int32(__tag[len_tag-2])/2
+						exeft:=__tag[len_tag-1]
+						aut:=__tag[4]
+						trackoutput:=__tag[len_tag-6]
+						cmdlen:=__tag[9]
+						cmd:=string(__tag[10:10+cmdlen])
+						//cmd:=item["Command"].(string)
+						cusname_len:=__tag[10+cmdlen+2]
+						cusname:=string(__tag[10+cmdlen+2+1:10+cmdlen+2+1+cusname_len])
+						//cusname:=item["CustomName"].(string)
+						lo_len:=__tag[10+cmdlen+2+1+cusname_len]
+						lo:=string(__tag[10+cmdlen+2+1+cusname_len+1:10+cmdlen+2+1+cusname_len+1+lo_len])
+						//exeft:=item["ExecuteOnFirstTick"].(uint8)
+						//tickdelay:=item["TickDelay"].(int32)
+						//aut:=item["auto"].(uint8)
+						//trackoutput:=item["TrackOutput"].(uint8)
+						//lo:=item["LastOutput"].(string)
 						conb_bit:=static_item["conditional_bit"].(uint8)
 						conb:=false
 						if conb_bit==1 {
@@ -239,6 +282,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							Conditional: conb,
 							NeedRedstone: nrb,
 						}
+						//fmt.Printf("%#v\n",cbdata)
 					}
 					lb:=chunk.RuntimeIDToLegacyBlock(runtimeId)
 					blocks[counter]=&types.Module {
