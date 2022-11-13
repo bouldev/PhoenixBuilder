@@ -194,6 +194,13 @@ FB_PREFIX="phoenixbuilder"
 FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}"
 FB_VER=""
 
+# Github Releases download source presets
+${GH_DOMAIN:="https://github.com/"}  # Do not use mirror as default, let users choose their own
+${GH_USER:="LNSSPsd"}
+${GH_REPO:="PhoenixBuilder"}
+${GH_RELEASE_URL:="/releases/download/"}
+${GH_LINK:="${GH_DOMAIN}${GH_USER}/${GH_REPO}${GH_RELEASE_URL}"}
+
 # Further system detection
 FILE_TYPE=""
 FILE_ARCH=""
@@ -350,10 +357,27 @@ report_error() {
   quit_installer 1
 }
 
+# Download a file contains the latest version num for FastBuilder distros
+printf "Getting latest version of FastBuilder..."
+${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}/version
+DL_RET=$?
+if [ ${DL_RET} == 0 ]; then
+  FB_VER=$(cat "${PREFIX}"/./fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
+  printf "${FB_VER}\n"
+else
+  report_error ${DL_RET}
+fi
+
 if [[ ${BINARY_INSTALL} == "1" ]]; then
+  printf "Downloading FastBuilder binary...\n"
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
-  printf "Downloading FastBuilder binary..."
+  if [[ ${PB_USE_GH_REPO} == "1" ]]; then
+    printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
+    FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
+    printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
+  fi
+  printf "\033[33mIf the official storage does not work for you, you can try to assign environment variable \"PB_USE_GH_REPO=1\" for the script to download stuff from Github.\033[0m\n"
   ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}/./fastbuilder-temp/fastbuilder" "${FB_LINK}"
   DL_RET=$?
   if [ ${DL_RET} == 0 ]; then
@@ -378,37 +402,15 @@ if [[ ${BINARY_INSTALL} == "1" ]]; then
     LAUNCH_CMD="${PREFIX}/fastbuilder"
   fi
 else
-  # Download a file contains the latest version num for FastBuilder distros
-  printf "Getting latest version of FastBuilder..."
-  ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/version ${FB_DOMAIN}${FB_LOCATION_ROOT}/version
-  DL_RET=$?
-  if [ ${DL_RET} == 0 ]; then
-    FB_VER=$(cat "${PREFIX}"/./fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
-    printf "${FB_VER}\n"
-  else
-    report_error ${DL_RET}
-  fi
-  printf "Downloading dependencies...\n"
-  if [ $(${UNAME_GET_OSNAME}) == "Android" ]; then
-    # We need a livecheck script here!
-    READLINE_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/r/readline/readline_8.2.0_${FILE_ARCH}.deb"
-    ZLIB_LINK="https://mirrors.bfsu.edu.cn/termux/apt/termux-main/pool/main/z/zlib/zlib_1.2.12-1_${FILE_ARCH}.deb"
-    printf "Downloading dependencies...\n"
-    ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/readline.deb ${READLINE_LINK}
-    ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/zlib.deb ${ZLIB_LINK}
-    DL_RET=$?
-    if [ ${DL_RET} == 0 ]; then
-      printf "Installing dependencies...\n"
-      dpkg -i "${PREFIX}"/./fastbuilder-temp/readline.deb "${PREFIX}"/./fastbuilder-temp/zlib.deb
-      if [ $? != 0 ]; then
-        printf "\033[31mSome errors occurred when calling Debian Packager.\nYou may want to run \"dpkg --configure -a\" to fix some problems.\033[0m\n"
-        quit_installer 1
-      fi
-    fi
-  fi
   printf "Downloading FastBuilder package...\n"
   # Repeat FB_LINK
   FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
+  if [[ ${PB_USE_GH_REPO} == "1" ]]; then
+    printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
+    FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
+    printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
+  fi
+  printf "\033[33mIf the official storage does not work for you, you can try to assign environment variable \"PB_USE_GH_REPO=1\" for the script to download stuff from Github.\033[0m\n"
   ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/fastbuilder.deb ${FB_LINK}
   DL_RET=$?
   if [ ${DL_RET} == 0 ]; then
