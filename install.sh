@@ -197,11 +197,13 @@ FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}"
 FB_VER=""
 
 # Github Releases download source presets
-${GH_DOMAIN:="https://github.com/"}  # Do not use mirror as default, let users choose their own
-${GH_USER:="LNSSPsd"}
-${GH_REPO:="PhoenixBuilder"}
-${GH_RELEASE_URL:="/releases/download/"}
-${GH_LINK:="${GH_DOMAIN}${GH_USER}/${GH_REPO}${GH_RELEASE_URL}"}
+# Do not use mirror as default, let users choose their own
+# The environment variables here are the default and can be overridden by the environment variables set by the export command
+GH_DOMAIN=${GH_DOMAIN:="https://github.com"}
+GH_USER=${GH_USER:="LNSSPsd"}
+GH_REPO=${GH_REPO:="PhoenixBuilder"}
+GH_RELEASE_URL=${GH_RELEASE_URL:="releases/download/"}
+GH_LINK=${GH_LINK:="${GH_DOMAIN}/${GH_USER}/${GH_REPO}/${GH_RELEASE_URL}"}
 
 # Further system detection
 FILE_TYPE=""
