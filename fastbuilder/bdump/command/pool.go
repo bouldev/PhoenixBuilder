@@ -1,12 +1,13 @@
 package command
 
-var BDumpCommandPool map[uint16]Command {
+var BDumpCommandPool map[uint16]func()Command = map[uint16]func()Command {
 	1:  func()Command { return &CreateConstantString{} },
 	6:  func()Command { return &AddInt16ZValue0{} },
 	7:  func()Command { return &PlaceBlock{} },
 	8:  func()Command { return &AddZValue0{} },
 	9:  func()Command { return &NoOperation{} },
 	12: func()Command { return &AddInt32ZValue0{} },
+	// 13 is reserved, please use it first
 	14: func()Command { return &AddXValue{} },
 	15: func()Command { return &SubtractXValue{} },
 	16: func()Command { return &AddYValue{} },
@@ -33,4 +34,5 @@ var BDumpCommandPool map[uint16]Command {
 	37: func()Command { return &PlaceRuntimeBlockWithChestData{} },
 	38: func()Command { return &PlaceRuntimeBlockWithChestDataAndUint32RuntimeID{} },
 	39: func()Command { return &AssignNBTData{} },
+	88: func()Command { return &Terminate{} },
 }

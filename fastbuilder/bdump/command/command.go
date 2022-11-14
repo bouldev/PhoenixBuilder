@@ -38,10 +38,11 @@ func ReadCommand(reader io.Reader) (Command, error) {
 	if err != nil {
 		return nil, err
 	}
-	command, found_command:=BDumpCommandPool[uint16(buf)]
+	command_func, found_command:=BDumpCommandPool[uint16(buf[0])]
 	if !found_command {
 		return nil, fmt.Errorf("Command::ReadCommand: Unknown Command ID: %d", int(buf[0]))
 	}
+	command:=command_func()
 	err=command.Unmarshal(reader)
 	if err!=nil {
 		return nil, err

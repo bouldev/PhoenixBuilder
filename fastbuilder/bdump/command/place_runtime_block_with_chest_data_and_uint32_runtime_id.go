@@ -6,7 +6,7 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 )
 
-type PlaceRuntimeBlockWithChestDataAndUint32RuntimeID {
+type PlaceRuntimeBlockWithChestDataAndUint32RuntimeID struct {
 	BlockRuntimeID uint32
 	ChestSlots []types.ChestSlot
 }
@@ -23,7 +23,7 @@ func (cmd *PlaceRuntimeBlockWithChestDataAndUint32RuntimeID) Marshal(writer io.W
 	uint16_buf:=make([]byte, 2)
 	uint32_buf:=make([]byte, 4)
 	binary.BigEndian.PutUint32(uint32_buf, cmd.BlockRuntimeID)
-	_, err:=writer.Write(append(uint32_buf, len(cmd.ChestSlots)))
+	_, err:=writer.Write(append(uint32_buf, uint8(len(cmd.ChestSlots))))
 	// They are different parts, but wrote together for convenient
 	if err!=nil {
 		return err
@@ -52,7 +52,7 @@ func (cmd *PlaceRuntimeBlockWithChestDataAndUint32RuntimeID) Unmarshal(reader io
 	if err!=nil {
 		return err
 	}
-	cmd.ChestSlots=make([]types.ChestSlots, uint8_buf[0])
+	cmd.ChestSlots=make([]types.ChestSlot, int(uint8_buf[0]))
 	for i:=0;i<int(uint8_buf[0]);i++ {
 		item_name, err:=readString(reader)
 		if err!=nil {

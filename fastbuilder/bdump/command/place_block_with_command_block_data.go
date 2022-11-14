@@ -28,7 +28,7 @@ func (cmd *PlaceBlockWithCommandBlockData) Marshal(writer io.Writer) error {
 		return err
 	}
 	binary.BigEndian.PutUint16(uint16_buf, cmd.BlockData)
-	_, err:=writer.Write(uint16_buf)
+	_, err=writer.Write(uint16_buf)
 	if err!=nil {
 		return err
 	}

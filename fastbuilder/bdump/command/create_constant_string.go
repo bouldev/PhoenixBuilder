@@ -2,7 +2,6 @@ package command
 
 import (
 	"io"
-	"fmt"
 )
 
 type CreateConstantString struct {

@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/bdump"
 	bridge_path "phoenixbuilder/fastbuilder/builder/path"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
+	"phoenixbuilder/fastbuilder/bdump/command"
 
 	"github.com/andybalholm/brotli"
 )
@@ -99,83 +99,33 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 		}
 	}
 	ReadBrString(br) // Ignores author field
-	curcmdbuf := make([]byte, 1)
 	brushPosition := []int{0, 0, 0}
 	var blocksStrPool []string
 	var runtimeIdPoolUsing []*types.ConstBlock
-	prevCmd := 0
+	//var prevCmd command.Command = nil
 	for {
-		prevCmd = int(curcmdbuf[0])
-		_, err := br.Read(curcmdbuf)
+		_cmd, err:=command.ReadCommand(br)
 		if err != nil {
-			return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetConstructCmd))
+			return fmt.Errorf("%s: %v", I18n.T(I18n.BDump_FailedToGetConstructCmd), err)
 		}
-		cmd := curcmdbuf[0]
-		if cmd == 88 {
+		_, isTerminate:=_cmd.(*command.Terminate)
+		if isTerminate {
 			break
 		}
-		if cmd == 1 {
-			bstr, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd1))
+		switch cmd:=_cmd.(type) {
+		case *command.CreateConstantString:
+			blocksStrPool = append(blocksStrPool, cmd.ConstantString)
+		case *command.AddInt16ZValue0:
+			brushPosition[2] += int(cmd.Value)
+		case *command.PlaceBlock:
+			if int(cmd.BlockConstantStringID) >= len(blocksStrPool) {
+				return fmt.Errorf("Error: BlockID exceeded BlockPool")
 			}
-			blocksStrPool = append(blocksStrPool, bstr)
-			continue
-		} else if cmd == 2 {
-			rdst := make([]byte, 2)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd2))
-			}
-			jumpval := binary.BigEndian.Uint16(rdst)
-			brushPosition[0] += int(jumpval)
-			brushPosition[1] = 0
-			brushPosition[2] = 0
-		} else if cmd == 3 {
-			brushPosition[0]++
-			brushPosition[1] = 0
-			brushPosition[2] = 0
-		} else if cmd == 4 {
-			rdst := make([]byte, 2)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd4))
-			}
-			jumpval := binary.BigEndian.Uint16(rdst)
-			brushPosition[1] += int(jumpval)
-			brushPosition[2] = 0
-		} else if cmd == 5 {
-			brushPosition[1]++
-			brushPosition[2] = 0
-		} else if cmd == 6 {
-			rdst := make([]byte, 2)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd6))
-			}
-			jumpval := binary.BigEndian.Uint16(rdst)
-			brushPosition[2] += int(jumpval)
-		} else if cmd == 7 {
-			rdst := make([]byte, 2)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd7_0))
-			}
-			blockId := binary.BigEndian.Uint16(rdst)
-			_, err = br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd7_1))
-			}
-			if int(blockId) >= len(blocksStrPool) {
-				bridge_fmt.Printf("WARNING: BlockID exceeded BlockPool\n")
-				continue
-			}
-			blockData := binary.BigEndian.Uint16(rdst)
-			blockName := &blocksStrPool[int(blockId)]
+			blockName := &blocksStrPool[int(cmd.BlockConstantStringID)]
 			blc <- &types.Module{
 				Block: &types.Block{
 					Name: blockName,
-					Data: uint16(blockData),
+					Data: cmd.BlockData,
 				},
 				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
@@ -183,505 +133,190 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 					Z: brushPosition[2] + config.Position.Z,
 				},
 			}
-		} else if cmd == 8 {
+		case *command.AddZValue0:
 			brushPosition[2]++
-		} else if cmd == 9 {
-			// Command: NOP
-		} else if cmd == 10 {
-			rdst := make([]byte, 4)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd10))
-			}
-			jumpval := binary.BigEndian.Uint32(rdst)
-			brushPosition[0] += int(jumpval)
-			brushPosition[1] = 0
-			brushPosition[2] = 0
-		} else if cmd == 11 {
-			rdst := make([]byte, 4)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd11))
-			}
-			jumpval := binary.BigEndian.Uint32(rdst)
-			brushPosition[1] += int(jumpval)
-			brushPosition[2] = 0
-		} else if cmd == 12 {
-			rdst := make([]byte, 4)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf(I18n.T(I18n.BDump_FailedToGetCmd12))
-			}
-			jumpval := binary.BigEndian.Uint32(rdst)
-			brushPosition[2] += int(jumpval)
-		} else if cmd == 13 {
-			bridge_fmt.Printf(I18n.T(I18n.BDump_Warn_Reserved))
-		} else if cmd == 14 {
+		case *command.NoOperation:
+			// Command: NOP, DO NOTHING
+			break
+		case *command.AddInt32ZValue0:
+			brushPosition[2] += int(cmd.Value)
+		case *command.AddXValue:
 			brushPosition[0]++
-		} else if cmd == 15 {
+		case *command.SubtractXValue:
 			brushPosition[0]--
-		} else if cmd == 16 {
+		case *command.AddYValue:
 			brushPosition[1]++
-		} else if cmd == 17 {
+		case *command.SubtractYValue:
 			brushPosition[1]--
-		} else if cmd == 18 {
+		case *command.AddZValue:
 			brushPosition[2]++
-		} else if cmd == 19 {
+		case *command.SubtractZValue:
 			brushPosition[2]--
-		} else if cmd == 20 {
-			rdst := make([]byte, 2)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos9], file may be corrupted")
-			}
-			jumpval := binary.BigEndian.Uint16(rdst)
-			brushPosition[0] += int(int16(jumpval))
-		} else if cmd == 21 {
-			rdst := make([]byte, 4)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos10], file may be corrupted")
-			}
-			jumpval := binary.BigEndian.Uint32(rdst)
-			brushPosition[0] += int(int32(jumpval))
-		} else if cmd == 22 {
-			rdst := make([]byte, 2)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos11], file may be corrupted")
-			}
-			jumpval := binary.BigEndian.Uint16(rdst)
-			brushPosition[1] += int(int16(jumpval))
-		} else if cmd == 23 {
-			rdst := make([]byte, 4)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos12], file may be corrupted")
-			}
-			jumpval := binary.BigEndian.Uint32(rdst)
-			brushPosition[1] += int(int32(jumpval))
-		} else if cmd == 24 {
-			rdst := make([]byte, 2)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos13], file may be corrupted")
-			}
-			jumpval := binary.BigEndian.Uint16(rdst)
-			brushPosition[2] += int(int16(jumpval))
-		} else if cmd == 25 {
-			rdst := make([]byte, 4)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos14], file may be corrupted")
-			}
-			jumpval := binary.BigEndian.Uint32(rdst)
-			brushPosition[2] += int(int32(jumpval))
-		} else if cmd == 26 {
-			fbuf := make([]byte, 4)
-			_, err := br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos15], file may be corrupted")
-			}
-			cbmode := binary.BigEndian.Uint32(fbuf)
-			command, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos16], file may be corrupted")
-			}
-			cusname, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos17], file may be corrupted")
-			}
-			lasout, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos18], file may be corrupted")
-			}
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos19], file may be corrupted")
-			}
-			tickdelay := int32(binary.BigEndian.Uint32(fbuf))
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos20], file may be corrupted")
-			}
-			fbools := []bool{false, false, false, false}
-			if fbuf[0] == 1 {
-				fbools[0] = true
-			}
-			if fbuf[1] == 1 {
-				fbools[1] = true
-			}
-			if fbuf[2] == 1 {
-				fbools[2] = true
-			}
-			if fbuf[3] == 1 {
-				fbools[3] = true
-			}
-			cbdata := &types.CommandBlockData{
-				Mode:               cbmode,
-				Command:            command,
-				CustomName:         cusname,
-				LastOutput:         lasout,
-				TickDelay:          tickdelay,
-				ExecuteOnFirstTick: fbools[0],
-				TrackOutput:        fbools[1],
-				Conditional:        fbools[2],
-				NeedRedstone:       fbools[3],
-			}
+		case *command.AddInt16XValue:
+			brushPosition[0] += int(cmd.Value)
+		case *command.AddInt32XValue:
+			brushPosition[0] += int(cmd.Value)
+		case *command.AddInt16YValue:
+			brushPosition[1] += int(cmd.Value)
+		case *command.AddInt32YValue:
+			brushPosition[1] += int(cmd.Value)
+		case *command.AddInt16ZValue:
+			brushPosition[2] += int(cmd.Value)
+		case *command.AddInt32ZValue:
+			brushPosition[2] += int(cmd.Value)
+		case *command.SetCommandBlockData:
 			blc <- &types.Module{
-				CommandBlockData: cbdata,
+				CommandBlockData: cmd.CommandBlockData,
 				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
 					Y: brushPosition[1] + config.Position.Y,
 					Z: brushPosition[2] + config.Position.Z,
 				},
 			}
-		} else if cmd == 27 {
-			rdst := make([]byte, 2)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos4], file may be corrupted")
+		case *command.PlaceBlockWithCommandBlockData:
+			if int(cmd.BlockConstantStringID) >= len(blocksStrPool) {
+				return fmt.Errorf("Error: BlockConstantStringID exceeded BlockPool length")
 			}
-			blockId := binary.BigEndian.Uint16(rdst)
-			_, err = br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos5], file may be corrupted")
-			}
-			if int(blockId) >= len(blocksStrPool) {
-				bridge_fmt.Printf("WARNING: Invalid command")
-				continue
-			}
-			blockData := binary.BigEndian.Uint16(rdst)
-			blockName := &blocksStrPool[int(blockId)]
+			blockName := &blocksStrPool[int(cmd.BlockConstantStringID)]
 			cmdl := &types.Module{
 				Block: &types.Block{
 					Name: blockName,
-					Data: uint16(blockData),
+					Data: cmd.BlockData,
 				},
 				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
 					Y: brushPosition[1] + config.Position.Y,
 					Z: brushPosition[2] + config.Position.Z,
 				},
+				CommandBlockData: cmd.CommandBlockData,
 			}
-			fbuf := make([]byte, 4)
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos15], file may be corrupted")
-			}
-			cbmode := binary.BigEndian.Uint32(fbuf)
-			command, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos16], file may be corrupted")
-			}
-			cusname, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos17], file may be corrupted")
-			}
-			lasout, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos18], file may be corrupted")
-			}
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos19], file may be corrupted")
-			}
-			tickdelay := int32(binary.BigEndian.Uint32(fbuf))
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos20], file may be corrupted")
-			}
-			fbools := []bool{false, false, false, false}
-			if fbuf[0] == 1 {
-				fbools[0] = true
-			}
-			if fbuf[1] == 1 {
-				fbools[1] = true
-			}
-			if fbuf[2] == 1 {
-				fbools[2] = true
-			}
-			if fbuf[3] == 1 {
-				fbools[3] = true
-			}
-			cbdata := &types.CommandBlockData{
-				Mode:               cbmode,
-				Command:            command,
-				CustomName:         cusname,
-				LastOutput:         lasout,
-				TickDelay:          tickdelay,
-				ExecuteOnFirstTick: fbools[0],
-				TrackOutput:        fbools[1],
-				Conditional:        fbools[2],
-				NeedRedstone:       fbools[3],
-			}
-			cmdl.CommandBlockData = cbdata
 			blc <- cmdl
-		} else if cmd == 36 {
-			rdst := make([]byte, 2)
-			_, err = br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos5], file may be corrupted")
-			}
-			blockData := binary.BigEndian.Uint16(rdst)
+		case *command.PlaceCommandBlockWithCommandBlockData:
 			blockName := "command_block"
 			cmdl := &types.Module{
 				Block: &types.Block{
 					Name: &blockName,
-					Data: uint16(blockData),
+					Data: cmd.BlockData,
 				},
 				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
 					Y: brushPosition[1] + config.Position.Y,
 					Z: brushPosition[2] + config.Position.Z,
 				},
+				CommandBlockData: cmd.CommandBlockData,
 			}
-			fbuf := make([]byte, 4)
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos15], file may be corrupted")
-			}
-			cbmode := binary.BigEndian.Uint32(fbuf)
-			command, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos16], file may be corrupted")
-			}
-			cusname, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos17], file may be corrupted")
-			}
-			lasout, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos18], file may be corrupted")
-			}
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos19], file may be corrupted")
-			}
-			tickdelay := int32(binary.BigEndian.Uint32(fbuf))
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos20], file may be corrupted")
-			}
-			fbools := []bool{false, false, false, false}
-			if fbuf[0] == 1 {
-				fbools[0] = true
-			}
-			if fbuf[1] == 1 {
-				fbools[1] = true
-			}
-			if fbuf[2] == 1 {
-				fbools[2] = true
-			}
-			if fbuf[3] == 1 {
-				fbools[3] = true
-			}
-			cbdata := &types.CommandBlockData{
-				Mode:               cbmode,
-				Command:            command,
-				CustomName:         cusname,
-				LastOutput:         lasout,
-				TickDelay:          tickdelay,
-				ExecuteOnFirstTick: fbools[0],
-				TrackOutput:        fbools[1],
-				Conditional:        fbools[2],
-				NeedRedstone:       fbools[3],
-			}
-			cmdl.CommandBlockData = cbdata
 			blc <- cmdl
-		} else if cmd == 28 {
-			rdst := make([]byte, 1)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos21], file may be corrupted")
-			}
-			brushPosition[0] += int(int8(rdst[0]))
-		} else if cmd == 29 {
-			rdst := make([]byte, 1)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos22], file may be corrupted")
-			}
-			brushPosition[1] += int(int8(rdst[0]))
-		} else if cmd == 30 {
-			rdst := make([]byte, 1)
-			_, err := br.Read(rdst)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos23], file may be corrupted")
-			}
-			brushPosition[2] += int(int8(rdst[0]))
-		} else if cmd == 31 {
-			poolId := make([]byte, 1)
-			_, err := br.Read(poolId)
-			if err != nil {
-				return fmt.Errorf("Failed to get pool id, file may be corrupted.")
-			}
-			if poolId[0] == 117 {
+		case *command.AddInt8XValue:
+			brushPosition[0] += int(cmd.Value)
+		case *command.AddInt8YValue:
+			brushPosition[1] += int(cmd.Value)
+		case *command.AddInt8ZValue:
+			brushPosition[2] += int(cmd.Value)
+		case *command.UseRuntimeIDPool:
+			if cmd.PoolID == 117 {
 				runtimeIdPoolUsing = world_provider.RuntimeIdArray_117
-			} else if poolId[0] == 118 {
+			} else if cmd.PoolID == 118 {
 				runtimeIdPoolUsing = world_provider.RuntimeIdArray_2_1_10
 			} else {
 				return fmt.Errorf("This file is using an unknown runtime id pool, we're unable to resolve it.")
 			}
-		} else if cmd == 32 {
-			runtimeIdMem := make([]byte, 2)
-			_, err = br.Read(runtimeIdMem)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos24], file may be corrupted")
+		case *command.PlaceRuntimeBlock:
+			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
-			runtimeId := uint32(binary.BigEndian.Uint16(runtimeIdMem))
 			blc <- &types.Module{
-				Block: runtimeIdPoolUsing[runtimeId].Take(),
+				Block: runtimeIdPoolUsing[int(cmd.BlockRuntimeID)].Take(),
 				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
 					Y: brushPosition[1] + config.Position.Y,
 					Z: brushPosition[2] + config.Position.Z,
 				},
 			}
-		} else if cmd == 33 {
-			runtimeIdMem := make([]byte, 4)
-			_, err = br.Read(runtimeIdMem)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos24], file may be corrupted")
+		case *command.PlaceRuntimeBlockWithUint32RuntimeID:
+			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
-			runtimeId := binary.BigEndian.Uint32(runtimeIdMem)
 			blc <- &types.Module{
-				Block: runtimeIdPoolUsing[runtimeId].Take(),
+				Block: runtimeIdPoolUsing[cmd.BlockRuntimeID].Take(),
 				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
 					Y: brushPosition[1] + config.Position.Y,
 					Z: brushPosition[2] + config.Position.Z,
 				},
 			}
-		} else if cmd == 34 || cmd == 35 {
-			var dataval uint32
-			if cmd == 34 {
-				datavbuf := make([]byte, 2)
-				_, err = br.Read(datavbuf)
-				dataval = uint32(binary.BigEndian.Uint16(datavbuf))
-			} else {
-				datavbuf := make([]byte, 4)
-				_, err = br.Read(datavbuf)
-				dataval = binary.BigEndian.Uint32(datavbuf)
+		case *command.PlaceRuntimeBlockWithCommandBlockData:
+			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
-			cmdl := &types.Module{
-				Block: runtimeIdPoolUsing[dataval].Take(),
-				Point: types.Position{
+			cmdl:=&types.Module {
+				Block: runtimeIdPoolUsing[int(cmd.BlockRuntimeID)].Take(),
+				Point: types.Position {
 					X: brushPosition[0] + config.Position.X,
 					Y: brushPosition[1] + config.Position.Y,
 					Z: brushPosition[2] + config.Position.Z,
 				},
+				CommandBlockData: cmd.CommandBlockData,
 			}
-			fbuf := make([]byte, 4)
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos a15], file may be corrupted")
-			}
-			cbmode := binary.BigEndian.Uint32(fbuf)
-			command, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos a16], file may be corrupted")
-			}
-			cusname, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos a 17], file may be corrupted")
-			}
-			lasout, err := ReadBrString(br)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos a18], file may be corrupted")
-			}
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos a19], file may be corrupted")
-			}
-			tickdelay := int32(binary.BigEndian.Uint32(fbuf))
-			_, err = br.Read(fbuf)
-			if err != nil {
-				return fmt.Errorf("Failed to get argument for cmd[pos a20], file may be corrupted")
-			}
-			fbools := []bool{false, false, false, false}
-			if fbuf[0] == 1 {
-				fbools[0] = true
-			}
-			if fbuf[1] == 1 {
-				fbools[1] = true
-			}
-			if fbuf[2] == 1 {
-				fbools[2] = true
-			}
-			if fbuf[3] == 1 {
-				fbools[3] = true
-			}
-			cbdata := &types.CommandBlockData{
-				Mode:               cbmode,
-				Command:            command,
-				CustomName:         cusname,
-				LastOutput:         lasout,
-				TickDelay:          tickdelay,
-				ExecuteOnFirstTick: fbools[0],
-				TrackOutput:        fbools[1],
-				Conditional:        fbools[2],
-				NeedRedstone:       fbools[3],
-			}
-			cmdl.CommandBlockData = cbdata
 			blc <- cmdl
-		} else if cmd == 37 || cmd == 38 {
-			var runtimeId uint32
-			if cmd == 37 {
-				rIdBuf := make([]byte, 2)
-				_, err = br.Read(rIdBuf)
-				runtimeId = uint32(binary.BigEndian.Uint16(rIdBuf))
-			} else {
-				rIdBuf := make([]byte, 4)
-				_, err = br.Read(rIdBuf)
-				runtimeId = binary.BigEndian.Uint32(rIdBuf)
+		case *command.PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID:
+			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
-			slotCountCon := make([]byte, 1)
-			br.Read(slotCountCon)
-			chest := make(types.ChestData, slotCountCon[0])
-			for i := uint8(0); i < slotCountCon[0]; i++ {
-				itemname, _ := ReadBrString(br)
-				countcon := make([]byte, 1)
-				damageBuf := make([]byte, 2)
-				slotcon := make([]byte, 1)
-				br.Read(countcon)
-				br.Read(damageBuf)
-				br.Read(slotcon)
-				damageVal := binary.BigEndian.Uint16(damageBuf)
-				chest[i] = types.ChestSlot{
-					Name:   itemname,
-					Count:  countcon[0],
-					Damage: damageVal,
-					Slot:   slotcon[0],
-				}
+			cmdl:=&types.Module {
+				Block: runtimeIdPoolUsing[cmd.BlockRuntimeID].Take(),
+				Point: types.Position {
+					X: brushPosition[0] + config.Position.X,
+					Y: brushPosition[1] + config.Position.Y,
+					Z: brushPosition[2] + config.Position.Z,
+				},
+				CommandBlockData: cmd.CommandBlockData,
 			}
-			pos := types.Position{
+			blc <- cmdl
+		case *command.PlaceRuntimeBlockWithChestData:
+			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
+			}
+			pos:=types.Position{
 				X: brushPosition[0] + config.Position.X,
 				Y: brushPosition[1] + config.Position.Y,
 				Z: brushPosition[2] + config.Position.Z,
 			}
 			blc <- &types.Module{
-				Block: runtimeIdPoolUsing[runtimeId].Take(),
+				Block: runtimeIdPoolUsing[int(cmd.BlockRuntimeID)].Take(),
 				Point: pos,
 			}
-			for _, slot := range chest {
+			for _, slot := range cmd.ChestSlots {
 				slotcopy := types.ChestSlot(slot)
 				blc <- &types.Module{
 					ChestSlot: &slotcopy,
 					Point:     pos,
 				}
 			}
-		} else if(cmd==39){
-			lenBuf := make([]byte, 4)
-			_, err = br.Read(lenBuf)
-			len := binary.BigEndian.Uint32(lenBuf)
-			ignoreBuf := make([]byte, len)
-			br.Read(ignoreBuf)
-			fmt.Printf("WARNING: BDump/Import: Reserved command 39 (#83)\n")
-		} else {
-			bridge_fmt.Printf("WARNING: BDump/Import: Unimplemented method found : %d\n", cmd)
-			bridge_fmt.Printf("WARNING: BDump/Import: Previous command is: %d\n", prevCmd)
-			bridge_fmt.Printf("WARNING: BDump/Import: Trying to ignore, it may probably cause an error!\n")
+		case *command.PlaceRuntimeBlockWithChestDataAndUint32RuntimeID:
+			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
+			}
+			pos:=types.Position{
+				X: brushPosition[0] + config.Position.X,
+				Y: brushPosition[1] + config.Position.Y,
+				Z: brushPosition[2] + config.Position.Z,
+			}
+			blc <- &types.Module{
+				Block: runtimeIdPoolUsing[cmd.BlockRuntimeID].Take(),
+				Point: pos,
+			}
+			for _, slot := range cmd.ChestSlots {
+				slotcopy := types.ChestSlot(slot)
+				blc <- &types.Module{
+					ChestSlot: &slotcopy,
+					Point:     pos,
+				}
+			}
+		case *command.AssignNBTData:
+			// We are not able to do anything with those data currently
+		default:
+			fmt.Printf("WARNING: BDump/Import: Unknown method found: %#v\n\n", _cmd)
+			fmt.Printf("WARNING: BDump/Import: THIS IS A BUG\n")
 		}
 	}
 	return nil

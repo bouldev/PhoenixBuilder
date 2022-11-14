@@ -5,7 +5,7 @@ import (
 )
 
 type UseRuntimeIDPool struct {
-	ID uint8
+	PoolID uint8
 }
 
 func (_ *UseRuntimeIDPool) ID() uint16 {
@@ -17,7 +17,7 @@ func (_ *UseRuntimeIDPool) Name() string {
 }
 
 func (cmd *UseRuntimeIDPool) Marshal(writer io.Writer) error {
-	_, err:=writer.Write([]byte{cmd.ID})
+	_, err:=writer.Write([]byte{cmd.PoolID})
 	return err
 }
 
@@ -27,6 +27,6 @@ func (cmd *UseRuntimeIDPool) Unmarshal(reader io.Reader) error {
 	if err!=nil {
 		return err
 	}
-	cmd.ID=buf[0]
+	cmd.PoolID=buf[0]
 	return nil
 }
