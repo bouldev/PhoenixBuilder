@@ -2,6 +2,7 @@ package command
 
 import (
 	"io"
+	"fmt"
 )
 
 type Command interface {
@@ -29,4 +30,21 @@ func readString(reader io.Reader) (string, error) {
 	}
 	// This should not happen
 	return str, nil
+}
+
+func ReadCommand(reader io.Reader) (Command, error) {
+	buf:=make([]byte, 1)
+	_, err:=io.ReadAtLeast(reader, buf, 1)
+	if err != nil {
+		return nil, err
+	}
+	command, found_command:=BDumpCommandPool[uint16(buf)]
+	if !found_command {
+		return nil, fmt.Errorf("Command::ReadCommand: Unknown Command ID: %d", int(buf[0]))
+	}
+	err=command.Unmarshal(reader)
+	if err!=nil {
+		return nil, err
+	}
+	return command, nil
 }
