@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"encoding/binary"
+	"phoenixbuilder/fastbuilder/bdump/command"
 )
 
 type BDumpLegacy struct {
@@ -106,23 +107,18 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 	brushPosition:=[]int{0,0,0}
 	blocksPalette:=make(map[string]int)
 	cursor := 0
+	writer:=&BDumpWriter{writer:w}
 	for _, mdl := range bdump.Blocks {
 		blknm:=*mdl.Block.Name
 		_, found := blocksPalette[blknm]
 		if found {
 			continue
 		}
-		_, err:=w.Write([]byte{1}) //addToPalette
+		err:=writer.WriteCommand(&command.CreateConstantString {
+			ConstantString: blknm,
+		})
 		if (err != nil) {
-			return fmt.Errorf("Failed to write palette")
-		}
-		_, err=w.Write([]byte(blknm))
-		if (err != nil) {
-			return fmt.Errorf("Failed to write palette p2")
-		}
-		_, err=w.Write([]byte{0})
-		if (err != nil) {
-			return fmt.Errorf("Failed to write palette p3")
+			return err
 		}
 		blocksPalette[blknm]=cursor;
 		cursor++
@@ -131,47 +127,37 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 		for {
 			if(mdl.Point.X!=brushPosition[0]) {
 				if(mdl.Point.X-brushPosition[0]==1){
-					_, err:=w.Write([]byte{14})
+					err:=writer.WriteCommand(&command.AddXValue{})
 					if err != nil {
-						return fmt.Errorf("Failed to write command")
+						return err
 					}
 				}else if(mdl.Point.X-brushPosition[0]==-1){
-					_, err:=w.Write([]byte{15})
+					err:=writer.WriteCommand(&command.SubtractXValue{})
 					if err != nil {
-						return fmt.Errorf("Failed to write command")
+						return err
 					}
 				}else{
 					wrap:=mdl.Point.X-brushPosition[0]
 					if (wrap < -32768||wrap > 32767) {
-						_, err:=w.Write([]byte{21})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
-						}
-						writeO:=make([]byte,4)
-						binary.BigEndian.PutUint32(writeO,uint32(int32(wrap)))
-						_, err=w.Write(writeO)
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
+						err:=writer.WriteCommand(&command.AddInt32XValue {
+							Value: int32(wrap),
+						})
+						if err!=nil {
+							return err
 						}
 					}else if(wrap < -127||wrap > 127){
-						_, err:=w.Write([]byte{20})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
-						}
-						writeO:=make([]byte,2)
-						binary.BigEndian.PutUint16(writeO,uint16(int16(wrap)))
-						_, err=w.Write(writeO)
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
+						err:=writer.WriteCommand(&command.AddInt16XValue {
+							Value: int16(wrap),
+						})
+						if err!=nil {
+							return err
 						}
 					}else{
-						_, err:=w.Write([]byte{28})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
-						}
-						_, err=w.Write([]byte{uint8(int8(wrap))})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
+						err:=writer.WriteCommand(&command.AddInt8XValue {
+							Value: int8(wrap),
+						})
+						if err!=nil {
+							return err
 						}
 					}
 				}
@@ -179,47 +165,37 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 				continue
 			}else if(mdl.Point.Y!=brushPosition[1]) {
 				if(mdl.Point.Y-brushPosition[1]==1){
-					_, err:=w.Write([]byte{16})
-					if err != nil {
-						return fmt.Errorf("Failed to write command")
+					err:=writer.WriteCommand(&command.AddYValue{})
+					if err!=nil {
+						return err
 					}
 				}else if(mdl.Point.Y-brushPosition[1]==-1){
-					_, err:=w.Write([]byte{17})
-					if err != nil {
-						return fmt.Errorf("Failed to write command")
+					err:=writer.WriteCommand(&command.SubtractYValue{})
+					if err!=nil {
+						return err
 					}
 				}else{
 					wrap:=mdl.Point.Y-brushPosition[1]
 					if (wrap > 32767||wrap < -32768) {
-						_, err:=w.Write([]byte{23})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
-						}
-						writeO:=make([]byte,4)
-						binary.BigEndian.PutUint32(writeO,uint32(int32(wrap)))
-						_, err=w.Write(writeO)
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
+						err:=writer.WriteCommand(&command.AddInt32YValue {
+							Value: int32(wrap),
+						})
+						if err!=nil {
+							return err
 						}
 					}else if(wrap > 127||wrap < -127){
-						_, err:=w.Write([]byte{22})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
-						}
-						writeO:=make([]byte,2)
-						binary.BigEndian.PutUint16(writeO,uint16(int16(wrap)))
-						_, err=w.Write(writeO)
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
+						err:=writer.WriteCommand(&command.AddInt16YValue {
+							Value: int16(wrap),
+						})
+						if err!=nil {
+							return err
 						}
 					}else{
-						_, err:=w.Write([]byte{29})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
-						}
-						_, err=w.Write([]byte{uint8(int8(wrap))})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
+						err:=writer.WriteCommand(&command.AddInt8YValue {
+							Value: int8(wrap),
+						})
+						if err!=nil {
+							return err
 						}
 					}
 				}
@@ -227,47 +203,37 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 				continue
 			}else if(mdl.Point.Z!=brushPosition[2]) {
 				if(mdl.Point.Z-brushPosition[2]==1){
-					_, err:=w.Write([]byte{18})
-					if err != nil {
-						return fmt.Errorf("Failed to write command")
+					err:=writer.WriteCommand(&command.AddZValue{})
+					if err!=nil {
+						return err
 					}
 				}else if(mdl.Point.Z-brushPosition[2]==1){
-					_, err:=w.Write([]byte{19})
-					if err != nil {
-						return fmt.Errorf("Failed to write command")
+					err:=writer.WriteCommand(&command.SubtractZValue{})
+					if err!=nil {
+						return err
 					}
 				}else{
 					wrap:=mdl.Point.Z-brushPosition[2]
 					if (wrap > 32767||wrap < -32768) {
-						_, err:=w.Write([]byte{25})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
-						}
-						writeO:=make([]byte,4)
-						binary.BigEndian.PutUint32(writeO,uint32(int32(wrap)))
-						_, err=w.Write(writeO)
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
+						err:=writer.WriteCommand(&command.AddInt32ZValue {
+							Value: int32(wrap),
+						})
+						if err!=nil {
+							return err
 						}
 					}else if(wrap > 127||wrap < -127){
-						_, err:=w.Write([]byte{24})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
-						}
-						writeO:=make([]byte,2)
-						binary.BigEndian.PutUint16(writeO,uint16(int16(wrap)))
-						_, err=w.Write(writeO)
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
+						err:=writer.WriteCommand(&command.AddInt16ZValue {
+							Value: int16(wrap),
+						})
+						if err!=nil {
+							return err
 						}
 					}else{
-						_, err:=w.Write([]byte{30})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
-						}
-						_, err=w.Write([]byte{uint8(int8(wrap))})
-						if err != nil {
-							return fmt.Errorf("Failed to write command")
+						err:=writer.WriteCommand(&command.AddInt8ZValue {
+							Value: int8(wrap),
+						})
+						if err!=nil {
+							return err
 						}
 					}
 				}
@@ -276,67 +242,21 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 			break
 		}
 		if mdl.CommandBlockData != nil {
-			_, err:=w.Write([]byte{27})
-			writeA:=make([]byte,2)
-			wac, _ := blocksPalette[*mdl.Block.Name]
-			binary.BigEndian.PutUint16(writeA,uint16(wac))
-			_, err1 := w.Write(writeA)
-			writeB:=make([]byte,2)
-			binary.BigEndian.PutUint16(writeB,uint16(mdl.Block.Data))
-			_, err2 := w.Write(writeB)
-			if(err!=nil||err1!=nil||err2!=nil){
-				return fmt.Errorf("Failed to write line230")
-			}
-			dt:=mdl.CommandBlockData
-			wMode:=make([]byte,4)
-			binary.BigEndian.PutUint32(wMode,dt.Mode)
-			_, err1=w.Write(wMode)
-			_, err2=w.Write([]byte(dt.Command))
-			_, err3:=w.Write([]byte{0})
-			_, err4:=w.Write([]byte(dt.CustomName))
-			_, err5:=w.Write([]byte{0})
-			_, err6:=w.Write([]byte(dt.LastOutput))
-			_, err7:=w.Write([]byte{0})
-			wTickDelay:=make([]byte,4)
-			binary.BigEndian.PutUint32(wTickDelay,uint32(int32(dt.TickDelay)))
-			_, err8:=w.Write(wTickDelay)
-			fBools:=make([]byte,4)
-			if dt.ExecuteOnFirstTick {
-				fBools[0]=1
-			}else{
-				fBools[0]=0
-			}
-			if dt.TrackOutput {
-				fBools[1]=1
-			}else{
-				fBools[1]=0
-			}
-			if dt.Conditional {
-				fBools[2]=1
-			}else{
-				fBools[2]=0
-			}
-			if dt.NeedRedstone {
-				fBools[3]=1
-			}else{
-				fBools[3]=0
-			}
-			_, err9:=w.Write(fBools)
-			if(err!=nil||err1!=nil||err2!=nil||err3!=nil||err4!=nil||err5!=nil||err6!=nil||err7!=nil||err8!=nil||err9!=nil){
-				return fmt.Errorf("Failed to write cbcmd")
+			err:=writer.WriteCommand(&command.PlaceCommandBlockWithCommandBlockData {
+				BlockData: uint16(mdl.Block.Data),
+				CommandBlockData: mdl.CommandBlockData,
+			})
+			if err!=nil {
+				return err
 			}
 			continue
 		}
-		_, err:=w.Write([]byte{7})
-		writeA:=make([]byte,2)
-		wac, _ := blocksPalette[*mdl.Block.Name]
-		binary.BigEndian.PutUint16(writeA,uint16(wac))
-		_, err1 := w.Write(writeA)
-		writeB:=make([]byte,2)
-		binary.BigEndian.PutUint16(writeB,uint16(mdl.Block.Data))
-		_, err2 := w.Write(writeB)
-		if(err!=nil||err1!=nil||err2!=nil){
-			return fmt.Errorf("Failed to write line230")
+		err:=writer.WriteCommand(&command.PlaceBlock {
+			BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
+			BlockData: uint16(mdl.Block.Data),
+		})
+		if(err!=nil){
+			return err
 		}
 	}
 	return nil

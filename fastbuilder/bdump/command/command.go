@@ -49,3 +49,11 @@ func ReadCommand(reader io.Reader) (Command, error) {
 	}
 	return command, nil
 }
+
+func WriteCommand(command Command, writer io.Writer) error {
+	_, err:=writer.Write([]byte{uint8(command.ID())})
+	if err!=nil {
+		return err
+	}
+	return command.Marshal(writer)
+}
