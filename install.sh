@@ -273,7 +273,7 @@ elif [ ${MACHINE} == "macos" ]; then
 elif [[ ${SYSTEM_NAME} == "NetBSD" ]] || [[ ${SYSTEM_NAME} == "FreeBSD" ]] || [[ ${SYSTEM_NAME} == "OpenBSD" ]]; then
   echo           "If you met 404 error in further downloading, report it at"
   printf "\033[32m  https://github.com/LNSSPsd/PhoenixBuilder/issues\033[0m\n"
-  FB_PREFIX="phoenixbuilder-$(echo ${SYSTEM_NAME} | sed -e 's/\(.*\)/\L\1/')-executable-"
+  FB_PREFIX="phoenixbuilder-$(echo ${SYSTEM_NAME} | tr '[:upper:]' '[:lower:]')-executable-"
   FILE_TYPE=""
   FILE_ARCH="${ARCH}"
   BINARY_INSTALL="1"
@@ -375,10 +375,10 @@ fi
 if [[ ${BINARY_INSTALL} == "1" ]]; then
   printf "Downloading FastBuilder binary...\n"
   # Repeat FB_LINK
-  FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
+  FB_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}"
   if [[ ${PB_USE_GH_REPO} == "1" ]]; then
     printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
-    FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}${FILE_ARCH}"
+    FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}${FILE_ARCH}${FILE_TYPE}"
     printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
   fi
   printf "\033[33mIf the official storage does not work for you, you can try to assign environment variable \"PB_USE_GH_REPO=1\" for the script to download stuff from Github.\033[0m\n"
