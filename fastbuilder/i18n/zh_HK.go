@@ -141,6 +141,6 @@ var I18nDict_zh_HK map[uint16]string = map[uint16]string{
 	Task_Summary_2:                      "[任務 %d] 用時: %v 秒",
 	Task_Summary_3:                      "[任務 %d] 平均速度: %v 方塊/秒",
 	UnsupportedACMEVersion:              "不支援該版本ACME結構（仅支援acme 1.2文檔版本）",
-	Warning_ACME_Deprecated:             "警告 - `acme' 功能已棄用，將於未來被移除。請轉移至其他檔案格式。\n"
+	Warning_ACME_Deprecated:             "警告 - `acme' 功能已棄用，將於未來被移除。請轉移至其他檔案格式。\n",
 	Warning_UserHomeDir:                 "警告 - 無法獲取當前user主目錄，將設定homedir=\".\";\n",
 }

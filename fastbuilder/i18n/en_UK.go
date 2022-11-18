@@ -134,6 +134,6 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	Task_Summary_2:                      "[Task %d] Time used: %v second(s)",
 	Task_Summary_3:                      "[Task %d] Average speed: %v blocks/second",
 	UnsupportedACMEVersion:              "Unsupported ACME structure version. Only acme file version 1.2 is supported.",
-	Warning_ACME_Deprecated:             "WARNING - `acme' is deprecated and will be removed in future, please migrate to other format instead.\n"
+	Warning_ACME_Deprecated:             "WARNING - `acme' is deprecated and will be removed in future, please migrate to other format instead.\n",
 	Warning_UserHomeDir:                 "WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n",
 }

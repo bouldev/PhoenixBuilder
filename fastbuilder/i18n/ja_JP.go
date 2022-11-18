@@ -136,6 +136,6 @@ var I18nDict_ja_JP map[uint16]string = map[uint16]string{
 	Task_Summary_2:                      "[タスク %d] %v 秒をかけた",
 	Task_Summary_3:                      "[タスク %d] 平均速度: %v ブロック/秒",
 	UnsupportedACMEVersion:              "このバーションの ACME ストラクチャーファイルは支援されていませんです。バーション 1.2 だけ支援されています。",
-	Warning_ACME_Deprecated:             "警告 - acme は非推奨で、将来的に削除される予定です。他のファイル形式への移行をお願いします。\n"
+	Warning_ACME_Deprecated:             "警告 - acme は非推奨で、将来的に削除される予定です。他のファイル形式への移行をお願いします。\n",
 	Warning_UserHomeDir:                 "警告 - ユーザーのホームフォルダーの取得に失敗しました。homedir=\".\";をさせていだだきます。\n",
 }
