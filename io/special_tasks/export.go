@@ -332,6 +332,10 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		env.CommandSender.Output(fmt.Sprintf("Failed to parse command: %v", err))
 		return nil
 	}
+
+	// TODO: remove lexport related stuff
+	env.CommandSender.Output("WARNING - `lexport' is deprecated and it will be removed in future, please use `export' instead.")
+
 	beginPos := cfg.Position
 	endPos   := cfg.End
 	msizex:=0

@@ -73,6 +73,10 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 	}
 	blocksTable := make(map[string]*types.Block)
 	blocksTableSet := false
+
+	// TODO: remove 'ACME' related stuff
+	fmt.Printf(I18n.T(I18n.Warning_ACME_Deprecated))
+
 	for {
 		commandStrBuf, err := buf.ReadBytes(0x3a)
 		if err != nil {

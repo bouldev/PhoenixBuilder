@@ -167,6 +167,7 @@ const (
 	Task_Summary_2
 	Task_Summary_3
 	UnsupportedACMEVersion
+	Warning_ACME_Deprecated
 	Warning_UserHomeDir
 )
 
