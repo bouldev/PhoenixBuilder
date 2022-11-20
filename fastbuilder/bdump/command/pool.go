@@ -7,7 +7,7 @@ var BDumpCommandPool map[uint16]func()Command = map[uint16]func()Command {
 	8:  func()Command { return &AddZValue0{} },
 	9:  func()Command { return &NoOperation{} },
 	12: func()Command { return &AddInt32ZValue0{} },
-	// 13 is reserved, please use it first
+	13: func()Command { return &PlaceBlockWithBlockStates{} },
 	14: func()Command { return &AddXValue{} },
 	15: func()Command { return &SubtractXValue{} },
 	16: func()Command { return &AddYValue{} },

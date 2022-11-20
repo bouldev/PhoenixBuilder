@@ -314,6 +314,22 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			}
 		case *command.AssignNBTData:
 			// We are not able to do anything with those data currently
+		case *command.PlaceBlockWithBlockStates:
+			if int(cmd.BlockConstantStringID) >= len(blocksStrPool) {
+				return fmt.Errorf("Error: BlockID exceeded BlockPool")
+			}
+			blockName := &blocksStrPool[int(cmd.BlockConstantStringID)]
+			blc <- &types.Module{
+				Block: &types.Block{
+					Name: blockName,
+					BlockStates: cmd.BlockStatesJSONString,
+				},
+				Point: types.Position{
+					X: brushPosition[0] + config.Position.X,
+					Y: brushPosition[1] + config.Position.Y,
+					Z: brushPosition[2] + config.Position.Z,
+				},
+			}
 		default:
 			fmt.Printf("WARNING: BDump/Import: Unknown method found: %#v\n\n", _cmd)
 			fmt.Printf("WARNING: BDump/Import: THIS IS A BUG\n")

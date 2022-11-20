@@ -1,6 +1,7 @@
 package commands_generator
 
 // extern void SetBlockRequestInternal(void *preallocatedStr, int x, int y, int z, const char *blockName, unsigned short data, const char *method);
+// extern void SetBlockWithBlockStatesRequestInternal(void *preallocatedStr, int x, int y, int z, const char *blockName, const char *blockStates, const char *method);
 import "C"
 import (
 	"fmt"
@@ -13,7 +14,11 @@ func SetBlockRequest(buf *string, module *types.Module, config *types.MainConfig
 	Point := module.Point
 	Method := config.Method
 	if Block != nil {
-		C.SetBlockRequestInternal(unsafe.Pointer(buf), C.int(Point.X), C.int(Point.Y), C.int(Point.Z), C.CString(*Block.Name), C.ushort(Block.Data), C.CString(Method))
+		if len(Block.BlockStates)!=0 {
+			C.SetBlockWithBlockStatesRequestInternal(unsafe.Pointer(buf), C.int(Point.X), C.int(Point.Y), C.int(Point.Z), C.CString(*Block.Name), C.CString(Block.BlockStates), C.CString(Method))
+		}else{
+			C.SetBlockRequestInternal(unsafe.Pointer(buf), C.int(Point.X), C.int(Point.Y), C.int(Point.Z), C.CString(*Block.Name), C.ushort(Block.Data), C.CString(Method))
+		}
 	} else {
 		C.SetBlockRequestInternal(unsafe.Pointer(buf), C.int(Point.X), C.int(Point.Y), C.int(Point.Z), C.CString(config.Block.Name), C.ushort(config.Block.Data), C.CString(Method))
 	}

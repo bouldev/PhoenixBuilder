@@ -20,6 +20,7 @@ type RuntimeModule struct {
 
 type Block struct {
 	Name *string
+	BlockStates string
 	Data uint16
 }
 

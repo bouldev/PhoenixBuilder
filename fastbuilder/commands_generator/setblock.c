@@ -8,3 +8,7 @@ void SetBlockRequestInternal(GoString *preallocatedStr, int x, int y, int z, con
 	preallocatedStr->n=strlen(preallocatedStr->p);
 }
 
+void SetBlockWithBlockStatesRequestInternal(GoString *preallocatedStr, int x, int y, int z, const char *blockName, const char *blockStates, const char *method) {
+	snprintf((char*)preallocatedStr->p,1023,"setblock %d %d %d %s %s %s",x,y,z,blockName,blockStates,method);
+	preallocatedStr->n=strlen(preallocatedStr->p);
+}
