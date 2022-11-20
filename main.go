@@ -52,7 +52,7 @@ func main() {
 		}
 	}
 
-	if !args.NoReadline() && !args.ShouldEnableOmegaSystem() {
+	if !args.NoReadline() {
 		readline.InitReadline()
 	}
 
