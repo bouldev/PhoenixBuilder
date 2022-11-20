@@ -75,6 +75,7 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 	blocksTableSet := false
 
 	// TODO: remove 'ACME' related stuff
+	// TO BE DISCUSSED, might be kept as an unrecommended method.
 	fmt.Printf(I18n.T(I18n.Warning_ACME_Deprecated))
 
 	for {
