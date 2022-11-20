@@ -74,6 +74,7 @@ func (cmd *PlaceBlockWithCommandBlockData) Marshal(writer io.Writer) error {
 }
 
 func (cmd *PlaceBlockWithCommandBlockData) Unmarshal(reader io.Reader) error {
+	cmd.CommandBlockData=&types.CommandBlockData{}
 	buf:=make([]byte, 4)
 	_, err:=io.ReadAtLeast(reader, buf, 4)
 	if err != nil {

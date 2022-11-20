@@ -2,6 +2,7 @@ package task
 
 import (
 	"fmt"
+	"runtime/debug"
 	"phoenixbuilder/bridge/bridge_fmt"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/commands_generator"
@@ -349,6 +350,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
+				debug.PrintStack()
 				cmdsender.Output(fmt.Sprintf("[Task %d] Fatal error: %v", taskid, err))
 				close(blockschannel)
 			}

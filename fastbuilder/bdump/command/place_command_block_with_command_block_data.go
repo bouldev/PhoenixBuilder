@@ -68,6 +68,7 @@ func (cmd *PlaceCommandBlockWithCommandBlockData) Marshal(writer io.Writer) erro
 }
 
 func (cmd *PlaceCommandBlockWithCommandBlockData) Unmarshal(reader io.Reader) error {
+	cmd.CommandBlockData=&types.CommandBlockData{}
 	buf:=make([]byte, 4)
 	uint16_buf:=make([]byte, 2)
 	_, err:=io.ReadAtLeast(reader, uint16_buf, 2)

@@ -67,6 +67,7 @@ func (cmd *PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID) Marshal(writ
 }
 
 func (cmd *PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID) Unmarshal(reader io.Reader) error {
+	cmd.CommandBlockData=&types.CommandBlockData{}
 	buf:=make([]byte, 4)
 	_, err:=io.ReadAtLeast(reader, buf, 4)
 	if err != nil {
