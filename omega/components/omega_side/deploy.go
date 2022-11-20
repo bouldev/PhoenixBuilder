@@ -11,7 +11,7 @@ import (
 )
 
 // TODO: get repo url from server
-var site = "https://omega.fastbuilder.pro/"
+var site = "https://omega.fastbuilder.pro/omega_compoments_deploy_binary/"
 
 type deployItemType int
 
