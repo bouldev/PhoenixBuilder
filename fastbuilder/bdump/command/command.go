@@ -16,20 +16,20 @@ type Command interface {
 // as I think we do not have to make them work
 
 func readString(reader io.Reader) (string, error) {
+	full_buf:=[]byte{}
 	buf:=make([]byte, 1)
-	str:=""
 	for {
 		_, err:=io.ReadAtLeast(reader, buf, 1)
 		if err!=nil {
 			return "", err
 		}
 		if buf[0]==0 {
-			return str, nil
+			return string(full_buf), nil
 		}
-		str+=string(buf[0])
+		full_buf=append(full_buf, buf)
 	}
 	// This should not happen
-	return str, nil
+	return string(full_buf), nil
 }
 
 func ReadCommand(reader io.Reader) (Command, error) {
