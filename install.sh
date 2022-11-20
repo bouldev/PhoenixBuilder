@@ -63,8 +63,16 @@ elif [[ $(${UNAME_GET_OSNAME}) == "Android" ]] && [[ $(apt install &> /dev/null;
   # No need of root on Termux
   printf "\033[32mRunning under Android Termux (APT does not require root)\033[0m\n"
   ROOT_REQUIRED="1"
+elif [[ $(${UNAME_GET_OSNAME}) == "Android" ]] && [[ $(apt install &> /dev/null; echo $?) != 0 ]]; then
+  # What happend?
+  printf "\033[31mAPT broken!\033[0m\n"
+  printf "\033[31mPlease reconfigure your APT/dpkg to fix current existing problems by running\033[0m\n"
+  printf "\033[33m  dpkg --configure -a\033[0m\n"
+  printf "\033[31mOr prepend LOCAL=1 before command\033[0m\n"
+  printf "\033[31mTo install FastBuilder without APT access.\033[0m\n"
+  quit_installer 1
 elif [[ $(id -u) == 0 ]]; then
-  printf "\033[31mWARNING: Is is not recommended to install things by scripts in a normal Linux distribution, they may mess up your environment.\033[0m\n"
+  printf "\033[31mWARNING: Is is not recommended to install things by scripts in a normal *nix, they may mess up your environment.\033[0m\n"
   if [ ${SUDO_UID} ]; then
     printf "\033[32mRunning under sudo privileges\033[0m\n"
   else
@@ -74,7 +82,7 @@ elif [[ $(id -u) == 0 ]]; then
 else
   printf "\033[31mRoot privilege required!\033[0m\n"
   printf "\033[31mPlease run this installer under root permission\033[0m\n"
-  printf "\033[31mIs is not recommended to install things by scripts in a normal Linux distribution, they may mess up your environment.\033[0m\n"
+  printf "\033[31mIs is not recommended to install things by scripts in a normal *nix, they may mess up your environment.\033[0m\n"
   printf "\033[31mOr prepend LOCAL=1 before command\033[0m\n"
   printf "\033[31mTo install FastBuilder without root access.\033[0m\n"
   quit_installer 1
@@ -218,11 +226,13 @@ if [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(${UNAME_GET_OSNAME}) == "Android" ]];
       FB_VER=$(dpkg-query --showformat='${Version}' --show pro.fastbuilder.phoenix-android)
       printf "\033[32mFound previously installed FastBuilder, Version: ${FB_VER}\033[0m\n"
     fi
+    # Terrible workaround for previous corrupted releases, try not hurt packmans
     apt remove pro.fastbuilder.phoenix-android -y
     echo "Requesting FastBuilder Phoenix for Android ${ARCH}..."
     FB_PREFIX="pro.fastbuilder.phoenix-android"
     FILE_TYPE=".deb"
-    if [ $(echo ${ARCH} | grep "arm64" &> /dev/null; echo $?) == 0 ]; then
+    # Termux armv8l should run armv7 binaries (That's weird?)
+    if [[ $(echo ${ARCH} | grep "arm64" &> /dev/null; echo $?) == 0 ]] && [[ $(dpkg --print-architecture) != "arm" ]]; then
       FILE_ARCH="aarch64"
     else
       FILE_ARCH="arm"
@@ -292,6 +302,7 @@ elif [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(${UNAME_GET_OSNAME}) != "Android" ]
   BINARY_INSTALL="1"
 fi
 
+# TODO: Put all trash in $TMPDIR
 # Download now
 if [[ ${MACHINE} == "ios" ]] && [[ ${ROOT_REQUIRED} == "1" ]]; then
   # Install APT source for iOS. This would allow users to upgrade FastBuilder from Cydia
@@ -367,7 +378,7 @@ FB_VERSION_LINK="${FB_DOMAIN}${FB_LOCATION_ROOT}/version"
 if [[ ${PB_USE_GH_REPO} == "1" ]]; then
   FB_VERSION_LINK="${GH_DOMAIN}/${GH_USER}/${GH_REPO}/raw/main/version"
 fi
-${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/version $FB_VERSION_LINK
+${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/version ${FB_VERSION_LINK}
 DL_RET=$?
 if [ ${DL_RET} == 0 ]; then
   FB_VER=$(cat "${PREFIX}"/./fastbuilder-temp/version | sed -n -e 'H;${x;s/\n//g;p;}')
@@ -417,8 +428,9 @@ else
     printf "\033[32mOriginal download link: ${FB_LINK}\033[0m\n"
     FB_LINK="${GH_LINK}v${FB_VER}/${FB_PREFIX}_${FB_VER}_${FILE_ARCH}${FILE_TYPE}"
     printf "\033[32mGithub download link: ${FB_LINK}\033[0m\n"
+  else
+    printf "\033[33mIf the official storage does not work for you, you can try to assign environment variable \"PB_USE_GH_REPO=1\" for the script to download stuff from Github.\033[0m\n"
   fi
-  printf "\033[33mIf the official storage does not work for you, you can try to assign environment variable \"PB_USE_GH_REPO=1\" for the script to download stuff from Github.\033[0m\n"
   ${DL_TOOL} ${DL_TOOL_OUT_FLAG} "${PREFIX}"/./fastbuilder-temp/fastbuilder.deb ${FB_LINK}
   DL_RET=$?
   if [ ${DL_RET} == 0 ]; then
@@ -426,7 +438,7 @@ else
   else
     report_error ${DL_RET}
   fi
-  # When installer.sh have root privileges, it will install packages directly through dpkg
+  # When install.sh have root privileges, it will install packages directly through dpkg
   if [ ${ROOT_REQUIRED} == "1" ]; then
     printf "Installing deb package...\n"
     dpkg -i "${PREFIX}"/./fastbuilder-temp/fastbuilder.deb
