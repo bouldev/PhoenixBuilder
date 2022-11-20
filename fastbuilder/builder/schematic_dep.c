@@ -1,3 +1,5 @@
+// +build dep___do_not_add_this_tag_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
