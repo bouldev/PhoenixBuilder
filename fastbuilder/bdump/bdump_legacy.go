@@ -258,6 +258,14 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 		if(err!=nil){
 			return err
 		}
+		if mdl.NBTData != nil {
+			err:=writer.WriteCommand(&command.AssignNBTData {
+				Data: mdl.NBTData,
+			})
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

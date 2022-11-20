@@ -169,6 +169,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 					}
 					var cbdata *types.CommandBlockData = nil
 					var chestData *types.ChestData = nil
+					var nbtData []byte = nil
 					/*if(block=="chest"||block=="minecraft:chest"||strings.Contains(block,"shulker_box")) {
 						content:=item["Items"].([]interface{})
 						chest:=make(types.ChestData, len(content))
@@ -283,6 +284,11 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							NeedRedstone: nrb,
 						}
 						//fmt.Printf("%#v\n",cbdata)
+					}else{
+						pnd, hasNBT:=item["__tag"]
+						if hasNBT {
+							nbtData=[]byte(pnd.(string))
+						}
 					}
 					lb:=chunk.RuntimeIDToLegacyBlock(runtimeId)
 					blocks[counter]=&types.Module {
@@ -292,6 +298,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 						},
 						CommandBlockData: cbdata,
 						ChestData: chestData,
+						NBTData: nbtData,
 						Point: types.Position {
 							X: x,
 							Y: y,

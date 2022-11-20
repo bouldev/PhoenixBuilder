@@ -4,6 +4,7 @@ package types
 type Module struct {
 	Block  *Block
 	CommandBlockData *CommandBlockData
+	NBTData []byte
 	//Entity *Entity
 	ChestSlot *ChestSlot
 	ChestData *ChestData
