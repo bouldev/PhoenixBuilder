@@ -26,7 +26,7 @@ func readString(reader io.Reader) (string, error) {
 		if buf[0]==0 {
 			return string(full_buf), nil
 		}
-		full_buf=append(full_buf, buf)
+		full_buf=append(full_buf, buf...)
 	}
 	// This should not happen
 	return string(full_buf), nil
