@@ -3,13 +3,13 @@ TARGETS:=build/ current current-v8
 PACKAGETARGETS:=
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
 ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
-IOS_STRIP=$(shell which strip)
-LIPO=$(shell which lipo)
-LDID=$(shell which ldid)
+IOS_STRIP=/usr/bin/strip
+LIPO=/usr/bin/lipo
+LDID=/usr/bin/ldid
 TARGETS:=${TARGETS} ios-executable ios-v8-executable ios-lib
 else
 IOS_STRIP=$(shell xcrun --sdk iphoneos -f strip)
-IOS_OBJCOPY=$(shell which llvm-objcopy)
+IOS_OBJCOPY=$(shell xcrun --sdk iphoneos -f objcopy)
 LDID=ldid2
 LIPO=/usr/bin/lipo
 TARGETS:=${TARGETS} macos ios-v8-executable ios-executable ios-lib
@@ -240,12 +240,11 @@ build/hashes.json: build genhash.js ${TARGETS}
 	node genhash.js
 	cp version build/version
 
-# TODO: iOS 15+ rootless
 package/ios: build/phoenixbuilder-ios-executable release/
 	mkdir -p release/phoenixbuilder-iphoneos/usr/local/bin release/phoenixbuilder-iphoneos/DEBIAN
-	cp build/phoenixbuilder-ios-executable release/phoenixbuilder-iphoneos/usr/bin/fastbuilder
+	cp build/phoenixbuilder-ios-executable release/phoenixbuilder-iphoneos/usr/local/bin/fastbuilder
 	printf "Package: pro.fastbuilder.phoenix\n\
-	Name: FastBuilder Phoenix\n\
+	Name: FastBuilder Phoenix (Alpha)\n\
 	Version: $(VERSION)\n\
 	Architecture: iphoneos-arm\n\
 	Maintainer: Ruphane\n\
@@ -253,7 +252,6 @@ package/ios: build/phoenixbuilder-ios-executable release/
 	Section: Games\n\
 	Priority: optional\n\
 	Enhances: mterminal | openssh | ws.hbang.newterm2\n\
-	Tag: purpose::console
 	Homepage: https://fastbuilder.pro\n\
 	Depiction: https://apt.boul.dev/info/fastbuilder\n\
 	Description: Modern Minecraft structuring tool\n" > release/phoenixbuilder-iphoneos/DEBIAN/control
@@ -263,9 +261,10 @@ package/android-armv7: build/phoenixbuilder-android-executable-armv7 release/
 	mkdir -p release/phoenixbuilder-android-armv7/data/data/com.termux/files/usr/bin release/phoenixbuilder-android-armv7/DEBIAN
 	cp build/phoenixbuilder-android-executable-armv7 release/phoenixbuilder-android-armv7/data/data/com.termux/files/usr/bin/fastbuilder
 	printf "Package: pro.fastbuilder.phoenix-android\n\
-	Name: FastBuilder Phoenix\n\
+	Name: FastBuilder Phoenix (Alpha)\n\
 	Version: $(VERSION)\n\
 	Architecture: arm\n\
+	Depends: libreadline8 | readline (>= 8.0.0), zlib | zlib1g\n\
 	Maintainer: Ruphane\n\
 	Author: Bouldev <admin@boul.dev>\n\
 	Section: Games\n\
@@ -277,9 +276,10 @@ package/android-arm64: build/phoenixbuilder-android-executable-arm64 release/
 	mkdir -p release/phoenixbuilder-android-arm64/data/data/com.termux/files/usr/bin release/phoenixbuilder-android-arm64/DEBIAN
 	cp build/phoenixbuilder-android-executable-arm64 release/phoenixbuilder-android-arm64/data/data/com.termux/files/usr/bin/fastbuilder
 	printf "Package: pro.fastbuilder.phoenix-android\n\
-	Name: FastBuilder Phoenix\n\
+	Name: FastBuilder Phoenix (Alpha)\n\
 	Version: $(VERSION)\n\
 	Architecture: aarch64\n\
+	Depends: libreadline8 | readline (>= 8.0.0), zlib | zlib1g\n\
 	Maintainer: Ruphane\n\
 	Author: Bouldev <admin@boul.dev>\n\
 	Section: Games\n\
