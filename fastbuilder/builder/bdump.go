@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"io"
 	"bytes"
 	"encoding/binary"
 	"fmt"

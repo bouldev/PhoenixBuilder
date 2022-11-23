@@ -17,7 +17,7 @@ import (
 
 func seekBuf(buf io.Reader, seekn int) error {
 	seeker := make([]byte, seekn)
-	c, err := io.ReadAtLeast(buf, seeker, seekn)
+	_, err := io.ReadAtLeast(buf, seeker, seekn)
 	if err!=nil {
 		return fmt.Errorf("Early EOF [SEEK]: %v", err)
 	}
@@ -66,13 +66,13 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 		commandStr := string(commandStrBuf)
 		if commandStr == "dict2strid_:" {
 			jsonSizeBuffer := make([]byte, 8)
-			c, err := io.ReadAtLeast(buf, jsonSizeBuffer, 8)
+			_, err := io.ReadAtLeast(buf, jsonSizeBuffer, 8)
 			if err != nil {
 				return err
 			}
 			jsonSize := binary.BigEndian.Uint64(jsonSizeBuffer)
 			jsonContent := make([]byte, jsonSize)
-			_, err = io.ReadAtLeast(buf, jsonContent, jsonSize)
+			_, err = io.ReadAtLeast(buf, jsonContent, int(jsonSize))
 			if err != nil {
 				return err
 			}
@@ -102,13 +102,13 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 			}
 			l1 := int(binary.BigEndian.Uint16(l1Buffer))
 			l2Buffer := make([]byte, 2)
-			c, err = io.ReadAtLeast(buf, l2Buffer, 2)
+			_, err = io.ReadAtLeast(buf, l2Buffer, 2)
 			if err != nil {
 				return err
 			}
 			l2 := int(binary.BigEndian.Uint16(l2Buffer))
 			l3Buffer := make([]byte, 2)
-			c, err = io.ReadAtLeast(buf, l3Buffer, 2)
+			_, err = io.ReadAtLeast(buf, l3Buffer, 2)
 			if err != nil {
 				return err
 			}
