@@ -38,7 +38,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 	defer file.Close()
 	{
 		header3bytes := make([]byte, 3)
-		_, err := file.Read(header3bytes)
+		_, err := io.ReadAtLeast(file, header3bytes, 3)
 		if err != nil {
 			return fmt.Errorf(I18n.T(I18n.BDump_EarlyEOFRightWhenOpening))
 		}
@@ -90,7 +90,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 	}
 	{
 		tempbuf := make([]byte, 4)
-		_, err := br.Read(tempbuf)
+		_, err := io.ReadAtLeast(br, tempbuf, 4)
 		if err != nil {
 			return fmt.Errorf(I18n.T(I18n.InvalidFileError))
 		}

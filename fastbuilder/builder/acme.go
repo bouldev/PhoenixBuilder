@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"io"
 	"bufio"
 	"compress/gzip"
 	"encoding/binary"
@@ -14,26 +15,11 @@ import (
 	"strings"
 )
 
-func seekBuf(buf *bufio.Reader, seekn int) error {
+func seekBuf(buf io.Reader, seekn int) error {
 	seeker := make([]byte, seekn)
-	c, err := buf.Read(seeker)
-	if c != seekn {
-		if err == nil {
-			return seekBuf(buf, seekn-c)
-		}
-		bridge_fmt.Printf("%v\n", err)
-		return fmt.Errorf("Early EOF [SEEK]")
-	}
-	return err
-}
-
-func readBig(buf *bufio.Reader, out []byte) error {
-	c, err := buf.Read(out)
-	if c != len(out) {
-		if err != nil {
-			return err
-		}
-		return readBig(buf, out[c:])
+	c, err := io.ReadAtLeast(buf, seeker, seekn)
+	if err!=nil {
+		return fmt.Errorf("Early EOF [SEEK]: %v", err)
 	}
 	return err
 }
@@ -51,9 +37,9 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 	defer gz.Close()
 	buf := bufio.NewReader(gz)
 	headerbuf := make([]byte, 4)
-	_, err = buf.Read(headerbuf)
+	_, err = io.ReadAtLeast(buf, headerbuf, 4)
 	if err != nil {
-		return fmt.Errorf("Early EOF[1]")
+		return err
 	}
 	if string(headerbuf) != "MCAC" {
 		return fmt.Errorf(I18n.T(I18n.NotAnACMEFile))
@@ -64,8 +50,6 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 		if versionField1 != 1 || versionField2 != 2 {
 			return fmt.Errorf(I18n.T(I18n.UnsupportedACMEVersion))
 		}
-		//seeker := make([]byte, 26)
-		//_, err = buf.Read(seeker)
 		err = seekBuf(buf, 26)
 		if err != nil {
 			return fmt.Errorf(I18n.T(I18n.ACME_FailedToSeek))
@@ -73,10 +57,6 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 	}
 	blocksTable := make(map[string]*types.Block)
 	blocksTableSet := false
-
-	// TODO: remove 'ACME' related stuff
-	// TO BE DISCUSSED, might be kept as an unrecommended method.
-	fmt.Printf(I18n.T(I18n.Warning_ACME_Deprecated))
 
 	for {
 		commandStrBuf, err := buf.ReadBytes(0x3a)
@@ -86,15 +66,15 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 		commandStr := string(commandStrBuf)
 		if commandStr == "dict2strid_:" {
 			jsonSizeBuffer := make([]byte, 8)
-			c, err := buf.Read(jsonSizeBuffer)
-			if err != nil || c != 8 {
-				return fmt.Errorf("err?")
+			c, err := io.ReadAtLeast(buf, jsonSizeBuffer, 8)
+			if err != nil {
+				return err
 			}
 			jsonSize := binary.BigEndian.Uint64(jsonSizeBuffer)
 			jsonContent := make([]byte, jsonSize)
-			err = readBig(buf, jsonContent)
+			_, err = io.ReadAtLeast(buf, jsonContent, jsonSize)
 			if err != nil {
-				return fmt.Errorf("err?[2]err22")
+				return err
 			}
 			var blocksJSON map[string]interface{}
 			json.Unmarshal(jsonContent, &blocksJSON)
@@ -116,21 +96,21 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 				return fmt.Errorf("ERR-SEEK-DM3")
 			}
 			l1Buffer := make([]byte, 2)
-			c, err := buf.Read(l1Buffer)
-			if err != nil || c != 2 {
-				return fmt.Errorf("ERR RSIZE DM3 l1")
+			_, err := io.ReadAtLeast(buf, l1Buffer, 2)
+			if err != nil {
+				return err
 			}
 			l1 := int(binary.BigEndian.Uint16(l1Buffer))
 			l2Buffer := make([]byte, 2)
-			c, err = buf.Read(l2Buffer)
-			if err != nil || c != 2 {
-				return fmt.Errorf("ERR RSIZE DM3 l2")
+			c, err = io.ReadAtLeast(buf, l2Buffer, 2)
+			if err != nil {
+				return err
 			}
 			l2 := int(binary.BigEndian.Uint16(l2Buffer))
 			l3Buffer := make([]byte, 2)
-			c, err = buf.Read(l3Buffer)
-			if err != nil || c != 2 {
-				return fmt.Errorf("ERR RSIZE DM3 l3")
+			c, err = io.ReadAtLeast(buf, l3Buffer, 2)
+			if err != nil {
+				return err
 			}
 			l3 := int(binary.BigEndian.Uint16(l3Buffer))
 			for p1 := 0; p1 < l1; p1++ {
