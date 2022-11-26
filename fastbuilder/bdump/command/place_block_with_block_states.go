@@ -11,7 +11,7 @@ import (
 
 type PlaceBlockWithBlockStates struct {
 	BlockConstantStringID uint16
-	BlockStatesJSONString string
+	BlockStatesString string
 }
 
 func (_ *PlaceBlockWithBlockStates) ID() uint16 {
@@ -29,7 +29,7 @@ func (cmd *PlaceBlockWithBlockStates) Marshal(writer io.Writer) error {
 	if err!=nil {
 		return err
 	}
-	_, err=writer.Write([]byte(cmd.BlockStatesJSONString))
+	_, err=writer.Write(append([]byte(cmd.BlockStatesString), 0))
 	return err
 }
 
@@ -44,9 +44,6 @@ func (cmd *PlaceBlockWithBlockStates) Unmarshal(reader io.Reader) error {
 	if err!=nil {
 		return err
 	}
-	if !json.Valid([]byte(blockStates)) {
-		return fmt.Errorf("Invalid blockStates JSON (Not a valid JSON string)")
-	}
-	cmd.BlockStatesJSONString=blockStates
+	cmd.BlockStatesString=blockStates
 	return nil
 }
