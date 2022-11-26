@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"io"
 	"os"
 	"fmt"
@@ -46,7 +47,7 @@ func GetMD5(i string) string {
 }
 
 func CheckUpdate(currentVersion string) (bool, string) {
-	resp, err:=http.Get("https://storage.fastbuilder.pro/version")
+	resp, err:=http.Get("https://api.github.com/repos/LNSSPsd/PhoenixBuilder/releases/latest")
 	if(err!=nil) {
 		fmt.Printf("Failed to check update!\nPlease check your network status.\n")
 		return false, ""
@@ -56,5 +57,12 @@ func CheckUpdate(currentVersion string) (bool, string) {
 		fmt.Printf("Failed to check update!\nPlease check your network status.\n")
 		return false, ""
 	}
-	return C.compareVersion(C.CString(string(content)),C.CString(currentVersion))!=0, strings.Replace(string(content),"\n","",1)
+	var json_structure map[string]interface{}
+	err=json.Unmarshal(content, &json_structure)
+	if err!=nil {
+		fmt.Printf("Failed to check update due to invalid response received from GitHub.\n")
+		return false, ""
+	}
+	version:=json_structure["tag_name"].(string)
+	return C.compareVersion(C.CString(version[1:]),C.CString(currentVersion))!=0, strings.Replace(string(content),"\n","",1)
 }
