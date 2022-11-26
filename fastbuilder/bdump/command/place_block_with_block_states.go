@@ -2,8 +2,6 @@ package command
 
 import (
 	"io"
-	"fmt"
-	"encoding/json"
 	"encoding/binary"
 )
 

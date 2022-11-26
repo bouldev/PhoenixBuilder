@@ -323,7 +323,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			blc <- &types.Module{
 				Block: &types.Block{
 					Name: blockName,
-					BlockStates: cmd.BlockStatesJSONString,
+					BlockStates: cmd.BlockStatesString,
 				},
 				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
