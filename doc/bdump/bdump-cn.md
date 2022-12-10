@@ -2,12 +2,13 @@
 
 > 感谢 [EillesWan](https://github.com/EillesWan) 提供的翻译，本文档内容主要来自其翻译内容，存在部分改动。
 >
-> 所有注有`译注`的内容均为以上贡献者所注。
+> 部分注有 `译注` 的内容均为此贡献者所注。
 
 
-> [Happy2018new](https://github.com/Happy2018new) & 修订日志<br>
-> 修订 `容器` 相关<br>
-> 新增第 `39` 号操作的解析
+> [Happy2018new](https://github.com/Happy2018new) & 修订日志<br/>
+> 修订 `容器` 相关<br/>
+> 新增第 `39` 号操作的解析<br/>
+> 同步 [66f2aa5](https://github.com/LNSSPsd/PhoenixBuilder/commit/66f2aa5b129e51a2154b64e5ff8bffc15290cf02) 中有关 `Bdump` 文件格式的更改
 
 
 BDump v3 是个用于存储*Minecraft*建筑结构的文件格式。其内容由指示建造过程的命令组成。
@@ -15,6 +16,15 @@ BDump v3 是个用于存储*Minecraft*建筑结构的文件格式。其内容由
 按照一定的顺序来写下每一个方块的ID的文件格式会因为包含空气方块而徒增文件大小，因此我们设计了一种新的文件格式，引入了「画笔」，并让一系列的指令控制其进行移动或放置方块。
 
 *\[注：画笔绝非机器人的位置，而是一个引入的抽象的概念\]*
+
+
+
+
+
+
+
+
+
 
 ## 基本文件结构
 
@@ -57,47 +67,47 @@ BDump v3 文件的后缀名为`.bdx`，且文件头为`BD@`, 代表本bdump文�
 
 | ID                | 内部名                                     | 描述                                                         | 参数                                                         |
 | ----------------- | ------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| 1                 | `addToBlockPalette`                        | 将所需方块名加入方块池中，且这神奇的方块池依照你调用这个命令(`addToBlockPalette`)的顺序为你可爱的方块名称分配ID。就是说，你第一次调用这个命令的时候，方块的id为`0`，第二次就是`1`了。哦，我的天哪，最多的方块id可以达到`65535`个之多！ | `char *blockName`                                            |
-| 2                 | `addX`                                     | **(已弃用)** 将画笔的 `X` 坐标增加 `x`，顺带把画笔的 `Y` 和 `Z` 坐标重置为 `0`。 由于命令的实际功能与其名称之间存在差异，该方法在我们生成过程中不会再使用。虽然它已被我们弃用，但在读取 `bdx` 时仍然需要实现它的解析，因为包含此命令的 `bdx` 文件，也就是旧版本的文件一直都在。 | `unsigned short x`                                           |
-| 3                 | `X++`                                      | **(已弃用)** 将画笔的 `X` 坐标增加 `1`，顺带把画笔的 `Y` 和 `Z` 坐标重置为 `0`。（同上理） | -                                                            |
-| 4                 | `addY`                                     | **(已弃用)** 将画笔的 `Y` 坐标增加 `y`，顺带把画笔的 `Z` 坐标重置为 `0`。（同上理） | `unsigned short y`                                           |
-| 5                 | `Y++`                                      | **(已弃用)** 将画笔的 `Y` 坐标增加 `1`，顺带把画笔的 `Z` 坐标重置为 `0`。（同上理） | -                                                            |
-| 6                 | `addZ`                                     | 将画笔的 `Z` 坐标增加 `z`，哦我的天哪，这竟然并没有被弃用，那是因为它并不会把什么东西搞没；可是，理所应当的，这玩意也不再在当下版本的 PhonixBuilder 输出的文件中被使用了。 | `unsigned short z`                                           |
-| 7                 | `placeBlock`                               | 在当前画笔的位置，带着方块数据 `blockData` 放置一个方块，此方块在方块池中的ID为 `blockID`。 | `unsigned short blockID`<br/>`unsigned short blockData`      |
-| 8                 | `Z++`                                      | 将画笔的 `Z` 坐标增加 `1`，由于它并不会把什么东西搞没，所以也不弃用了；但这玩意也不再在当下版本的 PhonixBuilder 中被使用了。 | -                                                            |
-| 9                 | `NOP`                                      | 摆烂。（不进行操作(No Operation)）                           | -                                                            |
-| 10, `0x0A`        | `jumpX`                                    | **(已弃用)** 将画笔的 `X` 坐标增加 `x`，顺带把画笔的 `Y` 和 `Z` 坐标重置为 `0`。 由于命令的实际功能与其名称之间存在差异，该方法在我们生成过程中不会再使用。虽然它已被我们弃用，但在读取 `bdx` 时仍然需要实现它的解析，因为包含此命令的 `bdx` 文件，也就是旧版本的文件一直都在。<br/>而 `jumpX` 与 `addX` 指令之间的差异在于 `jumpX` 的参数用的是 `unsigned int` 而不是 `unsigned short`. | `unsigned int x`                                             |
-| 11, `0x0B`        | `jumpY`                                    | **(已弃用)** 将画笔的 `Y` 坐标增加 `y`，顺带把画笔的 `Z` 坐标重置为 `0`。（同上理） | `unsigned int y`                                             |
-| 12, `0x0C`        | `jumpZ`                                    | 将画笔的 `Z` 坐标增加 `z`，哦我的天哪，这竟然并没有被弃用，那是因为它并不会把什么东西搞没；可是，理所应当的，这玩意也不再在当下版本的 PhonixBuilder 中被使用了。（同上理） | `unsigned int z`                                             |
-| 13, `0x0D`        | `reserved`                                 | 预留命令，你的程序中不应使用此命令                           | -                                                            |
-| 14, `0x0E`        | `*X++`                                     | 将画笔的 `X` 坐标增加 `1`。                                  | -                                                            |
-| 15, `0x0F`        | `*X--`                                     | 将画笔的 `X` 坐标减少 `1`。                                  | -                                                            |
-| 16, `0x10`        | `*Y++`                                     | 将画笔的 `Y` 坐标增加 `1`。                                  | -                                                            |
-| 17, `0x11`        | `*Y--`                                     | 将画笔的 `Y` 坐标减少 `1`。                                  | -                                                            |
-| 18, `0x12`        | `*Z++`                                     | 将画笔的 `Z` 坐标增加 `1`。                                  | -                                                            |
-| 19, `0x13`        | `*Z--`                                     | 将画笔的 `Z` 坐标减少 `1`。                                  | -                                                            |
-| 20, `0x14`        | `addX(int16_t)`                            | 将画笔的 `X` 坐标增加 `x`，此 `x` 可为正、为负或为零。       | `short x`                                                    |
-| 21, `0x15`        | `addX(int32_t)`                            | 将画笔的 `X` 坐标增加 `x`，此指令与前述（20）之异乃参数之选用：此指令使用 `int32` 为其参数 | `int x`                                                      |
-| 22, `0x16`        | `addY(int16_t)`                            | 将画笔的 `Y` 坐标增加 `y`。（同上理）                        | `short y`                                                    |
-| 23, `0x17`        | `addY(int32_t)`                            | 将画笔的 `Y` 坐标增加 `y`。（同上理）                        | `int y`                                                      |
-| 24, `0x18`        | `addZ(int16_t)`                            | 将画笔的 `Z` 坐标增加 `z`。（同上理）                        | `short z`                                                    |
-| 25, `0x19`        | `addZ(int32_t)`                            | 将画笔的 `Z` 坐标增加 `z`。（同上理）                        | `int z`                                                      |
-| 26, `0x1A`        | `assignCommandBlockData`                   | **(已弃用, 可以采用 `36` 指令取代)** 在画笔当前位置的方块设置指令方块的数据 *\[译注：这里可能是说，无论是啥方块都可以加指令方块的数据，但是嘞，只有指令方块才能起效\]* | `unsigned int mode {脉冲 = 0, 循环 = 1, 连锁 = 2}` <br/> `char *command` <br/> `char *customName` <br/> `char *lastOutput (此项无效，可被设为 '\0')` <br/> `int tickdelay` <br/> `bool executeOnFirstTick` <br/> `bool trackOutput` <br/> `bool conditional` <br/> `bool needRedstone` |
-| 27, `0x1B`        | `placeCommandBlockWithData`                | **(已弃用, 可以采用 `36` 指令取代)** 在当前笔刷的位置放一个命令方块，并设置其数据值。 | `unsigned short blockID` <br/> `unsigned short blockData` <br/> `unsigned int mode {脉冲 = 0, 循环 = 1, 连锁 = 2}` <br/> `char *command` <br/> `char *customName` <br/> `char *lastOutput (此项无效，可被设为 '\0')` <br/> `int tickdelay` <br/> `bool executeOnFirstTick` <br/> `bool trackOutput` <br/> `bool conditional` <br/> `bool needRedstone` |
-| 28, `0x1C`        | `addX(int8_t)`                             | 将画笔的 `X` 坐标增加 `x`，此指令与前述（20）之异乃参数之选用：此指令使用 `char` 为其参数 | `char x //int8_t x`                                          |
-| 29, `0x1D`        | `addY(int8_t)`                             | 将画笔的 `Y` 坐标增加 `y`。（同上理）                        | `char y //int8_t y`                                          |
-| 30, `0x1E`        | `addZ(int8_t)`                             | 将画笔的 `Z` 坐标增加 `z`。（同上理）                        | `char z //int8_t z`                                          |
-| 31, `0x1F`        | `useRuntimeIdPalette`                      | 使用预设的运行时ID方块池。<br/>`presetId`(预设ID) 是 PhoenixBuilder 内的值。网易MC( 1.17.0 @ 2.0.5 )下的 `presetId` 被我们定为 `117`。 每一个运行时ID都对应着一个方块，而且包含其数据值。<br/>相关内容详见 [PhoenixBuilder/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources)<br/>已不再在新版本中被使用。| `unsigned char presetId`                                     |
-| 32, `0x20`        | `placeBlockWithRuntimeId(uint16_t)`        | 使用特定的运行时ID在当前画笔的位置放置方块。                 | `unsigned short runtimeId`                                   |
-| 33, `0x21`        | `placeBlockWithRuntimeId`                  | 使用特定的运行时ID在当前画笔的位置放置方块。                 | `unsigned int runtimeId`                                     |
-| 34, `0x22`        | `placeCommandBlockWithRuntimeId(uint16_t)` | 使用特定的运行时ID在当前画笔的位置放置命令方块，并设置其数据值。 | `unsigned short runtimeId` <br/> `unsigned int mode {脉冲 = 0, 循环 = 1, 连锁 = 2}` <br/> `char *command` <br/> `char *customName` <br/> `char *lastOutput (此项无效，可被设为 '\0')` <br/> `int tickdelay` <br/> `bool executeOnFirstTick` <br/> `bool trackOutput` <br/> `bool conditional` <br/> `bool needRedstone` |
-| 35, `0x23`        | `placeCommandBlockWithRuntimeId`           | 使用特定的运行时ID在当前画笔的位置放置指令方块，并设置其数据值。 | `unsigned short runtimeId` <br/> `unsigned int mode {脉冲 = 0, 循环 = 1, 连锁 = 2}` <br/> `char *command` <br/> `char *customName` <br/> `char *lastOutput (此项无效，可被设为 '\0')` <br/> `int tickdelay` <br/> `bool executeOnFirstTick` <br/> `bool trackOutput` <br/> `bool conditional` <br/> `bool needRedstone` |
-| 36, `0x24`        | `placeCommandBlockWithDataNew`             | 使用特定的数据值在当前画笔的位置放置指令方块，并设置其数据值。 | `unsigned short data` <br/> `unsigned int mode {脉冲 = 0, 循环 = 1, 连锁 = 2}` <br/> `char *command` <br/> `char *customName` <br/> `char *lastOutput (此项无效，可被设为 '\0')` <br/> `int tickdelay` <br/> `bool executeOnFirstTick` <br/> `bool trackOutput` <br/> `bool conditional` <br/> `bool needRedstone` |
-| 37, `0x25`        | `placeBlockWithChestData(uint16_t)`        | 在画笔所在位置放置一个 `runtimeId`(特定的运行时ID) 所表示的方块(如箱子、熔炉、唱片机等)，并向此方块载入数据。<br/>其中 `slotCount` 的数据类型为 `unsigned char`，因为我的世界用一个字节来存储物品栏编号。此参数指的是要载入的次数，即要载入的 `ChestData` 结构体数量。| `unsigned short runtimeId` <br/> `unsigned char slotCount` <br/> `struct ChestData data` |
-| 38, `0x26`        | `placeBlockWithChestData`                  | 在画笔所在位置放置一个 `runtimeId`(特定的运行时ID) 所表示的方块(如箱子、熔炉、唱片机等)，并向此方块载入数据。<br/>其中 `slotCount` 的数据类型为 `unsigned char`，因为我的世界用一个字节来存储物品栏编号。此参数指的是要载入的次数，即要载入的 `ChestData` 结构体数量。| `unsigned int runtimeId`<br/>`unsigned char slotCount`<br/>`struct ChestData data` |
-| 39, `0x27`        | `recordBlockEntityData`                  | 预留命令之一，通常情况下用于记录方块的 `方块实体` 数据，但亦可用于记录其他信息。<br>`uint32_t length` 指代 `unsigned char buffer[length]` 的具体长度，而 `unsigned char buffer[length]` 自身则用于记录信息。| `uint32_t length`<br>`unsigned char buffer[length]` |
-| 88, `'X'`, `0x58` | `end`                                      | 停止读入。注意！虽然通常的结尾应该是 "XE" （2字节），但是用 'X' （1字节）是允许的。 | -                                                            |
-| 90, `0x5A`        | `isSigned`                                 | 这是一个与其他命令功能稍有不同的命令，其参数应当出现在其前面，而这个指令呢也只能出现在文件的末尾。在不知道所以然的情况下，请不要使用它，因为无效的签名会使得 PhoenixBuilder 无法去构建你的结构。详见 `签名` 部分。 | `unsigned char signatureSize`                                |
+| 1                 | `CreateConstantString`                     | 将特定的 `字符串` 放入 `方块池` 。`字符串` 在 `方块池` 中的 `ID` 将按照调用此命令的顺序进行排序。如：你第一次调用这个命令的时候，对应 `字符串` 的 `ID` 为 `0` ，第二次就是 `1` 了。你最多只能添加到 `65535`<br/>*\[译注：通常情况下，`字符串` 是一个方块的 `英文ID名` ，如 `glass` \]* | `char *constantString` |
+| 2                 | **已弃用且已移除**                          | - | - |
+| 3                 | **已弃用且已移除**                          | - | - |
+| 4                 | **已弃用且已移除**                          | - | - |
+| 5                 | **已弃用且已移除**                          | - | - |
+| 6                 | `AddInt16ZValue0`                          | 将画笔的 `Z` 坐标增加 `value` | `unsigned short value` |
+| 7                 | `PlaceBlock`                               | 在画笔所在位置放置一个方块。同时指定欲放置的方块的 `数据值(附加值)` 为 `blockData` ，且该方块在方块池中的 `ID` 为 `blockConstantStringID` | `unsigned short blockConstantStringID`<br/>`unsigned short blockData` |
+| 8                 | `AddZValue0`                               | 将画笔的 `Z` 坐标增加 `1` | - |
+| 9                 | `NOP`                                      | 摆烂，即不进行操作(`No Operation`) | - |
+| 10, `0x0A`        | **已弃用且已移除**                          | - | - |
+| 11, `0x0B`        | **已弃用且已移除**                          | - | - |
+| 12, `0x0C`        | `AddInt32ZValue0`                          | 将画笔的 `Z` 坐标增加 `value` | `unsigned int value` |
+| 13, `0x0D`        | `PlaceBlockWithBlockStates`                | 在画笔所在位置放置一个方块。同时指定欲放置的方块的 `方块状态` 为 `blockStatesString` ，且该方块在方块池中的 `ID` 为 `blockConstantStringID`<br/> `方块状态` 的格式形如 `["color":"orange"]` | `unsigned short blockConstantStringID`<br/>`char *blockStatesString` |
+| 14, `0x0E`        | `AddXValue`                                | 将画笔的 `X` 坐标增加 `1` | - |
+| 15, `0x0F`        | `SubtractXValue`                           | 将画笔的 `X` 坐标减少 `1` | - |
+| 16, `0x10`        | `AddYValue`                                | 将画笔的 `Y` 坐标增加 `1` | - |
+| 17, `0x11`        | `SubtractYValue`                           | 将画笔的 `Y` 坐标减少 `1` | - |
+| 18, `0x12`        | `AddZValue`                                | 将画笔的 `Z` 坐标增加 `1` | - |
+| 19, `0x13`        | `SubtractZValue`                           | 将画笔的 `Z` 坐标减少 `1` | - |
+| 20, `0x14`        | `AddInt16XValue`                           | 将画笔的 `X` 坐标增加 `value` 且 `value` 可正可负，亦或 `0` | `short value` |
+| 21, `0x15`        | `AddInt32XValue`                           | 将画笔的 `X` 坐标增加 `value`<br/>此指令与上一命令的不同点是此指令使用 `int32_t` 作为其参数 | `int value` |
+| 22, `0x16`        | `AddInt16YValue`                           | 将画笔的 `Y` 坐标增加 `value` （同上理） | `short value` |
+| 23, `0x17`        | `AddInt32YValue`                           | 将画笔的 `Y` 坐标增加 `value` （同上理） | `int value` |
+| 24, `0x18`        | `AddInt16ZValue`                           | 将画笔的 `Z` 坐标增加 `value` （同上理） | `short value` |
+| 25, `0x19`        | `AddInt32ZValue`                           | 将画笔的 `Z` 坐标增加 `value` （同上理） | `int value` |
+| 26, `0x1A`        | `SetCommandBlockData`                      | **(推荐使用 `36` 号命令)** 在画笔当前位置的方块设置指令方块的数据 *\[译注：这里可能是说，无论是啥方块都可以加指令方块的数据，但是嘞，只有指令方块才能起效\]* | `unsigned int mode {脉冲=0, 重复=1, 连锁=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (此项无效，可被设为 '\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needsRedstone` |
+| 27, `0x1B`        | `PlaceBlockWithCommandBlockData`           | **(推荐使用 `36` 号命令)** 在画笔当前位置放置方块池中 `ID` 为 `blockConstantStringID` 的方块，且该方块的 `方块数据值(附加值)` 为 `blockData` 。放置完成后，为这个方块设置 `命令方块` 的数据(若可行的话) | `unsigned short blockConstantStringID`<br/>`unsigned short blockData`<br/>`unsigned int mode {脉冲=0, 重复=1, 连锁=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (此项无效，可被设为 '\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
+| 28, `0x1C`        | `AddInt8XValue`                            | 将画笔的 `X` 坐标增加 `value`<br/>此指令与命令 `AddInt16XValue(20) `的不同点是此指令使用 `char` 作为其参数 | `char value //int8_t value` |
+| 29, `0x1D`        | `AddInt8YValue`                            | 将画笔的 `Y` 坐标增加 `value` （同上理） | `char value //int8_t value` |
+| 30, `0x1E`        | `AddInt8ZValue`                            | 将画笔的 `Z` 坐标增加 `value` （同上理） | `char value //int8_t value` |
+| 31, `0x1F`        | `UseRuntimeIDPool`                         | 使用预设的 `运行时ID方块池`<br/>`poolId`(预设ID) 是 PhoenixBuilder 内的值。网易MC( 1.17.0 @ 2.0.5 )下的 `poolId` 被我们定为 `117`。 每一个 `运行时ID` 都对应着一个方块，而且包含其 `方块数据值(附加值)`<br/>相关内容详见 [PhoenixBuilder/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources)<br/>**已不再在新版本中被使用** | `unsigned char poolId` |
+| 32, `0x20`        | `PlaceRuntimeBlock`                        | 使用特定的 `运行时ID` 在当前画笔的位置放置方块 | `unsigned short runtimeId`                                   |
+| 33, `0x21`        | `placeBlockWithRuntimeId`                  | 使用特定的 `运行时ID` 在当前画笔的位置放置方块 | `unsigned int runtimeId`                                     |
+| 34, `0x22`        | `PlaceRuntimeBlockWithCommandBlockData`    | 使用特定的 `运行时ID` 在当前画笔的位置放置命令方块，并设置其数据 | `unsigned short runtimeId`<br/>`unsigned int mode {脉冲=0, 重复=1, 连锁=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (此项无效，可被设为 '\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
+| 35, `0x23`        | `PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID` | 使用特定的 `运行时ID` 在当前画笔的位置放置指令方块，并设置其数据 | `unsigned int runtimeId`<br/>`unsigned int mode {脉冲 = 0, 循环 = 1, 连锁 = 2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (此项无效，可被设为 '\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
+| 36, `0x24`        | `PlaceCommandBlockWithCommandBlockData`    | 根据给定的 `方块数据值(附加值)` 在当前画笔所在位置放置一个指令方块，并设置其数据值 | `unsigned short data`<br/>`unsigned int mode {脉冲 = 0, 循环 = 1, 连锁 = 2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (此项无效，可被设为 '\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
+| 37, `0x25`        | `PlaceRuntimeBlockWithChestData`           | 在画笔所在位置放置一个 `runtimeId`(特定的 `运行时ID`) 所表示的方块(如箱子、熔炉、唱片机等)，并向此方块载入数据<br/>其中 `slotCount` 的数据类型为 `unsigned char`，因为我的世界用一个字节来存储物品栏编号。此参数指的是要载入的次数，即要载入的 `ChestData` 结构体数量 | `unsigned short runtimeId` <br/> `unsigned char slotCount` <br/> `struct ChestData data` |
+| 38, `0x26`        | `PlaceRuntimeBlockWithChestDataAndUint32RuntimeID` | 在画笔所在位置放置一个 `runtimeId`(特定的 `运行时ID`) 所表示的方块(如箱子、熔炉、唱片机等)，并向此方块载入数据<br/>其中 `slotCount` 的数据类型为 `unsigned char`，因为我的世界用一个字节来存储物品栏编号。此参数指的是要载入的次数，即要载入的 `ChestData` 结构体数量 | `unsigned int runtimeId`<br/>`unsigned char slotCount`<br/>`struct ChestData data` |
+| 39, `0x27`        | `RecordBlockEntityData`                    | 记录画笔所在方块的 `方块实体` 数据，但亦可用于记录其他信息<br/>`uint32_t length` 指代 `unsigned char buffer[length]` 的具体长度，而 `unsigned char buffer[length]` 自身则用于记录信息<br/>应当说明的是，由于一些限制，`PhoenixBuilder` 在此处记录的字段不是完整的 `NBT` | `uint32_t length`<br>`unsigned char buffer[length]` |
+| 88, `'X'`, `0x58` | `Terminate`                                | 停止读入。注意！虽然通常的结尾应该是 `XE` （2字节），但是用 `X` （1字节）是允许的 | - |
+| 90, `0x5A`        | `isSigned` (此命令并非是一个真实的命令)      | 这是一个与其他命令功能稍有不同的命令，其参数应当出现在其前面，而这个指令呢也只能出现在文件的末尾。在不知道所以然的情况下，请不要使用它，因为无效的签名会使得 `PhoenixBuilder` 无法去构建你的结构。详见 `签名` 部分。 | `unsigned char signatureSize` |
 
 此表为 bdump v4 到 2022/1/29 为止的全部指令。
 
@@ -116,6 +126,14 @@ struct ChestData {
 （下述内容的其中一部分目前未被更新，除去部分已经弃用的命令外，其余应当正常运作）
 
 
+
+
+
+
+
+
+
+
 ## 文件样例
 下面是一些 `bdx` 文件的例子。
 ***
@@ -128,23 +146,23 @@ struct ChestData {
 
 ```assembly
 author 'DEMO\0'
-addToBlockPalette 'tnt\0' ; 方块ID: 0
-addSmallX 3 ; 画笔位置: {3,0,0}
-addToBlockPalette 'repeating_command_block\0' ; 方块ID: 1
-addToBlockPalette 'glass\0' ; 方块ID: 2
-addToBlockPalette 'iron_block\0' ; 方块ID: 3
-addSmallZ 6 ; 画笔位置: {3,0,6}
-addSmallY 5 ; 画笔位置: {3,5,6}
-placeBlock (int16_t)0, (int16_t)0 ; TNT将会被放在 {3,5,6}
-NewYadd ; *Y++, 画笔位置: {3,6,6}
-placeCommandBlockWithData (int16_t)1, (int16_t)0, 1, 'kill @e[type=tnt]\0', 'Kill TNT!\0', '\0', (int32_t)0, 1, 1, 0, 0 ; 指令方块将会被放在 {3,6,6}
-addSmallY 9 ; 画笔位置: {3,15,6}
-addBigZ 1919804 ; 1919810: 00 1D 4B 3C = 01d4b3ch, 画笔位置: {3,15,1919810}
-addBigX 114511 ; 114511: 00 01 BF 4F = 01bf4fh, 画笔位置: {114514,15,1919810}
-placeBlock (int16_t)2,(int16_t)0 ; 玻璃将会被放在 {114514,15,1919810}
-addSmallZ -10 ; -10: F6 = 0f6h, 画笔位置: {114514,15,1919800}
-placeBlock (int16_t)3,(int16_t)0 ; 铁块 将会被放在 {114514,15,1919800}
-end
+CreateConstantString 'tnt\0' ; 方块ID: 0
+AddInt8XValue 3 ; 画笔位置: {3,0,0}
+CreateConstantString 'repeating_command_block\0' ; 方块ID: 1
+CreateConstantString 'glass\0' ; 方块ID: 2
+CreateConstantString 'iron_block\0' ; 方块ID: 3
+AddInt8ZValue 6 ; 画笔位置: {3,0,6}
+AddInt8YValue 5 ; 画笔位置: {3,5,6}
+PlaceBlock (int16_t)0, (int16_t)0 ; TNT将会被放在 {3,5,6}
+AddYValue ; *Y++, 画笔位置: {3,6,6}
+PlaceCommandBlockWithCommandBlockData (int16_t)1, (int16_t)0, 1, 'kill @e[type=tnt]\0', 'Kill TNT!\0', '\0', (int32_t)0, 1, 1, 0, 0 ; 指令方块将会被放在 {3,6,6}
+AddInt8YValue 9 ; 画笔位置: {3,15,6}
+AddInt32ZValue 1919804 ; 1919810: 00 1D 4B 3C = 01d4b3ch, 画笔位置: {3,15,1919810}
+AddInt32XValue 114511 ; 114511: 00 01 BF 4F = 01bf4fh, 画笔位置: {114514,15,1919810}
+PlaceBlock (int16_t)2,(int16_t)0 ; 玻璃将会被放在 {114514,15,1919810}
+AddInt8ZValue -10 ; -10: F6 = 0f6h, 画笔位置: {114514,15,1919800}
+PlaceBlock (int16_t)3,(int16_t)0 ; 铁块 将会被放在 {114514,15,1919800}
+Terminate
 db 'E'
 ```
 ***
@@ -156,16 +174,16 @@ db 'E'
 
 ```assembly
 author 'DEMO\0' ; 设置作者为 'DEMO'
-useRuntimeIdPalette (unsigned char)117 ; 117: 75
-placeBlockWithChestData (unsigned int)5420, (unsigned char)2 , 'apple\x00', (unsigned char)3, (unsigned short)0, (unsigned char)0, 'diamond\x00', (unsigned char)64, (unsigned short)0, (unsigned char)2
-end
+UseRuntimeIDPool (unsigned char)117 ; 117: 75
+PlaceRuntimeBlockWithChestDataAndUint32RuntimeID (unsigned int)5420, (unsigned char)2 , 'apple\x00', (unsigned char)3, (unsigned short)0, (unsigned char)0, 'diamond\x00', (unsigned char)64, (unsigned short)0, (unsigned char)2
+Terminate
 db 'E'
 ```
 
-以下是关于上述用到的 `placeBlockWithChestData` 的相关解析。<br>
+以下是关于上述用到的 `PlaceRuntimeBlockWithChestDataAndUint32RuntimeID` 的相关解析。<br>
 |参数|解释|代码片段|其他/备注|
 |-|-|-|-|
-|`placeBlockWithChestData (unsigned int)5420`|在画笔所在位置放置一个 `正在燃烧的熔炉`<br/>因为 `正在燃烧的熔炉` 在 `ID` 为 `117` 的 `运行时ID方块池` 中的 `ID` 是 `5420` |`\x26\x00\x00\x15\x2c`|`5420` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00\x00\x15\x2c`<br/>`unsigned int` 是 `正整数型` ，因此有 `4` 个字节|
+|`PlaceRuntimeBlockWithChestDataAndUint32RuntimeID (unsigned int)5420`|在画笔所在位置放置一个 `正在燃烧的熔炉`<br/>因为 `正在燃烧的熔炉` 在 `ID` 为 `117` 的 `运行时ID方块池` 中的 `ID` 是 `5420` |`\x26\x00\x00\x15\x2c`|`5420` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00\x00\x15\x2c`<br/>`unsigned int` 是 `正整数型` ，因此有 `4` 个字节|
 |`(unsigned char)2`|向 `正在燃烧的熔炉` 载入 `2` 次数据(载入 `2` 个 `ChestData` 结构体)|`\x02`|`2` 在 `16` 进制下，其 `大端字节序` 表达为 `\x02`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
 |`apple\x00`|放入 `苹果` |`apple\x00`|`char *` 是以 `\x00`(`UTF-8` 编码)结尾的字符串|
 |`(unsigned char)3`|`苹果` 的数量为 `3`|`\x03`|`3` 在 `16` 进制下，其 `大端字节序` 表达为 `\x03`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节|
@@ -178,61 +196,21 @@ db 'E'
 
 您可以在 [PhoenixBuilder/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources) 查看 `运行时ID方块池` 。<br>
 本样例采用的是 [PhoenixBuilder/resources/blockRuntimeIDs/netease/runtimeIds_117.json](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/resources/blockRuntimeIDs/netease/runtimeIds_117.json) 所述之版本。
+
+
+
+
+
+
+
+
+
+
 ## 签名
-
-注意：新版已经使用了基于RSA的签名系统，但未在本文档里记录。
-
-*PhoenixBuilder* 0.3.5 实现了一个 bdump 文件签名系统，用以辨认文件**真正的**发布者。
-
+*PhoenixBuilder* 的 `0.3.5` 版本实现了一个 `bdump 文件签名系统` ，用以辨认文件**真正的**发布者。
 
 请注意， `bdx` 文件可不必被签名，除非用户打开了 `-S`（严格）开关。但这并不妨碍你去给他签名，如果你为了签名而签名的话，则应确保其正常工作，因为 *PhoenixBuilder* 会拒绝处理签名不正确的 `bdx` 文件。
 
-### API
+我们使用基于 `RSA` 的哈希方法对 `BDX` 文件进行 `签名` 。签名时，相应的服务器会为每个用户颁发一个单独的认证集，然后 *PhoenixBuilder* 用相应的 `私钥` 对文件进行 `签名` ，并向对应的硬编码服务器提供文件中根密钥链接的 `公钥` ，用于校验 `BDX` 文件的真实发布者。
 
-先让我们看看这 `bdx` 文件的签名接口吧。通过以下两个过程，我们就可以轻易签名了。
-
-请使用 `HTTPS` 链接来连接我们接口的主机 `uc.fastbuilder.pro` 。
-
-#### 签名过程
-
-* 发送请求(Request)：
-
-    ```http
-    POST /signbdx.web HTTP/1.1
-    Host: uc.fastbuilder.pro
-    User-Agent: MyApplication/0.1
-    
-    {"hash": "<未压缩的，且不含结束指令'X'的bdx文件的哈希值>","token": "<你的FastBuilder密钥(Token)>"}
-    ```
-
-* 返回应答(Response)：
-
-  ```http
-  HTTP/1.1 200 OK
-  Content-Type: application/json
-  
-  {"success":true,"sign":"<签名的Base64值>",message:""}
-  ```
-
-#### 验证过程
-
-* 发送请求(Request)：
-
-    ```http
-    POST /verifybdx.web HTTP/1.1
-    Host: uc.fastbuilder.pro
-    User-Agent: MyApplication/0.1
-    
-    {"hash": "<未压缩的，且不含结束指令'X'的bdx文件的哈希值>","sign": "<签名的Base64值>"}
-    ```
-
-* 返回应答(Response)：
-
-  ```http
-  HTTP/1.1 200 OK
-  Content-Type: application/json
-  
-  {"success":true,"corrupted":false,"username":"<签名人>",message:""}
-  ```
-
-在签名后，签名的 base64 值应在解码后再写入文件已压缩的部分，后面跟着签名长度(1 字节)和`isSigned`标志。
+有关 `签名` 的更多信息及详细细节，另见 `fastbuilder/bdump/utils.go` : `SignBDXNew`/`VerifyBDXNew`
