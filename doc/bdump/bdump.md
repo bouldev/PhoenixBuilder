@@ -134,4 +134,4 @@ Note that a signature isn't required for a `bdx` file unless the user sets a `-S
 
 We use hash method based on RSA for file signing. The server will issue an individual certification set for each user, and *PhoenixBuilder* signs the file with the private key and provide the public key chained the root key in the file, whose reality will be checked with the hardcoded server public key.
 
-See `fastbuilder/bdump/utils.go` : `SignBDXNew`/`VerifyBDXNew` to see details.
+See `fastbuilder/bdump/utils.go` : `SignBDXNew`/`VerifyBDXNew` for details.
