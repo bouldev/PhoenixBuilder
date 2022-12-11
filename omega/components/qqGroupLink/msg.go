@@ -22,6 +22,7 @@ var CQCodeTypes = map[string]string{
 
 type User struct {
 	Nickname string `json:"nickname"`
+	UserId   int64  `json:"user_id"`
 }
 
 type UniversalMessage struct {
@@ -31,10 +32,13 @@ type UniversalMessage struct {
 }
 
 type MetaPost struct {
-	Time          int64  `json:"time"`
-	PostType      string `json:"post_type"`
-	SelfID        int    `json:"self_id"`
-	MetaEventType string `json:"meta_event_type"`
+	Time          int64       `json:"time"`
+	PostType      string      `json:"post_type"`
+	SelfID        int         `json:"self_id"`
+	MetaEventType string      `json:"meta_event_type"`
+	Echo          string      `json:"echo"`
+	Data          interface{} `json:"data"`
+	UserId        int64       `json:"user_id"`
 }
 
 func ParseMetaPost(data []byte) (MetaPost, error) {
@@ -63,6 +67,12 @@ type QMessage struct {
 	// 		Message string `json:"message"`
 	// }
 	Echo string `json:"echo"`
+}
+
+type GroupMemberInfo struct {
+	Card    string `json:"card"`
+	GroupId int64  `json:"group_id"`
+	UserId  int64  `json:"user_id"`
 }
 
 //func (msg UniversalMessage) GetMessage() string {
