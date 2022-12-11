@@ -37,8 +37,6 @@ func main() {
 	I18n.Init()
 
 	pterm.DefaultBox.Println(pterm.LightCyan("https://github.com/LNSSPsd/PhoenixBuilder"))
-	pterm.Println(pterm.Yellow(I18n.T(I18n.Copyright_Notice_Contrib)))
-	pterm.Println(pterm.Yellow(I18n.T(I18n.Copyright_Notice_Bouldev)))
 	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
 
 	// iSH.app specific, for foreground ability

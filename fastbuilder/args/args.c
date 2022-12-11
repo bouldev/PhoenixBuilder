@@ -106,7 +106,6 @@ void print_version(int detailed) {
 	printf("With V8 linked.\n");
 #endif
 	printf("COMMIT " FB_COMMIT_LONG "\n");
-	printf("Copyright (C) 2022 Bouldev\n");
 	printf("\n");
 }
 
