@@ -16,4 +16,5 @@ var DefaultComponentConfigByte []byte
 // 插件列表
 var Components = map[string]defines.Component{
 	"选取方块": &PickBlock{BasicComponent: &defines.BasicComponent{}},
+	"能力管理": &AbilityManage{BasicComponent: &defines.BasicComponent{}},
 }
