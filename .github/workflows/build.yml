@@ -105,7 +105,7 @@ jobs:
       run: |
         sudo apt install libedit2 libxml2 libncursesw6 binutils elfutils
         wget -q http://ftp.debian.org/debian/pool/main/libf/libffi/libffi8_3.4.4-1_amd64.deb
-        sudo dpkg -i libffi8_3.4.2-4_amd64.deb
+        sudo dpkg -i libffi8_3.4.4-1_amd64.deb
       
     - name: Cache LLVM
       id: cache-llvm
