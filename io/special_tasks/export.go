@@ -3,8 +3,11 @@
 package special_tasks
 
 import (
+	"io"
 	"fmt"
 	"time"
+	"math"
+	"bytes"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -44,6 +47,35 @@ type SolidRet struct {
 }
 
 var ExportWaiter chan map[string]interface{}
+
+type byteAndNormalReader interface {
+	io.Reader
+	io.ByteReader
+}
+
+func readNBTString(reader byteAndNormalReader) (string, error) {
+	// Code mainly from gophertunnel
+	var length uint32
+	for i:=uint(0);i<35;i+=7 {
+		b, err:=reader.ReadByte()
+		if(err!=nil) {
+			return "", fmt.Errorf("Early EOF")
+		}
+		length|=uint32(b&0x7f)<<i
+		if b&0x80==0 {
+			break
+		}
+	}
+	if length>math.MaxInt16 {
+		return "", fmt.Errorf("Invalid string length")
+	}
+	buf:=make([]byte, length)
+	_, err:=io.ReadAtLeast(reader, buf, int(length))
+	if err!=nil {
+		return "", fmt.Errorf("Early EOF")
+	}
+	return string(buf), nil
+}
 
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
 	cmdsender:=env.CommandSender
@@ -197,7 +229,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							=========
 							Types for command blocks are checked by their names
 							Whether a command block is conditional is checked through its data value.
-							THEY ARE NOT INCLUDED IN NBT DATA.
+							SINCE IT IS NOT INCLUDED IN NBT DATA.
 							
 							normal
 							\x01\x00\x00\x00\x00\x01\x00\x00\x00\bsay test\"\x00\x00\x00\x00\x01\xfa\xcd\x03\x00\x00
@@ -230,24 +262,34 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 						}else if(block=="chain_command_block"||block=="minecraft:chain_command_block"){
 							mode=packet.CommandBlockChain
 						}
+						tagContent:=bytes.NewBuffer(__tag)
+						tagContent.Next(9)
 						len_tag:=len(__tag)
 						tickdelay:=int32(__tag[len_tag-2])/2
 						exeft:=__tag[len_tag-1]
 						aut:=__tag[4]
 						trackoutput:=__tag[len_tag-6]
-						cmdlen:=__tag[9]
-						cmd:=string(__tag[10:10+cmdlen])
-						//cmd:=item["Command"].(string)
-						cusname_len:=__tag[10+cmdlen+2]
-						cusname:=string(__tag[10+cmdlen+2+1:10+cmdlen+2+1+cusname_len])
-						//cusname:=item["CustomName"].(string)
-						lo_len:=__tag[10+cmdlen+2+1+cusname_len]
-						lo:=string(__tag[10+cmdlen+2+1+cusname_len+1:10+cmdlen+2+1+cusname_len+1+lo_len])
-						//exeft:=item["ExecuteOnFirstTick"].(uint8)
-						//tickdelay:=item["TickDelay"].(int32)
-						//aut:=item["auto"].(uint8)
-						//trackoutput:=item["TrackOutput"].(uint8)
-						//lo:=item["LastOutput"].(string)
+						//cmdlen:=__tag[9]
+						//cmd:=string(__tag[10:10+cmdlen])
+						//fmt.Printf("%s\n",cmd)
+						cmd, err:=readNBTString(tagContent)
+						if err!=nil {
+							panic(err)
+						}
+						//fmt.Printf("%s\n",cmd)
+						tagContent.Next(2)
+						cusname, err:=readNBTString(tagContent)
+						//cusname_len:=__tag[10+cmdlen+2]
+						//cusname:=string(__tag[10+cmdlen+2+1:10+cmdlen+2+1+cusname_len])
+						if err!=nil {
+							panic(err)
+						}
+						lo, err:=readNBTString(tagContent)
+						//lo_len:=__tag[10+cmdlen+2+1+cusname_len]
+						//lo:=string(__tag[10+cmdlen+2+1+cusname_len+1:10+cmdlen+2+1+cusname_len+1+lo_len])
+						if err!=nil {
+							panic(err)
+						}
 						conb_bit:=static_item["conditional_bit"].(uint8)
 						conb:=false
 						if conb_bit==1 {
