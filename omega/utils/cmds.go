@@ -179,10 +179,12 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 				} else {
 					waitChan <- true
 				}
-				if a.Record == "成功次数" {
-					logger.Write(fmt.Sprintf("[%v]=>success:[%v]", cmd, output.SuccessCount))
-				} else {
-					logger.Write(fmt.Sprintf("[%v]=>output:[%v]", cmd, output.OutputMessages))
+				if !(a.Record == "" || a.Record == "无" || a.Record == "空") {
+					if a.Record == "成功次数" {
+						logger.Write(fmt.Sprintf("[%v]=>success:[%v]", cmd, output.SuccessCount))
+					} else {
+						logger.Write(fmt.Sprintf("[%v]=>output:[%v]", cmd, output.OutputMessages))
+					}
 				}
 			}
 			if a.As == "WS" {
@@ -215,7 +217,7 @@ func CheckPlayerMatchSelector(ctrl defines.GameControl, name, selector string) (
 	s := FormatByReplacingOccurrences(selector, map[string]interface{}{
 		"[player]": "\"" + name + "\"",
 	})
-	c := make(chan bool)
+	c := make(chan bool, 1)
 	ctrl.SendCmdAndInvokeOnResponse(fmt.Sprintf("testfor %v", s), func(output *packet.CommandOutput) {
 		// pterm.Info.Println(output)
 		if output.SuccessCount != 0 {
