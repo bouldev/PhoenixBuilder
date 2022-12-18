@@ -40,6 +40,8 @@ type QGroupLink struct {
 	AllowdFakeCmdExecutor     map[int64]map[string][]string `json:"允许这些人透过QQ执行伪命令"`
 	DenyCmds                  map[string]string             `json:"屏蔽这些指令"`
 	AllowCmds                 []string                      `json:"允许所有人使用这些指令"`
+	SendJoinAndLeaveMsg       bool                          `json:"向Q群发送玩家进出消息"`
+	ShowExchangeDetail        bool                          `json:"在控制台显示消息转发详情"`
 	upgrader                  *websocket.Upgrader
 	conn                      *websocket.Conn
 	connectLock               chan int
@@ -342,7 +344,9 @@ func (cq *QGroupLink) onNewQQMessage(msg IMessage) {
 				"[QQUserName]": qqUserName,
 				"[msg]":        msgText,
 			})
-			cq.Frame.GetBackendDisplay().Write("QQ->MC: " + m)
+			if cq.ShowExchangeDetail {
+				cq.Frame.GetBackendDisplay().Write("QQ->MC: " + m)
+			}
 			m = strings.Replace(m, "[Error]:", "", 1)
 			cq.Frame.GetGameControl().SayTo(cq.Selector, m)
 			return
@@ -387,7 +391,9 @@ func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
 	if len(chat.RawParameters) > 0 {
 		msg = msg + " (" + strings.Join(chat.RawParameters, ", ") + ")"
 	}
-	cq.Frame.GetBackendDisplay().Write("MC->QQ: " + msg)
+	if cq.ShowExchangeDetail {
+		cq.Frame.GetBackendDisplay().Write("MC->QQ: " + msg)
+	}
 	cq.sendGroupsMessage(msg)
 	return false
 }
@@ -412,6 +418,8 @@ func (cq *QGroupLink) Init(cfg *defines.ComponentConfig) {
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"
 		cfg.Configs["允许所有人使用这些指令"] = []string{"list"}
+		cfg.Configs["向Q群发送玩家进出消息"] = true
+		cfg.Configs["在控制台显示消息转发详情"] = true
 		cfg.Upgrade()
 	}
 	// 初始化储存群名片的Map
@@ -463,8 +471,8 @@ func (cq *QGroupLink) Inject(frame defines.MainFrame) {
 	}
 	cq.sendGroupsMessage(hint)
 	cq.Frame.GetGameListener().SetGameChatInterceptor(cq.onNewGameMsg)
-	// 打印所有消息时, 无需再次打印进出服务器的提示了
-	if cq.ChatOnly {
+	// 如果设置为启用, 将会向Q群发送玩家进出提示
+	if cq.SendJoinAndLeaveMsg {
 		cq.Frame.GetGameListener().AppendLogoutInfoCallback(func(entry protocol.PlayerListEntry) {
 			player := cq.Frame.GetGameControl().GetPlayerKitByUUID(entry.UUID)
 			if player != nil {
