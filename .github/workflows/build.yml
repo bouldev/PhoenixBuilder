@@ -102,6 +102,8 @@ jobs:
     # Debian/Ubuntu provided LLVM only support native targets, using Homebrew prebuilt for all targets
       
     - name: Setup LLVM dependencies
+      continue-on-error: true
+      # ^ Idk why apt would ever return the exit code 8 saying I should reboot
       run: |
         sudo apt install libedit2 libxml2 libncursesw6 binutils elfutils
         wget -q http://ftp.debian.org/debian/pool/main/libf/libffi/libffi8_3.4.2-4_amd64.deb
@@ -262,24 +264,24 @@ jobs:
     #    git commit -m "Auto update" -a
     #    git push
     #    cd ..
-
-    - name: Load Key
-      env:
-        FBKEY: ${{ secrets.FBKEY }}
-      if: ${{ env.FBKEY != '' }}
-      run: |
-        echo "$FBKEY">~/fbkey
-        mkdir -p ~/.ssh
-        printf "StrictHostKeyChecking no\nUserKnownHostsFile /dev/null">~/.ssh/config
-        chmod 0600 ~/fbkey
-
-    - name: Upload binaries and publish
-      env:
-        FBUSER: ${{ secrets.FBUSER }}
-        FBIP: ${{ secrets.FBIP }}
-      if: ${{ env.FBUSER != '' && env.FBIP != '' }}
-      run: |
-        echo "put fb-upload.tar.gz">~/a
-        sftp -P 8964 -i ~/fbkey -b ~/a $FBUSER@$FBIP
-        ssh -i ~/fbkey $FBUSER@$FBIP -p 8964 "mkdir -p fbbinaries;mv fb-upload.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rmdir build;rm -rf /var/www/storage/*;mv * /var/www/storage/;cd ..;rmdir fbbinaries"
+    #
+    #- name: Load Key
+    #  env:
+    #    FBKEY: ${{ secrets.FBKEY }}
+    #  if: ${{ env.FBKEY != '' }}
+    #  run: |
+    #    echo "$FBKEY">~/fbkey
+    #    mkdir -p ~/.ssh
+    #    printf "StrictHostKeyChecking no\nUserKnownHostsFile /dev/null">~/.ssh/config
+    #    chmod 0600 ~/fbkey
+    #
+    #- name: Upload binaries and publish
+    #  env:
+    #    FBUSER: ${{ secrets.FBUSER }}
+    #    FBIP: ${{ secrets.FBIP }}
+    #  if: ${{ env.FBUSER != '' && env.FBIP != '' }}
+    #  run: |
+    #    echo "put fb-upload.tar.gz">~/a
+    #    sftp -P 8964 -i ~/fbkey -b ~/a $FBUSER@$FBIP
+    #    ssh -i ~/fbkey $FBUSER@$FBIP -p 8964 "mkdir -p fbbinaries;mv fb-upload.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rmdir build;rm -rf /var/www/storage/*;mv * /var/www/storage/;cd ..;rmdir fbbinaries"
 
