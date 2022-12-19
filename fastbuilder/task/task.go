@@ -256,7 +256,6 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			cmdsender.SendWSCommand("gamemode c", und)
 			cmdsender.SendWSCommand("gamerule sendcommandfeedback true", und)
 		}
-		request := commands_generator.AllocateRequestString()
 		for {
 			task.ContinueLock.Lock()
 			task.ContinueLock.Unlock()
@@ -284,12 +283,12 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			blkscounter++
 			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				if curblock.Block != nil {
-					commands_generator.SetBlockRequest(request, curblock, cfg)
+					request:=commands_generator.SetBlockRequest(curblock, cfg)
 					if !isFastMode {
 						//<-time.After(time.Second)
 						wc := make(chan bool)
 						(*cmdsender.GetBlockUpdateSubscribeMap()).Store(protocol.BlockPos{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)}, wc)
-						cmdsender.SendSizukanaCommand(*request)
+						cmdsender.SendSizukanaCommand(request)
 						select {
 						case <-wc:
 							break
@@ -298,7 +297,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 						}
 						close(wc)
 					} else {
-						cmdsender.SendSizukanaCommand(*request)
+						cmdsender.SendSizukanaCommand(request)
 					}
 				}
 				cbdata := curblock.CommandBlockData
@@ -320,11 +319,9 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 				cmdsender.UpdateCommandBlock(int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z), cbdata)
 			} else if curblock.ChestSlot != nil {
-				commands_generator.ReplaceItemRequest(request, curblock, cfg)
-				cmdsender.SendSizukanaCommand(*request)
+				cmdsender.SendSizukanaCommand(commands_generator.ReplaceItemRequest(curblock, cfg))
 			} else {
-				commands_generator.SetBlockRequest(request, curblock, cfg)
-				err := cmdsender.SendSizukanaCommand(*request)
+				err := cmdsender.SendSizukanaCommand(commands_generator.SetBlockRequest(curblock, cfg))
 				if err != nil {
 					panic(err)
 				}
@@ -345,8 +342,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 			}
 		}
-		commands_generator.FreeRequestStringPtr(request)
-	}()
+	} ()
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
