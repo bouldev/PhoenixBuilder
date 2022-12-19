@@ -7,10 +7,11 @@ package readline
 #cgo CFLAGS: -I${SRCDIR}/../../depends/readline-master/include
 #cgo LDFLAGS: -L${SRCDIR}/../../depends/stub -L${SRCDIR}/../../depends/readline-master/prebuilt -L${SRCDIR}/../../depends/ncurses-6.3-20220319/prebuilt
 #cgo !native,!darwin,!ios,!windows,!android LDFLAGS: -lreadline
-#cgo android,arm LDFLAGS: -lreadline-armv7-android -lncurses-arm-android
-#cgo android,arm64 LDFLAGS: -lreadline-aarch64-android -lncurses-aarch64-android
-#cgo android,386 LDFLAGS: -lreadline-i686-android -lncurses-i686-android
-#cgo android,amd64 LDFLAGS: -lreadline-x86_64-android -lncurses-x86_64-android
+#cgo android_shared LDFLAGS: -lreadline
+#cgo android,!android_shared,arm LDFLAGS: -lreadline-armv7-android -lncurses-arm-android
+#cgo android,!android_shared,arm64 LDFLAGS: -lreadline-aarch64-android -lncurses-aarch64-android
+#cgo android,!android_shared,386 LDFLAGS: -lreadline-i686-android -lncurses-i686-android
+#cgo android,!android_shared,amd64 LDFLAGS: -lreadline-x86_64-android -lncurses-x86_64-android
 #cgo darwin,!ios,arm64 LDFLAGS: -lreadline-aarch64-macos -lncurses
 #cgo darwin,amd64 LDFLAGS: -lreadline-x86_64-macos -lncurses
 #cgo ios,arm64 LDFLAGS: -lreadline-aarch64-ios -lncurses

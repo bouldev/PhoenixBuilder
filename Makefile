@@ -34,7 +34,7 @@ ifneq (${THEOS},)
 	PACKAGETARGETS:=${PACKAGETARGETS} package/ios
 endif
 ifneq ($(wildcard ${HOME}/android-ndk-r20b),)
-	TARGETS:=${TARGETS} android-v8-executable-64 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86
+	TARGETS:=${TARGETS} android-v8-executable-arm64 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86
 	PACKAGETARGETS:=${PACKAGETARGETS} package/android
 endif
 ifneq ($(wildcard /usr/bin/i686-w64-mingw32-gcc),)
@@ -80,11 +80,11 @@ ios-lib: build/phoenixbuilder-ios-static.a
 ish-executable: build/phoenixbuilder-ish-executable
 macos: build/phoenixbuilder-macos
 macos-v8: build/phoenixbuilder-v8-macos
-android-executable-armv7: build/phoenixbuilder-android-executable-armv7
-android-executable-arm64: build/phoenixbuilder-android-executable-arm64
-android-v8-executable-64: build/phoenixbuilder-v8-android-executable-arm64
-android-executable-x86_64: build/phoenixbuilder-android-executable-x86_64
-android-executable-x86: build/phoenixbuilder-android-executable-x86
+android-executable-armv7: build/phoenixbuilder-android-static-executable-armv7 build/phoenixbuilder-android-termux-shared-executable-armv7 build/phoenixbuilder-android-shared-executable-armv7
+android-executable-arm64: build/phoenixbuilder-android-static-executable-arm64 build/phoenixbuilder-android-termux-shared-executable-arm64 build/phoenixbuilder-android-shared-executable-arm64
+android-v8-executable-arm64: build/phoenixbuilder-v8-android-static-executable-arm64 build/phoenixbuilder-v8-android-termux-shared-executable-arm64 build/phoenixbuilder-v8-android-shared-executable-arm64
+android-executable-x86_64: build/phoenixbuilder-android-static-executable-x86_64 build/phoenixbuilder-android-termux-shared-executable-x86_64 build/phoenixbuilder-android-shared-executable-x86_64
+android-executable-x86: build/phoenixbuilder-android-shared-executable-x86 build/phoenixbuilder-android-termux-shared-executable-x86 build/phoenixbuilder-android-static-executable-x86
 windows-executable: windows-executable-x86 windows-executable-x86_64
 windows-executable-x86: build/phoenixbuilder-windows-executable-x86.exe
 windows-executable-x86_64: build/phoenixbuilder-windows-executable-x86_64.exe
@@ -172,16 +172,46 @@ build/phoenixbuilder-v8-macos-arm64: build/ ${SRCS_GO}
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CGO_LDFLAGS="-lc++" CC=`pwd`/archs/macos.sh CXX=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -tags with_v8 -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8-macos-arm64
 build/phoenixbuilder-v8-macos: build/ build/phoenixbuilder-v8-macos-x86_64 build/phoenixbuilder-v8-macos-arm64 ${SRCS_GO}
 	GODEBUG=madvdontneed=1 ${LIPO} -create build/phoenixbuilder-v8-macos-x86_64 build/phoenixbuilder-v8-macos-arm64 -output build/phoenixbuilder-v8-macos
-build/phoenixbuilder-android-executable-armv7: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang GOOS=android GOARCH=arm CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-executable-armv7
-build/phoenixbuilder-v8-android-executable-arm64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang CXX=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -tags with_v8 -trimpath -ldflags "-s -w -extldflags -static-libstdc++" -o build/phoenixbuilder-v8-android-executable-arm64
-build/phoenixbuilder-android-executable-arm64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang CXX=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -extldflags -static-libstdc++" -o build/phoenixbuilder-android-executable-arm64
-build/phoenixbuilder-android-executable-x86: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang GOOS=android GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-executable-x86
-build/phoenixbuilder-android-executable-x86_64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang ${SRCS_GO}
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang GOOS=android GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-executable-x86_64
+build/phoenixbuilder-android-static-executable-armv7: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang ${SRCS_GO}
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang GOOS=android GOARCH=arm CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-static-executable-armv7
+build/phoenixbuilder-v8-android-static-executable-arm64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang CXX=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -tags with_v8 -trimpath -ldflags "-s -w -extldflags -static-libstdc++" -o build/phoenixbuilder-v8-android-static-executable-arm64
+build/phoenixbuilder-android-static-executable-arm64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang CXX=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w -extldflags -static-libstdc++" -o build/phoenixbuilder-android-static-executable-arm64
+build/phoenixbuilder-android-static-executable-x86: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang ${SRCS_GO}
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang GOOS=android GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-static-executable-x86
+build/phoenixbuilder-android-static-executable-x86_64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang ${SRCS_GO}
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang GOOS=android GOARCH=amd64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-static-executable-x86_64
+build/phoenixbuilder-android-termux-shared-executable-armv7: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Wl,-rpath,/data/data/com.termux/files/usr/lib" CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang GOOS=android GOARCH=arm CGO_ENABLED=1 go build -tags android_shared -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-termux-shared-executable-armv7
+build/phoenixbuilder-v8-android-termux-shared-executable-arm64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CGO_LDFLAGS="-Wl,-rpath,/data/data/com.termux/files/usr/lib" CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang CXX=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -tags with_v8,android_shared -trimpath -ldflags "-s -w -extldflags -static-libstdc++" -o build/phoenixbuilder-v8-android-termux-shared-executable-arm64
+build/phoenixbuilder-android-termux-shared-executable-arm64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Wl,-rpath,/data/data/com.termux/files/usr/lib" CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang CXX=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -tags android_shared -trimpath -ldflags "-s -w -extldflags -static-libstdc++" -o build/phoenixbuilder-android-termux-shared-executable-arm64
+build/phoenixbuilder-android-termux-shared-executable-x86: build/ CGO_LDFLAGS="-Wl,-rpath,/data/data/com.termux/files/usr/lib" ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Wl,-rpath,/data/data/com.termux/files/usr/lib" CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang GOOS=android GOARCH=386 CGO_ENABLED=1 go build -tags android_shared -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-termux-shared-executable-x86
+build/phoenixbuilder-android-termux-shared-executable-x86_64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Wl,-rpath,/data/data/com.termux/files/usr/lib" CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang GOOS=android GOARCH=amd64 CGO_ENABLED=1 go build -tags android_shared -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-termux-shared-executable-x86_64
+build/phoenixbuilder-android-shared-executable-armv7: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang GOOS=android GOARCH=arm CGO_ENABLED=1 go build -tags android_shared -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-shared-executable-armv7
+build/phoenixbuilder-v8-android-shared-executable-arm64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang CXX=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -tags with_v8,android_shared -trimpath -ldflags "-s -w -extldflags -static-libstdc++" -o build/phoenixbuilder-v8-android-shared-executable-arm64
+build/phoenixbuilder-android-shared-executable-arm64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang CXX=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++ GOOS=android GOARCH=arm64 CGO_ENABLED=1 go build -tags android_shared -trimpath -ldflags "-s -w -extldflags -static-libstdc++" -o build/phoenixbuilder-android-shared-executable-arm64
+build/phoenixbuilder-android-shared-executable-x86: build/ CGO_LDFLAGS="-Wl,-rpath,/data/data/com.termux/files/usr/lib" ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android21-clang GOOS=android GOARCH=386 CGO_ENABLED=1 go build -tags android_shared -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-shared-executable-x86
+build/phoenixbuilder-android-shared-executable-x86_64: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang ${SRCS_GO}
+	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang GOOS=android GOARCH=amd64 CGO_ENABLED=1 go build -tags android_shared -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-shared-executable-x86_64
 build/phoenixbuilder-windows-executable-x86.exe: build/ /usr/bin/i686-w64-mingw32-gcc ${SRCS_GO}
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/i686-w64-mingw32-gcc GOOS=windows GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-windows-executable-x86.exe
 build/phoenixbuilder-windows-executable-x86_64.exe: build/ /usr/bin/x86_64-w64-mingw32-gcc ${SRCS_GO}
