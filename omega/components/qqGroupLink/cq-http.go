@@ -108,6 +108,9 @@ func (cq *QGroupLink) receiveRoutine() {
 		}
 		// 接收到群名片更新数据包时, Echo为自定义的返回字段
 		if post.Echo == "GetGroupCards" {
+			if post.Data == nil {
+				continue
+			}
 			for _, v := range post.Data.([]interface{}) {
 				mem := GroupMemberInfo{}
 				if bytes, err := json.Marshal(v); err == nil {
