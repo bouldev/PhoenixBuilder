@@ -47,9 +47,10 @@ type CmdSender struct {
 	*BaseCoreComponent
 	PlayerTrigger    string `json:"以玩家身份发送信息的前缀"`
 	WebsocketTrigger string `json:"以Websocket身份发送信息的前缀"`
+	WriteOnlyTrigger string `json:"发送WriteOnly指令的前缀"`
 }
 
-func (c *CmdSender) send(cmds []string, ws bool) {
+func (c *CmdSender) send(cmds []string, typ string) {
 	cmd := strings.Join(cmds, " ")
 	onFeedBack := func(output *packet.CommandOutput) {
 		terMsg := pterm.Info.Sprintf("/%v\n", cmd)
@@ -62,14 +63,21 @@ func (c *CmdSender) send(cmds []string, ws bool) {
 		}
 		c.mainFrame.GetBackendDisplay().Write(terMsg)
 	}
-	if ws {
+	if typ == "WS" {
 		c.mainFrame.GetGameControl().SendCmdAndInvokeOnResponse(cmd, onFeedBack)
-	} else {
+	} else if typ == "Player" {
 		c.mainFrame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(cmd, onFeedBack)
+	} else {
+		c.mainFrame.GetGameControl().SendWOCmd(cmd)
 	}
 }
 
 func (c *CmdSender) Init(cfg *defines.ComponentConfig) {
+	if cfg.Version == "0.0.1" {
+		cfg.Version = "0.0.2"
+		cfg.Configs["发送WriteOnly指令的前缀"] = "#"
+		cfg.Upgrade()
+	}
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, c); err != nil {
 		panic(err)
@@ -84,7 +92,7 @@ func (c *CmdSender) Inject(frame defines.MainFrame) {
 			Usage:    fmt.Sprintf("以 webscoket 身份发送指令，如果有可能性，显示结果， 例如 %vlist", c.WebsocketTrigger),
 		},
 		OptionalOnTriggerFn: func(cmds []string) (stop bool) {
-			c.send(cmds, true)
+			c.send(cmds, "WS")
 			return true
 		},
 	})
@@ -94,7 +102,17 @@ func (c *CmdSender) Inject(frame defines.MainFrame) {
 			Usage:    fmt.Sprintf("以玩家身份发送指令，临时打开命令返回以显示结果， 例如 %vlist", c.PlayerTrigger),
 		},
 		OptionalOnTriggerFn: func(cmds []string) (stop bool) {
-			c.send(cmds, false)
+			c.send(cmds, "Player")
+			return true
+		},
+	})
+	frame.SetBackendMenuEntry(&defines.BackendMenuEntry{
+		MenuEntry: defines.MenuEntry{
+			Triggers: []string{c.WriteOnlyTrigger},
+			Usage:    fmt.Sprintf("发送 WriteOnly 指令，不会返回结果， 例如 %vsay Hello", c.WriteOnlyTrigger),
+		},
+		OptionalOnTriggerFn: func(cmds []string) (stop bool) {
+			c.send(cmds, "WO")
 			return true
 		},
 	})
@@ -104,125 +122,123 @@ type NoSQLDBUtil struct {
 	*BaseCoreComponent
 }
 
+//	func (o *NoSQLDBUtil) text2db(cmds []string) {
+//		if len(cmds) != 2 {
+//			fmt.Println("db text2db src_text dst_db")
+//		}
+//		src_text := cmds[0]
+//		dst_db := cmds[1]
+//		//db := o.mainFrame.GetNoSqlDB(dst_db)
+//		if db == nil {
+//			fmt.Println("cannot open db")
+//		}
+//		file, err := os.OpenFile(src_text, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+//		defer file.Close()
+//		if err != nil {
+//			fmt.Println(err)
+//			return
+//		}
+//		src := bufio.NewReader(file)
+//		for {
+//			if _line, _, err := src.ReadLine(); err == nil {
+//				line := strings.TrimSpace(string(_line))
+//				objs := strings.Split(line, "\t")
+//				key := objs[0]
+//				value := strings.Join(objs[1:], "\t")
+//				db.Commit(key, value)
+//			} else {
+//				break
+//			}
+//		}
+//		fmt.Println("done")
+//	}
 //
-//func (o *NoSQLDBUtil) text2db(cmds []string) {
-//	if len(cmds) != 2 {
-//		fmt.Println("db text2db src_text dst_db")
-//	}
-//	src_text := cmds[0]
-//	dst_db := cmds[1]
-//	//db := o.mainFrame.GetNoSqlDB(dst_db)
-//	if db == nil {
-//		fmt.Println("cannot open db")
-//	}
-//	file, err := os.OpenFile(src_text, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-//	defer file.Close()
-//	if err != nil {
-//		fmt.Println(err)
-//		return
-//	}
-//	src := bufio.NewReader(file)
-//	for {
-//		if _line, _, err := src.ReadLine(); err == nil {
-//			line := strings.TrimSpace(string(_line))
-//			objs := strings.Split(line, "\t")
-//			key := objs[0]
-//			value := strings.Join(objs[1:], "\t")
-//			db.Commit(key, value)
+//	func (o *NoSQLDBUtil) db2text(cmds []string) {
+//		if len(cmds) != 2 {
+//			fmt.Println("db db2text src_db dst_text")
+//		}
+//		src_db := cmds[0]
+//		dst_text := cmds[1]
+//		db := o.mainFrame.GetNoSqlDB(src_db)
+//		if db == nil {
+//			fmt.Println("cannot open db")
+//		}
+//		var err error
+//		var buf *bufio.Writer
+//		var file *os.File
+//		if dst_text != "screen" {
+//			file, err = os.OpenFile(dst_text, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+//			if err != nil {
+//				fmt.Println(err)
+//				return
+//			}
+//			buf = bufio.NewWriter(file)
 //		} else {
-//			break
+//			buf = bufio.NewWriter(os.Stdout)
 //		}
-//	}
-//	fmt.Println("done")
-//}
-//
-//func (o *NoSQLDBUtil) db2text(cmds []string) {
-//	if len(cmds) != 2 {
-//		fmt.Println("db db2text src_db dst_text")
-//	}
-//	src_db := cmds[0]
-//	dst_text := cmds[1]
-//	db := o.mainFrame.GetNoSqlDB(src_db)
-//	if db == nil {
-//		fmt.Println("cannot open db")
-//	}
-//	var err error
-//	var buf *bufio.Writer
-//	var file *os.File
-//	if dst_text != "screen" {
-//		file, err = os.OpenFile(dst_text, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-//		if err != nil {
-//			fmt.Println(err)
-//			return
-//		}
-//		buf = bufio.NewWriter(file)
-//	} else {
-//		buf = bufio.NewWriter(os.Stdout)
-//	}
-//	db.IterAll(func(key string, v string) (stop bool) {
-//		ma, err := json.Marshal(v)
-//		if err != nil {
-//			fmt.Println(err)
+//		db.IterAll(func(key string, v string) (stop bool) {
+//			ma, err := json.Marshal(v)
+//			if err != nil {
+//				fmt.Println(err)
+//				return false
+//			}
+//			buf.WriteString(key + "\t" + string(ma) + "\n")
 //			return false
+//		})
+//		buf.Flush()
+//		if file != nil {
+//			file.Close()
 //		}
-//		buf.WriteString(key + "\t" + string(ma) + "\n")
-//		return false
-//	})
-//	buf.Flush()
-//	if file != nil {
-//		file.Close()
+//		fmt.Println("done")
 //	}
-//	fmt.Println("done")
-//}
 //
-//func (o *NoSQLDBUtil) do(cmds []string) {
+// func (o *NoSQLDBUtil) do(cmds []string) {
 //
-//	if len(cmds) < 1 {
-//		fmt.Println("Opened dbs")
-//		for dbName, _ := range o.omega.OpenedDBs {
-//			fmt.Println(dbName)
-//		}
-//		fmt.Println("db text2db/db2text src dst")
-//		fmt.Println("db src delete/put key <value>")
-//		return
-//	}
-//	if cmds[0] == "text2db" {
-//		o.text2db(cmds[1:])
-//	} else if cmds[0] == "db2text" {
-//		o.db2text(cmds[1:])
-//	}
-//	targetDBName := cmds[0]
-//	availables := []string{}
-//	flag := false
-//	for dbName, _ := range o.omega.OpenedDBs {
-//		if targetDBName == dbName {
-//			flag = true
-//			break
-//		}
-//		availables = append(availables, dbName)
-//	}
-//	if !flag {
-//		fmt.Println(availables)
-//		return
-//	}
-//	db := o.mainFrame.GetNoSqlDB(targetDBName)
-//	if len(cmds) < 3 {
-//		fmt.Println("db put/delete key")
-//		return
-//	}
-//	op := cmds[1]
-//	key := cmds[2]
-//	if op == "delete" {
-//		db.Delete(key)
-//	} else if op == "put" {
-//		if len(cmds) != 4 {
-//			fmt.Println("db put/delete key value")
+//		if len(cmds) < 1 {
+//			fmt.Println("Opened dbs")
+//			for dbName, _ := range o.omega.OpenedDBs {
+//				fmt.Println(dbName)
+//			}
+//			fmt.Println("db text2db/db2text src dst")
+//			fmt.Println("db src delete/put key <value>")
 //			return
 //		}
-//		db.Commit(key, cmds[3])
+//		if cmds[0] == "text2db" {
+//			o.text2db(cmds[1:])
+//		} else if cmds[0] == "db2text" {
+//			o.db2text(cmds[1:])
+//		}
+//		targetDBName := cmds[0]
+//		availables := []string{}
+//		flag := false
+//		for dbName, _ := range o.omega.OpenedDBs {
+//			if targetDBName == dbName {
+//				flag = true
+//				break
+//			}
+//			availables = append(availables, dbName)
+//		}
+//		if !flag {
+//			fmt.Println(availables)
+//			return
+//		}
+//		db := o.mainFrame.GetNoSqlDB(targetDBName)
+//		if len(cmds) < 3 {
+//			fmt.Println("db put/delete key")
+//			return
+//		}
+//		op := cmds[1]
+//		key := cmds[2]
+//		if op == "delete" {
+//			db.Delete(key)
+//		} else if op == "put" {
+//			if len(cmds) != 4 {
+//				fmt.Println("db put/delete key value")
+//				return
+//			}
+//			db.Commit(key, cmds[3])
+//		}
 //	}
-//}
-//
 func (o *NoSQLDBUtil) Inject(frame defines.MainFrame) {
 	o.mainFrame = frame
 	//frame.SetBackendMenuEntry(&defines.BackendMenuEntry{

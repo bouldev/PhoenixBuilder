@@ -66,8 +66,15 @@ func ParseAdaptiveCmd(c interface{}) (cmds []defines.Cmd, err error) {
 				nc.As = "Player"
 			case "玩家":
 				nc.As = "Player"
+			case "WO":
+			case "wo":
+				nc.As = "WO"
+			case "WriteOnly":
+				nc.As = "WO"
+			case "SettingsCommand":
+				nc.As = "WO"
 			default:
-				return nil, fmt.Errorf("身份 仅 可为\"WS\"/\"Player\"/\"玩家\"之一，你的设置是: %v", nc)
+				return nil, fmt.Errorf("身份 仅 可为\"WS\"/\"Player\"/\"WO\"之一，你的设置是: %v", nc)
 			}
 			cmds = append(cmds, nc)
 		}
@@ -169,7 +176,10 @@ func LaunchCmdsArray(ctrl defines.GameControl, cmds []defines.Cmd, remapping map
 				cmd = strings.ReplaceAll(cmd, _replacement, val)
 			}
 		}
-		if (a.Record == "" || a.Record == "无" || a.Record == "空") && !conditional {
+		if a.As == "WO" {
+			ctrl.SendWOCmd(cmd)
+			executeSucceed = true
+		} else if (a.Record == "" || a.Record == "无" || a.Record == "空") && !conditional {
 			ctrl.SendCmd(cmd)
 		} else {
 			waitChan := make(chan bool, 1)
