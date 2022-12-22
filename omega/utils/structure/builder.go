@@ -192,8 +192,20 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 				}
 
 			} else {
-				cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
-				o.BlockCmdSender(cmd)
+				// fmt.Println(block.BlockName, block.BlockStates, block.BlockData, "test")
+				if block.BlockName != "" && block.BlockStates != "" {
+					cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(block.BlockName, "minecraft:", "", 1), block.BlockStates)
+					o.BlockCmdSender(cmd)
+					// fmt.Println(cmd)
+				} else if block.BlockName != "" && block.BlockStates == "" {
+					cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(block.BlockName, "minecraft:", "", 1), block.BlockData)
+					o.BlockCmdSender(cmd)
+					// fmt.Println(cmd)
+				} else {
+					cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
+					o.BlockCmdSender(cmd)
+					// fmt.Println(cmd)
+				}
 			}
 			counter++
 		}

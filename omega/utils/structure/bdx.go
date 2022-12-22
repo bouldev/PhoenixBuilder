@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"phoenixbuilder/bridge/bridge_fmt"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
@@ -138,8 +137,9 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				}
 				blockData := binary.BigEndian.Uint16(blockDataBytes)
 				blockChan <- &IOBlockForDecoder{
-					Pos:  brushPosition,
-					RTID: legacyRunTimeIDRemapper.GetRTID(blockId, blockData),
+					Pos:       brushPosition,
+					BlockName: legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[blockId],
+					BlockData: blockData,
 				}
 			} else if cmd == 8 {
 				brushPosition[2]++
@@ -176,7 +176,23 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				jumpval := binary.BigEndian.Uint32(rdst)
 				brushPosition[2] += int(jumpval)
 			} else if cmd == 13 {
-				bridge_fmt.Printf("WARNING: BDump/Import: Use of reserved command\n")
+				rdst := make([]byte, 2)
+				_, err := br.Read(rdst)
+				if err != nil {
+					infoSender("Failed to get argument for cmd[pos4], file may be corrupted")
+					return
+				}
+				blockId := binary.BigEndian.Uint16(rdst)
+				block_states_string, err := ReadBrString(br)
+				if err != nil {
+					infoSender("Failed to get argument for cmd[pos5], file may be corrupted")
+					return
+				}
+				blockChan <- &IOBlockForDecoder{
+					Pos:         brushPosition,
+					BlockStates: block_states_string,
+					BlockName:   legacyRunTimeIDRemapper.palatteIDToBlockNameMapping[blockId],
+				}
 			} else if cmd == 14 {
 				brushPosition[0]++
 			} else if cmd == 15 {
@@ -611,6 +627,20 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				// 		Point:     pos,
 				// 	}
 				// }
+			} else if cmd == 39 {
+				buffer_length := make([]byte, 4)
+				_, err := br.Read(buffer_length)
+				if err != nil {
+					infoSender("Failed to get the length of buffer, file may be corrupted")
+					return
+				}
+				bufferLength := binary.BigEndian.Uint32(buffer_length)
+				buffer := make([]byte, bufferLength)
+				_, err = br.Read(buffer)
+				if err != nil {
+					infoSender("Failed to get the buffer, file may be corrupted")
+					return
+				}
 			} else {
 				// fmt.Println("ERROR!")
 				infoSender(fmt.Sprintf("unimplemented method found : %d", cmd))
