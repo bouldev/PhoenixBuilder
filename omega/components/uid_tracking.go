@@ -45,10 +45,10 @@ func (o *UIDTracking) Init(cfg *defines.ComponentConfig) {
 		panic(err)
 	}
 	var err error
-	if o.cmdsBeforeUidAsign, err = utils.ParseAdaptiveCmd(o.cmdsBeforeUidAsign); err != nil {
+	if o.cmdsBeforeUidAsign, err = utils.ParseAdaptiveCmd(o.CmdsBeforeUidAsignIn); err != nil {
 		panic(err)
 	}
-	if o.cmdsAfterUidAsign, err = utils.ParseAdaptiveCmd(o.cmdsAfterUidAsign); err != nil {
+	if o.cmdsAfterUidAsign, err = utils.ParseAdaptiveCmd(o.CmdsAfterUidAsignIn); err != nil {
 		panic(err)
 	}
 	o.mu = sync.Mutex{}
