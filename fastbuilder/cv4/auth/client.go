@@ -28,6 +28,7 @@ type Client struct {
 	salt   []byte
 	client *websocket.Conn
 
+	peerNoEncryption bool
 	encryptor      *encryptionSession
 	serverResponse chan map[string]interface{}
 
@@ -102,6 +103,9 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 				default:
 					continue
 				}
+			} else if msgaction == "no_encryption" {
+				authclient.peerNoEncryption=true
+				close(encrypted)
 			}
 			select {
 			case authclient.serverResponse <- message:
@@ -131,18 +135,20 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 }
 
 func (client *Client) CanSendMessage() bool {
-	return client.encryptor != nil && !client.closed
+	return (client.encryptor != nil||client.peerNoEncryption) && !client.closed
 }
 
 func (client *Client) SendMessage(data []byte) {
-	if client.encryptor == nil {
+	if client.encryptor == nil && !client.peerNoEncryption {
 		panic("早すぎる")
 	}
 	if client.closed {
 		bridge_fmt.Println("Error: SendMessage: Connection closed")
 		panic("Message after auth close")
 	}
-	client.encryptor.encrypt(data)
+	if !client.peerNoEncryption {
+		client.encryptor.encrypt(data)
+	}
 	var inbuf bytes.Buffer
 	wr := gzip.NewWriter(&inbuf)
 	wr.Write(data)
