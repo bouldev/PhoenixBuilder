@@ -105,6 +105,7 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 				}
 			} else if msgaction == "no_encryption" {
 				authclient.peerNoEncryption=true
+				authclient.SendMessage([]byte(`{"action":"accept_no_encryption"}`))
 				close(encrypted)
 			}
 			select {
