@@ -74,7 +74,7 @@ func readNBTString(reader byteAndNormalReader) (string, error) {
 	if err!=nil {
 		return "", fmt.Errorf("Early EOF")
 	}
-	return string(buf), nil
+	return strings.TrimRight(string(buf), "\x00"), nil
 }
 
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
