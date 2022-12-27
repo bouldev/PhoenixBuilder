@@ -288,7 +288,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 						//<-time.After(time.Second)
 						wc := make(chan bool)
 						(*cmdsender.GetBlockUpdateSubscribeMap()).Store(protocol.BlockPos{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)}, wc)
-						cmdsender.SendSizukanaCommand(request)
+						cmdsender.SendDimensionalCommand(request)
 						select {
 						case <-wc:
 							break
@@ -297,7 +297,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 						}
 						close(wc)
 					} else {
-						cmdsender.SendSizukanaCommand(request)
+						cmdsender.SendDimensionalCommand(request)
 					}
 				}
 				cbdata := curblock.CommandBlockData
@@ -319,15 +319,15 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 				cmdsender.UpdateCommandBlock(int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z), cbdata)
 			} else if curblock.ChestSlot != nil {
-				cmdsender.SendSizukanaCommand(commands_generator.ReplaceItemRequest(curblock, cfg))
+				cmdsender.SendDimensionalCommand(commands_generator.ReplaceItemRequest(curblock, cfg))
 			} else {
-				err := cmdsender.SendSizukanaCommand(commands_generator.SetBlockRequest(curblock, cfg))
+				err := cmdsender.SendDimensionalCommand(commands_generator.SetBlockRequest(curblock, cfg))
 				if err != nil {
 					panic(err)
 				}
 			} /*else if curblock.Entity != nil {
 				//request := commands_generator.SummonRequest(curblock, cfg)
-				//err := cmdsender.SendSizukanaCommand(request)
+				//err := cmdsender.SendDimensionalCommand(request)
 				//if err != nil {
 				//	panic(err)
 				//}
