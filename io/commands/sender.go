@@ -70,10 +70,7 @@ func (sender *CommandSender) SendSizukanaCommand(command string) error {
 }
 
 func (sender *CommandSender) SendDimensionalCommand(command string) error {
-	return sender.getConn().WritePacket(&packet.SettingsCommand{
-		CommandLine: fmt.Sprintf("execute @a[name=\"%s\"] ~~~ %s", sender.getConn().IdentityData().DisplayName, command)
-		SuppressOutput: true,
-	})
+	return sender.SendSizukanaCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~~~ %s", sender.getConn().IdentityData().DisplayName, command))
 }
 
 func (sender *CommandSender) SendChat(content string) error {

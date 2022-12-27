@@ -43,6 +43,10 @@ func (sender *CommandSender) SendSizukanaCommand(command string) error {
 	return nil
 }
 
+func (sender *CommandSender) SendDimensionalCommand(command string) error {
+	return sender.SendSizukanaCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~~~ %s", sender.getConn().IdentityData().DisplayName, command))
+}
+
 func (sender *CommandSender) SendChat(content string) error {
 	C.phoenixbuilder_send_chat(C.CString(content))
 	return nil
