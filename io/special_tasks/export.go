@@ -74,7 +74,7 @@ func readNBTString(reader byteAndNormalReader) (string, error) {
 	if err!=nil {
 		return "", fmt.Errorf("Early EOF")
 	}
-	return strings.TrimRight(string(buf), "\x00"), nil
+	return string(buf), nil
 }
 
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
@@ -277,7 +277,18 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							panic(err)
 						}
 						//fmt.Printf("%s\n",cmd)
-						tagContent.Next(2)
+						tagContent.Next(1)
+						var successCount uint32
+						for i:=uint(0);i<35;i+=7 {
+							b, err:=tagContent.ReadByte()
+							if(err!=nil) {
+								panic(err)
+							}
+							successCount|=uint32(b&0x7f)<<i
+							if b&0x80==0 {
+								break
+							}
+						}
 						cusname, err:=readNBTString(tagContent)
 						//cusname_len:=__tag[10+cmdlen+2]
 						//cusname:=string(__tag[10+cmdlen+2+1:10+cmdlen+2+1+cusname_len])
