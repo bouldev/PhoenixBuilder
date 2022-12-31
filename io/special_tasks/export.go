@@ -53,6 +53,46 @@ type byteAndNormalReader interface {
 	io.ByteReader
 }
 
+func readVarint32(reader byteAndNormalReader) (int32, error) {
+	// Copied code, from gophertunnel
+	var val uint32
+	for i:=uint(0);i<35;i+=7 {
+		b, err:=reader.ReadByte()
+		if(err!=nil) {
+			return 0, fmt.Errorf("Early EOF")
+		}
+		val|=uint32(b&0x7f)<<i
+		if b&0x80==0 {
+			break
+		}
+	}
+	ret_val:=int32(val>>1)
+	if ret_val&1!=0 {
+		ret_val= ^ret_val
+	}
+	return ret_val, nil
+}
+
+func readVarint64(reader byteAndNormalReader) (int64, error) {
+	// Copied code, from gophertunnel
+	var val uint64
+	for i:=uint(0);i<70;i+=7 {
+		b, err:=reader.ReadByte()
+		if(err!=nil) {
+			return 0, fmt.Errorf("Early EOF")
+		}
+		val|=uint64(b&0x7f)<<i
+		if b&0x80==0 {
+			break
+		}
+	}
+	rval:=int64(val>>1)
+	if rval&1!=0 {
+		rval= ^rval
+	}
+	return rval, nil
+}
+
 func readNBTString(reader byteAndNormalReader) (string, error) {
 	// Code mainly from gophertunnel
 	var length uint32
@@ -231,26 +271,27 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							Whether a command block is conditional is checked through its data value.
 							SINCE IT IS NOT INCLUDED IN NBT DATA.
 							
-							normal
-							\x01\x00\x00\x00\x00\x01\x00\x00\x00\bsay test\"\x00\x00\x00\x00\x01\xfa\xcd\x03\x00\x00
-							===
-							tick 60
-							\x01\x00\x00\x00\x00\x01\x00\x00\x00\bsay test\"\x00\x00\x00\x00\x01\xfa\xcd\x03x\x00
-							===
-							no tracking output, tick 62
-							\x01\x00\x00\x00\x00\x01\x00\x00\x00\bsay test\"\x00\x00\x00\x00\x00\xfa\xcd\x03|\x00
-							===
-							tick 62, custom name = "***"
-							\x01\x00\x00\x00\x00\x01\x00\x00\x00\bsay test\"\x00\x03***\x00\x00\x01\xfa\xcd\x03|\x00
-							===
-							tick 62, w/ error output, executeonfirsttick
-							\x01\x00\x00\x00\x00\x01\x00\x00\x00\tdsay test\"\x00\x00\x17commands.generic.syntax\x06\x00\x04dsay\x05 test\x01\xfa\xcd\x03|\x01
-							===
-							same with above, but will not execute on first tick
-							\x01\x00\x00\x00\x00\x01\x00\x00\x00\tdsay test\"\x00\x00\x17commands.generic.syntax\x06\x00\x04dsay\x05 test\x01\xfa\xcd\x03|\x00
-							===
-							normal, noredstone
-							\x01\x00\x00\x00\x01\x01\x00\x00\x00\bsay test\"\x02\x00\x00\x00\x01\xfa\xcd\x03\x00\x00
+							The content of __tag is NBT data w/o keys, flatten placed,
+							in such order:
+							
+							isMovable:byte
+							CustomName:string
+							UserCustomData:string
+							powered:byte
+							auto:byte
+							conditionMet:byte
+							LPConditionalMode:byte
+							LPRedstoneMode:byte
+							LPCommandMode:byte
+							Command:string
+							Version:VarInt32
+							CustomName:string
+							LastOutput:string
+							LastOutputParams:list[string]
+							TrackOutput:byte
+							LastExecution:VarInt64
+							TickDelay:VarInt32
+							ExecuteOnFirstTick:byte
 						*/
 						__tag:=[]byte(item["__tag"].(string))
 						//fmt.Printf("CMDBLK %#v\n\n",item["__tag"])
@@ -263,43 +304,85 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							mode=packet.CommandBlockChain
 						}
 						tagContent:=bytes.NewBuffer(__tag)
-						tagContent.Next(9)
-						len_tag:=len(__tag)
-						tickdelay:=int32(__tag[len_tag-2])/2
-						exeft:=__tag[len_tag-1]
-						aut:=__tag[4]
-						trackoutput:=__tag[len_tag-6]
-						//cmdlen:=__tag[9]
-						//cmd:=string(__tag[10:10+cmdlen])
-						//fmt.Printf("%s\n",cmd)
+						tagContent.Next(1)
+						// ^ Skip: [isMovable:byte]
+						_, err:=readNBTString(tagContent)
+						if err!=nil {
+							panic(err)
+						}
+						// ^ Skip: [CustomName:string]
+						_, err=readNBTString(tagContent)
+						if err!=nil {
+							panic(err)
+						}
+						// ^ Skip: [UserCustomData:string]
+						tagContent.Next(1)
+						// ^ Skip: [powered:byte]
+						aut, err:=tagContent.ReadByte()
+						if err!=nil {
+							panic(err)
+						}
+						// ^ Read: [auto:byte]
+						tagContent.Next(4)
+						// ^ Skip: [conditionMet:byte]
+						//   Skip: [LPConditionMode:byte]
+						//   Skip: [LPRedstoneMode:byte]
+						//   Skip: [LPCommandMode:byte]
 						cmd, err:=readNBTString(tagContent)
 						if err!=nil {
 							panic(err)
 						}
-						//fmt.Printf("%s\n",cmd)
-						tagContent.Next(1)
-						var successCount uint32
-						for i:=uint(0);i<35;i+=7 {
-							b, err:=tagContent.ReadByte()
-							if(err!=nil) {
+						// ^ Read: [Command:string]
+						_, err=readVarint32(tagContent)
+						if err!=nil {
+							panic(err)
+						}
+						// ^ Skip: [Version:VarInt32]
+						cusname, err:=readNBTString(tagContent)
+						if err!=nil {
+							panic(err)
+						}
+						// ^ Read: [CustomName:string]
+						lo, err:=readNBTString(tagContent)
+						if err!=nil {
+							panic(err)
+						}
+						// ^ Read: [LastOutput:string]
+						lop_in, err:=readVarint32(tagContent)
+						if err!=nil {
+							panic(err)
+						}
+						// ^ PartialRead: **LENGTH OF** [LastOutputParams:list[string]]
+						for i:=0;i<int(lop_in);i++ {
+							_, err=readNBTString(tagContent)
+							if err!=nil {
 								panic(err)
 							}
-							successCount|=uint32(b&0x7f)<<i
-							if b&0x80==0 {
-								break
-							}
+							// ^ PartialRead: **CONTENT OF** [LastOutputParams:list[string]]
 						}
-						cusname, err:=readNBTString(tagContent)
-						//cusname_len:=__tag[10+cmdlen+2]
-						//cusname:=string(__tag[10+cmdlen+2+1:10+cmdlen+2+1+cusname_len])
+						// ^ Skip: [LastOutputParams:list[string]]
+						trackoutput, err:=tagContent.ReadByte()
 						if err!=nil {
 							panic(err)
 						}
-						lo, err:=readNBTString(tagContent)
-						//lo_len:=__tag[10+cmdlen+2+1+cusname_len]
-						//lo:=string(__tag[10+cmdlen+2+1+cusname_len+1:10+cmdlen+2+1+cusname_len+1+lo_len])
+						// ^ Read: [TrackOutput:byte]
+						_, err=readVarint64(tagContent)
 						if err!=nil {
 							panic(err)
+						}
+						// ^ Skip: [LastExecution:VarInt64]
+						tickdelay, err:=readVarint32(tagContent)
+						if err!=nil {
+							panic(err)
+						}
+						// ^ Read: [TickDelay:VarInt32]
+						exeft, err:=tagContent.ReadByte()
+						if err!=nil {
+							panic(err)
+						}
+						// ^ Read: [ExecuteOnFirstTick:byte]
+						if tagContent.Len()!=0 {
+							panic("Unterminated command block tag")
 						}
 						conb_bit:=static_item["conditional_bit"].(uint8)
 						conb:=false
