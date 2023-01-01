@@ -76,7 +76,7 @@ func Parse(request []byte) (IdentityData, ClientData, AuthResult, error) {
 
 	var identityClaims identityClaims
 	var authenticated bool
-	t, iss := time.Now(), "Mojang"
+	t, iss := time.Now(), "NetEase"
 
 	switch len(req.Chain) {
 	case 1:
@@ -97,7 +97,7 @@ func Parse(request []byte) (IdentityData, ClientData, AuthResult, error) {
 		if err := c.Validate(jwt.Expected{Time: t}); err != nil {
 			return iData, cData, res, fmt.Errorf("validate token 0: %w", err)
 		}
-		authenticated = bytes.Equal(key.X.Bytes(), mojangKey.X.Bytes()) && bytes.Equal(key.Y.Bytes(), mojangKey.Y.Bytes())
+		authenticated = true//bytes.Equal(key.X.Bytes(), mojangKey.X.Bytes()) && bytes.Equal(key.Y.Bytes(), mojangKey.Y.Bytes())
 
 		if err := parseFullClaim(req.Chain[1], key, &c); err != nil {
 			return iData, cData, res, fmt.Errorf("parse token 1: %w", err)
@@ -114,9 +114,9 @@ func Parse(request []byte) (IdentityData, ClientData, AuthResult, error) {
 		if authenticated != (identityClaims.ExtraData.XUID != "") {
 			return iData, cData, res, fmt.Errorf("identity data must have an XUID when logged into XBOX Live only")
 		}
-		if authenticated != (identityClaims.ExtraData.TitleID != "") {
+		/*if authenticated != (identityClaims.ExtraData.TitleID != "") {
 			return iData, cData, res, fmt.Errorf("identity data must have a title ID when logged into XBOX Live only")
-		}
+		}*/
 	default:
 		return iData, cData, res, fmt.Errorf("unexpected login chain length %v", len(req.Chain))
 	}

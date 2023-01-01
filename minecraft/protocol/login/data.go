@@ -56,7 +56,7 @@ var checkUsername = regexp.MustCompile("[A-Za-z0-9 ]").MatchString
 // Validate validates the identity data. It returns an error if any data contained in the IdentityData is
 // invalid.
 func (data IdentityData) Validate() error {
-	if _, err := strconv.ParseInt(data.XUID, 10, 64); err != nil && len(data.XUID) != 0 {
+	if _, err := strconv.ParseInt(data.XUID, 16, 64); err != nil && len(data.XUID) != 0 {
 		return fmt.Errorf("XUID must be parseable as an int64, but got %v", data.XUID)
 	}
 	if id, err := uuid.Parse(data.Identity); err != nil || id == uuid.Nil {
