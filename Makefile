@@ -199,11 +199,11 @@ build/phoenixbuilder-android-termux-shared-executable-x86_64: build/ ${HOME}/and
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Wl,-rpath,/data/data/com.termux/files/usr/lib" CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang GOOS=android GOARCH=amd64 CGO_ENABLED=1 go build -tags android_shared -trimpath -ldflags "-s -w" -o build/phoenixbuilder-android-termux-shared-executable-x86_64
 build/phoenixbuilder-android-executable-arm64: build/phoenixbuilder-android-termux-shared-executable-arm64
 	ln build/phoenixbuilder-android-termux-shared-executable-arm64 build/phoenixbuilder-android-executable-arm64
-build/phoenixbuilder-android-executable-arm64: build/phoenixbuilder-android-termux-shared-executable-armv7
+build/phoenixbuilder-android-executable-armv7: build/phoenixbuilder-android-termux-shared-executable-armv7
 	ln build/phoenixbuilder-android-termux-shared-executable-armv7 build/phoenixbuilder-android-executable-armv7
-build/phoenixbuilder-android-executable-arm64: build/phoenixbuilder-android-termux-shared-executable-x86
+build/phoenixbuilder-android-executable-x86: build/phoenixbuilder-android-termux-shared-executable-x86
 	ln build/phoenixbuilder-android-termux-shared-executable-x86 build/phoenixbuilder-android-executable-x86
-build/phoenixbuilder-android-executable-arm64: build/phoenixbuilder-android-termux-shared-executable-x86_64
+build/phoenixbuilder-android-executable-x86_64: build/phoenixbuilder-android-termux-shared-executable-x86_64
 	ln build/phoenixbuilder-android-termux-shared-executable-x86_64 build/phoenixbuilder-android-executable-x86_64
 build/phoenixbuilder-android-shared-executable-armv7: build/ ${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang ${SRCS_GO}
 	cd depends/stub&&make clean&&make CC=${HOME}/android-ndk-r20b/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang&&cd -
