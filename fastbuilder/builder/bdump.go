@@ -293,6 +293,30 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 					Point:     pos,
 				}
 			}
+		case *command.PlaceBlockWithChestData:
+			if int(cmd.BlockConstantStringID) >= len(blocksStrPool) {
+				return fmt.Errorf("Error: BlockConstantStringID exceeded BlockPool length")
+			}
+			blockName := &blocksStrPool[int(cmd.BlockConstantStringID)]
+			pos:=types.Position{
+				X: brushPosition[0] + config.Position.X,
+				Y: brushPosition[1] + config.Position.Y,
+				Z: brushPosition[2] + config.Position.Z,
+			}
+			blc <- &types.Module{
+				Block: &types.Block {
+					Name: blockName,
+					Data: cmd.BlockData,
+				},
+				Point: pos,
+			}
+			for _, slot := range cmd.ChestSlots {
+				slotcopy := types.ChestSlot(slot)
+				blc <- &types.Module{
+					ChestSlot: &slotcopy,
+					Point:     pos,
+				}
+			}
 		case *command.PlaceRuntimeBlockWithChestDataAndUint32RuntimeID:
 			if int(cmd.BlockRuntimeID) >= len(runtimeIdPoolUsing) {
 				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)

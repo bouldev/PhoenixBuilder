@@ -34,5 +34,6 @@ var BDumpCommandPool map[uint16]func()Command = map[uint16]func()Command {
 	37: func()Command { return &PlaceRuntimeBlockWithChestData{} },
 	38: func()Command { return &PlaceRuntimeBlockWithChestDataAndUint32RuntimeID{} },
 	39: func()Command { return &AssignNBTData{} },
+	40: func()Command { return &PlaceBlockWithChestData{} },
 	88: func()Command { return &Terminate{} },
 }
