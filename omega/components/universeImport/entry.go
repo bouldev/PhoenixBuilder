@@ -3,7 +3,7 @@ package universe_import
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"os"
 	"path"
@@ -149,7 +149,7 @@ func (o *UniverseImport) StartNewTask() {
 	data := []byte{}
 	fileName := path.Base(task.Path)
 	if fp, err := os.OpenFile(filePath, os.O_RDONLY, 0644); err == nil {
-		data, err = ioutil.ReadAll(fp)
+		data, err = io.ReadAll(fp)
 		if err != nil {
 			pterm.Error.Printfln("无法读取文件 %v 的数据 (%v)", filePath, err)
 			o.data.CurrentTask = nil
@@ -435,17 +435,8 @@ func (o *UniverseImport) onGetCalled(cmds []string) (stop bool) {
 			pterm.Error.Printfln("无法获取名为 %v 目标的坐标, 请检查 %v 是否在服务器或者考虑调整设置, %v", target, target, err)
 		} else {
 			result := results[0]
-			if result.Position.X < 0 {
-				result.Position.X--
-			}
-			if result.Position.Z < 0 {
-				result.Position.Z--
-			}
-			result.Position.Y -= 1.6200103759765
-			if result.Position.Y < 0 {
-				result.Position.Y--
-			}
-			o.PosInferredByGet = &define.CubePos{int(result.Position.X), int(result.Position.Y), int(result.Position.Z)}
+			result.Position.Y -= 1.62001001834869
+			o.PosInferredByGet = &define.CubePos{int(math.Floor(result.Position.X)), int(math.Floor(result.Position.Y)), int(math.Floor(result.Position.Z))}
 			pterm.Info.Printfln("已经获得 %v 所在坐标 %v, 后续使用 load 指令时可以省略 [x] [y] [z]", target, o.PosInferredByGet)
 		}
 	})
