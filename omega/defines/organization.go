@@ -148,7 +148,7 @@ type GameControl interface {
 	SetOnParamMsg(string, func(chat *GameChat) (catch bool)) error
 	PlaceCommandBlock(pos define.CubePos, commandBlockName string, commandBlockData int,
 		withMove, withAirPrePlace bool, updatePacket *packet.CommandBlockUpdate,
-		onDone func(done bool), timeOut time.Duration)
+		onDone func(done bool), timeOut time.Duration, botName string)
 }
 
 type PlayerKit interface {
