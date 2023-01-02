@@ -1,16 +1,16 @@
 package builder
 
 import (
-	"io"
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"phoenixbuilder/fastbuilder/bdump"
+	"phoenixbuilder/fastbuilder/bdump/command"
 	bridge_path "phoenixbuilder/fastbuilder/builder/path"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
-	"phoenixbuilder/fastbuilder/bdump/command"
 
 	"github.com/andybalholm/brotli"
 )
@@ -105,15 +105,15 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 	var runtimeIdPoolUsing []*types.ConstBlock
 	//var prevCmd command.Command = nil
 	for {
-		_cmd, err:=command.ReadCommand(br)
+		_cmd, err := command.ReadCommand(br)
 		if err != nil {
 			return fmt.Errorf("%s: %v", I18n.T(I18n.BDump_FailedToGetConstructCmd), err)
 		}
-		_, isTerminate:=_cmd.(*command.Terminate)
+		_, isTerminate := _cmd.(*command.Terminate)
 		if isTerminate {
 			break
 		}
-		switch cmd:=_cmd.(type) {
+		switch cmd := _cmd.(type) {
 		case *command.CreateConstantString:
 			blocksStrPool = append(blocksStrPool, cmd.ConstantString)
 		case *command.AddInt16ZValue0:
@@ -222,7 +222,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				return fmt.Errorf("This file is using an unknown runtime id pool, we're unable to resolve it.")
 			}
 		case *command.PlaceRuntimeBlock:
-			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+			if int(cmd.BlockRuntimeID) >= len(runtimeIdPoolUsing) {
 				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
 			blc <- &types.Module{
@@ -234,7 +234,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				},
 			}
 		case *command.PlaceRuntimeBlockWithUint32RuntimeID:
-			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+			if int(cmd.BlockRuntimeID) >= len(runtimeIdPoolUsing) {
 				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
 			blc <- &types.Module{
@@ -246,12 +246,12 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				},
 			}
 		case *command.PlaceRuntimeBlockWithCommandBlockData:
-			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+			if int(cmd.BlockRuntimeID) >= len(runtimeIdPoolUsing) {
 				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
-			cmdl:=&types.Module {
+			cmdl := &types.Module{
 				Block: runtimeIdPoolUsing[int(cmd.BlockRuntimeID)].Take(),
-				Point: types.Position {
+				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
 					Y: brushPosition[1] + config.Position.Y,
 					Z: brushPosition[2] + config.Position.Z,
@@ -260,12 +260,12 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			}
 			blc <- cmdl
 		case *command.PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID:
-			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+			if int(cmd.BlockRuntimeID) >= len(runtimeIdPoolUsing) {
 				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
-			cmdl:=&types.Module {
+			cmdl := &types.Module{
 				Block: runtimeIdPoolUsing[cmd.BlockRuntimeID].Take(),
-				Point: types.Position {
+				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
 					Y: brushPosition[1] + config.Position.Y,
 					Z: brushPosition[2] + config.Position.Z,
@@ -274,10 +274,10 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			}
 			blc <- cmdl
 		case *command.PlaceRuntimeBlockWithChestData:
-			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+			if int(cmd.BlockRuntimeID) >= len(runtimeIdPoolUsing) {
 				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
-			pos:=types.Position{
+			pos := types.Position{
 				X: brushPosition[0] + config.Position.X,
 				Y: brushPosition[1] + config.Position.Y,
 				Z: brushPosition[2] + config.Position.Z,
@@ -294,10 +294,10 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				}
 			}
 		case *command.PlaceRuntimeBlockWithChestDataAndUint32RuntimeID:
-			if int(cmd.BlockRuntimeID)>=len(runtimeIdPoolUsing) {
+			if int(cmd.BlockRuntimeID) >= len(runtimeIdPoolUsing) {
 				return fmt.Errorf("Fatal: Block with runtime ID %d not found", cmd.BlockRuntimeID)
 			}
-			pos:=types.Position{
+			pos := types.Position{
 				X: brushPosition[0] + config.Position.X,
 				Y: brushPosition[1] + config.Position.Y,
 				Z: brushPosition[2] + config.Position.Z,
@@ -322,8 +322,8 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			blockName := &blocksStrPool[int(cmd.BlockConstantStringID)]
 			blc <- &types.Module{
 				Block: &types.Block{
-					Name: blockName,
-					BlockStates: cmd.BlockStatesString,
+					Name:        blockName,
+					BlockStates: &cmd.BlockStatesString,
 				},
 				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
