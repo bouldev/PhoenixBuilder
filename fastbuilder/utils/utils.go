@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 // int compareVersion(char *latestVersion,char *currentVersion);
@@ -64,5 +63,5 @@ func CheckUpdate(currentVersion string) (bool, string) {
 		return false, ""
 	}
 	version:=json_structure["tag_name"].(string)
-	return C.compareVersion(C.CString(version[1:]),C.CString(currentVersion))!=0, strings.Replace(string(content),"\n","",1)
+	return C.compareVersion(C.CString(version[1:]),C.CString(currentVersion))!=0, version[1:]
 }

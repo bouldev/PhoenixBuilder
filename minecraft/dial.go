@@ -218,14 +218,14 @@ func listenConn(conn *Conn, logger *log.Logger, c chan struct{}) {
 		packets, err := conn.dec.Decode()
 		if err != nil {
 			if !raknet.ErrConnectionClosed(err) {
-				logger.Printf("error reading from dialer connection: %v\n", err)
+				fmt.Printf("error reading from dialer connection: %v\n", err)
 			}
 			return
 		}
 		for _, data := range packets {
 			loggedInBefore := conn.loggedIn
 			if err := conn.receive(data); err != nil {
-				logger.Printf("error: %v", err)
+				fmt.Printf("error: %v", err)
 				return
 			}
 			if !loggedInBefore && conn.loggedIn {
