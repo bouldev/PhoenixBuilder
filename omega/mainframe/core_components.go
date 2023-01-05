@@ -393,8 +393,7 @@ func (o *NameRecord) Inject(frame defines.MainFrame) {
 		name = utils.ToPlainName(name)
 		o.update(name, ud.String())
 	})
-	var fn collaborate.FUNCTYPE_GET_POSSIBLE_NAME
-	fn = o.GetPossibleName
+	var fn collaborate.FUNCTYPE_GET_POSSIBLE_NAME = o.GetPossibleName
 	o.mainFrame.SetContext(collaborate.INTERFACE_POSSIBLE_NAME, fn)
 }
 
@@ -494,6 +493,72 @@ func (o *KeepAlive) Activate() {
 	}()
 }
 
+type Partol struct {
+	*BaseCoreComponent
+	EnableInvisibility     bool `json:"启用隐身"`
+	Patrol                 int  `json:"随机巡逻间隔(秒)"`
+	TeleportWhenPlayerJoin bool `json:"是否在玩家上线时传送至其位置"`
+	AlwaysInOverworld      bool `json:"是否将机器人固定在主世界维度"`
+}
+
+func (o *Partol) Init(cfg *defines.ComponentConfig) {
+	o.BaseCoreComponent.Init(cfg)
+	m, _ := json.Marshal(cfg.Configs)
+	if err := json.Unmarshal(m, o); err != nil {
+		panic(err)
+	}
+	if o.Patrol < 90 {
+		panic("巡逻时间太短，至少应该设为 90")
+	}
+}
+
+func (o *Partol) Inject(frame defines.MainFrame) {
+	o.mainFrame = frame
+	if o.TeleportWhenPlayerJoin {
+		o.mainFrame.GetGameListener().SetOnTypedPacketCallBack(packet.IDText, func(p packet.Packet) {
+			pk := p.(*packet.Text)
+			if pk.TextType == 2 && pk.Message == "§e%multiplayer.player.joined" {
+				o.mainFrame.GetGameControl().SendWOCmd(fmt.Sprintf("execute \"%s\" ~ 320 ~ tp \"%s\" ~ ~ ~", pk.Parameters[0], o.mainFrame.GetUQHolder().GetBotName()))
+			}
+		})
+	}
+	if o.AlwaysInOverworld {
+		o.mainFrame.GetGameListener().SetOnTypedPacketCallBack(packet.IDChangeDimension, func(p packet.Packet) {
+			pk := p.(*packet.ChangeDimension)
+			if pk.Dimension != 0 {
+				go func() {
+					// 延迟3秒是为了给予机器人接收数据包的时间
+					<-time.NewTimer(time.Second * time.Duration(3)).C
+					o.mainFrame.GetGameControl().SendWOCmd(fmt.Sprintf("tp \"%s\" 0 320 0", o.mainFrame.GetUQHolder().GetBotName()))
+				}()
+			}
+		})
+	}
+}
+
+func (o *Partol) Activate() {
+	count := 0
+	for {
+		count++
+		o.mainFrame.GetBotTaskScheduler().CommitBackgroundTask(&defines.BasicBotTaskPauseAble{
+			BasicBotTask: defines.BasicBotTask{
+				Name: fmt.Sprintf("Portal %v", count),
+				ActivateFn: func() {
+					utils.GetPlayerList(o.mainFrame.GetGameControl(), "@r[rm=100]", func(players []string) {
+						if o.EnableInvisibility {
+							o.mainFrame.GetGameControl().SendCmd(fmt.Sprintf("effect @s invisibility %v 1 true", o.Patrol*2))
+						}
+						if len(players) > 0 {
+							o.mainFrame.GetGameControl().SendWOCmd(fmt.Sprintf("execute \"%s\" ~ 320 ~ tp \"%s\" ~ ~ ~", players[0], o.mainFrame.GetUQHolder().GetBotName()))
+						}
+					})
+				},
+			},
+		})
+		<-time.NewTimer(time.Second * time.Duration(o.Patrol)).C
+	}
+}
+
 func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 	return map[string]func() defines.CoreComponent{
 		"菜单显示":      func() defines.CoreComponent { return &Menu{BaseCoreComponent: &BaseCoreComponent{}} },
@@ -503,5 +568,6 @@ func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 		"假死检测":      func() defines.CoreComponent { return &KeepAlive{BaseCoreComponent: &BaseCoreComponent{}} },
 		"性能分析":      func() defines.CoreComponent { return &PerformaceAnalysis{BaseCoreComponent: &BaseCoreComponent{}} },
 		"OP权限自检":    func() defines.CoreComponent { return &OPCheck{BaseCoreComponent: &BaseCoreComponent{}} },
+		"随机巡逻":      func() defines.CoreComponent { return &Partol{BaseCoreComponent: &BaseCoreComponent{}} },
 	}
 }

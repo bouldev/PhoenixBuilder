@@ -8,7 +8,6 @@ import (
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"regexp"
-	"time"
 
 	"github.com/pterm/pterm"
 )
@@ -31,8 +30,6 @@ type IntrusionDetectSystem struct {
 	K32Threshold    int  `json:"32k手持物品附魔等级阈值"`
 	k32Response     []defines.Cmd
 	K32ResponseIn   interface{}   `json:"32k手持物品反制"`
-	Patrol          int           `json:"随机巡逻(秒)"`
-	EnablePatrol    bool          `json:"启用随机巡逻"`
 	RegexCheckers   []*RegexCheck `json:"使用以下正则表达式检查"`
 }
 
@@ -67,9 +64,6 @@ func (o *IntrusionDetectSystem) Init(cfg *defines.ComponentConfig) {
 	for _, rc := range o.RegexCheckers {
 		rc.compiledItemNameRegex = *regexp.MustCompile(rc.Item)
 		rc.compiledValueRegex = *regexp.MustCompile(rc.RegexString)
-	}
-	if o.EnablePatrol && o.Patrol > 0 && o.Patrol < 90 {
-		panic("巡逻时间太短，至少应该设为 90")
 	}
 }
 
@@ -281,32 +275,4 @@ func (o *IntrusionDetectSystem) onSeePlayer(pk *packet.AddPlayer) {
 			return string(marshal)
 		}
 	})
-}
-
-func (o *IntrusionDetectSystem) Activate() {
-	o.Frame.GetGameControl().SendCmd(fmt.Sprintf("effect @s invisibility %v 1 true", o.Patrol*2))
-	if o.EnablePatrol && o.Patrol > 0 {
-		go func() {
-			count := 0
-			for {
-				count++
-				o.Frame.GetBotTaskScheduler().CommitBackgroundTask(&defines.BasicBotTaskPauseAble{
-					BasicBotTask: defines.BasicBotTask{
-						Name: fmt.Sprintf("Portal %v", count),
-						ActivateFn: func() {
-							utils.GetPlayerList(o.Frame.GetGameControl(), "@r[rm=100]", func(players []string) {
-								o.Frame.GetGameControl().SendCmd(fmt.Sprintf("effect @s invisibility %v 1 true", o.Patrol*2))
-								if len(players) > 0 {
-									player := players[0]
-									o.Frame.GetGameControl().SendCmd("tp @s \"" + player + "\"")
-									o.Frame.GetGameControl().SendCmd("tp @s ~ 320 ~")
-								}
-							})
-						},
-					},
-				})
-				<-time.NewTimer(time.Second * time.Duration(o.Patrol)).C
-			}
-		}()
-	}
 }

@@ -217,8 +217,6 @@
       ],
       "32k手持物品附魔等级阈值": 11,
       "启用32k手持物品检测": true,
-      "启用随机巡逻": true,
-      "随机巡逻(秒)": 120,
       "使用以下正则表达式检查": [
         {
           "使用正则表达式匹配标签值": "minecraft:axolotl|minecraft:pufferfish|minecraft:tropicalfish|minecraft:salmon|minecraft:cod|minecraft:bee",
@@ -1957,6 +1955,19 @@
         "IDPlayerList",
         "IDUpdateSoftEnum"
       ]
+    }
+  },
+  {
+    "名称": "随机巡逻",
+    "描述": "将机器人随机传送到在线玩家的顶部",
+    "是否禁用": false,
+    "版本": "0.0.1",
+    "来源": "Core",
+    "配置": {
+      "启用隐身": true,
+      "随机巡逻间隔(秒)": 120,
+      "是否在玩家上线时传送至其位置": true,
+      "是否将机器人固定在主世界维度": true
     }
   }
 ]
