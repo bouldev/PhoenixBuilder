@@ -115,6 +115,8 @@ func (o *Assembler) AddPendingTask(pk *packet.LevelChunk) (exist bool) {
 }
 
 func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
+	// WIP
+	return nil
 	defer func() {
 		r := recover()
 		if r != nil {

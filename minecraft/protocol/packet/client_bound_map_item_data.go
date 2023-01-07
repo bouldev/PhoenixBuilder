@@ -134,6 +134,8 @@ func (pk *ClientBoundMapItemData) Marshal(w *protocol.Writer) {
 
 // Unmarshal ...
 func (pk *ClientBoundMapItemData) Unmarshal(r *protocol.Reader) {
+	// IGNORED !!!
+	return
 	r.Varint64(&pk.MapID)
 	r.Varuint32(&pk.UpdateFlags)
 	r.Uint8(&pk.Dimension)

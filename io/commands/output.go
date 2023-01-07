@@ -43,11 +43,12 @@ func (sender *CommandSender) Output(content string) error {
 	}
 	msg := strings.Replace(content, "schematic", "sc***atic", -1)
 	msg =  strings.Replace(msg, ".", "．", -1)
+	return sender.SendChat(fmt.Sprintf("§b%s",msg))
 	// Netease set .bdx, .schematic, .mcacblock, etc as blocked words
 	// So we should replace half-width points w/ full-width points to avoid being
 	// blocked
 	//return SendChat(fmt.Sprintf("§b%s",msg), conn)
-	return sender.SendSizukanaCommand(TellRawRequest(types.AllPlayers, msg))
+	//return sender.SendSizukanaCommand(TellRawRequest(types.AllPlayers, msg))
 }
 
 func RawTellRawRequest(target types.Target, line string) string {

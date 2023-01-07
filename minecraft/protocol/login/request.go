@@ -77,7 +77,7 @@ func Parse(request []byte) (IdentityData, ClientData, AuthResult, error) {
 
 	var identityClaims identityClaims
 	var authenticated bool
-	t, iss := time.Now(), "Mojang"
+	t, iss := time.Now(), "NetEase"
 
 	switch len(req.Chain) {
 	case 1:

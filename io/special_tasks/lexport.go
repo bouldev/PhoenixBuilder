@@ -75,14 +75,14 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		close(chann)
 		var dimension float64 = 0
 		var got interface{}
-		var testAreaIsLoaded string = "testforblocks ~ -64 ~ ~63 319 ~63 ~ -64 ~"
+		var testAreaIsLoaded string = "testforblocks ~-31 -64 ~-31 ~31 319 ~31 ~-31 -64 ~-31"
 		json.Unmarshal([]byte(resp.OutputMessages[0].Parameters[0]), &got)
 		dimension = got.([]interface{})[0].(map[string]interface{})["dimension"].(float64)
 		if dimension == 1 {
-			testAreaIsLoaded = "testforblocks ~-16 0 ~-16 ~63 127 ~63 ~ 0 ~"
+			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 127 ~31 ~-31 0 ~-31"
 		}
 		if dimension == 2 {
-			testAreaIsLoaded = "testforblocks ~ 0 ~ ~63 255 ~63 ~ 0 ~"
+			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 255 ~31 ~-31 0 ~-31"
 		}
 		// 这个前置准备用于后面判断被导出区域是否加载
 		// 如果尝试请求一个没有被完全加载的区域，那么返回的结构将是只包括空气的结构，但不会报错
@@ -105,7 +105,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 			u_d2, _ := uuid.NewUUID()
 			wchan := make(chan *packet.CommandOutput)
 			(*env.CommandSender.GetUUIDMap()).Store(u_d2.String(), wchan)
-			env.CommandSender.SendWSCommand(fmt.Sprintf("tp %d %d %d", value.BeginX, value.BeginY, value.BeginZ), u_d2)
+			env.CommandSender.SendWSCommand(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2), u_d2)
 			<-wchan
 			close(wchan)
 			// 传送玩家
@@ -116,6 +116,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 				env.CommandSender.SendWSCommand(testAreaIsLoaded, u_d3)
 				resp := <-chann
 				close(chann)
+				//fmt.Printf("%#v\n",resp)
 				if resp.OutputMessages[0].Message == "commands.compare.tooManyBlocks" {
 					break
 				}
@@ -136,6 +137,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 					Mirror:                    0,
 					Integrity:                 100,
 					Seed:                      0,
+					AllowNonTickingChunks: true,
 				},
 				RequestType: packet.StructureTemplateRequestExportFromSave,
 			})

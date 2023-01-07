@@ -1,6 +1,7 @@
 package minecraft
 
 import (
+	"fmt"
 	"bytes"
 	"context"
 	"crypto/ecdsa"
@@ -165,7 +166,10 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	setAndroidData(&conn.clientData)
 
 	request = login.Encode(chainData, conn.clientData, key)
-	identityData, _, _, _ := login.Parse(request)
+	identityData, _, _, err := login.Parse(request)
+	if err!=nil {
+		fmt.Printf("WARNING: Identity data parsing error: %w\n", err)
+	}
 	// If we got the identity data from Minecraft auth, we need to make sure we set it in the Conn too, as
 	// we are not aware of the identity data ourselves yet.
 	conn.identityData = identityData

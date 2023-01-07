@@ -330,7 +330,8 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	/*chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		conn.WritePacket(pk)
 	})*/
-	fmt.Printf("WARNING: TODO: Dump runtime id table, for what chunk loading is currently stubbed\n")
+	fmt.Printf("WARNING: TODO: Dump runtime id table, for what chunk loading is currently stubbed.\n")
+	// Also at mirror/io/assembler/assembler.go:119(currently) search "WIP" plz
 	// currentChunkConstructor := &world_provider.ChunkConstructor{}
 	for {
 		if(breaker!=nil) {

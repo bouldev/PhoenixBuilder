@@ -36,6 +36,8 @@ type StructureSettings struct {
 	// IgnoreBlocks specifies if the structure should ignore blocks or include them. If set to false, blocks
 	// will show up in the exported structure.
 	IgnoreBlocks bool
+	// See gophertunnel
+	AllowNonTickingChunks bool
 	// Size is the size of the area that is about to be exported. The area exported will start at the
 	// Position + Offset, and will extend as far as Size specifies.
 	Size BlockPos
@@ -70,6 +72,7 @@ func StructSettings(r IO, x *StructureSettings) {
 	r.String(&x.PaletteName)
 	r.Bool(&x.IgnoreEntities)
 	r.Bool(&x.IgnoreBlocks)
+	r.Bool(&x.AllowNonTickingChunks)
 	r.UBlockPos(&x.Size)
 	r.UBlockPos(&x.Offset)
 	r.Varint64(&x.LastEditingPlayerUniqueID)

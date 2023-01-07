@@ -36,6 +36,8 @@ func (pk *InventoryContent) Unmarshal(r *protocol.Reader) {
 	var length uint32
 	r.Varuint32(&pk.WindowID)
 	r.Varuint32(&length)
+	// IGNORED !!!
+	return
 
 	pk.Content = make([]protocol.ItemInstance, length)
 	for i := uint32(0); i < length; i++ {
