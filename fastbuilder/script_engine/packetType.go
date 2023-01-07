@@ -168,7 +168,7 @@ func init() {
 		"IDAddVolumeEntity":                   packet.IDAddVolumeEntity,
 		"IDRemoveVolumeEntity":                packet.IDRemoveVolumeEntity,
 //		"IDNeteaseJson":                       packet.IDNeteaseJson,
-		"IDPyRpc":                             packet.IDPyRpc,
+		//"IDPyRpc":                             packet.IDPyRpc,
 	}
 	bridge.PacketNameMap=PacketNameMap
 }
