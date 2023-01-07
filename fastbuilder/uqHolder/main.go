@@ -534,7 +534,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	//	}
 	//}
 	// meaning not clear
-	case *packet.PlayerHotBar:
+	/*case *packet.PlayerHotBar:
 		uq.PlayerHotBar = *p
 	// not supported, plan to support
 	case *packet.InventoryTransaction:
@@ -559,8 +559,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	// no need to support
 	case *packet.PlayStatus:
 	// no need to support
-	case *packet.PyRpc:
-	//not handled
+	*/
 	default:
 		if !uq.displayUnknownPackets {
 			break
@@ -582,7 +581,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 func (uq *UQHolder) UpdateFromConn(conn *minecraft.Conn) {
 	gd := conn.GameData()
 	uq.BotUniqueID = gd.EntityUniqueID
-	uq.ConnectTime = gd.ConnectTime
+	uq.ConnectTime = time.Time{} // No longer needed
 	uq.WorldName = gd.WorldName
 	uq.WorldGameMode = gd.WorldGameMode
 	uq.WorldDifficulty = uint32(gd.Difficulty)

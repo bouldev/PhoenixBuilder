@@ -70,6 +70,7 @@ func (o *Assembler) GenRequestFromLevelChunk(pk *packet.LevelChunk) (requests []
 		requests = append(requests, &packet.SubChunkRequest{
 			Dimension: 0,
 			Position:  protocol.SubChunkPos{pk.Position.X(), int32(i), pk.Position.Z()},
+			Offsets: [][3]int8{[3]int8{0,0,0}},
 		})
 	}
 	return requests
@@ -121,8 +122,8 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 			return
 		}
 	}()
-	cp := define.ChunkPos{pk.SubChunkX, pk.SubChunkZ}
-	// subChunkIndex := pk.SubChunkY
+	cp := define.ChunkPos{pk.Position[0], pk.Position[2]}
+	// subChunkIndex := pk.Position[1]
 	o.taskMu.RLock()
 	if chunkData, hasK := o.pendingTasks[cp]; !hasK {
 		o.taskMu.RUnlock()
@@ -130,20 +131,18 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 		return nil
 	} else {
 		o.taskMu.RUnlock()
-		if pk.RequestResult != packet.SubChunkRequestResultSuccess {
-			// cancel pending task
-			// fmt.Println("Cancel Pending Task")
+		if pk.SubChunkEntries[0].Result != protocol.SubChunkResultSuccess {
 			o.taskMu.Lock()
 			delete(o.pendingTasks, cp)
 			o.taskMu.Unlock()
 			return nil
 		}
-		subIndex, subChunk, nbts, err := chunk.NEMCSubChunkDecode(pk.Data)
+		subIndex, subChunk, nbts, err := chunk.NEMCSubChunkDecode(pk.SubChunkEntries[0].RawPayload)
 		if err != nil {
 			panic(err)
 		}
-		if subIndex != int8(pk.SubChunkY) || subIndex > 20 {
-			panic(fmt.Sprintf("sub Index conflict %v %v", pk.SubChunkY, subIndex))
+		if subIndex != int8(pk.Position[1]) || subIndex > 20 {
+			panic(fmt.Sprintf("sub Index conflict %v %v", pk.Position[1], subIndex))
 		}
 		subs := chunkData.Chunk.Sub()
 		//if subChunk.Empty() {

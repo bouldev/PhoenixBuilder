@@ -1,7 +1,6 @@
 package minecraft
 
 import (
-	"fmt"
 	"bytes"
 	"context"
 	"crypto/ecdsa"
@@ -9,23 +8,23 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/base64"
-	"io/ioutil"
-	"log"
-	rand2 "math/rand"
-	"net"
+	"github.com/google/uuid"
+	"github.com/sandertv/go-raknet"
 	"phoenixbuilder/minecraft/internal/resource"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/login"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"io"
+	"log"
+	rand2 "math/rand"
+	"net"
+	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/google/uuid"
-	"github.com/sandertv/go-raknet"
 )
 
-type GameAuthenticator interface {
+type Authenticator interface {
 	GetAccess(publicKey []byte) (address string, chainInfo string, err error)
 }
 
@@ -43,8 +42,10 @@ type Dialer struct {
 	// XUID of the player.
 	// The IdentityData object is obtained using Minecraft auth if Email and Password are set. If not, the
 	// object provided here is used, or a default one if left empty.
-	IdentityData  login.IdentityData
-	Authenticator GameAuthenticator
+	IdentityData login.IdentityData
+	
+	// Authenticator towards netease's server
+	Authenticator
 
 	// PacketFunc is called whenever a packet is read from or written to the connection returned when using
 	// Dialer.Dial(). It includes packets that are otherwise covered in the connection sequence, such as the
@@ -56,6 +57,12 @@ type Dialer struct {
 	// server will send chunks as blobs, which may be saved by the client so that chunks don't have to be
 	// transmitted every time, resulting in less network transmission.
 	EnableClientCache bool
+
+	// KeepXBLIdentityData, if set to true, enables passing XUID and title ID to the target server
+	// if the authentication token is not set. This is technically not valid and some servers might kick
+	// the client when an XUID is present without logging in.
+	// For getting this to work with BDS, authentication should be disabled.
+	KeepXBLIdentityData bool
 }
 
 // Dial dials a Minecraft connection to the address passed over the network passed. The network is typically
@@ -63,9 +70,9 @@ type Dialer struct {
 //
 // A zero value of a Dialer struct is used to initiate the connection. A custom Dialer may be used to specify
 // additional behaviour.
-func Dial(network, address string) (*Conn, error) {
+func Dial(network string) (*Conn, error) {
 	var d Dialer
-	return d.Dial(network, address)
+	return d.Dial(network)
 }
 
 // DialTimeout dials a Minecraft connection to the address passed over the network passed. The network is
@@ -88,7 +95,7 @@ func DialContext(ctx context.Context, network string) (*Conn, error) {
 
 // Dial dials a Minecraft connection to the address passed over the network passed. The network is typically
 // "raknet". A Conn is returned which may be used to receive packets from and send packets to.
-func (d Dialer) Dial(network, address string) (*Conn, error) {
+func (d Dialer) Dial(network string) (*Conn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 	return d.DialContext(ctx, network)
@@ -108,45 +115,23 @@ func (d Dialer) DialTimeout(network string, timeout time.Duration) (*Conn, error
 // If a connection is not established before the context passed is cancelled, DialContext returns an error.
 func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, err error) {
 	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-	data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
-	address, chainData, err := d.Authenticator.GetAccess(data)
+	
+	armoured_key, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
+
+	address, chainData, err := d.Authenticator.GetAccess(armoured_key)
 	if err != nil {
 		return nil, err
 	}
-
-	// var chainData string
-	// if d.ServerCode != "" {
-	// 	data, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
-	// 	pubKeyData := base64.StdEncoding.EncodeToString(data)
-	// 	chainAddr, code, err := d.Client.Auth(d.ServerCode, d.Password, pubKeyData, d.Token)
-	// 	chainAndAddr := strings.Split(chainAddr, "|")
-
-	// 	if err != nil {
-	// 		if code == -3 {
-	// 			homedir, err := os.UserHomeDir()
-	// 			if err != nil {
-	// 				fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
-	// 				homedir = "."
-	// 			}
-	// 			fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
-	// 			os.MkdirAll(fbconfigdir, 0755)
-	// 			token := filepath.Join(fbconfigdir, "fbtoken")
-	// 			os.Remove(token)
-	// 		}
-	// 		return nil, err
-	// 	}
-	// 	chainData = chainAndAddr[0]
-	// 	address = chainAndAddr[1]
-	// }
-	// if d.ErrorLog == nil {
-	// 	d.ErrorLog = log.New(os.Stderr, "", log.LstdFlags)
-	// }
+	
+	if d.ErrorLog == nil {
+		d.ErrorLog = log.New(os.Stderr, "", log.LstdFlags)
+	}
 	var netConn net.Conn
 
 	switch network {
 	case "raknet":
 		// If the network is specifically 'raknet', we use the raknet library to dial a RakNet connection.
-		dialer := raknet.Dialer{ErrorLog: log.New(ioutil.Discard, "", 0)}
+		dialer := raknet.Dialer{ErrorLog: log.New(io.Discard, "", 0)}
 		var pong []byte
 		pong, err = dialer.PingContext(ctx, address)
 		if err != nil {
@@ -180,10 +165,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	setAndroidData(&conn.clientData)
 
 	request = login.Encode(chainData, conn.clientData, key)
-	identityData, _, _, err := login.Parse(request)
-	if err!=nil {
-		fmt.Printf("WARNING: Failed on login info parsing: %v\n", err)
-	}
+	identityData, _, _, _ := login.Parse(request)
 	// If we got the identity data from Minecraft auth, we need to make sure we set it in the Conn too, as
 	// we are not aware of the identity data ourselves yet.
 	conn.identityData = identityData
@@ -218,14 +200,14 @@ func listenConn(conn *Conn, logger *log.Logger, c chan struct{}) {
 		packets, err := conn.dec.Decode()
 		if err != nil {
 			if !raknet.ErrConnectionClosed(err) {
-				fmt.Printf("error reading from dialer connection: %v\n", err)
+				logger.Printf("error reading from dialer connection: %v\n", err)
 			}
 			return
 		}
 		for _, data := range packets {
 			loggedInBefore := conn.loggedIn
 			if err := conn.receive(data); err != nil {
-				fmt.Printf("error: %v", err)
+				logger.Printf("error: %v", err)
 				return
 			}
 			if !loggedInBefore && conn.loggedIn {

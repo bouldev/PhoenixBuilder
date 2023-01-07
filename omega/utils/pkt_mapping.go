@@ -181,7 +181,6 @@ func init() {
 		"IDClientStartItemCooldown":           packet.IDClientStartItemCooldown,
 		"IDScriptMessage":                     packet.IDScriptMessage,
 		"IDCodeBuilderSource":                 packet.IDCodeBuilderSource,
-		"IDPyRpc":                             packet.IDPyRpc,
 	}
 	PktIDInvMapping = make(map[int]string)
 	PktIDNames = make([]string, 0)

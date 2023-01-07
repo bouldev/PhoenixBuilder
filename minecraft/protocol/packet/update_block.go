@@ -5,10 +5,10 @@ import (
 )
 
 const (
-	BlockUpdateNeighbours = 1 << iota //1
-	BlockUpdateNetwork                //2
-	BlockUpdateNoGraphics             //4
-	BlockUpdatePriority               //8
+	BlockUpdateNeighbours = 1 << iota
+	BlockUpdateNetwork
+	BlockUpdateNoGraphics
+	BlockUpdatePriority
 )
 
 // UpdateBlock is sent by the server to update a block client-side, without resending the entire chunk that

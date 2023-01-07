@@ -8,9 +8,8 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"io"
-	"log"
-	"net"
+	"github.com/google/uuid"
+	"github.com/sandertv/go-raknet"
 	"phoenixbuilder/minecraft/internal"
 	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/minecraft/protocol"
@@ -18,15 +17,15 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/resource"
 	"phoenixbuilder/minecraft/text"
-	"strings"
-	"sync"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/sandertv/go-raknet"
 	"go.uber.org/atomic"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
+	"io"
+	"log"
+	"net"
+	"strings"
+	"sync"
+	"time"
 )
 
 // exemptedResourcePack is a resource pack that is exempted from being downloaded. These packs may be directly
@@ -111,7 +110,7 @@ type Conn struct {
 	resourcePacks []*resource.Pack
 	// biomes is a map of biome definitions that the listener may hold. Each client will be sent these biome
 	// definitions upon joining.
-	biomes map[string]interface{}
+	biomes map[string]any
 	// texturePacksRequired specifies if clients that join must accept the texture pack in order for them to
 	// be able to join the server. If they don't accept, they can only leave the server.
 	texturePacksRequired bool
@@ -126,9 +125,7 @@ type Conn struct {
 	disconnectMessage atomic.String
 
 	shieldID atomic.Int32
-
-	// PhoenixBuilder debug mode, which means this connection is fake
-	// and nothing will be sended or received from it.
+	
 	DebugMode bool
 }
 
@@ -356,10 +353,6 @@ func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
 
 func (conn *Conn) ReadPacketAndBytes() (pk packet.Packet, data []byte, err error) {
 	if data, ok := conn.takeDeferredPacket(); ok {
-		// if data.h.PacketID != 67 {
-		// 	fmt.Println(data.h.PacketID)
-		// }
-
 		pk, err := data.decode(conn)
 		if err != nil {
 			conn.log.Println(err)
@@ -1142,7 +1135,6 @@ func (conn *Conn) handleStartGame(pk *packet.StartGame) error {
 		WorldGameMode:                pk.WorldGameMode,
 		ServerAuthoritativeInventory: pk.ServerAuthoritativeInventory,
 		Experiments:                  pk.Experiments,
-		ConnectTime:                  time.Now(),
 	}
 	for _, item := range pk.Items {
 		if item.Name == "minecraft:shield" {
@@ -1254,7 +1246,7 @@ func (conn *Conn) handlePlayStatus(pk *packet.PlayStatus) error {
 // handshake packet to the client and enables encryption after that.
 func (conn *Conn) enableEncryption(clientPublicKey *ecdsa.PublicKey) error {
 	signer, _ := jose.NewSigner(jose.SigningKey{Key: conn.privateKey, Algorithm: jose.ES384}, &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{"x5u": login.MarshalPublicKey(&conn.privateKey.PublicKey)},
+		ExtraHeaders: map[jose.HeaderKey]any{"x5u": login.MarshalPublicKey(&conn.privateKey.PublicKey)},
 	})
 	// We produce an encoded JWT using the header and payload above, then we send the JWT in a ServerToClient-
 	// Handshake packet so that the client can initialise encryption.

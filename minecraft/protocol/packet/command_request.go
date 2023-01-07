@@ -17,6 +17,7 @@ type CommandRequest struct {
 	// Internal specifies if the command request internal. Setting it to false seems to work and the usage of
 	// this field is not known.
 	Internal bool
+	// Unknown NetEase specified field
 	UnLimited bool
 }
 

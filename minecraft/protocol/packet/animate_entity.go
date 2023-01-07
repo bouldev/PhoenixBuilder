@@ -51,7 +51,6 @@ func (pk *AnimateEntity) Marshal(w *protocol.Writer) {
 
 // Unmarshal ...
 func (pk *AnimateEntity) Unmarshal(r *protocol.Reader) {
-	return
 	r.String(&pk.Animation)
 	r.String(&pk.NextState)
 	r.String(&pk.StopCondition)

@@ -3,7 +3,6 @@ package minecraft
 import (
 	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
-	"time"
 )
 
 // GameData is a loose wrapper around a part of the data found in the StartGame packet. It holds data sent
@@ -74,6 +73,4 @@ type GameData struct {
 	// Experiments is a list of experiments enabled on the server side. These experiments are used to enable
 	// disable experimental features.
 	Experiments []protocol.ExperimentData
-	// The time when the client connected to the server.
-	ConnectTime time.Time
 }

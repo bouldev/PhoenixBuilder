@@ -202,7 +202,10 @@ func init() {
 		IDClientStartItemCooldown:           func() Packet { return &ClientStartItemCooldown{} },
 		IDScriptMessage:                     func() Packet { return &ScriptMessage{} },
 		IDCodeBuilderSource:                 func() Packet { return &CodeBuilderSource{} },
-		IDPyRpc:                             func() Packet { return &PyRpc{} },
+		IDTickingAreasLoadStatus:            func() Packet { return &TickingAreasLoadStatus{} },
+		IDDimensionData:                     func() Packet { return &DimensionData{} },
+		IDAgentAction:                       func() Packet { return &AgentAction{} },
+		IDChangeMobProperty:                 func() Packet { return &ChangeMobProperty{} },
 	}
 	for id, pk := range packets {
 		Register(id, pk)

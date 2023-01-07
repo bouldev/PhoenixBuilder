@@ -8,7 +8,7 @@ import (
 
 // ANSI converts all Minecraft text formatting codes in the values passed to ANSI formatting codes, so that
 // it may be displayed properly in the terminal.
-func ANSI(a ...interface{}) string {
+func ANSI(a ...any) string {
 	str := make([]string, len(a))
 	for i, v := range a {
 		str[i] = minecraftReplacer.Replace(fmt.Sprint(v))
@@ -22,7 +22,7 @@ func ANSI(a ...interface{}) string {
 // 	red, purple, yellow, white, dark-yellow, obfuscated, bold (b), and italic (i).
 // These HTML tags may also be nested, like so:
 // `<red>Hello <bold>World</bold>!</red>`
-func Colourf(format string, a ...interface{}) string {
+func Colourf(format string, a ...any) string {
 	str := fmt.Sprintf(format, a...)
 
 	e := &enc{w: &strings.Builder{}, first: true}
@@ -52,20 +52,14 @@ func (e *enc) process(tok html.Token) {
 	}
 	switch tok.Type {
 	case html.TextToken:
-		for _, s := range e.formatStack {
-			e.w.WriteString(s)
-		}
-		e.w.WriteString(tok.Data)
-		if len(e.formatStack) != 0 {
-			e.w.WriteString(reset)
-		}
+		e.writeText(tok.Data)
 	case html.StartTagToken:
 		if format, ok := strMap[tok.Data]; ok {
 			e.formatStack = append(e.formatStack, format)
 			return
 		}
 		// Not a known colour, so just write the token as a string.
-		e.w.WriteString("<" + tok.Data + ">")
+		e.writeText("<" + tok.Data + ">")
 	case html.EndTagToken:
 		for i, format := range e.formatStack {
 			if f, ok := strMap[tok.Data]; ok && f == format {
@@ -74,6 +68,17 @@ func (e *enc) process(tok html.Token) {
 			}
 		}
 		// Not a known colour, so just write the token as a string.
-		e.w.WriteString("</" + tok.Data + ">")
+		e.writeText("</" + tok.Data + ">")
+	}
+}
+
+// writeText writes text to the encoder by encasing it in the current format stack.
+func (e *enc) writeText(s string) {
+	for _, format := range e.formatStack {
+		e.w.WriteString(format)
+	}
+	e.w.WriteString(s)
+	if len(e.formatStack) != 0 {
+		e.w.WriteString(reset)
 	}
 }

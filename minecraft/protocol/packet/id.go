@@ -179,5 +179,8 @@ const (
 	IDClientStartItemCooldown
 	IDScriptMessage
 	IDCodeBuilderSource
-	IDPyRpc = 0xC8
+	IDTickingAreasLoadStatus
+	IDDimensionData
+	IDAgentAction
+	IDChangeMobProperty
 )
