@@ -104,14 +104,7 @@ func (bdump *BDumpLegacy) writeHeader(w *bytes.Buffer) error {
 		return err
 	}
 	_, err = w.Write([]byte{0})
-	if err != nil {
-		return err
-	}
-	// 写入作者之名
-	// 注：现在不再写入作者信息
-	_, err = w.Write([]byte{0x1f, 0x75})
 	return err
-	// 放置容器需要用到 117 号的 RunTimeId 调色板表
 }
 
 func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
