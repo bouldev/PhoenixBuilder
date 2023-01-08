@@ -62,8 +62,8 @@ func CheckUpdate(currentVersion string) (bool, string) {
 		fmt.Printf("Failed to check update due to invalid response received from GitHub.\n")
 		return false, ""
 	}
-	version, err:=json_structure["tag_name"].(string)
-	if err!=nil {
+	version, found_tag_name_item:=json_structure["tag_name"].(string)
+	if !found_tag_name_item {
 		fmt.Printf("Unknown error occured while checking the update\n")
 		return false, ""
 	}
