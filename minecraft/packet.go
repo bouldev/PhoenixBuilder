@@ -44,7 +44,8 @@ func (p *packetData) decode(conn *Conn) (pk packet.Packet, err error) {
 	r := protocol.NewReader(p.payload, conn.shieldID.Load())
 	defer func() {
 		if recoveredErr := recover(); recoveredErr != nil {
-			err = fmt.Errorf("%T: %w", pk, recoveredErr.(error))
+			// 
+			//err = fmt.Errorf("%T: %w", pk, recoveredErr.(error))
 		}
 	}()
 	pk.Unmarshal(r)
