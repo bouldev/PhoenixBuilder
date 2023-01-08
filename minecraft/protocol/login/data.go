@@ -62,6 +62,11 @@ func (data IdentityData) Validate() error {
 	if id, err := uuid.Parse(data.Identity); err != nil || id == uuid.Nil {
 		return fmt.Errorf("UUID must be parseable as a valid UUID, but got %v", data.Identity)
 	}
+	// NetEase's rule for DisplayName is different, where unicode characters
+	// were enabled to use. We are not going to open a server as it's not
+	// possible for NetEase's Minecraft, so these checks below could be
+	// ignored.
+	return nil
 	if len(data.DisplayName) == 0 || len(data.DisplayName) > 15 {
 		return fmt.Errorf("DisplayName must not be empty or longer than 15 characters, but got %v characters", len(data.DisplayName))
 	}
