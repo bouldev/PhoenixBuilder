@@ -72,7 +72,7 @@ var I18nDict_ja_JP map[uint16]string = map[uint16]string{
 	InvalidPosition:                     "働けるポジションを取得できませんでした。 (無視でOK)",
 	Lang_Config_ErrOnCreate:             "言語設定ファイルを作成できませんでした: %v",
 	Lang_Config_ErrOnSave:               "言語設定の保存に失敗しました: %v",
-	LanguageName:                        "日本語 (日本国)",
+	LanguageName:                        "日本語",
 	LanguageUpdated:                     "言語設定を変更しました。",
 	Logout_Done:                         "FastBuilder ユーザーセンターからログアウトしました。",
 	Menu_BackButton:                     "< Back", // REMOVED FEATURES NO TRANSLATION

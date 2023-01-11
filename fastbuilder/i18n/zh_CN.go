@@ -72,7 +72,7 @@ var I18nDict_zh_CN map[uint16]string = map[uint16]string{
 	InvalidPosition:                     "未获取到有效坐标。（可忽略此错误）",
 	Lang_Config_ErrOnCreate:             "创建语言配置文件时出错：%v",
 	Lang_Config_ErrOnSave:               "保存语言配置时出错：%v",
-	LanguageName:                        "简体中文 (中国)",
+	LanguageName:                        "简体中文",
 	LanguageUpdated:                     "语言偏好已更新",
 	Logout_Done:                         "已从FastBuilder用户中心退出登录。",
 	Menu_BackButton:                     "< 返回",

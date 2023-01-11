@@ -72,7 +72,7 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	InvalidPosition:                     "No position got. (ignorable)",
 	Lang_Config_ErrOnCreate:             "Error creating language config file: %v",
 	Lang_Config_ErrOnSave:               "Error saving language config: %v",
-	LanguageName:                        "English (UK)",
+	LanguageName:                        "British English",
 	LanguageUpdated:                     "Language preference has been updated",
 	Logout_Done:                         "Logged out from FastBuilder User Centre.",
 	Menu_BackButton:                     "< Back",
