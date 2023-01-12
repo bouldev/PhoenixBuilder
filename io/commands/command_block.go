@@ -14,7 +14,7 @@ func (sender *CommandSender) UpdateCommandBlock(x int32,y int32,z int32,d *types
 		Block: true,
 		Position: protocol.BlockPos {x,y,z},
 		Mode: d.Mode,
-		NeedsRedstone: d.NeedRedstone,
+		NeedsRedstone: d.NeedsRedstone,
 		Conditional: d.Conditional,
 		Command: d.Command,
 		LastOutput: d.LastOutput,

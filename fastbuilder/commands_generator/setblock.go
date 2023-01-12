@@ -10,8 +10,8 @@ func SetBlockRequest(module *types.Module, config *types.MainConfig) string {
 	Point := module.Point
 	Method := config.Method
 	if Block != nil {
-		if Block.BlockStates != nil {
-			return fmt.Sprintf("setblock %d %d %d %s %s %s", Point.X, Point.Y, Point.Z, *Block.Name, *Block.BlockStates, Method)
+		if len(Block.BlockStates)==0 {
+			return fmt.Sprintf("setblock %d %d %d %s %s %s", Point.X, Point.Y, Point.Z, *Block.Name, Block.BlockStates, Method)
 		} else {
 			return fmt.Sprintf("setblock %d %d %d %s %d %s", Point.X, Point.Y, Point.Z, *Block.Name, Block.Data, Method)
 		}

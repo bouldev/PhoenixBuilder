@@ -264,7 +264,7 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 				return err
 			}
 		} else {
-			if mdl.Block.BlockStates == nil {
+			if len(mdl.Block.BlockStates) == 0{
 				err := writer.WriteCommand(&command.PlaceBlock{
 					BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
 					BlockData:             uint16(mdl.Block.Data),
@@ -275,14 +275,11 @@ func (bdump *BDumpLegacy) writeBlocks(w *bytes.Buffer) error {
 			} else {
 				err := writer.WriteCommand(&command.PlaceBlockWithBlockStates{
 					BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
-					BlockStatesString:     *mdl.Block.BlockStates,
+					BlockStatesString:     mdl.Block.BlockStates,
 				})
 				if err != nil {
 					return err
 				}
-				// 以方块状态为依据放置方块
-				// 我更推荐使用这一个方式来放置方块，因为方块数据值(附加值)已不再在新版本 MC 中使用
-				// ——Happy2018new
 			}
 		}
 		/*

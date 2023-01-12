@@ -344,7 +344,7 @@ func (bdump *BDump) writeBlocks(w *bytes.Buffer) error {
 			}else{
 				fBools[2]=0
 			}
-			if dt.NeedRedstone {
+			if dt.NeedsRedstone {
 				fBools[3]=1
 			}else{
 				fBools[3]=0

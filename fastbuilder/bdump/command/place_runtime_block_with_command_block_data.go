@@ -59,7 +59,7 @@ func (cmd *PlaceRuntimeBlockWithCommandBlockData) Marshal(writer io.Writer) erro
 	if cmd.CommandBlockData.Conditional {
 		uint32_buf[2]=1
 	}
-	if cmd.CommandBlockData.NeedRedstone {
+	if cmd.CommandBlockData.NeedsRedstone {
 		uint32_buf[3]=1
 	}
 	// ELSE statements are not required as the buffer was initiated w/ 0
@@ -121,9 +121,9 @@ func (cmd *PlaceRuntimeBlockWithCommandBlockData) Unmarshal(reader io.Reader) er
 		cmd.CommandBlockData.Conditional=true
 	}
 	if buf[3]==0 {
-		cmd.CommandBlockData.NeedRedstone=false
+		cmd.CommandBlockData.NeedsRedstone=false
 	}else{
-		cmd.CommandBlockData.NeedRedstone=true
+		cmd.CommandBlockData.NeedsRedstone=true
 	}
 	return nil
 }

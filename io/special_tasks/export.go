@@ -329,7 +329,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							TickDelay:          tickdelay,
 							TrackOutput:        tob,
 							Conditional:        conb,
-							NeedRedstone:       nrb,
+							NeedsRedstone:       nrb,
 						}
 						//fmt.Printf("%#v\n",cbdata)
 					} else {

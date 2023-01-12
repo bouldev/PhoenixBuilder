@@ -19,7 +19,7 @@ type RuntimeModule struct {
 
 type Block struct {
 	Name        *string
-	BlockStates *string
+	BlockStates string
 	Data        uint16
 }
 
@@ -32,7 +32,7 @@ type CommandBlockData struct {
 	ExecuteOnFirstTick bool //byte
 	TrackOutput        bool //byte
 	Conditional        bool
-	NeedRedstone       bool
+	NeedsRedstone       bool
 }
 
 type ChestData []ChestSlot

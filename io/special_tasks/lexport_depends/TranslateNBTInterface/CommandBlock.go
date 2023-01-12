@@ -120,6 +120,6 @@ func GetCommandBlockData(cb map[string]interface{}, blockName string) (types.Com
 		ExecuteOnFirstTick: executeOnFirstTick,
 		TrackOutput:        trackOutput,
 		Conditional:        conditionalMode,
-		NeedRedstone:       needRedstone,
+		NeedsRedstone:       needRedstone,
 	}, nil
 }
