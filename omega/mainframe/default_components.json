@@ -130,7 +130,7 @@
               "价格": 3,
               "商品显示名": "苹果",
               "给予模版": [
-                "give [player] apple [count][currency]",
+                "give [player] apple [count]",
                 "/tellraw [player] {\"rawtext\":[{\"text\":\"2401PT: 苹果是你的了, 共计[totalPrice], 你的钱[moneyHas]->[moneyLeft][currency]([currencyCMD])\"}]}"
               ]
             },
@@ -1631,17 +1631,22 @@
     "来源": "Built-In",
     "配置": {
       "Omega接管时指令": [
-        "tellraw @a  {\"rawtext\":[{\"text\":\"§6[player] 将被封禁 [day]天[hour]时[min]分[sec]秒\"}]}",
+        "tellraw @a {\"rawtext\":[{\"text\":\"§6[player] 将被封禁 [day]天[hour]时[min]分[sec]秒\"}]}",
         "scoreboard players set [player] 封禁时间 0"
       ],
       "踢出指令": [
-        "kick [player] 你已被封禁 [day]天[hour]时[min]分[sec]秒"
+        "kick [player] 你已被封禁\n剩余时间: [day]天[hour]时[min]分[sec]秒"
+      ],
+      "设备封禁时踢出指令": [
+        "kick [player] 当前设备已被封禁\n剩余时间: [day]天[hour]时[min]分[sec]秒"
       ],
       "到达封禁时间Omega结束接管时指令": [
         "tellraw [player] {\"rawtext\":[{\"text\":\"§6你的封禁已经结束，下次请好好做人\"}]}"
       ],
       "延迟踢出时间": 5,
       "登录时延迟发送": 20,
+      "是否检查设备ID": false,
+      "设备ID相关说明": "机器人仅能获取到附近玩家的设备ID, 建议在玩家上线时将机器人传送至其位置",
       "读取封禁时间的计分板名": "封禁时间",
       "检查周期": 3,
       "选择器": "@a[scores={封禁时间=1..}]",

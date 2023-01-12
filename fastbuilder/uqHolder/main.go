@@ -34,6 +34,7 @@ type Player struct {
 	ActionPermissions       uint32
 	OPPermissionLevel       uint32
 	CustomStoredPermissions uint32
+	DeviceID                string
 	// only when the player can be seen by bot
 	EntityRuntimeID uint64
 	Entity          *Entity
@@ -159,9 +160,7 @@ func (uq *UQHolder) gc(deadline uint64) {
 	for _, p := range uq.playersByUUID {
 		if p.Entity != nil && p.EntityRuntimeID != 0 {
 			if e, hask := uq.EntitiesByRuntimeID[p.EntityRuntimeID]; hask && e.LastUpdateTick < deadline {
-				if _, hasK := uq.entitiesByUniqueID[e.UniqueID]; hasK {
-					delete(uq.entitiesByUniqueID, e.UniqueID)
-				}
+				delete(uq.entitiesByUniqueID, e.UniqueID)
 				delete(uq.EntitiesByRuntimeID, p.EntityRuntimeID)
 			}
 			p.Entity = nil
@@ -177,9 +176,7 @@ func (uq *UQHolder) gc(deadline uint64) {
 	}
 	for _, rtid := range gcEID {
 		if e, hask := uq.EntitiesByRuntimeID[rtid]; hask && e.LastUpdateTick < deadline {
-			if _, hasK := uq.entitiesByUniqueID[e.UniqueID]; hasK {
-				delete(uq.entitiesByUniqueID, e.UniqueID)
-			}
+			delete(uq.entitiesByUniqueID, e.UniqueID)
 			delete(uq.EntitiesByRuntimeID, rtid)
 		}
 	}
@@ -278,8 +275,8 @@ func GetStringContents(s string) []string {
 }
 func ToPlainName(name string) string {
 	if strings.Contains(name, ">") {
-		strings.ReplaceAll(name, ">", " ")
-		strings.ReplaceAll(name, "<", " ")
+		name = strings.ReplaceAll(name, ">", " ")
+		name = strings.ReplaceAll(name, "<", " ")
 	}
 	if name != "" {
 		names := GetStringContents(name)
@@ -297,7 +294,7 @@ func (uq *UQHolder) GetBotName() string {
 	}
 }
 
-var recordNoPlayerEntity = false
+// var recordNoPlayerEntity = false
 
 func (uq *UQHolder) Update(pk packet.Packet) {
 	uq.mu.Lock()
@@ -335,9 +332,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 				if p, ok := uq.playersByUUID[e.UUID]; ok {
 					if p.Entity != nil && p.EntityRuntimeID != 0 {
 						if e, hask := uq.EntitiesByRuntimeID[p.EntityRuntimeID]; hask {
-							if _, hasK := uq.entitiesByUniqueID[e.UniqueID]; hasK {
-								delete(uq.entitiesByUniqueID, e.UniqueID)
-							}
+							delete(uq.entitiesByUniqueID, e.UniqueID)
 							delete(uq.EntitiesByRuntimeID, p.EntityRuntimeID)
 						}
 						p.Entity = nil
@@ -434,7 +429,7 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 		player.ActionPermissions = p.ActionPermissions
 		player.OPPermissionLevel = p.PermissionLevel
 		player.CustomStoredPermissions = p.CustomStoredPermissions
-
+		player.DeviceID = p.DeviceID
 	case *packet.MobEquipment:
 		entity := uq.GetEntityByRuntimeID(p.EntityRuntimeID)
 		entity.Slots[p.InventorySlot] = &Equipment{
