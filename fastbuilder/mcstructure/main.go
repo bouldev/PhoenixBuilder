@@ -1,36 +1,26 @@
-package lexport_depends
+package mcstructure
 
 import (
 	"fmt"
 	"math"
 	"phoenixbuilder/fastbuilder/types"
-	TranslateNBTInerface "phoenixbuilder/io/special_tasks/lexport_depends/TranslateNBTInterface"
+	"phoenixbuilder/fastbuilder/mcstructure/nbttranslatinginterface"
 	"strconv"
 	"strings"
 )
 
-// 用于描述一个区域的基本信息，也就是区域的起点位置及区域的尺寸
 type Area struct {
-	BeginX int
-	BeginY int
-	BeginZ int
-	SizeX  int
-	SizeY  int
-	SizeZ  int
+	BeginX int32
+	BeginY int32
+	BeginZ int32
+	SizeX  int32
+	SizeY  int32
+	SizeZ  int32
 }
 
-// 用于描述一个区域的坐标
-type AreaLocation struct {
-	Posx int
-	Posz int
-}
+type AreaLocation [2]int
 
-// 用于描述一个方块的坐标
-type BlockPos struct {
-	Posx int
-	Posy int
-	Posz int
-}
+type BlockPos [3]int32
 
 /*
 用于存放一个 MCBE 的结构；这里面的数据稍微作了一些处理，只保留了需要的部分
@@ -57,43 +47,42 @@ type Mcstructure struct {
 因此，返回值 map[int]AreaLocation 是返回值 map[AreaLocation]int 的逆过程
 */
 func SplitArea(
-	startX int, startY int, startZ int,
-	endX int, endY int, endZ int,
-	splitSizeX int, splitSizeZ int,
+	beginPos BlockPos,
+	endPos BlockPos,
+	splitSizeX int32, splitSizeZ int32,
 	useSpecialSplitWay bool,
 ) ([]Area, map[AreaLocation]int, map[int]AreaLocation) {
 	if splitSizeX < 0 {
-		splitSizeX = splitSizeX * -1
+		splitSizeX = -splitSizeX
 	}
 	if splitSizeZ < 0 {
-		splitSizeZ = splitSizeZ * -1
+		splitSizeZ = -splitSizeZ
 	}
 	// 考虑一些特殊的情况，此举是为了更高的兼容性
-	var save int
-	if endX < startX {
-		save = startX
-		startX = endX
-		endX = save
+	if endPos[0] < beginPos[0] {
+		tmp := beginPos[0]
+		beginPos[0] = endPos[0]
+		endPos[0]=tmp
 	}
-	if endY < startY {
-		save = startY
-		startY = endY
-		endY = save
+	if endPos[1] < beginPos[1] {
+		tmp:=beginPos[1]
+		beginPos[1]=endPos[1]
+		endPos[1]=tmp
 	}
-	if endZ < startZ {
-		save = startZ
-		startZ = endZ
-		endZ = save
+	if endPos[2] < beginPos[2] {
+		tmp:=beginPos[2]
+		beginPos[2]=endPos[2]
+		endPos[2]=tmp
 	}
 	// 考虑一些特殊的情况，此举是为了更高的兼容性
-	sizeX := endX - startX + 1
-	sizeY := endY - startY + 1
-	sizeZ := endZ - startZ + 1
+	sizeX := endPos[0] - beginPos[0] + 1
+	sizeY := endPos[1] - beginPos[1] + 1
+	sizeZ := endPos[2] - beginPos[2] + 1
 	// 取得 Area 的大小
 	chunkX_length := int(math.Ceil(float64(sizeX) / float64(splitSizeX)))
 	chunkZ_length := int(math.Ceil(float64(sizeZ) / float64(splitSizeZ)))
 	// 取得各轴上需要拆分的区域数
-	ans := make([]Area, chunkX_length*chunkZ_length) // 这个东西最终会 return 掉
+	ret := make([]Area, chunkX_length*chunkZ_length) // 这个东西最终会 return 掉
 	areaLoctionToInt := map[AreaLocation]int{}       // 知道了区域的坐标求区域在 []Area 的位置
 	IntToareaLoction := map[int]AreaLocation{}       // 知道了区域在 []Area 的位置求区域坐标
 	facing := -1                                     // 蛇形处理的时候需要用到这个
@@ -101,25 +90,25 @@ func SplitArea(
 	// 初始化
 	for chunkX := 1; chunkX <= chunkX_length; chunkX++ {
 		facing = facing * -1
-		BeginX := splitSizeX*(chunkX-1) + startX
+		BeginX := splitSizeX*(int32(chunkX)-1) + beginPos[0]
 		xLength := splitSizeX
-		if BeginX+xLength-1 > endX {
-			xLength = endX - BeginX + 1
+		if BeginX+xLength-1 > endPos[0] {
+			xLength = endPos[0] - BeginX + 1
 		}
 		for chunkZ := 1; chunkZ <= chunkZ_length; chunkZ++ {
-			key++ // p = p + 1
+			key++
 			currentChunkZ := chunkZ
 			if useSpecialSplitWay && facing == -1 {
 				currentChunkZ = chunkZ_length - currentChunkZ + 1
 			}
-			BeginZ := splitSizeZ*(currentChunkZ-1) + startZ
+			BeginZ := splitSizeZ*(int32(currentChunkZ)-1) + beginPos[2]
 			zLength := splitSizeZ
-			if BeginZ+zLength-1 > endZ {
-				zLength = endZ - BeginZ + 1
+			if BeginZ+zLength-1 > endPos[2] {
+				zLength = endPos[2] - BeginZ + 1
 			}
-			ans[key] = Area{
+			ret[key] = Area{
 				BeginX: BeginX,
-				BeginY: startY,
+				BeginY: beginPos[1],
 				BeginZ: BeginZ,
 				SizeX:  xLength,
 				SizeY:  sizeY,
@@ -129,7 +118,7 @@ func SplitArea(
 			IntToareaLoction[key] = AreaLocation{chunkX - 1, currentChunkZ - 1}
 		}
 	}
-	return ans, areaLoctionToInt, IntToareaLoction
+	return ret, areaLoctionToInt, IntToareaLoction
 }
 
 // 用于提取得到的 MCBE 结构文件中的一些数据，具体拿了什么数据，你可以看返回值字段
@@ -209,7 +198,7 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 		if !normal {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]", key)
 		}
-		blockStates, err := TranslateNBTInerface.Compound(value_states, true)
+		blockStates, err := nbttranslatinginterface.Compound(value_states, true)
 		if err != nil {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in input[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]", key)
 		}
@@ -302,21 +291,18 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 
 // 根据 mcstructure 的起点和尺寸，以及提供的方块坐标，寻找这个方块在 mcstructure 中的角标
 func SearchForBlock(structureInfo Area, pos BlockPos) (int, error) {
-	pos.Posx = pos.Posx - structureInfo.BeginX
-	pos.Posy = pos.Posy - structureInfo.BeginY
-	pos.Posz = pos.Posz - structureInfo.BeginZ
+	pos[0] -= structureInfo.BeginX
+	pos[1] -= structureInfo.BeginY
+	pos[2] -= structureInfo.BeginZ
 	// 将方块的绝对坐标转换为相对坐标(相对于 mcstructure)
 	blockCount := structureInfo.SizeX * structureInfo.SizeY * structureInfo.SizeZ
 	// 计算结构的尺寸
-	angleMark := 0
-	angleMark = angleMark + structureInfo.SizeY*structureInfo.SizeZ*pos.Posx
-	angleMark = angleMark + structureInfo.SizeZ*pos.Posy
-	angleMark = angleMark + pos.Posz
+	angleMark := structureInfo.SizeY*structureInfo.SizeZ*pos[0] + structureInfo.SizeZ*pos[1] + pos[2]
 	// 计算方块相对于 mcstructure 的角标
 	if angleMark > blockCount-1 {
 		return -1, fmt.Errorf("Index out of the list, occured in input[%v]", angleMark)
 	}
-	return angleMark, nil
+	return int(angleMark), nil
 }
 
 /*
@@ -328,44 +314,48 @@ allAreasFindUse 通过 区域坐标 来查这个区域在 allAreas 表的位置
 
 currentExport 当前 Task 指定的导出区域，也就是根据 set(get) 和 setend(get end) 制成的 Area
 */
-func ExportBaseOnChunkSize(
+func DumpBlocks(
 	allAreas []Mcstructure,
-	allAreasFindUse map[AreaLocation]int,
+	reversedMap map[AreaLocation]int,
 	currentExport Area,
 ) ([]*types.Module, error) {
 	ans := make([]*types.Module, 0)
 	// 这个东西最后会 return 掉
-	allChunks, _, allChunksFindUse := SplitArea(
-		currentExport.BeginX, currentExport.BeginY, currentExport.BeginZ,
-		currentExport.BeginX+currentExport.SizeX-1,
-		currentExport.BeginY+currentExport.SizeY-1,
-		currentExport.BeginZ+currentExport.SizeZ-1,
+	allChunks, _, chunkPosIndicator := SplitArea(
+		BlockPos{currentExport.BeginX, currentExport.BeginY, currentExport.BeginZ},
+		BlockPos{
+			currentExport.BeginX+currentExport.SizeX-1,
+			currentExport.BeginY+currentExport.SizeY-1,
+			currentExport.BeginZ+currentExport.SizeZ-1,
+		},
 		16, 16, true,
 	)
 	// 将所有待导出区域按 16*16 的大小拆分为区块，且蛇形拆分
 	// 然后按照得到的结果重排处理
 	for key, value := range allChunks {
-		chunkPos := allChunksFindUse[key]
-		chunkPos.Posx = int(math.Floor(float64(chunkPos.Posx) / 4))
-		chunkPos.Posz = int(math.Floor(float64(chunkPos.Posz) / 4))
+		chunkPos := chunkPosIndicator[key]
+		chunkPos[0] = int(math.Floor(float64(chunkPos[0]) / 4))
+		chunkPos[1] = int(math.Floor(float64(chunkPos[1]) / 4))
 		// 取得当前遍历的区块的坐标
 		// 这里已经把坐标变换到 allAreas 下的坐标系中
-		targetAreaPos := allAreasFindUse[chunkPos]
+		targetAreaPos := reversedMap[chunkPos]
 		targetArea := allAreas[targetAreaPos]
 		// 取得被遍历区块对应的 mcstructure
 		i, _, _ := SplitArea(
-			value.BeginX, value.BeginY, value.BeginZ,
-			value.BeginX+value.SizeX-1,
-			value.BeginY+value.SizeY-1,
-			value.BeginZ+value.SizeZ-1,
+			BlockPos{value.BeginX, value.BeginY, value.BeginZ},
+			BlockPos{
+				value.BeginX+value.SizeX-1,
+				value.BeginY+value.SizeY-1,
+				value.BeginZ+value.SizeZ-1,
+			},
 			1, 1, true,
 		)
 		allBlocksInCurrentChunk := make([]int32, 0)
-		for _, VALUE := range i {
+		for _, val := range i {
 			got, err := SearchForBlock(targetArea.info, BlockPos{
-				Posx: VALUE.BeginX,
-				Posy: VALUE.BeginY,
-				Posz: VALUE.BeginZ,
+				val.BeginX,
+				val.BeginY,
+				val.BeginZ,
 			})
 			if err != nil {
 				return []*types.Module{}, fmt.Errorf("SearchForBlock(Started by ExportBaseOnChunk): %v", err)
@@ -373,12 +363,12 @@ func ExportBaseOnChunkSize(
 			allBlocksInCurrentChunk = append(allBlocksInCurrentChunk, int32(got))
 		}
 		// 枚举出被遍历区块中所有方块的坐标(只枚举其中一层)
-		for KEY, VALUE := range allBlocksInCurrentChunk {
-			VALUE = VALUE - int32(targetArea.info.SizeZ)
+		for key, val := range allBlocksInCurrentChunk {
+			val -= int32(targetArea.info.SizeZ)
 			// 这个前置处理方法可能不太优雅
 			// 凑合着用吧
-			for j := 0; j < targetArea.info.SizeY; j++ {
-				VALUE = VALUE + int32(targetArea.info.SizeZ)
+			for j := int32(0); j < targetArea.info.SizeY; j++ {
+				val += int32(targetArea.info.SizeZ)
 				// 前往下一层
 				foreground_blockName := "undefined"
 				background_blockName := "undefined"
@@ -386,8 +376,8 @@ func ExportBaseOnChunkSize(
 				background_blockStates := "undefined"
 				foreground_blockData := int16(-1)
 				// 初始化
-				fgId := targetArea.foreground[VALUE] // 前景层方块在调色板中的id
-				bgId := targetArea.background[VALUE] // 背景层方块在调色板中的id
+				fgId := targetArea.foreground[val] // 前景层方块在调色板中的id
+				bgId := targetArea.background[val] // 背景层方块在调色板中的id
 				if fgId != -1 {
 					foreground_blockName = strings.Replace(targetArea.blockPalette[fgId], "minecraft:", "", 1) // 前景层方块的名称
 					foreground_blockStates = targetArea.blockPalette_blockStates[fgId]                         // 前景层方块的方块状态
@@ -407,7 +397,7 @@ func ExportBaseOnChunkSize(
 				var err error = fmt.Errorf("ExportBaseOnChunk: Initialization error")
 				// 变量初始化
 				// 危险！变量初始化这里不要动，不然可能会出现一些意想不到的 Bug
-				got, ok := targetArea.blockNBT[int(VALUE)]
+				got, ok := targetArea.blockNBT[int(val)]
 				if ok {
 					_, ok := got["block_position_data"]
 					if !ok {
@@ -427,7 +417,7 @@ func ExportBaseOnChunkSize(
 							return []*types.Module{}, fmt.Errorf("ExportBaseOnChunk: Crashed by invalid \"block_entity_data\"")
 						}
 						// 拿一下这个方块的方块实体数据
-						containerData, err = TranslateNBTInerface.GetContainerDataRun(block_entity_data, foreground_blockName)
+						containerData, err = nbttranslatinginterface.GetContainerDataRun(block_entity_data, foreground_blockName)
 						if fmt.Sprintf("%v", err) != "GetContainerDataRun: Not a container" && err != nil {
 							return []*types.Module{}, fmt.Errorf("%v", err)
 						}
@@ -448,9 +438,9 @@ func ExportBaseOnChunkSize(
 										Data: 0,
 									},
 									Point: types.Position{
-										X: i[KEY].BeginX - currentExport.BeginX,
-										Y: i[KEY].BeginY + j - currentExport.BeginY,
-										Z: i[KEY].BeginZ - currentExport.BeginZ,
+										X: int(i[key].BeginX - currentExport.BeginX),
+										Y: int(i[key].BeginY + j - currentExport.BeginY),
+										Z: int(i[key].BeginZ - currentExport.BeginZ),
 									},
 								})
 							}
@@ -458,7 +448,7 @@ func ExportBaseOnChunkSize(
 						}
 						// 容器
 						if foreground_blockName == "command_block" || foreground_blockName == "repeating_command_block" || foreground_blockName == "chain_command_block" {
-							commandBlockData, err = TranslateNBTInerface.GetCommandBlockData(block_entity_data, foreground_blockName)
+							commandBlockData, err = nbttranslatinginterface.GetCommandBlockData(block_entity_data, foreground_blockName)
 							if err != nil {
 								return []*types.Module{}, fmt.Errorf("GetCommandBlockData(Started by ExportBaseOnChunk): %v", err)
 							}
@@ -466,7 +456,7 @@ func ExportBaseOnChunkSize(
 						}
 						// 命令方块
 						hasNBT = true
-						string_nbt, err = TranslateNBTInerface.Compound(block_entity_data, false)
+						string_nbt, err = nbttranslatinginterface.Compound(block_entity_data, false)
 						if err != nil {
 							return []*types.Module{}, fmt.Errorf("%v", err)
 						}
@@ -481,9 +471,9 @@ func ExportBaseOnChunkSize(
 							BlockStates: background_blockStates,
 						},
 						Point: types.Position{
-							X: i[KEY].BeginX - currentExport.BeginX,
-							Y: i[KEY].BeginY + j - currentExport.BeginY,
-							Z: i[KEY].BeginZ - currentExport.BeginZ,
+							X: int(i[key].BeginX - currentExport.BeginX),
+							Y: int(i[key].BeginY + j - currentExport.BeginY),
+							Z: int(i[key].BeginZ - currentExport.BeginZ),
 						},
 					})
 				}
@@ -496,9 +486,9 @@ func ExportBaseOnChunkSize(
 							Name: &foreground_blockName,
 						},
 						Point: types.Position{
-							X: i[KEY].BeginX - currentExport.BeginX,
-							Y: i[KEY].BeginY + j - currentExport.BeginY,
-							Z: i[KEY].BeginZ - currentExport.BeginZ,
+							X: int(i[key].BeginX - currentExport.BeginX),
+							Y: int(i[key].BeginY + j - currentExport.BeginY),
+							Z: int(i[key].BeginZ - currentExport.BeginZ),
 						},
 					}
 					// 简单地初始化一下一个单个的元素
