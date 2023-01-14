@@ -13,7 +13,6 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/io/commands"
 	"phoenixbuilder/minecraft/protocol"
-	"phoenixbuilder/minecraft/protocol/packet"
 	"runtime"
 	"strings"
 	"sync"
@@ -307,16 +306,16 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 				if !isFastMode {
 					UUID := uuid.New()
-					w := make(chan *packet.CommandOutput)
-					(*cmdsender.GetUUIDMap()).Store(UUID.String(), w)
+					//w := make(chan *packet.CommandOutput)
+					//(*cmdsender.GetUUIDMap()).Store(UUID.String(), w)
 					cmdsender.SendWSCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y+1, curblock.Point.Z), UUID)
-					select {
+					/*select {
 					case <-time.After(time.Second):
 						(*cmdsender.GetUUIDMap()).Delete(UUID.String())
 						break
 					case <-w:
 					}
-					close(w)
+					close(w)*/
 				}
 				cmdsender.UpdateCommandBlock(int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z), cbdata)
 			} else if curblock.ChestSlot != nil {
