@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"phoenixbuilder/fastbuilder/configuration"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"encoding/json"
 	"encoding/base64"
@@ -72,13 +73,11 @@ func SignBDX(filecontent []byte, privateKeyString string, cert string) ([]byte, 
 // bool corrupted
 // string username
 // error error
-func VerifyBDX(filecontent []byte, sign []byte) (bool, string, error) {
+func VerifyBDX(hashsum []byte, sign []byte) (bool, string, error) {
 	if(sign[0]==0&&sign[1]==0x8B) {
-		return VerifyBDXNew(filecontent,sign)
+		return VerifyBDXNew(hashsum, sign)
 	}
-	hash:=sha256.New()
-	hash.Write(filecontent)
-	hexOfHash:=hex.EncodeToString(hash.Sum(nil))
+	hexOfHash:=hex.EncodeToString(hashsum)
 	body:=fmt.Sprintf(`{"hash": "%s", "sign": "%s"}`,hexOfHash,base64.StdEncoding.EncodeToString(sign))
 	request, err := http.NewRequest("POST", verifyBDXURL, strings.NewReader(body))
 	if(err != nil){
@@ -145,7 +144,7 @@ const constantServerKey="-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEAzOoZfky1sYQ
 // bool corrupted
 // string username
 // error error
-func VerifyBDXNew(filecontent []byte, sign []byte) (bool, string, error) {
+func VerifyBDXNew(hashsum []byte, sign []byte) (bool, string, error) {
 	if(sign[0]!=0||sign[1]!=0x8B) {
 		panic("Not a valid 2nd generation signature format");
 		return false, "", fmt.Errorf("Not a valid 2nd generation signature format");
@@ -179,11 +178,84 @@ func VerifyBDXNew(filecontent []byte, sign []byte) (bool, string, error) {
 	signatureLen:=reader.Len()
 	signature=make([]byte, signatureLen)
 	reader.Read(signature)
-	sum1=sha256.Sum256(filecontent)
-	err=rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, sum1[:], signature)
+	err=rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, hashsum, signature)
 	if(err!=nil) {
 		return true, "", nil
 	}
 	return false, fpContent[1], nil
+}
+
+func readZeroTerminatedString(reader io.Reader) (string, error) {
+	str := ""
+	c := make([]byte, 1)
+	for {
+		_, err := reader.Read(c)
+		if err != nil {
+			return "", err
+		}
+		if c[0] == 0 {
+			break
+		}
+		str += string(c)
+	}
+	return str, nil
+}
+
+// bool signed
+// bool corrupted
+// string username
+// error
+func VerifyStreamBDX(stream io.Reader) (bool, bool, string, error) {
+	last_block:=make([]byte, 2048)
+	cur_block:=make([]byte, 2048)
+	afterFirstRun:=false
+	hash:=sha256.New()
+	for {
+		if afterFirstRun {
+			copy(last_block, cur_block)
+		}
+		n, _:=io.ReadAtLeast(stream, cur_block, 2048)
+		if n!=2048 {
+			var buffered_block []byte
+			if n==0 {
+				buffered_block=last_block
+			}else{
+				if !afterFirstRun {
+					buffered_block=cur_block[:n]
+				}else{
+					buffered_block=append(last_block, cur_block[:n]...)
+				}
+			}
+			bbl:=len(buffered_block)
+			if buffered_block[bbl-1] != 90 {
+				// Not signed
+				return false, false, "", nil
+			}
+			signlen := int(buffered_block[bbl-2])
+			var sign []byte
+			var bodyLeft []byte
+			if signlen == int(255) {
+				signlenBuf:=buffered_block[bbl-4:bbl-2]
+				signlen=int(binary.BigEndian.Uint16(signlenBuf))
+				if signlen>=bbl-4 {
+					return false, false, "", fmt.Errorf("Too long signature")
+				}
+				sign=buffered_block[bbl-signlen-4:bbl-4]
+				bodyLeft=buffered_block[:bbl-signlen-5]
+			}else{
+				sign=buffered_block[bbl-signlen-2:bbl-2]
+				bodyLeft=buffered_block[:bbl-signlen-3]
+			}
+			hash.Write(bodyLeft)
+			hash_val:=hash.Sum(nil)
+			cor, usn, err := VerifyBDX(hash_val, sign)
+			return true, cor, usn, err
+		}
+		if afterFirstRun {
+			hash.Write(last_block)
+		}else{
+			afterFirstRun=true
+		}
+	}
 }
 

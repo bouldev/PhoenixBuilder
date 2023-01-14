@@ -1,13 +1,12 @@
 package builder
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	"io"
+	"os"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/bdump/command"
-	bridge_path "phoenixbuilder/fastbuilder/builder/path"
+	//bridge_path "phoenixbuilder/fastbuilder/builder/path"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
@@ -15,7 +14,7 @@ import (
 	"github.com/andybalholm/brotli"
 )
 
-func ReadBrString(br *bytes.Buffer) (string, error) {
+func readZeroTerminatedString(br io.Reader) (string, error) {
 	str := ""
 	c := make([]byte, 1)
 	for {
@@ -32,7 +31,7 @@ func ReadBrString(br *bytes.Buffer) (string, error) {
 }
 
 func BDump(config *types.MainConfig, blc chan *types.Module) error {
-	file, err := bridge_path.ReadFile(config.Path)
+	file, err := os.Open(config.Path)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
 	}
@@ -47,47 +46,30 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			return fmt.Errorf(I18n.T(I18n.BDump_NotBDX_Invheader))
 		}
 	}
-	bro := brotli.NewReader(file)
-	br := &bytes.Buffer{}
-	filelen, _ := br.ReadFrom(bro)
-	if filelen == 0 {
-		return fmt.Errorf(I18n.T(I18n.InvalidFileError))
-	}
-	{
-		bts := br.Bytes()
-		if bts[filelen-1] == 90 {
-			types.ForwardedBrokSender <- fmt.Sprintf(I18n.T(I18n.BDump_SignedVerifying))
-			lent := int64(bts[filelen-2])
-			var sign []byte
-			var fileBody []byte
-			if lent == int64(255) {
-				lenBuf := bts[filelen-4 : filelen-2]
-				lent = int64(binary.BigEndian.Uint16(lenBuf))
-				sign = bts[filelen-lent-4 : filelen-4]
-				fileBody = bts[:filelen-lent-5]
-			} else {
-				sign = bts[filelen-lent-2 : filelen-2]
-				fileBody = bts[:filelen-lent-3]
-			}
-			cor, un, err := bdump.VerifyBDX(fileBody, sign)
-			if cor {
-				return fmt.Errorf(I18n.T(I18n.FileCorruptedError))
-			}
-			if err != nil {
-				e := fmt.Errorf(I18n.T(I18n.BDump_VerificationFailedFor), err)
-				if config.Strict {
-					return e
-				} else {
-					types.ForwardedBrokSender <- fmt.Sprintf("%s(%s): %v", I18n.T(I18n.ERRORStr), I18n.T(I18n.IgnoredStr), e)
-				}
-			} else {
-				types.ForwardedBrokSender <- fmt.Sprintf(I18n.T(I18n.BDump_FileSigned), un)
-			}
-		} else if config.Strict {
+	br := brotli.NewReader(file)
+	signed, corrupted, signer_username, err:=bdump.VerifyStreamBDX(br)
+	if !signed {
+		if !config.Strict {
 			return fmt.Errorf("%s.", I18n.T(I18n.BDump_FileNotSigned))
-		} else {
+		}else{
 			types.ForwardedBrokSender <- fmt.Sprintf("%s!", I18n.T(I18n.BDump_FileNotSigned))
 		}
+	}
+	if corrupted {
+		return fmt.Errorf(I18n.T(I18n.FileCorruptedError))
+	}
+	// The original one is consumed
+	file.Seek(3, os.SEEK_SET)
+	br=brotli.NewReader(file)
+	if err != nil {
+		e := fmt.Errorf(I18n.T(I18n.BDump_VerificationFailedFor), err)
+		if config.Strict {
+			return e
+		} else {
+			types.ForwardedBrokSender <- fmt.Sprintf("%s(%s): %v", I18n.T(I18n.ERRORStr), I18n.T(I18n.IgnoredStr), e)
+		}
+	} else {
+		types.ForwardedBrokSender <- fmt.Sprintf(I18n.T(I18n.BDump_FileSigned), signer_username)
 	}
 	{
 		tempbuf := make([]byte, 4)
@@ -99,11 +81,10 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 			return fmt.Errorf(I18n.T(I18n.BDump_NotBDX_Invinnerheader))
 		}
 	}
-	ReadBrString(br) // Ignores author field
+	readZeroTerminatedString(br) // Ignores author field
 	brushPosition := []int{0, 0, 0}
 	var blocksStrPool []string
 	var runtimeIdPoolUsing []*types.ConstBlock
-	//var prevCmd command.Command = nil
 	for {
 		_cmd, err := command.ReadCommand(br)
 		if err != nil {
@@ -337,8 +318,8 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 					Point:     pos,
 				}
 			}
-		case *command.AssignNBTData:
-			// We are not able to do anything with those data currently
+		case *command.AssignDebugData:
+			// Not going to do anything with those data
 		case *command.PlaceBlockWithBlockStates:
 			if int(cmd.BlockConstantStringID) >= len(blocksStrPool) {
 				return fmt.Errorf("Error: BlockID exceeded BlockPool")
