@@ -27,13 +27,11 @@ const userAgent = "PhoenixBuilder/General"
 // SignBDX(fileContent)
 // []byte - sign
 // error  - err
-func SignBDX(filecontent []byte, privateKeyString string, cert string) ([]byte, error) {
+func SignBDX(fileHash []byte, privateKeyString string, cert string) ([]byte, error) {
 	if(len(privateKeyString)!=0&&len(cert)!=0) {
-		return SignBDXNew(filecontent,privateKeyString,cert)
+		return SignBDXNew(fileHash,privateKeyString,cert)
 	}
-	hash:=sha256.New()
-	hash.Write(filecontent)
-	hexOfHash:=hex.EncodeToString(hash.Sum(nil))
+	hexOfHash:=hex.EncodeToString(fileHash)
 	body:=fmt.Sprintf(`{"hash": "%s", "token": "%s"}`,hexOfHash,configuration.UserToken)
 	request, err := http.NewRequest("POST", signBDXURL, strings.NewReader(body))
 	if(err != nil){
@@ -116,15 +114,14 @@ func VerifyBDX(hashsum []byte, sign []byte) (bool, string, error) {
 // SignBDXNew(fileContent)
 // []byte - sign
 // error  - err
-func SignBDXNew(filecontent []byte, privateKeyString string, cert string) ([]byte, error) {
+func SignBDXNew(fileHash []byte, privateKeyString string, cert string) ([]byte, error) {
 	buf:=bytes.NewBuffer([]byte{})
 	derKey, _ := pem.Decode([]byte(privateKeyString))
 	privateKey, err:=x509.ParsePKCS1PrivateKey(derKey.Bytes)
 	if(err!=nil) {
 		return nil, err
 	}
-	hashedFileContent:=sha256.Sum256(filecontent)
-	signContent, err:=privateKey.Sign(rand.Reader,hashedFileContent[:],crypto.SHA256)
+	signContent, err:=privateKey.Sign(rand.Reader,fileHash,crypto.SHA256)
 	if(err!=nil) {
 		return nil, err
 	}

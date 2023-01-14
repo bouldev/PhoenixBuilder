@@ -163,7 +163,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 			panic(err)
 		}
 		
-		outputResult := bdump.BDumpLegacy{
+		outputResult := bdump.BDump{
 			Blocks: processedData,
 		}
 		if strings.LastIndex(cfg.Path, ".bdx") != len(cfg.Path)-4 || len(cfg.Path) < 4 {

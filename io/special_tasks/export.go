@@ -359,7 +359,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		}
 		blocks = blocks[:counter]
 		runtime.GC()
-		out := bdump.BDumpLegacy{
+		out := bdump.BDump{
 			Blocks: blocks,
 		}
 		if strings.LastIndex(cfg.Path, ".bdx") != len(cfg.Path)-4 || len(cfg.Path) < 4 {
