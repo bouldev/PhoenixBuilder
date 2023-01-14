@@ -93,7 +93,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				// Command: NOP
 			case *command.AddInt32ZValue0:
 				brushPosition[2] += int(cmd.Value)
-			case *command.PlaceBlockWithBlockStates:
+			case *command.PlaceBlockWithBlockStatesDeprecated:
 				blockId := cmd.BlockConstantStringID
 				block_states_string := cmd.BlockStatesString
 				if err != nil {
@@ -263,7 +263,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 			case *command.PlaceBlockWithChestData:
 				// Does not work at first
 			case *command.PlaceRuntimeBlockWithChestDataAndUint32RuntimeID:
-			case *command.AssignNBTData:
+			case *command.AssignDebugData:
 			default:
 				// fmt.Println("ERROR!")
 				infoSender(fmt.Sprintf("BUG: unimplemented method found : %#v", _cmd))

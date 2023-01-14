@@ -5,15 +5,13 @@ import (
 	"encoding/binary"
 )
 
-// See [#107](https://github.com/LNSSPsd/PhoenixBuilder/issues/107) for details
-
 type PlaceBlockWithBlockStates struct {
 	BlockConstantStringID uint16
-	BlockStatesString string
+	BlockStatesConstantStringID uint16
 }
 
 func (_ *PlaceBlockWithBlockStates) ID() uint16 {
-	return 13
+	return 5
 }
 
 func (_ *PlaceBlockWithBlockStates) Name() string {
@@ -27,7 +25,8 @@ func (cmd *PlaceBlockWithBlockStates) Marshal(writer io.Writer) error {
 	if err!=nil {
 		return err
 	}
-	_, err=writer.Write(append([]byte(cmd.BlockStatesString), 0))
+	binary.BigEndian.PutUint16(buf, cmd.BlockStatesConstantStringID)
+	_, err=writer.Write(buf)
 	return err
 }
 
@@ -38,10 +37,10 @@ func (cmd *PlaceBlockWithBlockStates) Unmarshal(reader io.Reader) error {
 		return err
 	}
 	cmd.BlockConstantStringID=binary.BigEndian.Uint16(buf)
-	blockStates, err:=readString(reader)
+	_, err=io.ReadAtLeast(reader, buf, 2)
 	if err!=nil {
 		return err
 	}
-	cmd.BlockStatesString=blockStates
+	cmd.BlockStatesConstantStringID=binary.BigEndian.Uint16(buf)
 	return nil
 }
