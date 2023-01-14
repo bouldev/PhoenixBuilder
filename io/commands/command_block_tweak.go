@@ -25,5 +25,5 @@ func (sender *CommandSender) UpdateCommandBlock(x int32,y int32,z int32,d *types
 					C.CString(d.LastOutput), C.int(d.TickDelay),
 					booltochar(d.ExecuteOnFirstTick),
 					booltochar(d.TrackOutput), booltochar(d.Conditional),
-					booltochar(d.NeedRedstone))
+					booltochar(d.NeedsRedstone))
 }
