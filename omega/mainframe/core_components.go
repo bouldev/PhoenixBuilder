@@ -495,14 +495,22 @@ func (o *KeepAlive) Activate() {
 
 type Partol struct {
 	*BaseCoreComponent
-	EnableInvisibility     bool `json:"启用隐身"`
-	Patrol                 int  `json:"随机巡逻间隔(秒)"`
-	TeleportWhenPlayerJoin bool `json:"是否在玩家上线时传送至其位置"`
-	AlwaysInOverworld      bool `json:"是否将机器人固定在主世界维度"`
+	EnableInvisibility     bool      `json:"启用隐身"`
+	EnablePartol           bool      `json:"启用随机巡逻"`
+	Patrol                 int       `json:"随机巡逻间隔(秒)"`
+	TeleportWhenPlayerJoin bool      `json:"是否在玩家上线时传送至其位置"`
+	AlwaysInOverworld      bool      `json:"是否将机器人固定在主世界维度"`
+	OverworldAnchor        []float32 `json:"主世界锚点"`
 }
 
 func (o *Partol) Init(cfg *defines.ComponentConfig) {
 	o.BaseCoreComponent.Init(cfg)
+	if cfg.Version == "0.0.1" {
+		cfg.Version = "0.0.2"
+		cfg.Configs["启用随机巡逻"] = true
+		cfg.Configs["主世界锚点"] = []int{0, 320, 0}
+		cfg.Upgrade()
+	}
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)
@@ -529,7 +537,8 @@ func (o *Partol) Inject(frame defines.MainFrame) {
 				go func() {
 					// 延迟3秒是为了给予机器人接收数据包的时间
 					<-time.NewTimer(time.Second * time.Duration(3)).C
-					o.mainFrame.GetGameControl().SendWOCmd(fmt.Sprintf("tp \"%s\" 0 320 0", o.mainFrame.GetUQHolder().GetBotName()))
+					cmd := fmt.Sprintf("tp \"%s\" %f %f %f", o.mainFrame.GetUQHolder().GetBotName(), o.OverworldAnchor[0], o.OverworldAnchor[1], o.OverworldAnchor[2])
+					o.mainFrame.GetGameControl().SendWOCmd(cmd)
 				}()
 			}
 		})
@@ -537,6 +546,9 @@ func (o *Partol) Inject(frame defines.MainFrame) {
 }
 
 func (o *Partol) Activate() {
+	if !o.EnablePartol {
+		return
+	}
 	count := 0
 	for {
 		count++
