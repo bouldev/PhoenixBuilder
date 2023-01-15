@@ -31,9 +31,6 @@ import (
 
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
 	cmdsender := env.CommandSender
-	// WIP
-	cmdsender.Output("Sorry, but compatibility works haven't been done yet, you are being redirected to lexport.")
-	return CreateLegacyExportTask(commandLine, env)
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err != nil {
 		cmdsender.Output(fmt.Sprintf("Failed to parse command: %v", err))
@@ -197,6 +194,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							LPCommandMode:byte
 							Command:string
 							Version:VarInt32
+							SuccessCount:VarInt32
 							CustomName:string
 							LastOutput:string
 							LastOutputParams:list[string]
@@ -250,6 +248,11 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							panic(err)
 						}
 						// ^ Skip: [Version:VarInt32]
+						_, err = readVarint32(tagContent)
+						if err != nil {
+							panic(err)
+						}
+						// ^ Skip: [SuccessCount:VarInt32]
 						cusname, err := readNBTString(tagContent)
 						if err != nil {
 							panic(err)

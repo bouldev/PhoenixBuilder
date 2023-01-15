@@ -65,7 +65,7 @@ func (ig *IDGroup) AppendItem(p *RichBlock) {
 
 func ReadNemcData() []NEMCBlock {
 	var nemcJsonData []byte
-	nemcJsonData, err := ioutil.ReadFile("resources/blockRuntimeIDs/netease/runtimeIds_2_2_15.json")
+	nemcJsonData, err := ioutil.ReadFile("resources/blockRuntimeIDs/netease/runtimeIds_2_5_15_proc.json")
 	if err != nil {
 		panic(err)
 	}
@@ -333,7 +333,7 @@ func main() {
 	enc.Encode(groupedBlocks)
 	fp.Close()
 
-	fp, err = os.OpenFile("mirror/chunk/blockmapping_nemc_2_2_15_mc_1_19.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	fp, err = os.OpenFile("mirror/chunk/blockmapping_nemc_2_5_15_mc_1_19.gob.brotli", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
 		panic(err)
 	}

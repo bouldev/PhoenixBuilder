@@ -22,6 +22,10 @@ func (sub *SubChunk) Invalid() bool {
 	return sub.storages==nil
 }
 
+func (sub *SubChunk) Validate() {
+	sub.storages=[]*PalettedStorage{}
+}
+
 // Layer returns a certain block storage/layer from a sub chunk. If no storage at the layer exists, the layer
 // is created, as well as all layers between the current highest layer and the new highest layer.
 func (sub *SubChunk) Layer(layer uint8) *PalettedStorage {

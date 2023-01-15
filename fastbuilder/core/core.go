@@ -327,11 +327,9 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 
 	chunkAssembler := assembler.NewAssembler(assembler.REQUEST_AGGRESSIVE, time.Second*5)
 	// max 100 chunk request per second
-	/*chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
+	chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		conn.WritePacket(pk)
-	})*/
-	fmt.Printf("WARNING: TODO: Dump runtime id table, for what chunk loading is currently stubbed.\n")
-	// Also at mirror/io/assembler/assembler.go:119(currently) search "WIP" plz
+	})
 	// currentChunkConstructor := &world_provider.ChunkConstructor{}
 	for {
 		if(breaker!=nil) {

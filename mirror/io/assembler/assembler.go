@@ -65,15 +65,18 @@ func (o *Assembler) AdjustSendPeriod(d time.Duration) {
 }
 
 func (o *Assembler) GenRequestFromLevelChunk(pk *packet.LevelChunk) (requests []*packet.SubChunkRequest) {
-	requests = make([]*packet.SubChunkRequest, 0, 24)
-	for i := -4; i <= 19; i++ {
-		requests = append(requests, &packet.SubChunkRequest{
-			Dimension: 0,
-			Position:  protocol.SubChunkPos{pk.Position.X(), int32(i), pk.Position.Z()},
-			Offsets: [][3]int8{[3]int8{0,0,0}},
-		})
+	requests = make([]*packet.SubChunkRequest, 0, 1)
+	offsets:=make([][3]int8, 24)
+	for i:=-4;i<=19;i++ {
+		offsets[i+4]=[3]int8{0,int8(i),0}
 	}
-	return requests
+	return []*packet.SubChunkRequest{
+		&packet.SubChunkRequest{
+			Dimension: 0,
+			Position: protocol.SubChunkPos{pk.Position[0], 0, pk.Position[1]},
+			Offsets: offsets,
+		},
+	}
 }
 
 func (o *Assembler) NoCache() {
@@ -115,12 +118,10 @@ func (o *Assembler) AddPendingTask(pk *packet.LevelChunk) (exist bool) {
 }
 
 func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
-	// WIP
-	return nil
 	defer func() {
 		r := recover()
 		if r != nil {
-			fmt.Println("on handle sub chunk ", r, pk)
+			fmt.Println("on handle sub chunk ", r)
 			return
 		}
 	}()
@@ -129,48 +130,57 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 	o.taskMu.RLock()
 	if chunkData, hasK := o.pendingTasks[cp]; !hasK {
 		o.taskMu.RUnlock()
-		//fmt.Printf("Unexpected chunk\n")
+		//fmt.Printf("Unexpected chunk %#v %#v\n", cp, o.pendingTasks)
 		return nil
 	} else {
 		o.taskMu.RUnlock()
-		if pk.SubChunkEntries[0].Result != protocol.SubChunkResultSuccess {
-			o.taskMu.Lock()
-			delete(o.pendingTasks, cp)
-			o.taskMu.Unlock()
-			return nil
-		}
-		subIndex, subChunk, nbts, err := chunk.NEMCSubChunkDecode(pk.SubChunkEntries[0].RawPayload)
-		if err != nil {
-			panic(err)
-		}
-		if subIndex != int8(pk.Position[1]) || subIndex > 20 {
-			panic(fmt.Sprintf("sub Index conflict %v %v", pk.Position[1], subIndex))
-		}
-		subs := chunkData.Chunk.Sub()
-		//if subChunk.Empty() {
-		//	fmt.Printf("REAL EMPTY\n")
-		//}
-		chunkData.Chunk.AssignSub(int(subIndex+4), subChunk)
-		for _, nbt := range nbts {
-			if pos, success := define.GetCubePosFromNBT(nbt); success {
-				chunkData.BlockNbts[pos] = nbt
+		for _, entry:=range pk.SubChunkEntries {
+			if entry.Result != protocol.SubChunkResultSuccess {
+				if entry.Result == protocol.SubChunkResultSuccessAllAir {
+					allAirSubChunk:=chunk.NewSubChunk(o.airRID)
+					allAirSubChunk.Validate()
+					chunkData.Chunk.AssignSub(int(int8(pk.Position[1])+entry.Offset[1]+4), allAirSubChunk)
+					continue
+				}
+				fmt.Printf("SUBCHUNK REQ ERR: %#v\n", entry)
+				o.taskMu.Lock()
+				delete(o.pendingTasks, cp)
+				o.taskMu.Unlock()
+				return nil
 			}
+			subIndex, subChunk, nbts, err := chunk.NEMCSubChunkDecode(entry.RawPayload)
+			if err!=nil {
+				fmt.Printf("%#v", entry)
+				panic(err)
+			}
+			if subIndex != int8(pk.Position[1])+entry.Offset[1] || subIndex>20 {
+				panic(fmt.Sprintf("sub Index conflict %v %v", pk.Position[1], subIndex))
+			}
+			//subs := chunkData.Chunk.Sub()
+			chunkData.Chunk.AssignSub(int(subIndex+4), subChunk)
+			for _, nbt := range nbts {
+				if pos, success := define.GetCubePosFromNBT(nbt); success {
+					chunkData.BlockNbts[pos] = nbt
+				}
+			}
+			chunkData.SyncTime = time.Now().Unix()
 		}
 		// fmt.Printf("pending %v\n", len(o.pendingTasks))
 		chunkData.SyncTime = time.Now().Unix()
-		//emptySubChunkCounter:=0
+		emptySubChunkCounter:=0
+		subs:=chunkData.Chunk.Sub()
 		for _, subChunk := range subs {
 			if subChunk.Invalid() {
-				//emptySubChunkCounter++
-				return nil
+				emptySubChunkCounter++
+				//return nil
 			}
 		}
-		/*if emptySubChunkCounter!=0 {
-			fmt.Printf("eta %d for %v\n", emptySubChunkCounter, cp)
+		if emptySubChunkCounter!=0 {
+			fmt.Printf("Error combining chunk: eta %d for %v\n", emptySubChunkCounter, cp)
 			return nil
 		}
-		fmt.Printf("Finished %v\n", cp)
-		*/
+		//fmt.Printf("Finished %v\n", cp)
+		
 		o.taskMu.Lock()
 		delete(o.pendingTasks, cp)
 		o.visitTime[cp] = time.Now()

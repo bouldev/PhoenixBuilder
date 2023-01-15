@@ -505,7 +505,7 @@ func InitMapping(mappingInData []byte) {
 
 	nemcToMCRIDMapping := mappingIn.NEMCRidToMCRid
 
-	NEMCAirRID = 134
+	NEMCAirRID = 6565
 	NEMCRuntimeIDToStandardRuntimeID = func(nemcRuntimeID uint32) (runtimeID uint32) {
 		return uint32(nemcToMCRIDMapping[nemcRuntimeID])
 	}
@@ -611,7 +611,7 @@ func InitMapping(mappingInData []byte) {
 
 }
 
-//go:embed blockmapping_nemc_2_2_15_mc_1_19.gob.brotli
+//go:embed blockmapping_nemc_2_5_15_mc_1_19.gob.brotli
 var mappingInData []byte
 
 func init() {

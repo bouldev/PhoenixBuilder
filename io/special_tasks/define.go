@@ -42,7 +42,7 @@ func readVarint32(reader byteAndNormalReader) (int32, error) {
 		}
 	}
 	ret_val := int32(val >> 1)
-	if ret_val&1 != 0 {
+	if val&1 != 0 {
 		ret_val = ^ret_val
 	}
 	return ret_val, nil
@@ -62,7 +62,7 @@ func readVarint64(reader byteAndNormalReader) (int64, error) {
 		}
 	}
 	rval := int64(val >> 1)
-	if rval&1 != 0 {
+	if val&1 != 0 {
 		rval = ^rval
 	}
 	return rval, nil
