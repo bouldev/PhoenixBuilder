@@ -448,7 +448,7 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 			cb(p.Username)
 		}
 	}
-	fmt.Println(strings.Join(GetWIPLogo(LOGO_BOTH), "\n"))
+	fmt.Println(strings.Join(GetLogo(LOGO_BOTH), "\n"))
 	pterm.Success.Println("OMEGA_ng 等待指令")
 	pterm.Success.Println("输入 ? 以获得帮助")
 	if len(updateInfo) > 10 {
