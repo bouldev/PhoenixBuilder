@@ -49,7 +49,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 	br := brotli.NewReader(file)
 	signed, corrupted, signer_username, err:=bdump.VerifyStreamBDX(br)
 	if !signed {
-		if !config.Strict {
+		if config.Strict {
 			return fmt.Errorf("%s.", I18n.T(I18n.BDump_FileNotSigned))
 		}else{
 			types.ForwardedBrokSender <- fmt.Sprintf("%s!", I18n.T(I18n.BDump_FileNotSigned))
