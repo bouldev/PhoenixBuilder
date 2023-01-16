@@ -32,6 +32,8 @@ func ReadBrString(src io.Reader) (string, error) {
 }
 
 func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockChan chan *IOBlockForDecoder, cancelFn func(), err error) {
+	err = fmt.Errorf("Please use command `bdump' instead.")
+	return
 	legacyRunTimeIDRemapper := NewDoubleValueLegacyBlockToRuntimeIDMapper()
 	blockChan = make(chan *IOBlockForDecoder, 10240)
 	{
