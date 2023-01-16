@@ -242,6 +242,42 @@ jobs:
         files: |
           fb-upload.tar.gz
           build/*
+    - name: Compress And Upload to COS
+      env:
+        COS_ACCESSURL: ${{ secrets.COS_ACCESSURL }}
+        COS_SERVICEURL: ${{ secrets.COS_SERVICEURL }}
+        COS_SECRETID: ${{ secrets.COS_SECRETID }}
+        COS_SECRETKEY: ${{ secrets.COS_SECRETKEY }}
+      run: |
+        cd tools/cos_uploader && go build -o ../../cos_uploader -ldflags "-X main.AccessUrl=${COS_ACCESSURL} -X main.ServiceUrl=${COS_SERVICEURL} -X main.SecretID=${COS_SECRETID} -X main.SecretKey=${COS_SECRETKEY}" main.go && cd ../../
+        ./cos_uploader -l build -r fastbuilder_official
+        mkdir -p build_compressed
+        go run tools/compressor/main.go -in "\
+          build/phoenixbuilder,
+          build/phoenixbuilder-aarch64,
+          build/phoenixbuilder-android-executable-arm64,
+          build/phoenixbuilder-android-executable-armv7,
+          build/phoenixbuilder-ios-executable,
+          build/phoenixbuilder-macos,
+          build/phoenixbuilder-macos-arm64,
+          build/phoenixbuilder-macos-x86_64,
+          build/phoenixbuilder-windows-executable-x86.exe,
+          build/phoenixbuilder-windows-executable-x86_64.exe
+        " -out "\
+          build_compressed/phoenixbuilder,
+          build_compressed/phoenixbuilder-aarch64,
+          build_compressed/phoenixbuilder-android-executable-arm64,
+          build_compressed/phoenixbuilder-android-executable-armv7,
+          build_compressed/phoenixbuilder-ios-executable,
+          build_compressed/phoenixbuilder-macos,
+          build_compressed/phoenixbuilder-macos-arm64,
+          build_compressed/phoenixbuilder-macos-x86_64,
+          build_compressed/phoenixbuilder-windows-executable-x86.exe,
+          build_compressed/phoenixbuilder-windows-executable-x86_64.exe
+        "
+        cp build/hashes.json build_compressed
+        cp build/version build_compressed
+        ./cos_uploader -l build_compressed -r fastbuilder_official_compressed
 
     #- name: Generate index files for storage over github
     #  run: node index_generator.js build
