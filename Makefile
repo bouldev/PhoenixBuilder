@@ -132,6 +132,9 @@ build/:
 build/phoenixbuilder: build/ ${SRCS_GO}
 	cd depends/stub&&make clean&&cd -
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 go build -tags "${APPEND_GO_TAGS}" -trimpath -ldflags "-s -w" -o $@
+build/phoenixbuilder-no-readline: build/ ${SRCS_GO}
+	cd depends/stub&&make clean&&cd -
+	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 go build -tags "no_readline" -tags "${APPEND_GO_TAGS}" -trimpath -ldflags "-s -w" -o $@
 build/phoenixbuilder-with-symbols: build/ ${SRCS_GO}
 	cd depends/stub&&make clean&&cd -
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 go build -tags "${APPEND_GO_TAGS}" -trimpath -o $@
