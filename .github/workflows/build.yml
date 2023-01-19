@@ -254,6 +254,7 @@ jobs:
         mkdir -p build_compressed
         go run tools/compressor/main.go -in "\
           build/phoenixbuilder,
+          build/phoenixbuilder-no-readline,
           build/phoenixbuilder-aarch64,
           build/phoenixbuilder-android-executable-arm64,
           build/phoenixbuilder-android-executable-armv7,
@@ -265,6 +266,7 @@ jobs:
           build/phoenixbuilder-windows-executable-x86_64.exe
         " -out "\
           build_compressed/phoenixbuilder,
+          build_compressed/phoenixbuilder-no-readline,
           build_compressed/phoenixbuilder-aarch64,
           build_compressed/phoenixbuilder-android-executable-arm64,
           build_compressed/phoenixbuilder-android-executable-armv7,

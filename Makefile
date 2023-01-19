@@ -1,5 +1,5 @@
 .PHONY: current all current-v8 current-arm64-executable ios-executable ios-v8-executable ios-lib ish-executable macos macos-v8 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64 freebsd-executable freebsd-executable-x86 freebsd-executable-x86_64 freebsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 openwrt-mt7620-mipsel_24kc
-TARGETS:=build/ current current-v8
+TARGETS:=build/ current current-no-readline current-v8
 PACKAGETARGETS:=
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
 ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
@@ -71,6 +71,7 @@ CGO_DEF := "-DFB_VERSION=\"$(VERSION)\" -DFB_COMMIT=\"$(shell git log -1 --forma
 
 current: build/phoenixbuilder
 all: ${TARGETS} build/hashes.json
+current-no-readline: build/phoenixbuilder-no-readline
 current-debug: build/phoenixbuilder-debug
 current-v8: build/phoenixbuilder-v8
 current-arm64-executable: build/phoenixbuilder-aarch64
