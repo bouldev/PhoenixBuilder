@@ -100,7 +100,7 @@ func (o *Omega) GetOmegaCacheDir(elem ...string) string {
 			panic(fmt.Errorf("为了安全考虑，路径开头不能为 / 且不能包含 .."))
 		}
 	}
-	return path.Join("omega_cache", path.Join(elem...))
+	return path.Join("cache", "omega", path.Join(elem...))
 }
 
 func (o *Omega) GetOmegaNormalCacheDir(elem ...string) string {

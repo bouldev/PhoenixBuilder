@@ -284,6 +284,9 @@ func (o *Omega) bootstrapDirs() {
 		}
 	}
 	omegaCacheDir := o.GetOmegaCacheDir()
+	if utils.IsDir("omega_cache") {
+		os.RemoveAll("omega_cache")
+	}
 	if !utils.IsDir(omegaCacheDir) {
 		fmt.Println("创建 Omega Cache 文件夹: " + omegaSideDir)
 		if err := utils.MakeDirP(omegaCacheDir); err != nil {
