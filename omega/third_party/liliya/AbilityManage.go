@@ -35,7 +35,7 @@ type AbilityDetails struct {
 
 type AbilitySettings struct {
 	Type    *uint32
-	Pos     int
+	Flag    uint32
 	Reverse bool
 }
 
@@ -53,6 +53,7 @@ func (o *AbilityManage) Inject(frame defines.MainFrame) {
 	o.Frame = frame
 }
 
+// 返回的tag前后带有颜色符号, 这里负责将它们去除
 func cleanTags(tags []string) []string {
 	for k, v := range tags {
 		tags[k] = strings.TrimSuffix(strings.TrimPrefix(v, "§a"), "§r")
@@ -60,19 +61,21 @@ func cleanTags(tags []string) []string {
 	return tags
 }
 
-func hasElementInOtherSlice(a []string, b []string) (bool, string) {
+// 查询两个切片是否有相同的元素, 并返回这个元素
+func hasElementInOtherSlice(a []string, b []string) (string, bool) {
 	for _, v1 := range a {
 		for _, v2 := range b {
 			if v1 == v2 {
-				return true, v1
+				return v1, true
 			}
 		}
 	}
-	return false, ""
+	return "", false
 }
 
-func (o *AbilityManage) switchAbility(tags []string, pd *AbilityDetails, ps []AbilitySettings, name string) bool {
-	if has, tag := hasElementInOtherSlice(tags, pd.Tags); pd.Enable && (pd.Always || has) {
+// 这里根据给定的参数来变更能力, 且会向玩家发送对应的提示; 返回值代表是否进行了变更, 后续会根据变更与否来决定是否发送数据包
+func (o *AbilityManage) switchAbility(tags []string, pd *AbilityDetails, as []AbilitySettings, name string) bool {
+	if tag, has := hasElementInOtherSlice(tags, pd.Tags); pd.Enable && (pd.Always || has) {
 		sendFeedbackMsg := func(status bool) {
 			if status {
 				if pd.Msg1 != "" {
@@ -85,15 +88,16 @@ func (o *AbilityManage) switchAbility(tags []string, pd *AbilityDetails, ps []Ab
 			}
 		}
 		changeAbility := func() (result bool) {
-			for i, v := range ps {
-				if (*v.Type>>v.Pos%2 == 1) != (has != v.Reverse) {
-					*v.Type = *v.Type ^ (1 << v.Pos)
+			for i, v := range as {
+				if (*v.Type&v.Flag != 0) != (has != v.Reverse) {
+					*v.Type = *v.Type ^ v.Flag
 					result = true
+					// 为了避免多次向玩家发送提示
 					if i == 0 {
 						if v.Reverse {
-							sendFeedbackMsg(!(*v.Type>>v.Pos%2 == 1))
+							sendFeedbackMsg(*v.Type&v.Flag == 0)
 						} else {
-							sendFeedbackMsg(*v.Type>>v.Pos%2 == 1)
+							sendFeedbackMsg(*v.Type&v.Flag != 0)
 						}
 					}
 				}
@@ -101,6 +105,7 @@ func (o *AbilityManage) switchAbility(tags []string, pd *AbilityDetails, ps []Ab
 			return result
 		}
 		if changeAbility() {
+			// 非持续生效, 移除tag
 			if !pd.Always {
 				o.Frame.GetGameControl().SendWOCmd(fmt.Sprintf("tag \"%s\" remove %s", name, tag))
 			}
@@ -110,17 +115,18 @@ func (o *AbilityManage) switchAbility(tags []string, pd *AbilityDetails, ps []Ab
 	return false
 }
 
-func (o *AbilityManage) getPermissionLevel(ap uint32) (commandPermissionLevel, permissionLevel uint32) {
-	if ap>>5%2 == 1 {
+// 正常情况下, commandPermissionLevel 与 permissionLevel 应该由 actionPermissions 决定的
+func (o *AbilityManage) getPermissionLevel(actionPermissions uint32) (commandPermissionLevel, permissionLevel uint32) {
+	if actionPermissions&packet.ActionPermissionOperator != 0 {
 		commandPermissionLevel = packet.CommandPermissionLevelHost
 	}
-	switch ap {
+	switch actionPermissions {
 	case 447:
 		permissionLevel = packet.PermissionLevelOperator
 	case 287:
 		permissionLevel = packet.PermissionLevelMember
 	default:
-		if ap != 0 {
+		if actionPermissions != 0 {
 			permissionLevel = packet.PermissionLevelCustom
 		}
 	}
@@ -130,8 +136,8 @@ func (o *AbilityManage) getPermissionLevel(ap uint32) (commandPermissionLevel, p
 func (o *AbilityManage) Activate() {
 	t := time.NewTicker(time.Second * time.Duration(o.Duration))
 	for {
-		<-t.C
 		for _, v := range o.Frame.GetUQHolder().PlayersByEntityID {
+			// 跳过Bot, 以防止一些情况的出现
 			if v.Username == o.Frame.GetUQHolder().GetBotName() {
 				continue
 			}
@@ -143,17 +149,64 @@ func (o *AbilityManage) Activate() {
 					}
 					pl := o.Frame.GetUQHolder().GetPlayersByUUID(o.Frame.GetGameControl().GetPlayerKit(output.OutputMessages[0].Parameters[0]).GetRelatedUQ().UUID)
 					pf, ap, name := pl.PropertiesFlag, pl.ActionPermissions, pl.Username
-					isChanged := o.switchAbility(tags, o.AllowFlight, []AbilitySettings{{Type: &pf, Pos: 6, Reverse: false}, {Type: &pf, Pos: 9, Reverse: false}}, name)
-					isChanged = o.switchAbility(tags, o.NoClip, []AbilitySettings{{Type: &pf, Pos: 7, Reverse: false}}, name) || isChanged
-					isChanged = o.switchAbility(tags, o.Mute, []AbilitySettings{{Type: &pf, Pos: 10, Reverse: false}}, name) || isChanged
-					isChanged = o.switchAbility(tags, o.NoMine, []AbilitySettings{{Type: &ap, Pos: 0, Reverse: true}}, name) || isChanged
-					isChanged = o.switchAbility(tags, o.NoDoorsAndSwitches, []AbilitySettings{{Type: &ap, Pos: 1, Reverse: true}}, name) || isChanged
-					isChanged = o.switchAbility(tags, o.NoOpenContainers, []AbilitySettings{{Type: &ap, Pos: 2, Reverse: true}}, name) || isChanged
-					isChanged = o.switchAbility(tags, o.NoAttackPlayers, []AbilitySettings{{Type: &ap, Pos: 3, Reverse: true}}, name) || isChanged
-					isChanged = o.switchAbility(tags, o.NoAttackMobs, []AbilitySettings{{Type: &ap, Pos: 4, Reverse: true}}, name) || isChanged
-					isChanged = o.switchAbility(tags, o.Operator, []AbilitySettings{{Type: &ap, Pos: 5, Reverse: false}}, name) || isChanged
-					isChanged = o.switchAbility(tags, o.NoTeleport, []AbilitySettings{{Type: &ap, Pos: 7, Reverse: true}}, name) || isChanged
-					isChanged = o.switchAbility(tags, o.NoBuild, []AbilitySettings{{Type: &ap, Pos: 8, Reverse: true}}, name) || isChanged
+
+					// 开启飞行, 需要同时设置以下两个能力, 否则生存模式会无法飞行
+					isChanged := o.switchAbility(tags, o.AllowFlight, []AbilitySettings{
+						{Type: &pf, Flag: packet.AdventureFlagFlying, Reverse: false},
+						{Type: &pf, Flag: packet.AdventureFlagAllowFlight, Reverse: false},
+					}, name)
+
+					// 关闭碰撞
+					isChanged = o.switchAbility(tags, o.NoClip, []AbilitySettings{
+						{Type: &pf, Flag: packet.AdventureFlagNoClip, Reverse: false},
+					}, name) || isChanged
+
+					// 禁止发言
+					isChanged = o.switchAbility(tags, o.Mute, []AbilitySettings{
+						{Type: &pf, Flag: packet.AdventureFlagMuted, Reverse: false},
+					}, name) || isChanged
+
+					// 禁止破坏方块, 这里使用 Reverse, 因为默认情况下是允许破坏方块的
+					isChanged = o.switchAbility(tags, o.NoMine, []AbilitySettings{
+						{Type: &ap, Flag: packet.ActionPermissionMine, Reverse: true},
+					}, name) || isChanged
+
+					// 禁止使用门与开关
+					isChanged = o.switchAbility(tags, o.NoDoorsAndSwitches, []AbilitySettings{
+						{Type: &ap, Flag: packet.ActionPermissionDoorsAndSwitches, Reverse: true},
+					}, name) || isChanged
+
+					// 禁止打开容器
+					isChanged = o.switchAbility(tags, o.NoOpenContainers, []AbilitySettings{
+						{Type: &ap, Flag: packet.ActionPermissionOpenContainers, Reverse: true},
+					}, name) || isChanged
+
+					// 禁止攻击玩家
+					isChanged = o.switchAbility(tags, o.NoAttackPlayers, []AbilitySettings{
+						{Type: &ap, Flag: packet.ActionPermissionAttackPlayers, Reverse: true},
+					}, name) || isChanged
+
+					// 禁止攻击生物
+					isChanged = o.switchAbility(tags, o.NoAttackMobs, []AbilitySettings{
+						{Type: &ap, Flag: packet.ActionPermissionAttackMobs, Reverse: true},
+					}, name) || isChanged
+
+					// 操作员命令
+					isChanged = o.switchAbility(tags, o.Operator, []AbilitySettings{
+						{Type: &ap, Flag: packet.ActionPermissionOperator, Reverse: false},
+					}, name) || isChanged
+
+					// 禁止使用传送
+					isChanged = o.switchAbility(tags, o.NoTeleport, []AbilitySettings{
+						{Type: &ap, Flag: packet.ActionPermissionTeleport, Reverse: true},
+					}, name) || isChanged
+
+					// 禁止放置方块
+					isChanged = o.switchAbility(tags, o.NoBuild, []AbilitySettings{
+						{Type: &ap, Flag: packet.ActionPermissionBuild, Reverse: true},
+					}, name) || isChanged
+
+					// 如果调用现有api, 可能会发送多个数据包来完成相同的任务, 这里选择将它们放在一个数据包里发送
 					if isChanged {
 						cpml, pml := o.getPermissionLevel(ap)
 						o.Frame.GetGameControl().SendMCPacket(&packet.AdventureSettings{
@@ -167,5 +220,6 @@ func (o *AbilityManage) Activate() {
 				}
 			})
 		}
+		<-t.C
 	}
 }

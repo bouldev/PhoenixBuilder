@@ -166,8 +166,10 @@ type PlayerKit interface {
 	SetOnParamMsg(func(chat *GameChat) (catch bool)) error
 	GetOnParamMsg() func(chat *GameChat) (catch bool)
 
-	HasPermission(key string) bool
-	SetPermission(key string, b bool)
+	GetAdventureFlag(key uint32) (bool, error)
+	SetAdventureFlag(key uint32, value bool) (changeSent bool, err error)
+	GetActionPermission(key uint32) (bool, error)
+	SetActionPermission(key uint32, value bool) (changeSent bool, err error)
 
 	GetPos(selector string) chan *define.CubePos
 }

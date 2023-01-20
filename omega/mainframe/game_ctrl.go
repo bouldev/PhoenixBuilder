@@ -2,6 +2,7 @@ package mainframe
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
@@ -20,19 +21,78 @@ type PlayerKitOmega struct {
 	uq              *uqHolder.UQHolder
 	ctrl            *GameCtrl
 	name            string
-	persistStorage  map[string]string
 	violatedStorage map[string]interface{}
 	OnParamMsg      func(chat *defines.GameChat) (catch bool)
 	playerUQ        *uqHolder.Player
-	Permission      map[string]bool
 }
 
-func (p *PlayerKitOmega) HasPermission(key string) bool {
-	if auth, hasK := p.Permission[key]; hasK && auth {
-		return true
+func sendAdventureSettingsPacket(p *PlayerKitOmega, adventureFlag, actionPermissions uint32) {
+	getCommandPermissionLevel := func() uint32 {
+		if actionPermissions&packet.ActionPermissionOperator != 0 {
+			return packet.CommandPermissionLevelHost
+		}
+		return packet.CommandPermissionLevelNormal
 	}
-	return false
+	getPermissionLevel := func() uint32 {
+		switch actionPermissions {
+		case 447:
+			return packet.PermissionLevelOperator
+		case 287:
+			return packet.PermissionLevelMember
+		default:
+			if actionPermissions != 0 {
+				return packet.PermissionLevelCustom
+			}
+		}
+		return packet.PermissionLevelVisitor
+	}
+	p.ctrl.SendMCPacket(&packet.AdventureSettings{
+		Flags:                  adventureFlag,
+		CommandPermissionLevel: getCommandPermissionLevel(),
+		ActionPermissions:      actionPermissions,
+		PermissionLevel:        getPermissionLevel(),
+		PlayerUniqueID:         p.GetRelatedUQ().EntityUniqueID,
+	})
 }
+
+func (p *PlayerKitOmega) GetAdventureFlag(key uint32) (bool, error) {
+	if uq := p.GetRelatedUQ(); uq != nil {
+		return uq.PropertiesFlag&key != 0, nil
+	}
+	return false, errors.New("fail")
+}
+
+func (p *PlayerKitOmega) SetAdventureFlag(key uint32, value bool) (changeSent bool, err error) {
+	if uq := p.GetRelatedUQ(); uq != nil {
+		if (uq.PropertiesFlag&key != 0) != value {
+			sendAdventureSettingsPacket(p, uq.PropertiesFlag^key, uq.ActionPermissions)
+			changeSent = true
+		}
+	} else {
+		err = errors.New("fail")
+	}
+	return changeSent, err
+}
+
+func (p *PlayerKitOmega) GetActionPermission(key uint32) (bool, error) {
+	if uq := p.GetRelatedUQ(); uq != nil {
+		return uq.ActionPermissions&key != 0, nil
+	}
+	return false, errors.New("fail")
+}
+
+func (p *PlayerKitOmega) SetActionPermission(key uint32, value bool) (changeSent bool, err error) {
+	if uq := p.GetRelatedUQ(); uq != nil {
+		if (uq.ActionPermissions&key != 0) != value {
+			sendAdventureSettingsPacket(p, uq.PropertiesFlag, uq.ActionPermissions^key)
+			changeSent = true
+		}
+	} else {
+		err = errors.New("fail")
+	}
+	return changeSent, err
+}
+
 func (b *PlayerKitOmega) GetPlayerNameByUUid(Theuuid string) string {
 	UUID, err := uuid.Parse(Theuuid)
 	if err != nil {
@@ -44,6 +104,7 @@ func (b *PlayerKitOmega) GetPlayerNameByUUid(Theuuid string) string {
 	}
 	return ""
 }
+
 func (p *PlayerKitOmega) GetPos(selector string) chan *define.CubePos {
 	s := utils.FormatByReplacingOccurrences(selector, map[string]interface{}{
 		"[player]": "\"" + p.name + "\"",
@@ -96,10 +157,6 @@ func (p *PlayerKitOmega) GetPos(selector string) chan *define.CubePos {
 		send(nil)
 	}()
 	return c
-}
-
-func (p *PlayerKitOmega) SetPermission(key string, b bool) {
-	p.Permission[key] = b
 }
 
 func (p *PlayerKitOmega) SetOnParamMsg(f func(chat *defines.GameChat) (catch bool)) error {
