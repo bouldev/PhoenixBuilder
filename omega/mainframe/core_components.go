@@ -508,7 +508,7 @@ func (o *Partol) Init(cfg *defines.ComponentConfig) {
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"
 		cfg.Configs["启用随机巡逻"] = true
-		cfg.Configs["主世界锚点"] = []int{0, 320, 0}
+		cfg.Configs["主世界锚点"] = []float32{0, 320, 0}
 		cfg.Upgrade()
 	}
 	m, _ := json.Marshal(cfg.Configs)
