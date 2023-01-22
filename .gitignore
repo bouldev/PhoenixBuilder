@@ -91,3 +91,5 @@ dotcs_plugins
 
 *.tar.gz
 omega_release/binary
+binary
+omega/mainframe/update.log
