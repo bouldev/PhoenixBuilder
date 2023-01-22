@@ -533,15 +533,14 @@ func InitMapping(mappingInData []byte) {
 	// 	LegacyBlocks[rid] = &LegacyBlock{Name: "", Val: 0}
 	// }
 	for nemcRid, Rid := range nemcToMCRIDMapping {
-		if LegacyBlocks[Rid].Name != "" {
+		if LegacyBlocks[Rid] != nil && LegacyBlocks[Rid].Name != "" {
 			continue
 		}
 		val := nemcToVal[nemcRid]
 		if nemcRid == int(NEMCAirRID) {
 			continue
 		}
-		LegacyBlocks[Rid].Val = uint16(val)
-		LegacyBlocks[Rid].Name = nemcToName[nemcRid]
+		LegacyBlocks[Rid] = &LegacyBlock{Name: nemcToName[nemcRid], Val: uint16(val)}
 	}
 	// for rid, _ := range Blocks {
 	// 	if LegacyBlocks[rid].Name == "" {
@@ -552,7 +551,9 @@ func InitMapping(mappingInData []byte) {
 	LegacyBlocks[AirRID].Val = 0
 	LegacyAirBlock = LegacyBlocks[AirRID]
 	for rid, block := range LegacyBlocks {
-		LegacyRuntimeIDs[LegacyBlockHash{name: block.Name, data: block.Val}] = uint32(rid)
+		if block != nil {
+			LegacyRuntimeIDs[LegacyBlockHash{name: block.Name, data: block.Val}] = uint32(rid)
+		}
 	}
 	LegacyRuntimeIDs[LegacyBlockHash{name: "air", data: 0}] = AirRID
 	LegacyBlockToRuntimeID = func(name string, data uint16) (runtimeID uint32, found bool) {
@@ -564,6 +565,7 @@ func InitMapping(mappingInData []byte) {
 	}
 
 	{
+		SchematicBlockToRuntimeIDStaticMapping = make([]uint32, 256*256)
 		for _, blkName := range SchematicBlockNames {
 			if blkName == "null" {
 				continue
