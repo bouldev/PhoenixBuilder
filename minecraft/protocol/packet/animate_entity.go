@@ -56,6 +56,7 @@ func (pk *AnimateEntity) Unmarshal(r *protocol.Reader) {
 	r.String(&pk.StopCondition)
 	r.Int32(&pk.StopConditionVersion)
 	r.String(&pk.Controller)
+	r.Float32(&pk.BlendOutTime)
 	var count uint32
 	r.Varuint32(&count)
 	pk.EntityRuntimeIDs = make([]uint64, count)
