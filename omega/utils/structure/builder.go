@@ -145,8 +145,8 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 				fallBackActionsMu.Unlock()
 			}
 		}
-		blk := chunk.RuntimeIDToLegacyBlock(block.RTID)
-		if blk == nil {
+		blk, found := chunk.RuntimeIDToLegacyBlock(block.RTID)
+		if !found {
 			continue
 		}
 		o.ProgressUpdater(counter)

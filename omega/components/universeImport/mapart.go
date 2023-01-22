@@ -65,7 +65,7 @@ func init() {
 		if !found || rtidJ != rtid {
 			panic(fmt.Errorf("%v %v %v %v", cdata.Block.Name, cdata.Block.Val, found, rtidJ))
 		}
-		if chunk.RuntimeIDToLegacyBlock(rtid).Name != cdata.Block.Name || chunk.RuntimeIDToLegacyBlock(rtid).Val != cdata.Block.Val {
+		if blk, _ := chunk.RuntimeIDToLegacyBlock(rtid); blk.Name != cdata.Block.Name || blk.Val != cdata.Block.Val {
 			panic(fmt.Errorf("missing color block mapping %v", cdata))
 		}
 		blockArray2D = append(blockArray2D, &colorBlock{RuntimeID: rtid, Height: Height2D})
@@ -271,8 +271,12 @@ func PreProcessImage(img image.Image, dir string, cmds []string) (structureFile 
 		if found {
 			return javaStr
 		} else {
-			block := chunk.RuntimeIDToLegacyBlock(u)
-			return fmt.Sprintf("omega:as_legacy_block[name=%v,val=%v]", block.Name, block.Val)
+			if block, found := chunk.RuntimeIDToLegacyBlock(u); found {
+				return fmt.Sprintf("omega:as_legacy_block[name=%v,val=%v]", block.Name, block.Val)
+			} else {
+				return chunk.JavaAirBlock
+			}
+
 		}
 
 	}

@@ -70,7 +70,10 @@ func (o *RedStoneUpdateLimit) recordUpdate(pos protocol.BlockPos) {
 func (o *RedStoneUpdateLimit) onBlockUpdate(pk *packet.UpdateBlock) {
 	nemcRid := pk.NewBlockRuntimeID
 	rid := chunk.NEMCRuntimeIDToStandardRuntimeID(nemcRid)
-	legacyBlock := chunk.RuntimeIDToLegacyBlock(rid)
+	legacyBlock, found := chunk.RuntimeIDToLegacyBlock(rid)
+	if !found {
+		return
+	}
 	// fmt.Println(nemcRid, rid, legacyBlock)
 	isRedstone := false
 	if _isRedstone, hasK := o.redstoneRidCache[rid]; hasK {

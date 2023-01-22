@@ -9,7 +9,6 @@ import (
 	"phoenixbuilder/mirror/define"
 
 	"github.com/Tnze/go-mc/nbt"
-	"github.com/pterm/pterm"
 )
 
 type SchematicFileStructure struct {
@@ -66,10 +65,10 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 	}
 	blockChan := make(chan *IOBlockForDecoder, 10240)
 	airRID := chunk.AirRID
-	lightBlockRID, found := chunk.LegacyBlockToRuntimeID("light_block", 0)
-	if !found {
-		pterm.Error.Println("placeholder block RTID not found")
-	}
+	// lightBlockRID, found := chunk.LegacyBlockToRuntimeID("light_block", 0)
+	// if !found {
+	// 	pterm.Error.Println("placeholder block RTID not found")
+	// }
 	blocksCounter := 0
 	for _, blk := range blocks {
 		if blk != 0 {
@@ -83,11 +82,8 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 			close(blockChan)
 		}()
 		width, height, length := Size[X], Size[Y], Size[Z]
-		index, name, data := 0, "", uint16(0)
-		rtid, found := uint32(0), false
+		index := 0
 		x, y, z := 0, 0, 0
-		blkSchematicID := byte(0)
-		notFoundCache := map[string]bool{}
 		for z = 0; z < length; z++ {
 			for y = 0; y < height; y++ {
 				for x = 0; x < width; x++ {
@@ -95,29 +91,12 @@ func DecodeSchematic(data []byte, infoSender func(string)) (blockFeeder chan *IO
 						return
 					}
 					index = x + z*width + y*length*width
-					blkSchematicID = blocks[index]
-					if blkSchematicID == 0 {
+					if rtid, found := chunk.SchematicBlockToRuntimeID(blocks[index], values[index]); !found {
 						continue
-					}
-					name = chunk.SchematicBlockMapping[blkSchematicID]
-					data = uint16(values[index])
-					rtid, found = chunk.LegacyBlockToRuntimeID(name, data)
-					if !found {
-						rtid, found = chunk.LegacyBlockToRuntimeID(name, 0)
-						if !found {
-							if _, hasK := notFoundCache[name]; !hasK {
-								infoSender(fmt.Sprintf("Warning: %v not support in Schematic Foramte", name))
-								notFoundCache[name] = true
-							}
+					} else {
+						if rtid != airRID {
+							blockChan <- &IOBlockForDecoder{Pos: define.CubePos{x, y, z}, RTID: rtid}
 						}
-						// continue
-					} else {
-						// fmt.Printf("%v,%v,%v\t", name, data, rtid)
-					}
-					if rtid != airRID {
-						blockChan <- &IOBlockForDecoder{Pos: define.CubePos{x, y, z}, RTID: rtid}
-					} else {
-						blockChan <- &IOBlockForDecoder{Pos: define.CubePos{x, y, z}, RTID: lightBlockRID}
 					}
 				}
 			}

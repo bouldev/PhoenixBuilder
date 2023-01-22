@@ -166,8 +166,8 @@ func (o *DifferRecover) onTrigger(chat *defines.GameChat) (stop bool) {
 						pk.ActionBar(fmt.Sprintf("current %v blocks\n", counter+1))
 						sender(fmt.Sprintf("tp @s %v %v %v\n", block.Pos[0], block.Pos[1], block.Pos[2]))
 					}
-					blk := chunk.RuntimeIDToLegacyBlock(block.RTID)
-					if blk == nil {
+					blk, found := chunk.RuntimeIDToLegacyBlock(block.RTID)
+					if !found {
 						continue
 					}
 					cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.ReplaceAll(blk.Name, "minecraft:", ""), blk.Val)

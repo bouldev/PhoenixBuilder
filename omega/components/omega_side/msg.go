@@ -300,6 +300,14 @@ func (t *omegaSideTransporter) initMapping() {
 		},
 		"reg_block_update": func(args map[string]interface{}, writer func(interface{})) {
 			t.side.Frame.GetGameListener().AppendOnBlockUpdateInfoCallBack(func(pos define.CubePos, origRTID, currentRTID uint32) {
+				originBlock, found := chunk.RuntimeIDToLegacyBlock(origRTID)
+				if !found {
+					originBlock = nil
+				}
+				currentBlock, found := chunk.RuntimeIDToLegacyBlock(currentRTID)
+				if !found {
+					currentBlock = nil
+				}
 				oname, oprop, ofound := chunk.RuntimeIDToState(origRTID)
 				cname, cprop, cfound := chunk.RuntimeIDToState(currentRTID)
 				t.writeToConn(ServerPush{
@@ -310,12 +318,12 @@ func (t *omegaSideTransporter) initMapping() {
 					Data: map[string]interface{}{
 						"pos":                        pos,
 						"origin_block_runtime_id":    origRTID,
-						"origin_block_simple_define": chunk.RuntimeIDToLegacyBlock(origRTID),
+						"origin_block_simple_define": originBlock,
 						"origin_block_full_define": map[string]interface{}{
 							"name": oname, "props": oprop, "found": ofound,
 						},
 						"new_block_runtime_id":    currentRTID,
-						"new_block_simple_define": chunk.RuntimeIDToLegacyBlock(currentRTID),
+						"new_block_simple_define": currentBlock,
 						"new_block_full_define": map[string]interface{}{
 							"name": cname, "props": cprop, "found": cfound,
 						},

@@ -332,7 +332,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							TickDelay:          tickdelay,
 							TrackOutput:        tob,
 							Conditional:        conb,
-							NeedsRedstone:       nrb,
+							NeedsRedstone:      nrb,
 						}
 						//fmt.Printf("%#v\n",cbdata)
 					} else {
@@ -341,7 +341,8 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 							nbtData = []byte(pnd.(string))
 						}
 					}
-					lb := chunk.RuntimeIDToLegacyBlock(runtimeId)
+					// it's ok to ignore "found", because it will set lb to air if not found
+					lb, _ := chunk.RuntimeIDToLegacyBlock(runtimeId)
 					blocks[counter] = &types.Module{
 						Block: &types.Block{
 							Name: &lb.Name,
