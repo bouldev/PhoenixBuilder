@@ -402,10 +402,13 @@ func (o *QGuildLink) Inject(frame defines.MainFrame) {
 	}
 	o.Frame.GetGameListener().SetGameChatInterceptor(o.onGameMessage)
 	if o.SendJoinAndLeaveMsg {
-		o.Frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
-			name := utils.ToPlainName(entry.Username)
-			if name != o.Frame.GetUQHolder().GetBotName() {
-				o.sendAllChannelsMessage(fmt.Sprintf("%v 进入了游戏", name))
+		o.Frame.GetGameListener().SetOnTypedPacketCallBack(packet.IDText, func(p packet.Packet) {
+			pkt := p.(*packet.Text)
+			if pkt.TextType == packet.TextTypeTranslation && pkt.Message == "§e%multiplayer.player.joined" {
+				name := utils.ToPlainName(pkt.Parameters[0])
+				if name != o.Frame.GetUQHolder().GetBotName() {
+					o.sendAllChannelsMessage(fmt.Sprintf("%v 进入了游戏", name))
+				}
 			}
 		})
 		o.Frame.GetGameListener().AppendLogoutInfoCallback(func(entry protocol.PlayerListEntry) {
