@@ -48,17 +48,14 @@ func (b *Bonjour) Inject(frame defines.MainFrame) {
 
 func (b *Bonjour) Activate() {
 	b.BasicComponent.Activate()
+	time.Sleep(5 * time.Second)
 	existingPlayers := make([]string, 0)
 	for _, p := range b.Frame.GetUQHolder().PlayersByEntityID {
 		b.Ctrl.GetPlayerKit(p.Username).GetViolatedStorage()["login_time"] = time.Now()
 		existingPlayers = append(existingPlayers, p.Username)
 	}
 	b.logger.Write(fmt.Sprintf("当前已经在线玩家: %v", existingPlayers))
-	go func() {
-		time.Sleep(5 * time.Second)
-		b.newCome = true
-	}()
-
+	b.newCome = true
 }
 
 func (b *Bonjour) onLogin(entry protocol.PlayerListEntry) {
@@ -93,7 +90,7 @@ func (b *Bonjour) onLogout(entry protocol.PlayerListEntry) {
 		return
 	}
 	if loginTime, hasK := player.GetViolatedStorage()["login_time"]; hasK && loginTime != nil {
-		playTime := time.Now().Sub(loginTime.(time.Time)).Minutes()
+		playTime := time.Since(loginTime.(time.Time)).Minutes()
 		b.logger.Write(fmt.Sprintf("logout %v %v (%.1fm)", player.GetRelatedUQ().Username, entry.UUID.String(), playTime))
 	} else {
 		b.logger.Write(fmt.Sprintf("logout %v %v (login not recorded)", player.GetRelatedUQ().Username, entry.UUID.String()))
