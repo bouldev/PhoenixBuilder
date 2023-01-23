@@ -148,7 +148,7 @@ type GameControl interface {
 	SetOnParamMsg(string, func(chat *GameChat) (catch bool)) error
 	PlaceCommandBlock(pos define.CubePos, commandBlockName string, commandBlockData int,
 		withMove, withAirPrePlace bool, updatePacket *packet.CommandBlockUpdate,
-		onDone func(done bool), timeOut time.Duration, botName string)
+		onDone func(done bool), timeOut time.Duration)
 }
 
 type PlayerKit interface {
@@ -166,10 +166,8 @@ type PlayerKit interface {
 	SetOnParamMsg(func(chat *GameChat) (catch bool)) error
 	GetOnParamMsg() func(chat *GameChat) (catch bool)
 
-	GetAdventureFlag(key uint32) (bool, error)
-	SetAdventureFlag(key uint32, value bool) (changeSent bool, err error)
-	GetActionPermission(key uint32) (bool, error)
-	SetActionPermission(key uint32, value bool) (changeSent bool, err error)
+	HasPermission(key string) bool
+	SetPermission(key string, b bool)
 
 	GetPos(selector string) chan *define.CubePos
 }

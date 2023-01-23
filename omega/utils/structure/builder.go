@@ -33,12 +33,7 @@ type deferAction struct {
 	action func()
 }
 
-// 修复非主世界维度不能导入的问题
-func outputDimensionalCommand(command string, botName string) string {
-	return fmt.Sprintf("execute @a[name=\"%v\"] ~ ~ ~ %v", botName, command)
-}
-
-func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepTime time.Duration, botName string) {
+func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepTime time.Duration) {
 	o.delayBlocks = make(map[define.CubePos]*IOBlockForBuilder)
 	// o.delayBlocksMu = sync.Mutex{}
 	counter := 0
@@ -151,7 +146,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 		}
 		o.ProgressUpdater(counter)
 		if block.Expand16 {
-			cmd := outputDimensionalCommand(fmt.Sprintf("fill %v %v %v %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], block.Pos[0]+15, block.Pos[1]+15, block.Pos[2]+15, strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val), botName)
+			cmd := fmt.Sprintf("fill %v %v %v %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], block.Pos[0]+15, block.Pos[1]+15, block.Pos[2]+15, strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
 			// fmt.Println("fast fill")
 			o.NormalCmdSender(cmd)
 			counter += 4096
@@ -173,7 +168,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 							if !done {
 								pterm.Error.Printfln("命令方块放置失败: 坐标: %v 名称: %v %v 信息: %v", block.Pos, blk.Name, blk.Val, block.NBT)
 							}
-						}, time.Second*3, botName)
+						}, time.Second*3)
 					}
 					fallBackActionsMu.Unlock()
 					o.Ctrl.PlaceCommandBlock(block.Pos, blk.Name, int(blk.Val), false, true, cfg, func(done bool) {
@@ -184,7 +179,7 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 							delete(fallBackActions, block.Pos)
 							fallBackActionsMu.Unlock()
 						}
-					}, time.Second*3, botName)
+					}, time.Second*3)
 					for time.Since(placeStart) < time.Millisecond*50 {
 						if !quickDone {
 							time.Sleep(time.Millisecond)
@@ -197,20 +192,8 @@ func (o *Builder) Build(blocksIn chan *IOBlockForBuilder, speed int, boostSleepT
 				}
 
 			} else {
-				// fmt.Println(block.BlockName, block.BlockStates, block.BlockData, "test")
-				if block.BlockName != "" && block.BlockStates != "" {
-					cmd := outputDimensionalCommand(fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(block.BlockName, "minecraft:", "", 1), block.BlockStates), botName)
-					o.BlockCmdSender(cmd)
-					// fmt.Println(cmd)
-				} else if block.BlockName != "" && block.BlockStates == "" {
-					cmd := outputDimensionalCommand(fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(block.BlockName, "minecraft:", "", 1), block.BlockData), botName)
-					o.BlockCmdSender(cmd)
-					// fmt.Println(cmd)
-				} else {
-					cmd := outputDimensionalCommand(fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val), botName)
-					o.BlockCmdSender(cmd)
-					// fmt.Println(cmd)
-				}
+				cmd := fmt.Sprintf("setblock %v %v %v %v %v", block.Pos[0], block.Pos[1], block.Pos[2], strings.Replace(blk.Name, "minecraft:", "", 1), blk.Val)
+				o.BlockCmdSender(cmd)
 			}
 			counter++
 		}

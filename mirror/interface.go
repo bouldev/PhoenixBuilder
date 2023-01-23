@@ -12,13 +12,10 @@ var TimeStampNotFound = time.Unix(0, 0).Unix()
 // 收到/保存/读取该区块时区块所在的位置 ChunkX/ChunkZ (ChunkX=X>>4)
 // 以及区块收到/保存的时间 (Unix Second)
 type ChunkData struct {
-	Chunk       *chunk.Chunk
-	BlockNbts   map[define.CubePos]map[string]interface{}
-	BlockName   map[define.CubePos]string // for bdx
-	BlockStates map[define.CubePos]string // for bdx
-	BlockData   map[define.CubePos]uint16 // for bdx
-	SyncTime    int64
-	ChunkPos    define.ChunkPos
+	Chunk     *chunk.Chunk
+	BlockNbts map[define.CubePos]map[string]interface{}
+	SyncTime  int64
+	ChunkPos  define.ChunkPos
 }
 
 func (cd *ChunkData) GetSyncTime() time.Time {
