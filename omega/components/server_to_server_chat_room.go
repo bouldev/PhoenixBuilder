@@ -318,19 +318,19 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 						} else {
 							switch msg.Action {
 							case "msg":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v", msg.ServerName, msg.Data))
+								o.Frame.GetGameControl().SayTo("@a[rm=1]", fmt.Sprintf("%v %v", msg.ServerName, msg.Data))
 							case "connected":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
+								o.Frame.GetGameControl().SayTo("@a[rm=1]", fmt.Sprintf("%v 加入了互通", msg.ServerName))
 							case "disconnected":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
+								o.Frame.GetGameControl().SayTo("@a[rm=1]", fmt.Sprintf("%v 加入了互通", msg.ServerName))
 							case "consolemsg":
 								pterm.Info.Println(msg.Data)
 							case "player.join":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v 加入了游戏", msg.ServerName, msg.Data))
+								o.Frame.GetGameControl().SayTo("@a[rm=1]", fmt.Sprintf("%v %v 加入了游戏", msg.ServerName, msg.Data))
 							case "player.left":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v 退出了游戏", msg.ServerName, msg.Data))
+								o.Frame.GetGameControl().SayTo("@a[rm=1]", fmt.Sprintf("%v %v 退出了游戏", msg.ServerName, msg.Data))
 							case "get_data_serverlist":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("目前连接的服服互通服务器列表: %v", msg.Data))
+								o.Frame.GetGameControl().SayTo("@a[rm=1]", fmt.Sprintf("目前连接的服服互通服务器列表: %v", msg.Data))
 							case "kick":
 								return
 							}
