@@ -19,11 +19,11 @@ class version_weather:
 
 #初始化
 def initialize():
-    if not os.path.exists('data\\weather.json'):
+    if not os.path.exists(os.path.join('data','weather.json')):
         nowtime=str(time.strftime("%Y %m %d %H %M %S")).split(" ")
         nowtime_="".join(nowtime)
         data={"名称":"天气系统","描述":"天气系统的存储文件","信息":{"初始时间":"%s"%(nowtime_),"季节":"春","已过天数":0,"酸雨天":[5,20],"天气":"晴","low":0,"high":5,"温度":2}}
-        with open("data\\weather.json","w",encoding="utf-8") as f:
+        with open(os.path.join('data','weather.json'),"w",encoding="utf-8") as f:
             f.write(json.dumps(data,ensure_ascii=False,indent=4))
 initialize()
 def Mono_plugin_season(api:API):
@@ -36,7 +36,7 @@ def Mono_plugin_season(api:API):
 
             """
             if 1:
-                with open("data\\weather.json","r",encoding="utf-8") as f:
+                with open(os.path.join('data','weather.json'),"r",encoding="utf-8") as f:
                     data=f.read()
                 data=json.loads(data)
 
@@ -126,7 +126,7 @@ def Mono_plugin_season(api:API):
             #季节效果
             while True:
                 time.sleep(2)
-                with open("data\\weather.json","r",encoding="utf-8") as f:
+                with open(os.path.join('data','weather.json'),"r",encoding="utf-8") as f:
                     data=f.read()
                 try:
                     data=json.loads(data)
@@ -153,7 +153,7 @@ def Mono_plugin_season(api:API):
         def temp():
             if 1:
                 #温度浮动
-                with open("data\\weather.json","r",encoding="utf-8") as f:
+                with open(os.path.join('data','weather.json'),"r",encoding="utf-8") as f:
                     data=f.read()
                 data=json.loads(data)
                 if -30<= data["信息"]["温度"] <= -10:
@@ -168,7 +168,7 @@ def Mono_plugin_season(api:API):
                     data["信息"]["温度"] = random.randint(data["信息"]["low"],data["信息"]["high"])
                 if 40< data["信息"]["温度"] <= 50:
                     data["信息"]["温度"] = random.randint(data["信息"]["low"],data["信息"]["high"])
-                with open("data\\weather.json","w",encoding="utf-8") as f:
+                with open(os.path.join('data','weather.json'),"w",encoding="utf-8") as f:
                     f.write(json.dumps(data,ensure_ascii=False,indent=4))
         def seasonsRepeat():
             """
@@ -182,7 +182,7 @@ def Mono_plugin_season(api:API):
             
             """
             try:
-                with open("data\\weather.json","r",encoding="utf-8") as f:
+                with open(os.path.join('data','weather.json'),"r",encoding="utf-8") as f:
                     data=f.read()
                 try :
                     data=json.loads(data)
@@ -220,7 +220,7 @@ def Mono_plugin_season(api:API):
                         data["信息"]["温度"] = temp
                         data["信息"]["high"] = high_
                         data["信息"]["low"] = low_
-                    with open("data\\weather.json","w",encoding="utf-8") as f:
+                    with open(os.path.join('data','weather.json'),"w",encoding="utf-8") as f:
                         f.write(json.dumps(data,ensure_ascii=False,indent=4))
                     if today_weather !="":
                         if data["信息"]["已过天数"] in data["信息"]["酸雨天"]:
@@ -264,7 +264,7 @@ def Mono_plugin_season(api:API):
                         data["信息"]["温度"] = temp
                         data["信息"]["high"] = high_
                         data["信息"]["low"] = low_
-                    with open("data\\weather.json","w",encoding="utf-8") as f:
+                    with open(os.path.join('data','weather.json'),"w",encoding="utf-8") as f:
                         f.write(json.dumps(data,ensure_ascii=False,indent=4))
                     if today_weather !="":
                         if data["信息"]["已过天数"] in data["信息"]["酸雨天"]:
@@ -307,7 +307,7 @@ def Mono_plugin_season(api:API):
                         data["信息"]["温度"] = temp
                         data["信息"]["high"] = high_
                         data["信息"]["low"] = low_
-                    with open("data\\weather.json","w",encoding="utf-8") as f:
+                    with open(os.path.join('data','weather.json'),"w",encoding="utf-8") as f:
                         f.write(json.dumps(data,ensure_ascii=False,indent=4))
                     if today_weather !="":
                         if data["信息"]["已过天数"] in data["信息"]["酸雨天"]:
@@ -350,7 +350,7 @@ def Mono_plugin_season(api:API):
                         data["信息"]["温度"] = temp
                         data["信息"]["high"] = high_
                         data["信息"]["low"] = low_
-                    with open("data\\weather.json","w",encoding="utf-8") as f:
+                    with open(os.path.join('data','weather.json'),"w",encoding="utf-8") as f:
                         f.write(json.dumps(data,ensure_ascii=False,indent=4))
                     if today_weather !="":
                         if data["信息"]["已过天数"] in data["信息"]["酸雨天"]:
@@ -373,7 +373,7 @@ def Mono_plugin_season(api:API):
     api.execute_with_repeat(weather.temp,repeat_time=50)
     #聊天栏获取当前温度
     def get_temp(player_input:PlayerInput):
-        with open("data\\weather.json","r",encoding="utf-8") as f:
+        with open(os.path.join('data','weather.json'),"r",encoding="utf-8") as f:
             data=f.read()
         data=json.loads(data)
         temp=data["信息"]["温度"]
