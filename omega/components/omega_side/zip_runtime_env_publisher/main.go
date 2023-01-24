@@ -59,22 +59,23 @@ func main() {
 	var outDir = "zip_out"
 	var srcDir = "../side"
 	// 每次运行前必须部署的文件
-	GenZip(srcDir, path.Join(outDir, "basic_structure_and_runtime_libs.zip"), func(filePath string, info os.FileInfo) (discard bool) {
-		if strings.Contains(filePath, ".DS_Store") {
-			return true
-		} else if strings.Contains(filePath, "omega_python_plugins") {
-			return true
-		} else if strings.Contains(filePath, "dotcs_plugins") {
-			return true
-		} else if strings.HasSuffix(filePath, "NOTE") {
-			return false
-		} else if strings.HasSuffix(filePath, "python_plugin_starter.py") || strings.HasSuffix(filePath, "dotcs_emulator.py") || strings.HasSuffix(filePath, "只写了一部分的开发文档.md") {
-			return false
-		} else if strings.Contains(filePath, "omega_side") {
-			return false
-		}
-		return true
-	})
+	// GenZip(srcDir, path.Join(outDir, "basic_structure_and_runtime_libs.zip"), func(filePath string, info os.FileInfo) (discard bool) {
+	// 	if strings.Contains(filePath, ".DS_Store") {
+	// 		return true
+	// 	} else if strings.Contains(filePath, "omega_python_plugins") {
+	// 		return true
+	// 	} else if strings.Contains(filePath, "dotcs_plugins") {
+	// 		return true
+	// 	} else if strings.HasSuffix(filePath, "NOTE") {
+	// 		return false
+	// 	} else if strings.HasSuffix(filePath, "python_plugin_starter.py") || strings.HasSuffix(filePath, "dotcs_emulator.py") || strings.HasSuffix(filePath, "只写了一部分的开发文档.md") {
+	// 		return false
+	// 	} else if strings.Contains(filePath, "omega_side") {
+	// 		return false
+	// 	}
+	// 	return true
+	// })
+	// GenHash(path.Join(outDir, "basic_structure_and_runtime_libs.zip"))
 	// Omega 标准 Python 插件的示例文件 （在 omega_python_plugins 文件夹消失时部署）
 	GenZip(srcDir, path.Join(outDir, "omega_python_plugins.zip"), func(filePath string, info os.FileInfo) (discard bool) {
 		if strings.Contains(filePath, ".DS_Store") {
@@ -94,30 +95,30 @@ func main() {
 	// 	return true
 	// })
 	// 原生 DotCS
-	GenZip("/Users/dai/projects/PhoenixBuilder/omega_storage/side/dotcs", path.Join(outDir, "pure_dotcs.zip"), func(filePath string, info os.FileInfo) (discard bool) {
-		if strings.Contains(filePath, ".DS_Store") {
-			return true
-		}
-		if strings.Contains(filePath, "player/") {
-			return true
-		}
-		if strings.Contains(filePath, "serverMsg/") {
-			return true
-		}
-		if strings.Contains(filePath, "temp") {
-			return true
-		}
-		if strings.Contains(filePath, "pluginupdate1.txt") {
-			return true
-		}
-		if strings.Contains(filePath, "__pycache__") {
-			return true
-		}
-		return false
-	})
-	GenHash(path.Join(outDir, "basic_structure_and_runtime_libs.zip"))
-	GenHash(path.Join(outDir, "dotcs_plugins.zip"))
-	GenHash(path.Join(outDir, "pure_dotcs.zip"))
+	// GenZip("/Users/dai/projects/PhoenixBuilder/omega_storage/side/dotcs", path.Join(outDir, "pure_dotcs.zip"), func(filePath string, info os.FileInfo) (discard bool) {
+	// 	if strings.Contains(filePath, ".DS_Store") {
+	// 		return true
+	// 	}
+	// 	if strings.Contains(filePath, "player/") {
+	// 		return true
+	// 	}
+	// 	if strings.Contains(filePath, "serverMsg/") {
+	// 		return true
+	// 	}
+	// 	if strings.Contains(filePath, "temp") {
+	// 		return true
+	// 	}
+	// 	if strings.Contains(filePath, "pluginupdate1.txt") {
+	// 		return true
+	// 	}
+	// 	if strings.Contains(filePath, "__pycache__") {
+	// 		return true
+	// 	}
+	// 	return false
+	// })
+
+	// GenHash(path.Join(outDir, "dotcs_plugins.zip"))
+	// GenHash(path.Join(outDir, "pure_dotcs.zip"))
 	// PlantformSpecific := "../plantform_specific"
 	// python 运行环境 conda create python=3.10 -p path--no-default-packages
 	// // Linux_amd64 python 运行环境
