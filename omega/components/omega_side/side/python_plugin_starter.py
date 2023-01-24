@@ -81,7 +81,7 @@ class Linker(object):
         self.merged_code_body.append(f"def plugin_file_{self.plugin_counter}():\n")
         for l in code:
             if "import" in l and "*" in l:
-                self.merged_code_head.append(l)
+                self.merged_code_head.append(l.strip()+"\n")
             else:
                 self.merged_code_body.append("    "+l)
         self.merged_code_tail.append(f"plugin_file_{self.plugin_counter}()\n")
@@ -95,7 +95,7 @@ linker=Linker("omega_python_plugins")
 linker.scan_all_plugins()
 with open("linked_python_plugin.py","w",encoding="utf-8") as f:
     f.write("# -*- coding: UTF-8 -*-\n")
-    f.write("orig_print=print\ndef alter_print(*args,**kwargs):\n\tkwargs['flush']=True\n\torig_print(*args,**kwargs)\nprint=orig_print\n")
+    f.write("orig_print=print\ndef alter_print(*args,**kwargs):\n\tkwargs['flush']=True\n\torig_print(*args,**kwargs)\nprint=orig_print\n\n")
     f.write(linker.dump_code())
     
 import linked_python_plugin

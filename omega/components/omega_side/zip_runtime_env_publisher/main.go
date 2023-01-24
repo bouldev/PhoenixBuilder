@@ -59,22 +59,22 @@ func main() {
 	var outDir = "zip_out"
 	var srcDir = "../side"
 	// 每次运行前必须部署的文件
-	// GenZip(srcDir, path.Join(outDir, "basic_structure_and_runtime_libs.zip"), func(filePath string, info os.FileInfo) (discard bool) {
-	// 	if strings.Contains(filePath, ".DS_Store") {
-	// 		return true
-	// 	} else if strings.Contains(filePath, "omega_python_plugins") {
-	// 		return true
-	// 	} else if strings.Contains(filePath, "dotcs_plugins") {
-	// 		return true
-	// 	} else if strings.HasSuffix(filePath, "NOTE") {
-	// 		return false
-	// 	} else if strings.HasSuffix(filePath, "python_plugin_starter.py") || strings.HasSuffix(filePath, "dotcs_emulator.py") || strings.HasSuffix(filePath, "只写了一部分的开发文档.md") {
-	// 		return false
-	// 	} else if strings.Contains(filePath, "omega_side") {
-	// 		return false
-	// 	}
-	// 	return true
-	// })
+	GenZip(srcDir, path.Join(outDir, "basic_structure_and_runtime_libs.zip"), func(filePath string, info os.FileInfo) (discard bool) {
+		if strings.Contains(filePath, ".DS_Store") {
+			return true
+		} else if strings.Contains(filePath, "omega_python_plugins") {
+			return true
+		} else if strings.Contains(filePath, "dotcs_plugins") {
+			return true
+		} else if strings.HasSuffix(filePath, "NOTE") {
+			return false
+		} else if strings.HasSuffix(filePath, "python_plugin_starter.py") || strings.HasSuffix(filePath, "dotcs_emulator.py") || strings.HasSuffix(filePath, "只写了一部分的开发文档.md") {
+			return false
+		} else if strings.Contains(filePath, "omega_side") {
+			return false
+		}
+		return true
+	})
 	// GenHash(path.Join(outDir, "basic_structure_and_runtime_libs.zip"))
 	// Omega 标准 Python 插件的示例文件 （在 omega_python_plugins 文件夹消失时部署）
 	GenZip(srcDir, path.Join(outDir, "omega_python_plugins.zip"), func(filePath string, info os.FileInfo) (discard bool) {
