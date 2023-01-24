@@ -112,11 +112,13 @@ func Remapping(nemcName string) (mcName string) {
 }
 
 type MappingOut struct {
-	RIDToMCBlock   []*GeneralBlock
-	NEMCRidToMCRid []int16
-	NEMCRidToVal   []uint8
-	NEMCToName     []string
-	JavaToRid      map[string]uint32
+	RIDToMCBlock       []*GeneralBlock
+	NEMCRidToMCRid     []uint32
+	MCRidToNEMCRid     []uint32
+	NEMCRidToVal       []uint8
+	NEMCToName         []string
+	JavaToRid          map[string]uint32
+	AirRID, NEMCAirRID uint32
 }
 
 func main() {
@@ -128,7 +130,10 @@ func main() {
 			remapper[fmt.Sprintf("stone_slab%v", i)] = fmt.Sprintf("stone_block_slab%v", i)
 			remapper[fmt.Sprintf("double_stone_slab%v", i)] = fmt.Sprintf("double_stone_block_slab%v", i)
 		}
-
+	}
+	for _, color := range []string{"purple", "pink", "green", "red", "gray", "light_blue", "yellow", "blue", "brown", "black", "white", "orange", "cyan", "magenta", "lime", "silver"} {
+		// "glazedTerracotta.purple":  "purple_glazed_terracotta",
+		remapper[fmt.Sprintf("glazedTerracotta.%v", color)] = fmt.Sprintf("%v_glazed_terracotta", color)
 	}
 
 	if err := os.MkdirAll("convert_out", 0755); err != nil {
@@ -138,6 +143,7 @@ func main() {
 	// group up standard mc block states
 	airRID := 0
 	nemcAirRID := 0
+	NEMCRIDNOTFOUND := -1
 	dec := nbt.NewDecoder(bytes.NewBuffer(blockStateData))
 	groupedBlocks := make(map[string]*IDGroup)
 	blocks := []*RichBlock{}
@@ -150,7 +156,7 @@ func main() {
 		rb := &RichBlock{
 			GeneralBlock: s,
 			Val:          0,
-			NEMCRID:      -1,
+			NEMCRID:      NEMCRIDNOTFOUND,
 			RID:          int(rid),
 		}
 		_, hasK := groupedBlocks[rb.Name]
@@ -179,7 +185,7 @@ func main() {
 			nemcAirRID = rid
 		}
 		if group, found := groupedBlocks[Remapping(nemcBlocks.Name)]; !found {
-			fmt.Println("not found: ", nemcBlocks)
+			fmt.Printf("Nemc block: %v not found in MC.\n", nemcBlocks)
 		} else {
 			found := false
 			for val, b := range group.IDS {
@@ -190,31 +196,36 @@ func main() {
 				}
 			}
 			if !found {
-				fmt.Println("not found: ", nemcBlocks)
+				fmt.Printf("Nemc block-(value): %v not found in MC.\n", nemcBlocks)
 			}
 		}
 	}
-	fmt.Println(airRID, " ", nemcAirRID)
+	fmt.Println("MC Air RID:   ", airRID)
+	fmt.Println("NEMC Air RID: ", nemcAirRID)
 
-	nemcToMCRIDMapping := make([]int16, len(nemcData))
+	nemcToMCRIDMapping := make([]uint32, len(nemcData))
+
 	nemcToVal := make([]uint8, len(nemcData))
 	nemcToName := make([]string, len(nemcData))
 	for i := 0; i < len(nemcData); i++ {
-		nemcToMCRIDMapping[i] = int16(airRID)
+		nemcToMCRIDMapping[i] = uint32(airRID)
 		nemcToVal[i] = uint8(nemcData[i].Val)
 		nemcToName[i] = nemcData[i].Name
 	}
+	mcRtidToNEMCRid := make([]uint32, len(blocks))
 	for rid, b := range blocks {
-		if b.NEMCRID == -1 {
-			fmt.Println("new block ", b)
+		if b.NEMCRID == NEMCRIDNOTFOUND {
+			fmt.Printf("MC block %v not found in NEMC\n", b)
+			mcRtidToNEMCRid[rid] = uint32(nemcAirRID)
 			continue
 		}
+		mcRtidToNEMCRid[rid] = uint32(b.NEMCRID)
 		// origBlock := nemcData[b.NEMCRID]
 		// if origBlock.Name == "minecraft:skull" {
 		// 	nemcToMCRIDMapping[b.NEMCRID] = int16(skullRID)
 		// 	continue
 		// }
-		nemcToMCRIDMapping[b.NEMCRID] = int16(rid)
+		nemcToMCRIDMapping[b.NEMCRID] = uint32(rid)
 	}
 	fmt.Println(nemcToMCRIDMapping[nemcAirRID])
 	fp, err = os.OpenFile("convert_out/nemcRIDToMC1_19RID.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
@@ -305,7 +316,7 @@ func main() {
 			// fmt.Printf("%v not found in java\n", blk)
 		}
 	}
-	fmt.Printf("%v blocks not found in java", counter)
+	fmt.Printf("%v blocks not found in java\n", counter)
 
 	fp, err = os.OpenFile("convert_out/javaBlockToRid.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 	if err != nil {
@@ -319,9 +330,12 @@ func main() {
 	mapping_out := MappingOut{
 		RIDToMCBlock:   ridToMCBlock,
 		NEMCRidToMCRid: nemcToMCRIDMapping,
+		MCRidToNEMCRid: mcRtidToNEMCRid,
 		NEMCRidToVal:   nemcToVal,
 		NEMCToName:     nemcToName,
 		JavaToRid:      javaToRid,
+		AirRID:         uint32(airRID),
+		NEMCAirRID:     uint32(nemcAirRID),
 	}
 
 	fp, err = os.OpenFile("convert_out/StandardMCStates.json", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)

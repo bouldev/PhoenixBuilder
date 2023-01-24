@@ -17,11 +17,17 @@ import (
 
 // the input of this function is nemc runtime id, and should only from the network (chunk data packet), so it should never be "not found" if mapping and input is correct
 var NEMCAirRID uint32
+var AirRID uint32
+
+// for query speed, these two functions do not have "found" return value
+// for not found, it will return (mc/nemc) air rtid
+// note: for an unknown (nemc/mc) rtid -> mapping -> (mc/nemc) air -> mapping -> (nemc/air) air, after twice conversion, it will be (nemc/mc) air, not the origin value
 var NEMCRuntimeIDToStandardRuntimeID func(nemcRuntimeID uint32) (runtimeID uint32)
+var StandardRuntimeIDToNEMCRuntimeID func(runtimeID uint32) (nemcRuntimeID uint32)
 
 // the only place nemc runtime id is used is in decoding of chunk data packet, so in any other place, standard runtime id is used
 // so in function below, the "runtimeID" is always standard runtime id, not nemc runtime id
-var AirRID uint32
+
 var LegacyAirBlock *LegacyBlock
 var JavaAirBlock = "minecraft:air"
 
@@ -143,11 +149,13 @@ func registerBlockState(s *GeneralBlock) {
 }
 
 type MappingIn struct {
-	RIDToMCBlock   []*GeneralBlock
-	NEMCRidToMCRid []int16
-	NEMCRidToVal   []uint8
-	NEMCToName     []string
-	JavaToRid      map[string]uint32
+	RIDToMCBlock       []*GeneralBlock
+	NEMCRidToMCRid     []uint32
+	MCRidToNEMCRid     []uint32
+	NEMCRidToVal       []uint8
+	NEMCToName         []string
+	JavaToRid          map[string]uint32
+	AirRID, NEMCAirRID uint32
 }
 
 var SchematicBlockNames = []string{
@@ -494,9 +502,12 @@ func InitMapping(mappingInData []byte) {
 		panic("blockStateData read fail")
 	}
 
+	AirRID = mappingIn.AirRID
+	NEMCAirRID = mappingIn.NEMCAirRID
+
 	RuntimeIDToState = func(runtimeID uint32) (name string, properties map[string]interface{}, found bool) {
 		if runtimeID >= uint32(len(Blocks)) {
-			return "air", nil, false
+			return "minecraft:air", nil, false
 		}
 		name, properties = Blocks[runtimeID].EncodeBlock()
 		return name, properties, true
@@ -518,9 +529,11 @@ func InitMapping(mappingInData []byte) {
 
 	nemcToMCRIDMapping := mappingIn.NEMCRidToMCRid
 
-	NEMCAirRID = 6565
 	NEMCRuntimeIDToStandardRuntimeID = func(nemcRuntimeID uint32) (runtimeID uint32) {
 		return uint32(nemcToMCRIDMapping[nemcRuntimeID])
+	}
+	StandardRuntimeIDToNEMCRuntimeID = func(runtimeID uint32) (nemcRuntimeID uint32) {
+		return uint32(mappingIn.MCRidToNEMCRid[runtimeID])
 	}
 	if NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID) != AirRID {
 		panic(fmt.Errorf("air rid not matching: %d vs %d", NEMCRuntimeIDToStandardRuntimeID(NEMCAirRID), AirRID))
