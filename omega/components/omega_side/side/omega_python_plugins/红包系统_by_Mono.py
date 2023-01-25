@@ -135,12 +135,12 @@ class redbag:
                 
                 with open(os.path.join('data','player',f"{redbagSender}",'redbag.txt'),"w",encoding="utf-8") as f:
                     f.write(json.dumps(writedata_one,ensure_ascii=False))
-                with open(os.path.join('data','redbag_Data'),"r",encoding="utf-8") as f:
+                with open(os.path.join('data','redbag_Data.json'),"r",encoding="utf-8") as f:
                     redbag_GetData=f.read()
                 redbag_GetData=ast.literal_eval(redbag_GetData)
                 TheOnlyCode=str(uuid.uuid4()).split("-")[0]
                 redbag_GetData["信息"][f'{TheOnlyCode}'] = [f"{redbagSender}","1"]
-                with open(os.path.join('data','redbag_Data'),"w",encoding="utf-8") as f:
+                with open(os.path.join('data','redbag_Data.json'),"w",encoding="utf-8") as f:
                     f.write(json.dumps(redbag_GetData,ensure_ascii=False,indent=4))
                 return {"count":1,"value":True,"code":TheOnlyCode}
             else:
@@ -156,12 +156,12 @@ class redbag:
                 redbagdata[redbag_addnum] = writedata
                 with open(os.path.join('data','player',f"{redbagSender}",'redbag.txt'),"w",encoding="utf-8") as f:
                     f.write(json.dumps(redbagdata,ensure_ascii=False))
-                with open(os.path.join('data','redbag_Data'),"r",encoding="utf-8") as f:
+                with open(os.path.join('data','redbag_Data.json'),"r",encoding="utf-8") as f:
                     redbag_GetData=f.read()
                 redbag_GetData=ast.literal_eval(redbag_GetData)
                 TheOnlyCode=str(uuid.uuid4()).split("-")[0]
                 redbag_GetData["信息"]["%s"%TheOnlyCode] = [redbagSender,str(redbag_addnum)]
-                with open(os.path.join('data','redbag_Data'),"w",encoding="utf-8") as f:
+                with open(os.path.join('data','redbag_Data.json'),"w",encoding="utf-8") as f:
                     f.write(json.dumps(redbag_GetData,ensure_ascii=False,indent=4))
                 
                 return {"count":1,"value":True,"code":TheOnlyCode}
@@ -171,7 +171,7 @@ class redbag:
         code -> 红包唯一识别码(uuid)
         player -> 领取玩家名
         """
-        with open(os.path.join('data','redbag_Data'),"r",encoding="utf-8") as f:
+        with open(os.path.join('data','redbag_Data.json'),"r",encoding="utf-8") as f:
             redbag_GetData=f.read()
         redbag_GetData=ast.literal_eval(redbag_GetData)
         if code not in redbag_GetData['信息']:
@@ -219,7 +219,6 @@ def Mono_plugin_redbag(api:API):
     api.do_echo("MonoMenu红包系统_omeagside已启动",cb=None)
     def on_menu_invoked_redbag_one(player_input:PlayerInput):
         player=player_input.Name
-        api.do_send_player_msg(player,f"{player_input.Msg}",cb=None)
         if len(player_input.Msg) in [0,1]: #只输入了 omg发红包
             api.do_send_player_msg(player,"§r输入§bomg发红包 <金额> <数量> <祝福语> 发送红包",cb=None)#\n§r输入§bomg领/抢 <代号> §r领取红包
         elif len(player_input.Msg) in [2,3]: #输入了omg发红包 <金额> <数量> <或者也许输入了祝福语>
@@ -274,3 +273,4 @@ def Mono_plugin_redbag(api:API):
     api.listen_omega_menu(triggers=["领","抢"],argument_hint="",usage="领红包 领/抢 [代号]",cb=None,on_menu_invoked=on_menu_invoked_redbag_two)
 
 omega.add_plugin(plugin=Mono_plugin_redbag)
+
