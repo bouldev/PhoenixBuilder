@@ -592,7 +592,7 @@ func InitMapping(mappingInData []byte) {
 		var name string
 		for block := byte(0); block < 255; block++ {
 			for data := byte(0); data < 255; data++ {
-				index := uint16(block)<<4 | uint16(data)
+				index := uint16(block)<<8 | uint16(data)
 				name = SchematicBlockNames[block]
 				rtidU32, found := LegacyBlockToRuntimeID(name, (uint16(data)))
 				if !found {
@@ -605,7 +605,7 @@ func InitMapping(mappingInData []byte) {
 			}
 		}
 		SchematicBlockToRuntimeID = func(block, data byte) (runtimeID uint32, found bool) {
-			index := uint16(block)<<4 | uint16(data)
+			index := uint16(block)<<8 | uint16(data)
 			if rtid := SchematicBlockToRuntimeIDStaticMapping[index]; rtid == notFound {
 				return AirRID, false
 			} else {

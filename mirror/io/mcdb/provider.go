@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"phoenixbuilder/mirror/define"
@@ -210,9 +209,9 @@ func (p *Provider) GetWithDeadline(pos define.ChunkPos, deadline time.Time) (dat
 	return p.Get(pos)
 }
 
-// saveChunk saves a chunk at the position passed to the leveldb database. Its version is written as the
+// SaveChunk saves a chunk at the position passed to the leveldb database. Its version is written as the
 // version in the chunkVersion constant.
-func (p *Provider) saveChunk(position define.ChunkPos, c *chunk.Chunk) error {
+func (p *Provider) SaveChunk(position define.ChunkPos, c *chunk.Chunk) error {
 	data := chunk.Encode(c, chunk.DiskEncoding)
 
 	key := p.index(position)
@@ -230,8 +229,8 @@ func (p *Provider) saveChunk(position define.ChunkPos, c *chunk.Chunk) error {
 	return nil
 }
 
-// saveBlockNBT saves all block NBT data to the chunk position passed.
-func (p *Provider) saveBlockNBT(position define.ChunkPos, data []map[string]any) error {
+// SaveBlockNBT saves all block NBT data to the chunk position passed.
+func (p *Provider) SaveBlockNBT(position define.ChunkPos, data []map[string]any) error {
 	if len(data) == 0 {
 		return p.DB.Delete(append(p.index(position), keyBlockEntities), nil)
 	}
@@ -252,14 +251,14 @@ func (p *Provider) saveTimeStamp(position define.ChunkPos, timeStamp int64) erro
 }
 
 func (p *Provider) Write(cd *mirror.ChunkData) error {
-	if err := p.saveChunk(cd.ChunkPos, cd.Chunk); err != nil {
+	if err := p.SaveChunk(cd.ChunkPos, cd.Chunk); err != nil {
 		return err
 	}
 	serializedNbt := make([]map[string]interface{}, 0)
 	for _, nbt := range cd.BlockNbts {
 		serializedNbt = append(serializedNbt, nbt)
 	}
-	if err := p.saveBlockNBT(cd.ChunkPos, serializedNbt); err != nil {
+	if err := p.SaveBlockNBT(cd.ChunkPos, serializedNbt); err != nil {
 		return err
 	}
 	if err := p.saveTimeStamp(cd.ChunkPos, cd.SyncTime); err != nil {
@@ -331,7 +330,7 @@ func (p *Provider) saveAuxInfo() (err error) {
 		return fmt.Errorf("error closing level.dat: %w", err)
 	}
 	//noinspection SpellCheckingInspection
-	if err := ioutil.WriteFile(filepath.Join(p.dir, "levelname.txt"), []byte(p.D.LevelName), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(p.dir, "levelname.txt"), []byte(p.D.LevelName), 0644); err != nil {
 		return fmt.Errorf("error writing levelname.txt: %w", err)
 	}
 	return nil
