@@ -302,3 +302,18 @@ func GetJsonDataWithAttachment(fname string, ptr interface{}) (remapping map[str
 	remapping["orig"]["json"] = string(origBytes)
 	return remapping, nil
 }
+
+func MoveDir(oldPath, newPath string) (err error) {
+	if err := os.Rename(oldPath, newPath); err != nil {
+		return err
+	}
+	return nil
+}
+
+func IsDirEmpty(dir string) bool {
+	contents, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return false
+	}
+	return len(contents) == 0
+}

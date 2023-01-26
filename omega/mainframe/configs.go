@@ -4,6 +4,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"phoenixbuilder/omega/components"
@@ -22,6 +24,43 @@ var defaultConfigBytes []byte
 
 //go:embed default_components.json
 var defaultComponentsBytes []byte
+
+func (o *Omega) systemWideUpgrade(root string) (err error) {
+	// omega system wide upgrade
+	o.OmegaConfig = utils.CollectOmegaConfig(root)
+	if o.OmegaConfig.MigrationVersion < 1202 {
+
+		// move all dir with path root/第三方/name to root/第三方_by_name
+		thirdPartyDir := path.Join(root, "配置", "第三方")
+		thirdPartyByDir := path.Join(root, "配置", "第三方_by_")
+		thirdPartyDirs, err := ioutil.ReadDir(thirdPartyDir)
+		if err != nil {
+			return err
+		}
+
+		for _, dir := range thirdPartyDirs {
+			if dir.IsDir() {
+				oldPath := path.Join(thirdPartyDir, dir.Name())
+				newPath := thirdPartyByDir + dir.Name()
+				if err := utils.MoveDir(oldPath, newPath); err != nil {
+					return err
+				}
+			}
+		}
+		// if dir root/第三方/ is empty, delete it
+		if utils.IsDirEmpty(thirdPartyDir) {
+			if err := os.Remove(thirdPartyDir); err != nil {
+				return err
+			}
+		}
+
+		o.OmegaConfig.MigrationVersion = 1202
+		if err := utils.DeployOmegaConfig(o.OmegaConfig, root); err != nil {
+			panic(err)
+		}
+	}
+	return nil
+}
 
 func (o *Omega) checkAndLoadConfig() {
 	defer func() {
@@ -51,7 +90,12 @@ func (o *Omega) checkAndLoadConfig() {
 			panic(err)
 		}
 	}
-	o.OmegaConfig = utils.CollectOmegaConfig(root)
+
+	err := o.systemWideUpgrade(root)
+	if err != nil {
+		pterm.Error.Printfln("系统配置升级失败: %v", err)
+	}
+
 	{
 		existComponentConfigs := utils.CollectComponentConfigs(root)
 		if len(existComponentConfigs) == 0 {

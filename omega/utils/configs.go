@@ -26,6 +26,10 @@ func DeployComponentConfigs(ComponentConfigs []*defines.ComponentConfig, root st
 		// dir := path.Join(root, "配置")
 		name := strings.ReplaceAll(cfgs[0].Name, "::", "__")
 		subFolders := strings.Split(cfgs[0].Name, "::")
+		if len(subFolders) == 3 {
+			s := []string{strings.Join(subFolders[:2], "_by_")}
+			subFolders = append(s, subFolders[2:]...)
+		}
 		// if len(cfgs) > 1 || IsDir(path.Join(root, "配置", name)) {
 		dir := path.Join(root, "配置", path.Join(subFolders...))
 		os.MkdirAll(dir, 0755)
