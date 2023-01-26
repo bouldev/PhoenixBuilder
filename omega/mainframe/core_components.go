@@ -10,7 +10,8 @@ import (
 	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
-	"runtime/pprof"
+
+	// "runtime/pprof"
 	"strings"
 	"time"
 
@@ -261,21 +262,21 @@ type PerformaceAnalysis struct {
 
 func (o *PerformaceAnalysis) Inject(frame defines.MainFrame) {
 	o.mainFrame = frame
-	pprofFp, err := os.OpenFile(o.omega.GetPath("cpu.prof"), os.O_RDWR|os.O_CREATE, 0644)
-	o.pprofFp = pprofFp
-	if err == nil {
-		if err := pprof.StartCPUProfile(pprofFp); err == nil {
-			o.startSuccess = true
-		}
-	}
+	// pprofFp, err := os.OpenFile(o.omega.GetPath("cpu.prof"), os.O_RDWR|os.O_CREATE, 0644)
+	// o.pprofFp = pprofFp
+	// if err == nil {
+	// 	if err := pprof.StartCPUProfile(pprofFp); err == nil {
+	// 		o.startSuccess = true
+	// 	}
+	// }
 }
 
 func (o *PerformaceAnalysis) Stop() error {
-	if o.startSuccess {
-		fmt.Println("正在保存性能分析文件")
-		pprof.StopCPUProfile()
-		o.pprofFp.Close()
-	}
+	// if o.startSuccess {
+	// 	fmt.Println("正在保存性能分析文件")
+	// 	pprof.StopCPUProfile()
+	// 	o.pprofFp.Close()
+	// }
 	return nil
 }
 
