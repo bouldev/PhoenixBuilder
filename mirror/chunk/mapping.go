@@ -47,6 +47,7 @@ var Blocks []*GeneralBlock
 var LegacyBlocks []*LegacyBlock
 var LegacyRuntimeIDs = map[LegacyBlockHash]uint32{}
 var JavaStrToRuntimeIDMapping map[string]uint32
+var JavaStrPropsToRuntimeIDMapping map[string]map[string]uint32
 var RuntimeIDToJavaStrMapping map[uint32]string
 
 const (
@@ -625,8 +626,27 @@ func InitMapping(mappingInData []byte) {
 	legacyBlockNameRegex := regexp.MustCompile(`name=.+,`)
 	legacyBlockValRegex := regexp.MustCompile(`val=.+]`)
 	JavaStrToRuntimeIDMapping = mappingIn.JavaToRid
+	JavaStrPropsToRuntimeIDMapping = make(map[string]map[string]uint32)
+	splitJavaNameAndProps := func(javaName string) (name, prop string) {
+		ss := strings.Split(javaName, "[")
+		if len(ss) == 1 {
+			return ss[0], ""
+		}
+		return ss[0], strings.TrimRight(ss[1], "]")
+	}
+	{
+		for javaName, rtid := range JavaStrToRuntimeIDMapping {
+			jname, jprop := splitJavaNameAndProps(javaName)
+			if props, found := JavaStrPropsToRuntimeIDMapping[jname]; !found {
+				JavaStrPropsToRuntimeIDMapping[jname] = map[string]uint32{jprop: rtid}
+			} else {
+				props[jprop] = rtid
+			}
+		}
+
+	}
 	JavaToRuntimeID = func(javaBlockStr string) (runtimeID uint32, found bool) {
-		if rtid, hasK := mappingIn.JavaToRid[javaBlockStr]; hasK {
+		if rtid, hasK := JavaStrToRuntimeIDMapping[javaBlockStr]; hasK {
 			return rtid, true
 		} else if strings.HasPrefix(javaBlockStr, "omega:as_runtime_id[") {
 			matchs := numberRegex.FindAllString(javaBlockStr, 1)
@@ -637,7 +657,31 @@ func InitMapping(mappingInData []byte) {
 				}
 			}
 			mappingIn.JavaToRid[javaBlockStr] = AirRID
-		} else if strings.HasPrefix(javaBlockStr, "omega:as_legacy_block[") {
+		}
+		jname, jprop := splitJavaNameAndProps(javaBlockStr)
+		if oprops, found := JavaStrPropsToRuntimeIDMapping[jname]; found {
+			bscore := -1
+			brtid := AirRID
+			tprop := strings.Split(jprop, ",")
+			for prop, rtid := range oprops {
+				oprop := strings.Split(prop, ",")
+				score := 0
+				for _, p := range tprop {
+					for _, m := range oprop {
+						if m == p {
+							score++
+							break
+						}
+					}
+				}
+				if score > bscore {
+					bscore = score
+					brtid = rtid
+				}
+			}
+			return brtid, true
+		}
+		if strings.HasPrefix(javaBlockStr, "omega:as_legacy_block[") {
 			name := "air"
 			matchs := legacyBlockNameRegex.FindAllString(javaBlockStr, 1)
 			if len(matchs) > 0 {

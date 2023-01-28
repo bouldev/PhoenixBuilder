@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 
 	"phoenixbuilder/minecraft/nbt"
 
@@ -301,6 +302,26 @@ func main() {
 				found = true
 				rb.JavaString = javaName
 				javaToRid[javaName] = uint32(rb.RID)
+				javaNameAlter := strings.ReplaceAll(javaName, ",waterlogged=false", "")
+				if javaNameAlter != javaName {
+					javaToRid[javaNameAlter] = uint32(rb.RID)
+				}
+				javaNameAlter = strings.ReplaceAll(javaName, ",waterlogged=true", "")
+				if javaNameAlter != javaName {
+					javaToRid[javaNameAlter] = uint32(rb.RID)
+				}
+				javaNameAlter = strings.ReplaceAll(javaName, "waterlogged=false,", "")
+				if javaNameAlter != javaName {
+					javaToRid[javaNameAlter] = uint32(rb.RID)
+				}
+				javaNameAlter = strings.ReplaceAll(javaName, "waterlogged=true,", "")
+				if javaNameAlter != javaName {
+					javaToRid[javaNameAlter] = uint32(rb.RID)
+				}
+				javaNameAlter = strings.ReplaceAll(javaName, "waterlogged=true", "")
+				if javaNameAlter != javaName {
+					javaToRid[javaNameAlter] = uint32(rb.RID)
+				}
 				break
 			}
 		}
