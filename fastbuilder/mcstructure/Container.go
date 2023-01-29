@@ -1,4 +1,4 @@
-package nbttranslatinginterface
+package mcstructure
 
 import (
 	"fmt"
@@ -33,7 +33,8 @@ func CheckIfIsEffectiveContainer(name string) (string, error) {
 	if ok {
 		return value, nil
 	}
-	return "", fmt.Errorf("CheckIfIsEffectiveContainer: \"%v\" not found", name)
+	// return "", fmt.Errorf("CheckIfIsEffectiveContainer: \"%v\" not found", name)
+	return "", fmt.Errorf("")
 }
 
 // 将 Interface NBT 转换为 types.ChestData
@@ -44,7 +45,7 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 	if !normal {
 		got, normal := container.(map[string]interface{})
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("Crashed in input")
+			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container; container = %#v", container)
 		}
 		correct = append(correct, got)
 	} else {
@@ -63,27 +64,27 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		// 初始化
 		containerData, normal := value.(map[string]interface{})
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("Crashed in input[%v]", key)
+			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v]; container[%v] = %#v", key, key, value)
 		}
 		// correct 这个列表中的每一项都必须是一个复合标签，也就得是 map[string]interface{} 才行
 		_, ok := containerData["Count"]
 		if !ok {
-			return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Count\"]", key)
+			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Count\"]; container[%v] = %#v", key, key, containerData)
 		}
 		count_got, normal := containerData["Count"].(byte)
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Count\"]", key)
+			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Count\"]; container[%v] = %#v", key, key, containerData)
 		}
 		count = uint8(count_got)
 		// 拿一下物品数量
 		// 这个物品数量是一定存在的，拿不到必须报错哦
 		_, ok = containerData["Damage"]
 		if !ok {
-			return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Damage\"]", key)
+			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Damage\"]; container[%v] = %#v", key, key, containerData)
 		}
 		damage_got, normal := containerData["Damage"].(int16)
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Damage\"]", key)
+			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Damage\"]; container[%v] = %#v", key, key, containerData)
 		}
 		itemData = uint16(damage_got)
 		// 拿一下物品的 Damage 值
@@ -94,15 +95,15 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		if ok {
 			tag, normal := containerData["tag"].(map[string]interface{})
 			if !normal {
-				return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"tag\"]", key)
+				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"tag\"]; container[%v] = %#v", key, key, containerData)
 			}
-			// 这个 input["tag"] 一定是一个复合标签，如果不是就必须报错哦
+			// 这个 container["tag"] 一定是一个复合标签，如果不是就必须报错哦
 			// 真的是吗（？
 			_, ok = tag["Damage"]
 			if ok {
 				got, normal := tag["Damage"].(int32)
 				if !normal {
-					return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"tag\"]", key)
+					return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"tag\"]; container[%v] = %#v", key, key, containerData)
 				}
 				itemData = uint16(got)
 			}
@@ -114,17 +115,17 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		if ok {
 			Block, normal := containerData["Block"].(map[string]interface{})
 			if !normal {
-				return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"]", key)
+				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Block\"]; container[%v] = %#v", key, key, containerData)
 			}
-			// 这个 input["Block"] 一定是一个复合标签，如果不是就必须报错哦
+			// 这个 container["Block"] 一定是一个复合标签，如果不是就必须报错哦
 			// 如果 Block 找得到则说明这个物品是一个方块
 			_, ok = Block["val"]
 			if !ok {
-				return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"][\"val\"]", key)
+				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Block\"][\"val\"]; container[%v][\"Block\"] = %#v", key, key, Block)
 			}
 			got, normal := Block["val"].(int16)
 			if !normal {
-				return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Block\"][\"val\"]", key)
+				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Block\"][\"val\"]; container[%v][\"Block\"] = %#v", key, key, Block)
 			}
 			itemData = uint16(got)
 			// 如果这个物品是个方块，也就是 Block 找得到的话
@@ -141,11 +142,11 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		// 需要说明的是，以上列举的三个情况不能涵盖所有的物品数据值(附加值)的情况，所以我希望可以有个人看一下普世情况是长什么样的，请帮帮我！
 		_, ok = containerData["Name"]
 		if !ok {
-			return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Name\"]", key)
+			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Name\"]; container[%v] = %#v", key, key, containerData)
 		}
 		got, normal := containerData["Name"].(string)
 		if !normal {
-			return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Name\"]", key)
+			return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Name\"]; container[%v] = %#v", key, key, containerData)
 		}
 		name = strings.Replace(got, "minecraft:", "", 1)
 		// 拿一下这个物品的物品名称
@@ -155,7 +156,7 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 		if ok {
 			got, normal := containerData["Slot"].(byte)
 			if !normal {
-				return types.ChestData{}, fmt.Errorf("Crashed in input[%v][\"Slot\"]", key)
+				return types.ChestData{}, fmt.Errorf("GetContainerData: Crashed in container[%v][\"Slot\"]; container[%v] = %#v", key, key, containerData)
 			}
 			slot = uint8(got)
 		}
@@ -176,14 +177,14 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 func GetContainerDataRun(blockNBT map[string]interface{}, blockName string) (types.ChestData, error) {
 	key, err := CheckIfIsEffectiveContainer(blockName)
 	if err != nil {
-		return types.ChestData{}, fmt.Errorf("GetContainerDataRun: Not a container")
+		return types.ChestData{}, fmt.Errorf("GetContainerDataRun: Not a supported container")
 	}
 	got, ok := blockNBT[key]
 	// 这里是确定一下这个容器是否是我们支持了的容器
 	if ok {
 		ans, err := GetContainerData(got)
 		if err != nil {
-			return types.ChestData{}, fmt.Errorf("GetContainerData(Started by GetContainerDataRun): %v", err)
+			return types.ChestData{}, fmt.Errorf("GetContainerDataRun: %v", err)
 		}
 		return ans, nil
 	}

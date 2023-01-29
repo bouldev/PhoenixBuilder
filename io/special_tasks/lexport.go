@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
-	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/fastbuilder/environment"
+	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/fastbuilder/parsing"
 	"phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/minecraft"
@@ -46,7 +46,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		beginPos.Z = endPos.Z
 		endPos.Z = save
 	}
-	
+
 	if beginPos.Y < -64 {
 		beginPos.Y = -64
 	}
@@ -62,10 +62,10 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 				env.CommandSender.Output(pterm.Error.Sprintf("%v", err))
 			}
 		}()
-		
+
 		u_d0, _ := uuid.NewUUID()
 		env.CommandSender.SendWSCommand("gamemode c", u_d0)
-		
+
 		u_d1, _ := uuid.NewUUID()
 		chann := make(chan *packet.CommandOutput)
 		(*env.CommandSender.GetUUIDMap()).Store(u_d1.String(), chann)
@@ -87,10 +87,8 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		// 如果尝试请求一个没有被完全加载的区域，那么返回的结构将是只包括空气的结构，但不会报错
 		// 如果被请求的区域部分没有加载，那么可能地，没有加载的部分就是空气了
 		// 所以为了永远地规避区域加载问题，我这里使用了 testforblocks 方法用于到时候给每个待导出区域检查是否已完全加载
-		// 特别地，为了减少租赁服的负载，这个 testforblocks 命令永远会失败
 		// 这里应该说一下，如果尝试将 testforblocks 命令用于一个没有被加载的区域，返回的
 		// OutputMessages[0].Message 字段是 "commands.generic.outOfWorld"
-		// 反之，如果被测定区域和目标区域全部加载，则返回 "commands.compare.tooManyBlocks"
 		// 你可能会说，为什么不用 testforblock 命令给单个方块作检测，这是因为
 		// 目标待导出区域最大是 64*64 ，而只对单方块检测并不能保证整个待导出区域都已经加载了
 		splittedAreas, reversedMap, indicativeMap := mcstructure.SplitArea(mcstructure.BlockPos{int32(beginPos.X), int32(beginPos.Y), int32(beginPos.Z)}, mcstructure.BlockPos{int32(endPos.X), int32(endPos.Y), int32(endPos.Z)}, 64, 64, true)
@@ -115,10 +113,11 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 				resp := <-chann
 				close(chann)
 				//fmt.Printf("%#v\n",resp)
-				if resp.OutputMessages[0].Message == "commands.compare.tooManyBlocks" {
+				if resp.OutputMessages[0].Message != "commands.generic.outOfWorld" {
 					break
 				}
 			}
+			// 等待当前被访问的区块加载完成
 			ExportWaiter = make(chan map[string]interface{})
 			env.Connection.(*minecraft.Conn).WritePacket(&packet.StructureTemplateDataRequest{
 				StructureName: "mystructure:aaaaa",
@@ -134,7 +133,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 					Mirror:                    0,
 					Integrity:                 100,
 					Seed:                      0,
-					AllowNonTickingChunks: true,
+					AllowNonTickingChunks:     false,
 				},
 				RequestType: packet.StructureTemplateRequestExportFromSave,
 			})
@@ -150,7 +149,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		}
 		env.CommandSender.Output(pterm.Info.Sprint("Data received, processing......"))
 		env.CommandSender.Output(pterm.Info.Sprint("Extracting blocks......"))
-		
+
 		processedData, err := mcstructure.DumpBlocks(allAreas, reversedMap, mcstructure.Area{
 			BeginX: int32(beginPos.X),
 			BeginY: int32(beginPos.Y),
@@ -162,14 +161,14 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		if err != nil {
 			panic(err)
 		}
-		
+
 		outputResult := bdump.BDump{
 			Blocks: processedData,
 		}
 		if strings.LastIndex(cfg.Path, ".bdx") != len(cfg.Path)-4 || len(cfg.Path) < 4 {
 			cfg.Path += ".bdx"
 		}
-		
+
 		env.CommandSender.Output(pterm.Info.Sprint("Writing output file......"))
 		err, signerr := outputResult.WriteToFile(cfg.Path, env.LocalCert, env.LocalKey)
 		if err != nil {
