@@ -199,7 +199,7 @@ func (t *omegaSideTransporter) initMapping() {
 		"player.subtitle_to": func(args map[string]interface{}, writer func(interface{})) {
 			player := args["player"].(string)
 			msg := args["msg"].(string)
-			t.side.Frame.GetGameControl().TitleTo(player, msg)
+			t.side.Frame.GetGameControl().SubTitleTo(player, msg)
 			writer(map[string]interface{}{
 				"ack": true,
 			})
