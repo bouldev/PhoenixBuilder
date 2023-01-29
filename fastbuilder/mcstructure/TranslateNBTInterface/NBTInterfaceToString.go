@@ -7,8 +7,7 @@ import (
 	"strings"
 )
 
-// 判断 nbt 中 value 的数据类型
-func getData(input interface{}) (string, error) {
+func stringifyNBTInterface(input interface{}) (string, error) {
 	switch reflect.TypeOf(input).Kind() {
 	case reflect.Uint8:
 		return fmt.Sprintf("%vb", int(input.(byte))), nil
@@ -60,7 +59,7 @@ func getData(input interface{}) (string, error) {
 		value := input.([]interface{})
 		list, err := ConvertListToString(value)
 		if err != nil {
-			return "", fmt.Errorf("getData: Failed in %#v", value)
+			return "", fmt.Errorf("stringifyNBTInterface: Failed in %#v", value)
 		}
 		return list, nil
 		// list
@@ -68,12 +67,12 @@ func getData(input interface{}) (string, error) {
 		value := input.(map[string]interface{})
 		compound, err := ConvertCompoundToString(value, false)
 		if err != nil {
-			return "", fmt.Errorf("getData: Failed in %#v", value)
+			return "", fmt.Errorf("stringifyNBTInterface: Failed in %#v", value)
 		}
 		return compound, nil
 		// compound
 	}
-	return "", fmt.Errorf("getData: Failed because of unknown type of the target data, occurred in %#v", input)
+	return "", fmt.Errorf("stringifyNBTInterface: Failed because of unknown type of the target data, occurred in %#v", input)
 }
 
 func ConvertCompoundToString(input map[string]interface{}, outputBlockStatesMode bool) (string, error) {
@@ -83,7 +82,7 @@ func ConvertCompoundToString(input map[string]interface{}, outputBlockStatesMode
 		if value == nil {
 			return "", fmt.Errorf("ConvertCompoundToString: Crashed in input[\"%v\"]; errorLogs = value is nil; input = %#v", key, input)
 		}
-		got, err := getData(value)
+		got, err := stringifyNBTInterface(value)
 		if err != nil {
 			return "", fmt.Errorf("ConvertCompoundToString: Crashed in input[\"%v\"]; errorLogs = %v; input = %#v", key, err, input)
 		}
@@ -110,7 +109,7 @@ func ConvertListToString(input []interface{}) (string, error) {
 		if value == nil {
 			return "", fmt.Errorf("ConvertListToString: Crashed in input[\"%v\"]; errorLogs = value is nil; input = %#v", key, input)
 		}
-		got, err := getData(value)
+		got, err := stringifyNBTInterface(value)
 		if err != nil {
 			return "", fmt.Errorf("ConvertListToString: Crashed in input[\"%v\"]; errorLogs = %v; input = %#v", key, err, input)
 		}
