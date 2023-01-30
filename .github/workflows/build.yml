@@ -5,7 +5,6 @@ on:
     branches: [ main ]
     paths:
       - "version"
-      - "fyne-gui/version"
   workflow_dispatch: {}
 
 jobs:
@@ -100,20 +99,17 @@ jobs:
     #    mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
     #    rm -rf $GITHUB_WORKSPACE/macOS-sdks
     # Debian/Ubuntu provided LLVM only support native targets, using Homebrew prebuilt for all targets
-      
     - name: Setup LLVM dependencies
       run: |
         sudo apt install libedit2 libxml2 libncursesw6 binutils elfutils
         wget -q http://ftp.debian.org/debian/pool/main/libf/libffi/libffi8_3.4.4-1_amd64.deb
         sudo dpkg -i libffi8_3.4.4-1_amd64.deb
-      
     - name: Cache LLVM
       id: cache-llvm
       uses: actions/cache@v3
       with:
         key: llvm-cache
         path: ~/llvm
-      
     - name: Download LLVM
       if: steps.cache-llvm.outputs.cache-hit != 'true'
       run: |
@@ -121,14 +117,12 @@ jobs:
         tar xf llvm.tar.xz
         rm llvm.tar.xz
         mv llvm/14.0.6 ~/llvm
-      
     - name: Cache iSH GCC
       id: cache-ish-gcc
       uses: actions/cache@v3
       with:
         key: ish-gcc-cache
         path: ~/i686-unknown-linux-musl
-      
     - name: Download iSH GCC
       if: steps.cache-ish-gcc.outputs.cache-hit != 'true'
       run: |
@@ -136,14 +130,12 @@ jobs:
         tar xf i686-unknown-linux-musl.tar.xz
         rm i686-unknown-linux-musl.tar.xz
         mv i686-unknown-linux-musl ~/
-      
     - name: Cache Openwrt mt7620 SDK
       id: cache-openwrt-mt7620-sdk
       uses: actions/cache@v3
       with:
         key: openwrt-sdk-mt7620-cache
         path: ~/openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64
-      
     - name: Download Openwrt mt7620 SDK
       if: steps.cache-openwrt-mt7620-sdk.outputs.cache-hit != 'true'
       run: |
@@ -151,14 +143,12 @@ jobs:
         tar -xJf openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         rm openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         mv openwrt-sdk-21.02.2-ramips-mt7620_gcc-8.4.0_musl.Linux-x86_64 ~/
-      
     - name: Cache Openwrt ipq40xx-generic SDK
       id: cache-openwrt-ipq40xx-generic-sdk
       uses: actions/cache@v3
       with:
         key: openwrt-sdk-ipq40xx-generic-cache
         path: ~/openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64
-      
     - name: Download Openwrt ipq40xx-generic SDK
       if: steps.cache-openwrt-ipq40xx-generic-sdk.outputs.cache-hit != 'true'
       run: |
@@ -166,14 +156,12 @@ jobs:
         tar -xJf openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
         rm openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64.tar.xz
         mv openwrt-sdk-22.03.0-rc4-ipq40xx-generic_gcc-11.2.0_musl_eabi.Linux-x86_64 ~/
-      
     - name: Cache Openwrt mt7622 SDK
       id: cache-openwrt-mt7622-sdk
       uses: actions/cache@v3
       with:
         key: openwrt-sdk-mediatek-mt7622-cache
         path: ~/openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64
-      
     - name: Download Openwrt mt7622 SDK
       if: steps.cache-openwrt-mt7622-sdk.outputs.cache-hit != 'true'
       run: |
@@ -181,11 +169,9 @@ jobs:
         tar -xJf openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64.tar.xz
         rm openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64.tar.xz
         mv openwrt-sdk-22.03.0-rc4-mediatek-mt7622_gcc-11.2.0_musl.Linux-x86_64 ~/
-      
     - name: Set build time
       id: build_time
       run: echo "build_time=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-      
     - name: Pre-Build & configure go-raknet
       run: |
         make current
@@ -193,33 +179,14 @@ jobs:
         chmod 0644 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
         sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go>~/conn.go
         cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
-      
     - name: Build
       run: |
         export THEOS=~/theos
         make all
-      
     - name: Package for specific platforms
       run: |
         export THEOS=~/theos
         make package
-      
-    - name: Build GUI applications
-      run: |
-        export THEOS=~/theos
-        cd fyne-gui/android_wrapper
-        go build
-        cd ..
-        make all
-        #node simpleappend.js
-        rename s/phoenixbuilder/phoenixbuilder-gui/ build/phoenixbuilder*
-        ls -lh build/>release.txt
-        mv release.txt build/release-list-gui.txt
-        cp version build/version-gui.txt
-        rm -f build/phoenixbuilder-macos-arm64 build/phoenixbuilder-macos-x86_64
-        mv build ../build/gui
-        cd ..
-        
     - name: Archive binaries
       run: |
         mv release/*.deb build/
@@ -228,11 +195,9 @@ jobs:
         cp version build/version.txt
         cp install.sh build/install.sh
         tar -czf fb-upload.tar.gz build
-        
     - name: Provide release version
       id: release_version
       run: echo "release_version=$(cat build/version)"  >> $GITHUB_OUTPUT
-
     - name: Release
       uses: softprops/action-gh-release@v0.1.14
       env:
@@ -280,7 +245,6 @@ jobs:
         cp build/hashes.json build_compressed
         cp build/version build_compressed
         ./cos_uploader -l build_compressed -r fastbuilder_official_compressed
-
     #- name: Generate index files for storage over github
     #  run: node index_generator.js build
     #- name: Deploy to storage
