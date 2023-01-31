@@ -1,4 +1,4 @@
-# 插件: 关
+# 插件: 开
 
 from threading import Thread
 import time
@@ -12,6 +12,17 @@ class version_井字棋:
     移植_author     =    "Mono"
     version    =    "2.0 for omegaside"
 JZQ_Rooms = []
+
+def searchName(key,data) -> list:
+    """
+    模糊查找器
+    key: 关键字
+    data: 数据
+    :return: list
+    """
+    data_re = [i for i in data if key in i]
+    return data_re
+
 def Mono_plugin_井字棋(api:API):
     class JZQStage:
         def __init__(self):
@@ -101,6 +112,11 @@ def Mono_plugin_井字棋(api:API):
             allplayers=[]
             for i in response:
                 allplayers.append(i.name)
+            playernameList=searchName(to_who,allplayers)
+            if len(playernameList) !=1:
+                api.do_send_player_msg(playername, "§a井字棋§f>> §c玩家未找到!.",cb=None)
+                return
+            to_who = playernameList[0]
             if to_who in allplayers and (not playername == to_who):
                 JZQ_Rooms.append([playername, to_who])
                 api.do_send_player_msg(playername, "§a井字棋§f>> §a成功开启游戏.",cb=None)
