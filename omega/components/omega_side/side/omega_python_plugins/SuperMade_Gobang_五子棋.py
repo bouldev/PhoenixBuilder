@@ -7,7 +7,6 @@ from omega_side.python3_omega_sync.protocol import *
 
 # install_lib("numpy")
 # import numpy as np
-# <- SuperScript ->
 
 class Super_AFKGobangBasic:
     """
@@ -85,7 +84,6 @@ class Super_AFKGobangBasic:
             Frame.do_set_player_actionbar(_1P, actbarText % ("§a我方下子" if this_room.isTurn(_1P) else "§6对方下子"), ign_cb)
             Frame.do_set_player_actionbar(_2P, actbarText % ("§a我方下子" if this_room.isTurn(_2P) else "§6对方下子"), ign_cb)
             if this_room.status == "done":
-                Frame.do_send_player_msg("@a", "game done", ign_cb)
                 break
             if this_room.timeleft < 20:
                 Frame.do_set_player_title(nowPlayer, "§c还剩 20 秒", ign_cb)
@@ -101,6 +99,7 @@ class Super_AFKGobangBasic:
                     Frame.do_set_player_title(_2P, "§c游戏超时， 本局已结束", ign_cb)
                     break
             this_room.timeleft -= 1
+        GobangRoom.removeRoom(linked_room_uid)
 
     def GameWait(this, Frame: API, _1P: str, _2P: str):
         Frame.do_send_player_msg(_1P, "§7§l> §r§6正在等待对方同意请求..", ign_cb)
@@ -113,14 +112,16 @@ class Super_AFKGobangBasic:
             if time.time() - waitStartTime > 30:
                 Frame.do_send_player_msg(_1P, f"§7§l> §c等待{_2P}的请求超时， 已取消.", ign_cb)
                 break
-            if this.waitingCache[_2P]:
+            if this.waitingCache.get(_2P, "none") == "none":
+                break
+            elif this.waitingCache[_2P]:
                 if this.waitingCache[_2P] == 1:
                     Super_AFKGobangBasic.GameStart(Frame, _1P, _2P)
                     Frame.do_echo("Game done!", ign_cb)
                     break
                 else:
                     Frame.do_send_player_msg(_1P, f"§7§l> §c{_2P}拒绝了您的邀请..", ign_cb)
-                del this.waitingCache[_2P]
+        del this.waitingCache[_2P]
 
 class SuperGobangStage():
     def __init__(this):
@@ -170,10 +171,6 @@ class SuperGobangStage():
     def toSignLeft(this, num: int):
         return this.PosSignLeft[num-1]
 
-    def toSignRight(this, num: int):
-        return this.PosSignRight[num-1]
-
-
     def strfChess(this):
         fmt: str = "§e   1 2 3 4 5 6 7 8 9 10 1112§r"
         for cl in this.field:
@@ -199,6 +196,7 @@ def plugin(Frame: API):
                 Frame.do_send_player_msg(chat.Name, "§c模糊搜索玩家名， 输入的名字长度必须大于1", ign_cb)
                 return
             allplayers = [single_player.name for single_player in Frame.do_get_players_list(None)]
+            allplayers.remove(chat.Name)
             new2P = None
             for single_player in allplayers:
                 if _2P in single_player:
@@ -207,8 +205,12 @@ def plugin(Frame: API):
             if not new2P:
                 Frame.do_send_player_msg(chat.Name, f"§c未找到名字里含有\"{_2P}\"的玩家.", ign_cb)
                 return
+            if new2P in GobangRoom.waitingCache.keys():
+                Frame.do_send_player_msg(chat.Name, f"§c申请已经发出了", ign_cb)
             if not GobangRoom.getRoom(chat.Name):
                 threading.Thread(target=GobangRoom.GameWait, args = (Frame, chat.Name, new2P)).start()
+            else:
+                Frame.do_send_player_msg(chat.Name, f"§c你还没有退出当前游戏房间", ign_cb)
         
     Frame.listen_omega_menu(triggers=["五子棋", "wzq"],argument_hint="[对手]",usage="开一局五子棋游戏",cb = ign_cb,on_menu_invoked=on_menu_invoked)
     
@@ -227,19 +229,21 @@ def plugin(Frame: API):
                                 raise AssertionError("§c落子格式不正确； 下子/xiazi/xz <纵坐标> <横坐标>")
                             assert inRoom.stage.onchess(int(posl), int(posw), inRoom.PID(player))
                             Frame.do_send_player_msg(player, "§l§7> §r§a成功下子.", ign_cb)
-                            Frame.do_send_player_msg(inRoom.anotherPlayer(player), "§l§7> §r§a到你啦！", ign_cb)
                             inRoom.resetTimer()
                             is_win = inRoom.stage.get_win(Frame)
                             if is_win:
                                 Frame.do_set_player_title(player, "§a§l恭喜！", ign_cb)
                                 Frame.do_set_player_subtitle(player, "§e本局五子棋您获得了胜利！", ign_cb)
                                 Frame.do_send_player_msg(player, "§7§l> §r§e恭喜！ §a本局五子棋您取得了胜利！", ign_cb)
-                                Frame.do_send_wo_cmd(f"/execute {inRoom.anotherPlayer(player)} ~~~ playsound random.levelup @s", ign_cb)
+                                Frame.do_send_wo_cmd(f"/execute {player} ~~~ playsound random.levelup @s", ign_cb)
                                 Frame.do_set_player_title(inRoom.anotherPlayer(player), "§7§l遗憾惜败", ign_cb)
                                 Frame.do_set_player_subtitle(inRoom.anotherPlayer(player), "§6下局再接再厉哦！", ign_cb)
-                                Frame.do_send_wo_cmd(f"/execute {inRoom.anotherPlayer(player)} ~~~ playsound note.pling @s ~~~ 1 0.5")
+                                Frame.do_send_wo_cmd(f"/execute {inRoom.anotherPlayer(player)} ~~~ playsound note.pling @s ~~~ 1 0.5", ign_cb)
                                 inRoom.setStatus("done")
-                            inRoom.turn()
+                                return
+                            else:
+                                Frame.do_send_player_msg(inRoom.anotherPlayer(player), "§l§7> §r§a到你啦！", ign_cb)
+                                inRoom.turn()
                         except AssertionError as err:
                             Frame.do_send_player_msg(player, str(err), ign_cb)
                         except:
