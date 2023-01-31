@@ -2,6 +2,7 @@ package omega_side
 
 import (
 	"fmt"
+	"encoding/json"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror/chunk"
@@ -85,6 +86,21 @@ func (t *omegaSideTransporter) initMapping() {
 			pktID := int(args["pktID"].(float64))
 			pktName := utils.PktIDInvMapping[pktID]
 			writer(map[string]interface{}{"name": pktName})
+		},
+		"send_packet": func(args map[string]interface{}, writer func(interface{})) {
+			_pk, ok := packet.NewPool()[uint32(args["packetID"].(float64))]
+			if ok {
+				pk := _pk()
+				_err := json.Unmarshal([]byte(args["jsonStr"].(string)), &pk)
+				if _err != nil {
+					writer(map[string]interface{}{"succ": false, "err": string(_err.Error())})
+				} else {
+					t.side.Frame.GetGameControl().SendMCPacket(pk)
+					writer(map[string]interface{}{"succ": true, "err": nil})
+				}
+			} else {
+				writer(map[string]interface{}{"succ": false, "err": "packetID is not in pool"})
+			}
 		},
 		"send_ws_cmd": func(args map[string]interface{}, writer func(interface{})) {
 			cmd := args["cmd"].(string)

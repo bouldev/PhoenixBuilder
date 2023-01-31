@@ -92,6 +92,11 @@ class ListenPacketAcknowledgeResp:
     err:str=""
     
 @dataclass
+class SendPacketAcknowledgeResp:
+    succ:bool=False
+    err:str=""
+    
+@dataclass
 class PlayerPoseResp:
     success:bool=False
     pos:List[int]=None

@@ -111,6 +111,9 @@ class API(object):
     
     def do_send_wo_cmd(self,cmd:str,cb:Callable[[AcknowledgeResp],None])->AcknowledgeResp:
         return self._send_request(RequestMsg(function="send_wo_cmd",args={"cmd":cmd}),cb=cb)
+
+    def do_send_packet(self,packetID:int,jsonStr:str,cb:Callable[[SendPacketAcknowledgeResp],None])->SendPacketAcknowledgeResp:
+        return self._send_request(RequestMsg(function="send_packet",args={"packetID": packetID, "jsonStr": jsonStr}),cb=cb)
     
     def do_get_uqholder(self,cb:Callable[[dict],None])->dict:
         return self._send_request(RequestMsg(function="get_uqholder",args={}),cb=cb)
