@@ -60,6 +60,8 @@ type SuperLinkAPIData struct {
 	APIExecuteCmds []string    `json:"收到相同API事件后执行的指令"`
 	APITriggerMsg  string      `json:"发送API事件的触发词"`
 	UseExtraData   interface{} `json:"使用额外数据接口"`
+	SendBack       bool        `json:"测试模式(将这个消api息转发出去的同时也转发到自己服)"`
+	Notice         string      `json:"说明"`
 }
 
 var super_Link SuperLink
@@ -94,20 +96,24 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
 		table := (cfg.Configs["特定协议附加数据"]).(map[string]interface{})
 		table["SuperScript@DotCS-V3"] = map[string]interface{}{
 			"协议说明": []string{
+				"默认互通模式： 只转发和接收同一个频道的其他租赁服的信息",
 				"计分板互通： 相当于跨服银行的功能，同一个频道才支持计分板互通，若设置'允许互通的计分板及计分板提示词'为空，则只支持消息互通；",
 				"计分板互通： 如果输入的是正数，就是向服务端存入分数(租赁服部分会克扣相应分数哦)； 如果输入的是负数，就是向服务端提取分数",
-				"自定义API事件互通： 传输自定义的API事件，使用命令方块/tell <机器人名字> <API事件触发词> 来发送API事件；",
+				"计分板互通： 注意：在默认大区互通计分板有风险，建议在自己的私人频道使用计分板互通(把选项'频道'改成随便一个名字即可，两个互通的服务器都使用这个频道名)",
+				"自定义API事件互通： 传输自定义的API事件，具有非常强大的扩展性功能，可以同时***使用3个通道传输消息***；支持使用目标选择器，计分板分数和普通文字",
+				"自定义API事件互通： 使用命令方块/tellraw <机器人名字> {'rawtext':[{'text':'发送API事件的关键词'},数据1,数据2,数据3]} (记得把单引号改成双引号)",
+				"自定义API事件互通： 数据1/2/3可以是 {'text':'文本'}，也可以是{'selector':'<目标选择器>'}，还可以是{'score':{'name':'计分板项','objective':'计分板名'}} (记得把单引号改成双引号)，具体看下面的example",
 				"自定义API事件互通： 如果同一个频道中，其它租赁服也有相同的API事件名，那这个租赁服接收到API事件名后就会执行API对应的指令",
 			},
 			"token":      "",
 			"频道":         "默认大区",
+			"启用跨服聊天":     true,
 			"上传计分板分数触发词": []string{"上传"},
 			"计分板名不在允许范围内的提示词": "§c该计分板不允许互通哦",
 			"允许互通的计分板及计分板提示词": map[string]map[string]interface{}{
-				"money": {
-					"说明": "示例的计分板项",
+				"示例_money": {
 					"服务端分数记录为负仍然允许上传分数": false,
-					"符合条件才可以上传":         "@a[scores={money=-999999..},tag=!ban]",
+					"符合条件才可以上传":         "@a[scores={示例_money=-999999..},tag=!ban]",
 					"成功存入分数提示":          "§a成功存入了[count]积分， 余额为[left]积分",
 					"成功提取分数提示":          "§a成功提取了[count]积分， 余额为[left]积分",
 					"在租赁服计分板不存在或分数不足":   "§c你的积分不足哦， 或者你在这个计分板上没有分数，无法上传",
@@ -115,32 +121,36 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
 					"服务端计分板不存在":         "服务端该计分板不存在!",
 					"不符合分数上传条件":         "被ban的玩家不能上传哦",
 				},
-				"super": {
-					"说明": "示例的计分板项",
+				"示例二_super": {
 					"服务端分数记录为负仍然允许上传分数": false,
 					"符合条件才可以上传":         "@a[tag=amazing_tag]",
 					"成功存入分数提示":          "§a成功捉走了[count]只super， 你还可以再抓[left]只喔",
 					"成功提取分数提示":          "§a成功丢入了[count]只super， 你还可以再抓[left]只喔",
 					"在租赁服计分板不存在或分数不足":   "§c啊呀，你没有这么多只super可以上传啦",
 					"在中心服务器存储的计分板分数不足":  "§c啊呀，你只在云端存了[left]只super，  不可以贪心哦",
-					"服务端计分板不存在":         "呀..可是..云端不支持存放super啦..或许你可以试试改成CMA2401PT？",
+					"服务端计分板不存在":         "哈呀..云端不支持存放super啦..或许你可以试试改成CMA2401PT？",
 					"不符合分数上传条件":         "你有神奇的标签，不能向云端存入或提取super哦",
 				},
 			},
 			"自定义API数据和事件名": map[string]map[string]interface{}{
-				"example": {
+				"示例": {
+					"说明": "触发方法：在地上放置一个命令方块，输入：/tellraw <机器人名字> {'rawtext':[{'text':'example'},{'text':'hello'},{'selector':'@p'},{'score':{'name':'@p','objective':'雪球菜单'}}]}并激活 (记得把单引号全部改成双引号)",
 					"收到相同API事件后执行的指令": []string{
-						"/say 我接收到了一条示例API事件哦",
+						"/say 我接收到了一条示例API事件：",
+						"/say 值1是： [APIData1]， 显示的内容应当是： hello，",
+						"/say 值2是： [APIData2]， 显示的内容应当是： 最近的玩家的名字",
+						"/say 值3是： [APIData3]， 显示的内容应当是： 这个玩家的雪球菜单计分板分数",
 					},
-					"发送API事件的触发词": "example",
-					"使用额外数据接口":    nil,
+					"发送API事件的关键词": "example",
+					"测试模式(将这个消api息转发出去的同时也转发到自己服)": true,
 				},
-				"bomb": {
+				"跨服大喇叭": {
+					"说明": "触发方法：在地上放置一个命令方块，输入：/tellraw <机器人名字> {'rawtext':[{'text':'广播'},{'selector':'@p'},{'text':'这是广播内容'},{'score':{'name':'@p','objective':'雪球菜单'}}]}并激活 (记得把单引号全部改成双引号)",
 					"收到相同API事件后执行的指令": []string{
-						"/say 对面的租赁服炸了哦",
+						"/tellraw @a {\"rawtext\":[{\"text\":\"§l§a跨服广播 §d[APIData1] §f说： §e[APIData2]\"}]}",
 					},
-					"发送API事件的触发词": "big_laba",
-					"使用额外数据接口":    nil,
+					"发送API事件的关键词": "广播",
+					"测试模式(将这个消api息转发出去的同时也转发到自己服)": true,
 				},
 			},
 		}
@@ -162,7 +172,7 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
 				panic(fmt.Sprintf("服服互通 计分板互通配置部分有误 > %v %v", err, v))
 			}
 			if err := json.Unmarshal(m, &o.ExtraFmt); err != nil {
-				panic(fmt.Sprintf("服服互通 计分板互通配置部分有误 > %v %v", err, v))
+				panic(fmt.Sprintf("服服互通 计分板互通配置部分有误 < %v %v", err, v))
 			}
 		}
 		apiMsgFmt := t["自定义API数据和事件名"].(map[string]interface{})
@@ -172,7 +182,7 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
 				panic(fmt.Sprintf("服服互通 API事件配置部分有误 > %v %v", err, v))
 			}
 			if err := json.Unmarshal(m, &o.APIDataFmt); err != nil {
-				panic(fmt.Sprintf("服服互通 API事件配置部分有误 > %v %v", err, v))
+				panic(fmt.Sprintf("服服互通 API事件配置部分有误 < %v %v", err, v))
 			}
 		}
 		super_Link.apiMsgFmt = apiMsgFmt
@@ -379,6 +389,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 		super_Link.CmdUIDRecv = map[string]map[string]interface{}{}
 		ScbUpdateTriggers := []string{}
 		rawScbUpdateTriggers := additonalData["上传计分板分数触发词"].([]interface{})
+		enableServerChatroom := additonalData["启用跨服聊天"].(bool)
 		for _, _v := range rawScbUpdateTriggers {
 			val, ok := _v.(string)
 			if ok {
@@ -424,6 +435,8 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 				} else {
 					pterm.Info.Println("已连接至服服互通服务器", o.ServerAddr)
 					super_Link.ConnectOK = true
+					super_Link.Retry = 0
+					super_Link.RetryWaitTime = 30
 					decoder := json.NewDecoder(conn)
 					// encoder := json.NewEncoder(conn)
 					var loginData struct {
@@ -484,9 +497,8 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 					super_Link.Retry = 0
 					// Listener
 					o.Frame.GetGameListener().SetGameChatInterceptor(func(chat *defines.GameChat) (stop bool) {
-						if chat.Type == 7 && strings.Contains(chat.Name, "LinkAPI") {
+						if chat.Type == 9 {
 							go o.handleAPIEventSend(chat.Msg)
-							return true
 						}
 						if chat.Type != packet.TextTypeChat {
 							return false
@@ -525,7 +537,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 							Data       interface{} `json:"data"`
 							ChatColor  string      `json:"msgColor"`
 							ChatData   string      `json:"msgInfo"`
-							APIData    interface{} `json:"api_data"`
+							APIData    interface{} `json:"APIData"`
 							UID        string      `json:"UID"`
 						}
 						if err := decoder.Decode(&msg); err != nil {
@@ -539,21 +551,25 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 								return
 							}
 						} else {
+							if enableServerChatroom {
+								switch msg.Action {
+								case "msg":
+									o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v", msg.ServerName, msg.Data))
+								case "connected":
+									o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
+								case "disconnected":
+									o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
+								case "player.join":
+									o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v 加入了游戏", msg.ServerName, msg.Data))
+								case "player.left":
+									o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v 退出了游戏", msg.ServerName, msg.Data))
+								case "get_data_serverlist":
+									o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("目前连接的服服互通服务器列表: %v", msg.Data))
+								}
+							}
 							switch msg.Action {
-							case "msg":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v", msg.ServerName, msg.Data))
-							case "connected":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
-							case "disconnected":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v 加入了互通", msg.ServerName))
 							case "consolemsg":
 								pterm.Info.Println(msg.Data)
-							case "player.join":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v 加入了游戏", msg.ServerName, msg.Data))
-							case "player.left":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("%v %v 退出了游戏", msg.ServerName, msg.Data))
-							case "get_data_serverlist":
-								o.Frame.GetGameControl().SayTo("@a", fmt.Sprintf("目前连接的服服互通服务器列表: %v", msg.Data))
 							case "kick":
 								return
 							case "upload_scb.result":
@@ -563,9 +579,10 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 								} else {
 									pterm.Error.Println("Data type is not expected: ", msg.Data)
 								}
-							case "api.simple":
-								go o.handleAPIEventRecv(msg.Data)
+							case "api.data":
+								go o.handleAPIEventRecv(msg.Data, msg.APIData)
 							}
+
 						}
 					}
 				}
@@ -716,26 +733,65 @@ func (o *SeverToServerChatRoom) handleScoreboardUpload(scoreboardname string, pl
 }
 
 func (o *SeverToServerChatRoom) handleAPIEventSend(msg []string) {
-	apiMsg := msg[0]
+	apiMsg := o.getTextFromJSON(msg[0])
+	if len(apiMsg) != 4 {
+		return
+	}
+	if !super_Link.ConnectOK {
+		fmt.Println("接收到了可能有效的API消息", apiMsg, "， 但是未能连上服服互通，将忽略")
+	}
 	for k, v := range super_Link.apiMsgFmt {
-		if v.(map[string]interface{})["发送API事件的触发词"] == apiMsg {
+		if v.(map[string]interface{})["发送API事件的关键词"] == apiMsg[0] {
+			sendBack := v.(map[string]interface{})["测试模式(将这个消api息转发出去的同时也转发到自己服)"].(bool)
 			o.sendJson(map[string]interface{}{
-				"data_type":  "api.simple",
-				"data":       k,
-				"ExtraData1": nil, // 实在没精力做这个了，下次提交再说
+				"data_type": "api.data",
+				"data":      k,
+				"APIData": map[string]interface{}{
+					"ExtraData1": apiMsg[1],
+					"ExtraData2": apiMsg[2],
+					"ExtraData3": apiMsg[3],
+					"SendBack":   sendBack,
+				},
 			})
 		}
 	}
-
 }
 
-func (o *SeverToServerChatRoom) handleAPIEventRecv(apiMsg interface{}) {
+func (o *SeverToServerChatRoom) handleAPIEventRecv(apiName interface{}, apiData interface{}) {
+	apiDatas, ok := apiData.(map[string]interface{})
+	if !ok {
+		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("接收到无法解析的API消息，已跳过： %v %v", apiDatas, apiData))
+		return
+	}
 	for k, v := range super_Link.apiMsgFmt {
-		if k == apiMsg {
+		if k == apiName {
 			cmds := v.(map[string]interface{})["收到相同API事件后执行的指令"].([]interface{})
 			for ind := range cmds {
-				o.Frame.GetGameControl().SendWOCmd(cmds[ind].(string))
+				cmd := cmds[ind].(string)
+				o.Frame.GetGameControl().SendWOCmd(utils.FormatByReplacingOccurrences(
+					cmd,
+					map[string]interface{}{
+						"[APIData1]": apiDatas["ExtraData1"],
+						"[APIData2]": apiDatas["ExtraData2"],
+						"[APIData3]": apiDatas["ExtraData3"],
+					},
+				))
 			}
 		}
 	}
+}
+
+func (o *SeverToServerChatRoom) getTextFromJSON(rawJson string) []string {
+	output := []string{}
+	defer func() {
+		if err := recover(); err != nil {
+			// fmt.Println("§c解析APIData失败，原因：", err)
+		}
+	}()
+	k := make(map[string]interface{}, 0)
+	json.Unmarshal([]byte(rawJson), &k)
+	for ind := range k["rawtext"].([]interface{}) {
+		output = append(output, k["rawtext"].([]interface{})[ind].(map[string]interface{})["text"].(string))
+	}
+	return output
 }
