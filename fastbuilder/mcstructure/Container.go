@@ -173,11 +173,13 @@ func GetContainerData(container interface{}) (types.ChestData, error) {
 	return ans, nil
 }
 
-// 主函数
+var ErrNotASupportContainer error = fmt.Errorf("GetContainerDataRun: Not a supported container")
+
+// 处理容器的主函数
 func GetContainerDataRun(blockNBT map[string]interface{}, blockName string) (types.ChestData, error) {
 	key, err := CheckIfIsEffectiveContainer(blockName)
 	if err != nil {
-		return types.ChestData{}, fmt.Errorf("GetContainerDataRun: Not a supported container")
+		return types.ChestData{}, ErrNotASupportContainer
 	}
 	got, ok := blockNBT[key]
 	// 这里是确定一下这个容器是否是我们支持了的容器
