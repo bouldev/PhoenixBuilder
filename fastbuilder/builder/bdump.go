@@ -6,6 +6,7 @@ import (
 	"os"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/bdump/command"
+
 	//bridge_path "phoenixbuilder/fastbuilder/builder/path"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
@@ -350,6 +351,27 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 					Name:        blockName,
 					BlockStates: blockStates,
 				},
+				Point: types.Position{
+					X: brushPosition[0] + config.Position.X,
+					Y: brushPosition[1] + config.Position.Y,
+					Z: brushPosition[2] + config.Position.Z,
+				},
+			}
+		case *command.PlaceBlockWithNBTData:
+			if int(cmd.BlockConstantStringID) >= len(blocksStrPool) {
+				return fmt.Errorf("Error: BlockID exceeded StringPool")
+			}
+			if int(cmd.BlockStatesConstantStringID) >= len(blocksStrPool) {
+				return fmt.Errorf("Error: BlockStatesID exceeded StringPool")
+			}
+			blockName := &blocksStrPool[int(cmd.BlockConstantStringID)]
+			blockStates := blocksStrPool[int(cmd.BlockStatesConstantStringID)]
+			blc <- &types.Module{
+				Block: &types.Block{
+					Name:        blockName,
+					BlockStates: blockStates,
+				},
+				NBTData: cmd.BlockNBT,
 				Point: types.Position{
 					X: brushPosition[0] + config.Position.X,
 					Y: brushPosition[1] + config.Position.Y,
