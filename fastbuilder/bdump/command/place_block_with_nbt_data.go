@@ -31,9 +31,8 @@ func (cmd *PlaceBlockWithNBTData) Marshal(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
-	lenBuf := make([]byte, 4)
-	binary.BigEndian.PutUint32(lenBuf, uint32(len(cmd.BlockNBT)))
-	_, err = writer.Write(append(lenBuf, cmd.BlockNBT...))
+	binary.BigEndian.PutUint16(buf, uint16(len(cmd.BlockNBT)))
+	_, err = writer.Write(append(buf, cmd.BlockNBT...))
 	return err
 }
 
@@ -50,12 +49,11 @@ func (cmd *PlaceBlockWithNBTData) Unmarshal(reader io.Reader) error {
 		return err
 	}
 	cmd.BlockStatesConstantStringID = binary.BigEndian.Uint16(buf)
-	lenBuf := make([]byte, 4)
-	_, err = io.ReadAtLeast(reader, lenBuf, 4)
+	_, err = io.ReadAtLeast(reader, buf, 2)
 	if err != nil {
 		return err
 	}
-	cmd.BlockNBT = make([]byte, int(binary.BigEndian.Uint32(lenBuf)))
+	cmd.BlockNBT = make([]byte, int(binary.BigEndian.Uint16(buf)))
 	_, err = io.ReadAtLeast(reader, cmd.BlockNBT, len(cmd.BlockNBT))
 	return err
 }
