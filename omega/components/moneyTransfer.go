@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
-	"phoenixbuilder/omega/utils"
 	"regexp"
 	"strconv"
 	"strings"
@@ -174,22 +174,25 @@ func (o *MoneyTransfer) check(chat *defines.GameChat) bool {
 	} else {
 		o.Frame.GetGameControl().SayTo(chat.Name, "没有你说的那个玩家...")
 	}
-	hint, resolver := utils.GenStringListHintResolverWithIndex(availablePlayers)
-	if o.Frame.GetGameControl().SetOnParamMsg(chat.Name,
-		func(chat *defines.GameChat) (catch bool) {
-			i, cancel, err := resolver(chat.Msg)
-			if cancel {
-				o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX); hasK {
+		hint, resolver := collaborate_func.(collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX)(availablePlayers)
+		if o.Frame.GetGameControl().SetOnParamMsg(chat.Name,
+			func(chat *defines.GameChat) (catch bool) {
+				i, cancel, err := resolver(chat.Msg)
+				if cancel {
+					o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+					return true
+				}
+				if err != nil {
+					o.Frame.GetGameControl().SayTo(chat.Name, "无法传送，因为输入"+err.Error())
+					return true
+				}
+				o.tryTransfer(chat.Name, availablePlayers[i], chat.Msg[1:])
 				return true
-			}
-			if err != nil {
-				o.Frame.GetGameControl().SayTo(chat.Name, "无法传送，因为输入"+err.Error())
-				return true
-			}
-			o.tryTransfer(chat.Name, availablePlayers[i], chat.Msg[1:])
-			return true
-		}) == nil {
-		o.Frame.GetGameControl().SayTo(chat.Name, "可选项有: "+hint+" 请输入喔:")
+			}) == nil {
+			o.Frame.GetGameControl().SayTo(chat.Name, "可选项有: "+hint+" 请输入喔:")
+		}
 	}
 	return true
 }

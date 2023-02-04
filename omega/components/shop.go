@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strconv"
@@ -58,63 +59,66 @@ func (o *Shop) Init(cfg *defines.ComponentConfig) {
 
 func (o *Shop) askForItemList(chat *defines.GameChat) {
 	groupNames := []string{}
-	for k, _ := range o.Goods {
+	for k := range o.Goods {
 		groupNames = append(groupNames, k)
 	}
-	hint, resolver := utils.GenStringListHintResolverWithIndex(groupNames)
-
-	if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(newChat *defines.GameChat) (catch bool) {
-		i, cancel, err := resolver(newChat.Msg)
-		if cancel {
-			o.Frame.GetGameControl().GetPlayerKit(chat.Name).Say("已取消")
-			return true
-		}
-		if err != nil {
-			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("无法处理你的要求，因为"+err.Error()))
-			return true
-		}
-		groupName := groupNames[i]
-		cn := o.Goods[groupName].CurrencyName
-		availableGoods := []string{}
-		for i, g := range o.Goods[groupName].Goods {
-			_i := i + 1
-			f := o.Format
-			if g.Once {
-				f = o.FormatOnce
-			}
-			availableGoods = append(availableGoods, g.Name)
-			cmd := utils.FormatByReplacingOccurrences(f, map[string]interface{}{
-				"[i]":             _i,
-				"[price]":         g.Price,
-				"[currency_name]": cn,
-				"[name]":          "\"" + g.Name + "\"",
-			})
-			o.Frame.GetGameControl().SayTo(chat.Name, cmd)
-		}
-		itemHint, itemResolver := utils.GenStringListHintResolverWithIndex(availableGoods)
-		if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(itemChat *defines.GameChat) (catch bool) {
-			itemI, cancel, err := itemResolver(itemChat.Msg)
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX); hasK {
+		hint, resolver := collaborate_func.(collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX)(groupNames)
+		if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(newChat *defines.GameChat) (catch bool) {
+			i, cancel, err := resolver(newChat.Msg)
 			if cancel {
-				o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+				o.Frame.GetGameControl().GetPlayerKit(chat.Name).Say("已取消")
 				return true
 			}
 			if err != nil {
 				o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("无法处理你的要求，因为"+err.Error()))
 				return true
 			}
-			goodName := availableGoods[itemI]
-			itemChat.Msg[0] = goodName
-			o.tryBuy(itemChat)
+			groupName := groupNames[i]
+			cn := o.Goods[groupName].CurrencyName
+			availableGoods := []string{}
+			for i, g := range o.Goods[groupName].Goods {
+				_i := i + 1
+				f := o.Format
+				if g.Once {
+					f = o.FormatOnce
+				}
+				availableGoods = append(availableGoods, g.Name)
+				cmd := utils.FormatByReplacingOccurrences(f, map[string]interface{}{
+					"[i]":             _i,
+					"[price]":         g.Price,
+					"[currency_name]": cn,
+					"[name]":          "\"" + g.Name + "\"",
+				})
+				o.Frame.GetGameControl().SayTo(chat.Name, cmd)
+			}
+			if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX); hasK {
+				itemHint, itemResolver := collaborate_func.(collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX)(availableGoods)
+				if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(itemChat *defines.GameChat) (catch bool) {
+					itemI, cancel, err := itemResolver(itemChat.Msg)
+					if cancel {
+						o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+						return true
+					}
+					if err != nil {
+						o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("无法处理你的要求，因为"+err.Error()))
+						return true
+					}
+					goodName := availableGoods[itemI]
+					itemChat.Msg[0] = goodName
+					o.tryBuy(itemChat)
+					return true
+				}) == nil {
+					o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("想购买的话，请输入 %v %v [物品名或序号] [数量] 喔！\n物品信息可选有"+itemHint,
+						o.Frame.GetGameListener().GetTriggerWord(), o.Triggers[0]))
+				}
+			}
 			return true
 		}) == nil {
-			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("想购买的话，请输入 %v %v [物品名或序号] [数量] 喔！\n物品信息可选有"+itemHint,
-				o.Frame.GetGameListener().GetTriggerWord(), o.Triggers[0]))
+			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§6§l这是已有的商品分类，你想确认一下哪一类呢?\n"+hint+", 请输入喔:"))
 		}
-
-		return true
-	}) == nil {
-		o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§6§l这是已有的商品分类，你想确认一下哪一类呢?\n"+hint+", 请输入喔:"))
 	}
+
 }
 
 func (o *Shop) startBuy(player string, count int, good *PlainGood) {
@@ -165,13 +169,13 @@ func (o *Shop) tryBuy(chat *defines.GameChat) {
 	count := chat.Msg[1]
 	good, hasK := o.PlainItems[item]
 	if !hasK {
-		o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§4§l似乎没有这个商品"))
+		o.Frame.GetGameControl().SayTo(chat.Name, "§4§l似乎没有这个商品")
 		o.askForItemList(chat)
 		return
 	}
 	atoi, err := strconv.Atoi(count)
 	if err != nil || atoi <= 0 {
-		o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("§4§l输入的数量无效，必须是一个正整数"))
+		o.Frame.GetGameControl().SayTo(chat.Name, "§4§l输入的数量无效，必须是一个正整数")
 		return
 	}
 	o.startBuy(chat.Name, atoi, good)

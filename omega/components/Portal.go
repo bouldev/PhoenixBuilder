@@ -142,18 +142,14 @@ func (o *Portal) doTP(name string, pos string) bool {
 		})
 		return true
 	}
-	for n, _ := range ps {
-		if n == pos {
-			if goPS(n, ps[n]) {
-				return true
-			}
+	for n := range ps {
+		if n == pos && goPS(n, ps[n]) {
+			return true
 		}
 	}
 	for n, p := range o.positions["*"] {
-		if n == pos {
-			if goPS(n, p) {
-				return true
-			}
+		if n == pos && goPS(n, p) {
+			return true
 		}
 	}
 	o.Frame.GetGameControl().SayTo(name, "前往失败，因为没有那个地点")
@@ -171,34 +167,36 @@ func (o *Portal) tp(chat *defines.GameChat) bool {
 
 	ps := o.getPlayerPositions(chat.Name)
 	names := []string{}
-	for n, _ := range ps {
+	for n := range ps {
 		names = append(names, n)
 	}
-	for n, _ := range o.positions["*"] {
+	for n := range o.positions["*"] {
 		names = append(names, n)
 	}
-	hint, resolver := utils.GenStringListHintResolverWithIndex(names)
-	if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
-		i, cancel, err := resolver(chat.Msg)
-		if cancel {
-			pk.Say(fmt.Sprintf("已取消"))
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX); hasK {
+		hint, resolver := collaborate_func.(collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX)(names)
+		if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
+			i, cancel, err := resolver(chat.Msg)
+			if cancel {
+				pk.Say("已取消")
+				return true
+			}
+			if err != nil {
+				pk.Say(fmt.Sprintf("无法前往你说的地点，因为输入%v", err))
+				return true
+			}
+			o.doTP(chat.Name, names[i])
 			return true
+		}) == nil {
+			pk.Say(fmt.Sprintf("可选的地点有 %v 请输入:", hint))
 		}
-		if err != nil {
-			pk.Say(fmt.Sprintf("无法前往你说的地点，因为输入%v", err))
-			return true
-		}
-		o.doTP(chat.Name, names[i])
-		return true
-	}) == nil {
-		pk.Say(fmt.Sprintf("可选的地点有 %v 请输入:", hint))
 	}
 	return true
 }
 
 func (o *Portal) doRemove(name string, pos string) bool {
 	ps := o.getPlayerPositions(name)
-	for n, _ := range ps {
+	for n := range ps {
 		if n == pos {
 			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("%v 移除了地点 %v: %v", name, n, ps[n]))
 			o.Frame.GetGameControl().SayTo(name, "已移除")
@@ -229,7 +227,7 @@ func (o *Portal) doAdd(name string, posName string) {
 			}
 		} else {
 			o.positions[name] = map[string]*PortalEntry{
-				posName: &PortalEntry{
+				posName: {
 					Time: utils.TimeToString(time.Now()),
 					Pos:  []int{pos.X(), pos.Y(), pos.Z()},
 				},
@@ -271,24 +269,26 @@ func (o *Portal) remove(chat *defines.GameChat) bool {
 
 	ps := o.getPlayerPositions(chat.Name)
 	names := []string{}
-	for n, _ := range ps {
+	for n := range ps {
 		names = append(names, n)
 	}
-	hint, resolver := utils.GenStringListHintResolverWithIndex(names)
-	if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
-		i, cancel, err := resolver(chat.Msg)
-		if cancel {
-			pk.Say(fmt.Sprintf("已取消"))
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX); hasK {
+		hint, resolver := collaborate_func.(collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX)(names)
+		if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
+			i, cancel, err := resolver(chat.Msg)
+			if cancel {
+				pk.Say("已取消")
+				return true
+			}
+			if err != nil {
+				pk.Say(fmt.Sprintf("无法移除你说的地点，因为输入%v", err))
+				return true
+			}
+			o.doRemove(chat.Name, names[i])
 			return true
+		}) == nil {
+			pk.Say(fmt.Sprintf("可选的地点有 %v 请输入:", hint))
 		}
-		if err != nil {
-			pk.Say(fmt.Sprintf("无法移除你说的地点，因为输入%v", err))
-			return true
-		}
-		o.doRemove(chat.Name, names[i])
-		return true
-	}) == nil {
-		pk.Say(fmt.Sprintf("可选的地点有 %v 请输入:", hint))
 	}
 	return true
 }

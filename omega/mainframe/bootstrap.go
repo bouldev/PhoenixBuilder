@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/components"
 	"phoenixbuilder/omega/defines"
 	third_party_omega_components "phoenixbuilder/omega/third_party"
@@ -383,6 +384,29 @@ func (o *Omega) bootstrapComponents() (success bool) {
 	return true
 }
 
+func (o *Omega) initContext() {
+	var func1 collaborate.GEN_STRING_LIST_HINT_RESOLVER = func(available []string) (string, func(params []string) (selection int, cancel bool, err error)) {
+		return collaborate.GenStringListHintResolver(available)
+	}
+	var func2 collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX = func(_available []string) (string, func(params []string) (selection int, cancel bool, err error)) {
+		return collaborate.GenStringListHintResolverWithIndex(_available)
+	}
+	var func3 collaborate.GEN_INT_RANGE_RESOLVER = func(min, max int) (string, func(params []string) (selection int, cancel bool, err error)) {
+		return collaborate.GenIntRangeResolver(min, max)
+	}
+	var func4 collaborate.GEN_YES_NO_RESOLVER = func() (string, func(params []string) (bool, error)) {
+		return collaborate.GenYesNoResolver()
+	}
+	var func5 collaborate.QUERY_FOR_PLAYER_NAME = func(src, dst string, searchFn collaborate.FUNCTYPE_GET_POSSIBLE_NAME) (name string, cancel bool) {
+		return collaborate.QueryForPlayerName(o.GameCtrl, src, dst, searchFn)
+	}
+	o.SetGlobalContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER, func1)
+	o.SetGlobalContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX, func2)
+	o.SetGlobalContext(collaborate.INTERFACE_GEN_INT_RANGE_RESOLVER, func3)
+	o.SetGlobalContext(collaborate.INTERFACE_GEN_YES_NO_RESOLVER, func4)
+	o.SetGlobalContext(collaborate.INTERFACE_QUERY_FOR_PLAYER_NAME, func5)
+}
+
 //go:embed update.log
 var updateInfo []byte
 
@@ -429,6 +453,9 @@ func (o *Omega) Bootstrap(adaptor defines.ConnectionAdaptor) {
 
 	o.backendLogger.Write("启用 Game Ctrl 模块")
 	o.GameCtrl = newGameCtrl(o)
+
+	o.backendLogger.Write("初始化 Context ...")
+	o.initContext()
 
 	o.backendLogger.Write("初始化组件 ...")
 

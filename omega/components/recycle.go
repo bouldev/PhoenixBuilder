@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strconv"
@@ -90,7 +91,7 @@ func (o *Recycle) computeMaxRecycleCount(name string, option string, maxCount in
 	if count < 0 {
 		count = 0
 	}
-	factor := time.Now().Sub(t).Seconds() / float64(time.Hour.Seconds()*24)
+	factor := time.Since(t).Seconds() / float64(time.Hour.Seconds()*24)
 	recCount := float64(maxCount) * factor
 	allowCount := int(recCount) + count
 	if allowCount > maxCount {
@@ -150,28 +151,30 @@ func (o *Recycle) popMenu(name string) {
 		availableOptions = append(availableOptions, e.Name)
 		pk.Say(m)
 	}
-	hint, resolver := utils.GenStringListHintResolverWithIndex(availableOptions)
-	if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
-		i, cancel, err := resolver(chat.Msg)
-		if cancel {
-			pk.Say("已取消")
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX); hasK {
+		hint, resolver := collaborate_func.(collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX)(availableOptions)
+		if pk.SetOnParamMsg(func(chat *defines.GameChat) (catch bool) {
+			i, cancel, err := resolver(chat.Msg)
+			if cancel {
+				pk.Say("已取消")
+				return true
+			}
+			if err != nil {
+				pk.Say(fmt.Sprintf("无法理解你的选择，因为 %v", err))
+				return true
+			}
+			option := o.Options[i]
+			if len(chat.Msg) == 1 {
+				o.askForAmount(chat.Name, option)
+			} else {
+				o.tryHandleAmount(chat.Name, option, chat.Msg[1])
+			}
+			//chat.Msg = utils.InsertHead(o.Triggers[0], chat.Msg)
+			//o.Frame.GetGameListener().Throw(chat)
 			return true
+		}) == nil {
+			pk.Say(fmt.Sprintf("你想回收什么呢？ 请输入 %v, 以及你想回收的 [数量] 喔!", hint))
 		}
-		if err != nil {
-			pk.Say(fmt.Sprintf("无法理解你的选择，因为 %v", err))
-			return true
-		}
-		option := o.Options[i]
-		if len(chat.Msg) == 1 {
-			o.askForAmount(chat.Name, option)
-		} else {
-			o.tryHandleAmount(chat.Name, option, chat.Msg[1])
-		}
-		//chat.Msg = utils.InsertHead(o.Triggers[0], chat.Msg)
-		//o.Frame.GetGameListener().Throw(chat)
-		return true
-	}) == nil {
-		pk.Say(fmt.Sprintf("你想回收什么呢？ 请输入 %v, 以及你想回收的 [数量] 喔!", hint))
 	}
 }
 
@@ -213,21 +216,23 @@ func (o *Recycle) askForAmount(name string, option *Option) {
 	} else {
 		maxC = 999
 	}
-	hint, resolver := utils.GenIntRangeResolver(1, maxC)
-	if o.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
-		amount, cancel, err := resolver(chat.Msg)
-		if cancel {
-			o.Frame.GetGameControl().GetPlayerKit(name).Say("已取消")
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_INT_RANGE_RESOLVER); hasK {
+		hint, resolver := collaborate_func.(collaborate.GEN_INT_RANGE_RESOLVER)(1, maxC)
+		if o.Frame.GetGameControl().SetOnParamMsg(name, func(chat *defines.GameChat) (catch bool) {
+			amount, cancel, err := resolver(chat.Msg)
+			if cancel {
+				o.Frame.GetGameControl().GetPlayerKit(name).Say("已取消")
+				return true
+			}
+			if err != nil {
+				o.Frame.GetGameControl().GetPlayerKit(name).Say("输入的数量无效，因为 " + err.Error())
+				return true
+			}
+			o.startRecycle(name, option, amount)
 			return true
+		}) == nil {
+			o.Frame.GetGameControl().GetPlayerKit(name).Say("你想回收多少个" + option.Name + "呢？ 请输入 " + hint)
 		}
-		if err != nil {
-			o.Frame.GetGameControl().GetPlayerKit(name).Say("输入的数量无效，因为 " + err.Error())
-			return true
-		}
-		o.startRecycle(name, option, amount)
-		return true
-	}) == nil {
-		o.Frame.GetGameControl().GetPlayerKit(name).Say("你想回收多少个" + option.Name + "呢？ 请输入 " + hint)
 	}
 }
 

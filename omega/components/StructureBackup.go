@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror/define"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"strings"
@@ -135,7 +136,7 @@ func (o *StructureBackup) getStructureName(user string, args []string, idx int) 
 func (o *StructureBackup) tryBackup(chat *defines.GameChat) bool {
 	if t, ok := o.lastRequestTime[chat.Name]; ok {
 		if t.Add(time.Duration(o.CoolDownSecond) * time.Second).After(time.Now()) {
-			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("你请求的太频繁了,%v秒以后再试吧", int(t.Add(time.Duration(o.CoolDownSecond)*time.Second).Sub(time.Now()).Seconds())))
+			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("你请求的太频繁了,%v秒以后再试吧", int(time.Until(t.Add(time.Duration(o.CoolDownSecond)*time.Second)).Seconds())))
 			return true
 		}
 	}
@@ -149,29 +150,31 @@ func (o *StructureBackup) tryBackup(chat *defines.GameChat) bool {
 			sname = append(sname, n)
 			structures = append(structures, s)
 		}
-		hint, resolver := utils.GenStringListHintResolverWithIndex(sname)
-		if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(chat *defines.GameChat) (catch bool) {
-			i, b, err := resolver(chat.Msg)
-			if b {
-				o.Frame.GetGameControl().SayTo(chat.Name, "操作已取消")
+		if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX); hasK {
+			hint, resolver := collaborate_func.(collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX)(sname)
+			if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(chat *defines.GameChat) (catch bool) {
+				i, b, err := resolver(chat.Msg)
+				if b {
+					o.Frame.GetGameControl().SayTo(chat.Name, "操作已取消")
+					return true
+				}
+				if err != nil {
+					o.Frame.GetGameControl().SayTo(chat.Name, "无法理解的输入，因为"+err.Error())
+					return true
+				}
+				n := sname[i]
+				if o.Structures.User[chat.Name] != nil && o.Structures.User[chat.Name][n] != nil {
+					delete(o.Structures.User[chat.Name], n)
+					o.fileChange = true
+				}
+				o.getStructureName(chat.Name, []string{}, structures[i].RealIDX)
 				return true
+			}) == nil {
+				for i, name := range sname {
+					o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("%d: %v", i+1, name))
+				}
+				o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("备份数量已满，请选择一个要丢弃的备份，或者取消备份:\n"+hint))
 			}
-			if err != nil {
-				o.Frame.GetGameControl().SayTo(chat.Name, "无法理解的输入，因为"+err.Error())
-				return true
-			}
-			n := sname[i]
-			if o.Structures.User[chat.Name] != nil && o.Structures.User[chat.Name][n] != nil {
-				delete(o.Structures.User[chat.Name], n)
-				o.fileChange = true
-			}
-			o.getStructureName(chat.Name, []string{}, structures[i].RealIDX)
-			return true
-		}) == nil {
-			for i, name := range sname {
-				o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("%d: %v", i+1, name))
-			}
-			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("备份数量已满，请选择一个要丢弃的备份，或者取消备份:\n"+hint))
 		}
 		return true
 	}
@@ -201,34 +204,36 @@ func (o *StructureBackup) doRecovery(user string, admin string, s *StructureEntr
 func (o *StructureBackup) askForAuth(user string, admins []string, s *StructureEntry, sname string) {
 	o.lastRequestTime[user] = time.Now()
 	approved := false
-	for _, _a := range admins {
-		admin := _a
-		hint, resolver := utils.GenYesNoResolver()
-		if o.Frame.GetGameControl().SetOnParamMsg(admin, func(chat *defines.GameChat) (catch bool) {
-			y, err := resolver(chat.Msg)
-			if err != nil {
-				o.Frame.GetGameControl().SayTo(chat.Name, "已弃权")
-				o.Frame.GetGameControl().SayTo(user, admin+"已弃权")
-				return true
-			}
-			if !y {
-				o.Frame.GetGameControl().SayTo(chat.Name, "已拒绝")
-				o.Frame.GetGameControl().SayTo(user, admin+"已拒绝")
-				return true
-			} else {
-				o.Frame.GetGameControl().SayTo(chat.Name, "同意了请求")
-				o.Frame.GetGameControl().SayTo(user, admin+"同意了请求")
-				o.Frame.GetBackendDisplay().Write(fmt.Sprintf(admin+"同意了 %v 恢复中心位于 %v %v %v 的建筑 %v 的请求", user, s.CenterPos[0], s.CenterPos[1], s.CenterPos[2], sname))
-				if approved {
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_YES_NO_RESOLVER); hasK {
+		hint, resolver := collaborate_func.(collaborate.GEN_YES_NO_RESOLVER)()
+		for _, _a := range admins {
+			admin := _a
+			if o.Frame.GetGameControl().SetOnParamMsg(admin, func(chat *defines.GameChat) (catch bool) {
+				y, err := resolver(chat.Msg)
+				if err != nil {
+					o.Frame.GetGameControl().SayTo(chat.Name, "已弃权")
+					o.Frame.GetGameControl().SayTo(user, admin+"已弃权")
 					return true
 				}
-				approved = true
-				o.doRecovery(user, admin, s, sname)
+				if !y {
+					o.Frame.GetGameControl().SayTo(chat.Name, "已拒绝")
+					o.Frame.GetGameControl().SayTo(user, admin+"已拒绝")
+					return true
+				} else {
+					o.Frame.GetGameControl().SayTo(chat.Name, "同意了请求")
+					o.Frame.GetGameControl().SayTo(user, admin+"同意了请求")
+					o.Frame.GetBackendDisplay().Write(fmt.Sprintf(admin+"同意了 %v 恢复中心位于 %v %v %v 的建筑 %v 的请求", user, s.CenterPos[0], s.CenterPos[1], s.CenterPos[2], sname))
+					if approved {
+						return true
+					}
+					approved = true
+					o.doRecovery(user, admin, s, sname)
+				}
+				return true
+			}) == nil {
+				o.Frame.GetGameControl().SayTo(user, fmt.Sprintf("等待管理员 %v 同意恢复请求", strings.Join(admins, " 或 ")))
+				o.Frame.GetGameControl().SayTo(admin, fmt.Sprintf("%v 请求恢复中心位于 %v %v %v 的建筑 %v, 要同意吗? 输入 "+hint+": ", user, s.CenterPos[0], s.CenterPos[1], s.CenterPos[2], sname))
 			}
-			return true
-		}) == nil {
-			o.Frame.GetGameControl().SayTo(user, fmt.Sprintf("等待管理员 %v 同意恢复请求", strings.Join(admins, " 或 ")))
-			o.Frame.GetGameControl().SayTo(admin, fmt.Sprintf("%v 请求恢复中心位于 %v %v %v 的建筑 %v, 要同意吗? 输入 "+hint+": ", user, s.CenterPos[0], s.CenterPos[1], s.CenterPos[2], sname))
 		}
 	}
 }
@@ -236,7 +241,7 @@ func (o *StructureBackup) askForAuth(user string, admins []string, s *StructureE
 func (o *StructureBackup) tryRecover(chat *defines.GameChat) bool {
 	if t, ok := o.lastRequestTime[chat.Name]; ok {
 		if t.Add(time.Duration(o.CoolDownSecond) * time.Second).After(time.Now()) {
-			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("你请求的太频繁了,%v秒以后再试吧", int(t.Add(time.Duration(o.CoolDownSecond)*time.Second).Sub(time.Now()).Seconds())))
+			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("你请求的太频繁了,%v秒以后再试吧", int(time.Until(t.Add(time.Duration(o.CoolDownSecond)*time.Second)).Seconds())))
 			return true
 		}
 	}
@@ -258,24 +263,26 @@ func (o *StructureBackup) tryRecover(chat *defines.GameChat) bool {
 		sname = append(sname, n)
 		structures = append(structures, s)
 	}
-	hint, resolver := utils.GenStringListHintResolverWithIndex(sname)
-	if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(chat *defines.GameChat) (catch bool) {
-		i, b, err := resolver(chat.Msg)
-		if b {
-			o.Frame.GetGameControl().SayTo(chat.Name, "操作已取消")
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX); hasK {
+		hint, resolver := collaborate_func.(collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX)(sname)
+		if o.Frame.GetGameControl().SetOnParamMsg(chat.Name, func(chat *defines.GameChat) (catch bool) {
+			i, b, err := resolver(chat.Msg)
+			if b {
+				o.Frame.GetGameControl().SayTo(chat.Name, "操作已取消")
+				return true
+			}
+			if err != nil {
+				o.Frame.GetGameControl().SayTo(chat.Name, "无法理解的输入，因为"+err.Error())
+				return true
+			}
+			o.askForAuth(chat.Name, admins, structures[i], sname[i])
 			return true
+		}) == nil {
+			for i, name := range sname {
+				o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("%d: %v", i+1, name))
+			}
+			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("选择一个备份以恢复，或者取消恢复:\n"+hint))
 		}
-		if err != nil {
-			o.Frame.GetGameControl().SayTo(chat.Name, "无法理解的输入，因为"+err.Error())
-			return true
-		}
-		o.askForAuth(chat.Name, admins, structures[i], sname[i])
-		return true
-	}) == nil {
-		for i, name := range sname {
-			o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("%d: %v", i+1, name))
-		}
-		o.Frame.GetGameControl().SayTo(chat.Name, fmt.Sprintf("选择一个备份以恢复，或者取消恢复:\n"+hint))
 	}
 	return true
 }

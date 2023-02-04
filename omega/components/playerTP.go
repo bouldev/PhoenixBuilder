@@ -3,6 +3,7 @@ package components
 import (
 	"encoding/json"
 	"fmt"
+	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
 	"phoenixbuilder/omega/utils"
 	"time"
@@ -36,50 +37,52 @@ func (o *PlayerTP) requestTp(src, dst string) {
 		"[src]": "\"" + src + "\"",
 		"[dst]": "\"" + dst + "\"",
 	})
-	hint, ynResolver := utils.GenYesNoResolver()
-	if o.Frame.GetGameControl().SetOnParamMsg(dst, func(chat *defines.GameChat) (catch bool) {
-		result, err := ynResolver(chat.Msg)
-		if err != nil {
-			o.Frame.GetGameControl().SayTo(chat.Name, "抱歉，我不明白你的意思，因为输入"+err.Error())
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_YES_NO_RESOLVER); hasK {
+		hint, ynResolver := collaborate_func.(collaborate.GEN_YES_NO_RESOLVER)()
+		if o.Frame.GetGameControl().SetOnParamMsg(dst, func(chat *defines.GameChat) (catch bool) {
+			result, err := ynResolver(chat.Msg)
+			if err != nil {
+				o.Frame.GetGameControl().SayTo(chat.Name, "抱歉，我不明白你的意思，因为输入"+err.Error())
+				return true
+			}
+			if result {
+				tpCmd := utils.FormatByReplacingOccurrences(o.TPCmd, map[string]interface{}{
+					"[src]": "\"" + src + "\"",
+					"[dst]": "\"" + dst + "\"",
+				})
+				o.Frame.GetGameControl().SendCmd(tpCmd)
+				// fmt.Println(tpCmd)
+				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("accept tp %v -> %v", src, dst))
+				o.Frame.GetGameControl().SayTo(src, "传送开始")
+				o.Frame.GetGameControl().SayTo(dst, "传送开始")
+			} else {
+				m := utils.FormatByReplacingOccurrences(o.HintOnRefuse, map[string]interface{}{
+					"[src]": "\"" + src + "\"",
+					"[dst]": "\"" + dst + "\"",
+				})
+				o.Frame.GetBackendDisplay().Write(fmt.Sprintf("reject tp %v -> %v", src, dst))
+				o.Frame.GetGameControl().SayTo(src, m)
+			}
 			return true
-		}
-		if result {
-			tpCmd := utils.FormatByReplacingOccurrences(o.TPCmd, map[string]interface{}{
+		}) == nil {
+			sendMsg := utils.FormatByReplacingOccurrences(o.HintOnReqSent, map[string]interface{}{
 				"[src]": "\"" + src + "\"",
 				"[dst]": "\"" + dst + "\"",
 			})
-			o.Frame.GetGameControl().SendCmd(tpCmd)
-			// fmt.Println(tpCmd)
-			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("accept tp %v -> %v", src, dst))
-			o.Frame.GetGameControl().SayTo(src, "传送开始")
-			o.Frame.GetGameControl().SayTo(dst, "传送开始")
+			o.Frame.GetGameControl().SayTo(src, sendMsg)
+			o.Frame.GetGameControl().SayTo(dst, reqMsg)
+			o.Frame.GetGameControl().SayTo(dst, hint)
+			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("request tp %v -> %v", src, dst))
+			o.lastRequestTime[src] = time.Now()
 		} else {
-			m := utils.FormatByReplacingOccurrences(o.HintOnRefuse, map[string]interface{}{
-				"[src]": "\"" + src + "\"",
-				"[dst]": "\"" + dst + "\"",
-			})
-			o.Frame.GetBackendDisplay().Write(fmt.Sprintf("reject tp %v -> %v", src, dst))
-			o.Frame.GetGameControl().SayTo(src, m)
+			o.Frame.GetGameControl().SayTo(src, o.HintOnTargetBusy)
 		}
-		return true
-	}) == nil {
-		sendMsg := utils.FormatByReplacingOccurrences(o.HintOnReqSent, map[string]interface{}{
-			"[src]": "\"" + src + "\"",
-			"[dst]": "\"" + dst + "\"",
-		})
-		o.Frame.GetGameControl().SayTo(src, sendMsg)
-		o.Frame.GetGameControl().SayTo(dst, reqMsg)
-		o.Frame.GetGameControl().SayTo(dst, hint)
-		o.Frame.GetBackendDisplay().Write(fmt.Sprintf("request tp %v -> %v", src, dst))
-		o.lastRequestTime[src] = time.Now()
-	} else {
-		o.Frame.GetGameControl().SayTo(src, o.HintOnTargetBusy)
 	}
 }
 
 func (o *PlayerTP) check(chat *defines.GameChat) bool {
 	if t, hask := o.lastRequestTime[chat.Name]; hask {
-		timeLeft := time.Now().Sub(t).Seconds()
+		timeLeft := time.Since(t).Seconds()
 		if timeLeft < float64(o.CoolDownSecond) {
 			o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnReqTooFrequent+fmt.Sprintf("(还剩%v秒)", int(timeLeft)))
 			return true
@@ -103,22 +106,24 @@ func (o *PlayerTP) check(chat *defines.GameChat) bool {
 	} else {
 		o.Frame.GetGameControl().SayTo(chat.Name, o.HintOnNoPlayer)
 	}
-	hint, resolver := utils.GenStringListHintResolverWithIndex(availablePlayers)
-	if o.Frame.GetGameControl().SetOnParamMsg(chat.Name,
-		func(chat *defines.GameChat) (catch bool) {
-			i, cancel, err := resolver(chat.Msg)
-			if cancel {
-				o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+	if collaborate_func, hasK := o.Frame.GetContext(collaborate.INTERFACE_GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX); hasK {
+		hint, resolver := collaborate_func.(collaborate.GEN_STRING_LIST_HINT_RESOLVER_WITH_INDEX)(availablePlayers)
+		if o.Frame.GetGameControl().SetOnParamMsg(chat.Name,
+			func(chat *defines.GameChat) (catch bool) {
+				i, cancel, err := resolver(chat.Msg)
+				if cancel {
+					o.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+					return true
+				}
+				if err != nil {
+					o.Frame.GetGameControl().SayTo(chat.Name, "无法传送，因为输入"+err.Error())
+					return true
+				}
+				o.requestTp(chat.Name, availablePlayers[i])
 				return true
-			}
-			if err != nil {
-				o.Frame.GetGameControl().SayTo(chat.Name, "无法传送，因为输入"+err.Error())
-				return true
-			}
-			o.requestTp(chat.Name, availablePlayers[i])
-			return true
-		}) == nil {
-		o.Frame.GetGameControl().SayTo(chat.Name, "可选项有: "+hint+" 请输入喔:")
+			}) == nil {
+			o.Frame.GetGameControl().SayTo(chat.Name, "可选项有: "+hint+" 请输入喔:")
+		}
 	}
 	return true
 }

@@ -108,13 +108,15 @@ func (o *Memo) BeforeActivate() (err error) {
 
 func (me *Memo) askForPlayer(chat *defines.GameChat) {
 	go func() {
-		if name, cancel := utils.QueryForPlayerName(
-			me.Frame.GetGameControl(), chat.Name,
-			"",
-			me.PlayerSearcher); !cancel {
-			me.askForMsg(chat.Name, name)
-		} else {
-			me.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+		if collaborate_func, hasK := me.Frame.GetContext(collaborate.INTERFACE_QUERY_FOR_PLAYER_NAME); hasK {
+			if name, cancel := collaborate_func.(collaborate.QUERY_FOR_PLAYER_NAME)(
+				chat.Name,
+				"",
+				me.PlayerSearcher); !cancel {
+				me.askForMsg(chat.Name, name)
+			} else {
+				me.Frame.GetGameControl().SayTo(chat.Name, "已取消")
+			}
 		}
 	}()
 
