@@ -39,7 +39,7 @@ type UIDTracking struct {
 	mu                   sync.Mutex
 }
 
-func (o *UIDTracking) Init(cfg *defines.ComponentConfig) {
+func (o *UIDTracking) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

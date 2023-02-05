@@ -350,7 +350,7 @@ func (m *Menu) Activate() {
 
 }
 
-func (m *Menu) Init(cfg *defines.ComponentConfig) {
+func (m *Menu) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Configs["没有菜单项时提示"] = "没有可选项"
 		cfg.Configs["关闭菜单时的提示"] = "已取消"

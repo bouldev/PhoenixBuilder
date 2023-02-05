@@ -39,7 +39,7 @@ type CDkey struct {
 	needConvertDataFile bool
 }
 
-func (o *CDkey) Init(cfg *defines.ComponentConfig) {
+func (o *CDkey) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Configs["要求输入兑换码时提示"] = "请输入兑换码"
 		cfg.Configs["不可同设备重复兑换时提示"] = "当前设备已经领取过了，不能重复领取"

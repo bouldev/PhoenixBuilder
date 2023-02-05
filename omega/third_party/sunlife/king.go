@@ -53,7 +53,7 @@ type ProtectPay struct {
 	Cmds     []string `json:"缴纳保护费执行指令"`
 }
 
-func (b *King) Init(cfg *defines.ComponentConfig) {
+func (b *King) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, b)
 	if err != nil {

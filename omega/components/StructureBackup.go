@@ -49,7 +49,7 @@ func (o *StructureBackup) formatStructureName(idx int) string {
 	return fmt.Sprintf("OMBKIDpt2%v", idx)
 }
 
-func (o *StructureBackup) Init(cfg *defines.ComponentConfig) {
+func (o *StructureBackup) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

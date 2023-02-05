@@ -22,7 +22,7 @@ type ShutUp struct {
 	ShutupCmdsIn   interface{} `json:"发言过快反制"`
 }
 
-func (o *ShutUp) Init(cfg *defines.ComponentConfig) {
+func (o *ShutUp) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

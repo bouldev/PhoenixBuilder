@@ -23,7 +23,7 @@ type RemoveBlock struct {
 	fastFilter     map[uint32]*RemoveBlockComplex
 }
 
-func (o *RemoveBlock) Init(cfg *defines.ComponentConfig) {
+func (o *RemoveBlock) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

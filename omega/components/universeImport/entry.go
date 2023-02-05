@@ -78,15 +78,6 @@ func (o *Importor) Activate() {
 
 func (o *UniverseImport) getFrontEnd(fileName string, data []byte, infoSender func(s string)) (blockFeeder chan *structure.IOBlockForDecoder, stopFn func(), suggestMinCacheChunks int, totalBlocks int, err error) {
 	suggestMinCacheChunks = 0
-
-	tryBDX := func() bool {
-		if blockFeeder, stopFn, suggestMinCacheChunks, totalBlocks, err = structure.DecodeBDX(data, infoSender); err == nil {
-			return true
-		} else {
-			pterm.Warning.Printfln("文件无法被 bdx 解析器解析，将尝试下一个解析器 (%v)", err)
-			return false
-		}
-	}
 	trySchem := func() bool {
 		if blockFeeder, stopFn, suggestMinCacheChunks, totalBlocks, err = structure.DecodeSchem(data, infoSender); err == nil {
 			return true
@@ -103,21 +94,8 @@ func (o *UniverseImport) getFrontEnd(fileName string, data []byte, infoSender fu
 			return false
 		}
 	}
-	if strings.Contains(fileName, ".bdx") {
-		if tryBDX() {
-			return
-		}
-		if trySchem() {
-			return
-		}
+	if strings.Contains(fileName, ".schematic") {
 		if trySchematic() {
-			return
-		}
-	} else if strings.Contains(fileName, ".schematic") {
-		if trySchematic() {
-			return
-		}
-		if tryBDX() {
 			return
 		}
 		if trySchem() {
@@ -128,9 +106,6 @@ func (o *UniverseImport) getFrontEnd(fileName string, data []byte, infoSender fu
 			return
 		}
 		if trySchematic() {
-			return
-		}
-		if tryBDX() {
 			return
 		}
 	}
@@ -256,7 +231,7 @@ func (o *Importor) onLevelChunk(cd *mirror.ChunkData) {
 	o.builder.OnLevelChunk(cd)
 }
 
-func (o *UniverseImport) Init(cfg *defines.ComponentConfig) {
+func (o *UniverseImport) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Configs["超频加速比"] = 10
 		cfg.Configs["忽略方块nbt信息"] = false
@@ -467,7 +442,7 @@ func (o *UniverseImport) Inject(frame defines.MainFrame) {
 			Triggers:     o.Triggers,
 			ArgumentHint: "[路径] [x] [y] [z]  (对于图片而言，应该为 [路径] [x] [y] [z] [x方向地图数] [z方向地图数])",
 			FinalTrigger: false,
-			Usage:        "导入建筑，支持 bdx schem schmatic",
+			Usage:        "导入建筑，支持 schem schmatic",
 		},
 		OptionalOnTriggerFn: o.onImport,
 	})

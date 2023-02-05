@@ -24,7 +24,7 @@ type BaseCoreComponent struct {
 	mainFrame defines.MainFrame
 }
 
-func (c *BaseCoreComponent) Init(cfg *defines.ComponentConfig) {
+func (c *BaseCoreComponent) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	c.cfg = cfg
 }
 
@@ -73,7 +73,7 @@ func (c *CmdSender) send(cmds []string, typ string) {
 	}
 }
 
-func (c *CmdSender) Init(cfg *defines.ComponentConfig) {
+func (c *CmdSender) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"
 		cfg.Configs["发送WriteOnly指令的前缀"] = "#"
@@ -309,8 +309,8 @@ type NameRecord struct {
 	FileName          string `json:"改名历史记录文件"`
 }
 
-func (o *NameRecord) Init(cfg *defines.ComponentConfig) {
-	o.BaseCoreComponent.Init(cfg)
+func (o *NameRecord) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
+	o.BaseCoreComponent.Init(cfg, storage)
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)
@@ -416,8 +416,8 @@ type KeepAlive struct {
 	lastTime   time.Time
 }
 
-func (o *KeepAlive) Init(cfg *defines.ComponentConfig) {
-	o.BaseCoreComponent.Init(cfg)
+func (o *KeepAlive) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
+	o.BaseCoreComponent.Init(cfg, storage)
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)
@@ -504,8 +504,8 @@ type Partol struct {
 	OverworldAnchor        []float32 `json:"主世界锚点"`
 }
 
-func (o *Partol) Init(cfg *defines.ComponentConfig) {
-	o.BaseCoreComponent.Init(cfg)
+func (o *Partol) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
+	o.BaseCoreComponent.Init(cfg, storage)
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"
 		cfg.Configs["启用随机巡逻"] = true

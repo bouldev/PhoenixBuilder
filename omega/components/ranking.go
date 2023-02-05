@@ -88,7 +88,7 @@ func (ss *scoreRecords) freshOrder() {
 	}
 }
 
-func (o *Ranking) Init(cfg *defines.ComponentConfig) {
+func (o *Ranking) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		delete((cfg.Configs["渲染选项"]).(map[string]interface{}), "渲染计分板")
 		delete((cfg.Configs["渲染选项"]).(map[string]interface{}), "清除计分板指令")

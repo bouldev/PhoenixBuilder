@@ -11,7 +11,7 @@ type Banner struct {
 	Cmds [][]string `json:"启动时信息显示" yaml:"启动时信息显示"`
 }
 
-func (b *Banner) Init(cfg *defines.ComponentConfig) {
+func (b *Banner) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, b)
 	if err != nil {

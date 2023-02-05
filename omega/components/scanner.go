@@ -24,7 +24,7 @@ type Scanner struct {
 	FilterHasnt  []string `json:"如果不包含以下关键词则忽略"`
 }
 
-func (o *Scanner) Init(cfg *defines.ComponentConfig) {
+func (o *Scanner) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

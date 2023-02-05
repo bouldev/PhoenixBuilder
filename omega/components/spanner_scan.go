@@ -37,7 +37,7 @@ func (o *MobSpawnerScan) needRemove(l string) bool {
 	return false
 }
 
-func (o *MobSpawnerScan) Init(cfg *defines.ComponentConfig) {
+func (o *MobSpawnerScan) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

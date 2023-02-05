@@ -365,8 +365,9 @@ func (o *Omega) bootstrapComponents() (success bool) {
 				nameSpace = thirdPartNameSpace[Name]
 			}
 		}
-		component.Init(cfg)
-		component.Inject(NewBox(o, Name, nameSpace))
+		box := NewBox(o, Name, nameSpace)
+		component.Init(cfg, box)
+		component.Inject(box)
 		o.Components = append(o.Components, component)
 		beforeActivateFNs[cfg.Name] = component.BeforeActivate
 	}

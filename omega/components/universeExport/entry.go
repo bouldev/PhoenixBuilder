@@ -421,7 +421,7 @@ func (o *UniverseExport) OnLevelChunk(cd *mirror.ChunkData) {
 	}
 }
 
-func (o *UniverseExport) Init(cfg *defines.ComponentConfig) {
+func (o *UniverseExport) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Configs["继续导出的触发词"] = []string{"继续导出"}
 		cfg.Configs["取消导出的触发词"] = []string{"取消导出"}

@@ -44,7 +44,7 @@ type ContainerRegexCheck struct {
 	compiledValueRegex     regexp.Regexp
 }
 
-func (o *ContainerScan) Init(cfg *defines.ComponentConfig) {
+func (o *ContainerScan) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

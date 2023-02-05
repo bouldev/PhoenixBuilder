@@ -13,7 +13,7 @@ type EchoMiao struct {
 	Triggers []string `json:"菜单触发词"`
 }
 
-func (o *EchoMiao) Init(cfg *defines.ComponentConfig) {
+func (o *EchoMiao) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, o); err != nil {
 		panic(err)

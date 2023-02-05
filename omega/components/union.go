@@ -89,7 +89,7 @@ func (o *Union) executeCmdsWithDefer(player, uid string, cmds []defines.Cmd) {
 	}()
 }
 
-func (o *Union) Init(cfg *defines.ComponentConfig) {
+func (o *Union) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

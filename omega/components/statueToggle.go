@@ -32,7 +32,7 @@ type StatusToggle struct {
 	Verification    *defines.VerificationRule `json:"可使用者身份验证"`
 }
 
-func (o *StatusToggle) Init(cfg *defines.ComponentConfig) {
+func (o *StatusToggle) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"
 		cfg.Configs["可使用者身份验证"] = map[string]interface{}{

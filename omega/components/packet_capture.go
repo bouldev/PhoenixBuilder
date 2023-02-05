@@ -19,8 +19,8 @@ type Capture struct {
 	packetTypeID []uint32
 }
 
-func (o *Capture) Init(cfg *defines.ComponentConfig) {
-	o.BasicComponent.Init(cfg)
+func (o *Capture) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
+	o.BasicComponent.Init(cfg, storage)
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

@@ -18,7 +18,7 @@ type CBTrigger struct {
 	CompiledTriggerChecker func(input string) (keys map[string]string, hit bool)
 }
 
-func (o *CBTrigger) Init(cfg *defines.ComponentConfig) {
+func (o *CBTrigger) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

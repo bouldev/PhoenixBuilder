@@ -17,7 +17,7 @@ type PickBlock struct {
 	NeedPermission bool     `json:"OP权限验证"`
 }
 
-func (o *PickBlock) Init(cfg *defines.ComponentConfig) {
+func (o *PickBlock) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, o); err != nil {
 		panic(err)

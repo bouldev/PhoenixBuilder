@@ -18,7 +18,7 @@ type SimpleCmd struct {
 	Cmds         []defines.Cmd
 }
 
-func (sc *SimpleCmd) Init(cfg *defines.ComponentConfig) {
+func (sc *SimpleCmd) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"
 		cfg.Configs["可使用者身份验证"] = map[string]interface{}{

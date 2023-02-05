@@ -34,7 +34,7 @@ type TerritoryData struct {
 	Member []string
 }
 
-func (b *TerritoryTest) Init(cfg *defines.ComponentConfig) {
+func (b *TerritoryTest) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	//get config of setting
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, b)

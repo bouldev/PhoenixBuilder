@@ -70,7 +70,7 @@ type InvestRegularlyMap struct {
 	Interest float64 `json:"利率"`
 }
 
-func (o *Bank) Init(cfg *defines.ComponentConfig) {
+func (o *Bank) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Configs["赞助人名单"] = []string{
 			"萌宝宝",

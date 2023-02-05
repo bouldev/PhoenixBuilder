@@ -44,7 +44,7 @@ type RankingDesignationMap struct {
 	Three string `json:"第三名称号"`
 }
 
-func (b *Designation) Init(cfg *defines.ComponentConfig) {
+func (b *Designation) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, b)
 	if err != nil {

@@ -49,7 +49,7 @@ type NewLotteryData struct {
 	IsGuarantees bool `json:"是否小保底保底"`
 }
 
-func (b *NewLottery) Init(cfg *defines.ComponentConfig) {
+func (b *NewLottery) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Configs["抽一次的价格"] = 200
 		cfg.Version = "0.0.2"

@@ -17,7 +17,7 @@ type AboutMe struct {
 	Usage    string              `json:"提示信息"`
 }
 
-func (o *AboutMe) Init(cfg *defines.ComponentConfig) {
+func (o *AboutMe) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

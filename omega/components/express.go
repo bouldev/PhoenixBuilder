@@ -163,7 +163,7 @@ func (o *Express) queryPlayer(chat *defines.GameChat) bool {
 	return true
 }
 
-func (o *Express) Init(cfg *defines.ComponentConfig) {
+func (o *Express) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

@@ -20,7 +20,7 @@ type MoneyTransfer struct {
 	Usage           string              `json:"提示信息"`
 }
 
-func (o *MoneyTransfer) Init(cfg *defines.ComponentConfig) {
+func (o *MoneyTransfer) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

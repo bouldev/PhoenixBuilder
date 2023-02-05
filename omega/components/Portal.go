@@ -36,7 +36,7 @@ type Portal struct {
 	queryNameFn      collaborate.FUNCTYPE_GET_POSSIBLE_NAME
 }
 
-func (o *Portal) Init(cfg *defines.ComponentConfig) {
+func (o *Portal) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Configs["保存存档点功能的提示信息"] = "以某个名字保存当前的地点"
 		cfg.Configs["删除存档点功能的提示信息"] = "移除一个保存的地点"

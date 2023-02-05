@@ -121,7 +121,7 @@ type Multiplayer struct {
 	WinCmds     []string `json:"胜利执行指令"`
 }
 
-func (o *Pvp) Init(cfg *defines.ComponentConfig) {
+func (o *Pvp) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, o); err != nil {
 		panic(err)

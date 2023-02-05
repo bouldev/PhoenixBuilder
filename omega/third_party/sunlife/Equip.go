@@ -57,7 +57,7 @@ type Data struct {
 	Foot       string
 }
 
-func (b *Equip) Init(cfg *defines.ComponentConfig) {
+func (b *Equip) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, b)
 	if err != nil {

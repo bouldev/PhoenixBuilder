@@ -20,7 +20,7 @@ type SkinCheck struct {
 	compiledCmds map[string][]defines.Cmd
 }
 
-func (o *SkinCheck) Init(cfg *defines.ComponentConfig) {
+func (o *SkinCheck) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Configs["忽略机器人"] = true
 		cfg.Version = "0.0.2"

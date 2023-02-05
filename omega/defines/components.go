@@ -37,7 +37,7 @@ func (c *ComponentConfig) SetUpgradeFn(fn func(*ComponentConfig) error) (ok bool
 // 顺序 &Component{} -> .Init(ComponentConfig) -> Activate() -> Stop()
 // 每个 Activate 工作在一个独立的 goroutine 下
 type Component interface {
-	Init(cfg *ComponentConfig)
+	Init(cfg *ComponentConfig, storage StorageAndLogProvider)
 	Inject(frame MainFrame)
 	BeforeActivate() error
 	Activate()
@@ -63,7 +63,7 @@ type BasicComponent struct {
 	Listener GameListener
 }
 
-func (bc *BasicComponent) Init(cfg *ComponentConfig) {
+func (bc *BasicComponent) Init(cfg *ComponentConfig, storage StorageAndLogProvider) {
 	bc.Config = cfg
 }
 
@@ -93,6 +93,6 @@ type StubComponent struct {
 	Hint string
 }
 
-func (sc *StubComponent) Init(cfg *ComponentConfig) {
+func (sc *StubComponent) Init(cfg *ComponentConfig, storage StorageAndLogProvider) {
 	panic(sc.Hint)
 }

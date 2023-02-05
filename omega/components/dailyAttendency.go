@@ -101,7 +101,7 @@ func (o *DailyAttendance) computeLastCheckPointTime() time.Time {
 	}
 }
 
-func (o *DailyAttendance) Init(cfg *defines.ComponentConfig) {
+func (o *DailyAttendance) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if m, err := json.Marshal(cfg.Configs); err != nil {
 		panic(err)
 	} else {

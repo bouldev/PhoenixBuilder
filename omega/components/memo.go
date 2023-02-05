@@ -135,7 +135,7 @@ func (me *Memo) record(chat *defines.GameChat) bool {
 	return true
 }
 
-func (me *Memo) Init(cfg *defines.ComponentConfig) {
+func (me *Memo) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, me); err != nil {
 		panic(err)

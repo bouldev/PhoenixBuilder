@@ -416,7 +416,7 @@ func (cq *QGroupLink) firstInitErr(err error) error {
 	return nil
 }
 
-func (cq *QGroupLink) Init(cfg *defines.ComponentConfig) {
+func (cq *QGroupLink) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	// 更新！
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"

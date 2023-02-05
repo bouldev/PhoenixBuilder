@@ -54,7 +54,7 @@ type SimpleNovelReader struct {
 	books       map[string][]string
 }
 
-func (o *SimpleNovelReader) Init(cfg *defines.ComponentConfig) {
+func (o *SimpleNovelReader) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

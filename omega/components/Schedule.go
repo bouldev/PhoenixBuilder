@@ -23,7 +23,7 @@ type Schedule struct {
 	stopC           chan struct{}
 }
 
-func (o *Schedule) Init(cfg *defines.ComponentConfig) {
+func (o *Schedule) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	marshal, err := json.Marshal(cfg.Configs)
 	if err != nil {
 		panic(err)

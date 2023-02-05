@@ -66,7 +66,7 @@ type SuperLinkAPIData struct {
 
 var super_Link SuperLink
 
-func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig) {
+func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		// There's no users use this version, is it?
 		cfg.Configs["服务器名"] = ""

@@ -19,7 +19,7 @@ type AntiAFK struct {
 	lastYRot map[uuid.UUID]float64
 }
 
-func (o *AntiAFK) Init(cfg *defines.ComponentConfig) {
+func (o *AntiAFK) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, o); err != nil {
 		panic(err)

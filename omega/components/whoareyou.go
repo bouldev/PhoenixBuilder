@@ -24,7 +24,7 @@ type WhoAreYou struct {
 	Delay         int `json:"登入检查延迟"`
 }
 
-func (o *WhoAreYou) Init(cfg *defines.ComponentConfig) {
+func (o *WhoAreYou) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)

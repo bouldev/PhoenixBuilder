@@ -426,7 +426,7 @@ func (o *RecordBlockChanges) StatisticsDatas() {
 	o.Frame.WriteJsonData(fmt.Sprintf("%v.json", o.FileName), new)
 }
 
-func (o *RecordBlockChanges) Init(settings *defines.ComponentConfig) {
+func (o *RecordBlockChanges) Init(settings *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	marshal, _ := json.Marshal(settings.Configs)
 	if err := json.Unmarshal(marshal, o); err != nil {
 		panic(err)

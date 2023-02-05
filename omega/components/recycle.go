@@ -40,7 +40,7 @@ type Recycle struct {
 	PlayerRecycleRecord map[string]map[string]LimitRecord
 }
 
-func (o *Recycle) Init(cfg *defines.ComponentConfig) {
+func (o *Recycle) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

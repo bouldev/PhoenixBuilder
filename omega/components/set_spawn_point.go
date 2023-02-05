@@ -17,7 +17,7 @@ type SetSpawnPoint struct {
 	Cmd                  string   `json:"设置方式"`
 }
 
-func (o *SetSpawnPoint) Init(cfg *defines.ComponentConfig) {
+func (o *SetSpawnPoint) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
 		panic(err)

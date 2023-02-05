@@ -148,7 +148,7 @@ func sortPos(pa define.CubePos, pb define.CubePos) (start define.CubePos, end de
 	return
 }
 
-func (o *WoodAxe) Init(cfg *defines.ComponentConfig) {
+func (o *WoodAxe) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, o)
 	if err != nil {

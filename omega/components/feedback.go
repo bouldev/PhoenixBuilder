@@ -40,7 +40,7 @@ func (me *FeedBack) record(chat *defines.GameChat) bool {
 	return true
 }
 
-func (me *FeedBack) Init(cfg *defines.ComponentConfig) {
+func (me *FeedBack) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, me); err != nil {
 		panic(err)

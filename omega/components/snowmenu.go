@@ -22,7 +22,7 @@ type SnowMenu struct {
 	TimeDelay              int                 `json:"系统检测周期(毫秒)"`
 }
 
-func (b *SnowMenu) Init(cfg *defines.ComponentConfig) {
+func (b *SnowMenu) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, b)
 	if err != nil {

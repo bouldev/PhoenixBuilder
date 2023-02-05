@@ -39,7 +39,7 @@ type AbilitySettings struct {
 	Reverse bool
 }
 
-func (o *AbilityManage) Init(cfg *defines.ComponentConfig) {
+func (o *AbilityManage) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, o); err != nil {
 		panic(err)

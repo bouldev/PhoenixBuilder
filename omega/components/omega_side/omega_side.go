@@ -124,7 +124,7 @@ func (o *OmegaSide) runCmd(subProcessName string, cmdStr string, remapping map[s
 	return nil
 }
 
-func (o *OmegaSide) Init(cfg *defines.ComponentConfig) {
+func (o *OmegaSide) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Configs["使用原生DotCS社区版环境"] = false
 		cfg.Configs["使用Omega标准Python插件框架"] = false

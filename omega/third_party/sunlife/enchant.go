@@ -33,7 +33,7 @@ type Rank struct {
 	Probability float64  `json:"成功概率"`
 }
 
-func (b *Enchant) Init(cfg *defines.ComponentConfig) {
+func (b *Enchant) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	m, _ := json.Marshal(cfg.Configs)
 	err := json.Unmarshal(m, b)
 	if err != nil {

@@ -19,7 +19,7 @@ type PlayersSleepingPercentage struct {
 	cmdsWhenSatisfyExecuting bool
 }
 
-func (o *PlayersSleepingPercentage) Init(cfg *defines.ComponentConfig) {
+func (o *PlayersSleepingPercentage) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	var err error
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err = json.Unmarshal(marshal, o); err != nil {

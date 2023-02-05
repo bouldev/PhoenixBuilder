@@ -20,7 +20,7 @@ type Bonjour struct {
 	newCome      bool
 }
 
-func (b *Bonjour) Init(cfg *defines.ComponentConfig) {
+func (b *Bonjour) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, b); err != nil {
 		panic(err)

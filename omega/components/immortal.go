@@ -20,7 +20,7 @@ type Immortal struct {
 	Cmds          []defines.Cmd
 }
 
-func (b *Immortal) Init(cfg *defines.ComponentConfig) {
+func (b *Immortal) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	marshal, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(marshal, b); err != nil {
 		panic(err)

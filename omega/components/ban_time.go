@@ -54,7 +54,7 @@ type bannedDeviceIDDetails struct {
 	PlayerName string `json:"封禁时玩家名"`
 }
 
-func (o *BanTime) Init(cfg *defines.ComponentConfig) {
+func (o *BanTime) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
 		cfg.Version = "0.0.2"
 		cfg.Configs["设备封禁时踢出指令"] = []string{"kick [player] 当前设备已被封禁\n剩余时间: [day]天[hour]时[min]分[sec]秒"}
