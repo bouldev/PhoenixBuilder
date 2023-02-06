@@ -26,21 +26,36 @@ type cdKeyTakenRecord struct {
 
 type CDkey struct {
 	*defines.BasicComponent
-	Usage               string                  `json:"菜单提示"`
-	HintOnInvalid       string                  `json:"兑换码无效时提示"`
-	HintOnRetake        string                  `json:"不可重复兑换时提示"`
-	HintOnDeviceRetake  string                  `json:"不可同设备重复兑换时提示"`
-	HintOnRateLimit     string                  `json:"领取次数到达上限时提示"`
-	HintOnRequireInput  string                  `json:"要求输入兑换码时提示"`
-	FileName            string                  `json:"兑换码领取记录文件"`
-	Triggers            []string                `json:"触发词"`
-	CDKeys              map[string]*cdKeyRecord `json:"兑换码"`
-	fileChange          bool
-	needConvertDataFile bool
+	Usage              string                  `json:"菜单提示"`
+	HintOnInvalid      string                  `json:"兑换码无效时提示"`
+	HintOnRetake       string                  `json:"不可重复兑换时提示"`
+	HintOnDeviceRetake string                  `json:"不可同设备重复兑换时提示"`
+	HintOnRateLimit    string                  `json:"领取次数到达上限时提示"`
+	HintOnRequireInput string                  `json:"要求输入兑换码时提示"`
+	FileName           string                  `json:"兑换码领取记录文件"`
+	Triggers           []string                `json:"触发词"`
+	CDKeys             map[string]*cdKeyRecord `json:"兑换码"`
+	fileChange         bool
 }
 
 func (o *CDkey) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
+		// 转换数据文件
+		filename := cfg.Configs["兑换码领取记录文件"].(string)
+		oldPlayerTaken := map[string]map[string][]*cdKeyTakenRecord{}
+		if err := storage.GetJsonData(filename, &oldPlayerTaken); err == nil {
+			newPlayerTaken := map[string]map[string]map[string][]*cdKeyTakenRecord{}
+			for cdkey, cdkeyData := range oldPlayerTaken {
+				newPlayerTaken[cdkey] = make(map[string]map[string][]*cdKeyTakenRecord)
+				newPlayerTaken[cdkey]["UUIDs"] = make(map[string][]*cdKeyTakenRecord)
+				for uuid, redeemDetails := range cdkeyData {
+					newPlayerTaken[cdkey]["UUIDs"][uuid] = redeemDetails
+				}
+				newPlayerTaken[cdkey]["DevideIDs"] = map[string][]*cdKeyTakenRecord{}
+			}
+			storage.WriteJsonDataWithTMP(filename, ".ckpt", newPlayerTaken)
+		}
+		// 升级配置
 		cfg.Configs["要求输入兑换码时提示"] = "请输入兑换码"
 		cfg.Configs["不可同设备重复兑换时提示"] = "当前设备已经领取过了，不能重复领取"
 		for key := range cfg.Configs["兑换码"].(map[string]any) {
@@ -48,7 +63,6 @@ func (o *CDkey) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLog
 		}
 		cfg.Version = "0.0.2"
 		cfg.Upgrade()
-		o.needConvertDataFile = true
 	}
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
@@ -65,6 +79,7 @@ func (o *CDkey) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLog
 			fmt.Println(r, " 的可领取次数不能为负数，如果希望能无限次领取可以设为0")
 		}
 	}
+
 }
 
 func (o *CDkey) doRedeem(player string, cmds []defines.Cmd, current, total int) {
@@ -154,27 +169,9 @@ func (o *CDkey) redeem(chat *defines.GameChat) bool {
 func (o *CDkey) Inject(frame defines.MainFrame) {
 	o.Frame = frame
 	playerTaken := map[string]map[string]map[string][]*cdKeyTakenRecord{}
-	// 数据文件转换 (0.0.1 -> 0.0.2)
-	if o.needConvertDataFile {
-		oldPlayerTaken := map[string]map[string][]*cdKeyTakenRecord{}
-		if err := frame.GetJsonData(o.FileName, &oldPlayerTaken); err != nil {
-			panic(err)
-		}
-		for cdkey, cdkeyData := range oldPlayerTaken {
-			playerTaken[cdkey] = make(map[string]map[string][]*cdKeyTakenRecord)
-			playerTaken[cdkey]["UUIDs"] = make(map[string][]*cdKeyTakenRecord)
-			playerTaken[cdkey]["DevideIDs"] = make(map[string][]*cdKeyTakenRecord)
-			for uuid, redeemDetails := range cdkeyData {
-				playerTaken[cdkey]["UUIDs"][uuid] = redeemDetails
-			}
-			playerTaken[cdkey]["DevideIDs"] = map[string][]*cdKeyTakenRecord{}
-		}
-		o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", playerTaken)
-	} else {
-		err := frame.GetJsonData(o.FileName, &playerTaken)
-		if err != nil {
-			panic(err)
-		}
+	err := o.Frame.GetJsonData(o.FileName, &playerTaken)
+	if err != nil {
+		panic(err)
 	}
 	// 初始化与计数, 设备ID部分不参与计数
 	for cdkey, cdkeyData := range playerTaken {

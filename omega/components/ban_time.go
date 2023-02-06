@@ -32,7 +32,6 @@ type BanTime struct {
 	KickCmdForDevice     []defines.Cmd
 	AfterOmegaTakeOver   []defines.Cmd
 	fileChange           bool
-	needConvertDataFile  bool
 	Data                 *data
 	mu                   sync.Mutex
 }
@@ -56,12 +55,18 @@ type bannedDeviceIDDetails struct {
 
 func (o *BanTime) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
 	if cfg.Version == "0.0.1" {
-		cfg.Version = "0.0.2"
+		// 转换数据文件
+		filename := cfg.Configs["文件名"].(string)
+		updateData := &data{}
+		if err := storage.GetJsonData(filename, &updateData.OldData); err == nil {
+			storage.WriteJsonDataWithTMP(filename, ".ckpt", updateData)
+		}
+		// 升级配置
 		cfg.Configs["设备封禁时踢出指令"] = []string{"kick [player] 当前设备已被封禁\n剩余时间: [day]天[hour]时[min]分[sec]秒"}
 		cfg.Configs["是否检查设备ID"] = false
 		cfg.Configs["设备ID相关说明"] = "机器人仅能获取到附近玩家的设备ID, 建议在玩家上线时将机器人传送至其位置"
+		cfg.Version = "0.0.2"
 		cfg.Upgrade()
-		o.needConvertDataFile = true
 	}
 	m, _ := json.Marshal(cfg.Configs)
 	var err error
@@ -94,15 +99,8 @@ func (o *BanTime) Inject(frame defines.MainFrame) {
 	var err error
 	o.mu.Lock()
 	defer o.mu.Unlock()
-	// 数据文件转换
-	if o.needConvertDataFile {
-		if err = frame.GetJsonData(o.FileName, &o.Data.OldData); err == nil {
-			o.Frame.WriteJsonDataWithTMP(o.FileName, ".ckpt", o.Data)
-		}
-	} else {
-		if err = frame.GetJsonData(o.FileName, &o.Data); err != nil {
-			panic(err)
-		}
+	if err = frame.GetJsonData(o.FileName, &o.Data); err != nil {
+		panic(err)
 	}
 	o.Frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
 		// 旧数据 + UUID = 新数据
