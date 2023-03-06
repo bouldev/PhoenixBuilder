@@ -47,11 +47,12 @@ type SuperLink struct {
 }
 
 type SuperLinkScoreboardData struct {
-	NegativeScoreSupport bool   `json:"服务端分数记录为负仍然允许上传分数"`
+	NegativeScoreSupport bool   `json:"云端分数记录为负仍然允许上传分数"`
 	UpdateNeed           string `json:"符合条件才可以上传"`
 	UploadScoreSuccess   string `json:"成功存入分数提示"`
 	DownloadScoreSuccess string `json:"成功提取分数提示"`
 	ClientScoreboardLack string `json:"在租赁服计分板不存在或分数不足"`
+	ServerScoreLack      string `json:"在中心服务器存储的计分板分数不足"`
 	ServerScoreboardLack string `json:"服务端计分板不存在"`
 	CondNotMatch         string `json:"不符合分数上传条件"`
 }
@@ -112,29 +113,29 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig, storage defin
 			"计分板名不在允许范围内的提示词": "§c该计分板不允许互通哦",
 			"允许互通的计分板及计分板提示词": map[string]map[string]interface{}{
 				"示例_money": {
-					"服务端分数记录为负仍然允许上传分数": false,
-					"符合条件才可以上传":         "@a[scores={示例_money=-999999..},tag=!ban]",
-					"成功存入分数提示":          "§a成功存入了[count]积分， 余额为[left]积分",
-					"成功提取分数提示":          "§a成功提取了[count]积分， 余额为[left]积分",
-					"在租赁服计分板不存在或分数不足":   "§c你的积分不足哦， 或者你在这个计分板上没有分数，无法上传",
-					"在中心服务器存储的计分板分数不足":  "§c您的积分已不足， 余额为[left]，  无法提取",
-					"服务端计分板不存在":         "服务端该计分板不存在!",
-					"不符合分数上传条件":         "被ban的玩家不能上传哦",
+					"云端分数记录为负仍然允许上传分数": false,
+					"符合条件才可以上传":        "@a[scores={示例_money=-999999..},tag=!ban]",
+					"成功存入分数提示":         "§a成功存入了[count]积分， 余额为[left]积分",
+					"成功提取分数提示":         "§a成功提取了[count]积分， 余额为[left]积分",
+					"在租赁服计分板不存在或分数不足":  "§c你的积分不足哦， 或者你在这个计分板上没有分数，无法上传",
+					"在中心服务器存储的计分板分数不足": "§c您的积分已不足， 余额为[left]，  无法提取",
+					"服务端计分板不存在":        "服务端该计分板不存在!",
+					"不符合分数上传条件":        "被ban的玩家不能上传哦，或者你没有coin计分板分数",
 				},
 				"示例二_super": {
-					"服务端分数记录为负仍然允许上传分数": false,
-					"符合条件才可以上传":         "@a[tag=amazing_tag]",
-					"成功存入分数提示":          "§a成功捉走了[count]只super， 你还可以再抓[left]只喔",
-					"成功提取分数提示":          "§a成功丢入了[count]只super， 你还可以再抓[left]只喔",
-					"在租赁服计分板不存在或分数不足":   "§c啊呀，你没有这么多只super可以上传啦",
-					"在中心服务器存储的计分板分数不足":  "§c啊呀，你只在云端存了[left]只super，  不可以贪心哦",
-					"服务端计分板不存在":         "哈呀..云端不支持存放super啦..或许你可以试试改成CMA2401PT？",
-					"不符合分数上传条件":         "你有神奇的标签，不能向云端存入或提取super哦",
+					"云端分数记录为负仍然允许上传分数": false,
+					"符合条件才可以上传":        "@a[tag=amazing_tag]",
+					"成功存入分数提示":         "§a成功捉走了[count]只super， 你还可以再抓[left]只喔",
+					"成功提取分数提示":         "§a成功丢入了[count]只super， 你还可以再抓[left]只喔",
+					"在租赁服计分板不存在或分数不足":  "§c啊呀，你没有这么多只super可以上传啦",
+					"在中心服务器存储的计分板分数不足": "§c啊呀，你只在云端存了[left]只super，  不可以贪心哦",
+					"服务端计分板不存在":        "哈呀..云端不支持存放super啦..或许你可以试试改成CMA2401PT？",
+					"不符合分数上传条件":        "你有神奇的标签，不能向云端存入或提取super哦",
 				},
 			},
 			"自定义API数据和事件名": map[string]map[string]interface{}{
 				"示例": {
-					"说明": "触发方法：在地上放置一个命令方块，输入：/tellraw <机器人名字> {'rawtext':[{'text':'example'},{'text':'hello'},{'selector':'@p'},{'score':{'name':'@p','objective':'雪球菜单'}}]}并激活 (记得把单引号全部改成双引号)",
+					"说明": "详细教程在Omega聊天群",
 					"收到相同API事件后执行的指令": []string{
 						"/say 我接收到了一条示例API事件：",
 						"/say 值1是： [APIData1]， 显示的内容应当是： hello，",
@@ -145,7 +146,7 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig, storage defin
 					"测试模式(将这个消api息转发出去的同时也转发到自己服)": true,
 				},
 				"跨服大喇叭": {
-					"说明": "触发方法：在地上放置一个命令方块，输入：/tellraw <机器人名字> {'rawtext':[{'text':'广播'},{'selector':'@p'},{'text':'这是广播内容'},{'score':{'name':'@p','objective':'雪球菜单'}}]}并激活 (记得把单引号全部改成双引号)",
+					"说明": "详细教程在Omega聊天群",
 					"收到相同API事件后执行的指令": []string{
 						"/tellraw @a {\"rawtext\":[{\"text\":\"§l§a跨服广播 §d[APIData1] §f说： §e[APIData2]\"}]}",
 					},
@@ -157,7 +158,6 @@ func (o *SeverToServerChatRoom) Init(cfg *defines.ComponentConfig, storage defin
 		cfg.Version = "0.0.5"
 		cfg.Upgrade()
 		panic("配置文件升级完成，你需要重启Omega以启用该配置(你还可能需要认真查看配置)")
-
 	}
 	m, _ := json.Marshal(cfg.Configs)
 	if err := json.Unmarshal(m, o); err != nil {
@@ -256,6 +256,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 					}
 					if cliVersion != loginData.ServerVers {
 						pterm.Warning.Println("服服互通： 客户端版本与服务端版本不匹配， 很可能连接出错")
+						pterm.Warning.Printf("客户端版本： %v，  服务端版本： %v", cliVersion, loginData.ServerVers)
 					}
 					// pterm.Info.Println(loginData)
 					var token interface{}
@@ -416,7 +417,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 			MenuEntry: defines.MenuEntry{
 				Triggers:     ScbUpdateTriggers,
 				ArgumentHint: "[计分板名] [分数]",
-				Usage:        "跨服上传和提取计分板分数",
+				Usage:        "跨服上传和提取计分板分数， 正数代表存入分数， 负数代表提取分数",
 				FinalTrigger: false,
 			},
 			OptionalOnTriggerFn: o.uploadScore,
@@ -497,7 +498,7 @@ func (o *SeverToServerChatRoom) Inject(frame defines.MainFrame) {
 					super_Link.Retry = 0
 					// Listener
 					o.Frame.GetGameListener().SetGameChatInterceptor(func(chat *defines.GameChat) (stop bool) {
-						if chat.Type == 9 {
+						if chat.Type == 9 && super_Link.ConnectOK {
 							go o.handleAPIEventSend(chat.Msg)
 						}
 						if chat.Type != packet.TextTypeChat {
@@ -601,7 +602,7 @@ func (o *SeverToServerChatRoom) uploadScore(chat *defines.GameChat) (stop bool) 
 	if super_Link.ConnectOK {
 		if len(chat.Msg) == 2 {
 			updateScore, err := strconv.Atoi(chat.Msg[1])
-			updateScore *= -1
+			// Positive is Post, while Negative is Get.
 			if err != nil {
 				o.Frame.GetGameControl().SayTo(chat.Name, "§c呀..格式错了， 请重新输入哦")
 				return true
@@ -609,30 +610,32 @@ func (o *SeverToServerChatRoom) uploadScore(chat *defines.GameChat) (stop bool) 
 			scbName := chat.Msg[0]
 			v3data := o.ProtocolSpecificData[o.Mode]
 			if v3data["允许互通的计分板及计分板提示词"].(map[string]interface{})[scbName] == nil {
-				o.Frame.GetGameControl().SayTo(chat.Name, o.getScoreboardMsgFmt(scbName).ClientScoreboardNotAllowed)
+				o.Frame.GetGameControl().SayTo(chat.Name, "§c管理员没有允许同互通该计分板分数哦")
 				return true
 			}
-			selector := v3data["允许互通的计分板及计分板提示词"].(map[string]interface{})[scbName].(map[string]interface{})["符合条件才可以上传"]
+			scbData := v3data["允许互通的计分板及计分板提示词"].(map[string]interface{})[scbName].(map[string]interface{})
 			o.Frame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(
-				fmt.Sprintf("/testfor %v", selector), func(output *packet.CommandOutput) {
+				fmt.Sprintf("/testfor %v", scbData["符合条件才可以上传"]), func(output *packet.CommandOutput) {
 					if output.SuccessCount == 0 {
 						o.Frame.GetGameControl().SayTo(chat.Name, o.getScoreboardMsgFmt(scbName).CondNotMatch)
 					} else {
-						if updateScore < 0 {
-							// 存入
-							cmd := fmt.Sprintf("/scoreboard players test \"%v\" %v %v", chat.Name, scbName, -1*updateScore)
+						if updateScore > 1000000000 || updateScore < -1000000000 {
+							o.Frame.GetGameControl().SayTo(chat.Name, "§c输入的分数太大了")
+						} else if updateScore > 0 {
+							// Post
+							cmd := fmt.Sprintf("/scoreboard players test \"%v\" %v %v", chat.Name, scbName, updateScore)
 							o.Frame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(
 								cmd, func(output *packet.CommandOutput) {
-									if output.SuccessCount == 0 {
+									if output.SuccessCount == 0 && !scbData["云端分数记录为负仍然允许上传分数"].(bool) {
 										o.Frame.GetGameControl().SayTo(chat.Name, o.getScoreboardMsgFmt(scbName).ClientScoreLack)
 									} else {
 										go o.handleScoreboardUpload(scbName, chat.Name, updateScore, true)
 									}
 								})
 
-						} else if updateScore > 0 {
-							// 提取
-							cmd := fmt.Sprintf("/scoreboard players set __test__ %v 0", scbName)
+						} else {
+							// Get
+							cmd := fmt.Sprintf("/scoreboard players set __omgtest__ %v 0", scbName)
 							o.Frame.GetGameControl().SendCmdAndInvokeOnResponseWithFeedback(
 								cmd, func(output *packet.CommandOutput) {
 									if output.SuccessCount == 0 {
@@ -662,6 +665,7 @@ func (o *SeverToServerChatRoom) getScoreboardMsgFmt(scoreboardname string) Sever
 		UploadScoreSuccess:         generalFmt["成功存入分数提示"].(string),
 		DownloadScoreSuccess:       generalFmt["成功提取分数提示"].(string),
 		ClientScoreLack:            generalFmt["在租赁服计分板不存在或分数不足"].(string),
+		ServerScoreLack:            generalFmt["在中心服务器存储的计分板分数不足"].(string),
 		ServerNoSuchScoreboard:     generalFmt["服务端计分板不存在"].(string),
 		CondNotMatch:               generalFmt["不符合分数上传条件"].(string),
 		ClientScoreboardNotAllowed: o.ProtocolSpecificData[o.Mode]["计分板名不在允许范围内的提示词"].(string),
@@ -669,7 +673,7 @@ func (o *SeverToServerChatRoom) getScoreboardMsgFmt(scoreboardname string) Sever
 }
 
 func (o *SeverToServerChatRoom) handleScoreboardUpload(scoreboardname string, player string, score int, noNegativeScore bool) {
-	// P_SCORE: store; N_SCORE: take
+	// Positive is Post, while Negative is Get.
 	o.TimeOut = 3
 	msgUID := fmt.Sprintf("b%X", time.Now().UnixMilli())
 	if err := o.sendJson(map[string]interface{}{
@@ -688,26 +692,29 @@ func (o *SeverToServerChatRoom) handleScoreboardUpload(scoreboardname string, pl
 		// wait for resp
 		for _k, dat := range super_Link.CmdUIDRecv {
 			if _k == msgUID {
+				pterm.Info.Println(dat)
 				if dat["success"] == true {
 					o.Frame.GetGameControl().SendCmd(
-						fmt.Sprintf("/scoreboard players add %v %v %v", scoreboardname, player, score),
+						fmt.Sprintf("/scoreboard players add %v %v %v", player, scoreboardname, -score),
 					)
 					if score > 0 {
+						// Post
 						o.Frame.GetGameControl().SayTo(player,
 							utils.FormatByReplacingOccurrences(
 								o.getScoreboardMsgFmt(scoreboardname).UploadScoreSuccess,
 								map[string]interface{}{
-									"[left]": dat["left"],
-									"[draw]": score,
+									"[left]":  dat["left"],
+									"[count]": score,
 								}),
 						)
 					} else {
+						// Get
 						o.Frame.GetGameControl().SayTo(player,
 							utils.FormatByReplacingOccurrences(
 								o.getScoreboardMsgFmt(scoreboardname).DownloadScoreSuccess,
 								map[string]interface{}{
-									"[left]": dat["left"],
-									"[draw]": score,
+									"[left]":  dat["left"],
+									"[count]": -score,
 								}),
 						)
 					}
@@ -715,10 +722,17 @@ func (o *SeverToServerChatRoom) handleScoreboardUpload(scoreboardname string, pl
 					o.Frame.GetGameControl().SayTo(player, utils.FormatByReplacingOccurrences(
 						o.getScoreboardMsgFmt(scoreboardname).ServerScoreLack,
 						map[string]interface{}{
-							"[left]": dat["left"],
-							"[draw]": -score,
+							"[left]":  dat["left"],
+							"[count]": -score,
 						},
 					))
+					pterm.Info.Println(utils.FormatByReplacingOccurrences(
+						o.getScoreboardMsgFmt(scoreboardname).ServerScoreLack,
+						map[string]interface{}{
+							"[left]":  dat["left"],
+							"[count]": -score,
+						}))
+					pterm.Info.Println(o.getScoreboardMsgFmt(scoreboardname).ServerScoreLack)
 				} else if dat["status"] == "failed.no_such_scoreboard" {
 					o.Frame.GetGameControl().SayTo(player, o.getScoreboardMsgFmt(scoreboardname).ServerNoSuchScoreboard)
 				} else {
@@ -729,7 +743,7 @@ func (o *SeverToServerChatRoom) handleScoreboardUpload(scoreboardname string, pl
 			}
 		}
 	}
-	o.Frame.GetGameControl().SayTo(player, "§c计分板上传超时..")
+	o.Frame.GetGameControl().SayTo(player, "§c计分板分数上传超时..")
 }
 
 func (o *SeverToServerChatRoom) handleAPIEventSend(msg []string) {
@@ -742,7 +756,11 @@ func (o *SeverToServerChatRoom) handleAPIEventSend(msg []string) {
 	}
 	for k, v := range super_Link.apiMsgFmt {
 		if v.(map[string]interface{})["发送API事件的关键词"] == apiMsg[0] {
-			sendBack := v.(map[string]interface{})["测试模式(将这个消api息转发出去的同时也转发到自己服)"].(bool)
+			sendBack, ok := v.(map[string]interface{})["测试模式(将这个消api息转发出去的同时也转发到自己服)"].(bool)
+			if !ok{
+				// TODO
+				return
+			}
 			o.sendJson(map[string]interface{}{
 				"data_type": "api.data",
 				"data":      k,
@@ -782,6 +800,7 @@ func (o *SeverToServerChatRoom) handleAPIEventRecv(apiName interface{}, apiData 
 }
 
 func (o *SeverToServerChatRoom) getTextFromJSON(rawJson string) []string {
+	// receive rawTextJson and then split to text elements
 	output := []string{}
 	defer func() {
 		if err := recover(); err != nil {
