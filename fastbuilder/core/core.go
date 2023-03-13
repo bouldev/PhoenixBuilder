@@ -1,43 +1,45 @@
 package core
 
 import (
-	"os"
-	"fmt"
-	"time"
 	"bufio"
-	"strings"
-	"runtime"
-	"runtime/debug"
-	"path/filepath"
 	"encoding/json"
-	fbtask "phoenixbuilder/fastbuilder/task"
-	"phoenixbuilder/omega/suggest"
+	"fmt"
+	"os"
+	"path/filepath"
+	"phoenixbuilder/fastbuilder/args"
+	blockNBT_API "phoenixbuilder/fastbuilder/bdump/blockNBT/API"
+	"phoenixbuilder/fastbuilder/configuration"
+	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
+	"phoenixbuilder/fastbuilder/environment"
+	"phoenixbuilder/fastbuilder/external"
+	"phoenixbuilder/fastbuilder/function"
+	I18n "phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/move"
+	"phoenixbuilder/fastbuilder/readline"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/script_engine/bridge/script_holder"
-	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/signalhandler"
-	"phoenixbuilder/fastbuilder/utils"
+	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/mirror/io/assembler"
-	"phoenixbuilder/mirror/io/global"
+	"phoenixbuilder/fastbuilder/uqHolder"
+	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/io/commands"
 	"phoenixbuilder/io/special_tasks"
-	"phoenixbuilder/fastbuilder/move"
-	"phoenixbuilder/fastbuilder/uqHolder"
-	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/fastbuilder/args"
-	"phoenixbuilder/omega/cli/embed"
-	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
-	"phoenixbuilder/fastbuilder/function"
-	"phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/mirror/io/assembler"
+	"phoenixbuilder/mirror/io/global"
 	"phoenixbuilder/mirror/io/lru"
-	"github.com/pterm/pterm"
+	"phoenixbuilder/omega/cli/embed"
+	"phoenixbuilder/omega/suggest"
+	"runtime"
+	"runtime/debug"
+	"strings"
+	"time"
+
 	"github.com/google/uuid"
-	"phoenixbuilder/fastbuilder/external"
-	"phoenixbuilder/fastbuilder/readline"
+	"github.com/pterm/pterm"
 )
 
 var PassFatal bool = false
@@ -45,11 +47,12 @@ var PassFatal bool = false
 func create_environment() *environment.PBEnvironment {
 	env := &environment.PBEnvironment{}
 	env.UQHolder = nil
+	env.NewUQHolder = nil
 	env.ActivateTaskStatus = make(chan bool)
 	env.TaskHolder = fbtask.NewTaskHolder()
 	functionHolder := function.NewFunctionHolder(env)
 	env.FunctionHolder = functionHolder
-	env.Destructors=[]func(){}
+	env.Destructors = []func(){}
 	hostBridgeGamma := &script_bridge.HostBridgeGamma{}
 	hostBridgeGamma.Init()
 	hostBridgeGamma.HostQueryExpose = map[string]func() string{
@@ -78,7 +81,7 @@ func create_environment() *environment.PBEnvironment {
 	if args.StartupScript() != "" {
 		scriptHolder.LoadScript(args.StartupScript(), env)
 	}
-	env.Destructors=append(env.Destructors,func(){
+	env.Destructors = append(env.Destructors, func() {
 		scriptHolder.Destroy()
 	})
 	hostBridgeGamma.HostRemoveBlock()
@@ -89,29 +92,29 @@ func create_environment() *environment.PBEnvironment {
 
 // Shouldn't be called when running a debug client
 func InitRealEnvironment(token string, server_code string, server_password string) *environment.PBEnvironment {
-	env:=create_environment()
-	env.LoginInfo=environment.LoginInfo {
-		Token: token,
-		ServerCode: server_code,
+	env := create_environment()
+	env.LoginInfo = environment.LoginInfo{
+		Token:          token,
+		ServerCode:     server_code,
 		ServerPasscode: server_password,
 	}
-	env.FBAuthClient=fbauth.CreateClient(env)
+	env.FBAuthClient = fbauth.CreateClient(env)
 	return env
 }
 
 func InitDebugEnvironment() *environment.PBEnvironment {
-	env:=create_environment()
-	env.IsDebug=true
-	env.LoginInfo=environment.LoginInfo {
+	env := create_environment()
+	env.IsDebug = true
+	env.LoginInfo = environment.LoginInfo{
 		ServerCode: "[DEBUG]",
 	}
 	return env
 }
 
 func ProcessTokenDefault(env *environment.PBEnvironment) bool {
-	token:=env.LoginInfo.Token
+	token := env.LoginInfo.Token
 	client := fbauth.CreateClient(env)
-	env.FBAuthClient=client
+	env.FBAuthClient = client
 	if token[0] == '{' {
 		token = client.GetToken("", token)
 		if token == "" {
@@ -136,18 +139,17 @@ func ProcessTokenDefault(env *environment.PBEnvironment) bool {
 	return true
 }
 
-
 func InitClient(env *environment.PBEnvironment) {
-	if env.FBAuthClient==nil {
-		env.FBAuthClient=fbauth.CreateClient(env)
+	if env.FBAuthClient == nil {
+		env.FBAuthClient = fbauth.CreateClient(env)
 	}
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
 	var conn *minecraft.Conn
 	if env.IsDebug {
-		conn = &minecraft.Conn {
+		conn = &minecraft.Conn{
 			DebugMode: true,
 		}
-	}else{
+	} else {
 		connDeadline := time.NewTimer(time.Minute * 3)
 		go func() {
 			<-connDeadline.C
@@ -187,20 +189,24 @@ func InitClient(env *environment.PBEnvironment) {
 			}
 		}
 	}
-	env.Connection=conn
+	env.Connection = conn
 	conn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
 	})
 	env.UQHolder = uqHolder.NewUQHolder(conn.GameData().EntityRuntimeID)
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = 0
-	
+
+	env.NewUQHolder = &blockNBT_API.PacketHandleResult{}
+	env.NewUQHolder.(*blockNBT_API.PacketHandleResult).InitValue()
+	// for blockNBT
+
 	if args.ShouldEnableOmegaSystem() {
-		_, cb:=embed.EnableOmegaSystem(env)
+		_, cb := embed.EnableOmegaSystem(env)
 		go cb()
 		//cb()
 	}
-	
+
 	commandSender := commands.InitCommandSender(env)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	function.InitInternalFunctions(functionHolder)
@@ -241,15 +247,15 @@ func InitClient(env *environment.PBEnvironment) {
 			commandSender.WorldChatOutput(csmsg[0], csmsg[1])
 		}
 	}()
-	
+
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
-	
+
 	zeroId, _ := uuid.NewUUID()
 	oneId, _ := uuid.NewUUID()
 	configuration.ZeroId = zeroId
 	configuration.OneId = oneId
-	
+
 	if args.ExternalListenAddress() != "" {
 		external.ListenExt(env, args.ExternalListenAddress())
 	}
@@ -262,10 +268,10 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 		return
 	}
 	defer Fatal()
-	commandSender:=env.CommandSender.(*commands.CommandSender)
-	functionHolder:=env.FunctionHolder.(*function.FunctionHolder)
+	commandSender := env.CommandSender.(*commands.CommandSender)
+	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	for {
-		if(breaker!=nil) {
+		if breaker != nil {
 			select {
 			case <-breaker:
 				return
@@ -320,10 +326,10 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 }
 
 func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
-	conn:=env.Connection.(*minecraft.Conn)
-	hostBridgeGamma:=env.ScriptBridge.(*script_bridge.HostBridgeGamma)
-	commandSender:=env.CommandSender.(*commands.CommandSender)
-	functionHolder:=env.FunctionHolder.(*function.FunctionHolder)
+	conn := env.Connection.(*minecraft.Conn)
+	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
+	commandSender := env.CommandSender.(*commands.CommandSender)
+	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 
 	chunkAssembler := assembler.NewAssembler(assembler.REQUEST_AGGRESSIVE, time.Second*5)
 	// max 100 chunk request per second
@@ -332,7 +338,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	})
 	// currentChunkConstructor := &world_provider.ChunkConstructor{}
 	for {
-		if(breaker!=nil) {
+		if breaker != nil {
 			select {
 			case <-breaker:
 				return
@@ -343,7 +349,9 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 		if err != nil {
 			panic(err)
 		}
-		
+
+		env.NewUQHolder.(*blockNBT_API.PacketHandleResult).HandlePacket(&pk) // for blockNBT
+
 		if env.OmegaAdaptorHolder != nil {
 			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacketAndByte(pk, data)
 			continue
@@ -544,4 +552,3 @@ func Fatal() {
 	}
 	os.Exit(0)
 }
-

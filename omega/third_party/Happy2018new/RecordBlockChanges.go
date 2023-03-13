@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"phoenixbuilder/fastbuilder/mcstructure/TranslateNBTInterface"
+	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/omega/defines"
@@ -67,7 +67,7 @@ func (o *RecordBlockChanges) RequestBlockChangesInfo(BlockInfo packet.UpdateBloc
 	var err error
 	// prepare
 	if BlockNBT != nil {
-		stringNBT, err = TranslateNBTInterface.ConvertCompoundToString(BlockNBT, false)
+		stringNBT, err = mcstructure.ConvertCompoundToString(BlockNBT, false)
 		if err != nil {
 			stringNBT = "undefined"
 		}
@@ -81,7 +81,7 @@ func (o *RecordBlockChanges) RequestBlockChangesInfo(BlockInfo packet.UpdateBloc
 			blockName_Result = "unknown"
 		}
 		// get block name
-		blockStates_Result, err = TranslateNBTInterface.ConvertCompoundToString(singleBlock.Properties, true)
+		blockStates_Result, err = mcstructure.ConvertCompoundToString(singleBlock.Properties, true)
 		if err != nil {
 			blockStates_Result = "undefined"
 		}

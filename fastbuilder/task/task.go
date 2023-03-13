@@ -2,8 +2,11 @@ package task
 
 import (
 	"fmt"
-	"runtime/debug"
 	"phoenixbuilder/bridge/bridge_fmt"
+	"phoenixbuilder/fastbuilder/bdump/blockNBT"
+	blockNBT_API "phoenixbuilder/fastbuilder/bdump/blockNBT/API"
+	blockNBT_CommandBlock "phoenixbuilder/fastbuilder/bdump/blockNBT/CommandBlock"
+	blockNBT_global "phoenixbuilder/fastbuilder/bdump/blockNBT/Global"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/configuration"
@@ -12,13 +15,15 @@ import (
 	"phoenixbuilder/fastbuilder/parsing"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/io/commands"
-	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pterm/pterm"
 	"go.uber.org/atomic"
 )
 
@@ -106,7 +111,7 @@ func (task *Task) Resume() {
 	if task.Type == types.TaskTypeAsync {
 		task.AsyncInfo.Total -= task.AsyncInfo.Built
 		task.AsyncInfo.Built = 0
-		task.AsyncInfo.BeginTime=time.Now()
+		task.AsyncInfo.BeginTime = time.Now()
 	}
 	task.State = TaskStateRunning
 	task.ContinueLock.Unlock()
@@ -161,6 +166,16 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	}
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig(env).Delay())
 	dcfg := fcfg.Delay()
+
+	bdump_blockNBT_API := &blockNBT_API.GlobalAPI{
+		WritePacket:        env.Connection.(*minecraft.Conn).WritePacket,
+		BotName:            env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
+		BotIdentity:        env.Connection.(*minecraft.Conn).IdentityData().Identity,
+		BotRunTimeID:       env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
+		BotUniqueID:        env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+		PacketHandleResult: env.NewUQHolder.(*blockNBT_API.PacketHandleResult),
+	}
+
 	und, _ := uuid.NewUUID()
 	cmdsender.SendWSCommand("gamemode c", und)
 	blockschannel := make(chan *types.Module, 10240)
@@ -208,16 +223,16 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				bridge_fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n", skipBlocks)
 			}
 			for _, blk := range blocks {
-				if (skipBlocks!=0&&task.AsyncInfo.Built == skipBlocks-1) {
-					skipBlocks=0
-					task.AsyncInfo.Total-=task.AsyncInfo.Built
-					task.AsyncInfo.Built=0
+				if skipBlocks != 0 && task.AsyncInfo.Built == skipBlocks-1 {
+					skipBlocks = 0
+					task.AsyncInfo.Total -= task.AsyncInfo.Built
+					task.AsyncInfo.Built = 0
 					continue
 				}
 				if task.AsyncInfo.Built >= skipBlocks {
 					blockschannel <- blk
-					if skipBlocks!=0 {
-						skipBlocks=0
+					if skipBlocks != 0 {
+						skipBlocks = 0
 					}
 				}
 				task.AsyncInfo.Built++
@@ -276,48 +291,38 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				return
 			}
 			if blkscounter%20 == 0 {
-				u_d, _ := uuid.NewUUID()
-				cmdsender.SendWSCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y, curblock.Point.Z), u_d)
-				// SettingsCommand is unable to teleport the player.
+				cmdsender.SendDimensionalCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y, curblock.Point.Z))
 			}
 			blkscounter++
-			if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
-				if curblock.Block != nil {
-					request:=commands_generator.SetBlockRequest(curblock, cfg)
-					if !isFastMode {
-						//<-time.After(time.Second)
-						wc := make(chan bool)
-						(*cmdsender.GetBlockUpdateSubscribeMap()).Store(protocol.BlockPos{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)}, wc)
-						cmdsender.SendDimensionalCommand(request)
-						select {
-						case <-wc:
-							break
-						case <-time.After(time.Second*2):
-							(*cmdsender.GetBlockUpdateSubscribeMap()).Delete(protocol.BlockPos{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)})
-						}
-						close(wc)
-					} else {
-						cmdsender.SendDimensionalCommand(request)
-					}
+			if curblock.NBTMap != nil {
+				err := blockNBT.PlaceBlockWithNBTDataRun(
+					bdump_blockNBT_API,
+					curblock,
+					&blockNBT_global.Datas{
+						Settings: cfg,
+						FastMode: isFastMode,
+						Others:   nil,
+					},
+				)
+				if err != nil {
+					pterm.Warning.Printf("%v\n", err)
 				}
-				cbdata := curblock.CommandBlockData
-				if cfg.InvalidateCommands {
-					cbdata.Command = "|" + cbdata.Command
+			} else if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
+				newStruct := blockNBT_CommandBlock.CommandBlock{
+					BlockEntityDatas: &blockNBT_global.BlockEntityDatas{
+						API: bdump_blockNBT_API,
+						Datas: &blockNBT_global.Datas{
+							Position: [3]int32{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)},
+							Settings: cfg,
+							FastMode: isFastMode,
+							Others:   nil,
+						},
+					},
 				}
-				if !isFastMode {
-					UUID := uuid.New()
-					//w := make(chan *packet.CommandOutput)
-					//(*cmdsender.GetUUIDMap()).Store(UUID.String(), w)
-					cmdsender.SendWSCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y+1, curblock.Point.Z), UUID)
-					/*select {
-					case <-time.After(time.Second):
-						(*cmdsender.GetUUIDMap()).Delete(UUID.String())
-						break
-					case <-w:
-					}
-					close(w)*/
+				err := newStruct.PlaceCommandBlockWithLegacyMethod(curblock, cfg)
+				if err != nil {
+					pterm.Warning.Printf("%v\n", err)
 				}
-				cmdsender.UpdateCommandBlock(int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z), cbdata)
 			} else if curblock.ChestSlot != nil {
 				cmdsender.SendDimensionalCommand(commands_generator.ReplaceItemRequest(curblock, cfg))
 			} else {
@@ -342,7 +347,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 			}
 		}
-	} ()
+	}()
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {

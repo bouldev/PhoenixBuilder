@@ -3,12 +3,14 @@ package command
 import (
 	"encoding/binary"
 	"io"
+	"phoenixbuilder/minecraft/nbt"
 )
 
 type PlaceBlockWithNBTData struct {
 	BlockConstantStringID       uint16
 	BlockStatesConstantStringID uint16
-	BlockNBT                    []byte
+	BlockNBT_bytes              []byte
+	BlockNBT                    map[string]interface{}
 }
 
 func (_ *PlaceBlockWithNBTData) ID() uint16 {
@@ -31,8 +33,7 @@ func (cmd *PlaceBlockWithNBTData) Marshal(writer io.Writer) error {
 	if err != nil {
 		return err
 	}
-	binary.BigEndian.PutUint16(buf, uint16(len(cmd.BlockNBT)))
-	_, err = writer.Write(append(buf, cmd.BlockNBT...))
+	_, err = writer.Write(append(buf, cmd.BlockNBT_bytes...)) // cmd.BlockNBT_bytes 以 nbt.LittleEndian 编码
 	return err
 }
 
@@ -53,7 +54,6 @@ func (cmd *PlaceBlockWithNBTData) Unmarshal(reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	cmd.BlockNBT = make([]byte, int(binary.BigEndian.Uint16(buf)))
-	_, err = io.ReadAtLeast(reader, cmd.BlockNBT, len(cmd.BlockNBT))
+	err = nbt.NewDecoderWithEncoding(reader, nbt.LittleEndian).Decode(&cmd.BlockNBT)
 	return err
 }

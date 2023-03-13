@@ -1,8 +1,8 @@
 package omega_side
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror/chunk"
@@ -127,6 +127,9 @@ func (t *omegaSideTransporter) initMapping() {
 		},
 		"get_uqholder": func(args map[string]interface{}, writer func(interface{})) {
 			writer(t.side.Frame.GetUQHolder())
+		},
+		"get_new_uqholder": func(args map[string]interface{}, writer func(interface{})) {
+			writer(t.side.Frame.GetNewUQHolder())
 		},
 		"get_players_list": func(args map[string]interface{}, writer func(interface{})) {
 			playerList := []SimplifiedPlayerInfo{}

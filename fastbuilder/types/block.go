@@ -4,6 +4,7 @@ type Module struct {
 	Block            *Block
 	CommandBlockData *CommandBlockData
 	NBTData          []byte
+	NBTMap           map[string]interface{}
 	//Entity *Entity
 	ChestSlot *ChestSlot
 	ChestData *ChestData
@@ -32,7 +33,7 @@ type CommandBlockData struct {
 	ExecuteOnFirstTick bool //byte
 	TrackOutput        bool //byte
 	Conditional        bool
-	NeedsRedstone       bool
+	NeedsRedstone      bool
 }
 
 type ChestData []ChestSlot

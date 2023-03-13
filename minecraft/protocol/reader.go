@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/google/uuid"
-	"phoenixbuilder/minecraft/nbt"
 	"image/color"
 	"io"
 	"math"
+	"phoenixbuilder/minecraft/nbt"
 	"unsafe"
+
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/google/uuid"
 )
 
 // Reader implements reading operations for reading types from Minecraft packets. Each Packet implementation
@@ -298,9 +299,10 @@ func (r *Reader) ItemInstance(i *ItemInstance) {
 	x := &i.Stack
 	x.NBTData = make(map[string]any)
 	r.Varint32(&x.NetworkID)
-	if x.NetworkID == 0 {
+	if x.NetworkID == 0 || x.NetworkID == -1 {
 		// The item was air, so there is no more data we should read for the item instance. After all, air
 		// items aren't really anything.
+		// 当 x.NetworkID 为 -1 时代表当前槽位的物品未更改，因此无需解析后续数据，直接跳过即可。
 		x.MetadataValue, x.Count, x.CanBePlacedOn, x.CanBreak = 0, 0, nil, nil
 		return
 	}

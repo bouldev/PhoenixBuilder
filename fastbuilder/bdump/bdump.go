@@ -1,11 +1,11 @@
 package bdump
 
 import (
-	"io"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"os"
-	"crypto/sha256"
 	"phoenixbuilder/fastbuilder/bdump/command"
 	"phoenixbuilder/fastbuilder/types"
 
@@ -20,8 +20,6 @@ type BDump struct {
 /*
 // Important note: Things under this file is what currently used,
 //                 and actually bdump.go isn't under use now.
-
-
 if(i.cmd=="addToBlockPalette"){
 	writebuf(1,1);
 	writebuf(i.blockName+"\0");
@@ -51,7 +49,6 @@ jumpX 10
 jumpY 11
 jumpZ 12
 reserved 13
-
 *X++  14
 *X--  15
 *Y++  16
@@ -69,7 +66,6 @@ placeCommandBlockWithData 27
 addSmallX 28
 addSmallY 29
 addSmallZ 30
-
 end 88
 isSigned    90
 */
@@ -131,7 +127,7 @@ func (bdump *BDump) writeBlocks(w io.Writer) error {
 	}
 	for _, mdl := range bdump.Blocks {
 		blkst := mdl.Block.BlockStates
-		if len(blkst)==0 {
+		if len(blkst) == 0 {
 			continue
 		}
 		_, found := blocksPalette[blkst]
@@ -266,15 +262,15 @@ func (bdump *BDump) writeBlocks(w io.Writer) error {
 			break
 		}
 		if mdl.ChestData != nil {
-			err := writer.WriteCommand(&command.PlaceBlockWithChestData {
+			err := writer.WriteCommand(&command.PlaceBlockWithChestData{
 				BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
-				BlockData: uint16(mdl.Block.Data),
-				ChestSlots: *mdl.ChestData,
+				BlockData:             uint16(mdl.Block.Data),
+				ChestSlots:            *mdl.ChestData,
 			})
 			if err != nil {
 				return err
 			}
-		}else if mdl.CommandBlockData != nil {
+		} else if mdl.CommandBlockData != nil {
 			err := writer.WriteCommand(&command.PlaceCommandBlockWithCommandBlockData{
 				BlockData:        uint16(mdl.Block.Data),
 				CommandBlockData: mdl.CommandBlockData,
@@ -282,7 +278,7 @@ func (bdump *BDump) writeBlocks(w io.Writer) error {
 			if err != nil {
 				return err
 			}
-		} else {
+		} else if mdl.NBTData == nil {
 			if len(mdl.Block.BlockStates) == 0 {
 				err := writer.WriteCommand(&command.PlaceBlock{
 					BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
@@ -293,15 +289,33 @@ func (bdump *BDump) writeBlocks(w io.Writer) error {
 				}
 			} else {
 				err := writer.WriteCommand(&command.PlaceBlockWithBlockStates{
-					BlockConstantStringID: uint16(blocksPalette[*mdl.Block.Name]),
+					BlockConstantStringID:       uint16(blocksPalette[*mdl.Block.Name]),
 					BlockStatesConstantStringID: uint16(blocksPalette[mdl.Block.BlockStates]),
 				})
 				if err != nil {
 					return err
 				}
 			}
+		} else {
+			err := writer.WriteCommand(&command.PlaceBlockWithNBTData{
+				BlockConstantStringID:       uint16(blocksPalette[*mdl.Block.Name]),
+				BlockStatesConstantStringID: uint16(blocksPalette[mdl.Block.BlockStates]),
+				BlockNBT_bytes:              mdl.NBTData,
+			})
+			if err != nil {
+				return err
+			}
 		}
-		
+		/*
+			if mdl.NBTData != nil {
+				err := writer.WriteCommand(&command.AssignNBTData{
+					Data: mdl.NBTData,
+				})
+				if err != nil {
+					return err
+				}
+			}
+		*/
 	}
 	return nil
 }
@@ -317,9 +331,9 @@ func (bdump *BDump) WriteToFile(path string, localCert string, localKey string) 
 		return fmt.Errorf("Failed to write BRBDP file header"), nil
 	}
 	brw := brotli.NewWriter(file)
-	brhw := &HashedWriter {
+	brhw := &HashedWriter{
 		writer: brw,
-		hash: sha256.New(),
+		hash:   sha256.New(),
 	}
 	err = bdump.writeHeader(brhw)
 	if err != nil {
@@ -329,7 +343,7 @@ func (bdump *BDump) WriteToFile(path string, localCert string, localKey string) 
 	if err != nil {
 		return err, nil
 	}
-	fileHash:=brhw.hash.Sum(nil)
+	fileHash := brhw.hash.Sum(nil)
 	sign, signerr := SignBDX(fileHash, localKey, localCert)
 	if signerr != nil {
 		brw.Write([]byte("XE"))

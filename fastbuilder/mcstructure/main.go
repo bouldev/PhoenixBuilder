@@ -3,8 +3,8 @@ package mcstructure
 import (
 	"fmt"
 	"math"
-	"phoenixbuilder/fastbuilder/mcstructure/TranslateNBTInterface"
 	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/minecraft/nbt"
 	"strconv"
 	"strings"
 )
@@ -194,7 +194,7 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 		if !normal {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
-		blockStates, err := TranslateNBTInterface.ConvertCompoundToString(value_states, true)
+		blockStates, err := ConvertCompoundToString(value_states, true)
 		if err != nil {
 			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Crashed in structure[\"structure\"][\"palette\"][\"default\"][\"block_palette\"][%v][\"states\"]; block_palette[%v] = %#v", key, key, value_block_palette[key])
 		}
@@ -367,26 +367,20 @@ func DumpBlocks(
 				background_blockName := "undefined"
 				foreground_blockStates := "undefined"
 				background_blockStates := "undefined"
-				foreground_blockData := int16(-1)
 				// 初始化
 				fgId := targetArea.foreground[val] // 前景层方块在调色板中的id
 				bgId := targetArea.background[val] // 背景层方块在调色板中的id
 				if fgId != -1 {
 					foreground_blockName = strings.Replace(targetArea.blockPalette[fgId], "minecraft:", "", 1) // 前景层方块的名称
 					foreground_blockStates = targetArea.blockPalette_blockStates[fgId]                         // 前景层方块的方块状态
-					foreground_blockData = targetArea.blockPalette_blockData[fgId]                             // 前景层方块的方块数据值(附加值)
 				}
 				if bgId != -1 {
 					background_blockName = strings.Replace(targetArea.blockPalette[bgId], "minecraft:", "", 1) // 背景层方块的名称
 					background_blockStates = targetArea.blockPalette_blockStates[bgId]                         // 背景层方块的方块状态
 				}
 				// 获得基本信息
-				// var hasNBT bool = false
-				var containerDataMark bool = false
-				var containerData types.ChestData = types.ChestData{}
-				var commandBlockDataMark bool = false
-				var commandBlockData types.CommandBlockData = types.CommandBlockData{}
-				// var string_nbt string = ""
+				var hasNBT bool = false
+				var blockNBT []byte
 				var err error = nil
 				// 变量初始化
 				// 危险！变量初始化这里不要动，不然可能会出现一些意想不到的 Bug
@@ -410,52 +404,32 @@ func DumpBlocks(
 							return []*types.Module{}, fmt.Errorf("DumpBlocks: Crashed by invalid \"block_entity_data\", occurred in %#v", block_position_data["block_entity_data"])
 						}
 						// 拿一下这个方块的方块实体数据
-						containerData, err = GetContainerDataRun(block_entity_data, foreground_blockName)
-						if err != ErrNotASupportContainer && err != nil {
-							return []*types.Module{}, fmt.Errorf("%v", err)
-						}
-						// 检查一下这个 NBT 方块是不是容器，如果不是会返回一个叫做 "GetContainerDataRun: Not a supported container" 的错误
-						if err == nil {
-							containerDataMark = true
-							// 标记当前被处理的方块是一个容器
-							if foreground_blockName == "chest" || foreground_blockName == "trapped_chest" {
-								var useOfChest string = "chest"
-								if foreground_blockName == "chest" {
-									useOfChest = "trapped_chest"
-								}
-								// 如果这是个箱子，那么先放个陷阱箱
-								// 反过来，如果这是个陷阱箱，那么先放个箱子
-								ans = append(ans, &types.Module{
-									Block: &types.Block{
-										Name: &useOfChest,
-										Data: 0,
-									},
-									Point: types.Position{
-										X: int(i[key].BeginX - currentExport.BeginX),
-										Y: int(i[key].BeginY + j - currentExport.BeginY),
-										Z: int(i[key].BeginZ - currentExport.BeginZ),
-									},
-								})
+						if foreground_blockName == "chest" || foreground_blockName == "trapped_chest" {
+							var useOfChest string = "chest"
+							if foreground_blockName == "chest" {
+								useOfChest = "trapped_chest"
 							}
-							// 对于箱子和陷阱箱的附加处理是为了解决箱子间的连接问题，让所有的箱子都不再连接；不知道有没有人愿意解决这个问题呢？
+							// 如果这是个箱子，那么先放个陷阱箱
+							// 反过来，如果这是个陷阱箱，那么先放个箱子
+							ans = append(ans, &types.Module{
+								Block: &types.Block{
+									Name: &useOfChest,
+									Data: 0,
+								},
+								Point: types.Position{
+									X: int(i[key].BeginX - currentExport.BeginX),
+									Y: int(i[key].BeginY + j - currentExport.BeginY),
+									Z: int(i[key].BeginZ - currentExport.BeginZ),
+								},
+							})
 						}
-						// 容器
-						if foreground_blockName == "command_block" || foreground_blockName == "repeating_command_block" || foreground_blockName == "chain_command_block" {
-							commandBlockData, err = GetCommandBlockData(block_entity_data, foreground_blockName)
-							if err != nil {
-								return []*types.Module{}, fmt.Errorf("DumpBlocks: %v", err)
-							}
-							commandBlockDataMark = true
+						// 对于箱子和陷阱箱的附加处理是为了解决箱子间的连接问题，让所有的箱子都不再连接；不知道有没有人愿意解决这个问题呢？
+						hasNBT = true
+						blockNBT, err = nbt.MarshalEncoding(block_entity_data, nbt.LittleEndian)
+						if err != nil {
+							return []*types.Module{}, fmt.Errorf("DumpBlocks: %v", err)
 						}
-						// 命令方块
-						/*
-							hasNBT = true
-							string_nbt, err = TranslateNBTInterface.ConvertCompoundToString(block_entity_data, false)
-							if err != nil {
-								return []*types.Module{}, fmt.Errorf("%v", err)
-							}
-							// 取得 snbt
-						*/
+						// 取得 nbt
 					}
 				}
 				// 取得方块实体数据
@@ -487,31 +461,13 @@ func DumpBlocks(
 						},
 					}
 					// 简单地初始化一下一个单个的元素
-					if commandBlockDataMark {
-						single.Block.Data = uint16(foreground_blockData)
-						single.CommandBlockData = &commandBlockData
+					if hasNBT {
+						single.NBTData = blockNBT
 					}
-					// 命令方块
-					if !commandBlockDataMark && containerDataMark {
-						single.Block.Data = uint16(foreground_blockData)
-						single.ChestData = &containerData
-					}
-					// 容器
-					// 优先级比命令方块低一些
-					/*
-						if hasNBT {
-							single.NBTData = []byte(string_nbt)
-						}
-						// operation 39 - RecordBlockEntityData
-						// 更多信息请见
-						// https://github.com/LNSSPsd/PhoenixBuilder/issues/83
-					*/
-					if !commandBlockDataMark && !containerDataMark {
-						single.Block.BlockStates = foreground_blockStates
-					}
-					// 普通方块
+					single.Block.BlockStates = foreground_blockStates
+					// 放入数据
 					ans = append(ans, single)
-					// 提交单个元素
+					// 提交
 				}
 				// 放置前景层的方块
 			}

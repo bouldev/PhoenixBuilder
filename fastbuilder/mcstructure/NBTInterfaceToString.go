@@ -1,4 +1,4 @@
-package TranslateNBTInterface
+package mcstructure
 
 import (
 	"fmt"

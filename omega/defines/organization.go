@@ -1,6 +1,7 @@
 package defines
 
 import (
+	blockNBT_API "phoenixbuilder/fastbuilder/bdump/blockNBT/API"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -94,6 +95,7 @@ type CtxProvider interface {
 	GetContext(key string) (entry interface{}, hasK bool)
 	SetContext(key string, entry interface{})
 	GetUQHolder() *uqHolder.UQHolder
+	GetNewUQHolder() *blockNBT_API.PacketHandleResult
 }
 
 // ConfigProvider 是帮助一个插件获得和修改别的插件的接口

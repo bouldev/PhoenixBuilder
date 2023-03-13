@@ -104,7 +104,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 			env.CommandSender.SendWSCommand(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2), u_d2)
 			<-wchan
 			close(wchan)
-			// Wait until the chunks successfully load
+
 			for {
 				u_d3, _ := uuid.NewUUID()
 				chann := make(chan *packet.CommandOutput)

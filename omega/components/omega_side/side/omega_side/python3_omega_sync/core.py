@@ -118,6 +118,9 @@ class API(object):
     def do_get_uqholder(self,cb:Callable[[dict],None])->dict:
         return self._send_request(RequestMsg(function="get_uqholder",args={}),cb=cb)
     
+    def do_get_new_uqholder(self,cb:Callable[[dict],None])->dict:
+        return self._send_request(RequestMsg(function="get_new_uqholder",args={}),cb=cb)
+    
     def do_get_players_list(self,cb:Callable[[List[PlayerInfo]],None])->List[PlayerInfo]:
         return self._send_request(RequestMsg(function="get_players_list",args={}),cb=cb)
     
