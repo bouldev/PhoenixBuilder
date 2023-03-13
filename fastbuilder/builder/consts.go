@@ -61,7 +61,7 @@ var ColorTable = []ColorBlock{
 	{Block: &types.ConstBlock{Name: "brewing_stand", Data: 6}, Color: colorful.Color{155, 155, 155}},
 	{Block: &types.ConstBlock{Name: "double_wooden_slab", Data: 1}, Color: colorful.Color{98, 70, 44}},
 	{Block: &types.ConstBlock{Name: "emerald_block", Data: 0}, Color: colorful.Color{77, 171, 67}},
-	{Block: &types.ConstBlock{Name: "light_weighted_pressure_plate", Data: 7}, Color: colorful.Color{231, 221, 99}},
+	//{Block: &types.ConstBlock{Name: "light_weighted_pressure_plate", Data: 7}, Color: colorful.Color{231, 221, 99}},
 	{Block: &types.ConstBlock{Name: "stained_hardened_clay", Data: 0}, Color: colorful.Color{237, 237, 237}},
 	{Block: &types.ConstBlock{Name: "stained_hardened_clay", Data: 2}, Color: colorful.Color{154, 76, 194}},
 	{Block: &types.ConstBlock{Name: "stained_hardened_clay", Data: 4}, Color: colorful.Color{213, 213, 82}},
