@@ -350,7 +350,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 						},
 						CommandBlockData: cbdata,
 						ChestData:        chestData,
-						NBTData:          nbtData,
+						DebugNBTData:     nbtData,
 						Point: types.Position{
 							X: x,
 							Y: y,

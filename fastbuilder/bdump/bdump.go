@@ -307,9 +307,9 @@ func (bdump *BDump) writeBlocks(w io.Writer) error {
 			}
 		}
 		/*
-			if mdl.NBTData != nil {
-				err := writer.WriteCommand(&command.AssignNBTData{
-					Data: mdl.NBTData,
+			if mdl.DebugNBTData != nil {
+				err := writer.WriteCommand(&command.AssignDebugData{
+					Data: mdl.DebugNBTData,
 				})
 				if err != nil {
 					return err

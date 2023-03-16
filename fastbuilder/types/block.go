@@ -3,6 +3,7 @@ package types
 type Module struct {
 	Block            *Block
 	CommandBlockData *CommandBlockData
+	DebugNBTData     []byte
 	NBTData          []byte
 	NBTMap           map[string]interface{}
 	//Entity *Entity
