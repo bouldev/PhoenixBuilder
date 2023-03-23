@@ -50,10 +50,10 @@ func InitMinecraftConnection(ctx context.Context, authenticator minecraft.Authen
 
 func main() {
 	authServer := "wss://api.fastbuilder.pro:2053/"
-	userName := "2401PT"
-	userPassword := "980530"
+	userName := "userName"
+	userPassword := "userPassword"
 	userToken := ""
-	serverCode := "96996635"
+	serverCode := "serverCode"
 	serverPassword := ""
 
 	ctx := context.Background()
