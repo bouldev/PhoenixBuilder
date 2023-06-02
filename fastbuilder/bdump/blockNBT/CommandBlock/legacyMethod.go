@@ -26,17 +26,18 @@ func (c *CommandBlock) PlaceCommandBlockWithLegacyMethod(block *types.Module, cf
 	} else if block.CommandBlockData.Mode == packet.CommandBlockRepeating {
 		blockName = "repeating_command_block"
 	}
-	block.Block.Name = &blockName
-	c.BlockEntityDatas.Block.Name = blockName
-	// 确定命令方块的类型
 	if block.Block == nil {
+		block.Block = &types.Block{}
+		block.Block.Name = &blockName
 		err := c.WriteDatas(false)
 		if err != nil {
 			return fmt.Errorf("PlaceCommandBlockWithLegacyMethod: %v", err)
 		}
 		return nil
 	}
-	// 如果是 operation 26 - SetCommandBlockData
+	block.Block.Name = &blockName
+	c.BlockEntityDatas.Block.Name = blockName
+	// 确定命令方块的类型 & 如果是 operation 26 - SetCommandBlockData
 	request := commands_generator.SetBlockRequest(block, cfg)
 	if c.BlockEntityDatas.Datas.FastMode {
 		err := c.BlockEntityDatas.API.SendSettingsCommand(request, true)
