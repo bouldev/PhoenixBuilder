@@ -2,9 +2,9 @@ package core
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -367,7 +367,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		conn.WritePacket(pk)
 	})
-	getchecknum_everPassed:=false
+	getchecknum_everPassed := false
 	// currentChunkConstructor := &world_provider.ChunkConstructor{}
 	for {
 		if breaker != nil {
@@ -383,6 +383,80 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 		}
 
 		env.NewUQHolder.(*blockNBT_API.PacketHandleResult).HandlePacket(&pk) // for blockNBT
+
+		{
+			p, ok := pk.(*packet.PyRpc)
+			if ok {
+				if strings.Contains(string(p.Content), "GetStartType") {
+					// 2021-12-22 10:51~11:55
+					// 2023-05-30
+					// Thank netease for wasting my time again ;)
+					//fmt.Printf("%X\n", p.Content)
+					encData := p.Content[len(p.Content)-163 : len(p.Content)-1]
+					//fmt.Printf("%s\n", p.Content)
+					//fmt.Printf("%s\n", encData)
+					//fmt.Printf("%s\n", env.Uid)
+					client := env.FBAuthClient.(*fbauth.Client)
+					response := client.TransferData(string(encData), fmt.Sprintf("%s", env.Uid))
+					//fmt.Printf("%s\n", response)
+					conn.WritePacket(&packet.PyRpc{
+						Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xc, 0x53, 0x65, 0x74, 0x53, 0x74, 0x61, 0x72, 0x74, 0x54, 0x79, 0x70, 0x65, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4},
+							[]byte{byte(len(response))},
+							[]byte(response),
+							[]byte{0xc0},
+						}, []byte{}),
+					})
+					//fmt.Printf("%s\n", response)
+				} else if strings.Contains(string(p.Content), "GetMCPCheckNum") {
+					// This shit sucks, so as netease.
+					if getchecknum_everPassed {
+						break
+					}
+					//fmt.Printf("%X", p.Content)
+					//fmt.Printf("%s\n", p.Content)
+					firstArgLenB := p.Content[19:21]
+					firstArgLen := binary.BigEndian.Uint16(firstArgLenB)
+					firstArg := string(p.Content[21 : 21+firstArgLen])
+					secondArgLen := uint16(p.Content[23+firstArgLen])
+					secondArg := string(p.Content[24+firstArgLen : 24+firstArgLen+secondArgLen])
+					//fmt.Printf("%s\n", secondArg)
+					//valM,_:=getUserInputMD5()
+					//valS,_:=getUserInputMD5()
+					//valM := utils.GetMD5(fmt.Sprintf("qhk+um%ssvdrx,9=>", secondArg))
+					//valS := utils.GetMD5(fmt.Sprintf("%s%s", valM[16:], valM[:16]))
+					//fmt.Printf("%s\n",valM)
+					client := env.FBAuthClient.(*fbauth.Client)
+					valM, valS := client.TransferCheckNum(firstArg, secondArg)
+					/*conn.WritePacket(&packet.PyRpc{
+						Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xe, 0x53, 0x65, 0x74, 0x4d, 0x43, 0x50, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x4e, 0x75, 0x6d, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4, 0x20},
+							[]byte(valM),
+							[]byte{0xc0},
+						}, []byte{}),
+					})*/
+					conn.WritePacket(&packet.PyRpc{
+						Content: bytes.Join([][]byte{[]byte{0x93, 0xc4, 0x0e}, []byte("SetMCPCheckNum"), []byte{0x91, 0x93, 0xc4, 0x20},
+							[]byte(valM),
+							[]byte{0xc4, 0x20},
+							[]byte(valS),
+							[]byte{0xc2},
+							[]byte{0xC0},
+						}, []byte{}),
+					})
+					getchecknum_everPassed = true
+					/*go func() {
+						time.Sleep(3*time.Second)
+						ud, _ := uuid.NewUUID()
+						chann := make(chan *packet.CommandOutput)
+						commandSender.UUIDMap.Store(ud.String(), chann)
+						commandSender.SendCommand("list", ud)
+						resp := <-chann
+						fmt.Printf("%+v\n", resp)
+					} ()*/
+				} else {
+					//fmt.Printf("PyRpc! %s\n", p.Content)
+				}
+			}
+		}
 
 		if env.OmegaAdaptorHolder != nil {
 			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacketAndByte(pk, data)
@@ -403,75 +477,6 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 		}
 		// fmt.Println(omega_utils.PktIDInvMapping[int(pk.ID())])
 		switch p := pk.(type) {
-		case *packet.PyRpc:
-			if strings.Contains(string(p.Content), "GetStartType") {
-				// 2021-12-22 10:51~11:55
-				// 2023-05-30
-				// Thank netease for wasting my time again ;)
-				//fmt.Printf("%X\n", p.Content)
-				encData := p.Content[len(p.Content)-163 : len(p.Content)-1]
-				//fmt.Printf("%s\n", p.Content)
-				//fmt.Printf("%s\n", encData)
-				//fmt.Printf("%s\n", env.Uid)
-				client := env.FBAuthClient.(*fbauth.Client)
-				response := client.TransferData(string(encData), fmt.Sprintf("%s", env.Uid))
-				//fmt.Printf("%s\n", response)
-				conn.WritePacket(&packet.PyRpc{
-					Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xc, 0x53, 0x65, 0x74, 0x53, 0x74, 0x61, 0x72, 0x74, 0x54, 0x79, 0x70, 0x65, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4},
-						[]byte{byte(len(response))},
-						[]byte(response),
-						[]byte{0xc0},
-					}, []byte{}),
-				})
-				//fmt.Printf("%s\n", response)
-			}else if strings.Contains(string(p.Content), "GetMCPCheckNum") {
-				// This shit sucks, so as netease.
-				if(getchecknum_everPassed) {
-					break
-				}
-				//fmt.Printf("%X", p.Content)
-				//fmt.Printf("%s\n", p.Content)
-				firstArgLenB := p.Content[19:21]
-				firstArgLen := binary.BigEndian.Uint16(firstArgLenB)
-				firstArg:=string(p.Content[21:21+firstArgLen])
-				secondArgLen := uint16(p.Content[23+firstArgLen])
-				secondArg := string(p.Content[24+firstArgLen : 24+firstArgLen+secondArgLen])
-				//fmt.Printf("%s\n", secondArg)
-				//valM,_:=getUserInputMD5()
-				//valS,_:=getUserInputMD5()
-				//valM := utils.GetMD5(fmt.Sprintf("qhk+um%ssvdrx,9=>", secondArg))
-				//valS := utils.GetMD5(fmt.Sprintf("%s%s", valM[16:], valM[:16]))
-				//fmt.Printf("%s\n",valM)
-				client := env.FBAuthClient.(*fbauth.Client)
-				valM, valS:=client.TransferCheckNum(firstArg, secondArg)
-				/*conn.WritePacket(&packet.PyRpc{
-					Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xe, 0x53, 0x65, 0x74, 0x4d, 0x43, 0x50, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x4e, 0x75, 0x6d, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4, 0x20},
-						[]byte(valM),
-						[]byte{0xc0},
-					}, []byte{}),
-				})*/
-				conn.WritePacket(&packet.PyRpc{
-					Content: bytes.Join([][]byte{[]byte{0x93, 0xc4, 0x0e}, []byte("SetMCPCheckNum"), []byte{0x91, 0x93, 0xc4, 0x20},
-						[]byte(valM),
-						[]byte{0xc4,0x20},
-						[]byte(valS),
-						[]byte{0xc2},
-						[]byte{0xC0},
-					}, []byte{}),
-				})
-				getchecknum_everPassed=true
-				/*go func() {
-					time.Sleep(3*time.Second)
-					ud, _ := uuid.NewUUID()
-					chann := make(chan *packet.CommandOutput)
-					commandSender.UUIDMap.Store(ud.String(), chann)
-					commandSender.SendCommand("list", ud)
-					resp := <-chann
-					fmt.Printf("%+v\n", resp)
-				} ()*/
-			}else{
-				//fmt.Printf("PyRpc! %s\n", p.Content)
-			}
 		// case *packet.AdventureSettings:
 		// 	if conn.GameData().EntityUniqueID == p.PlayerUniqueID {
 		// 		if p.PermissionLevel >= packet.PermissionLevelOperator {
