@@ -296,6 +296,33 @@ func (client *Client) TransferData(content string, uid string) string {
 	return data
 }
 
+type FNumRequest struct {
+	Action  string `json:"action"`
+	First   string `json:"1st"`
+	Second  string `json:"2nd"`
+}
+
+func (client *Client) TransferCheckNum(first string, second string) (string, string) {
+	rspreq := &FNumRequest{
+		Action:  "phoenix::transfer-check-num",
+		First: first,
+		Second: second,
+	}
+	msg, err := json.Marshal(rspreq)
+	if err != nil {
+		panic("Failed to encode json")
+	}
+	client.SendMessage(msg)
+	resp, _ := <-client.serverResponse
+	code, _ := resp["code"].(float64)
+	if code != 0 {
+		panic("Failed to transfer checknum")
+	}
+	valM, _ := resp["valM"].(string)
+	valS, _ := resp["valS"].(string)
+	return valM, valS
+}
+
 type WorldChatRequest struct {
 	Category string `json:"category"`
 	Action   string `json:"action"`

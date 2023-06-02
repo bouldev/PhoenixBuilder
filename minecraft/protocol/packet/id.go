@@ -183,4 +183,5 @@ const (
 	IDDimensionData
 	IDAgentAction
 	IDChangeMobProperty
+	IDPyRpc = 0xC8
 )
