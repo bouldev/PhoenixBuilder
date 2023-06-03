@@ -410,7 +410,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 				} else if strings.Contains(string(p.Content), "GetMCPCheckNum") {
 					// This shit sucks, so as netease.
 					if getchecknum_everPassed {
-						break
+						continue
 					}
 					//fmt.Printf("%X", p.Content)
 					//fmt.Printf("%s\n", p.Content)
