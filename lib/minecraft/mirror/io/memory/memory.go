@@ -1,8 +1,8 @@
 package memory
 
 import (
-	"fastbuilder-core/lib/minecraft/mirror"
-	"fastbuilder-core/lib/minecraft/mirror/define"
+	"phoenixbuilder/lib/minecraft/mirror"
+	"phoenixbuilder/lib/minecraft/mirror/define"
 	"sync"
 )
 

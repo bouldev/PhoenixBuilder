@@ -1,12 +1,12 @@
 package assembler
 
 import (
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol"
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol/packet"
-	"fastbuilder-core/lib/minecraft/mirror"
-	"fastbuilder-core/lib/minecraft/mirror/chunk"
-	"fastbuilder-core/lib/minecraft/mirror/define"
 	"fmt"
+	"phoenixbuilder/lib/minecraft/mirror"
+	"phoenixbuilder/lib/minecraft/mirror/chunk"
+	"phoenixbuilder/lib/minecraft/mirror/define"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
 	"time"
 

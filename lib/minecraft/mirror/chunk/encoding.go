@@ -5,9 +5,9 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"fastbuilder-core/lib/minecraft/gophertunnel/nbt"
+	"phoenixbuilder/minecraft/nbt"
 
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol"
+	"phoenixbuilder/minecraft/protocol"
 )
 
 type (

@@ -1,7 +1,7 @@
 package global
 
 import (
-	"fastbuilder-core/lib/minecraft/mirror"
+	"phoenixbuilder/lib/minecraft/mirror"
 	"sync"
 
 	"github.com/google/uuid"

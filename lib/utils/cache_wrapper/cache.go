@@ -1,12 +1,12 @@
 package cache_wrapper
 
 import (
-	"fastbuilder-core/lib/utils/crypto_wrapper"
-	"fastbuilder-core/lib/utils/file_wrapper"
-	"fastbuilder-core/lib/utils/lang"
-	"fastbuilder-core/lib/utils/triple_wrapper"
 	"os"
 	"path"
+	"phoenixbuilder/lib/utils/crypto_wrapper"
+	"phoenixbuilder/lib/utils/file_wrapper"
+	"phoenixbuilder/lib/utils/lang"
+	"phoenixbuilder/lib/utils/triple_wrapper"
 	"strings"
 )
 

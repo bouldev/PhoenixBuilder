@@ -1,6 +1,6 @@
 package uqholder
 
-import "fastbuilder-core/lib/minecraft/neomega/omega"
+import "phoenixbuilder/lib/minecraft/neomega/omega"
 
 func init() {
 	if false {

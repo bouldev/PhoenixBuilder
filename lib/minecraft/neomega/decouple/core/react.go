@@ -1,8 +1,8 @@
 package core
 
 import (
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol/packet"
-	"fastbuilder-core/lib/minecraft/neomega/omega"
+	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/minecraft/protocol/packet"
 )
 
 func init() {

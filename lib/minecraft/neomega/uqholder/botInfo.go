@@ -1,9 +1,9 @@
 package uqholder
 
 import (
-	minecraft "fastbuilder-core/lib/minecraft/gophertunnel"
-	"fastbuilder-core/lib/minecraft/neomega/omega"
 	"fmt"
+	"phoenixbuilder/lib/minecraft/neomega/omega"
+	minecraft "phoenixbuilder/minecraft"
 )
 
 func init() {

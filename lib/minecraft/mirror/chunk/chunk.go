@@ -1,7 +1,7 @@
 package chunk
 
 import (
-	"fastbuilder-core/lib/minecraft/mirror/define"
+	"phoenixbuilder/lib/minecraft/mirror/define"
 	"sync"
 )
 

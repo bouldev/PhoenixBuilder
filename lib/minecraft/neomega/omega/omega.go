@@ -1,7 +1,8 @@
 package omega
 
 import (
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol/packet"
+	"phoenixbuilder/minecraft/protocol/packet"
+
 	"github.com/google/uuid"
 )
 

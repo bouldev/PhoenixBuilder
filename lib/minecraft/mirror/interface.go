@@ -1,8 +1,8 @@
 package mirror
 
 import (
-	"fastbuilder-core/lib/minecraft/mirror/chunk"
-	"fastbuilder-core/lib/minecraft/mirror/define"
+	"phoenixbuilder/lib/minecraft/mirror/chunk"
+	"phoenixbuilder/lib/minecraft/mirror/define"
 	"time"
 )
 

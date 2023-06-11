@@ -1,11 +1,12 @@
 package cmdsender
 
 import (
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol"
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol/packet"
-	"fastbuilder-core/lib/minecraft/neomega/omega"
-	"github.com/google/uuid"
+	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 func init() {

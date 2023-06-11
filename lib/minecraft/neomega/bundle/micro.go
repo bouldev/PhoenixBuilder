@@ -1,12 +1,12 @@
 package bundle
 
 import (
-	minecraft "fastbuilder-core/lib/minecraft/gophertunnel"
-	"fastbuilder-core/lib/minecraft/neomega/decouple/cmdsender"
-	"fastbuilder-core/lib/minecraft/neomega/decouple/core"
-	"fastbuilder-core/lib/minecraft/neomega/decouple/infosender"
-	"fastbuilder-core/lib/minecraft/neomega/omega"
-	"fastbuilder-core/lib/minecraft/neomega/uqholder"
+	"phoenixbuilder/lib/minecraft/neomega/decouple/cmdsender"
+	"phoenixbuilder/lib/minecraft/neomega/decouple/core"
+	"phoenixbuilder/lib/minecraft/neomega/decouple/infosender"
+	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/lib/minecraft/neomega/uqholder"
+	"phoenixbuilder/minecraft"
 )
 
 func init() {

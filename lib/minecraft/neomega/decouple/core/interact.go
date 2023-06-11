@@ -1,9 +1,9 @@
 package core
 
 import (
-	minecraft "fastbuilder-core/lib/minecraft/gophertunnel"
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol/packet"
-	"fastbuilder-core/lib/minecraft/neomega/omega"
+	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/minecraft"
+	"phoenixbuilder/minecraft/protocol/packet"
 )
 
 type InteractCore struct {

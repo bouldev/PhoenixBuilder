@@ -3,7 +3,7 @@ package chunk
 import (
 	_ "embed"
 
-	"fastbuilder-core/lib/minecraft/gophertunnel/nbt"
+	"phoenixbuilder/minecraft/nbt"
 )
 
 // legacyBlockEntry represents a block entry used in versions prior to 1.13.

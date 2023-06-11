@@ -11,7 +11,7 @@ import (
 	"reflect"
 	"strings"
 
-	"fastbuilder-core/lib/minecraft/gophertunnel/nbt"
+	"phoenixbuilder/minecraft/nbt"
 
 	"github.com/andybalholm/brotli"
 )

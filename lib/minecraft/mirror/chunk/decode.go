@@ -2,9 +2,9 @@ package chunk
 
 import (
 	"bytes"
-	"fastbuilder-core/lib/minecraft/gophertunnel/nbt"
-	"fastbuilder-core/lib/minecraft/mirror/define"
 	"fmt"
+	"phoenixbuilder/lib/minecraft/mirror/define"
+	"phoenixbuilder/minecraft/nbt"
 
 	"github.com/pterm/pterm"
 )

@@ -1,8 +1,8 @@
 package hop_planner
 
 import (
-	"fastbuilder-core/lib/minecraft/mirror/define"
 	"math"
+	"phoenixbuilder/lib/minecraft/mirror/define"
 )
 
 func PlanHopSwapPath(sx, sz, ex, ez, receptiveRangeByChunk int) (hopPath []*HopToChunksPos, allRequiredChunks ExportedChunksMap) {

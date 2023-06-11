@@ -2,12 +2,12 @@ package download_wrapper
 
 import (
 	"bytes"
-	"fastbuilder-core/lib/utils/compress_wrapper"
-	"fastbuilder-core/lib/utils/lang"
-	"fastbuilder-core/lib/utils/string_wrapper"
 	"fmt"
 	"io"
 	"net/http"
+	"phoenixbuilder/lib/utils/compress_wrapper"
+	"phoenixbuilder/lib/utils/lang"
+	"phoenixbuilder/lib/utils/string_wrapper"
 	"strconv"
 	"strings"
 	"time"

@@ -1,6 +1,6 @@
 package omega
 
-import "fastbuilder-core/lib/minecraft/mirror/define"
+import "phoenixbuilder/lib/minecraft/mirror/define"
 
 type GameChat interface {
 }

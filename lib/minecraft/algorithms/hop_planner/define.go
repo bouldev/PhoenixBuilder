@@ -1,7 +1,7 @@
 package hop_planner
 
 import (
-	"fastbuilder-core/lib/minecraft/mirror/define"
+	"phoenixbuilder/lib/minecraft/mirror/define"
 )
 
 type HopToChunksPos struct {

@@ -2,10 +2,10 @@ package playerKit
 
 import (
 	"encoding/json"
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol/packet"
-	"fastbuilder-core/lib/minecraft/mirror/define"
-	"fastbuilder-core/lib/minecraft/neomega/omega"
-	"fastbuilder-core/lib/minecraft/omega/utils"
+	"phoenixbuilder/lib/minecraft/mirror/define"
+	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/omega/utils"
 	"time"
 )
 
