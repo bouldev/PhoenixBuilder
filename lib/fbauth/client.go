@@ -13,7 +13,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -151,20 +150,20 @@ func (c *Client) sendMessageAndGetResponse(data []byte) (resp <-chan map[string]
 	return responseC, nil
 }
 
-func (c *Client) SendMessageAndGetResponseWithDeadline(data []byte, deadline time.Duration) (resp map[string]interface{}, err error) {
+func (c *Client) SendMessageAndGetResponseWithDeadline(data []byte, deadline context.Context) (resp map[string]interface{}, err error) {
 	responseC, err := c.sendMessageAndGetResponse(data)
 	if err != nil {
 		return nil, err
 	}
 	select {
-	case <-time.NewTimer(deadline).C:
-		return nil, fmt.Errorf("auth server no response in %v (%v)", deadline, c.lastReadErr)
+	case <-deadline.Done():
+		return nil, fmt.Errorf("auth server no response before deadline")
 	case resp = <-responseC:
 		return resp, nil
 	}
 }
 
-func (c *Client) sendEcryptRequest() error {
+func (c *Client) sendEncryptRequest() error {
 	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&c.privateKey.PublicKey)
 	if err != nil {
 		return err
@@ -176,31 +175,33 @@ func (c *Client) sendEcryptRequest() error {
 	return nil
 }
 
-func (c *Client) EstablishConnectionToAuthServer(authServerAddr string) (err error) {
+func (c *Client) EstablishConnectionToAuthServer(connectContext context.Context, authServerAddr string) (err error) {
 	if c.privateKey, err = ecdsa.GenerateKey(elliptic.P384(), rand.Reader); err != nil {
 		return
 	}
 	c.waitEncrypted = make(chan struct{})
 	c.salt = []byte("2345678987654321")
 	c.serverResponse = make(chan map[string]interface{})
-	ctx, cancelFn := context.WithCancel(c.readCtx)
-	c.readCtx = ctx
-	if c.wsClient, _, err = websocket.DefaultDialer.Dial(authServerAddr, nil); err != nil {
+	var cancelFn context.CancelFunc
+	c.readCtx, cancelFn = context.WithCancel(c.readCtx)
+	if c.wsClient, _, err = websocket.DefaultDialer.DialContext(connectContext, authServerAddr, nil); err != nil {
 		cancelFn()
 		return fmt.Errorf("cannot connect to auth server")
 	}
 	go func() {
 		c.initReadLoop()
-		err = fmt.Errorf("read loop closed with error: %v", c.lastReadErr)
+		err = fmt.Errorf("fbauth server: read loop closed with error: %v", c.lastReadErr)
 		fmt.Println(err)
 		cancelFn()
 	}()
-	if err = c.sendEcryptRequest(); err != nil {
+	if err = c.sendEncryptRequest(); err != nil {
 		return err
 	}
 	select {
-	case <-ctx.Done():
-		return err
+	case <-connectContext.Done():
+		return connectContext.Err()
+	case <-c.readCtx.Done():
+		return c.readCtx.Err()
 	case <-c.waitEncrypted:
 		return nil
 	}

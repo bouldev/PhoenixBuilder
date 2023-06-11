@@ -1,11 +1,11 @@
 package fbauth
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 )
 
 type AccessWrapper struct {
@@ -31,7 +31,7 @@ type FTokenRequest struct {
 	Password string `json:"password"`
 }
 
-func NewAccessWrapperByPassword(client *Client, userName, userPassword string) (aw *AccessWrapper, err error) {
+func NewAccessWrapperByPassword(connectCtx context.Context, client *Client, userName, userPassword string) (aw *AccessWrapper, writeBackToken string, err error) {
 	aw = &AccessWrapper{
 		Client: client,
 	}
@@ -64,25 +64,29 @@ func NewAccessWrapperByPassword(client *Client, userName, userPassword string) (
 	if err != nil {
 		panic(fmt.Errorf("Failed to encode json %v", err))
 	}
-	resp, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, 5*time.Second)
+	resp, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, connectCtx)
 	if err != nil {
-		return nil, fmt.Errorf("user auth fail: may be incorrect username or password (%v)", err)
+		return nil, "", fmt.Errorf("user auth fail: may be incorrect username or password (%v)", err)
 	}
 	code, _ := resp["code"].(float64)
 	if code != 0 {
-		return nil, fmt.Errorf("user auth fail: incorrect username or password")
+		return nil, "", fmt.Errorf("user auth fail: incorrect username or password")
 	}
 	FBToken, ok := resp["token"].(string)
 	if !ok {
-		return nil, fmt.Errorf("user auth fail: may be incorrect username or password (invalid server token response)")
+		return nil, "", fmt.Errorf("user auth fail: may be incorrect username or password (invalid server token response)")
 	}
 	aw.FBToken = FBToken
-	return aw, nil
+	return aw, FBToken, nil
 }
 
 func (aw *AccessWrapper) SetServerInfo(ServerCode, Password string) {
 	aw.ServerCode = ServerCode
 	aw.ServerPassword = Password
+}
+
+func (aw *AccessWrapper) GetFBUid() string {
+	return aw.ucUID
 }
 
 type AuthRequest struct {
@@ -93,7 +97,7 @@ type AuthRequest struct {
 	FBToken        string
 }
 
-func (aw *AccessWrapper) auth(publicKey []byte) (resp string, err error) {
+func (aw *AccessWrapper) auth(ctx context.Context, publicKey []byte) (resp string, err error) {
 	authreq := &AuthRequest{
 		Action:         "phoenix::login",
 		ServerCode:     aw.ServerCode,
@@ -105,7 +109,7 @@ func (aw *AccessWrapper) auth(publicKey []byte) (resp string, err error) {
 	if err != nil {
 		return "", err
 	}
-	response, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, 10*time.Second)
+	response, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, ctx)
 	if err != nil {
 		return "", err
 	}
@@ -143,8 +147,8 @@ func (aw *AccessWrapper) auth(publicKey []byte) (resp string, err error) {
 	return chainInfo, nil
 }
 
-func (aw *AccessWrapper) GetAccess(publicKey []byte) (address string, chainInfo string, err error) {
-	chainAddr, err := aw.auth(publicKey)
+func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error) {
+	chainAddr, err := aw.auth(ctx, publicKey)
 	if err != nil {
 		return "", "", err
 	}
@@ -157,17 +161,74 @@ func (aw *AccessWrapper) GetAccess(publicKey []byte) (address string, chainInfo 
 	return address, chainInfo, nil
 }
 
-func (aw *AccessWrapper) BotOwner() (name string, err error) {
+func (aw *AccessWrapper) BotOwner(ctx context.Context) (name string, err error) {
 	rspreq := struct {
 		Action string `json:"action"`
 	}{
 		Action: "phoenix::get-user",
 	}
 	msg, _ := json.Marshal(rspreq)
-	resp, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, 5*time.Second)
+	resp, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, ctx)
 	if err != nil {
 		return "", err
 	}
 	shouldRespond, _ := resp["username"].(string)
 	return shouldRespond, nil
+}
+
+type RPCEncRequest struct {
+	Action  string `json:"action"`
+	Content string `json:"content"`
+	Uid     string `json:"uid"`
+}
+
+func (aw *AccessWrapper) TransferData(ctx context.Context, content string, uid string) (string, error) {
+	rspreq := &RPCEncRequest{
+		Action:  "phoenix::transfer-data",
+		Content: content,
+		Uid:     uid,
+	}
+	msg, err := json.Marshal(rspreq)
+	if err != nil {
+		panic("Failed to encode json")
+	}
+	resp, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, ctx)
+	if err != nil {
+		return "", err
+	}
+	code, _ := resp["code"].(float64)
+	if code != 0 {
+		panic("Failed to transfer start type")
+	}
+	data, _ := resp["data"].(string)
+	return data, nil
+}
+
+type RPCNumRequest struct {
+	Action string `json:"action"`
+	First  string `json:"1st"`
+	Second string `json:"2nd"`
+}
+
+func (aw *AccessWrapper) TransferCheckNum(ctx context.Context, first string, second string) (string, string, error) {
+	rspreq := &RPCNumRequest{
+		Action: "phoenix::transfer-check-num",
+		First:  first,
+		Second: second,
+	}
+	msg, err := json.Marshal(rspreq)
+	if err != nil {
+		panic("Failed to encode json")
+	}
+	resp, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, ctx)
+	if err != nil {
+		return "", "", err
+	}
+	code, _ := resp["code"].(float64)
+	if code != 0 {
+		return "", "", fmt.Errorf("Failed to transfer checknum")
+	}
+	valM, _ := resp["valM"].(string)
+	valS, _ := resp["valS"].(string)
+	return valM, valS, nil
 }
