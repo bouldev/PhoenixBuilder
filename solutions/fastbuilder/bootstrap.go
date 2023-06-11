@@ -79,7 +79,7 @@ func Bootstrap() {
 		hash_check()
 	}
 
-	token := loadToken()
+	token := loadFBTokenOrAskFBCredential()
 	runInteractiveClient(token)
 }
 

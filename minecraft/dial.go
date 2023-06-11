@@ -1,7 +1,6 @@
 package minecraft
 
 import (
-	"fmt"
 	"bytes"
 	"context"
 	"crypto/ecdsa"
@@ -9,24 +8,26 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/base64"
-	"github.com/google/uuid"
-	"github.com/sandertv/go-raknet"
-	"phoenixbuilder/minecraft/internal/resource"
-	"phoenixbuilder/minecraft/protocol"
-	"phoenixbuilder/minecraft/protocol/login"
-	"phoenixbuilder/minecraft/protocol/packet"
+	"fmt"
 	"io"
 	"log"
 	rand2 "math/rand"
 	"net"
 	"os"
+	"phoenixbuilder/minecraft/internal/resource"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/login"
+	"phoenixbuilder/minecraft/protocol/packet"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/sandertv/go-raknet"
 )
 
 type Authenticator interface {
-	GetAccess(publicKey []byte) (address string, chainInfo string, err error)
+	GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error)
 }
 
 // Dialer allows specifying specific settings for connection to a Minecraft server.
@@ -44,7 +45,7 @@ type Dialer struct {
 	// The IdentityData object is obtained using Minecraft auth if Email and Password are set. If not, the
 	// object provided here is used, or a default one if left empty.
 	IdentityData login.IdentityData
-	
+
 	// Authenticator towards netease's server
 	Authenticator
 
@@ -116,14 +117,14 @@ func (d Dialer) DialTimeout(network string, timeout time.Duration) (*Conn, error
 // If a connection is not established before the context passed is cancelled, DialContext returns an error.
 func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, err error) {
 	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-	
+
 	armoured_key, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 
-	address, chainData, err := d.Authenticator.GetAccess(armoured_key)
+	address, chainData, err := d.Authenticator.GetAccess(ctx, armoured_key)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if d.ErrorLog == nil {
 		d.ErrorLog = log.New(os.Stderr, "", log.LstdFlags)
 	}
@@ -167,7 +168,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 
 	request = login.Encode(chainData, conn.clientData, key)
 	identityData, _, _, err := login.Parse(request)
-	if err!=nil {
+	if err != nil {
 		fmt.Printf("WARNING: Identity data parsing error: %w\n", err.(error))
 	}
 	// If we got the identity data from Minecraft auth, we need to make sure we set it in the Conn too, as

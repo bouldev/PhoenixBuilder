@@ -13,7 +13,7 @@ import (
 	"golang.org/x/term"
 )
 
-func loadToken() (token string) {
+func loadFBTokenOrAskFBCredential() (token string) {
 	if !args.SpecifiedToken() {
 		token = credentials.LoadTokenPath()
 		if _, err := os.Stat(token); os.IsNotExist(err) {
