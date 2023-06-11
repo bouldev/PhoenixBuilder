@@ -1,6 +1,8 @@
 package core
 
 import (
+	"encoding/json"
+	"fmt"
 	"phoenixbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
@@ -36,6 +38,10 @@ func (r *ReactCore) SetOnTypedPacketCallBack(pktID uint32, cb func(packet.Packet
 
 func (r *ReactCore) HandlePacket(pkt packet.Packet) {
 	pktID := pkt.ID()
+	if pktID == packet.IDCommandOutput {
+		s, _ := json.Marshal(pkt)
+		fmt.Println(string(s))
+	}
 	for _, cb := range r.onAnyPacketCallBack {
 		cb(pkt)
 	}

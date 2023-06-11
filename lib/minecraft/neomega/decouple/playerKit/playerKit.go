@@ -92,7 +92,7 @@ func (p *PlayerKit) GetPos(selector string) chan *define.CubePos {
 		Uuid string `json:"uniqueId"`
 	}
 
-	p.ctrl.SendCmdAndInvokeOnResponse("querytarget "+s, func(output *packet.CommandOutput) {
+	p.ctrl.SendWSCmdAndInvokeOnResponse("querytarget "+s, func(output *packet.CommandOutput) {
 		if output.SuccessCount > 0 {
 			for _, v := range output.OutputMessages {
 				for _, j := range v.Parameters {

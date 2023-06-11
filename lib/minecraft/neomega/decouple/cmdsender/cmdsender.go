@@ -49,12 +49,13 @@ func NewCmdSender(reactable omega.ReactCore, interactable omega.InteractCore, op
 		}
 	})
 	reactable.SetOnTypedPacketCallBack(packet.IDCommandOutput, func(p packet.Packet) {
+		// fmt.Println(p)
 		c.onNewCommandFeedBack(p.(*packet.CommandOutput))
 	})
 	return c
 }
 
-func (c *CmdSender) SendCmd(cmd string) {
+func (c *CmdSender) SendWSCmd(cmd string) {
 	ud, _ := uuid.NewUUID()
 	c.SendPacket(c.packCmdWithUUID(cmd, ud, true))
 }
@@ -74,14 +75,14 @@ func (c *CmdSender) setCB(uuidStr string, cb func(output *packet.CommandOutput))
 	c.cbByUUID.Store(uuidStr, cb)
 }
 
-func (c *CmdSender) SendCmdAndInvokeOnResponse(cmd string, cb func(output *packet.CommandOutput)) {
+func (c *CmdSender) SendWSCmdAndInvokeOnResponse(cmd string, cb func(output *packet.CommandOutput)) {
 	ud, _ := uuid.NewUUID()
 	c.setCB(ud.String(), cb)
 	pkt := c.packCmdWithUUID(cmd, ud, true)
 	c.SendPacket(pkt)
 }
 
-func (c *CmdSender) SendCmdAndInvokeOnResponseWithFeedback(cmd string, cb func(output *packet.CommandOutput)) {
+func (c *CmdSender) SendPlayerCmdAndInvokeOnResponseWithFeedback(cmd string, cb func(output *packet.CommandOutput)) {
 	if !c.currentCmdFeedBack && !c.cmdFeedBackOnSent {
 		c.turnOnFeedBack()
 	}
@@ -138,7 +139,7 @@ func (c *CmdSender) onCommandFeedBackOff() {
 
 func (c *CmdSender) turnOnFeedBack() {
 	//fmt.Println("send sendcommandfeedback true")
-	c.SendCmd("gamerule sendcommandfeedback true")
+	c.SendWSCmd("gamerule sendcommandfeedback true")
 	c.cmdFeedBackOnSent = true
 }
 
@@ -146,7 +147,7 @@ func (c *CmdSender) turnOffFeedBack() {
 	c.currentCmdFeedBack = false
 	c.cmdFeedBackOnSent = false
 	//fmt.Println("send sendcommandfeedback false")
-	c.SendCmd("gamerule sendcommandfeedback false")
+	c.SendWSCmd("gamerule sendcommandfeedback false")
 }
 
 func (c *CmdSender) onNewCommandFeedBack(p *packet.CommandOutput) {
