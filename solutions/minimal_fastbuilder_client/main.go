@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	minecraft "fastbuilder-core/lib/minecraft/gophertunnel"
-	"fastbuilder-core/lib/minecraft/gophertunnel/protocol/packet"
-	"fastbuilder-core/lib/minecraft/neomega/bundle"
-	"fastbuilder-core/lib/minecraft/neomega/decouple/cmdsender"
-	"fastbuilder-core/lib/nemc/login_requester/cv4/fbauth"
 	"fmt"
-	"time"
+	"phoenixbuilder/fastbuilder/core"
+	"phoenixbuilder/lib/fbauth"
+	"phoenixbuilder/lib/minecraft/neomega/bundle"
+	"phoenixbuilder/lib/minecraft/neomega/decouple/cmdsender"
+	"phoenixbuilder/minecraft/protocol/packet"
 )
 
 var errStrFailToConnectAuthServer = "无法连接到登陆服务器"
@@ -34,20 +33,6 @@ func WrapAuthenticator(ctx context.Context, authServer, userName, userPassword, 
 	return authenticator, nil
 }
 
-func InitMinecraftConnection(ctx context.Context, authenticator minecraft.Authenticator, timeOut time.Duration) (client *minecraft.Conn, err error) {
-	ctx, _ = context.WithTimeout(ctx, 30*time.Second)
-	dialer := minecraft.Dialer{
-		Authenticator: authenticator,
-	}
-	if client, err = dialer.DialContext(ctx, "raknet"); err != nil {
-		return nil, fmt.Errorf("%v: %v", errCannotConnectToRentalServer, err)
-	}
-	client.WritePacket(&packet.ClientCacheStatus{
-		Enabled: false,
-	})
-	return client, nil
-}
-
 func main() {
 	authServer := "wss://api.fastbuilder.pro:2053/"
 	userName := "userName"
@@ -65,7 +50,7 @@ func main() {
 	}
 	fmt.Printf("Server: (Code:%v, Password:%v)\n", authenticator.ServerCode, authenticator.ServerPassword)
 
-	client, err := InitMinecraftConnection(ctx, authenticator, 30*time.Second)
+	client, err := core.InitMCConnection(ctx, authenticator)
 	if err != nil {
 		panic(err)
 	}
