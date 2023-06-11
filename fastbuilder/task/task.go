@@ -2,7 +2,7 @@ package task
 
 import (
 	"fmt"
-	"phoenixbuilder/bridge/bridge_fmt"
+
 	"phoenixbuilder/fastbuilder/bdump/blockNBT"
 	blockNBT_API "phoenixbuilder/fastbuilder/bdump/blockNBT/API"
 	blockNBT_CommandBlock "phoenixbuilder/fastbuilder/bdump/blockNBT/CommandBlock"
@@ -220,7 +220,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				if skipBlocks > task.AsyncInfo.Total {
 					skipBlocks = task.AsyncInfo.Total
 				}
-				bridge_fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n", skipBlocks)
+				fmt.Printf(I18n.T(I18n.Task_ResumeBuildFrom)+"\n", skipBlocks)
 			}
 			for _, blk := range blocks {
 				if skipBlocks != 0 && task.AsyncInfo.Built == skipBlocks-1 {

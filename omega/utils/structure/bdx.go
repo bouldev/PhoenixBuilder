@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"phoenixbuilder/bridge/bridge_fmt"
+
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/world_provider"
@@ -176,7 +176,7 @@ func handleBDXCMD(br io.Reader, infoSender func(string)) (author string, blockCh
 				jumpval := binary.BigEndian.Uint32(rdst)
 				brushPosition[2] += int(jumpval)
 			} else if cmd == 13 {
-				bridge_fmt.Printf("WARNING: BDump/Import: Use of reserved command\n")
+				fmt.Printf("WARNING: BDump/Import: Use of reserved command\n")
 			} else if cmd == 14 {
 				brushPosition[0]++
 			} else if cmd == 15 {

@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"phoenixbuilder/bridge/bridge_fmt"
+
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/environment"
 	I18n "phoenixbuilder/fastbuilder/i18n"
@@ -29,8 +29,8 @@ type Client struct {
 	client *websocket.Conn
 
 	peerNoEncryption bool
-	encryptor      *encryptionSession
-	serverResponse chan map[string]interface{}
+	encryptor        *encryptionSession
+	serverResponse   chan map[string]interface{}
 
 	closed bool
 
@@ -104,7 +104,7 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 					continue
 				}
 			} else if msgaction == "no_encryption" {
-				authclient.peerNoEncryption=true
+				authclient.peerNoEncryption = true
 				authclient.SendMessage([]byte(`{"action":"accept_no_encryption"}`))
 				close(encrypted)
 			}
@@ -136,7 +136,7 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 }
 
 func (client *Client) CanSendMessage() bool {
-	return (client.encryptor != nil||client.peerNoEncryption) && !client.closed
+	return (client.encryptor != nil || client.peerNoEncryption) && !client.closed
 }
 
 func (client *Client) SendMessage(data []byte) {
@@ -144,7 +144,7 @@ func (client *Client) SendMessage(data []byte) {
 		panic("早すぎる")
 	}
 	if client.closed {
-		bridge_fmt.Println("Error: SendMessage: Connection closed")
+		fmt.Println("Error: SendMessage: Connection closed")
 		panic("Message after auth close")
 	}
 	if !client.peerNoEncryption {
@@ -196,19 +196,19 @@ func (client *Client) Auth(serverCode string, serverPassword string, key string,
 	client.env.CertSigning = true
 	if signingKey, success := resp["privateSigningKey"].(string); success {
 		client.env.LocalKey = signingKey
-	}else{
+	} else {
 		pterm.Error.Println("Failed to fetch privateSigningKey from server")
 		client.env.CertSigning = false
 		client.env.LocalKey = ""
 	}
 	if keyProve, success := resp["prove"].(string); success {
 		client.env.LocalCert = keyProve
-	}else{
+	} else {
 		pterm.Error.Println("Failed to fetch keyProve from server")
 		client.env.CertSigning = false
 		client.env.LocalCert = ""
 	}
-	if(!client.env.CertSigning) {
+	if !client.env.CertSigning {
 		pterm.Error.Println("CertSigning is disabled for errors above.")
 	}
 	return str, 0, nil
@@ -234,7 +234,7 @@ func (client *Client) ShouldRespondUser() string {
 	code, _ := resp["code"].(float64)
 	if code != 0 {
 		//This should never happen
-		bridge_fmt.Println("UNK_1")
+		fmt.Println("UNK_1")
 		panic("??????")
 		//return true
 		//Torrekie 22/07/21 13.12: and this
@@ -297,15 +297,15 @@ func (client *Client) TransferData(content string, uid string) string {
 }
 
 type FNumRequest struct {
-	Action  string `json:"action"`
-	First   string `json:"1st"`
-	Second  string `json:"2nd"`
+	Action string `json:"action"`
+	First  string `json:"1st"`
+	Second string `json:"2nd"`
 }
 
 func (client *Client) TransferCheckNum(first string, second string) (string, string) {
 	rspreq := &FNumRequest{
-		Action:  "phoenix::transfer-check-num",
-		First: first,
+		Action: "phoenix::transfer-check-num",
+		First:  first,
 		Second: second,
 	}
 	msg, err := json.Marshal(rspreq)

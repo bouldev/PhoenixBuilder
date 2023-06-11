@@ -3,15 +3,16 @@ package builder
 import (
 	"compress/gzip"
 	"fmt"
-	"github.com/Tnze/go-mc/nbt"
 	"io/ioutil"
-	bridge_path "phoenixbuilder/fastbuilder/builder/path"
-	"phoenixbuilder/fastbuilder/i18n"
+	"os"
+	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
+
+	"github.com/Tnze/go-mc/nbt"
 )
 
 func Schematic(config *types.MainConfig, blc chan *types.Module) error {
-	file, err:=bridge_path.ReadFile(config.Path)
+	file, err := os.Open(config.Path)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
 	}
@@ -35,11 +36,11 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 	}
 
 	if err := nbt.Unmarshal(buffer, &SchematicModule); err != nil {
-		// Won't return the error `err` since it contains a large content that can 
+		// Won't return the error `err` since it contains a large content that can
 		// crash the server after being sent.
 		return fmt.Errorf(I18n.T(I18n.Sch_FailedToResolve))
 	}
-	if(len(SchematicModule.Blocks)==0) {
+	if len(SchematicModule.Blocks) == 0 {
 		return fmt.Errorf("Invalid structure.")
 	}
 	Size := [3]int{SchematicModule.Width, SchematicModule.Height, SchematicModule.Length}
@@ -57,7 +58,7 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 				var b types.Block
 				b.Name = &BlockStr[SchematicModule.Blocks[BlockIndex]]
 				b.Data = uint16(SchematicModule.Data[BlockIndex])
-				if BlockIndex - 188 <= 5 && BlockIndex - 188 >= 0 {
+				if BlockIndex-188 <= 5 && BlockIndex-188 >= 0 {
 					b.Name = &FenceName
 					b.Data = uint16(BlockIndex - 188)
 				}

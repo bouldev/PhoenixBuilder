@@ -1,14 +1,13 @@
 package builder
 
 import (
-	"io"
 	"bufio"
 	"compress/gzip"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"phoenixbuilder/bridge/bridge_fmt"
-	bridge_path "phoenixbuilder/fastbuilder/builder/path"
+	"io"
+	"os"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/types"
 	"strconv"
@@ -18,14 +17,14 @@ import (
 func seekBuf(buf io.Reader, seekn int) error {
 	seeker := make([]byte, seekn)
 	_, err := io.ReadAtLeast(buf, seeker, seekn)
-	if err!=nil {
+	if err != nil {
 		return fmt.Errorf("Early EOF [SEEK]: %v", err)
 	}
 	return err
 }
 
 func Acme(config *types.MainConfig, blc chan *types.Module) error {
-	file, err := bridge_path.ReadFile(config.Path)
+	file, err := os.Open(config.Path)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
 	}
@@ -133,7 +132,7 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 			}
 			break
 		} else {
-			bridge_fmt.Printf("Unknown ACME command!! %s\n", commandStr)
+			fmt.Printf("Unknown ACME command!! %s\n", commandStr)
 			return fmt.Errorf(I18n.T(I18n.ACME_UnknownCommand))
 		}
 	}

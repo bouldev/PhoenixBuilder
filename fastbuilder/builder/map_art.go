@@ -3,12 +3,13 @@ package builder
 import (
 	_ "embed"
 	"fmt"
+	"image"
+	"os"
+	I18n "phoenixbuilder/fastbuilder/i18n"
+	"phoenixbuilder/fastbuilder/types"
+
 	"github.com/disintegration/imaging"
 	"github.com/lucasb-eyer/go-colorful"
-	"image"
-	bridge_path "phoenixbuilder/fastbuilder/builder/path"
-	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/i18n"
 )
 
 const (
@@ -168,7 +169,6 @@ func Dither(img image.Image, colors *[]*colorful.Color, blocks *[]*colorBlock) (
 	return previewImg, blockImg
 }
 
-
 func GetYMap(blocks [][]*colorBlock, MapY int) [][]int {
 	H := len(blocks)
 	W := len(blocks[0])
@@ -219,7 +219,7 @@ func MapArt(config *types.MainConfig, blc chan *types.Module) error {
 
 	}
 	pos := config.Position
-	file, err:=bridge_path.ReadFile(config.Path)
+	file, err := os.Open(config.Path)
 	img, err := imaging.Decode(file)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
