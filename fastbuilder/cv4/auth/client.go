@@ -3,6 +3,7 @@ package fbauth
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -165,7 +166,7 @@ type AuthRequest struct {
 	FBToken        string
 }
 
-func (client *Client) Auth(serverCode string, serverPassword string, key string, fbtoken string) (string, int, error) {
+func (client *Client) Auth(ctx context.Context, serverCode string, serverPassword string, key string, fbtoken string) (string, int, error) {
 	authreq := &AuthRequest{
 		Action:         "phoenix::login",
 		ServerCode:     serverCode,
@@ -178,40 +179,44 @@ func (client *Client) Auth(serverCode string, serverPassword string, key string,
 		panic("Failed to encode json")
 	}
 	client.SendMessage(msg)
-	resp, _ := <-client.serverResponse
-	code, _ := resp["code"].(float64)
-	if code != 0 {
-		err, _ := resp["message"].(string)
-		trans, hasTranslation := resp["translation"].(float64)
-		if hasTranslation {
-			err = I18n.T(uint16(trans))
+	select {
+	case <-ctx.Done():
+		return "", 0, fmt.Errorf("fb auth server response time out (%v)", err)
+	case resp, _ := <-client.serverResponse:
+		code, _ := resp["code"].(float64)
+		if code != 0 {
+			err, _ := resp["message"].(string)
+			trans, hasTranslation := resp["translation"].(float64)
+			if hasTranslation {
+				err = I18n.T(uint16(trans))
+			}
+			return "", int(code), fmt.Errorf("%s", err)
 		}
-		return "", int(code), fmt.Errorf("%s", err)
+		uc_username, _ := resp["username"].(string)
+		u_uid, _ := resp["uid"].(string)
+		client.env.FBUCUsername = uc_username
+		client.env.Uid = u_uid
+		str, _ := resp["chainInfo"].(string)
+		client.env.CertSigning = true
+		if signingKey, success := resp["privateSigningKey"].(string); success {
+			client.env.LocalKey = signingKey
+		} else {
+			pterm.Error.Println("Failed to fetch privateSigningKey from server")
+			client.env.CertSigning = false
+			client.env.LocalKey = ""
+		}
+		if keyProve, success := resp["prove"].(string); success {
+			client.env.LocalCert = keyProve
+		} else {
+			pterm.Error.Println("Failed to fetch keyProve from server")
+			client.env.CertSigning = false
+			client.env.LocalCert = ""
+		}
+		if !client.env.CertSigning {
+			pterm.Error.Println("CertSigning is disabled for errors above.")
+		}
+		return str, 0, nil
 	}
-	uc_username, _ := resp["username"].(string)
-	u_uid, _ := resp["uid"].(string)
-	client.env.FBUCUsername = uc_username
-	client.env.Uid = u_uid
-	str, _ := resp["chainInfo"].(string)
-	client.env.CertSigning = true
-	if signingKey, success := resp["privateSigningKey"].(string); success {
-		client.env.LocalKey = signingKey
-	} else {
-		pterm.Error.Println("Failed to fetch privateSigningKey from server")
-		client.env.CertSigning = false
-		client.env.LocalKey = ""
-	}
-	if keyProve, success := resp["prove"].(string); success {
-		client.env.LocalCert = keyProve
-	} else {
-		pterm.Error.Println("Failed to fetch keyProve from server")
-		client.env.CertSigning = false
-		client.env.LocalCert = ""
-	}
-	if !client.env.CertSigning {
-		pterm.Error.Println("CertSigning is disabled for errors above.")
-	}
-	return str, 0, nil
 }
 
 type RespondRequest struct {

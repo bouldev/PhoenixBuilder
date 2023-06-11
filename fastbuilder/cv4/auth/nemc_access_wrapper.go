@@ -1,6 +1,7 @@
 package fbauth
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os"
@@ -25,9 +26,9 @@ func NewAccessWrapper(Client *Client, ServerCode, Password, Token string) *Acces
 	}
 }
 
-func (aw *AccessWrapper) GetAccess(publicKey []byte) (address string, chainInfo string, err error) {
+func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error) {
 	pubKeyData := base64.StdEncoding.EncodeToString(publicKey)
-	chainAddr, code, err := aw.Client.Auth(aw.ServerCode, aw.Password, pubKeyData, aw.Token)
+	chainAddr, code, err := aw.Client.Auth(ctx, aw.ServerCode, aw.Password, pubKeyData, aw.Token)
 	chainAndAddr := strings.Split(chainAddr, "|")
 	if err != nil {
 		if code == -3 {
