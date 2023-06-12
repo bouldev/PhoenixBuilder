@@ -1,8 +1,9 @@
-package main
+package bot_privilege
 
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"phoenixbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
@@ -33,6 +34,7 @@ func (o *PyRPCResponser) onPyRPC(pk packet.Packet) {
 		return
 	}
 	if strings.Contains(string(p.Content), "GetStartType") {
+		fmt.Printf("GetStartType: %X", p.Content)
 		// thank you rup!
 		encData := p.Content[len(p.Content)-163 : len(p.Content)-1]
 		response := o.TransferData(string(encData), o.Uid)

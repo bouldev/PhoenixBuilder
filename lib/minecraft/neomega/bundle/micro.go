@@ -1,6 +1,7 @@
 package bundle
 
 import (
+	"phoenixbuilder/lib/minecraft/neomega/decouple/block/placer"
 	"phoenixbuilder/lib/minecraft/neomega/decouple/cmdsender"
 	"phoenixbuilder/lib/minecraft/neomega/decouple/core"
 	"phoenixbuilder/lib/minecraft/neomega/decouple/infosender"
@@ -21,6 +22,7 @@ type MicroOmega struct {
 	omega.InfoSender
 	omega.CmdSender
 	omega.BotBasicInfoHolder
+	omega.BlockPlacer
 }
 
 func (o *MicroOmega) GetBotInfo() omega.BotBasicInfoHolder {
@@ -38,12 +40,14 @@ func NewMicroOmega(conn *minecraft.Conn, options MicroOmegaOption) omega.MicroOm
 	cmdSender := cmdsender.NewCmdSender(reactable, interactCore, options.CmdSenderOptions)
 	botBasicInfoHolder := uqholder.NewBotInfoHolder(conn, options.PrintUQHolderDebugInfo)
 	infoSender := infosender.NewInfoSender(interactCore, cmdSender, botBasicInfoHolder)
+	blockPlacer := placer.NewBlockPlacer(reactable, cmdSender, interactCore)
 	return &MicroOmega{
 		reactable,
 		interactCore,
 		infoSender,
 		cmdSender,
 		botBasicInfoHolder,
+		blockPlacer,
 	}
 }
 
@@ -51,6 +55,7 @@ func (o *MicroOmega) GetGameControl() interface {
 	omega.InteractCore
 	omega.CmdSender
 	omega.InfoSender
+	omega.BlockPlacer
 } {
 	return o
 }

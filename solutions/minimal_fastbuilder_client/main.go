@@ -4,17 +4,16 @@ import (
 	"context"
 	"fmt"
 	"phoenixbuilder/fastbuilder/core"
-	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/lib/fbauth"
+	"phoenixbuilder/lib/helpers/bot_privilege"
+	"phoenixbuilder/lib/helpers/fbuser"
 	"phoenixbuilder/lib/minecraft/neomega/bundle"
 	"phoenixbuilder/lib/minecraft/neomega/decouple/cmdsender"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"time"
 )
 
-var errStrFailToConnectAuthServer = "无法连接到登陆服务器"
 var errFBUserCenterLoginFail = "无效的 Fastbuilder 用户名或密码"
-var errCannotConnectToRentalServer = "无法连接到租赁服, 可能是用户 FBToken 无效、无租赁服登陆权限、租赁服未开放"
 var errRentalServerDisconnected = "与租赁服的连接已断开"
 
 func WrapAuthenticator(connectContext context.Context, client *fbauth.Client, userName, userPassword, userToken, serverCode, serverPassword string) (authenticator *fbauth.AccessWrapper, writeBackToken string, err error) {
@@ -28,37 +27,6 @@ func WrapAuthenticator(connectContext context.Context, client *fbauth.Client, us
 	}
 	authenticator.SetServerInfo(serverCode, serverPassword)
 	return authenticator, writeBackToken, nil
-}
-
-func ReadInfo() (userName, userPassword, userToken, serverCode, serverPassword string, err error) {
-	// read token or get user input
-	I18n.Init()
-	if userName == "" && userPassword == "" && userToken == "" {
-		userToken, err = ReadToken(LoadTokenPath())
-		if err != nil || userToken == "" {
-			for userName == "" {
-				userName, err = GetUserInput(I18n.T(I18n.Enter_FBUC_Username))
-				if err != nil {
-					return "", "", "", "", "", err
-				}
-			}
-			for userPassword == "" {
-				userPassword, err = GetUserPasswordInput(I18n.T(I18n.EnterPasswordForFBUC))
-				if err != nil {
-					return "", "", "", "", "", err
-				}
-			}
-		}
-	}
-
-	// read server code and password
-	if serverCode == "" {
-		serverCode, serverPassword, err = GetRentalServerCode()
-		if err != nil {
-			return "", "", "", "", "", err
-		}
-	}
-	return userName, userPassword, userToken, serverCode, serverPassword, nil
 }
 
 func main() {
@@ -75,7 +43,7 @@ func main() {
 	}
 
 	fmt.Println("Reading Info...")
-	userName, userPassword, userToken, serverCode, serverPassword, err := ReadInfo()
+	userName, userPassword, userToken, serverCode, serverPassword, err := fbuser.ReadInfo("", "", "", "", "")
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +55,7 @@ func main() {
 		panic(err)
 	}
 	if writeBackToken != "" {
-		WriteToken(writeBackToken, LoadTokenPath())
+		fbuser.WriteToken(writeBackToken, fbuser.LoadTokenPath())
 	}
 
 	fmt.Printf("Connecting to MC Server: (Code:%v, Password:%v)\n", authenticator.ServerCode, authenticator.ServerPassword)
@@ -105,7 +73,7 @@ func main() {
 		PrintUQHolderDebugInfo: false,
 	})
 	fmt.Printf("Adding Omega Components...\n")
-	NewPyRPCResponser(omega, authenticator.GetFBUid(),
+	bot_privilege.NewPyRPCResponser(omega, authenticator.GetFBUid(),
 		func(content, uid string) string {
 			ctx, _ = context.WithTimeout(ctx, 30*time.Second)
 			data, err := authenticator.TransferData(ctx, content, uid)
@@ -123,7 +91,7 @@ func main() {
 			return
 		},
 	)
-	helper := NewSetupHelper(omega)
+	helper := bot_privilege.NewSetupHelper(omega)
 	fmt.Printf("Running Omega...\n")
 	go func() {
 		for {

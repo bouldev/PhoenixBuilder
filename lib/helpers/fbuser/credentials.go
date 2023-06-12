@@ -1,4 +1,4 @@
-package main
+package fbuser
 
 import (
 	"bufio"
@@ -72,4 +72,36 @@ func WriteToken(token string, tokenPath string) {
 		}
 		fp.Close()
 	}
+}
+
+func ReadInfo(userName, userPassword, userToken, serverCode, serverPassword string) (string, string, string, string, string, error) {
+	var err error
+	// read token or get user input
+	I18n.Init()
+	if userName == "" && userPassword == "" && userToken == "" {
+		userToken, err = ReadToken(LoadTokenPath())
+		if err != nil || userToken == "" {
+			for userName == "" {
+				userName, err = GetUserInput(I18n.T(I18n.Enter_FBUC_Username))
+				if err != nil {
+					return userName, userPassword, userToken, serverCode, serverPassword, err
+				}
+			}
+			for userPassword == "" {
+				userPassword, err = GetUserPasswordInput(I18n.T(I18n.EnterPasswordForFBUC))
+				if err != nil {
+					return userName, userPassword, userToken, serverCode, serverPassword, err
+				}
+			}
+		}
+	}
+
+	// read server code and password
+	if serverCode == "" {
+		serverCode, serverPassword, err = GetRentalServerCode()
+		if err != nil {
+			return userName, userPassword, userToken, serverCode, serverPassword, err
+		}
+	}
+	return userName, userPassword, userToken, serverCode, serverPassword, nil
 }

@@ -1,7 +1,9 @@
 package omega
 
 import (
+	"phoenixbuilder/lib/minecraft/mirror/define"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -46,11 +48,22 @@ type InfoSender interface {
 	SubTitleTo(target string, msg string)
 }
 
+type NBTBlockPlacer interface {
+	PlaceCommandBlock(pos define.CubePos, commandBlockName string, blockDataOrStateStr string, withMove, withAirPrePlace bool, updatePacket *packet.CommandBlockUpdate,
+		onDone func(done bool), timeOut time.Duration)
+	PlaceSignBlock(pos define.CubePos, signBlockName string, blockDataOrStateStr string, withMove, withAirPrePlace bool, updatePacket *packet.BlockActorData, onDone func(done bool), timeOut time.Duration)
+}
+
+type BlockPlacer interface {
+	NBTBlockPlacer
+}
+
 type MicroOmega interface {
 	GetGameControl() interface {
 		InteractCore
 		CmdSender
 		InfoSender
+		BlockPlacer
 	}
 	GetGameListener() PacketDispatcher
 	GameReactable
