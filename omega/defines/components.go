@@ -1,5 +1,7 @@
 package defines
 
+import "github.com/pterm/pterm"
+
 // ComponentConfig 描述了 插件 的配置内容，必须保证可被 yaml 正确处理
 type ComponentConfig struct {
 	Name          string                 `json:"名称"`
@@ -94,5 +96,5 @@ type StubComponent struct {
 }
 
 func (sc *StubComponent) Init(cfg *ComponentConfig, storage StorageAndLogProvider) {
-	panic(sc.Hint)
+	pterm.Error.Println(sc.Hint)
 }

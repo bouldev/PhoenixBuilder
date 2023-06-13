@@ -34,7 +34,7 @@ type MicroOmegaOption struct {
 	PrintUQHolderDebugInfo bool
 }
 
-func NewMicroOmega(conn *minecraft.Conn, options MicroOmegaOption) omega.MicroOmega {
+func NewMicroOmega(conn *minecraft.Conn, options MicroOmegaOption) *MicroOmega {
 	reactable := core.NewReactCore()
 	interactCore := core.NewInteractCore(conn)
 	cmdSender := cmdsender.NewCmdSender(reactable, interactCore, options.CmdSenderOptions)
