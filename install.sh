@@ -40,7 +40,7 @@ for which_prog in "which" "which.debianutils" "command"; do
     fi
   else
     # Try to search for themself by emself
-    if $which_prog $which_prog >> /dev/null 2>&1; do
+    if $which_prog $which_prog >> /dev/null 2>&1; then
       WHICH_CMD="$which_prog"
       break
     fi
