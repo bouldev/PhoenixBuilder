@@ -403,6 +403,7 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		}
 	}
 	env.Connection = conn
+	pterm.Println(I18n.T(I18n.ConnectionEstablished))
 	env.UQHolder = uqHolder.NewUQHolder(conn.GameData().EntityRuntimeID)
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = 0
