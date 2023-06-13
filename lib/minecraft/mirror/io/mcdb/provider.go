@@ -3,6 +3,7 @@ package mcdb
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -35,7 +36,9 @@ const chunkVersion = 27
 // A compression type may be passed which will be used for the compression of new blocks written to the database. This
 // will only influence the compression. Decompression of the database will happen based on IDs found in the compressed
 // blocks.
-func New(dir string, compression opt.Compression) (*Provider, error) {
+var ErrCannotOpenMCDB = errors.New("cannot open mc database")
+
+func New(dir string, compression opt.Compression, readOnly bool, dbOptions *opt.Options) (*Provider, error) {
 	_ = os.MkdirAll(filepath.Join(dir, "db"), 0777)
 
 	p := &Provider{dir: dir}
@@ -57,7 +60,6 @@ func New(dir string, compression opt.Compression) (*Provider, error) {
 		if err := nbt.UnmarshalEncoding(f[8:], &p.D, nbt.LittleEndian); err != nil {
 			return fmt.Errorf("error decoding level.dat NBT: %w", err)
 		}
-		p.D.WorldStartCount++
 		return nil
 	}
 
@@ -76,11 +78,17 @@ func New(dir string, compression opt.Compression) (*Provider, error) {
 		}
 	}
 
-	if db, err := leveldb.OpenFile(
-		filepath.Join(dir, "db"), &opt.Options{
+	if dbOptions == nil {
+		dbOptions = &opt.Options{
 			Compression: compression,
 			BlockSize:   16 * opt.KiB,
-		}); err != nil {
+		}
+		if readOnly {
+			dbOptions.ReadOnly = true
+		}
+	}
+
+	if db, err := leveldb.OpenFile(filepath.Join(dir, "db"), dbOptions); err != nil {
 		return nil, fmt.Errorf("error opening leveldb database: %w", err)
 	} else {
 		p.DB = db
@@ -351,9 +359,11 @@ func (p *Provider) saveAuxInfo() (err error) {
 }
 
 // Close closes the provider, saving any file that might need to be saved, such as the level.dat.
-func (p *Provider) Close() error {
+func (p *Provider) Close(readOnly bool) error {
 	// p.initDefaultLevelDat()
-	p.saveAuxInfo()
+	if !readOnly {
+		p.saveAuxInfo()
+	}
 	return p.DB.Close()
 }
 
