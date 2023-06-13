@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Bouldev 2021
+# Bouldev 2023
 # This script is for auto selecting PhoenixBuilder release prebuilts,
 # not for native compiling.
 #
@@ -26,15 +26,34 @@ function ctrl_c() {
 }
 
 # Start
-SCRIPT_VERSION="0.0.2"
+SCRIPT_VERSION="0.0.3"
 printf "\033[33mFastBuilder Phoenix Installer v%s\033[0m\n" "${SCRIPT_VERSION}"
 printf "\033[33mBouldev 2022, Copyrighted.\033[0m\n"
 printf "\033[32mStarting installation progress...\033[0m\n"
 
+# Some distro does not provide `which` by default
+WHICH_CMD=""
+for which_prog in "which" "which.debianutils" "command"; do
+  if [[ $which_prog == "command" ]]; then
+    if command -v apt >> /dev/null 2>&1; then
+      WHICH_CMD="command -v"
+    fi
+  else
+    # Try to search for themself by emself
+    if $which_prog $which_prog >> /dev/null 2>&1; do
+      WHICH_CMD="$which_prog"
+      break
+    fi
+  fi
+done
+if [[ "${WHICH_CMD}" == "" ]]; then
+  printf "\033[33mWarning: Unable to identify absolute location of executables.\033[0m\n"
+fi
+
 # Check whether uname(1) GNU or BSD
 UNAME_GET_OSNAME="uname -s"
 for uname_prog in "uname" "guname"; do
-  which ${uname_prog} > /dev/null 2>&1
+  ${WHICH_CMD} ${uname_prog} > /dev/null 2>&1
   if [ $? == 0 ]; then
     if [ $(${uname_prog} --version &> /dev/null; echo $?) == 0 ]; then
       UNAME_GET_OSNAME="${uname_prog} -o"
@@ -42,6 +61,7 @@ for uname_prog in "uname" "guname"; do
   fi
 done
 
+# TODO: Don't do tmps in prefix, use mktemp(1)
 # Check permissions and prefix
 echo "Checking permissions..."
 if [ "${DESTDIR}" ]; then
@@ -96,7 +116,7 @@ KERNEL_VERSION=$(uname -r)
 # is that they may return unexpected values.
 # e.g. "uname -m" returns device model name when on iOS
 arch_format() {
-  which arch > /dev/null 2>&1
+  ${WHICH_CMD} arch > /dev/null 2>&1
   if [ $? == 0 ]; then
     ARCH=$(arch)
   else
@@ -127,7 +147,7 @@ ARCH="$(arch_format)"
 MACHINE="$(machine_format)"
 # Darwin's uname is not reliable, using sw_vers to identify device family if possible
 if [ ${SYSTEM_NAME} == "Darwin" ]; then
-  which sw_vers > /dev/null 2>&1
+  ${WHICH_CMD} sw_vers > /dev/null 2>&1
   if [ $? == 0 ]; then
     if [ "$(sw_vers -productName)" == "macOS" ]; then
       MACHINE="macos"
@@ -158,7 +178,7 @@ DL_TOOL=""
 DL_TOOL_NAME=""
 DL_TOOL_OUT_FLAG="-o"
 for i in "curl" "wget" "axel" "aria2c"; do
-  which ${i} > /dev/null 2>&1
+  ${WHICH_CMD} ${i} > /dev/null 2>&1
   if [ $? == 0 ]; then
     echo "Found ${i}: $(which ${i})"
     DL_TOOL=$(which ${i})
@@ -180,10 +200,10 @@ INSTALL=""
 # GNU install is preferred, BSD install is okay though
 # On macOS, GNU install were installed using brew with name "ginstall"
 for i in "ginstall" "install"; do
-  which ${i} >/dev/null 2>&1
+  ${WHICH_CMD} ${i} >/dev/null 2>&1
   if [ $? == 0 ]; then
     printf "\033[32mFastBuilder will be installed by using ${i}: \033[0m"
-    printf "\033[32m$(which ${i})\033[0m\n"
+    printf "\033[32m$(${WHICH_CMD} ${i})\033[0m\n"
     INSTALL="${i} -m 0755"
     break
   fi
