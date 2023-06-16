@@ -42,6 +42,7 @@ var RuntimeIDToBlock func(runtimeID uint32) (block *GeneralBlock, found bool)
 var JavaToRuntimeID func(javaBlockStr string) (runtimeID uint32, found bool)
 var RuntimeIDToJava func(runtimeID uint32) (javaBlockStr string, found bool)
 var BlockStateStrToRuntimeID func(blockName, blockState string) (uint32, bool)
+var BlockPropsToRuntimeID func(blockName string, blockProps map[string]interface{}) (uint32, bool)
 
 var SchematicBlockToRuntimeID func(block, data byte) (runtimeID uint32, found bool)
 var SchematicBlockToRuntimeIDStaticMapping []uint32
@@ -134,6 +135,33 @@ func hashProperties(properties map[string]interface{}) string {
 	}
 
 	return b.String()
+}
+
+func PropValueToStateString(value interface{}) string {
+	switch v := value.(type) {
+	case bool:
+		if v {
+			return "true"
+		} else {
+			return "false"
+		}
+	case uint8:
+		if v == 0 {
+			return "false"
+		} else if v == 1 {
+			return "true"
+		} else {
+			return fmt.Sprintf("%v", v)
+		}
+	case int32:
+		return fmt.Sprintf("%v", v)
+	case string:
+		return fmt.Sprintf("\"%v\"", v)
+	default:
+		// If block encoding is broken, we want to find out as soon as possible. This saves a lot of time
+		// debugging in-game.
+		return fmt.Sprintf("%v", v)
+	}
 }
 
 func PropsToStateString(properties map[string]interface{}, bracket bool) string {
@@ -704,6 +732,7 @@ func InitMapping(mappingInData []byte) {
 		return ss[0], strings.TrimRight(ss[1], "]")
 	}
 	trimStateProps := func(state string) (prop string) {
+		state = strings.TrimSpace(state)
 		return strings.TrimRight(strings.TrimLeft(state, "["), "]")
 	}
 	{
@@ -717,9 +746,39 @@ func InitMapping(mappingInData []byte) {
 		}
 
 	}
+	BlockPropsToRuntimeID = func(blockName string, blockProps map[string]interface{}) (uint32, bool) {
+		if !strings.HasPrefix(blockName, "minecraft:") {
+			blockName = "minecraft:" + blockName
+		}
+		if oprops, found := StatePropsToRuntimeIDMapping[blockName]; found {
+			bscore := -1
+			brtid := AirRID
+			for prop, rtid := range oprops {
+				oprop := strings.Split(prop, ",")
+				score := 0
+				for k, v := range blockProps {
+					p := fmt.Sprintf("\"%v\":%v", k, PropValueToStateString(v))
+					for _, m := range oprop {
+						m = strings.ReplaceAll(m, " ", "")
+						if m == p {
+							score++
+							break
+						}
+					}
+				}
+				if score > bscore {
+					bscore = score
+					brtid = rtid
+				}
+			}
+			return brtid, true
+		}
+		return AirRID, false
+	}
 	BlockStateStrToRuntimeID = func(blockName, blockState string) (uint32, bool) {
-		blockState = trimStateProps(blockState)
-		blockName = "minecraft:" + blockName
+		if !strings.HasPrefix(blockName, "minecraft:") {
+			blockName = "minecraft:" + blockName
+		}
 		sprops := trimStateProps(blockState)
 		if oprops, found := StatePropsToRuntimeIDMapping[blockName]; found {
 			bscore := -1

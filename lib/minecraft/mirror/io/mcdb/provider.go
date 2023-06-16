@@ -175,7 +175,7 @@ func (p *Provider) loadChunk(position define.ChunkPos) (c *chunk.Chunk, exists b
 }
 
 // LoadBlockNBT loads all block entities from the chunk position passed.
-func (p *Provider) loadBlockNBT(position define.ChunkPos) ([]map[string]any, error) {
+func (p *Provider) LoadBlockNBT(position define.ChunkPos) ([]map[string]any, error) {
 	data, err := p.DB.Get(append(p.index(position), keyBlockEntities), nil)
 	if err != leveldb.ErrNotFound && err != nil {
 		return nil, err
@@ -215,7 +215,7 @@ func (p *Provider) Get(pos define.ChunkPos) (data *mirror.ChunkData) {
 	} else {
 		cd.Chunk = c
 	}
-	if nbts, err := p.loadBlockNBT(pos); err == nil {
+	if nbts, err := p.LoadBlockNBT(pos); err == nil {
 		cd.BlockNbts = make(map[define.CubePos]map[string]interface{})
 		for _, nbt := range nbts {
 			if pos, success := define.GetCubePosFromNBT(nbt); success {

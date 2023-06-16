@@ -18,13 +18,12 @@ var errRentalServerDisconnected = "与租赁服的连接已断开"
 
 func WrapAuthenticator(connectContext context.Context, client *fbauth.Client, userName, userPassword, userToken, serverCode, serverPassword string) (authenticator *fbauth.AccessWrapper, writeBackToken string, err error) {
 	if userToken == "" {
-		authenticator, writeBackToken, err = fbauth.NewAccessWrapperByPassword(connectContext, client, userName, userPassword)
+		userToken, err = fbauth.GetTokenByPassword(connectContext, client, userName, userPassword)
 		if err != nil {
 			return nil, "", fmt.Errorf("%v: %v", errFBUserCenterLoginFail, err)
 		}
-	} else {
-		authenticator = fbauth.NewAccessWrapper(client, userToken)
 	}
+	authenticator = fbauth.NewAccessWrapper(client, userToken)
 	authenticator.SetServerInfo(serverCode, serverPassword)
 	return authenticator, writeBackToken, nil
 }

@@ -31,11 +31,7 @@ type FTokenRequest struct {
 	Password string `json:"password"`
 }
 
-func NewAccessWrapperByPassword(connectCtx context.Context, client *Client, userName, userPassword string) (aw *AccessWrapper, writeBackToken string, err error) {
-	aw = &AccessWrapper{
-		Client: client,
-	}
-
+func GetTokenByPassword(connectCtx context.Context, client *Client, userName, userPassword string) (writeBackToken string, err error) {
 	fakePassword := &struct {
 		EncryptToken bool   `json:"encrypt_token"`
 		Username     string `json:"username"`
@@ -64,20 +60,19 @@ func NewAccessWrapperByPassword(connectCtx context.Context, client *Client, user
 	if err != nil {
 		panic(fmt.Errorf("Failed to encode json %v", err))
 	}
-	resp, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, connectCtx)
+	resp, err := client.SendMessageAndGetResponseWithDeadline(msg, connectCtx)
 	if err != nil {
-		return nil, "", fmt.Errorf("user auth fail: may be incorrect username or password (%v)", err)
+		return "", fmt.Errorf("user auth fail: may be incorrect username or password (%v)", err)
 	}
 	code, _ := resp["code"].(float64)
 	if code != 0 {
-		return nil, "", fmt.Errorf("user auth fail: incorrect username or password")
+		return "", fmt.Errorf("user auth fail: incorrect username or password")
 	}
 	FBToken, ok := resp["token"].(string)
 	if !ok {
-		return nil, "", fmt.Errorf("user auth fail: may be incorrect username or password (invalid server token response)")
+		return "", fmt.Errorf("user auth fail: may be incorrect username or password (invalid server token response)")
 	}
-	aw.FBToken = FBToken
-	return aw, FBToken, nil
+	return FBToken, nil
 }
 
 func (aw *AccessWrapper) SetServerInfo(ServerCode, Password string) {

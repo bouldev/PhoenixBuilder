@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -101,6 +102,8 @@ func CopyDirectory(scrDir, dstDir string) error {
 				return err
 			}
 		default:
+			containedDir := path.Dir(destPath)
+			CreateDirIfNotExists(containedDir, 0755)
 			if err := CopyFile(sourcePath, destPath); err != nil {
 				return err
 			}

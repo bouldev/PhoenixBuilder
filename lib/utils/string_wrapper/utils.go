@@ -46,6 +46,7 @@ func TranslateStringToIntPos(str string) (pos [3]int, err error) {
 		return [3]int{}, fmt.Errorf("empty str")
 	}
 	str = strings.ReplaceAll(str, ",", " ")
+	str = strings.ReplaceAll(str, "，", " ")
 	ss := strings.Split(str, " ")
 	i := 0
 	for _, s := range ss {

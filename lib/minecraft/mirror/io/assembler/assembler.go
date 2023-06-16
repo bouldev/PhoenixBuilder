@@ -105,7 +105,7 @@ func (o *Assembler) AddPendingTask(pk *packet.LevelChunk) (exist bool) {
 		return true
 	}
 	o.taskMu.RUnlock()
-	chunk := chunk.New(o.airRID, define.Range{-64, 319})
+	chunk := chunk.New(o.airRID, define.WorldRange)
 	o.taskMu.Lock()
 	o.pendingTasks[cp] = &mirror.ChunkData{
 		Chunk:     chunk,
@@ -135,14 +135,18 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 	} else {
 		o.taskMu.RUnlock()
 		for _, entry := range pk.SubChunkEntries {
+			chunkPosX := int(pk.Position.X())
+			chunkPosY := int(int8(pk.Position[1]) + entry.Offset[1] + 4)
+			chunkPosZ := int(pk.Position.Z())
+			worldPos := define.CubePos{chunkPosX * 16, chunkPosY * 16, chunkPosZ * 16}
 			if entry.Result != protocol.SubChunkResultSuccess {
 				if entry.Result == protocol.SubChunkResultSuccessAllAir {
 					allAirSubChunk := chunk.NewSubChunk(o.airRID)
 					allAirSubChunk.Validate()
-					chunkData.Chunk.AssignSub(int(int8(pk.Position[1])+entry.Offset[1]+4), allAirSubChunk)
+					chunkData.Chunk.AssignSub(chunkPosY, allAirSubChunk)
 					continue
 				}
-				fmt.Printf("SUBCHUNK REQ ERR: %#v\n", entry)
+				fmt.Printf("SubChunkResult Err, pos: %v result: %v, bot in main world?\n", worldPos, entry.Result)
 				o.taskMu.Lock()
 				delete(o.pendingTasks, cp)
 				o.taskMu.Unlock()
@@ -150,11 +154,11 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 			}
 			subIndex, subChunk, nbts, err := chunk.NEMCSubChunkDecode(entry.RawPayload)
 			if err != nil {
-				fmt.Printf("%#v", entry)
+				fmt.Printf("%#v (world pos: %v)", entry, worldPos)
 				panic(err)
 			}
 			if subIndex != int8(pk.Position[1])+entry.Offset[1] || subIndex > 20 {
-				panic(fmt.Sprintf("sub Index conflict %v %v", pk.Position[1], subIndex))
+				panic(fmt.Sprintf("sub Index conflict %v %v (world pos: %v)", pk.Position[1], subIndex, worldPos))
 			}
 			//subs := chunkData.Chunk.Sub()
 			chunkData.Chunk.AssignSub(int(subIndex+4), subChunk)
