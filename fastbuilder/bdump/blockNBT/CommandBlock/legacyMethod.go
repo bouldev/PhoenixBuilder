@@ -29,6 +29,19 @@ func (c *CommandBlock) PlaceCommandBlockWithLegacyMethod(block *types.Module, cf
 	if block.Block == nil {
 		block.Block = &types.Block{}
 		block.Block.Name = &blockName
+
+		{
+			_, err := c.BlockEntityDatas.API.SendWSCommandWithResponce("list")
+			if err != nil {
+				return fmt.Errorf("PlaceCommandBlockWithLegacyMethod: %v", err)
+			}
+		}
+		// 这么做的目的只是为了保证存在 operation 26 - SetCommandBlockData 的时候，
+		// 命令方块导入速度不会太快。
+		// 不过这个解决方案不是很优雅，
+		// 但这里并没有 GetBlockUpdateSubscribeMap 类似的实现，
+		// 所以暂且先这样吧
+
 		err := c.WriteDatas(false)
 		if err != nil {
 			return fmt.Errorf("PlaceCommandBlockWithLegacyMethod: %v", err)
