@@ -38,9 +38,10 @@ type Mcstructure struct {
 
 /*
 用于拆分一个大区域为若干个小区域；当 useSpecialSplitWay 为真时，将蛇形拆分区域
-返回值 []Area 代表一个已经排好顺序的若干个小区域
-返回值 map[AreaLocation]int 代表可以通过 区域坐标(AreaLocation) 来访问 []Area 的对应项
-因此，返回值 map[int]AreaLocation 是返回值 map[AreaLocation]int 的逆过程
+
+返回值 []Area 代表一个已经排好顺序的若干个小区域。
+返回值 map[AreaLocation]int 代表可以通过 区域坐标(AreaLocation) 来访问 []Area 的对应项。
+返回值 map[int]AreaLocation 是返回值 map[AreaLocation]int 的逆过程
 */
 func SplitArea(
 	beginPos BlockPos,
@@ -117,7 +118,7 @@ func SplitArea(
 	return ret, areaLoctionToInt, IntToareaLoction
 }
 
-// 用于提取得到的 MCBE 结构文件中的一些数据，具体拿了什么数据，你可以看返回值字段
+// 用于提取得到的 MCBE 结构文件中的一些数据
 func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructure, error) {
 	var value_default map[string]interface{} = map[string]interface{}{}
 	var ok bool = false
@@ -285,7 +286,8 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 	// 返回扒~
 }
 
-// 根据 mcstructure 的起点和尺寸，以及提供的方块坐标，寻找这个方块在 mcstructure 中的角标
+// 根据 mcstructure 的起点和尺寸，以及提供的方块坐标，
+// 寻找这个方块在 mcstructure 中的角标
 func SearchForBlock(structureInfo Area, pos BlockPos) (int, error) {
 	pos[0] -= structureInfo.BeginX
 	pos[1] -= structureInfo.BeginY
@@ -302,10 +304,16 @@ func SearchForBlock(structureInfo Area, pos BlockPos) (int, error) {
 }
 
 /*
-基于区块的大小对整个待导出区域进行重排，并写入对应的方块、NBT数据
-allChunks 对整个待导出区域按 64*64 大小拆分，且蛇形拆分(使用SplitArea拆分)，然后再获取拆分得到的各个小区域的 mcstructure 数据，然后处理后制成此 allChunks 表
-chunkPosIndicator 通过 区域坐标 来查这个区域在 allChunks 表的位置
-currentExport 当前 Task 指定的导出区域，也就是根据 set(get) 和 setend(get end) 制成的 Area
+基于区块的大小对整个待导出区域进行重排，并写入对应的方块、NBT数据。
+
+我们对整个待导出区域按 64*64 大小拆分，且蛇形拆分(使用SplitArea拆分)，
+然后再获取拆分得到的各个小区域的 mcstructure 数据，
+然后处理后制成此函数中的 allChunks 表。
+
+chunkPosIndicator 用于通过 区域坐标 来查这个区域在 allChunks 表的位置。
+
+currentExport 指代当前 Task 指定的导出区域，
+也就是根据 set(get) 和 setend(get end) 制成的 Area
 */
 func DumpBlocks(
 	allAreas []Mcstructure,
@@ -313,7 +321,7 @@ func DumpBlocks(
 	currentExport Area,
 ) ([]*types.Module, error) {
 	ans := make([]*types.Module, 0)
-	// 这个东西最后会 return 掉
+	// ans 最终将会被 return
 	allChunks, _, chunkPosIndicator := SplitArea(
 		BlockPos{currentExport.BeginX, currentExport.BeginY, currentExport.BeginZ},
 		BlockPos{
@@ -423,7 +431,8 @@ func DumpBlocks(
 								},
 							})
 						}
-						// 对于箱子和陷阱箱的附加处理是为了解决箱子间的连接问题，让所有的箱子都不再连接；不知道有没有人愿意解决这个问题呢？
+						// 对于箱子和陷阱箱的附加处理是为了解决箱子间的连接问题，让所有的箱子都不再连接
+						// 不知道有没有人愿意解决这个问题呢？
 						hasNBT = true
 						blockNBT, err = nbt.MarshalEncoding(block_entity_data, nbt.LittleEndian)
 						if err != nil {
@@ -446,9 +455,8 @@ func DumpBlocks(
 						},
 					})
 				}
-				// 含水类方块
-				// 我不清楚有没有其他“含”方块，有的话记得提醒我哦！
-				// 这里处理的看似很拙劣，但实际上很有用！
+				// 含水类方块的处理。
+				// 我们将含水类方块处理为 setblock water + targetBlock 的形式
 				if foreground_blockName != "" && foreground_blockName != "air" && foreground_blockName != "undefined" {
 					single := &types.Module{
 						Block: &types.Block{
@@ -460,7 +468,7 @@ func DumpBlocks(
 							Z: int(i[key].BeginZ - currentExport.BeginZ),
 						},
 					}
-					// 简单地初始化一下一个单个的元素
+					// 初始化单个元素
 					if hasNBT {
 						single.NBTData = blockNBT
 					}

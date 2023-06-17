@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -177,22 +178,22 @@ func InitInternalFunctions(fh *FunctionHolder) {
 				FunctionType:  FunctionTypeSimple,
 				ArgumentTypes: []byte{},
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
-					env.CommandSender.SendSizukanaCommand("gamerule sendcommandfeedback true")
-					env.CommandSender.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
+					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand("gamerule sendcommandfeedback true", false)
+					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
 				},
 			},
 			"begin": &FunctionChainItem{
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
-					env.CommandSender.SendSizukanaCommand("gamerule sendcommandfeedback true")
-					env.CommandSender.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
+					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand("gamerule sendcommandfeedback true", false)
+					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
 				},
 			},
 			"end": &FunctionChainItem{
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
-					env.CommandSender.SendSizukanaCommand("gamerule sendcommandfeedback true")
-					env.CommandSender.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.OneId)
+					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand("gamerule sendcommandfeedback true", false)
+					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
 				},
 			},
 		},

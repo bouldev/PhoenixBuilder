@@ -2,11 +2,8 @@ package task
 
 import (
 	"fmt"
-
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/bdump/blockNBT"
-	blockNBT_API "phoenixbuilder/fastbuilder/bdump/blockNBT/API"
-	blockNBT_CommandBlock "phoenixbuilder/fastbuilder/bdump/blockNBT/CommandBlock"
-	blockNBT_global "phoenixbuilder/fastbuilder/bdump/blockNBT/Global"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/configuration"
@@ -15,7 +12,6 @@ import (
 	"phoenixbuilder/fastbuilder/parsing"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/io/commands"
-	"phoenixbuilder/minecraft"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -167,17 +163,8 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig(env).Delay())
 	dcfg := fcfg.Delay()
 
-	bdump_blockNBT_API := &blockNBT_API.GlobalAPI{
-		WritePacket:        env.Connection.(*minecraft.Conn).WritePacket,
-		BotName:            env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
-		BotIdentity:        env.Connection.(*minecraft.Conn).IdentityData().Identity,
-		BotRunTimeID:       env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
-		BotUniqueID:        env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
-		PacketHandleResult: env.NewUQHolder.(*blockNBT_API.PacketHandleResult),
-	}
-
 	und, _ := uuid.NewUUID()
-	cmdsender.SendWSCommand("gamemode c", und)
+	env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommand("gamemode c", und)
 	blockschannel := make(chan *types.Module, 10240)
 	task := &Task{
 		TaskId:        holder.TaskIdCounter.Add(1),
@@ -268,8 +255,8 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			isFastMode = true
 		} else {
 			//isFastMode=false
-			cmdsender.SendWSCommand("gamemode c", und)
-			cmdsender.SendWSCommand("gamerule sendcommandfeedback true", und)
+			env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommand("gamemode c", und)
+			env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommand("gamerule sendcommandfeedback true", und)
 		}
 		for {
 			task.ContinueLock.Lock()
@@ -291,42 +278,43 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				return
 			}
 			if blkscounter%20 == 0 {
-				cmdsender.SendDimensionalCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y, curblock.Point.Z))
+				env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y, curblock.Point.Z), true)
 			}
 			blkscounter++
 			if curblock.NBTMap != nil {
-				err := blockNBT.PlaceBlockWithNBTDataRun(
-					bdump_blockNBT_API,
+				err := blockNBT.PlaceBlockWithNBTData(
+					env.GlobalAPI.(*GlobalAPI.GlobalAPI),
 					curblock,
-					&blockNBT_global.Datas{
+					&blockNBT.Datas{
 						Settings: cfg,
 						FastMode: isFastMode,
 						Others:   nil,
 					},
 				)
 				if err != nil {
-					pterm.Warning.Printf("%v\n", err)
+					pterm.Warning.Printf("CreateTask: Failed to place the entity block named %v at (%d,%d,%d), and the error log is %v\n", curblock.Block.Name, curblock.Point.X, curblock.Point.Y, curblock.Point.Z, err)
 				}
 			} else if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
-				newStruct := blockNBT_CommandBlock.CommandBlock{
-					BlockEntityDatas: &blockNBT_global.BlockEntityDatas{
-						API: bdump_blockNBT_API,
-						Datas: &blockNBT_global.Datas{
+				newStruct := blockNBT.CommandBlock{
+					Package: &blockNBT.Package{
+						API: env.GlobalAPI.(*GlobalAPI.GlobalAPI),
+						Datas: &blockNBT.Datas{
 							Position: [3]int32{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)},
 							Settings: cfg,
 							FastMode: isFastMode,
 							Others:   nil,
 						},
 					},
+					NeedToPlaceBlock: false,
 				}
 				err := newStruct.PlaceCommandBlockWithLegacyMethod(curblock, cfg)
 				if err != nil {
 					pterm.Warning.Printf("%v\n", err)
 				}
 			} else if curblock.ChestSlot != nil {
-				cmdsender.SendDimensionalCommand(commands_generator.ReplaceItemRequest(curblock, cfg))
+				env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(commands_generator.ReplaceItemRequest(curblock, ""), true)
 			} else {
-				err := cmdsender.SendDimensionalCommand(commands_generator.SetBlockRequest(curblock, cfg))
+				env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(commands_generator.SetBlockRequest(curblock, cfg), true)
 				if err != nil {
 					panic(err)
 				}

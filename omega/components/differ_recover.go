@@ -39,7 +39,7 @@ func (o *DifferRecover) Init(cfg *defines.ComponentConfig, storage defines.Stora
 	o.BackUpName = "backup"
 }
 
-//TODO Check if differ recover is affected by 0 -> -64
+// TODO Check if differ recover is affected by 0 -> -64
 func (o *DifferRecover) GetBlocksPipe(currentProvider, ckptProvider mirror.ChunkReader, pos define.CubePos, distance int) chan *structure.IOBlockForBuilder {
 	computeRequiredChunks := func(pos define.CubePos, distance int) (requiredChunks []define.ChunkPos) {
 		// chunkX, ChunkZ := int(math.Floor(float64(pos[0]/16))), int(math.Floor(float64(pos[2]/16)))
@@ -103,7 +103,7 @@ func (o *DifferRecover) updateDelayBlocks(force bool) {
 			case "sign":
 				// nbt := block.BlockNbt
 				// fmt.Println("sign: ", nbt)
-				// o.Frame.GetGameControl().SendMCPacket(&packet.BlockActorData{
+				// o.Frame.GetGameControl().GetInteraction().WritePacket(&packet.BlockActorData{
 				// 	Position: protocol.BlockPos{int32(pos[0]), int32(pos[1]), int32(pos[2])},
 				// 	NBTData:  nbt,
 				// })

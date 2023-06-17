@@ -1,10 +1,11 @@
-// +build is_tweak
+//go:build is_tweak
 
 package commands
 
 import (
-	"github.com/google/uuid"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 /*
@@ -25,7 +26,7 @@ func (sender *CommandSender) GetUUIDMap() *sync.Map {
 }
 
 func (sender *CommandSender) ClearUUIDMap() {
-	sender.UUIDMap=sync.Map{}
+	sender.UUIDMap = sync.Map{}
 }
 
 func (sender *CommandSender) SendCommand(command string, UUID uuid.UUID) error {

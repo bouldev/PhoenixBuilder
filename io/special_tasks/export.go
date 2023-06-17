@@ -6,6 +6,7 @@ package special_tasks
 import (
 	"bytes"
 	"fmt"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -70,10 +71,10 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	teleportFn := func(x, z int) {
 		cmd := fmt.Sprintf("tp @s %v 128 %v", x, z)
 		uid, _ := uuid.NewUUID()
-		cmdsender.SendCommand(cmd, uid)
+		env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(cmd, uid)
 		cmd = fmt.Sprintf("execute @s ~~~ spreadplayers ~ ~ 3 4 @s")
 		uid, _ = uuid.NewUUID()
-		cmdsender.SendCommand(cmd, uid)
+		env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(cmd, uid)
 	}
 	feedChan := make(chan *fetcher.ChunkDefineWithPos, 1024)
 	deRegFn := env.ChunkFeeder.(*global.ChunkFeeder).RegNewReader(func(chunk *mirror.ChunkData) {
@@ -93,7 +94,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 			if yc < 0 {
 				yc = 23
 			}
-			cmdsender.SendCommand(fmt.Sprintf("tp @s ~ %d ~", yv), uuidval)
+			env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(fmt.Sprintf("tp @s ~ %d ~", yv), uuidval)
 			time.Sleep(time.Millisecond * 50)
 		}
 	}()

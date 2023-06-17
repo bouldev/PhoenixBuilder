@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	blockNBT_API "phoenixbuilder/fastbuilder/bdump/blockNBT/API"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/defines"
@@ -15,7 +15,7 @@ type PickBlock struct {
 	Triggers       []string `json:"菜单触发词"`
 	Usage          string   `json:"菜单项描述"`
 	NeedPermission bool     `json:"OP权限验证"`
-	apis           blockNBT_API.GlobalAPI
+	apis           GlobalAPI.GlobalAPI
 }
 
 func (o *PickBlock) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
@@ -27,17 +27,7 @@ func (o *PickBlock) Init(cfg *defines.ComponentConfig, storage defines.StorageAn
 
 func (o *PickBlock) Inject(frame defines.MainFrame) {
 	o.Frame = frame
-	o.apis = blockNBT_API.GlobalAPI{
-		WritePacket: func(p packet.Packet) error {
-			o.Frame.GetGameControl().SendMCPacket(p)
-			return nil
-		},
-		BotName:            o.Frame.GetUQHolder().GetBotName(),
-		BotIdentity:        "",
-		BotUniqueID:        o.Frame.GetUQHolder().BotUniqueID,
-		BotRunTimeID:       o.Frame.GetUQHolder().BotRuntimeID,
-		PacketHandleResult: o.Frame.GetNewUQHolder(),
-	}
+	o.apis = o.Frame.GetGameControl().GetInteraction()
 	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
@@ -69,40 +59,31 @@ func (o *PickBlock) throwItem() bool {
 		panic(fmt.Sprintf("throwItem: %v", err))
 	}
 	// 刷新背包数据(等待更改)
-	datas, err := o.apis.PacketHandleResult.Inventory.GetItemStackInfo(0, 0)
+	datas, err := o.apis.Resources.Inventory.GetItemStackInfo(0, 0)
 	if err != nil {
 		return false
 	}
 	// 取得快捷栏 0 的物品数据
 	if datas.Stack.Count > 0 {
-		ans, err := o.apis.SendItemStackRequestWithResponce(&packet.ItemStackRequest{
-			Requests: []protocol.ItemStackRequest{
-				{
-					Actions: []protocol.StackRequestAction{
-						&protocol.DropStackRequestAction{
-							Count: byte(datas.Stack.Count),
-							Source: protocol.StackRequestSlotInfo{
-								ContainerID:    28,
-								Slot:           0,
-								StackNetworkID: datas.StackNetworkID,
-							},
-							Randomly: false,
-						},
-					},
-				},
+		successStates, err := o.apis.DropItemAll(
+			protocol.StackRequestSlotInfo{
+				ContainerID:    28,
+				Slot:           0,
+				StackNetworkID: datas.StackNetworkID,
 			},
-		})
+			0,
+		)
 		if err != nil {
 			return false
 		}
-		// 发送数据包
-		if ans[0].Status == 0 {
-			return true
+		if !successStates {
+			return false
 		}
-		// 返回值
+	} else {
+		return false
 	}
 	// 尝试丢出物品
-	return false
+	return true
 	// 返回值
 }
 
@@ -114,22 +95,23 @@ func (o *PickBlock) onInvoke(chat *defines.GameChat) bool {
 	}
 	go func() {
 		// 前往玩家位置
-		o.apis.BotName = o.Frame.GetUQHolder().GetBotName()
+		o.apis.BotInfo.BotName = o.Frame.GetUQHolder().GetBotName()
 		err := o.apis.SendSettingsCommand(fmt.Sprintf("tp @s @a[name=\"%s\"]", chat.Name), true)
 		if err != nil {
 			panic(fmt.Sprintf("onInvoke: %v", err))
 		}
 		// 获取脚下坐标
 		resp, err := o.apis.SendWSCommandWithResponce("querytarget @s")
-		respString := resp.OutputMessages[0].Parameters[0]
-		var respList []interface{}
-		json.Unmarshal([]byte(respString), &respList)
-		if len(respList) <= 0 {
-			return
+		if err != nil {
+			o.Frame.GetGameControl().SayTo(chat.Name, "§c无法 §fPick 目标的方块")
 		}
-		respMap := respList[0].(map[string]interface{})
-		x, y, z := int32(math.Floor(respMap["position"].(map[string]interface{})["x"].(float64))), int32(math.Floor(respMap["position"].(map[string]interface{})["y"].(float64)))-2, int32(math.Floor(float64(respMap["position"].(map[string]interface{})["z"].(float64))))
-		// 尝试Pick方块
+		querytargetInfo, err := o.apis.ParseQuerytargetInfo(resp)
+		if err != nil {
+			o.Frame.GetGameControl().SayTo(chat.Name, "§c无法 §fPick 目标的方块")
+		}
+		pos := querytargetInfo[0].Position
+		x, y, z := int32(math.Floor(float64(pos[0]))), int32(math.Floor(float64(pos[1])))-2, int32(math.Floor(float64(pos[2])))
+		// 尝试 Pick 方块
 		o.blockPick(x, y, z)
 		// 面向玩家并尝试丢出方块
 		o.apis.SendSettingsCommand(fmt.Sprintf("tp ~ ~ ~ facing @a[name=\"%s\"]", chat.Name), true)

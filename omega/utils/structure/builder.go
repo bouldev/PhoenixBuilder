@@ -296,7 +296,7 @@ func (o *Builder) OnLevelChunk(cd *mirror.ChunkData) {
 // 	case "sign":
 // 		// nbt := block.BlockNbt
 // 		// fmt.Println("sign: ", nbt)
-// 		// o.Frame.GetGameControl().SendMCPacket(&packet.BlockActorData{
+// 		// o.Frame.GetGameControl().GetInteraction().WritePacket(&packet.BlockActorData{
 // 		// 	Position: protocol.BlockPos{int32(pos[0]), int32(pos[1]), int32(pos[2])},
 // 		// 	NBTData:  nbt,
 // 		// })
@@ -348,7 +348,7 @@ func (o *Builder) OnLevelChunk(cd *mirror.ChunkData) {
 // 		}
 // 		o.Ctrl.SendCmd(fmt.Sprintf("tp @s %v %v %v", block.Pos.X(), block.Pos.Y(), block.Pos.Z()))
 // 		time.Sleep(50 * time.Millisecond)
-// 		o.Ctrl.SendMCPacket(&packet.CommandBlockUpdate{
+// 		o.Frame.GetGameControl().GetInteraction().WritePacket(&packet.CommandBlockUpdate{
 // 			Block:              true,
 // 			Position:           protocol.BlockPos{int32(block.Pos.X()), int32(block.Pos.Y()), int32(block.Pos.Z())},
 // 			Mode:               mode,

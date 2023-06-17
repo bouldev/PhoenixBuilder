@@ -1,4 +1,4 @@
-// +build is_tweak
+//go:build is_tweak
 
 package commands
 
@@ -19,11 +19,11 @@ func booltochar(gobool bool) C.char {
 	return C.char(0)
 }
 
-func (sender *CommandSender) UpdateCommandBlock(x int32,y int32,z int32,d *types.CommandBlockData) {
-	C.phoenixbuilder_update_command_block(C.int(x),C.int(y),C.int(z),
-					C.uint(d.Mode), C.CString(d.Command), C.CString(d.CustomName),
-					C.CString(d.LastOutput), C.int(d.TickDelay),
-					booltochar(d.ExecuteOnFirstTick),
-					booltochar(d.TrackOutput), booltochar(d.Conditional),
-					booltochar(d.NeedsRedstone))
+func (sender *CommandSender) UpdateCommandBlock(x int32, y int32, z int32, d *types.CommandBlockData) {
+	C.phoenixbuilder_update_command_block(C.int(x), C.int(y), C.int(z),
+		C.uint(d.Mode), C.CString(d.Command), C.CString(d.CustomName),
+		C.CString(d.LastOutput), C.int(d.TickDelay),
+		booltochar(d.ExecuteOnFirstTick),
+		booltochar(d.TrackOutput), booltochar(d.Conditional),
+		booltochar(d.NeedsRedstone))
 }

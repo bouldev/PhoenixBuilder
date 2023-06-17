@@ -1,5 +1,4 @@
 //go:build is_tweak
-// +build is_tweak
 
 package commands
 

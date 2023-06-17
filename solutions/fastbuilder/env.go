@@ -16,7 +16,7 @@ import (
 func create_environment() *environment.PBEnvironment {
 	env := &environment.PBEnvironment{}
 	env.UQHolder = nil
-	env.NewUQHolder = nil
+	env.Resources = nil
 	env.ActivateTaskStatus = make(chan bool)
 	env.TaskHolder = fbtask.NewTaskHolder()
 	functionHolder := function.NewFunctionHolder(env)

@@ -1,7 +1,7 @@
 package defines
 
 import (
-	blockNBT_API "phoenixbuilder/fastbuilder/bdump/blockNBT/API"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -95,7 +95,6 @@ type CtxProvider interface {
 	GetContext(key string) (entry interface{}, hasK bool)
 	SetContext(key string, entry interface{})
 	GetUQHolder() *uqHolder.UQHolder
-	GetNewUQHolder() *blockNBT_API.PacketHandleResult
 }
 
 // ConfigProvider 是帮助一个插件获得和修改别的插件的接口
@@ -133,6 +132,7 @@ type BackendInteract interface {
 // 建议扩展该接口以提供更丰富的功能
 // 另一种扩展方式是定义新插件并暴露接口
 type GameControl interface {
+	GetInteraction() GlobalAPI.GlobalAPI
 	SayTo(target string, msg string)
 	RawSayTo(target string, msg string)
 	ActionBarTo(target string, msg string)
@@ -144,7 +144,6 @@ type GameControl interface {
 	SendWOCmd(cmd string)
 	SendCmdAndInvokeOnResponse(string, func(output *packet.CommandOutput))
 	SendCmdAndInvokeOnResponseWithFeedback(string, func(output *packet.CommandOutput))
-	SendMCPacket(packet.Packet)
 	GetPlayerKit(name string) PlayerKit
 	GetPlayerKitByUUID(ud uuid.UUID) PlayerKit
 	SetOnParamMsg(string, func(chat *GameChat) (catch bool)) error

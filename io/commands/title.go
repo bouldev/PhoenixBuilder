@@ -1,20 +1,21 @@
-// +build !is_tweak
+//go:build !is_tweak
 
 package commands
 
 import (
-	"fmt"
-	"phoenixbuilder/fastbuilder/types"
 	"encoding/json"
+	"fmt"
+	"phoenixbuilder/GameControl/GlobalAPI"
+	"phoenixbuilder/fastbuilder/types"
 	"strings"
 )
 
 func TitleRequest(target types.Target, lines ...string) string {
 	var items []TellrawItem
 	for _, text := range lines {
-		items=append(items,TellrawItem{Text:strings.Replace(text, "schematic", "sc***atic", -1)})
+		items = append(items, TellrawItem{Text: strings.Replace(text, "schematic", "sc***atic", -1)})
 	}
-	final := &TellrawStruct {
+	final := &TellrawStruct{
 		RawText: items,
 	}
 	content, _ := json.Marshal(final)
@@ -23,5 +24,5 @@ func TitleRequest(target types.Target, lines ...string) string {
 }
 
 func (sender *CommandSender) Title(message string) error {
-	return sender.SendSizukanaCommand(TitleRequest(types.AllPlayers, message))
+	return sender.env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(TitleRequest(types.AllPlayers, message), false)
 }

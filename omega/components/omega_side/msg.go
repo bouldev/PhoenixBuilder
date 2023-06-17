@@ -95,7 +95,7 @@ func (t *omegaSideTransporter) initMapping() {
 				if _err != nil {
 					writer(map[string]interface{}{"succ": false, "err": string(_err.Error())})
 				} else {
-					t.side.Frame.GetGameControl().SendMCPacket(pk)
+					t.side.Frame.GetGameControl().GetInteraction().WritePacket(pk)
 					writer(map[string]interface{}{"succ": true, "err": nil})
 				}
 			} else {
@@ -127,9 +127,6 @@ func (t *omegaSideTransporter) initMapping() {
 		},
 		"get_uqholder": func(args map[string]interface{}, writer func(interface{})) {
 			writer(t.side.Frame.GetUQHolder())
-		},
-		"get_new_uqholder": func(args map[string]interface{}, writer func(interface{})) {
-			writer(t.side.Frame.GetNewUQHolder())
 		},
 		"get_players_list": func(args map[string]interface{}, writer func(interface{})) {
 			playerList := []SimplifiedPlayerInfo{}

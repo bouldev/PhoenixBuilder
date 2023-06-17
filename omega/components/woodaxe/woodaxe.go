@@ -218,9 +218,21 @@ type cmdRespDataSet struct {
 
 func (o *WoodAxe) onInitStructureBlock(selectIndicatorPos, areaIndicatorPos define.CubePos) {
 	uid := o.Frame.GetUQHolder().BotUniqueID
-	o.selectIndicateStructureBlock = NewStructureBlock(selectIndicatorPos, o.Frame.GetGameControl().SendMCPacket, uid)
+	o.selectIndicateStructureBlock = NewStructureBlock(
+		selectIndicatorPos,
+		func(p packet.Packet) {
+			o.Frame.GetGameControl().GetInteraction().WritePacket(p)
+		},
+		uid,
+	)
 	o.selectIndicateStructureBlock.OffBound()
-	o.areaIndicateStructureBlock = NewStructureBlock(areaIndicatorPos, o.Frame.GetGameControl().SendMCPacket, uid)
+	o.areaIndicateStructureBlock = NewStructureBlock(
+		areaIndicatorPos,
+		func(p packet.Packet) {
+			o.Frame.GetGameControl().GetInteraction().WritePacket(p)
+		},
+		uid,
+	)
 	o.areaIndicateStructureBlock.OffBound()
 }
 

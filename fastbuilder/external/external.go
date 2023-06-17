@@ -3,6 +3,7 @@ package external
 import (
 	"fmt"
 	"io"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
@@ -84,12 +85,12 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 					handler.env.FunctionHolder.Process(p.Command)
 				case *packet.GameCommandPacket:
 					if p.CommandType == packet.CommandTypeSettings {
-						env.CommandSender.SendSizukanaCommand(p.Command)
+						env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(p.Command, false)
 						break
 					} else if p.CommandType == packet.CommandTypeNormal {
-						env.CommandSender.SendWSCommand(p.Command, p.UUID)
+						env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommand(p.Command, p.UUID)
 					} else {
-						env.CommandSender.SendCommand(p.Command, p.UUID)
+						env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(p.Command, p.UUID)
 					}
 				case *packet.GamePacket:
 					(env.Connection).(*minecraft.Conn).Write(p.Content)

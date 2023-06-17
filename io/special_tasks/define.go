@@ -21,8 +21,6 @@ type SolidRet struct {
 	StatusCode int64          `json:"statusCode"`
 }
 
-var ExportWaiter chan map[string]interface{}
-
 type byteAndNormalReader interface {
 	io.Reader
 	io.ByteReader

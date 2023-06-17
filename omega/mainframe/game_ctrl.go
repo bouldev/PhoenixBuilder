@@ -3,6 +3,7 @@ package mainframe
 import (
 	"encoding/json"
 	"fmt"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -344,6 +345,7 @@ func (o *PacketOutAnalyzer) Write(p packet.Packet) error {
 }
 
 type GameCtrl struct {
+	Interaction         *GlobalAPI.GlobalAPI
 	analyzer            *PacketOutAnalyzer
 	WriteBytesFn        func([]byte) error
 	WriteFn             func(packet packet.Packet) error
@@ -360,6 +362,10 @@ type GameCtrl struct {
 	PlayerPermission      map[string]map[string]bool
 	onBlockActorCbs       map[define.CubePos]func(define.CubePos, *packet.BlockActorData)
 	placeCommandBlockLock sync.Mutex
+}
+
+func (g *GameCtrl) GetInteraction() GlobalAPI.GlobalAPI {
+	return *g.Interaction
 }
 
 func (g *GameCtrl) GetPlayerKit(name string) defines.PlayerKit {
@@ -523,7 +529,7 @@ func (g *GameCtrl) onCommandFeedbackOn() {
 	pkts := g.NeedFeedBackPackets
 	g.NeedFeedBackPackets = make([]packet.Packet, 0)
 	for _, p := range pkts {
-		g.SendMCPacket(p)
+		g.Interaction.WritePacket(p)
 	}
 	if !g.ExpectedCmdFeedBack {
 		g.turnOffFeedBack()
@@ -566,7 +572,7 @@ func (g *GameCtrl) PlaceCommandBlock(pos define.CubePos, commandBlockName string
 				g.placeCommandBlockLock.Lock()
 				g.SendCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
 				time.Sleep(50 * time.Millisecond)
-				g.SendMCPacket(updatePacket)
+				g.Interaction.WritePacket(updatePacket)
 				g.placeCommandBlockLock.Unlock()
 				g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
 					onDone(true)
@@ -619,9 +625,13 @@ func (g *GameCtrl) toExpectedFeedBackStatus() {
 	}
 }
 
+/*
+此函数已被 g.Interaction.WritePacket 取代
+
 func (g *GameCtrl) SendMCPacket(p packet.Packet) {
 	g.WriteFn(p)
 }
+*/
 
 func (g *GameCtrl) SendBytes(data []byte) {
 	g.WriteBytesFn(data)
@@ -636,9 +646,10 @@ func (g *GameCtrl) SetOnParamMsg(name string, cb func(chat *defines.GameChat) (c
 	}
 }
 
-func newGameCtrl(o *Omega) *GameCtrl {
+func newGameCtrl(o *Omega, interaction *GlobalAPI.GlobalAPI) *GameCtrl {
 	analyzer := NewPacketOutAnalyzer(o.adaptor.Write)
 	c := &GameCtrl{
+		Interaction:         interaction,
 		WriteFn:             analyzer.Write,
 		WriteBytesFn:        o.adaptor.WriteBytes,
 		ExpectedCmdFeedBack: o.OmegaConfig.CommandFeedBackByDefault,
@@ -654,6 +665,7 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		placeCommandBlockLock: sync.Mutex{},
 	}
 	c.analyzer = analyzer
+	c.Interaction.WritePacket = c.WriteFn
 	err := o.GetJsonData("playerPermission.json", &c.PlayerPermission)
 	if err != nil {
 		panic(err)

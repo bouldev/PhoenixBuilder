@@ -4,8 +4,8 @@
 package special_tasks
 
 import (
-	"encoding/json"
 	"fmt"
+	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -64,23 +64,15 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		}()
 
 		u_d0, _ := uuid.NewUUID()
-		env.CommandSender.SendWSCommand("gamemode c", u_d0)
+		env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommand("gamemode c", u_d0)
 
-		u_d1, _ := uuid.NewUUID()
-		chann := make(chan *packet.CommandOutput)
-		(*env.CommandSender.GetUUIDMap()).Store(u_d1.String(), chann)
-		env.CommandSender.SendWSCommand("querytarget @s", u_d1)
-		resp := <-chann
-		close(chann)
-		var dimension float64 = 0
-		var got interface{}
+		resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommandWithResponce("querytarget @s")
+		parseResult, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).ParseQuerytargetInfo(resp)
 		var testAreaIsLoaded string = "testforblocks ~-31 -64 ~-31 ~31 319 ~31 ~-31 -64 ~-31"
-		json.Unmarshal([]byte(resp.OutputMessages[0].Parameters[0]), &got)
-		dimension = got.([]interface{})[0].(map[string]interface{})["dimension"].(float64)
-		if dimension == 1 {
+		if parseResult[0].Dimension == 1 {
 			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 127 ~31 ~-31 0 ~-31"
 		}
-		if dimension == 2 {
+		if parseResult[0].Dimension == 2 {
 			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 255 ~31 ~-31 0 ~-31"
 		}
 		// 这个前置准备用于后面判断被导出区域是否加载
@@ -98,49 +90,39 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		for key, value := range splittedAreas {
 			currentProgress := indicativeMap[key]
 			env.CommandSender.Output(pterm.Info.Sprintf("Fetching data from area [%d, %d]", currentProgress[0], currentProgress[1]))
-			u_d2, _ := uuid.NewUUID()
-			wchan := make(chan *packet.CommandOutput)
-			(*env.CommandSender.GetUUIDMap()).Store(u_d2.String(), wchan)
-			env.CommandSender.SendWSCommand(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2), u_d2)
-			<-wchan
-			close(wchan)
+			env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommandWithResponce(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2))
 
 			for {
-				u_d3, _ := uuid.NewUUID()
-				chann := make(chan *packet.CommandOutput)
-				(*env.CommandSender.GetUUIDMap()).Store(u_d3.String(), chann)
-				env.CommandSender.SendWSCommand(testAreaIsLoaded, u_d3)
-				resp := <-chann
-				close(chann)
-				//fmt.Printf("%#v\n",resp)
+				resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommandWithResponce(testAreaIsLoaded)
 				if resp.OutputMessages[0].Message != "commands.generic.outOfWorld" {
 					break
 				}
 			}
 			// 等待当前被访问的区块加载完成
-			ExportWaiter = make(chan map[string]interface{})
-			env.Connection.(*minecraft.Conn).WritePacket(&packet.StructureTemplateDataRequest{
-				StructureName: "mystructure:aaaaa",
-				Position:      protocol.BlockPos{int32(value.BeginX), int32(value.BeginY), int32(value.BeginZ)},
-				Settings: protocol.StructureSettings{
-					PaletteName:               "default",
-					IgnoreEntities:            true,
-					IgnoreBlocks:              false,
-					Size:                      protocol.BlockPos{int32(value.SizeX), int32(value.SizeY), int32(value.SizeZ)},
-					Offset:                    protocol.BlockPos{0, 0, 0},
-					LastEditingPlayerUniqueID: env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
-					Rotation:                  0,
-					Mirror:                    0,
-					Integrity:                 100,
-					Seed:                      0,
-					AllowNonTickingChunks:     false,
+			holder := env.GlobalAPI.(*GlobalAPI.GlobalAPI).Resources.Structure.Occupy()
+			exportData, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendStructureRequestWithResponce(
+				&packet.StructureTemplateDataRequest{
+					StructureName: "mystructure:aaaaa",
+					Position:      protocol.BlockPos{int32(value.BeginX), int32(value.BeginY), int32(value.BeginZ)},
+					Settings: protocol.StructureSettings{
+						PaletteName:               "default",
+						IgnoreEntities:            true,
+						IgnoreBlocks:              false,
+						Size:                      protocol.BlockPos{int32(value.SizeX), int32(value.SizeY), int32(value.SizeZ)},
+						Offset:                    protocol.BlockPos{0, 0, 0},
+						LastEditingPlayerUniqueID: env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+						Rotation:                  0,
+						Mirror:                    0,
+						Integrity:                 100,
+						Seed:                      0,
+						AllowNonTickingChunks:     false,
+					},
+					RequestType: packet.StructureTemplateRequestExportFromSave,
 				},
-				RequestType: packet.StructureTemplateRequestExportFromSave,
-			})
-			exportData := <-ExportWaiter
-			close(ExportWaiter)
+			)
+			env.GlobalAPI.(*GlobalAPI.GlobalAPI).Resources.Structure.Release(holder)
 			// 获取 mcstructure
-			got, err := mcstructure.GetMCStructureData(value, exportData)
+			got, err := mcstructure.GetMCStructureData(value, exportData.StructureTemplate)
 			if err != nil {
 				panic(err)
 			} else {
