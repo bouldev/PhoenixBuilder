@@ -5,12 +5,6 @@
 > 部分注有 `译注` 的内容均为此贡献者所注。
 
 
-> [Happy2018new](https://github.com/Happy2018new) & 修订日志<br/>
-> 修订 `容器` 相关<br/>
-> 新增第 `39` 号操作的解析<br/>
-> 同步 [66f2aa5](https://github.com/LNSSPsd/PhoenixBuilder/commit/66f2aa5b129e51a2154b64e5ff8bffc15290cf02) 中有关 `Bdump` 文件格式的更改
-
-
 BDump v3 是个用于存储*Minecraft*建筑结构的文件格式。其内容由指示建造过程的命令组成。
 
 按照一定的顺序来写下每一个方块的ID的文件格式会因为包含空气方块而徒增文件大小，因此我们设计了一种新的文件格式，引入了「画笔」，并让一系列的指令控制其进行移动或放置方块。
@@ -71,15 +65,15 @@ BDump v3 文件的后缀名为`.bdx`，且文件头为`BD@`, 代表本bdump文�
 | 2                 | **已弃用且已移除**                          | - | - |
 | 3                 | **已弃用且已移除**                          | - | - |
 | 4                 | **已弃用且已移除**                          | - | - |
-| 5                 | **已弃用且已移除**                          | - | - |
+| 5                 | `PlaceBlockWithBlockStates`                | 在画笔所在位置放置一个方块。同时指定欲放置方块的 `方块状态` 在方块池中的 `ID` 为 `blockStatesConstantStringID` ，且该方块在方块池中的 `ID` 为 `blockConstantStringID`<br/> `方块状态` 的格式形如 `["color": "orange"]` | `unsigned short blockConstantStringID`<br/>`unsigned short blockStatesConstantStringID` |
 | 6                 | `AddInt16ZValue0`                          | 将画笔的 `Z` 坐标增加 `value` | `unsigned short value` |
-| 7                 | `PlaceBlock`                               | 在画笔所在位置放置一个方块。同时指定欲放置的方块的 `数据值(附加值)` 为 `blockData` ，且该方块在方块池中的 `ID` 为 `blockConstantStringID` | `unsigned short blockConstantStringID`<br/>`unsigned short blockData` |
+| 7                 | `PlaceBlock`                               | 在画笔所在位置放置一个方块。同时指定欲放置方块的 `数据值(附加值)` 为 `blockData` ，且该方块在方块池中的 `ID` 为 `blockConstantStringID` | `unsigned short blockConstantStringID`<br/>`unsigned short blockData` |
 | 8                 | `AddZValue0`                               | 将画笔的 `Z` 坐标增加 `1` | - |
 | 9                 | `NOP`                                      | 摆烂，即不进行操作(`No Operation`) | - |
 | 10, `0x0A`        | **已弃用且已移除**                          | - | - |
 | 11, `0x0B`        | **已弃用且已移除**                          | - | - |
 | 12, `0x0C`        | `AddInt32ZValue0`                          | 将画笔的 `Z` 坐标增加 `value` | `unsigned int value` |
-| 13, `0x0D`        | `PlaceBlockWithBlockStates`                | 在画笔所在位置放置一个方块。同时指定欲放置的方块的 `方块状态` 为 `blockStatesString` ，且该方块在方块池中的 `ID` 为 `blockConstantStringID`<br/> `方块状态` 的格式形如 `["color":"orange"]` | `unsigned short blockConstantStringID`<br/>`char *blockStatesString` |
+| 13, `0x0D`        | `PlaceBlockWithBlockStates`                | 在画笔所在位置放置一个方块。同时指定欲放置方块的 `方块状态` 为 `blockStatesString` ，且该方块在方块池中的 `ID` 为 `blockConstantStringID`<br/> `方块状态` 的格式形如 `["color":"orange"]` | `unsigned short blockConstantStringID`<br/>`char *blockStatesString` |
 | 14, `0x0E`        | `AddXValue`                                | 将画笔的 `X` 坐标增加 `1` | - |
 | 15, `0x0F`        | `SubtractXValue`                           | 将画笔的 `X` 坐标减少 `1` | - |
 | 16, `0x10`        | `AddYValue`                                | 将画笔的 `Y` 坐标增加 `1` | - |
@@ -106,7 +100,8 @@ BDump v3 文件的后缀名为`.bdx`，且文件头为`BD@`, 代表本bdump文�
 | 37, `0x25`        | `PlaceRuntimeBlockWithChestData`           | 在画笔所在位置放置一个 `runtimeId`(特定的 `运行时ID`) 所表示的方块，并向此方块载入数据<br/>其中 `slotCount` 的数据类型为 `unsigned char`，因为我的世界用一个字节来存储物品栏编号。此参数指的是要载入的次数，即要载入的 `ChestData` 结构体数量 | `unsigned short runtimeId` <br/> `unsigned char slotCount` <br/> `struct ChestData data` |
 | 38, `0x26`        | `PlaceRuntimeBlockWithChestDataAndUint32RuntimeID` | 在画笔所在位置放置一个 `runtimeId`(特定的 `运行时ID`) 所表示的方块，并向此方块载入数据<br/>其中 `slotCount` 的数据类型为 `unsigned char`，因为我的世界用一个字节来存储物品栏编号。此参数指的是要载入的次数，即要载入的 `ChestData` 结构体数量 | `unsigned int runtimeId`<br/>`unsigned char slotCount`<br/>`struct ChestData data` |
 | 39, `0x27`        | `AssignDebugData`                          | 记录调试数据，不对建造过程产生任何影响。 | `uint32_t length`<br>`unsigned char buffer[length]` |
-| 40, `0x28`        | `PlaceBlockWithChestData`                  | 放置一个 constantBlockID 表示的方块，并指定容器数据。 | `uint16_t blockConstantStringID`<br/>`uint16_t blockData`<br/>`struct ChestData data` |
+| 40, `0x28`        | `PlaceBlockWithChestData`                  | 放置一个 `blockConstantStringID` 所表示的方块，并指定容器数据。 | `uint16_t blockConstantStringID`<br/>`uint16_t blockData`<br/>`struct ChestData data` |
+| 41, `0x29`        | `PlaceBlockWithNBTData`                    | 放置一个 `blockConstantStringID` 所表示的方块且指定它的 `方块状态` 在方块池中的 `ID` 为 `blockStatesConstantStringID`，然后向此方块载入 `NBT buffer[...]` 所表示的 `方块实体` 数据(是一个巨大的复合标签)<br/> `NBT buffer[...]` 指代未经压缩的非网端的小端序型 `NBT` 的二进制表示，但文件中不会记录此字段的长度<br/>因为一些失误，`blockStatesConstantStringID` 被记录了两次 | `blockConstantStringID uint16_t`<br/>`blockStatesConstantStringID uint16_t`<br/>`blockStatesConstantStringID uint16_t`<br/>`NBT buffer[...]` |
 | 88, `'X'`, `0x58` | `Terminate`                                | 停止读入。虽然通常的结尾应该是 `XE` （2字节），但是用 `X` （1字节）是允许的 | - |
 | 90, `0x5A`        | `isSigned` (伪命令)                         | 这是一个与其他命令功能稍有不同的命令，其参数应当出现在其前面，而这个指令呢也只能出现在文件的末尾。在不知道所以然的情况下，请不要使用它，因为无效的签名会使得 `PhoenixBuilder` 无法去构建你的结构。详见 `签名` 部分。 | `unsigned char signatureSize` |
 
