@@ -69,6 +69,8 @@ func (g *BlockPlacer) PlaceCommandBlock(pos define.CubePos, commandBlockName str
 			cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], "air", 0)
 			g.SendWOCmd(cmd)
 			time.Sleep(100 * time.Millisecond)
+		} else {
+			g.SendPacket(updatePacket)
 		}
 		cmd := fmt.Sprintf("setblock %v %v %v %v %v", pos[0], pos[1], pos[2], strings.Replace(commandBlockName, "minecraft:", "", 1), blockDataOrStateStr)
 		g.SendWOCmd(cmd)
@@ -80,6 +82,7 @@ func (g *BlockPlacer) PlaceCommandBlock(pos define.CubePos, commandBlockName str
 				time.Sleep(50 * time.Millisecond)
 				g.SendPacket(updatePacket)
 				g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
+					g.SendPacket(updatePacket)
 					onDone(true)
 					done <- true
 				}
