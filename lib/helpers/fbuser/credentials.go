@@ -82,15 +82,21 @@ func ReadInfo(userName, userPassword, userToken, serverCode, serverPassword stri
 		userToken, err = ReadToken(LoadTokenPath())
 		if err != nil || userToken == "" {
 			for userName == "" {
-				userName, err = GetUserInput(I18n.T(I18n.Enter_FBUC_Username))
+				userName, err = GetUserInput("请输入 FB 用户名或者 Token:")
+				if strings.HasPrefix(userName, "w9/") {
+					userToken = userName
+					userName = ""
+				}
 				if err != nil {
 					return userName, userPassword, userToken, serverCode, serverPassword, err
 				}
 			}
-			for userPassword == "" {
-				userPassword, err = GetUserPasswordInput(I18n.T(I18n.EnterPasswordForFBUC))
-				if err != nil {
-					return userName, userPassword, userToken, serverCode, serverPassword, err
+			if userToken == "" {
+				for userPassword == "" {
+					userPassword, err = GetUserPasswordInput(I18n.T(I18n.EnterPasswordForFBUC))
+					if err != nil {
+						return userName, userPassword, userToken, serverCode, serverPassword, err
+					}
 				}
 			}
 		}
