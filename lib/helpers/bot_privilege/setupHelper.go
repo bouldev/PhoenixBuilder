@@ -11,6 +11,7 @@ import (
 type SetupHelper struct {
 	omega.MicroOmega
 	hasOpPrivilege bool
+	cheatOn        bool
 }
 
 func NewSetupHelper(omega omega.MicroOmega) *SetupHelper {
@@ -44,29 +45,40 @@ func (o *SetupHelper) lostPrivilege() {
 func (o *SetupHelper) WaitOK() {
 	time.Sleep(3 * time.Second)
 	for !o.hasOpPrivilege {
+		o.GetGameControl().SendWSCmdAndInvokeOnResponse("tp @s ~~~", func(output *packet.CommandOutput) {
+			if output.SuccessCount > 0 {
+				o.hasOpPrivilege = true
+			}
+		})
 		o.GetGameControl().BotSay("请给予机器人管理员权限")
 		time.Sleep(1 * time.Second)
 	}
-	cheatOn := false
 	first := true
-	for !cheatOn {
+	for !o.cheatOn {
 		o.GetGameControl().SendWSCmdAndInvokeOnResponse("testforblock ~~~ air 0", func(output *packet.CommandOutput) {
-			// fmt.Println(output)
+			if output.SuccessCount > 0 {
+				o.cheatOn = true
+			}
 			if len(output.OutputMessages) > 0 {
 				if strings.Contains(output.OutputMessages[0].Message, "commands.generic.disabled") {
-					cheatOn = false
+					o.cheatOn = false
 					if first {
 						fmt.Println("请打开作弊模式")
 						first = false
 					}
 				} else {
 					fmt.Println("作弊模式已经打开")
-					cheatOn = true
+					o.cheatOn = true
 				}
 			}
 		})
+		o.GetGameControl().SendWSCmdAndInvokeOnResponse("tp @s ~~~", func(output *packet.CommandOutput) {
+			if output.SuccessCount > 0 {
+				o.cheatOn = true
+			}
+		})
 		time.Sleep(3 * time.Second)
-		if !cheatOn {
+		if !o.cheatOn {
 			o.GetGameControl().BotSay("请打开作弊模式")
 		}
 	}
