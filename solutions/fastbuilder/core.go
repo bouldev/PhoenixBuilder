@@ -27,6 +27,7 @@ import (
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/io/commands"
+	utils_core "phoenixbuilder/lib/utils/core"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -271,7 +272,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 				commandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
 				break
 			}
-			SubFunc(commandSender, p)
+			utils_core.ProcessCommandOutput(commandSender, p)
 		case *packet.ActorEvent:
 			if p.EventType == packet.ActorEventDeath && p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
 				conn.WritePacket(&packet.PlayerAction{
