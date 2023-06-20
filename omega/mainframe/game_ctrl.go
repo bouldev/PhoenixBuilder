@@ -646,10 +646,10 @@ func (g *GameCtrl) SetOnParamMsg(name string, cb func(chat *defines.GameChat) (c
 	}
 }
 
-func newGameCtrl(o *Omega, interaction *GlobalAPI.GlobalAPI) *GameCtrl {
+func newGameCtrl(o *Omega) *GameCtrl {
 	analyzer := NewPacketOutAnalyzer(o.adaptor.Write)
 	c := &GameCtrl{
-		Interaction:         interaction,
+		Interaction:         o.adaptor.GetInteraction(),
 		WriteFn:             analyzer.Write,
 		WriteBytesFn:        o.adaptor.WriteBytes,
 		ExpectedCmdFeedBack: o.OmegaConfig.CommandFeedBackByDefault,
