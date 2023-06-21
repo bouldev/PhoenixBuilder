@@ -40,7 +40,7 @@ func (r *Resources) Init() func(pk *packet.Packet) {
 			lockDown:           sync.RWMutex{},
 			containerOpenData:  nil,
 			containerCloseData: nil,
-			responded:          make(chan bool, 1),
+			responded:          make(chan struct{}, 1),
 			resourcesOccupy: resourcesOccupy{
 				lockDown: sync.Mutex{},
 				holder:   "",

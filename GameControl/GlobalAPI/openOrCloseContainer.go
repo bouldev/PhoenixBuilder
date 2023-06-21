@@ -20,7 +20,7 @@ func (g *GlobalAPI) OpenContainer(
 ) (bool, error) {
 	g.Resources.Container.AwaitChangesBeforeSendPacket()
 	// await responce before send packet
-	err := g.ClickBlock(hotBarSlotID, pos, blockName, blockStates, false)
+	err := g.ClickBlock(hotBarSlotID, pos, blockName, blockStates)
 	if err != nil {
 		return false, fmt.Errorf("OpenContainer: %v", err)
 	}

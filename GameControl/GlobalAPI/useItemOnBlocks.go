@@ -9,15 +9,13 @@ import (
 
 /*
 让客户端点击 pos 处名为 blockName 且方块状态为 blockStates 的方块。
-如果 needWaiting 为真，则会等待点击完成后再返回值。
 你可以对容器使用这样的操作，这会使得容器被打开
 */
 func (g *GlobalAPI) ClickBlock(
-	hotBarSlotID uint8,
+	hotbarSlotID uint8,
 	pos [3]int32,
 	blockName string,
 	blockStates map[string]interface{},
-	needWaiting bool,
 ) error {
 	standardRuntimeID, found := chunk.StateToRuntimeID(blockName, blockStates)
 	if !found {
@@ -28,12 +26,12 @@ func (g *GlobalAPI) ClickBlock(
 		return fmt.Errorf("ClickBlock: Failed to converse StandardRuntimeID to NEMCRuntimeID; standardRuntimeID = %#v, blockName = %#v, blockStates = %#v", standardRuntimeID, blockName, blockStates)
 	}
 	// get block RunTime ID
-	err := g.ChangeSelectedHotbarSlot(hotBarSlotID, true)
+	err := g.ChangeSelectedHotbarSlot(hotbarSlotID)
 	if err != nil {
 		return fmt.Errorf("ClickBlock: %v", err)
 	}
 	// change selected hotbar slot
-	datas, err := g.Resources.Inventory.GetItemStackInfo(0, hotBarSlotID)
+	datas, err := g.Resources.Inventory.GetItemStackInfo(0, hotbarSlotID)
 	if err != nil {
 		return fmt.Errorf("ClickBlock: %v", err)
 	}
@@ -48,7 +46,7 @@ func (g *GlobalAPI) ClickBlock(
 			Actions:            []protocol.InventoryAction(nil),
 			ActionType:         protocol.UseItemActionClickBlock,
 			BlockPosition:      pos,
-			HotBarSlot:         int32(hotBarSlotID),
+			HotBarSlot:         int32(hotbarSlotID),
 			HeldItem:           datas,
 			BlockRuntimeID:     blockRuntimeID,
 		},
@@ -65,13 +63,6 @@ func (g *GlobalAPI) ClickBlock(
 		return fmt.Errorf("ClickBlock: %v", err)
 	}
 	// send packet
-	if needWaiting {
-		_, err = g.SendWSCommandWithResponce("list")
-		if err != nil {
-			return fmt.Errorf("ClickBlock: %v", err)
-		}
-	}
-	// wait changes
 	return nil
 	// return
 }

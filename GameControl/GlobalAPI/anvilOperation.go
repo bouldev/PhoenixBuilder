@@ -73,7 +73,7 @@ func (g *GlobalAPI) ChangeItemNameByUsingAnvil(
 		return []AnvilOperationResponce{}, fmt.Errorf("ChangeItemNameByUsingAnvil: Could not convert got into map[string]interface{}; got = %#v", got)
 	}
 	// 获取要求放置的铁砧的方块状态
-	err = g.ChangeSelectedHotbarSlot(hotBarSlotID, true)
+	err = g.ChangeSelectedHotbarSlot(hotBarSlotID)
 	if err != nil {
 		return []AnvilOperationResponce{}, fmt.Errorf("ChangeItemNameByUsingAnvil: %v", err)
 	}

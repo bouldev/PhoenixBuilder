@@ -10,7 +10,7 @@ import (
 //
 // 无论如何，即便不需要得到响应，也仍然需要使用此函数。
 func (c *container) AwaitChangesBeforeSendPacket() {
-	c.responded = make(chan bool, 1)
+	c.responded = make(chan struct{}, 1)
 }
 
 // 用于已经向租赁服提交容器操作后执行，
@@ -28,7 +28,7 @@ func (c *container) AwaitChangesAfterSendPacket() {
 // 属于私有实现
 func (c *container) responceContainerOperation() {
 	if c.GetOccupyStates() {
-		c.responded <- true
+		c.responded <- struct{}{}
 		close(c.responded)
 	}
 }

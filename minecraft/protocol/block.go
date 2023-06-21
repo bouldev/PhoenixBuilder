@@ -35,7 +35,8 @@ type BlockChangeEntry struct {
 
 // BlockChange reads/writes a BlockChangeEntry from an IO.
 func BlockChange(r IO, x *BlockChangeEntry) {
-	r.BlockPos(&x.BlockPos)
+	// r.BlockPos(&x.BlockPos)
+	r.UBlockPos(&x.BlockPos) // for Netease
 
 	r.Varuint32(&x.BlockRuntimeID)
 	r.Varuint32(&x.Flags)

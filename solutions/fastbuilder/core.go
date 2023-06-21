@@ -123,7 +123,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			panic(err)
 		}
 
-		env.ResourcesUpdater.(func(pk *packet.Packet))(&pk)
+		go env.ResourcesUpdater.(func(pk *packet.Packet))(&pk)
 
 		{
 			p, ok := pk.(*packet.PyRpc)

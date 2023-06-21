@@ -137,7 +137,7 @@ type container struct {
 	*/
 	containerCloseData *packet.ContainerClose
 	// 其他实现在打开或关闭容器后可能需要等待回应，此管道便是为了完成这一实现
-	responded chan bool
+	responded chan struct{}
 	// 描述容器资源的占用状态及占用者
 	resourcesOccupy
 }
