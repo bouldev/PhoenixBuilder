@@ -280,6 +280,7 @@ char *fb_command_generator(const char *text, int state) {
 }
 
 const char *flags_pool[]={
+	"--assignnbtdata", "-assignnbtdata", "-nbt"
 	"--excludecommands","-excludecommands",
 	"--invalidatecommands","-invalidatecommands",
 	"--strict","-strict","-S",

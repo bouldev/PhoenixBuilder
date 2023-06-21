@@ -193,7 +193,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
+					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.OneId)
 				},
 			},
 		},

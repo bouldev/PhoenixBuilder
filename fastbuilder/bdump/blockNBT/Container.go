@@ -217,7 +217,7 @@ func (c *Container) WriteDatas() error {
 				Name:   value.Name,
 				Count:  value.Count,
 				Damage: value.Damage,
-				Slot:   value.Count,
+				Slot:   value.Slot,
 			},
 			"",
 		)
