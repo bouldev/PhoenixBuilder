@@ -83,12 +83,7 @@ func NEMCSubChunkDecode(data []byte) (int8, *SubChunk, []map[string]interface{},
 // DiskDecode decodes the data from a SerialisedData object into a chunk and returns it. If the data was
 // invalid, an error is returned.
 func DiskDecode(data SerialisedData, r define.Range) (*Chunk, error) {
-	air, ok := StateToRuntimeID("minecraft:air", nil)
-	if !ok {
-		panic("cannot find air runtime ID")
-	}
-
-	c := New(air, r)
+	c := New(AirRID, r)
 
 	var err error
 	for i, sub := range data.SubChunks {
@@ -144,7 +139,25 @@ func decodeSubChunk(buf *bytes.Buffer, c *Chunk, index *byte, e Encoding) (*SubC
 			if err != nil {
 				return nil, err
 			}
+
 		}
+		//if storageCount > 1 {
+		//	for x := uint8(0); x < 16; x++ {
+		//		for y := uint8(0); y < 16; y++ {
+		//			for z := uint8(0); z < 16; z++ {
+		//				for i := 0; i < int(storageCount); i++ {
+		//					rtid := sub.storages[i].At(x, y, z)
+		//					if rtid != AirRID {
+		//						if i != 0 {
+		//							fmt.Printf("%v, %v\n", i, rtid)
+		//						}
+		//					}
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
+
 	}
 	return sub, nil
 }

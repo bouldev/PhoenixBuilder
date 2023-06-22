@@ -52,10 +52,28 @@ func (blockPaletteEncoding) encode(buf *bytes.Buffer, v uint32) {
 	name, props, _ := RuntimeIDToState(v)
 	_ = nbt.NewEncoderWithEncoding(buf, nbt.LittleEndian).Encode(blockEntry{Name: name, State: props, Version: CurrentBlockVersion})
 }
+
+type BlockPaletteEncodingError struct {
+	error       string
+	canContinue bool
+}
+
+func (e *BlockPaletteEncodingError) Error() string {
+	return e.error
+}
+
+func (e *BlockPaletteEncodingError) CanContinue() bool {
+	return e.canContinue
+}
+
 func (blockPaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
 	var e blockEntry
 	if err := nbt.NewDecoderWithEncoding(buf, nbt.LittleEndian).Decode(&e); err != nil {
-		return 0, fmt.Errorf("error decoding block palette entry: %w", err)
+		return 0, &BlockPaletteEncodingError{
+			error:       fmt.Sprintf("error decoding block palette entry: %w", err),
+			canContinue: false,
+		}
+
 	}
 	// As of 1.18.30, many common block state names have been renamed for consistency and the old names are now aliases.
 	// This function checks if the entry has an alias and if so, returns the updated entry.
@@ -65,7 +83,14 @@ func (blockPaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
 
 	v, ok := StateToRuntimeID(e.Name, e.State)
 	if !ok {
-		return 0, fmt.Errorf("cannot get runtime ID of block state %v{%+v}", e.Name, e.State)
+		v, ok = BlockPropsToRuntimeID(e.Name, e.State)
+		if !ok {
+			return AirRID, &BlockPaletteEncodingError{
+				error:       fmt.Sprintf("cannot get runtime ID of block state %v{%+v}", e.Name, e.State),
+				canContinue: true,
+			}
+		}
+		return v, nil
 	}
 	return v, nil
 }
@@ -105,7 +130,17 @@ func (diskEncoding) decodePalette(buf *bytes.Buffer, blockSize paletteSize, e pa
 	for i := uint32(0); i < paletteCount; i++ {
 		palette.values[i], err = e.decode(buf)
 		if err != nil {
-			return nil, err
+			decodeErr, ok := err.(*BlockPaletteEncodingError)
+			if ok {
+				if decodeErr.CanContinue() {
+					fmt.Println(decodeErr.Error())
+					palette.values[i] = AirRID
+					continue
+				} else {
+					fmt.Println(decodeErr.Error())
+					return nil, err
+				}
+			}
 		}
 	}
 	return palette, nil
