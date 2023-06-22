@@ -62,11 +62,8 @@ func (g *GlobalAPI) sendCMDWithRespPrivate(
 	command string,
 	origin uint32,
 ) (packet.CommandOutput, error) {
-	uniqueId, err := uuid.NewUUID()
-	if err != nil || uniqueId == uuid.Nil {
-		return g.sendCMDWithRespPrivate(command, origin)
-	}
-	err = g.Resources.Command.WriteRequest(uniqueId)
+	uniqueId := generateUUID()
+	err := g.Resources.Command.WriteRequest(uniqueId)
 	if err != nil {
 		return packet.CommandOutput{}, fmt.Errorf("sendCMDWithRespPrivate: %v", err)
 	}

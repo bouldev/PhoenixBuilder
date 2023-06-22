@@ -7,23 +7,6 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-// 描述一个空气物品
-var AirItem protocol.ItemInstance = protocol.ItemInstance{
-	StackNetworkID: 0,
-	Stack: protocol.ItemStack{
-		ItemType: protocol.ItemType{
-			NetworkID:     0,
-			MetadataValue: 0,
-		},
-		BlockRuntimeID: 0,
-		Count:          0,
-		NBTData:        map[string]interface{}(nil),
-		CanBePlacedOn:  []string(nil),
-		CanBreak:       []string(nil),
-		HasNetworkID:   false,
-	},
-}
-
 // 描述单个物品所在的位置
 type ItemLocation struct {
 	WindowID    int16 // 物品所在库存的窗口 ID

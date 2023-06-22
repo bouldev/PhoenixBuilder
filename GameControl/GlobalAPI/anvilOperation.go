@@ -89,7 +89,14 @@ func (g *GlobalAPI) ChangeItemNameByUsingAnvil(
 	defer func() {
 		g.CloseContainer()
 		// 关闭铁砧
-		g.RevertBlocks(uniqueId, correctPos)
+		g.RevertStructure(
+			uniqueId,
+			BlockPos{
+				correctPos[0],
+				correctPos[1] - 1,
+				correctPos[2],
+			},
+		)
 		// 恢复铁砧下方的承重方块为原本方块
 	}()
 	// 退出时应该被调用的函数

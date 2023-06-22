@@ -6,13 +6,6 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-// 描述各个维度的 ID
-const (
-	OverWorldID = byte(iota) // 主世界
-	NetherID                 // 下界
-	EndID                    // 末地
-)
-
 // 用于描述单个 querytarget 结果的结构体
 type QuerytargetInfo struct {
 	Dimension byte
