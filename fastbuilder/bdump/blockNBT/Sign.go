@@ -94,7 +94,20 @@ func (s *Sign) WriteDatas() error {
 	}
 	// 放置告示牌(快速导入模式下)
 	{
-		err := s.Package.API.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", s.Package.Datas.Position[0], s.Package.Datas.Position[1], s.Package.Datas.Position[2]), true)
+		err := s.Package.API.SendSettingsCommand(
+			fmt.Sprintf(
+				"setblock %d %d %d air",
+				s.Package.Datas.Position[0],
+				s.Package.Datas.Position[1],
+				s.Package.Datas.Position[2],
+			),
+			true,
+		)
+		if err != nil {
+			return fmt.Errorf("WriteDatas: %v", err)
+		}
+		// 先清除当前告示牌处的方块
+		err = s.Package.API.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", s.Package.Datas.Position[0], s.Package.Datas.Position[1], s.Package.Datas.Position[2]), true)
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
