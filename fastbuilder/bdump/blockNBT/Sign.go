@@ -94,7 +94,12 @@ func (s *Sign) WriteDatas() error {
 	}
 	// 放置告示牌(快速导入模式下)
 	{
-		err := s.Package.API.SendSettingsCommand(
+		err := s.Package.API.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", s.Package.Datas.Position[0], s.Package.Datas.Position[1], s.Package.Datas.Position[2]), true)
+		if err != nil {
+			return fmt.Errorf("WriteDatas: %v", err)
+		}
+		// 传送机器人到告示牌所在的位置
+		err = s.Package.API.SendSettingsCommand(
 			fmt.Sprintf(
 				"setblock %d %d %d air",
 				s.Package.Datas.Position[0],
@@ -106,15 +111,9 @@ func (s *Sign) WriteDatas() error {
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
-		// 先清除当前告示牌处的方块
-		err = s.Package.API.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", s.Package.Datas.Position[0], s.Package.Datas.Position[1], s.Package.Datas.Position[2]), true)
-		if err != nil {
-			return fmt.Errorf("WriteDatas: %v", err)
-		}
-		if err != nil {
-			return fmt.Errorf("WriteDatas: %v", err)
-		}
-		// 传送机器人到告示牌所在的位置
+		// 清除当前告示牌处的方块。
+		// 如果不这么做且原本该处的方块是告示牌的话，
+		// 那么 NBT 数据将会注入失败
 		err = s.Package.API.SendSettingsCommand(
 			"replaceitem entity @s slot.hotbar 0 oak_sign",
 			true,
@@ -122,7 +121,7 @@ func (s *Sign) WriteDatas() error {
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
-		// 先获取一个告示牌到快捷栏 0
+		// 获取一个告示牌到快捷栏 0
 		err = s.Package.API.ChangeSelectedHotbarSlot(0)
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
@@ -141,7 +140,15 @@ func (s *Sign) WriteDatas() error {
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
-		// 备份结构
+		/*
+			我们会在告示牌的 (~1, ~, ~) 处生成一个玻璃，
+			然后点击这个玻璃并指定点击的面是 4 以将手中的告示牌放上去。
+
+			这样，我们就可以取得反作弊的认同，
+			然后我们就可以向告示牌注入 NBT 数据了。
+
+			但在生成玻璃前，我们需要备份这个玻璃原本的方块以方便之后恢复它
+		*/
 		_, err = s.Package.API.SendWSCommandWithResponce(
 			fmt.Sprintf(
 				"setblock %d %d %d glass",
@@ -153,7 +160,7 @@ func (s *Sign) WriteDatas() error {
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
-		// 修改备份过的区域以用于放置方块
+		// 生成上文提到的玻璃
 		err = s.Package.API.PlaceBlock(
 			GlobalAPI.UseItemOnBlocks{
 				HotbarSlotID: 0,
@@ -170,12 +177,15 @@ func (s *Sign) WriteDatas() error {
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
-		// 将手中的告示牌放出来
+		// 在玻璃上放置手中的告示牌
 		err = s.Package.API.SetBlock(s.Package.Datas.Position, s.Package.Block.Name, s.Package.Datas.StatesString)
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
-		// 将告示牌修正到正确的方块上
+		// 现在玻璃上有了一个告示牌，这是我们刚刚放上去的，
+		// 但这个告示牌的种类是 oak_sign ，且朝向固定，
+		// 因此现在我们需要覆写这个告示牌的种类及朝向为正确的形式。
+		// 经过测试，覆写操作不会导致 NBT 数据无法注入
 		err = s.Package.API.RevertStructure(
 			uniqueID,
 			GlobalAPI.BlockPos{
@@ -187,7 +197,7 @@ func (s *Sign) WriteDatas() error {
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
-		// 恢复备份用结构
+		// 将上文提到的玻璃处的方块恢复为原本的方块
 	}
 	// 放置告示牌
 	err := s.Package.API.WritePacket(&packet.BlockActorData{
