@@ -221,7 +221,7 @@ func (o *WoodAxe) onInitStructureBlock(selectIndicatorPos, areaIndicatorPos defi
 	o.selectIndicateStructureBlock = NewStructureBlock(
 		selectIndicatorPos,
 		func(p packet.Packet) {
-			o.Frame.GetGameControl().GetInteraction().WritePacket(p)
+			o.Frame.GetGameControl().SendMCPacket(p)
 		},
 		uid,
 	)
@@ -229,7 +229,7 @@ func (o *WoodAxe) onInitStructureBlock(selectIndicatorPos, areaIndicatorPos defi
 	o.areaIndicateStructureBlock = NewStructureBlock(
 		areaIndicatorPos,
 		func(p packet.Packet) {
-			o.Frame.GetGameControl().GetInteraction().WritePacket(p)
+			o.Frame.GetGameControl().SendMCPacket(p)
 		},
 		uid,
 	)

@@ -14,7 +14,7 @@ import (
 
 type ExportMCStructure struct {
 	*defines.BasicComponent
-	apis     GlobalAPI.GlobalAPI
+	apis     *GlobalAPI.GlobalAPI
 	lockDown sync.Mutex
 	Triggers []string `json:"菜单触发词"`
 	Usage    string   `json:"菜单项描述"`
@@ -29,7 +29,7 @@ func (o *ExportMCStructure) Init(cfg *defines.ComponentConfig, storage defines.S
 
 func (o *ExportMCStructure) Inject(frame defines.MainFrame) {
 	o.Frame = frame
-	o.apis = o.Frame.GetGameControl().GetInteraction()
+	o.apis = o.Frame.GetGameControl().GetExtendOperation().(*GlobalAPI.GlobalAPI)
 	o.lockDown = sync.Mutex{}
 	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{

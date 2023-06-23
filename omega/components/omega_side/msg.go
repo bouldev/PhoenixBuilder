@@ -95,7 +95,7 @@ func (t *omegaSideTransporter) initMapping() {
 				if _err != nil {
 					writer(map[string]interface{}{"succ": false, "err": string(_err.Error())})
 				} else {
-					t.side.Frame.GetGameControl().GetInteraction().WritePacket(pk)
+					t.side.Frame.GetGameControl().SendMCPacket(pk)
 					writer(map[string]interface{}{"succ": true, "err": nil})
 				}
 			} else {

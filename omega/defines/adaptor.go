@@ -1,7 +1,6 @@
 package defines
 
 import (
-	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
@@ -32,7 +31,6 @@ type ConnectionAdaptor interface {
 	Write(packet.Packet) error
 	WriteBytes([]byte) error
 	GetInitUQHolderCopy() *uqHolder.UQHolder
-	GetInteraction() *GlobalAPI.GlobalAPI
 	GetBackendCommandFeeder() chan string
 	GetChunkFeeder() chan *mirror.ChunkData
 	FBEval(cmd string)
