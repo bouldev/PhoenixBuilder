@@ -102,6 +102,6 @@ func main() {
 		}
 	}()
 
-	helper.WaitOK()
+	helper.WaitOK(time.Minute * 3)
 	fmt.Println("Minimal Client exited.")
 }
