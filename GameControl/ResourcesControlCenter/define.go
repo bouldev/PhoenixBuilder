@@ -14,10 +14,6 @@ import (
 值得说明的是，此结构体的出现将会意味着 UQHolder 的弃用 [TODO]
 */
 type Resources struct {
-	// 如果当前结构体是在 PhoenixBuilder 启动时取得的，
-	// 那么此认证结果为真，否则为假 。
-	// 此参数有助于验证公用资源的唯一性，因为公用资源在内存中至多存在一个
-	verified bool
 	// 管理命令请求队列及命令返回值
 	Command commandRequestWithResponce
 	// 管理本地库存数据，如背包物品

@@ -3,8 +3,6 @@ package mainframe
 import (
 	"encoding/json"
 	"fmt"
-	ExtendOperationCtrl "phoenixbuilder/GameControl/GlobalAPI"
-	"phoenixbuilder/GameControl/ResourcesControlCenter"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -346,7 +344,6 @@ func (o *PacketOutAnalyzer) Write(p packet.Packet) error {
 }
 
 type GameCtrl struct {
-	extendOperationAPI  *ExtendOperationCtrl.GlobalAPI
 	analyzer            *PacketOutAnalyzer
 	WriteBytesFn        func([]byte) error
 	WriteFn             func(packet packet.Packet) error
@@ -365,9 +362,6 @@ type GameCtrl struct {
 	placeCommandBlockLock sync.Mutex
 }
 
-func (g *GameCtrl) GetExtendOperation() defines.ExtendOperation {
-	return g.extendOperationAPI
-}
 func (g *GameCtrl) GetPlayerKit(name string) defines.PlayerKit {
 	return newPlayerKitOmega(g.uq, g, name)
 }
@@ -661,21 +655,6 @@ func newGameCtrl(o *Omega) *GameCtrl {
 		placeCommandBlockLock: sync.Mutex{},
 	}
 	c.analyzer = analyzer
-	{
-		res := &ResourcesControlCenter.Resources{}
-		res.Init()
-		extendOperationAPI := &ExtendOperationCtrl.GlobalAPI{
-			WritePacket: c.WriteFn,
-			BotInfo: ExtendOperationCtrl.BotInfo{
-				BotName:      c.uq.GetBotName(),
-				BotIdentity:  c.uq.GetBotIdentity(),
-				BotRunTimeID: c.uq.GetBotRuntimeID(),
-				BotUniqueID:  c.uq.GetBotUniqueID(),
-			},
-			Resources: res,
-		}
-		c.extendOperationAPI = extendOperationAPI
-	}
 
 	err := o.GetJsonData("playerPermission.json", &c.PlayerPermission)
 	if err != nil {

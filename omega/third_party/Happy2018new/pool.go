@@ -15,7 +15,7 @@ var DefaultComponentConfigByte []byte
 
 // 插件列表
 var Components = map[string]defines.Component{
-	"记录方块改动日志": &RecordBlockChanges{BasicComponent: &defines.BasicComponent{}},
-	"修改物品名称": &ChangeItemNameByUseAnvil{BasicComponent: &defines.BasicComponent{}},
-	"提取 MCStructure": &ExportMCStructure{BasicComponent: &defines.BasicComponent{}},
+	"记录方块改动日志":       &RecordBlockChanges{BasicComponent: &defines.BasicComponent{}},
+	"修改物品名称":         &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: "因兼容性问题，此组件已被移除"},
+	"提取 MCStructure": &defines.StubComponent{BasicComponent: &defines.BasicComponent{}, Hint: "因兼容性问题，此组件暂时被移除"},
 }

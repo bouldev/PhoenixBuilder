@@ -134,7 +134,6 @@ type ExtendOperation interface {
 // 建议扩展该接口以提供更丰富的功能
 // 另一种扩展方式是定义新插件并暴露接口
 type GameControl interface {
-	GetExtendOperation() ExtendOperation
 	SendMCPacket(packet.Packet)
 	SayTo(target string, msg string)
 	RawSayTo(target string, msg string)

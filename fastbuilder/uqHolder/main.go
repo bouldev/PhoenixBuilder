@@ -82,19 +82,19 @@ type GameRule struct {
 	Value                 interface{}
 }
 type UQHolder struct {
-	VERSION           string
-	ConnectTime       time.Time
-	WorldName         string
-	BotRandomID       int64
-	BotUniqueID       int64
-	BotRuntimeID      uint64
-	BotName           string
-	BotIdentity       string
-	CompressThreshold uint16
-	CurrentTick       uint64
-	WorldGameMode     int32
-	WorldDifficulty   uint32
-	// InventorySlot              map[uint32]protocol.ItemInstance
+	VERSION                    string
+	ConnectTime                time.Time
+	WorldName                  string
+	BotRandomID                int64
+	BotUniqueID                int64
+	BotRuntimeID               uint64
+	BotName                    string
+	BotIdentity                string
+	CompressThreshold          uint16
+	CurrentTick                uint64
+	WorldGameMode              int32
+	WorldDifficulty            uint32
+	InventorySlot              map[uint32]protocol.ItemInstance
 	playersByUUID              map[[16]byte]*Player
 	PlayersByEntityID          map[int64]*Player
 	EntitiesByRuntimeID        map[uint64]*Entity
@@ -107,8 +107,8 @@ type UQHolder struct {
 	BotSpawnPosition           map[int32]protocol.BlockPos
 	CommandsEnabled            bool
 	GameRules                  map[string]*GameRule
-	// InventoryContent           map[uint32][]protocol.ItemInstance
-	PlayerHotBar packet.PlayerHotBar
+	InventoryContent           map[uint32][]protocol.ItemInstance
+	PlayerHotBar               packet.PlayerHotBar
 	// AvailableCommands   packet.AvailableCommands
 	BotPos                PosRepresent
 	BotOnGround           bool
@@ -120,17 +120,17 @@ type UQHolder struct {
 
 func NewUQHolder(BotRuntimeID uint64) *UQHolder {
 	uq := &UQHolder{
-		VERSION:      fmt.Sprintf("%d.%d.%d", Version[0], Version[1], Version[2]),
-		BotRuntimeID: BotRuntimeID,
-		// InventorySlot:         map[uint32]protocol.ItemInstance{},
-		playersByUUID:       map[[16]byte]*Player{},
-		PlayersByEntityID:   map[int64]*Player{},
-		WorldSpawnPosition:  map[int32]protocol.BlockPos{},
-		BotSpawnPosition:    map[int32]protocol.BlockPos{},
-		EntitiesByRuntimeID: map[uint64]*Entity{},
-		entitiesByUniqueID:  map[int64]*Entity{},
-		GameRules:           map[string]*GameRule{},
-		// InventoryContent:      map[uint32][]protocol.ItemInstance{},
+		VERSION:               fmt.Sprintf("%d.%d.%d", Version[0], Version[1], Version[2]),
+		BotRuntimeID:          BotRuntimeID,
+		InventorySlot:         map[uint32]protocol.ItemInstance{},
+		playersByUUID:         map[[16]byte]*Player{},
+		PlayersByEntityID:     map[int64]*Player{},
+		WorldSpawnPosition:    map[int32]protocol.BlockPos{},
+		BotSpawnPosition:      map[int32]protocol.BlockPos{},
+		EntitiesByRuntimeID:   map[uint64]*Entity{},
+		entitiesByUniqueID:    map[int64]*Entity{},
+		GameRules:             map[string]*GameRule{},
+		InventoryContent:      map[uint32][]protocol.ItemInstance{},
 		CommandRelatedEnums:   make([]*packet.UpdateSoftEnum, 0),
 		displayUnknownPackets: false,
 		mu:                    sync.Mutex{},
@@ -318,10 +318,8 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 	switch p := pk.(type) {
 	case *packet.NetworkSettings:
 		uq.CompressThreshold = p.CompressionThreshold
-	/*
-		case *packet.InventorySlot:
-			uq.InventorySlot[p.Slot] = p.NewItem
-	*/
+	case *packet.InventorySlot:
+		uq.InventorySlot[p.Slot] = p.NewItem
 	case *packet.PlayerList:
 		if p.ActionType == packet.PlayerListActionAdd {
 			for _, e := range p.Entries {
@@ -381,11 +379,15 @@ func (uq *UQHolder) Update(pk packet.Packet) {
 				Value:                 r.Value,
 			}
 		}
-	/*
-		case *packet.InventoryContent:
-			uq.InventoryContent[p.WindowID] = p.Content
-
-	*/
+	case *packet.InventoryContent:
+		for key, value := range p.Content {
+			if value.Stack.ItemType.NetworkID != -1 {
+				if uq.InventoryContent[p.WindowID] == nil {
+					uq.InventoryContent[p.WindowID] = make([]protocol.ItemInstance, len(p.Content))
+				}
+				uq.InventoryContent[p.WindowID][key] = value
+			}
+		}
 	case *packet.AvailableCommands:
 		// too large
 		// uq.AvailableCommands = *p

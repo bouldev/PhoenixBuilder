@@ -123,8 +123,6 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			panic(err)
 		}
 
-		go env.ResourcesUpdater.(func(pk *packet.Packet))(&pk)
-
 		{
 			p, ok := pk.(*packet.PyRpc)
 			if ok {
@@ -203,6 +201,9 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacketAndByte(pk, data)
 			continue
 		}
+
+		go env.ResourcesUpdater.(func(pk *packet.Packet))(&pk)
+
 		env.UQHolder.(*uqHolder.UQHolder).Update(pk)
 		hostBridgeGamma.HostPumpMcPacket(pk)
 		hostBridgeGamma.HostQueryExpose["uqHolder"] = func() string {
