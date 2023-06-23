@@ -209,7 +209,7 @@ func (o *AbilityManage) Activate() {
 					// 如果调用现有api, 可能会发送多个数据包来完成相同的任务, 这里选择将它们放在一个数据包里发送
 					if isChanged {
 						cpml, pml := o.getPermissionLevel(ap)
-						o.Frame.GetGameControl().GetInteraction().WritePacket(&packet.AdventureSettings{
+						o.Frame.GetGameControl().SendMCPacket(&packet.AdventureSettings{
 							Flags:                  pf,
 							CommandPermissionLevel: cpml,
 							ActionPermissions:      ap,

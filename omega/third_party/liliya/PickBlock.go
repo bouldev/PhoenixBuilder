@@ -15,7 +15,7 @@ type PickBlock struct {
 	Triggers       []string `json:"菜单触发词"`
 	Usage          string   `json:"菜单项描述"`
 	NeedPermission bool     `json:"OP权限验证"`
-	apis           GlobalAPI.GlobalAPI
+	apis           *GlobalAPI.GlobalAPI
 }
 
 func (o *PickBlock) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
@@ -27,7 +27,7 @@ func (o *PickBlock) Init(cfg *defines.ComponentConfig, storage defines.StorageAn
 
 func (o *PickBlock) Inject(frame defines.MainFrame) {
 	o.Frame = frame
-	o.apis = o.Frame.GetGameControl().GetInteraction()
+	o.apis = o.Frame.GetGameControl().GetExtendOperation().(*GlobalAPI.GlobalAPI)
 	o.Frame.GetGameListener().SetGameMenuEntry(&defines.GameMenuEntry{
 		MenuEntry: defines.MenuEntry{
 			Triggers:     o.Triggers,
