@@ -3,6 +3,7 @@ package GlobalAPI
 import (
 	"fmt"
 	"phoenixbuilder/mirror/chunk"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -16,6 +17,16 @@ func generateUUID() uuid.UUID {
 		}
 		return uniqueId
 	}
+}
+
+// 返回 uniqueID 在字符串化之后的安全形式，
+// 因为我们得考虑 NEMC 的屏蔽词机制
+func uuid_to_safety_string(uniqueID uuid.UUID) string {
+	str := uniqueID.String()
+	for key, value := range StringUUIDReplaceMap {
+		str = strings.ReplaceAll(str, key, value)
+	}
+	return str
 }
 
 // 取得名称为 name 且方块状态为 states 的方块在 NEMC 下的 Block Runtime ID 。

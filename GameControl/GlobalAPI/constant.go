@@ -50,3 +50,21 @@ var AirItem protocol.ItemInstance = protocol.ItemInstance{
 var ErrContainerNerverOpened error = fmt.Errorf(
 	"CloseContainer: Container have been nerver opened",
 )
+
+/*
+用于将字符串型的 uuid 通过下表的映射处理为新的字符串。
+这么做是为了规避 NEMC 的屏蔽词问题。
+
+相信这样处理过后的字符串不会再被屏蔽了，
+或者，我们得说 *** 的 NEMC，你真好！
+*/
+var StringUUIDReplaceMap map[string]string = map[string]string{
+	"0": "?", "1": "†", "2": "‡", "3": "⁎", "4": "⁕",
+	"5": "⁑", "6": "⁜", "7": "⁂", "8": "✓", "9": "✕",
+	"a": "⌁", "b": ",", "c": "_", "d": "~", "e": "!",
+	"f": "@", "g": "#", "h": "♪", "i": "%", "j": "^",
+	"k": "&", "l": "*", "m": "(", "n": ")", "o": "-",
+	"p": "+", "q": "=", "r": "[", "s": "]", "t": "‰",
+	"u": ";", "v": "'", "w": "⌀", "x": "<", "y": ">",
+	"z": "‱",
+}

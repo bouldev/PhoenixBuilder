@@ -35,25 +35,22 @@ func PlaceBlockWithNBTData(
 	newRequest.Datas.Type = checkIfIsEffectiveNBTBlock(newRequest.Block.Name)
 	// get new request of place nbt block
 	var placeBlockMethod GeneralBlockNBT
-	if datas.Settings.AssignNBTData {
+	if datas.Settings.AssignNBTData || newRequest.Datas.Type == "CommandBlock" {
 		placeBlockMethod = getMethod(newRequest)
 		err = placeBlockMethod.Decode()
 		if err != nil {
-			return fmt.Errorf("PlaceBlockWithNBTData: Failed to place the entity block named %v at (%d,%d,%d), and the error log is %v", newRequest.Block.Name, blockInfo.Point.X, blockInfo.Point.Y, blockInfo.Point.Z, err)
+			return fmt.Errorf("PlaceBlockWithNBTData: %v", err)
 		}
-		// if the user wants us to assign NBT data
+		// if the user wants us to assign NBT data,
+		// or the target block is a command block
 	} else {
-		if newRequest.Datas.Type == "CommandBlock" {
-			placeBlockMethod = &CommandBlock{Package: &newRequest, NeedToPlaceBlock: true}
-		} else {
-			placeBlockMethod = &Default{Package: &newRequest}
-		}
-		// uf the user does not want us to assign NBT data
+		placeBlockMethod = &Default{Package: &newRequest}
+		// if the user does not want us to assign NBT data
 	}
 	// get method and decode nbt data into golang struct
 	err = placeBlockMethod.WriteDatas()
 	if err != nil {
-		return fmt.Errorf("PlaceBlockWithNBTData: Failed to place the entity block named %v at (%d,%d,%d), and the error log is %v", newRequest.Block.Name, blockInfo.Point.X, blockInfo.Point.Y, blockInfo.Point.Z, err)
+		return fmt.Errorf("PlaceBlockWithNBTData: %v", err)
 	}
 	// assign nbt data
 	return nil

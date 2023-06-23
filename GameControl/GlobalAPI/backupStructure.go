@@ -21,7 +21,7 @@ func (g *GlobalAPI) BackupStructure(structure MCStructure) (uuid.UUID, error) {
 	resp, err := g.SendWSCommandWithResponce(
 		fmt.Sprintf(
 			`structure save "%v" %d %d %d %d %d %d`,
-			uniqueId.String(),
+			uuid_to_safety_string(uniqueId),
 			structure.BeginX,
 			structure.BeginY,
 			structure.BeginZ,
@@ -44,35 +44,31 @@ func (g *GlobalAPI) BackupStructure(structure MCStructure) (uuid.UUID, error) {
 
 // 在 pos 处恢复名称为 unique.String() 的备份用结构并删除此结构
 func (g *GlobalAPI) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error {
-	{
-		resp, err := g.SendWSCommandWithResponce(
-			fmt.Sprintf(
-				`structure load "%v" %d %d %d`,
-				uniqueID.String(),
-				pos[0],
-				pos[1],
-				pos[2],
-			),
-		)
-		if err != nil {
-			return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
-		}
-		if resp.SuccessCount <= 0 {
-			return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
-		}
+	resp, err := g.SendWSCommandWithResponce(
+		fmt.Sprintf(
+			`structure load "%v" %d %d %d`,
+			uuid_to_safety_string(uniqueID),
+			pos[0],
+			pos[1],
+			pos[2],
+		),
+	)
+	if err != nil {
+		return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
+	}
+	if resp.SuccessCount <= 0 {
+		return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
 	}
 	// revert structure
-	{
-		err := g.SendSettingsCommand(
-			fmt.Sprintf(
-				`structure delete "%v"`,
-				uniqueID.String(),
-			),
-			false,
-		)
-		if err != nil {
-			return fmt.Errorf("RevertStructure: %v", err)
-		}
+	err = g.SendSettingsCommand(
+		fmt.Sprintf(
+			`structure delete "%v"`,
+			uuid_to_safety_string(uniqueID),
+		),
+		false,
+	)
+	if err != nil {
+		return fmt.Errorf("RevertStructure: %v", err)
 	}
 	// delete structure
 	return nil
