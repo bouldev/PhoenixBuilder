@@ -8,11 +8,7 @@ import (
 
 // ------------------------- Resources -------------------------
 
-/*
-管理 PhoenixBuilder 的各类公用资源。
-
-值得说明的是，此结构体的出现将会意味着 UQHolder 的弃用 [TODO]
-*/
+// 管理和保存 PhoenixBuilder 的各类公用资源
 type Resources struct {
 	// 管理命令请求队列及命令返回值
 	Command commandRequestWithResponce
@@ -41,7 +37,7 @@ type commandRequestWithResponce struct {
 type inventoryContents struct {
 	// 防止并发读写而设置的读写锁
 	lockDown sync.RWMutex
-	// int32 代表打开的库存的窗口 ID ，即 WindowID ；
+	// uint32 代表打开的库存的窗口 ID ，即 WindowID ；
 	// uint8 代表物品所在的槽位；
 	// 最内层的 protocol.ItemInstance 存放物品数据
 	datas map[uint32]map[uint8]protocol.ItemInstance
@@ -52,7 +48,7 @@ type inventoryContents struct {
 /*
 存放物品操作请求及结果。
 
-重要：
+!!! 重要 !!!
 任何物品操作都应该通过此结构体下的有关实现来完成，否则可能会造成严重后果。
 因此，为了绝对的安全，如果尝试绕过相关实现而直接发送物品操作数据包，则会造成程序惊慌。
 */
@@ -106,7 +102,7 @@ type ContainerID uint8
 /*
 存储容器的 打开/关闭 状态，同时存储容器资源的占用状态。
 
-重要：
+!!! 重要 !!!
 容器由于是 PhoenixBuilder 的其中一个公用资源，因此为了公平性，
 现在由我们(资源管理中心)负责完成对该公用资源的占用和释放之实现。
 
