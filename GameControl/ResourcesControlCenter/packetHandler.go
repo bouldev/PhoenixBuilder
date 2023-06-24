@@ -32,6 +32,10 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 			r.Inventory.writeItemStackInfo(uint32(value.WindowID), uint8(value.InventorySlot), value.NewItem)
 		}
 		// inventory contents(for enchant command...)
+	case *packet.InventorySlot:
+		r.Inventory.writeItemStackInfo(p.WindowID, uint8(p.Slot), p.NewItem)
+		fmt.Printf("%#v\n", *p)
+		// inventory contents(for chest...) [NOT TEST]
 	case *packet.ItemStackResponse:
 		for _, value := range p.Responses {
 			if value.Status == protocol.ItemStackResponseStatusOK {
