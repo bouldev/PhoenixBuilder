@@ -39,6 +39,7 @@ require (
 replace rogchap.com/v8go v0.7.0 => ./depends/v8go@v0.7.0
 
 require (
+	github.com/Shopify/go-lua v0.0.0-20221004153744-91867de107cf
 	github.com/Tnze/go-mc v1.17.0
 	github.com/andybalholm/brotli v1.0.3
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
@@ -57,6 +58,7 @@ require (
 	github.com/sandertv/go-raknet v1.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/xtaci/kcp-go/v5 v5.6.1
+	github.com/yuin/gopher-lua v1.1.0
 	go.kuoruan.net/v8go-polyfills v0.5.0
 	go.uber.org/atomic v1.9.0
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect

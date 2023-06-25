@@ -9,6 +9,8 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/omega/collaborate"
 	"phoenixbuilder/omega/defines"
+	lf "phoenixbuilder/omega/mainframe/lang_support/lua_frame"
+	omgApi "phoenixbuilder/omega/mainframe/lang_support/lua_frame/omgcomponentapi"
 	"phoenixbuilder/omega/utils"
 
 	// "runtime/pprof"
@@ -547,6 +549,7 @@ func (o *Partol) Inject(frame defines.MainFrame) {
 }
 
 func (o *Partol) Activate() {
+	//o.mainFrame.GetGameControl().SendCmd("/say test=======")
 	if !o.EnablePartol {
 		return
 	}
@@ -572,6 +575,101 @@ func (o *Partol) Activate() {
 	}
 }
 
+// 插件
+type LuaComponenter struct {
+	*BaseCoreComponent
+	Monitor   *lf.Monitor
+	LuaFrame  *lf.BuiltlnFn
+	mainFrame defines.MainFrame
+}
+
+func (b *LuaComponenter) Init(cfg *defines.ComponentConfig, storage defines.StorageAndLogProvider) {
+	m, _ := json.Marshal(cfg.Configs)
+	err := json.Unmarshal(m, b)
+	if err != nil {
+		panic(err)
+	}
+	//读取lua框架
+	b.Monitor = lf.NewMonitor(omgApi.NewOmgCoreComponent(b.omega, b.mainFrame))
+	//读取一次已经产生的文件
+	b.Monitor.InintComponents()
+	i := 0
+	for k, v := range b.Monitor.LuaComponentData {
+		i++
+		if v.JsonConfig.Disabled {
+
+			b.Monitor.OmgFrame.Omega.GetBackendDisplay().Write(pterm.Warning.Sprintf("\t跳过加载组件 %3d/%3d [%v] %v@%v", i, len(b.Monitor.LuaComponentData), v.JsonConfig.Source, k, v.JsonConfig.Version))
+			//b.omega.backendLogger.Write()
+		} else {
+			b.Monitor.OmgFrame.Omega.GetBackendDisplay().Write(pterm.Success.Sprintf("\t正在加载组件 %3d/%3d [%v] %v@%v", i, len(b.Monitor.LuaComponentData), v.JsonConfig.Source, k, v.JsonConfig.Version))
+			//b.omega.backendLogger.Write()
+		}
+
+	}
+}
+func (b *LuaComponenter) Inject(frame defines.MainFrame) {
+	b.mainFrame = frame
+	//注入函数 并且开启插件
+
+	b.Monitor.InjectComponents()
+
+}
+
+func (o *LuaComponenter) Activate() {
+	time.Sleep(time.Second * 3)
+	//开启组件
+	o.Monitor.OmgFrame.MainFrame = o.mainFrame
+	for k, _ := range o.Monitor.ComponentPoll {
+		err := o.Monitor.StartComponent(k, o.Monitor.LuaComponentData[k].LuaFile)
+		if err != nil {
+			lf.PrintInfo(lf.NewPrintMsg("警告", err))
+		}
+	}
+	//现在开始监听后台
+	func() {
+		o.Monitor.OmgFrame.Omega.SetBackendCmdInterceptor(func(cmds []string) (stop bool) {
+			is := false
+			if cmds[0] == "lua" {
+				is = true
+			}
+			cmd := ""
+			for _, v := range cmds {
+				cmd += v + " "
+			}
+			if err := o.Monitor.CmdCenter(cmd); err != nil {
+				lf.PrintInfo(lf.NewPrintMsg("警告", err))
+			}
+			return is
+		})
+		//o.omega.SetBackendCmdInterceptor()
+		o.mainFrame.GetGameListener().SetGameChatInterceptor(o.MsgDistributionCenter)
+	}()
+
+}
+
+// 每次消息传输过来则分发处理
+func (b *LuaComponenter) MsgDistributionCenter(chat *defines.GameChat) bool {
+	b.Monitor.BuiltlnFner.Listener.Range(func(key, value interface{}) bool { // 遍历所有监听器
+		msg := ""
+		for _, v := range chat.Msg {
+			msg += v + " "
+		}
+		message := lf.Message{
+			Type:    chat.Name,
+			Content: msg,
+		}
+		listener := key.(*lf.Listener) // 获取监听器实例
+		select {
+		case listener.MsgChannel <- message: // 尝试将消息发送到监听器的消息通道
+		default: // 如果监听器的消息通道已满
+			<-listener.MsgChannel          // 从通道中读取并丢弃一条最旧的消息
+			listener.MsgChannel <- message // 将新消息发送到监听器的消息通道
+		}
+		return true
+	})
+	return false
+}
+
 func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 	return map[string]func() defines.CoreComponent{
 		"菜单显示":      func() defines.CoreComponent { return &Menu{BaseCoreComponent: &BaseCoreComponent{}} },
@@ -582,5 +680,6 @@ func getCoreComponentsPool() map[string]func() defines.CoreComponent {
 		"性能分析":      func() defines.CoreComponent { return &PerformaceAnalysis{BaseCoreComponent: &BaseCoreComponent{}} },
 		"OP权限自检":    func() defines.CoreComponent { return &OPCheck{BaseCoreComponent: &BaseCoreComponent{}} },
 		"随机巡逻":      func() defines.CoreComponent { return &Partol{BaseCoreComponent: &BaseCoreComponent{}} },
+		"lua插件支持":   func() defines.CoreComponent { return &LuaComponenter{BaseCoreComponent: &BaseCoreComponent{}} },
 	}
 }
