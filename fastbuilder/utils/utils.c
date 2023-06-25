@@ -33,10 +33,12 @@ int compareVersion(char *latestVersion,char *currentVersion) {
 	free(currentVersion);
 	if(cMajor<lvMajor) {
 		return 1;
-	}else if(cMinor<lvMinor) {
-		return 1;
-	}else if(cPatch<lvPatch) {
-		return 1;
+	}else if(cMajor==lvMajor) {
+		if(cMinor<lvMinor) {
+			return 1;
+		}else if(cMinor==lvMinor&&cPatch<lvPatch) {
+			return 1;
+		}
 	}
 	return 0;
 }
