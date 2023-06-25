@@ -230,8 +230,6 @@ func (client *Client) ShouldRespondUser() string {
 	msg, err := json.Marshal(rspreq)
 	if err != nil {
 		panic("Failed to encode json")
-		//return true
-		//Torrekie 22/07/21 13.12: Don't understand why this, but LNSSPsd let me made this edit
 		return ""
 	}
 	client.SendMessage(msg)
@@ -241,8 +239,6 @@ func (client *Client) ShouldRespondUser() string {
 		//This should never happen
 		fmt.Println("UNK_1")
 		panic("??????")
-		//return true
-		//Torrekie 22/07/21 13.12: and this
 		return ""
 	}
 	shouldRespond, _ := resp["username"].(string)
@@ -255,7 +251,7 @@ type FTokenRequest struct {
 	Password string `json:"password"`
 }
 
-func (client *Client) GetToken(username string, password string) string {
+func (client *Client) GetToken(username string, password string) (string, string) {
 	rspreq := &FTokenRequest{
 		Action:   "phoenix::get-token",
 		Username: username,
@@ -269,10 +265,10 @@ func (client *Client) GetToken(username string, password string) string {
 	resp, _ := <-client.serverResponse
 	code, _ := resp["code"].(float64)
 	if code != 0 {
-		return ""
+		return "", resp["message"].(string)
 	}
 	usertoken, _ := resp["token"].(string)
-	return usertoken
+	return usertoken, ""
 }
 
 type FEncRequest struct {

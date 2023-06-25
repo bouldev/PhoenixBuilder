@@ -15,8 +15,9 @@ func ProcessTokenDefault(env *environment.PBEnvironment) bool {
 	client := fbauth.CreateClient(env)
 	env.FBAuthClient = client
 	if token[0] == '{' {
-		token = client.GetToken("", token)
+		token, err_msg := client.GetToken("", token)
 		if token == "" {
+			fmt.Printf("%s\n", err_msg)
 			fmt.Println(I18n.T(I18n.FBUC_LoginFailed))
 			return false
 		}
