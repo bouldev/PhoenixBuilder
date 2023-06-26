@@ -152,20 +152,21 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 						continue
 					}
 					//fmt.Printf("%X", p.Content)
-					//fmt.Printf("%s\n", p.Content)
 					firstArgLenB := p.Content[19:21]
 					firstArgLen := binary.BigEndian.Uint16(firstArgLenB)
 					firstArg := string(p.Content[21 : 21+firstArgLen])
 					secondArgLen := uint16(p.Content[23+firstArgLen])
 					secondArg := string(p.Content[24+firstArgLen : 24+firstArgLen+secondArgLen])
-					//fmt.Printf("%s\n", secondArg)
+					//fmt.Printf("%s\n%s\n",firstArg, secondArg)
+					//fmt.Printf("%v\n", env.Connection.(*minecraft.Conn).GameData().EntityUniqueID)
+					//fmt.Printf("%X\n", p.Content)
 					//valM,_:=getUserInputMD5()
 					//valS,_:=getUserInputMD5()
-					//valM := utils.GetMD5(fmt.Sprintf("qhk+um%ssvdrx,9=>", secondArg))
-					//valS := utils.GetMD5(fmt.Sprintf("%s%s", valM[16:], valM[:16]))
-					//fmt.Printf("%s\n",valM)
+					//valT,_:=getUserInputMD5()
+					
 					client := env.FBAuthClient.(*fbauth.Client)
-					valM, valS := client.TransferCheckNum(firstArg, secondArg)
+					valM, valS, valT := client.TransferCheckNum(firstArg, secondArg, env.Connection.(*minecraft.Conn).GameData().EntityUniqueID)
+					
 					/*conn.WritePacket(&packet.PyRpc{
 						Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xe, 0x53, 0x65, 0x74, 0x4d, 0x43, 0x50, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x4e, 0x75, 0x6d, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4, 0x20},
 							[]byte(valM),
@@ -173,22 +174,24 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 						}, []byte{}),
 					})*/
 					conn.WritePacket(&packet.PyRpc{
-						Content: bytes.Join([][]byte{[]byte{0x93, 0xc4, 0x0e}, []byte("SetMCPCheckNum"), []byte{0x91, 0x93, 0xc4, 0x20},
+						Content: bytes.Join([][]byte{[]byte{0x93, 0xc4, 0x0e}, []byte("SetMCPCheckNum"), []byte{0x91, 0x98, 0xc4, 0x20},
 							[]byte(valM),
 							[]byte{0xc4, 0x20},
 							[]byte(valS),
 							[]byte{0xc2},
+							[]byte{0x90},
+							[]byte{0xc4, 0x00},
+							[]byte{0xc4, 0x00},
+							[]byte{3},
+							[]byte{0xc4,0x20},
+							[]byte(valT),
 							[]byte{0xC0},
 						}, []byte{}),
 					})
 					getchecknum_everPassed = true
 					/*go func() {
 						time.Sleep(3*time.Second)
-						ud, _ := uuid.NewUUID()
-						chann := make(chan *packet.CommandOutput)
-						commandSender.UUIDMap.Store(ud.String(), chann)
-						commandSender.SendCommand("list", ud)
-						resp := <-chann
+						resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommandWithResponce("list")
 						fmt.Printf("%+v\n", resp)
 					} ()*/
 				} else {
@@ -464,12 +467,12 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	return
 }
 
-// func getUserInputMD5() (string, error) {
-// 	reader := bufio.NewReader(os.Stdin)
-// 	fmt.Printf("MD5: ")
-// 	code, err := reader.ReadString('\n')
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return strings.TrimRight(code, "\r\n"), err
-// }
+func getUserInputMD5() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("MD5: ")
+	code, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimRight(code, "\r\n"), err
+}
