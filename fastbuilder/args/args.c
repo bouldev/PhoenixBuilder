@@ -10,7 +10,7 @@
 #include <sys/types.h>
 
 #ifndef FB_VERSION
-#define FB_VERSION "(CUSTOM)"
+#define FB_VERSION "(CUSTOMIZED)"
 #define FB_COMMIT "???"
 #define FB_COMMIT_LONG "???"
 #warning "It seems that you're building PhoenixBuilder with plain `go build` command, it is highly recommended to use `make current` instead."

@@ -10,18 +10,18 @@ import (
 
 func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, error) {
 	//SLC := strings.Split(Message," ")
-	isTransIMI := false
+	isEscaping := false
 	isInQuote := false
 	var SLC []string
 	curmsg := ""
 	for _, c := range Message {
-		if isTransIMI {
-			isTransIMI = false
+		if isEscaping {
+			isEscaping = false
 			curmsg += string(c)
 			continue
 		}
 		if c == '\\' {
-			isTransIMI = true
+			isEscaping = true
 			continue
 		}
 		if c == '"' {
@@ -45,7 +45,7 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 	//fmt.Printf("%v\n",SLC)
 	if isInQuote {
 		return nil, fmt.Errorf(I18n.T(I18n.Parsing_UnterminatedQuotedString))
-	} else if isTransIMI {
+	} else if isEscaping {
 		return nil, fmt.Errorf(I18n.T(I18n.Parsing_UnterminatedEscape))
 	}
 	Config := &types.MainConfig{
