@@ -34,7 +34,6 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		// inventory contents(for enchant command...)
 	case *packet.InventorySlot:
 		r.Inventory.writeItemStackInfo(p.WindowID, uint8(p.Slot), p.NewItem)
-		fmt.Printf("%#v\n", *p)
 		// inventory contents(for chest...) [NOT TEST]
 	case *packet.ItemStackResponse:
 		for _, value := range p.Responses {
