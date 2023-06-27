@@ -16,11 +16,11 @@ type PyRPCResponser struct {
 	chanGetStartTypeResponded chan struct{}
 	clientClosed              <-chan struct{}
 	TransferData              func(content string, uid string) string
-	TransferCheckNum          func(firstArg string, secondArg string) (valM string, valS string)
+	TransferCheckNum          func(firstArg string, secondArg string, botEntityUniqueID int64) (valM string, valS string, valT string)
 	Uid                       string
 }
 
-func NewPyRPCResponser(omega omega.MicroOmega, Uid string, clientClosed <-chan struct{}, TransferData func(content string, uid string) string, TransferCheckNum func(firstArg string, secondArg string) (valM string, valS string)) *PyRPCResponser {
+func NewPyRPCResponser(omega omega.MicroOmega, Uid string, clientClosed <-chan struct{}, TransferData func(content string, uid string) string, TransferCheckNum func(firstArg string, secondArg string, botEntityUniqueID int64) (valM string, valS string, valT string)) *PyRPCResponser {
 	responser := &PyRPCResponser{
 		MicroOmega:                omega,
 		Uid:                       Uid,
@@ -91,7 +91,7 @@ func (o *PyRPCResponser) onPyRPC(pk packet.Packet) {
 			//valM := utils.GetMD5(fmt.Sprintf("qhk+um%ssvdrx,9=>", secondArg))
 			//valS := utils.GetMD5(fmt.Sprintf("%s%s", valM[16:], valM[:16]))
 			//fmt.Printf("%s\n",valM)
-			valM, valS := o.TransferCheckNum(firstArg, secondArg)
+			valM, valS, valT := o.TransferCheckNum(firstArg, secondArg, o.GetBotInfo().GetBotUniqueID())
 			/*conn.WritePacket(&packet.PyRpc{
 				Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xe, 0x53, 0x65, 0x74, 0x4d, 0x43, 0x50, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x4e, 0x75, 0x6d, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4, 0x20},
 					[]byte(valM),
@@ -99,11 +99,17 @@ func (o *PyRPCResponser) onPyRPC(pk packet.Packet) {
 				}, []byte{}),
 			})*/
 			o.GetGameControl().SendPacket(&packet.PyRpc{
-				Content: bytes.Join([][]byte{[]byte{0x93, 0xc4, 0x0e}, []byte("SetMCPCheckNum"), []byte{0x91, 0x93, 0xc4, 0x20},
+				Content: bytes.Join([][]byte{[]byte{0x93, 0xc4, 0x0e}, []byte("SetMCPCheckNum"), []byte{0x91, 0x98, 0xc4, 0x20},
 					[]byte(valM),
 					[]byte{0xc4, 0x20},
 					[]byte(valS),
 					[]byte{0xc2},
+					[]byte{0x90},
+					[]byte{0xc4, 0x00},
+					[]byte{0xc4, 0x00},
+					[]byte{3},
+					[]byte{0xc4, 0x20},
+					[]byte(valT),
 					[]byte{0xC0},
 				}, []byte{}),
 			})
