@@ -206,3 +206,7 @@ func (c *Client) EstablishConnectionToAuthServer(connectContext context.Context,
 		return nil
 	}
 }
+
+func (c *Client) Closed() <-chan struct{} {
+	return c.readCtx.Done()
+}

@@ -10,21 +10,47 @@ import (
 
 type PyRPCResponser struct {
 	omega.MicroOmega
-	isCheckNumResponded bool
-	TransferData        func(content string, uid string) string
-	TransferCheckNum    func(firstArg string, secondArg string) (valM string, valS string)
-	Uid                 string
+	isCheckNumResponded       bool
+	chanCheckNumResponded     chan struct{}
+	isGetStartTypeResponded   bool
+	chanGetStartTypeResponded chan struct{}
+	clientClosed              <-chan struct{}
+	TransferData              func(content string, uid string) string
+	TransferCheckNum          func(firstArg string, secondArg string) (valM string, valS string)
+	Uid                       string
 }
 
-func NewPyRPCResponser(omega omega.MicroOmega, Uid string, TransferData func(content string, uid string) string, TransferCheckNum func(firstArg string, secondArg string) (valM string, valS string)) *PyRPCResponser {
+func NewPyRPCResponser(omega omega.MicroOmega, Uid string, clientClosed <-chan struct{}, TransferData func(content string, uid string) string, TransferCheckNum func(firstArg string, secondArg string) (valM string, valS string)) *PyRPCResponser {
 	responser := &PyRPCResponser{
-		MicroOmega:       omega,
-		Uid:              Uid,
-		TransferData:     TransferData,
-		TransferCheckNum: TransferCheckNum,
+		MicroOmega:                omega,
+		Uid:                       Uid,
+		TransferData:              TransferData,
+		TransferCheckNum:          TransferCheckNum,
+		chanCheckNumResponded:     make(chan struct{}),
+		chanGetStartTypeResponded: make(chan struct{}),
+		clientClosed:              clientClosed,
 	}
 	omega.GetGameListener().SetOnTypedPacketCallBack(packet.IDPyRpc, responser.onPyRPC)
 	return responser
+}
+
+func (o *PyRPCResponser) ChallengeCompete() bool {
+	select {
+	case <-o.clientClosed:
+		return false
+	case <-o.chanGetStartTypeResponded:
+		if o.isCheckNumResponded {
+			return true
+		} else {
+			return o.ChallengeCompete()
+		}
+	case <-o.chanCheckNumResponded:
+		if o.isGetStartTypeResponded {
+			return true
+		} else {
+			return o.ChallengeCompete()
+		}
+	}
 }
 
 func (o *PyRPCResponser) onPyRPC(pk packet.Packet) {
@@ -45,7 +71,10 @@ func (o *PyRPCResponser) onPyRPC(pk packet.Packet) {
 				[]byte{0xc0},
 			}, []byte{}),
 		})
-
+		if !o.isGetStartTypeResponded {
+			o.isGetStartTypeResponded = true
+			close(o.chanGetStartTypeResponded)
+		}
 	} else if !o.isCheckNumResponded {
 		if strings.Contains(string(p.Content), "GetMCPCheckNum") {
 			// This shit sucks, so as netease.
@@ -79,6 +108,7 @@ func (o *PyRPCResponser) onPyRPC(pk packet.Packet) {
 				}, []byte{}),
 			})
 			o.isCheckNumResponded = true
+			close(o.chanCheckNumResponded)
 		}
 
 	}
