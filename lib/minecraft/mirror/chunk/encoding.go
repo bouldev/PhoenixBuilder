@@ -15,7 +15,7 @@ type (
 	// NetworkEncoding, which can be used to encode a Chunk to an intermediate disk or network representation respectively.
 	Encoding interface {
 		encodePalette(buf *bytes.Buffer, p *Palette, e paletteEncoding)
-		decodePalette(buf *bytes.Buffer, blockSize paletteSize, e paletteEncoding) (*Palette, error)
+		decodePalette(buf *bytes.Buffer, blockSize PaletteSize, e paletteEncoding) (*Palette, error)
 		network() byte
 	}
 	// paletteEncoding is an encoding type used for Chunk encoding. It is used to encode different types of palettes
@@ -110,14 +110,14 @@ type diskEncoding struct{}
 
 func (diskEncoding) network() byte { return 0 }
 func (diskEncoding) encodePalette(buf *bytes.Buffer, p *Palette, e paletteEncoding) {
-	if p.size != 0 {
+	if p.Size != 0 {
 		_ = binary.Write(buf, binary.LittleEndian, uint32(p.Len()))
 	}
-	for _, v := range p.values {
+	for _, v := range p.Values {
 		e.encode(buf, v)
 	}
 }
-func (diskEncoding) decodePalette(buf *bytes.Buffer, blockSize paletteSize, e paletteEncoding) (*Palette, error) {
+func (diskEncoding) decodePalette(buf *bytes.Buffer, blockSize PaletteSize, e paletteEncoding) (*Palette, error) {
 	paletteCount := uint32(1)
 	if blockSize != 0 {
 		if err := binary.Read(buf, binary.LittleEndian, &paletteCount); err != nil {
@@ -126,15 +126,15 @@ func (diskEncoding) decodePalette(buf *bytes.Buffer, blockSize paletteSize, e pa
 	}
 
 	var err error
-	palette := newPalette(blockSize, make([]uint32, paletteCount))
+	palette := NewPalette(blockSize, make([]uint32, paletteCount))
 	for i := uint32(0); i < paletteCount; i++ {
-		palette.values[i], err = e.decode(buf)
+		palette.Values[i], err = e.decode(buf)
 		if err != nil {
 			decodeErr, ok := err.(*BlockPaletteEncodingError)
 			if ok {
 				if decodeErr.CanContinue() {
 					fmt.Println(decodeErr.Error())
-					palette.values[i] = AirRID
+					palette.Values[i] = AirRID
 					continue
 				} else {
 					fmt.Println(decodeErr.Error())
@@ -163,7 +163,7 @@ func (*nemcNetworkEncoding) translate(nemcRID uint32) (mcRid uint32) {
 func (*nemcNetworkEncoding) encodePalette(buf *bytes.Buffer, p *Palette, _ paletteEncoding) {
 	panic("nemcNetworkEncoding.encodePalette not implement")
 }
-func (o *nemcNetworkEncoding) decodePalette(buf *bytes.Buffer, blockSize paletteSize, _ paletteEncoding) (*Palette, error) {
+func (o *nemcNetworkEncoding) decodePalette(buf *bytes.Buffer, blockSize PaletteSize, _ paletteEncoding) (*Palette, error) {
 	var paletteCount int32 = 1
 	if blockSize != 0 {
 		if err := protocol.Varint32(buf, &paletteCount); err != nil {
@@ -186,5 +186,5 @@ func (o *nemcNetworkEncoding) decodePalette(buf *bytes.Buffer, blockSize palette
 		}
 
 	}
-	return &Palette{values: blocks, size: blockSize}, nil
+	return &Palette{Values: blocks, Size: blockSize}, nil
 }

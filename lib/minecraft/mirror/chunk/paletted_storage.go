@@ -13,7 +13,7 @@ const (
 	uint32BitSize = uint32ByteSize * 8
 )
 
-// PalettedStorage is a storage of 4096 blocks encoded in a variable amount of uint32s, storages may have values
+// PalettedStorage is a storage of 4096 blocks encoded in a variable amount of Uint32s, storages may have values
 // with a bit size per block of 0, 1, 2, 3, 4, 5, 6, 8 or 16 bits.
 // 3 of these formats have additional padding in every uint32 and an additional uint32 at the end, to cater
 // for the blocks that don't fit. This padding is present when the storage has a block size of 3, 5 or 6
@@ -40,9 +40,9 @@ type PalettedStorage struct {
 	indices []uint32
 }
 
-// newPalettedStorage creates a new block storage using the uint32 slice as the indices and the palette passed.
+// NewPalettedStorage creates a new block storage using the uint32 slice as the indices and the palette passed.
 // The bits per block are calculated using the length of the uint32 slice.
-func newPalettedStorage(indices []uint32, palette *Palette) *PalettedStorage {
+func NewPalettedStorage(indices []uint32, palette *Palette) *PalettedStorage {
 	var (
 		bitsPerIndex       = uint16(len(indices) / uint32BitSize / uint32ByteSize)
 		indexMask          = (uint32(1) << bitsPerIndex) - 1
@@ -57,7 +57,7 @@ func newPalettedStorage(indices []uint32, palette *Palette) *PalettedStorage {
 
 // emptyStorage creates a PalettedStorage filled completely with a value v.
 func emptyStorage(v uint32) *PalettedStorage {
-	return newPalettedStorage([]uint32{}, newPalette(0, []uint32{v}))
+	return NewPalettedStorage([]uint32{}, NewPalette(0, []uint32{v}))
 }
 
 // Palette returns the Palette of the PalettedStorage.
@@ -86,7 +86,7 @@ func (storage *PalettedStorage) Set(x, y, z byte, v uint32) {
 func (storage *PalettedStorage) addNew(v uint32) int16 {
 	index, resize := storage.palette.Add(v)
 	if resize {
-		storage.resize(storage.palette.size)
+		storage.resize(storage.palette.Size)
 	}
 	return index
 }
@@ -146,13 +146,13 @@ func (storage *PalettedStorage) setPaletteIndex(x, y, z byte, i uint16) {
 // resize changes the size of a PalettedStorage to newPaletteSize. A new PalettedStorage is constructed,
 // and all values available in the current storage are set in their appropriate locations in the
 // new storage.
-func (storage *PalettedStorage) resize(newPaletteSize paletteSize) {
-	if newPaletteSize == paletteSize(storage.bitsPerIndex) {
+func (storage *PalettedStorage) resize(newPaletteSize PaletteSize) {
+	if newPaletteSize == PaletteSize(storage.bitsPerIndex) {
 		return // Don't resize if the size is already equal.
 	}
 	// Construct a new storage and set all values in there manually. We can't easily do this in a better
 	// way, because all values will be at a different index with a different length.
-	newStorage := newPalettedStorage(make([]uint32, newPaletteSize.uint32s()), storage.palette)
+	newStorage := NewPalettedStorage(make([]uint32, newPaletteSize.Uint32s()), storage.palette)
 	for x := byte(0); x < 16; x++ {
 		for y := byte(0); y < 16; y++ {
 			for z := byte(0); z < 16; z++ {
@@ -193,24 +193,24 @@ func (storage *PalettedStorage) RuntimeID(x, y, z byte) uint32 {
 // 	// Construct a new storage and set all values in there manually. We can't easily do this in a better
 // 	// way, because all values will be at a different index with a different length.
 // 	size := paletteSizeFor(len(newRuntimeIDs))
-// 	newStorage := newPalettedStorage(make([]uint32, size.uint32s()), newPalette(size, newRuntimeIDs))
+// 	newStorage := NewPalettedStorage(make([]uint32, size.Uint32s()), NewPalette(size, newRuntimeIDs))
 
-// 	for x := byte(0); x < 16; x++ {
-// 		for y := byte(0); y < 16; y++ {
-// 			for z := byte(0); z < 16; z++ {
-// 				// Replace all usages of the old palette indexes with the new indexes using the map we
-// 				// produced earlier.
-// 				newStorage.setPaletteIndex(x, y, z, conversion[storage.paletteIndex(x, y, z)])
-// 			}
-// 		}
-// 	}
-// 	*storage = *newStorage
-// }
+//		for x := byte(0); x < 16; x++ {
+//			for y := byte(0); y < 16; y++ {
+//				for z := byte(0); z < 16; z++ {
+//					// Replace all usages of the old palette indexes with the new indexes using the map we
+//					// produced earlier.
+//					newStorage.setPaletteIndex(x, y, z, conversion[storage.paletteIndex(x, y, z)])
+//				}
+//			}
+//		}
+//		*storage = *newStorage
+//	}
 func (storage *PalettedStorage) shrinkAir() {
 	airRID := AirRID
 	foundAirPalette := false
 	shrinkHappen := false
-	for _, v := range storage.palette.values {
+	for _, v := range storage.palette.Values {
 		if v == airRID {
 			if !foundAirPalette {
 				foundAirPalette = true
@@ -226,9 +226,9 @@ func (storage *PalettedStorage) shrinkAir() {
 	}
 	foundAirPalette = false
 	airPaletteI := 0
-	conversion := make([]uint16, len(storage.palette.values))
-	newStoragePaletteValues := make([]uint32, 0, len(storage.palette.values))
-	for i, v := range storage.palette.values {
+	conversion := make([]uint16, len(storage.palette.Values))
+	newStoragePaletteValues := make([]uint32, 0, len(storage.palette.Values))
+	for i, v := range storage.palette.Values {
 		if v == airRID {
 			if !foundAirPalette {
 				foundAirPalette = true
@@ -245,7 +245,7 @@ func (storage *PalettedStorage) shrinkAir() {
 	}
 	fmt.Println(len(conversion))
 	fmt.Println(len(newStoragePaletteValues))
-	storage.palette.values = newStoragePaletteValues
+	storage.palette.Values = newStoragePaletteValues
 	for x := byte(0); x < 16; x++ {
 		for y := byte(0); y < 16; y++ {
 			for z := byte(0); z < 16; z++ {

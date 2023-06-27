@@ -4,7 +4,7 @@ package chunk
 // that forms a Chunk.
 type SubChunk struct {
 	air      uint32
-	storages []*PalettedStorage
+	Storages []*PalettedStorage
 }
 
 // NewSubChunk creates a new sub chunk. All sub chunks should be created through this function
@@ -15,40 +15,40 @@ func NewSubChunk(air uint32) *SubChunk {
 // Empty checks if the SubChunk is considered empty. This is the case if the SubChunk has 0 block storages or if it has
 // a single one that is completely filled with air.
 func (sub *SubChunk) Empty() bool {
-	return len(sub.storages) == 0 || (len(sub.storages) == 1 && len(sub.storages[0].palette.values) == 1 && sub.storages[0].palette.values[0] == sub.air)
+	return len(sub.Storages) == 0 || (len(sub.Storages) == 1 && len(sub.Storages[0].palette.Values) == 1 && sub.Storages[0].palette.Values[0] == sub.air)
 }
 
 func (sub *SubChunk) Invalid() bool {
-	return sub.storages == nil
+	return sub.Storages == nil
 }
 
 func (sub *SubChunk) Validate() {
-	sub.storages = []*PalettedStorage{}
+	sub.Storages = []*PalettedStorage{}
 }
 
 // Layer returns a certain block storage/layer from a sub chunk. If no storage at the layer exists, the layer
 // is created, as well as all layers between the current highest layer and the new highest layer.
 func (sub *SubChunk) Layer(layer uint8) *PalettedStorage {
-	for uint8(len(sub.storages)) <= layer {
+	for uint8(len(sub.Storages)) <= layer {
 		// Keep appending to storages until the requested layer is achieved. Makes working with new layers
 		// much easier.
-		sub.storages = append(sub.storages, emptyStorage(sub.air))
+		sub.Storages = append(sub.Storages, emptyStorage(sub.air))
 	}
-	return sub.storages[layer]
+	return sub.Storages[layer]
 }
 
 // Layers returns all layers in the sub chunk. This method may also return an empty slice.
 func (sub *SubChunk) Layers() []*PalettedStorage {
-	return sub.storages
+	return sub.Storages
 }
 
 // Block returns the runtime ID of the block located at the given X, Y and Z. X, Y and Z must be in a
 // range of 0-15.
 func (sub *SubChunk) Block(x, y, z byte, layer uint8) uint32 {
-	if uint8(len(sub.storages)) <= layer {
+	if uint8(len(sub.Storages)) <= layer {
 		return sub.air
 	}
-	return sub.storages[layer].At(x, y, z)
+	return sub.Storages[layer].At(x, y, z)
 }
 
 // SetBlock sets the given block runtime ID at the given X, Y and Z. X, Y and Z must be in a range of 0-15.
