@@ -386,6 +386,10 @@ func DumpBlocks(
 					background_blockName = strings.Replace(targetArea.blockPalette[bgId], "minecraft:", "", 1) // 背景层方块的名称
 					background_blockStates = targetArea.blockPalette_blockStates[bgId]                         // 背景层方块的方块状态
 				}
+				if fgId == -1 && bgId == -1 {
+					foreground_blockName = "structure_void"
+					foreground_blockStates = "[]"
+				}
 				// 获得基本信息
 				var hasNBT bool = false
 				var blockNBT []byte
@@ -442,7 +446,7 @@ func DumpBlocks(
 					}
 				}
 				// 取得方块实体数据
-				if foreground_blockName != "" && foreground_blockName != "undefined" && (background_blockName == "water" || background_blockName == "flowing_water") {
+				if foreground_blockName != "undefined" && (background_blockName == "water" || background_blockName == "flowing_water") {
 					ans = append(ans, &types.Module{
 						Block: &types.Block{
 							Name:        &background_blockName,
@@ -457,7 +461,7 @@ func DumpBlocks(
 				}
 				// 含水类方块的处理。
 				// 我们将含水类方块处理为 setblock water + targetBlock 的形式
-				if foreground_blockName != "" && foreground_blockName != "air" && foreground_blockName != "undefined" {
+				if foreground_blockName != "air" && foreground_blockName != "undefined" {
 					single := &types.Module{
 						Block: &types.Block{
 							Name: &foreground_blockName,
