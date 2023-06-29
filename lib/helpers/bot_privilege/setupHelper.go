@@ -1,6 +1,7 @@
 package bot_privilege
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"phoenixbuilder/lib/minecraft/neomega/omega"
@@ -45,7 +46,7 @@ func (o *SetupHelper) lostPrivilege() {
 
 var ErrMaximumWaitTimeExeceed = errors.New("maximum wait time execeed")
 
-func (o *SetupHelper) WaitOK(challengeCompleted func() bool) {
+func (o *SetupHelper) WaitOK(ctx context.Context, challengeCompleted func(ctx context.Context) bool) (ok bool) {
 	time.Sleep(3 * time.Second)
 	for !o.hasOpPrivilege {
 		o.GetGameControl().SendWSCmdAndInvokeOnResponse("tp @s ~~~", func(output *packet.CommandOutput) {
@@ -56,11 +57,14 @@ func (o *SetupHelper) WaitOK(challengeCompleted func() bool) {
 		o.GetGameControl().BotSay("请给予机器人管理员权限")
 		fmt.Println("请给予机器人管理权限")
 		time.Sleep(1 * time.Second)
+		if ctx.Err() != nil {
+			return false
+		}
 	}
 	fmt.Println("机器人已获得管理权限")
 	first := true
 	fmt.Println("等待FB服务器答复网易租赁服 challenge ...")
-	success := challengeCompleted()
+	success := challengeCompleted(ctx)
 	if !success {
 		panic(fmt.Errorf("FB服务器未能在一定时间内完成网易租赁服零知识身份证明"))
 	} else {
@@ -89,11 +93,14 @@ func (o *SetupHelper) WaitOK(challengeCompleted func() bool) {
 				o.cheatOn = true
 			}
 		})
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
+		if ctx.Err() != nil {
+			return false
+		}
 		if !o.cheatOn {
 			o.GetGameControl().BotSay("请打开作弊模式")
 			fmt.Println("请打开作弊模式")
 		}
 	}
-
+	return true
 }

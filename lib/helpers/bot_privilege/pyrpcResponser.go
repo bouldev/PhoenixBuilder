@@ -2,6 +2,7 @@ package bot_privilege
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"phoenixbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -34,21 +35,23 @@ func NewPyRPCResponser(omega omega.MicroOmega, Uid string, clientClosed <-chan s
 	return responser
 }
 
-func (o *PyRPCResponser) ChallengeCompete() bool {
+func (o *PyRPCResponser) ChallengeCompete(ctx context.Context) bool {
 	select {
+	case <-ctx.Done():
+		return false
 	case <-o.clientClosed:
 		return false
 	case <-o.chanGetStartTypeResponded:
 		if o.isCheckNumResponded {
 			return true
 		} else {
-			return o.ChallengeCompete()
+			return o.ChallengeCompete(ctx)
 		}
 	case <-o.chanCheckNumResponded:
 		if o.isGetStartTypeResponded {
 			return true
 		} else {
-			return o.ChallengeCompete()
+			return o.ChallengeCompete(ctx)
 		}
 	}
 }
