@@ -698,9 +698,6 @@ func InitMapping(mappingInData []byte) {
 			return blk, true
 		}
 	}
-	numberRegex := regexp.MustCompile(`\d+`)
-	legacyBlockNameRegex := regexp.MustCompile(`name=.+,`)
-	legacyBlockValRegex := regexp.MustCompile(`val=.+]`)
 	JavaStrToRuntimeIDMapping = mappingIn.JavaToRid
 	JavaStrPropsToRuntimeIDMapping = make(map[string]map[string]uint32)
 	splitJavaNameAndProps := func(javaName string) (name, prop string) {
@@ -787,18 +784,6 @@ func InitMapping(mappingInData []byte) {
 		return AirRID, false
 	}
 	JavaToRuntimeID = func(javaBlockStr string) (runtimeID uint32, found bool) {
-		if rtid, hasK := JavaStrToRuntimeIDMapping[javaBlockStr]; hasK {
-			return rtid, true
-		} else if strings.HasPrefix(javaBlockStr, "omega:as_runtime_id[") {
-			matchs := numberRegex.FindAllString(javaBlockStr, 1)
-			if len(matchs) > 0 {
-				if rtid, err := strconv.Atoi(string(matchs[0])); err == nil {
-					mappingIn.JavaToRid[javaBlockStr] = uint32(rtid)
-					return uint32(rtid), true
-				}
-			}
-			mappingIn.JavaToRid[javaBlockStr] = AirRID
-		}
 		jname, jprop := splitJavaNameAndProps(javaBlockStr)
 		if oprops, found := JavaStrPropsToRuntimeIDMapping[jname]; found {
 			bscore := -1
@@ -821,26 +806,6 @@ func InitMapping(mappingInData []byte) {
 				}
 			}
 			return brtid, true
-		}
-		if strings.HasPrefix(javaBlockStr, "omega:as_legacy_block[") {
-			name := "air"
-			matchs := legacyBlockNameRegex.FindAllString(javaBlockStr, 1)
-			if len(matchs) > 0 {
-				name = matchs[0]
-				name = name[5 : len(name)-1]
-			}
-			matchs = legacyBlockValRegex.FindAllString(javaBlockStr, 1)
-			if len(matchs) > 0 {
-				if val, err := strconv.Atoi(string(matchs[0][4 : len(matchs[0])-1])); err == nil {
-					rtid, found := LegacyBlockToRuntimeID(name, uint16(val))
-					if found {
-						mappingIn.JavaToRid[javaBlockStr] = uint32(rtid)
-						return uint32(rtid), true
-					}
-
-				}
-			}
-			mappingIn.JavaToRid[javaBlockStr] = AirRID
 		}
 		return AirRID, false
 	}
