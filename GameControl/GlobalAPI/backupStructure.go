@@ -1,5 +1,7 @@
 package GlobalAPI
 
+// TODO: 在某天支持 结构空位 的备份和恢复
+
 import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/mcstructure"

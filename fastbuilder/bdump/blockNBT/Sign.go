@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/minecraft/protocol/packet"
+
+	"github.com/google/uuid"
 )
 
 // SignDatas 结构体用于描述告示牌的 NBT 在被解析后的数据
@@ -85,6 +87,9 @@ func (s *Sign) Decode() error {
 
 // 放置一个告示牌并写入告示牌数据
 func (s *Sign) WriteDatas() error {
+	var uniqueID_1 uuid.UUID
+	var uniqueID_2 uuid.UUID
+	// 初始化变量
 	if s.Package.Datas.FastMode {
 		err := s.Package.API.SetBlockFastly(s.Package.Datas.Position, s.Package.Block.Name, s.Package.Datas.StatesString)
 		if err != nil {
@@ -127,7 +132,7 @@ func (s *Sign) WriteDatas() error {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
 		// 切换手持物品栏到快捷栏 0
-		uniqueID, err := s.Package.API.BackupStructure(
+		uniqueID_1, err = s.Package.API.BackupStructure(
 			GlobalAPI.MCStructure{
 				BeginX: s.Package.Datas.Position[0] + 1,
 				BeginY: s.Package.Datas.Position[1],
@@ -178,7 +183,7 @@ func (s *Sign) WriteDatas() error {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
 		// 在玻璃上放置手中的告示牌
-		err = s.Package.API.SetBlock(s.Package.Datas.Position, s.Package.Block.Name, s.Package.Datas.StatesString)
+		err = s.Package.API.SetBlockFastly(s.Package.Datas.Position, s.Package.Block.Name, s.Package.Datas.StatesString)
 		if err != nil {
 			return fmt.Errorf("WriteDatas: %v", err)
 		}
@@ -186,18 +191,6 @@ func (s *Sign) WriteDatas() error {
 		// 但这个告示牌的种类是 oak_sign ，且朝向固定，
 		// 因此现在我们需要覆写这个告示牌的种类及朝向为正确的形式。
 		// 经过测试，覆写操作不会导致 NBT 数据无法注入
-		err = s.Package.API.RevertStructure(
-			uniqueID,
-			GlobalAPI.BlockPos{
-				s.Package.Datas.Position[0] + 1,
-				s.Package.Datas.Position[1],
-				s.Package.Datas.Position[2],
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("WriteDatas: %v", err)
-		}
-		// 将上文提到的玻璃处的方块恢复为原本的方块
 	}
 	// 放置告示牌
 	err := s.Package.API.WritePacket(&packet.BlockActorData{
@@ -214,6 +207,61 @@ func (s *Sign) WriteDatas() error {
 		return fmt.Errorf("WriteDatas: %v", err)
 	}
 	// 写入告示牌数据
+	uniqueID_2, err = s.Package.API.BackupStructure(GlobalAPI.MCStructure{
+		BeginX: s.Package.Datas.Position[0],
+		BeginY: s.Package.Datas.Position[1],
+		BeginZ: s.Package.Datas.Position[2],
+		SizeX:  1,
+		SizeY:  1,
+		SizeZ:  1,
+	})
+	if err != nil {
+		return fmt.Errorf("WriteDatas: %v", err)
+	}
+	/*
+		备份告示牌处的方块。
+
+		稍后我们会恢复上文提到的玻璃处的方块为原本方块，
+		而此方块被恢复后，游戏会按照特性刷新它附近的方块，
+		也就是告示牌方块。
+
+		但我们无法保证刷新后，我们导入的告示牌仍然可以稳定存在，
+		因为它可能会因为缺少依附方块而掉落。
+
+		因此，我们现在备份一次告示牌，然后再恢复玻璃处的方块，
+		然后再强行生成一次告示牌本身。
+
+		注：这个解法并不优雅，而且会浪费时间，
+		但它可以显著提高告示牌的存活概率，
+		而且用户不希望为了告示牌而再导入一次 BDX 文件。
+
+		TODO: 在某天推迟部分方块的导入顺序，
+		使得告示牌这类依附型方块在最后再被导入
+	*/
+	err = s.Package.API.RevertStructure(
+		uniqueID_1,
+		GlobalAPI.BlockPos{
+			s.Package.Datas.Position[0] + 1,
+			s.Package.Datas.Position[1],
+			s.Package.Datas.Position[2],
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("WriteDatas: %v", err)
+	}
+	// 将上文提到的玻璃处的方块恢复为原本的方块
+	err = s.Package.API.RevertStructure(
+		uniqueID_2,
+		GlobalAPI.BlockPos{
+			s.Package.Datas.Position[0],
+			s.Package.Datas.Position[1],
+			s.Package.Datas.Position[2],
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("WriteDatas: %v", err)
+	}
+	// 强行生成一次告示牌本身以抑制其可能发生的掉落
 	return nil
 	// 返回值
 }
