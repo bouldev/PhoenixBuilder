@@ -6,7 +6,6 @@ type Module struct {
 	DebugNBTData     []byte
 	NBTData          []byte
 	NBTMap           map[string]interface{}
-	//Entity *Entity
 	ChestSlot *ChestSlot
 	ChestData *ChestData
 	Point     Position
@@ -55,7 +54,6 @@ type DoubleModule struct {
 	Begin           Position
 	End             Position
 	Block, OldBlock *Block
-	Entity          *Entity
 }
 
 var takenBlocks map[*ConstBlock]*Block = make(map[*ConstBlock]*Block)

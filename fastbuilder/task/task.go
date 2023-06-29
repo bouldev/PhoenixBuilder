@@ -155,6 +155,7 @@ func (holder *TaskHolder) FindTask(taskId int64) *Task {
 func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	holder := env.TaskHolder.(*TaskHolder)
 	cmdsender := env.CommandSender.(*commands.CommandSender)
+	gameInterface := env.GlobalAPI.(*GlobalAPI.GlobalAPI)
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err != nil {
 		cmdsender.Output(fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand), err))
@@ -164,7 +165,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	dcfg := fcfg.Delay()
 
 	und, _ := uuid.NewUUID()
-	env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommand("gamemode c", und)
+	gameInterface.SendWSCommand("gamemode c", und)
 	blockschannel := make(chan *types.Module, 10240)
 	task := &Task{
 		TaskId:        holder.TaskIdCounter.Add(1),
@@ -255,8 +256,8 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			isFastMode = true
 		} else {
 			//isFastMode=false
-			env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommand("gamemode c", und)
-			env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommand("gamerule sendcommandfeedback true", und)
+			gameInterface.SendWSCommand("gamemode c", und)
+			gameInterface.SendWSCommand("gamerule sendcommandfeedback true", und)
 		}
 		for {
 			task.ContinueLock.Lock()
@@ -278,12 +279,12 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				return
 			}
 			if blkscounter%20 == 0 {
-				env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y, curblock.Point.Z), true)
+				gameInterface.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", curblock.Point.X, curblock.Point.Y, curblock.Point.Z), true)
 			}
 			blkscounter++
 			if curblock.NBTMap != nil {
 				err := blockNBT.PlaceBlockWithNBTData(
-					env.GlobalAPI.(*GlobalAPI.GlobalAPI),
+					gameInterface,
 					curblock,
 					&blockNBT.Datas{
 						Settings: cfg,
@@ -297,7 +298,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			} else if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				newStruct := blockNBT.CommandBlock{
 					Package: &blockNBT.Package{
-						API: env.GlobalAPI.(*GlobalAPI.GlobalAPI),
+						API: gameInterface,
 						Datas: &blockNBT.Datas{
 							Position: [3]int32{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)},
 							Settings: cfg,
@@ -312,19 +313,13 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					pterm.Warning.Printf("%v\n", err)
 				}
 			} else if curblock.ChestSlot != nil {
-				env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(commands_generator.ReplaceItemRequest(curblock, ""), true)
-			} else {
-				env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(commands_generator.SetBlockRequest(curblock, cfg), true)
-				if err != nil {
-					panic(err)
-				}
-			} /*else if curblock.Entity != nil {
-				//request := commands_generator.SummonRequest(curblock, cfg)
-				//err := cmdsender.SendDimensionalCommand(request)
-				//if err != nil {
-				//	panic(err)
-				//}
-			}*/
+				gameInterface.SendSettingsCommand(commands_generator.ReplaceItemRequest(curblock, ""), true)
+			} else if(len(cfg.Entity)!=0) {
+				gameInterface.SendSettingsCommand(commands_generator.SummonRequest(curblock, cfg), true)
+			}else{
+				
+				gameInterface.SendSettingsCommand(commands_generator.SetBlockRequest(curblock, cfg), true)
+			} 
 			if dcfg.DelayMode == types.DelayModeContinuous {
 				doDelay()
 			} else if dcfg.DelayMode == types.DelayModeDiscrete {

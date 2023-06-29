@@ -95,11 +95,13 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 	FlagSet.StringVar(&Config.Facing, "f", defaultConfig.Facing, "Building's facing")
 	FlagSet.StringVar(&Config.Path, "path", defaultConfig.Path, "The path of file")
 	FlagSet.StringVar(&Config.Path, "p", defaultConfig.Path, "The path of file")
-	FlagSet.StringVar(&Config.Shape, "shape", defaultConfig.Shape, "The path of file")
-	FlagSet.StringVar(&Config.Shape, "s", defaultConfig.Shape, "The path of file")
+	FlagSet.StringVar(&Config.Shape, "shape", defaultConfig.Shape, "The shape of geometric structure")
+	FlagSet.StringVar(&Config.Shape, "s", defaultConfig.Shape, "The shape of geometric structure")
 	//Block
-	FlagSet.StringVar(&Config.Block.Name, "block", defaultConfig.Block.Name, "Blocks that make up the building")
-	FlagSet.StringVar(&Config.Block.Name, "b", defaultConfig.Block.Name, "Blocks that make up the building")
+	FlagSet.StringVar(&Config.Block.Name, "block", defaultConfig.Block.Name, "Blocks making up the structure")
+	FlagSet.StringVar(&Config.Block.Name, "b", defaultConfig.Block.Name, "Blocks making up the structure")
+	FlagSet.StringVar(&Config.Entity, "entity", "", "")
+	FlagSet.StringVar(&Config.Entity, "e", "", "")
 	FlagSet.IntVar(&tempBlockData, "data", int(defaultConfig.Block.Data), "The data of Block")
 	FlagSet.IntVar(&tempBlockData, "d", int(defaultConfig.Block.Data), "The data of Block")
 	//OldBlock

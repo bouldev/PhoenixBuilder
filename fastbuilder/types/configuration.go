@@ -22,6 +22,7 @@ const (
 type MainConfig struct {
 	Execute               string
 	Block, OldBlock       *ConstBlock
+	Entity                string
 	End, Position         Position //Position=Begin
 	ResumeFrom            float64
 	Radius                int

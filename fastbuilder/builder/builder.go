@@ -26,7 +26,3 @@ func Generate(config *types.MainConfig, blc chan *types.Module) error {
 		return Builder[config.Execute](config, blc)
 	}
 }
-
-func PipeGenerate(configs []*types.Config) []*types.Module {
-	return nil
-}

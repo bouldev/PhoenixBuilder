@@ -18,8 +18,6 @@ type BDump struct {
 }
 
 /*
-// Important note: Things under this file is what currently used,
-//                 and actually bdump.go isn't under use now.
 if(i.cmd=="addToBlockPalette"){
 	writebuf(1,1);
 	writebuf(i.blockName+"\0");

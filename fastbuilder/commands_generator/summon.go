@@ -1,5 +1,3 @@
-// +build do_not_add_this_tag__not_implemented
-
 package commands_generator
 
 import (
@@ -9,13 +7,8 @@ import (
 
 
 func SummonRequest(module *types.Module, config *types.MainConfig) string {
-	Entity := module.Entity
-	Point := module.Point
-	Method := config.Method
-	if Entity != nil {
-		return fmt.Sprintf("summon %s %v %v %v", *Entity, Point.X, Point.Y, Point.Z)
-	} else {
-		return fmt.Sprintf("summon %s %v %v %v", *Entity, Point.X, Point.Y, Point.Z)
-	}
+	entity := config.Entity
+	point := module.Point
+	return fmt.Sprintf("summon %s %d %d %d", entity, point.X, point.Y, point.Z)
 }
 
