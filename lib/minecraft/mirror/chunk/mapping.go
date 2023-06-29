@@ -542,12 +542,28 @@ func InitMapping(mappingInData []byte) {
 			blk.Name = strings.ReplaceAll(blk.Name, "minecraft:double_stone_block_slab", "minecraft:double_stone_slab")
 			mappingIn.RIDToMCBlock[i] = blk
 		}
+		if strings.HasPrefix(blk.Name, "minecraft:stone_block_slab") {
+			blk.Name = strings.ReplaceAll(blk.Name, "minecraft:stone_block_slab", "minecraft:stone_slab")
+			mappingIn.RIDToMCBlock[i] = blk
+		}
+		if strings.HasSuffix(blk.Name, "_glazed_terracotta") {
+			blk.Name = strings.ReplaceAll(blk.Name, "_glazed_terracotta", "")
+			blk.Name = "minecraft:glazedTerracotta." + blk.Name[len("minecraft:"):]
+			mappingIn.RIDToMCBlock[i] = blk
+		}
+		if strings.HasSuffix(blk.Name, "sea_lantern") {
+			blk.Name = strings.ReplaceAll(blk.Name, "sea_lantern", "seaLantern")
+			mappingIn.RIDToMCBlock[i] = blk
+		}
+		if strings.HasSuffix(blk.Name, "trip_wire") {
+			blk.Name = strings.ReplaceAll(blk.Name, "trip_wire", "tripWire")
+			mappingIn.RIDToMCBlock[i] = blk
+		}
+		if strings.HasSuffix(blk.Name, "concrete_powder") {
+			blk.Name = strings.ReplaceAll(blk.Name, "concrete_powder", "concretePowder")
+			mappingIn.RIDToMCBlock[i] = blk
+		}
 	}
-	//for i, name := range mappingIn.NEMCToName {
-	//	if strings.HasPrefix(name, "double_stone") {
-	//		mappingIn.NEMCToName[i] = strings.ReplaceAll(name, "double_stone_block_slab", "double_stone_slab")
-	//	}
-	//}
 	StatePropsToRuntimeIDMapping = make(map[string]map[string]uint32)
 	RuntimeIDToSateStrMapping = make(map[uint32]string)
 
