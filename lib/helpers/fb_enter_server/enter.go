@@ -131,7 +131,14 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 			return
 		},
 	)
-	helper := bot_privilege.NewSetupHelper(omegaCore)
+	helper := bot_privilege.NewSetupHelper(omegaCore, func() {
+		if options.OpPrivilegeRemovedCallBack != nil {
+			options.OpPrivilegeRemovedCallBack()
+		}
+		if options.DeadOnOpPrivilegeRemoved {
+			deadReason <- ErrBotOpPrivilegeRemoved
+		}
+	})
 	go func() {
 		for {
 			pkt, err = conn.ReadPacket()
@@ -141,7 +148,10 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 			omegaCore.HandlePacket(pkt)
 		}
 	}()
-	helper.WaitOK(ctx, challengeSolver.ChallengeCompete)
+	err = helper.WaitOK(ctx, challengeSolver.ChallengeCompete)
+	if err != nil {
+		return nil, nil, err
+	}
 	if options.MakeBotCreative {
 		omegaCore.GetGameControl().SendPlayerCmdAndInvokeOnResponseWithFeedback("gamemode c @s", func(output *packet.CommandOutput) {
 			if output.SuccessCount > 0 {

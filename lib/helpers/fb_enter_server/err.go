@@ -13,3 +13,4 @@ var ErrFBTransferDataTimeOut = errors.New("FB服务器处理网易租赁服Trans
 var ErrFBTransferDataFail = errors.New("FB服务器处理网易租赁服TransferData失败")
 var ErrFBTransferCheckNumTimeOut = errors.New("FB服务器处理网易租赁服TransferCheckNum请求超时")
 var ErrFBTransferCheckNumFail = errors.New("FB服务器处理网易租赁服TransferCheckNum失败")
+var ErrBotOpPrivilegeRemoved = errors.New("机器人OP权限被移除")
