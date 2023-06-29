@@ -537,6 +537,17 @@ func InitMapping(mappingInData []byte) {
 	if err := gob.NewDecoder(uncompressor).Decode(&mappingIn); err != nil {
 		panic(err)
 	}
+	for i, blk := range mappingIn.RIDToMCBlock {
+		if strings.HasPrefix(blk.Name, "minecraft:double_stone_block_slab") {
+			blk.Name = strings.ReplaceAll(blk.Name, "minecraft:double_stone_block_slab", "minecraft:double_stone_slab")
+			mappingIn.RIDToMCBlock[i] = blk
+		}
+	}
+	//for i, name := range mappingIn.NEMCToName {
+	//	if strings.HasPrefix(name, "double_stone") {
+	//		mappingIn.NEMCToName[i] = strings.ReplaceAll(name, "double_stone_block_slab", "double_stone_slab")
+	//	}
+	//}
 	StatePropsToRuntimeIDMapping = make(map[string]map[string]uint32)
 	RuntimeIDToSateStrMapping = make(map[uint32]string)
 
