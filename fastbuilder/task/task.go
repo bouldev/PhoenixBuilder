@@ -2,8 +2,7 @@ package task
 
 import (
 	"fmt"
-	"phoenixbuilder/GameControl/GlobalAPI"
-	"phoenixbuilder/fastbuilder/bdump/blockNBT"
+	"phoenixbuilder/fastbuilder/bdump/block_nbt"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/configuration"
@@ -18,7 +17,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pterm/pterm"
 	"go.uber.org/atomic"
 )
@@ -155,7 +153,7 @@ func (holder *TaskHolder) FindTask(taskId int64) *Task {
 func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	holder := env.TaskHolder.(*TaskHolder)
 	cmdsender := env.CommandSender.(*commands.CommandSender)
-	gameInterface := env.GlobalAPI.(*GlobalAPI.GlobalAPI)
+	gameInterface := env.GameInterface
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err != nil {
 		cmdsender.Output(fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand), err))
@@ -164,8 +162,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig(env).Delay())
 	dcfg := fcfg.Delay()
 
-	und, _ := uuid.NewUUID()
-	gameInterface.SendWSCommand("gamemode c", und)
+	gameInterface.SendWSCommand("gamemode c")
 	blockschannel := make(chan *types.Module, 10240)
 	task := &Task{
 		TaskId:        holder.TaskIdCounter.Add(1),
@@ -256,8 +253,8 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			isFastMode = true
 		} else {
 			//isFastMode=false
-			gameInterface.SendWSCommand("gamemode c", und)
-			gameInterface.SendWSCommand("gamerule sendcommandfeedback true", und)
+			gameInterface.SendWSCommand("gamemode c")
+			gameInterface.SendWSCommand("gamerule sendcommandfeedback true")
 		}
 		for {
 			task.ContinueLock.Lock()
@@ -298,7 +295,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			} else if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				newStruct := blockNBT.CommandBlock{
 					Package: &blockNBT.Package{
-						API: gameInterface,
+						Interface: gameInterface,
 						Datas: &blockNBT.Datas{
 							Position: [3]int32{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)},
 							Settings: cfg,
@@ -317,7 +314,6 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			} else if(len(cfg.Entity)!=0) {
 				gameInterface.SendSettingsCommand(commands_generator.SummonRequest(curblock, cfg), true)
 			}else{
-				
 				gameInterface.SendSettingsCommand(commands_generator.SetBlockRequest(curblock, cfg), true)
 			} 
 			if dcfg.DelayMode == types.DelayModeContinuous {

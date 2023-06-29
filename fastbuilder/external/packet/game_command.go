@@ -13,7 +13,7 @@ const (
 )
 
 type GameCommandPacket struct {
-	UUID        uuid.UUID
+	UUID        uuid.UUID // reserved
 	CommandType uint8
 	Command     string
 }

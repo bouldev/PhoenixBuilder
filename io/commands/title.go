@@ -5,7 +5,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
-	"phoenixbuilder/GameControl/GlobalAPI"
+	"phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/fastbuilder/types"
 	"strings"
 )
@@ -24,5 +24,5 @@ func TitleRequest(target types.Target, lines ...string) string {
 }
 
 func (sender *CommandSender) Title(message string) error {
-	return sender.env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(TitleRequest(types.AllPlayers, message), false)
+	return sender.env.GameInterface.(*GameInterface.GameInterface).SendSettingsCommand(TitleRequest(types.AllPlayers, message), false)
 }

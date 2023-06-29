@@ -1,7 +1,6 @@
 package configuration
 
 import (
-	"github.com/google/uuid"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/environment"
 )
@@ -72,8 +71,7 @@ func CreateFullConfig() *FullConfig {
 	return &fc
 }
 
-var ZeroId uuid.UUID
-var OneId uuid.UUID
+
 var IsOp bool
 var SessionInitID int
 

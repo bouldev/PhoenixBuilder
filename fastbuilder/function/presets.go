@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -14,6 +13,7 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/io/special_tasks"
 	"phoenixbuilder/minecraft"
+	"phoenixbuilder/fastbuilder/utils"
 )
 
 func InitPresetFunctions(fh *FunctionHolder) {
@@ -178,22 +178,64 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType:  FunctionTypeSimple,
 				ArgumentTypes: []byte{},
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
-					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
+					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
+					p, _:=env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
+					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+					if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
+						configuration.IsOp = true
+					}
+					if len(pos) == 0 {
+						env.CommandSender.Output(I18n.T(I18n.InvalidPosition))
+						return
+					}
+					configuration.GlobalFullConfig(env).Main().Position = types.Position{
+						X: pos[0],
+						Y: pos[1],
+						Z: pos[2],
+					}
+					env.CommandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
 				},
 			},
 			"begin": &FunctionChainItem{
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
-					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
+					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
+					p, _:=env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
+					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+					if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
+						configuration.IsOp = true
+					}
+					if len(pos) == 0 {
+						env.CommandSender.Output(I18n.T(I18n.InvalidPosition))
+						return
+					}
+					configuration.GlobalFullConfig(env).Main().Position = types.Position{
+						X: pos[0],
+						Y: pos[1],
+						Z: pos[2],
+					}
+					env.CommandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
 				},
 			},
 			"end": &FunctionChainItem{
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
-					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.OneId)
+					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
+					p, _:=env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
+					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
+					if len(pos) == 0 {
+						env.CommandSender.Output(I18n.T(I18n.InvalidPosition))
+						return
+					}
+					configuration.GlobalFullConfig(env).Main().End = types.Position{
+						X: pos[0],
+						Y: pos[1],
+						Z: pos[2],
+					}
+					env.CommandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
 				},
 			},
 		},

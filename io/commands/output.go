@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"encoding/json"
-	"phoenixbuilder/GameControl/GlobalAPI"
+	"phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/types"
 	"strings"
@@ -67,5 +67,5 @@ func RawTellRawRequest(target types.Target, line string) string {
 func (cmd_sender *CommandSender) WorldChatOutput(sender string, content string) error {
 	fmt.Printf("W <%s> %s\n", sender, content)
 	str := fmt.Sprintf("§eW §r<%s> %s", sender, content)
-	return cmd_sender.env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendSettingsCommand(RawTellRawRequest(types.AllPlayers, str), false)
+	return cmd_sender.env.GameInterface.(*GameInterface.GameInterface).SendSettingsCommand(RawTellRawRequest(types.AllPlayers, str), false)
 }

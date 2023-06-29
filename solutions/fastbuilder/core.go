@@ -8,10 +8,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"phoenixbuilder/GameControl/GlobalAPI"
-	"phoenixbuilder/GameControl/ResourcesControlCenter"
+	"phoenixbuilder/game_control/game_interface"
+	"phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/fastbuilder/args"
-	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/core"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/environment"
@@ -25,7 +24,6 @@ import (
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/uqHolder"
-	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/io/commands"
 	utils_core "phoenixbuilder/lib/utils/core"
 	"phoenixbuilder/minecraft"
@@ -39,7 +37,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pterm/pterm"
 )
 
@@ -48,7 +45,7 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 		return
 	}
 	defer Fatal()
-	commandSender := env.CommandSender.(*commands.CommandSender)
+	gameInterface := env.GameInterface
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	for {
 		if breaker != nil {
@@ -67,31 +64,11 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 			continue
 		}
 		if cmd[0] == '.' {
-			resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommandWithResponce(cmd[1:])
+			resp, _ := gameInterface.SendCommandWithResponse(cmd[1:])
 			fmt.Printf("%+v\n", resp)
 		} else if cmd[0] == '!' {
-			resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommandWithResponce(cmd[1:])
+			resp, _ := gameInterface.SendWSCommandWithResponse(cmd[1:])
 			fmt.Printf("%+v\n", resp)
-		}
-		if cmd == "move" {
-			go func() {
-				for {
-					move.Auto()
-					time.Sleep(time.Second / 20)
-				}
-			}()
-			continue
-		}
-		if cmd[0] == '>' && len(cmd) > 1 {
-			umsg := cmd[1:]
-			if env.FBAuthClient != nil {
-				fbcl := env.FBAuthClient.(*fbauth.Client)
-				if !fbcl.CanSendMessage() {
-					commandSender.WorldChatOutput("FastBuildeｒ", "Lost connection to the authentication server.")
-					break
-				}
-				fbcl.WorldChat(umsg)
-			}
 		}
 		functionHolder.Process(cmd)
 	}
@@ -246,36 +223,6 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 				break
 			}
 		case *packet.CommandOutput:
-			if p.CommandOrigin.UUID.String() == configuration.ZeroId.String() {
-				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-				if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
-					configuration.IsOp = true
-				}
-				if len(pos) == 0 {
-					commandSender.Output(I18n.T(I18n.InvalidPosition))
-					break
-				}
-				configuration.GlobalFullConfig(env).Main().Position = types.Position{
-					X: pos[0],
-					Y: pos[1],
-					Z: pos[2],
-				}
-				commandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
-				break
-			} else if p.CommandOrigin.UUID.String() == configuration.OneId.String() {
-				pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
-				if len(pos) == 0 {
-					commandSender.Output(I18n.T(I18n.InvalidPosition))
-					break
-				}
-				configuration.GlobalFullConfig(env).Main().End = types.Position{
-					X: pos[0],
-					Y: pos[1],
-					Z: pos[2],
-				}
-				commandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot_End), pos))
-				break
-			}
 			utils_core.ProcessCommandOutput(commandSender, p)
 		case *packet.ActorEvent:
 			if p.EventType == packet.ActorEventDeath && p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
@@ -397,17 +344,17 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = 0
 
-	env.Resources = &ResourcesControlCenter.Resources{}
-	env.ResourcesUpdater = env.Resources.(*ResourcesControlCenter.Resources).Init()
-	env.GlobalAPI = &GlobalAPI.GlobalAPI{
+	env.Resources = &ResourcesControl.Resources{}
+	env.ResourcesUpdater = env.Resources.(*ResourcesControl.Resources).Init()
+	env.GameInterface = &GameInterface.GameInterface{
 		WritePacket: env.Connection.(*minecraft.Conn).WritePacket,
-		BotInfo: GlobalAPI.BotInfo{
-			BotName:      env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
-			BotIdentity:  env.Connection.(*minecraft.Conn).IdentityData().Identity,
-			BotRunTimeID: env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
-			BotUniqueID:  env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+		ClientInfo: GameInterface.ClientInfo{
+			ClientName:      env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
+			ClientIdentity:  env.Connection.(*minecraft.Conn).IdentityData().Identity,
+			ClientRuntimeID: env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
+			ClientUniqueID:  env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
 		},
-		Resources: env.Resources.(*ResourcesControlCenter.Resources),
+		Resources: env.Resources.(*ResourcesControl.Resources),
 	}
 
 	if args.ShouldEnableOmegaSystem() {
@@ -431,12 +378,11 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
-		ud, _ := uuid.NewUUID()
 		if !waitResponse {
-			env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommand(mcCmd, ud)
+			env.GameInterface.SendCommand(mcCmd)
 			return nil
 		}
-		resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommandWithResponce(mcCmd)
+		resp, _ := env.GameInterface.SendCommandWithResponse(mcCmd)
 		return &resp
 	})
 	hostBridgeGamma.HostConnectEstablished()
@@ -454,11 +400,6 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
-
-	zeroId, _ := uuid.NewUUID()
-	oneId, _ := uuid.NewUUID()
-	configuration.ZeroId = zeroId
-	configuration.OneId = oneId
 
 	if args.ExternalListenAddress() != "" {
 		external.ListenExt(env, args.ExternalListenAddress())

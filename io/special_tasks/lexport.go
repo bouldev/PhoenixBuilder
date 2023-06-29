@@ -5,7 +5,6 @@ package special_tasks
 
 import (
 	"fmt"
-	"phoenixbuilder/GameControl/GlobalAPI"
 	"phoenixbuilder/fastbuilder/bdump"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -15,10 +14,10 @@ import (
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/game_control/game_interface"
 	"runtime/debug"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/pterm/pterm"
 )
 
@@ -53,6 +52,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 	if endPos.Y > 320 {
 		endPos.Y = 320
 	}
+	gameInterface:=env.GameInterface.(*GameInterface.GameInterface)
 	go func() {
 		defer func() {
 			err := recover()
@@ -63,11 +63,10 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 			}
 		}()
 
-		u_d0, _ := uuid.NewUUID()
-		env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommand("gamemode c", u_d0)
+		gameInterface.SendWSCommand("gamemode c")
 
-		resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommandWithResponce("querytarget @s")
-		parseResult, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).ParseQuerytargetInfo(resp)
+		resp, _ := gameInterface.SendWSCommandWithResponse("querytarget @s")
+		parseResult, _ := gameInterface.ParseTargetQueryingInfo(resp)
 		var testAreaIsLoaded string = "testforblocks ~-31 -64 ~-31 ~31 319 ~31 ~-31 -64 ~-31"
 		if parseResult[0].Dimension == 1 {
 			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 127 ~31 ~-31 0 ~-31"
@@ -90,19 +89,19 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		for key, value := range splittedAreas {
 			currentProgress := indicativeMap[key]
 			env.CommandSender.Output(pterm.Info.Sprintf("Fetching data from area [%d, %d]", currentProgress[0], currentProgress[1]))
-			env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommandWithResponce(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2))
+			gameInterface.SendWSCommandWithResponse(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2))
 
 			for {
-				resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendWSCommandWithResponce(testAreaIsLoaded)
+				resp, _ := gameInterface.SendWSCommandWithResponse(testAreaIsLoaded)
 				if resp.OutputMessages[0].Message != "commands.generic.outOfWorld" {
 					break
 				}
 			}
 			// 等待当前被访问的区块加载完成
-			holder := env.GlobalAPI.(*GlobalAPI.GlobalAPI).Resources.Structure.Occupy()
-			exportData, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendStructureRequestWithResponce(
+			holder := gameInterface.Resources.Structure.Occupy()
+			exportData, _ := gameInterface.SendStructureRequestWithResponse(
 				&packet.StructureTemplateDataRequest{
-					StructureName: "mystructure:aaaaa",
+					StructureName: "mystructure:bbbbb",
 					Position:      protocol.BlockPos{int32(value.BeginX), int32(value.BeginY), int32(value.BeginZ)},
 					Settings: protocol.StructureSettings{
 						PaletteName:               "default",
@@ -120,7 +119,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 					RequestType: packet.StructureTemplateRequestExportFromSave,
 				},
 			)
-			env.GlobalAPI.(*GlobalAPI.GlobalAPI).Resources.Structure.Release(holder)
+			gameInterface.Resources.Structure.Release(holder)
 			// 获取 mcstructure
 			got, err := mcstructure.GetMCStructureData(value, exportData.StructureTemplate)
 			if err != nil {
