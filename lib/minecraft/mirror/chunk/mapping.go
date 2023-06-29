@@ -5,9 +5,7 @@ import (
 	_ "embed"
 	"encoding/gob"
 	"fmt"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"unsafe"
 
@@ -537,33 +535,56 @@ func InitMapping(mappingInData []byte) {
 	if err := gob.NewDecoder(uncompressor).Decode(&mappingIn); err != nil {
 		panic(err)
 	}
+	blockNameRegrades := map[string]string{}
 	for i, blk := range mappingIn.RIDToMCBlock {
 		if strings.HasPrefix(blk.Name, "minecraft:double_stone_block_slab") {
+			upperGradeName := blk.Name
 			blk.Name = strings.ReplaceAll(blk.Name, "minecraft:double_stone_block_slab", "minecraft:double_stone_slab")
+			lowerGradeName := blk.Name
 			mappingIn.RIDToMCBlock[i] = blk
+			blockNameRegrades[upperGradeName] = lowerGradeName
 		}
 		if strings.HasPrefix(blk.Name, "minecraft:stone_block_slab") {
+			upperGradeName := blk.Name
 			blk.Name = strings.ReplaceAll(blk.Name, "minecraft:stone_block_slab", "minecraft:stone_slab")
+			lowerGradeName := blk.Name
 			mappingIn.RIDToMCBlock[i] = blk
+			blockNameRegrades[upperGradeName] = lowerGradeName
 		}
 		if strings.HasSuffix(blk.Name, "_glazed_terracotta") {
-			blk.Name = strings.ReplaceAll(blk.Name, "_glazed_terracotta", "")
-			blk.Name = "minecraft:glazedTerracotta." + blk.Name[len("minecraft:"):]
-			mappingIn.RIDToMCBlock[i] = blk
+			upperGradeName := blk.Name
+			lowerGradeName := strings.ReplaceAll(upperGradeName, "_glazed_terracotta", "")
+			lowerGradeName = "minecraft:glazedTerracotta." + lowerGradeName[len("minecraft:"):]
+			blockNameRegrades[lowerGradeName] = upperGradeName
 		}
 		if strings.HasSuffix(blk.Name, "sea_lantern") {
-			blk.Name = strings.ReplaceAll(blk.Name, "sea_lantern", "seaLantern")
-			mappingIn.RIDToMCBlock[i] = blk
+			upperGradeName := blk.Name
+			lowerGradeName := strings.ReplaceAll(upperGradeName, "sea_lantern", "seaLantern")
+			blockNameRegrades[lowerGradeName] = upperGradeName
 		}
 		if strings.HasSuffix(blk.Name, "trip_wire") {
-			blk.Name = strings.ReplaceAll(blk.Name, "trip_wire", "tripWire")
-			mappingIn.RIDToMCBlock[i] = blk
+			upperGradeName := blk.Name
+			lowerGradeName := strings.ReplaceAll(upperGradeName, "trip_wire", "tripWire")
+			blockNameRegrades[lowerGradeName] = upperGradeName
 		}
 		if strings.HasSuffix(blk.Name, "concrete_powder") {
-			blk.Name = strings.ReplaceAll(blk.Name, "concrete_powder", "concretePowder")
-			mappingIn.RIDToMCBlock[i] = blk
+			upperGradeName := blk.Name
+			lowerGradeName := strings.ReplaceAll(upperGradeName, "concrete_powder", "concretePowder")
+			blockNameRegrades[lowerGradeName] = upperGradeName
 		}
 	}
+
+	blockNameRedirect := func(origBlockName string) (stdMCBlockName string) {
+		if !strings.HasPrefix(origBlockName, "minecraft:") {
+			origBlockName = "minecraft:" + origBlockName
+		}
+		if regradeName, found := blockNameRegrades[origBlockName]; found {
+			return regradeName
+		} else {
+			return origBlockName
+		}
+	}
+
 	StatePropsToRuntimeIDMapping = make(map[string]map[string]uint32)
 	RuntimeIDToSateStrMapping = make(map[uint32]string)
 
@@ -723,9 +744,7 @@ func InitMapping(mappingInData []byte) {
 
 	}
 	BlockPropsToRuntimeID = func(blockName string, blockProps map[string]interface{}) (uint32, bool) {
-		if !strings.HasPrefix(blockName, "minecraft:") {
-			blockName = "minecraft:" + blockName
-		}
+		blockName = blockNameRedirect(blockName)
 		if oprops, found := StatePropsToRuntimeIDMapping[blockName]; found {
 			bscore := -1
 			brtid := AirRID
@@ -752,10 +771,7 @@ func InitMapping(mappingInData []byte) {
 		return AirRID, false
 	}
 	BlockStateStrToRuntimeID = func(blockName, blockState string) (uint32, bool) {
-		blockName = strings.TrimSpace(blockName)
-		if !strings.HasPrefix(blockName, "minecraft:") {
-			blockName = "minecraft:" + blockName
-		}
+		blockName = blockNameRedirect(blockName)
 		sprops := trimStateProps(blockState)
 		if oprops, found := StatePropsToRuntimeIDMapping[blockName]; found {
 			bscore := -1
