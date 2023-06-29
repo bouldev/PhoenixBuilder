@@ -16,7 +16,7 @@ import (
 	"phoenixbuilder/minecraft"
 )
 
-func InitInternalFunctions(fh *FunctionHolder) {
+func InitPresetFunctions(fh *FunctionHolder) {
 	delayEnumId := fh.RegisterEnum("continuous, discrete, none", types.ParseDelayMode, types.DelayModeInvalid)
 	fh.RegisterFunction(&Function{
 		Name:          "exit",
@@ -421,7 +421,7 @@ func InitInternalFunctions(fh *FunctionHolder) {
 }
 
 func decideDelay(delaytype byte) int64 {
-	// Will add system check later,so don't merge into other functions.
+	// TODO: Being system-based
 	if delaytype == types.DelayModeContinuous {
 		return 1000
 	} else if delaytype == types.DelayModeDiscrete {
@@ -432,6 +432,6 @@ func decideDelay(delaytype byte) int64 {
 }
 
 func decideDelayThreshold() int {
-	// Will add system check later,so don't merge into other functions.
+	// TODO: Being system-based
 	return 20000
 }

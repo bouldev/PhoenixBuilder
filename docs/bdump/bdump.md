@@ -1,45 +1,43 @@
 # BDump File Format
 
-BDump v3 is a file format for storing Minecraft's structures. It is made of different commands that indicate the constructing process.
+BDump v3 is a file format for storing Minecraft's structures, which is made of a set of commands indicating the constructing process.
 
-By writing the ids that represent each blocks in a specific order is a workable plan that reduces the file size, but this would allow a large amount of unexpected air blocks that increasing the file size so we implemented a new format which has a pointer that indicates where the "brush" is, the file is a set of commands that tells the "brush" how to move, and where to place blocks. Within this file format, air blocks can be simply skipped by a move command so files can be smaller.
+By writing the IDs of each blocks in a specific order is a workable plan for reducing the file size, but this would leave a large amount of unexpected air blocks increasing the file size. Therefore this format holding a pointer indicating the position of the "brush" is implemented.
 
 ## Basic File Structure
 
-BDump v3 file's extension is `.bdx`, and the general header of it is `BD@`, which stands for that the file was compressed with brotli compression algorithm (the compress quality phoenixbuilder uses is 6). Note that there's also a header `BDZ` that stands for the file was compressed with gzip compression algorithm, which is no longer supported by PhoenixBuilder today since it has been deprecated for a long time and it's hard to find this type's file again. We define such kind of header as "compression header"  and the content after it is compressed with the compression algorithm it indicates.
+BDump v3 file's recommended extension is `.bdx`, whose general header is `BD@`, standing for a compression in `brotli` algorithm (default compressing quality: 6). Note that the header `BDZ` standing for a `gzip` compressed file is also possible, but is no longer supported by PhoenixBuilder since it has been deprecated for a long time and it's hard to find this type's file again. The content after the compression header is the data compressed with the compression algorithm it indicates.
 
-> Tip: BDump v2's extension is `.bdp` and the header is `BDMPS\0\x02\0`.
+> Note: BDump v2's extension is `.bdp` and the header is `BDMPS\0\x02\0`.
 
-The header of the compressed content is `BDX\0`, and the author's player name that terminated with `\0` is followed right after it. Then the content after it is the command with arguments that written one-by-one tightly. Each command id would take 1 byte of space, like what an `unsigned char` do.
+The header of the compressed content is `BDX\0`, and the author's player name terminated by `\0` following right after it (deprecated). The content after it is the command with arguments that written one-by-one tightly. Each command id would take 1 byte of space, like what an `unsigned char` do.
 
-All the operations depend a `Vec3` value that represents the current position of the "brush".
+All the operations depend on a shared `Vec3` value representing the current position of the "brush".
 
-Let's see the list of commands first.
+The list of commands is shown below.
 
 > Note: Integers would be written in <font style="color:red;">**big endian**</font>.
->
-> What is the difference of little endian and big endian?
 >
 > For example, an int32 number in little endian, `1`, is `01 00 00 00` in the memory, and the memory of an int32 number `1` in big endian is `00 00 00 01`.
 
 Type definition:
 
-* {int}: a number that can be positive, negative or zero.
-* {unsigned int}: a number that can be positive or zero.
-* `char`: an {int} value with 1 byte long.
-* `unsigned char`: an {unsigned int} value with 1 byte long.
-* `short`: an {int} value with 2 bytes long.
-* `unsigned short`: an {unsigned int} value with 2 bytes long.
-* `int32_t`: an {int} value with 4 bytes long.
-* `uint32_t`: an {unsigned int} value with 4 bytes long.
-* `char *`: a string that terminated with `\0` (encoding is utf-8).
+* {int}: an integer that can be positive, negative or zero.
+* {unsigned int}: an integer that can be positive or zero.
+* `char`: an 1-byte-long {int} value.
+* `unsigned char`: an 1-byte-long {unsigned int} value.
+* `short`/`int16_t`: a 2-byte-long {int} value.
+* `unsigned short`/`uint16_t`: a 2-byte-long {unsigned int} value.
+* `int32_t`: a 4-byte-long {int} value.
+* `uint32_t`: a 4-byte-long {unsigned int} value.
+* `char *`: a string terminated by `\0` (utf-8 encoded).
 * `int`: alias of `int32_t`
 * `unsigned int`: alias of `uint32_t`
-* `bool`: a value that can be either `true(1)` or `false(0)`, 1 byte long.
+* `bool`: an 1-byte-long value that can be either `true(1)` or `false(0)`.
 
 | ID                | Internal name                                             | Description                                                  | Arguments                                                    |
 | ----------------- | --------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| 1                 | `CreateConstantString`                                    | Add the specified string to the palette, and the ID of the string is sorted in the term of the command called, e.g. the ID when assigning the first string given is `0`, and the ID of the second time is `1`. The maximum count of strings is `65536`. | `char *constantString`                                       |
+| 1                 | `CreateConstantString`                                    | Add the specified string to the palette, whose ID is sorted by the order of having the command called, e.g. the ID of the first constant string given is `0`, and the ID of the second one is `1`. The maximum count of strings is `65536`. | `char *constantString`                                       |
 | 2                 | **DEPRECATED and REMOVED**                                | -                                                            | -                                                            |
 | 3                 | **DEPRECATED and REMOVED**                                | -                                                            | -                                                            |
 | 4                 | **DEPRECATED and REMOVED**                                | -                                                            | -                                                            |
@@ -83,7 +81,7 @@ Type definition:
 | 88, `'X'`, `0x58` | `Terminate`                                               | Stop reading. Note that although the general end is "XE" (2 bytes long), a 'X' (1 byte long) character is enough. | -                                                            |
 | 90, `0x5A`        | `isSigned` (fake command)                                 | A command that functions a little different with other commands, its argument is the previous byte of it, would only appear in the end of the file. An invalid signature would prevent PhoenixBuilder from constructing the structure. See paragraph `Signing` for reference. | `unsigned char signatureSize`                                |
 
-The list above is all the commands of the bdump v4 till 2022-1-29.
+The list above is all the commands of the bdump v4 till June 26<sup>th</sup> of 2023.
 
 For the `struct ChestData` data format:
 

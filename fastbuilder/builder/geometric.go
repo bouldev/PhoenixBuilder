@@ -1,41 +1,47 @@
 package builder
 
-import "phoenixbuilder/fastbuilder/types"
+import (
+	"phoenixbuilder/fastbuilder/types"
+	"math"
+)
 
 func Circle(config *types.MainConfig, blc chan *types.Module)error {
 	Radius := config.Radius
 	Facing := config.Facing
 	point := config.Position
+	radius_squared:=math.Pow(float64(Radius), 2)
+	var push_to_channel func(int, int)
 	switch Facing {
 	case "x":
-		for i := -Radius; i <= Radius; i++ {
-			for j := -Radius; j <= Radius; j++ {
-				if i*i+j*j < Radius*Radius && i*i+j*j >= (Radius-1)*(Radius-1) {
-					var b types.Module
-					b.Point = types.Position{point.X, point.Y + i, point.Z + j}
-					blc <- &b
-				}
+		push_to_channel=func (x int, y int) {
+			blc<-&types.Module {
+				Point: types.Position {point.X, point.Y + y, point.Z + x},
 			}
 		}
 	case "y":
-		for i := -Radius; i <= Radius; i++ {
-			for j := -Radius; j <= Radius; j++ {
-				if i*i+j*j < Radius*Radius && i*i+j*j >= (Radius-1)*(Radius-1) {
-					var b types.Module
-					b.Point = types.Position{point.X + i, point.Y, point.Z + j}
-					blc <- &b
-				}
+		push_to_channel=func (x int, y int) {
+			blc<-&types.Module {
+				Point: types.Position {point.X+x, point.Y, point.Z + y},
 			}
 		}
 	case "z":
-		for i := -Radius; i <= Radius; i++ {
-			for j := -Radius; j <= Radius; j++ {
-				if i*i+j*j < Radius*Radius && i*i+j*j >= (Radius-1)*(Radius-1) {
-					var b types.Module
-					b.Point = types.Position{point.X + i, point.Y + j, point.Z}
-					blc <- &b
-				}
+		push_to_channel=func (x int, y int) {
+			blc<-&types.Module {
+				Point: types.Position {point.X+x, point.Y+y, point.Z},
 			}
+		}
+	}
+	for i:=0;i<=Radius;i++ {
+		first_quadrant_val:=int(math.Sqrt(radius_squared-math.Pow(float64(i), 2)))
+		push_to_channel(i, first_quadrant_val)
+		if(first_quadrant_val!=0) {
+			push_to_channel(i, -first_quadrant_val)
+		}
+		if(i!=0) {
+			push_to_channel(-i,first_quadrant_val)
+		}
+		if(first_quadrant_val!=0&&i!=0) {
+			push_to_channel(-i,-first_quadrant_val)
 		}
 	}
 	return nil

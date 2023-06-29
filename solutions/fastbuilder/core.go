@@ -418,7 +418,7 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 
 	commandSender := commands.InitCommandSender(env)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
-	function.InitInternalFunctions(functionHolder)
+	function.InitPresetFunctions(functionHolder)
 	fbtask.InitTaskStatusDisplay(env)
 	move.ConnectTime = time.Time{}
 	move.Position = conn.GameData().PlayerPosition
