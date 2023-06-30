@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type AccessWrapper struct {
@@ -144,7 +145,7 @@ func (aw *AccessWrapper) auth(ctx context.Context, publicKey []byte) (resp strin
 	return chainInfo, nil
 }
 
-func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error) {
+func (aw *AccessWrapper) getAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error) {
 	chainAddr, err := aw.auth(ctx, publicKey)
 	if err != nil {
 		return "", "", err
@@ -156,6 +157,23 @@ func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (addre
 	chainInfo = chainAndAddr[0]
 	address = chainAndAddr[1]
 	return address, chainInfo, nil
+}
+
+func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error) {
+	// TODO make it configurable
+	maxRetryTimes := 3
+	fastRetryDelay := time.Second
+	for retryTimes := 0; retryTimes < maxRetryTimes; retryTimes++ {
+		address, chainInfo, err = aw.getAccess(ctx, publicKey)
+		if err != nil && strings.Contains(err.Error(), "Link server processing error") {
+			fmt.Println("Link server processing error, retrying...")
+			time.Sleep(fastRetryDelay)
+			continue
+		} else {
+			break
+		}
+	}
+	return address, chainInfo, err
 }
 
 func (aw *AccessWrapper) BotOwner(ctx context.Context) (name string, err error) {
