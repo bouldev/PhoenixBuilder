@@ -394,6 +394,35 @@ func (cq *QGroupLink) onNewGameMsg(chat *defines.GameChat) bool {
 	if len(chat.RawParameters) > 0 {
 		msg = msg + " (" + strings.Join(chat.RawParameters, ", ") + ")"
 	}
+	if strings.HasPrefix(msg, "{\"rawtext") {
+		// handle json
+		var jsonMsg struct {
+			Texts []struct {
+				Text string `json:"text"`
+			} `json:"rawtext"`
+		}
+		if err := json.Unmarshal([]byte(msg), &jsonMsg); err == nil {
+			cleanedMsg := ""
+			for _, v := range jsonMsg.Texts {
+				cleanedMsg += v.Text
+			}
+			// remove anything like §a, §l, etc
+			cleanedMsg = strings.ReplaceAll(cleanedMsg, "%%", "%")
+			ignoreNext := false
+			for _, v := range msg {
+				if ignoreNext {
+					ignoreNext = false
+					continue
+				}
+				if v == '§' {
+					ignoreNext = true
+					continue
+				}
+				cleanedMsg += string(v)
+			}
+			msg = cleanedMsg
+		}
+	}
 	if cq.ShowExchangeDetail {
 		cq.Frame.GetBackendDisplay().Write("MC->QQ: " + msg)
 	}
