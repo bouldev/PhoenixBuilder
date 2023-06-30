@@ -22,7 +22,6 @@ type PBEnvironment struct {
 	FBAuthClient              interface{}
 	GlobalFullConfig          interface{}
 	RespondUser               string
-	CommandSender             interfaces.CommandSender
 	Connection                interface{}
 	UQHolder                  interface{}
 	Resources                 interface{}

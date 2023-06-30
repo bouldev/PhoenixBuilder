@@ -11,9 +11,9 @@ import (
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
+	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/io/special_tasks"
 	"phoenixbuilder/minecraft"
-	"phoenixbuilder/fastbuilder/utils"
 )
 
 func InitPresetFunctions(fh *FunctionHolder) {
@@ -24,7 +24,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 		FunctionType:  FunctionTypeSimple,
 		SFMinSliceLen: 1,
 		FunctionContent: func(env *environment.PBEnvironment, _ []interface{}) {
-			env.CommandSender.Output(I18n.T(I18n.QuitCorrectly))
+			env.GameInterface.Output(I18n.T(I18n.QuitCorrectly))
 			fmt.Printf("%s\n", I18n.T(I18n.QuitCorrectly))
 			env.Connection.(*minecraft.Conn).Close()
 			os.Exit(0)
@@ -37,7 +37,6 @@ func InitPresetFunctions(fh *FunctionHolder) {
 		SFMinSliceLen: 1,
 		FunctionContent: func(env *environment.PBEnvironment, _ []interface{}) {
 			conn := env.Connection.(*minecraft.Conn)
-			commandSender := env.CommandSender
 			homedir, err := os.UserHomeDir()
 			if err != nil {
 				fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
@@ -48,11 +47,11 @@ func InitPresetFunctions(fh *FunctionHolder) {
 			token := filepath.Join(fbconfigdir, "fbtoken")
 			err = os.Remove(token)
 			if err != nil {
-				commandSender.Output(fmt.Sprintf(I18n.T(I18n.FBUC_Token_ErrOnRemove), err))
+				env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.FBUC_Token_ErrOnRemove), err))
 				return
 			}
-			commandSender.Output(I18n.T(I18n.Logout_Done))
-			commandSender.Output(I18n.T(I18n.QuitCorrectly))
+			env.GameInterface.Output(I18n.T(I18n.Logout_Done))
+			env.GameInterface.Output(I18n.T(I18n.QuitCorrectly))
 			fmt.Printf("%s\n", I18n.T(I18n.QuitCorrectly))
 			conn.Close()
 			os.Exit(0)
@@ -64,7 +63,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 		FunctionType:  FunctionTypeSimple,
 		SFMinSliceLen: 1,
 		FunctionContent: func(env *environment.PBEnvironment, _ []interface{}) {
-			env.CommandSender.Output(I18n.T(I18n.SelectLanguageOnConsole))
+			env.GameInterface.Output(I18n.T(I18n.SelectLanguageOnConsole))
 			I18n.SelectLanguage()
 			I18n.UpdateLanguage()
 		},
@@ -84,7 +83,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				Y: Y,
 				Z: Z,
 			}
-			env.CommandSender.Output(fmt.Sprintf("%s: %d, %d, %d.", I18n.T(I18n.PositionSet), X, Y, Z))
+			env.GameInterface.Output(fmt.Sprintf("%s: %d, %d, %d.", I18n.T(I18n.PositionSet), X, Y, Z))
 		},
 	})
 	fh.RegisterFunction(&Function{
@@ -102,7 +101,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				Y: Y,
 				Z: Z,
 			}
-			env.CommandSender.Output(fmt.Sprintf("%s: %d, %d, %d.", I18n.T(I18n.PositionSet_End), X, Y, Z))
+			env.GameInterface.Output(fmt.Sprintf("%s: %d, %d, %d.", I18n.T(I18n.PositionSet_End), X, Y, Z))
 		},
 	})
 	fh.RegisterFunction(&Function{
@@ -116,12 +115,12 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
 				Content: func(env *environment.PBEnvironment, args []interface{}) {
 					if configuration.GlobalFullConfig(env).Delay().DelayMode == types.DelayModeNone {
-						env.CommandSender.Output(I18n.T(I18n.DelaySetUnavailableUnderNoneMode))
+						env.GameInterface.Output(I18n.T(I18n.DelaySetUnavailableUnderNoneMode))
 						return
 					}
 					ms, _ := args[0].(int)
 					configuration.GlobalFullConfig(env).Delay().Delay = int64(ms)
-					env.CommandSender.Output(fmt.Sprintf("%s: %d", I18n.T(I18n.DelaySet), ms))
+					env.GameInterface.Output(fmt.Sprintf("%s: %d", I18n.T(I18n.DelaySet), ms))
 				},
 			},
 			"mode": &FunctionChainItem{
@@ -130,7 +129,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					"get": &FunctionChainItem{
 						FunctionType: FunctionTypeSimple,
 						Content: func(env *environment.PBEnvironment, _ []interface{}) {
-							env.CommandSender.Output(fmt.Sprintf("%s: %s.", I18n.T(I18n.CurrentDefaultDelayMode), types.StrDelayMode(configuration.GlobalFullConfig(env).Delay().DelayMode)))
+							env.GameInterface.Output(fmt.Sprintf("%s: %s.", I18n.T(I18n.CurrentDefaultDelayMode), types.StrDelayMode(configuration.GlobalFullConfig(env).Delay().DelayMode)))
 						},
 					},
 					"set": &FunctionChainItem{
@@ -139,15 +138,15 @@ func InitPresetFunctions(fh *FunctionHolder) {
 						Content: func(env *environment.PBEnvironment, args []interface{}) {
 							delaymode, _ := args[0].(byte)
 							configuration.GlobalFullConfig(env).Delay().DelayMode = delaymode
-							env.CommandSender.Output(fmt.Sprintf("%s: %s", I18n.T(I18n.DelayModeSet), types.StrDelayMode(delaymode)))
+							env.GameInterface.Output(fmt.Sprintf("%s: %s", I18n.T(I18n.DelayModeSet), types.StrDelayMode(delaymode)))
 							if delaymode != types.DelayModeNone {
 								dl := decideDelay(delaymode)
 								configuration.GlobalFullConfig(env).Delay().Delay = dl
-								env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.DelayModeSet_DelayAuto), dl))
+								env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.DelayModeSet_DelayAuto), dl))
 							}
 							if delaymode == types.DelayModeDiscrete {
 								configuration.GlobalFullConfig(env).Delay().DelayThreshold = decideDelayThreshold()
-								env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.DelayModeSet_ThresholdAuto), configuration.GlobalFullConfig(env).Delay().DelayThreshold))
+								env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.DelayModeSet_ThresholdAuto), configuration.GlobalFullConfig(env).Delay().DelayThreshold))
 							}
 						},
 					},
@@ -158,12 +157,12 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				ArgumentTypes: []byte{SimpleFunctionArgumentInt},
 				Content: func(env *environment.PBEnvironment, args []interface{}) {
 					if configuration.GlobalFullConfig(env).Delay().DelayMode != types.DelayModeDiscrete {
-						env.CommandSender.Output(I18n.T(I18n.DelayThreshold_OnlyDiscrete))
+						env.GameInterface.Output(I18n.T(I18n.DelayThreshold_OnlyDiscrete))
 						return
 					}
 					thr, _ := args[0].(int)
 					configuration.GlobalFullConfig(env).Delay().DelayThreshold = thr
-					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.DelayThreshold_Set), thr))
+					env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.DelayThreshold_Set), thr))
 				},
 			},
 		},
@@ -179,13 +178,13 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				ArgumentTypes: []byte{},
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					p, _:=env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
+					p, _ := env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
 					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
 					if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
 						configuration.IsOp = true
 					}
 					if len(pos) == 0 {
-						env.CommandSender.Output(I18n.T(I18n.InvalidPosition))
+						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))
 						return
 					}
 					configuration.GlobalFullConfig(env).Main().Position = types.Position{
@@ -193,7 +192,8 @@ func InitPresetFunctions(fh *FunctionHolder) {
 						Y: pos[1],
 						Z: pos[2],
 					}
-					env.CommandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+					env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+					//env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
 					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
 				},
 			},
@@ -201,13 +201,13 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					p, _:=env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
+					p, _ := env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
 					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
 					if !(p.OutputMessages[0].Message == "commands.generic.unknown") {
 						configuration.IsOp = true
 					}
 					if len(pos) == 0 {
-						env.CommandSender.Output(I18n.T(I18n.InvalidPosition))
+						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))
 						return
 					}
 					configuration.GlobalFullConfig(env).Main().Position = types.Position{
@@ -215,7 +215,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 						Y: pos[1],
 						Z: pos[2],
 					}
-					env.CommandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+					env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
 					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
 				},
 			},
@@ -223,10 +223,10 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					p, _:=env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
+					p, _ := env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
 					pos, _ := utils.SliceAtoi(p.OutputMessages[0].Parameters)
 					if len(pos) == 0 {
-						env.CommandSender.Output(I18n.T(I18n.InvalidPosition))
+						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))
 						return
 					}
 					configuration.GlobalFullConfig(env).Main().End = types.Position{
@@ -234,7 +234,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 						Y: pos[1],
 						Z: pos[2],
 					}
-					env.CommandSender.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
+					env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
 					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
 				},
 			},
@@ -250,7 +250,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					total := 0
-					env.CommandSender.Output(I18n.T(I18n.CurrentTasks))
+					env.GameInterface.Output(I18n.T(I18n.CurrentTasks))
 					taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 					taskholder.TaskMap.Range(func(_tid interface{}, _v interface{}) bool {
 						tid, _ := _tid.(int64)
@@ -263,11 +263,11 @@ func InitPresetFunctions(fh *FunctionHolder) {
 						if v.Config.Delay().DelayMode != types.DelayModeNone {
 							dv = v.Config.Delay().Delay
 						}
-						env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskStateLine), tid, v.CommandLine, fbtask.GetStateDesc(v.State), dv, types.StrDelayMode(v.Config.Delay().DelayMode), dt))
+						env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.TaskStateLine), tid, v.CommandLine, fbtask.GetStateDesc(v.State), dv, types.StrDelayMode(v.Config.Delay().DelayMode), dt))
 						total++
 						return true
 					})
-					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskTotalCount), total))
+					env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.TaskTotalCount), total))
 				},
 			},
 			"pause": &FunctionChainItem{
@@ -278,11 +278,11 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 					task := taskholder.FindTask(int64(tid))
 					if task == nil {
-						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
+						env.GameInterface.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Pause()
-					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskPausedNotice), task.TaskId))
+					env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.TaskPausedNotice), task.TaskId))
 				},
 			},
 			"resume": &FunctionChainItem{
@@ -293,11 +293,11 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 					task := taskholder.FindTask(int64(tid))
 					if task == nil {
-						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
+						env.GameInterface.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Resume()
-					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskResumedNotice), task.TaskId))
+					env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.TaskResumedNotice), task.TaskId))
 				},
 			},
 			"break": &FunctionChainItem{
@@ -308,11 +308,11 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 					task := taskholder.FindTask(int64(tid))
 					if task == nil {
-						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
+						env.GameInterface.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Break()
-					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskStoppedNotice), task.TaskId))
+					env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.TaskStoppedNotice), task.TaskId))
 				},
 			},
 			"setdelay": &FunctionChainItem{
@@ -324,14 +324,14 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 					task := taskholder.FindTask(int64(tid))
 					if task == nil {
-						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
+						env.GameInterface.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					if task.Config.Delay().DelayMode == types.DelayModeNone {
-						env.CommandSender.Output(I18n.T(I18n.Task_SetDelay_Unavailable))
+						env.GameInterface.Output(I18n.T(I18n.Task_SetDelay_Unavailable))
 						return
 					}
-					env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.Task_DelaySet), task.TaskId, del))
+					env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.Task_DelaySet), task.TaskId, del))
 					task.Config.Delay().Delay = int64(del)
 				},
 			},
@@ -344,19 +344,19 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 					task := taskholder.FindTask(int64(tid))
 					if task == nil {
-						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
+						env.GameInterface.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					task.Pause()
 					task.Config.Delay().DelayMode = delaymode
-					env.CommandSender.Output(fmt.Sprintf("[%s %d] - %s: %s", I18n.T(I18n.TaskTTeIuKoto), tid, I18n.T(I18n.DelayModeSet), types.StrDelayMode(delaymode)))
+					env.GameInterface.Output(fmt.Sprintf("[%s %d] - %s: %s", I18n.T(I18n.TaskTTeIuKoto), tid, I18n.T(I18n.DelayModeSet), types.StrDelayMode(delaymode)))
 					if delaymode != types.DelayModeNone {
 						task.Config.Delay().Delay = decideDelay(delaymode)
-						env.CommandSender.Output(fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_DelayAuto), I18n.T(I18n.TaskTTeIuKoto), task.TaskId, task.Config.Delay().Delay))
+						env.GameInterface.Output(fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_DelayAuto), I18n.T(I18n.TaskTTeIuKoto), task.TaskId, task.Config.Delay().Delay))
 					}
 					if delaymode == types.DelayModeDiscrete {
 						task.Config.Delay().DelayThreshold = decideDelayThreshold()
-						env.CommandSender.Output(fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_ThresholdAuto), I18n.T(I18n.TaskTTeIuKoto), task.TaskId, task.Config.Delay().DelayThreshold))
+						env.GameInterface.Output(fmt.Sprintf("[%s %d] "+I18n.T(I18n.DelayModeSet_ThresholdAuto), I18n.T(I18n.TaskTTeIuKoto), task.TaskId, task.Config.Delay().DelayThreshold))
 					}
 					task.Resume()
 				},
@@ -370,14 +370,14 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 					task := taskholder.FindTask(int64(tid))
 					if task == nil {
-						env.CommandSender.Output(I18n.T(I18n.TaskNotFoundMessage))
+						env.GameInterface.Output(I18n.T(I18n.TaskNotFoundMessage))
 						return
 					}
 					if task.Config.Delay().DelayMode != types.DelayModeDiscrete {
-						env.CommandSender.Output(I18n.T(I18n.DelayThreshold_OnlyDiscrete))
+						env.GameInterface.Output(I18n.T(I18n.DelayThreshold_OnlyDiscrete))
 						return
 					}
-					env.CommandSender.Output(fmt.Sprintf("[%s %d] - "+I18n.T(I18n.DelayThreshold_Set), I18n.T(I18n.TaskTTeIuKoto), tid, delayt))
+					env.GameInterface.Output(fmt.Sprintf("[%s %d] - "+I18n.T(I18n.DelayThreshold_Set), I18n.T(I18n.TaskTTeIuKoto), tid, delayt))
 					task.Config.Delay().DelayThreshold = delayt
 				},
 			},
@@ -393,7 +393,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 		FunctionContent: func(env *environment.PBEnvironment, args []interface{}) {
 			ev, _ := args[0].(byte)
 			configuration.GlobalFullConfig(env).Global().TaskCreationType = ev
-			env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskTypeSwitchedTo), types.MakeTaskType(ev)))
+			env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.TaskTypeSwitchedTo), types.MakeTaskType(ev)))
 		},
 	})
 	taskDMEnumId := fh.RegisterEnum("true, false", types.ParseTaskDisplayMode, types.TaskDisplayInvalid)
@@ -406,7 +406,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 		FunctionContent: func(env *environment.PBEnvironment, args []interface{}) {
 			ev, _ := args[0].(byte)
 			configuration.GlobalFullConfig(env).Global().TaskDisplayMode = ev
-			env.CommandSender.Output(fmt.Sprintf(I18n.T(I18n.TaskDisplayModeSet), types.MakeTaskDisplayMode(ev)))
+			env.GameInterface.Output(fmt.Sprintf(I18n.T(I18n.TaskDisplayModeSet), types.MakeTaskDisplayMode(ev)))
 		},
 	})
 	var builderMethods []string
@@ -422,7 +422,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 			if task == nil {
 				return
 			}
-			env.CommandSender.Output(fmt.Sprintf("%s, ID=%d.", I18n.T(I18n.TaskCreated), task.TaskId))
+			env.GameInterface.Output(fmt.Sprintf("%s, ID=%d.", I18n.T(I18n.TaskCreated), task.TaskId))
 		},
 	})
 	fh.RegisterFunction(&Function{
@@ -434,7 +434,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 			if task == nil {
 				return
 			}
-			env.CommandSender.Output(fmt.Sprintf("%s, ID=%d.", I18n.T(I18n.TaskCreated), task.TaskId))
+			env.GameInterface.Output(fmt.Sprintf("%s, ID=%d.", I18n.T(I18n.TaskCreated), task.TaskId))
 		},
 	})
 	fh.RegisterFunction(&Function{
@@ -446,7 +446,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 			if task == nil {
 				return
 			}
-			env.CommandSender.Output(fmt.Sprintf("%s, ID=%d.", I18n.T(I18n.TaskCreated), task.TaskId))
+			env.GameInterface.Output(fmt.Sprintf("%s, ID=%d.", I18n.T(I18n.TaskCreated), task.TaskId))
 		},
 	})
 	fh.RegisterFunction(&Function{
@@ -457,7 +457,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 		SFMinSliceLen:   1,
 		FunctionContent: func(env *environment.PBEnvironment, args []interface{}) {
 			str := args[0].(string)
-			env.CommandSender.Output(str)
+			env.GameInterface.Output(str)
 		},
 	})
 }

@@ -365,7 +365,7 @@ func InitTaskStatusDisplay(env *environment.PBEnvironment) {
 	go func() {
 		for {
 			str := <-holder.BrokSender
-			env.CommandSender.Output(str)
+			env.GameInterface.Output(str)
 		}
 	}()
 	ticker := time.NewTicker(500 * time.Millisecond)
@@ -398,7 +398,7 @@ func InitTaskStatusDisplay(env *environment.PBEnvironment) {
 			if len(displayStrs) == 0 {
 				continue
 			}
-			env.CommandSender.Title(strings.Join(displayStrs, "\n"))
+			env.GameInterface.Title(strings.Join(displayStrs, "\n"))
 		}
 	}()
 }

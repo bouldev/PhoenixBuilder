@@ -29,13 +29,12 @@ import (
 )
 
 func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
-	cmdsender := env.CommandSender
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err != nil {
-		cmdsender.Output(fmt.Sprintf("Failed to parse command: %v", err))
+		env.GameInterface.Output(fmt.Sprintf("Failed to parse command: %v", err))
 		return nil
 	}
-	//cmdsender.Output("Sorry, but compatibility works haven't been done yet, please use lexport.")
+	//env.GameInterface.Output("Sorry, but compatibility works haven't been done yet, please use lexport.")
 	//return nil
 	beginPos := cfg.Position
 	endPos := cfg.End
@@ -128,7 +127,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 				fmt.Println("go routine @ fastbuilder.task export crashed ", r)
 			}
 		}()
-		cmdsender.Output("EXPORT >> Exporting...")
+		env.GameInterface.Output("EXPORT >> Exporting...")
 		V := (endPos.X - beginPos.X + 1) * (endPos.Y - beginPos.Y + 1) * (endPos.Z - beginPos.Z + 1)
 		blocks := make([]*types.Module, V)
 		counter := 0
@@ -365,17 +364,17 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 		if strings.LastIndex(cfg.Path, ".bdx") != len(cfg.Path)-4 || len(cfg.Path) < 4 {
 			cfg.Path += ".bdx"
 		}
-		cmdsender.Output("EXPORT >> Writing output file")
+		env.GameInterface.Output("EXPORT >> Writing output file")
 		err, signerr := out.WriteToFile(cfg.Path, env.LocalCert, env.LocalKey)
 		if err != nil {
-			cmdsender.Output(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v", err))
+			env.GameInterface.Output(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v", err))
 			return
 		} else if signerr != nil {
-			cmdsender.Output(fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v", signerr))
+			env.GameInterface.Output(fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v", signerr))
 		} else {
-			cmdsender.Output(fmt.Sprintf("EXPORT >> File signed successfully"))
+			env.GameInterface.Output(fmt.Sprintf("EXPORT >> File signed successfully"))
 		}
-		cmdsender.Output(fmt.Sprintf("EXPORT >> Successfully exported your structure to %v", cfg.Path))
+		env.GameInterface.Output(fmt.Sprintf("EXPORT >> Successfully exported your structure to %v", cfg.Path))
 		runtime.GC()
 	}()
 	return nil

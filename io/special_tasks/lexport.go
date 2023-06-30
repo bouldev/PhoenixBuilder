@@ -11,10 +11,10 @@ import (
 	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/fastbuilder/parsing"
 	"phoenixbuilder/fastbuilder/task"
+	GameInterface "phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/game_control/game_interface"
 	"runtime/debug"
 	"strings"
 
@@ -24,7 +24,7 @@ import (
 func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) *task.Task {
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err != nil {
-		env.CommandSender.Output(pterm.Error.Sprintf("Failed to parse command: %v", err))
+		env.GameInterface.Output(pterm.Error.Sprintf("Failed to parse command: %v", err))
 		return nil
 	}
 	// 解析控制台输入
@@ -52,14 +52,14 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 	if endPos.Y > 320 {
 		endPos.Y = 320
 	}
-	gameInterface:=env.GameInterface.(*GameInterface.GameInterface)
+	gameInterface := env.GameInterface.(*GameInterface.GameInterface)
 	go func() {
 		defer func() {
 			err := recover()
 			if err != nil {
 				debug.PrintStack()
-				env.CommandSender.Output(pterm.Error.Sprintf("go routine @ fastbuilder.task lexport crashed"))
-				env.CommandSender.Output(pterm.Error.Sprintf("%v", err))
+				env.GameInterface.Output(pterm.Error.Sprintf("go routine @ fastbuilder.task lexport crashed"))
+				env.GameInterface.Output(pterm.Error.Sprintf("%v", err))
 			}
 		}()
 
@@ -88,7 +88,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		allAreas := make([]mcstructure.Mcstructure, 0)
 		for key, value := range splittedAreas {
 			currentProgress := indicativeMap[key]
-			env.CommandSender.Output(pterm.Info.Sprintf("Fetching data from area [%d, %d]", currentProgress[0], currentProgress[1]))
+			env.GameInterface.Output(pterm.Info.Sprintf("Fetching data from area [%d, %d]", currentProgress[0], currentProgress[1]))
 			gameInterface.SendWSCommandWithResponse(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2))
 
 			for {
@@ -128,8 +128,8 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 				allAreas = append(allAreas, got)
 			}
 		}
-		env.CommandSender.Output(pterm.Info.Sprint("Data received, processing......"))
-		env.CommandSender.Output(pterm.Info.Sprint("Extracting blocks......"))
+		env.GameInterface.Output(pterm.Info.Sprint("Data received, processing......"))
+		env.GameInterface.Output(pterm.Info.Sprint("Extracting blocks......"))
 
 		processedData, err := mcstructure.DumpBlocks(allAreas, reversedMap, mcstructure.Area{
 			BeginX: int32(beginPos.X),
@@ -150,17 +150,17 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 			cfg.Path += ".bdx"
 		}
 
-		env.CommandSender.Output(pterm.Info.Sprint("Writing output file......"))
+		env.GameInterface.Output(pterm.Info.Sprint("Writing output file......"))
 		err, signerr := outputResult.WriteToFile(cfg.Path, env.LocalCert, env.LocalKey)
 		if err != nil {
-			env.CommandSender.Output(pterm.Error.Sprintf("Failed to export: %v", err))
+			env.GameInterface.Output(pterm.Error.Sprintf("Failed to export: %v", err))
 			return
 		} else if signerr != nil {
-			env.CommandSender.Output(pterm.Info.Sprintf("Note: The file is unsigned since the following error was trapped: %v", signerr))
+			env.GameInterface.Output(pterm.Info.Sprintf("Note: The file is unsigned since the following error was trapped: %v", signerr))
 		} else {
-			env.CommandSender.Output(pterm.Success.Sprint("File signed successfully"))
+			env.GameInterface.Output(pterm.Success.Sprint("File signed successfully"))
 		}
-		env.CommandSender.Output(pterm.Success.Sprintf("Successfully exported your structure to %v", cfg.Path))
+		env.GameInterface.Output(pterm.Success.Sprintf("Successfully exported your structure to %v", cfg.Path))
 	}()
 	return nil
 }
