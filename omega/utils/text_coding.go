@@ -7,6 +7,8 @@ import (
 	"golang.org/x/text/encoding/simplifiedchinese"
 )
 
+// Better to just drop GBK support
+
 func IsGBK(data []byte) (isGBK bool, failAtPos int) {
 	length := len(data)
 	var i int = 0
