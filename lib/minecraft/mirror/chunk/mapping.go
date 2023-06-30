@@ -575,6 +575,7 @@ func InitMapping(mappingInData []byte) {
 	}
 
 	blockNameRedirect := func(origBlockName string) (stdMCBlockName string) {
+		origBlockName = strings.TrimSpace(origBlockName)
 		if !strings.HasPrefix(origBlockName, "minecraft:") {
 			origBlockName = "minecraft:" + origBlockName
 		}
