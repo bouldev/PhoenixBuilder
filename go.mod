@@ -6,11 +6,14 @@ require (
 	github.com/cheggaaa/pb v1.0.29
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/hashicorp/go-version v1.6.0
+	github.com/mitchellh/mapstructure v1.5.0
+	github.com/pierrec/lz4 v2.6.1+incompatible
 	rogchap.com/v8go v0.7.0
 )
 
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
+	github.com/frankban/quicktest v1.14.5 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
 	github.com/klauspost/cpuid v1.3.1 // indirect
@@ -37,7 +40,7 @@ require (
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-gl/mathgl v1.0.0
-	github.com/google/go-cmp v0.5.8 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/websocket v1.4.2
 	github.com/klauspost/compress v1.13.6
