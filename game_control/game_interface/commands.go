@@ -1,12 +1,12 @@
 package GameInterface
 
 import (
-	"fmt"
-	"strings"
 	"encoding/json"
+	"fmt"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -87,7 +87,7 @@ func (g *GameInterface) sendCommandWithResponse(
 
 // 以玩家的身份向租赁服发送命令且无视返回值
 func (g *GameInterface) SendCommand(command string) error {
-	uniqueId, _:=uuid.NewUUID()
+	uniqueId, _ := uuid.NewUUID()
 	err := g.sendCommand(command, uniqueId, protocol.CommandOriginPlayer)
 	if err != nil {
 		return fmt.Errorf("SendCommand: %v", err)
@@ -97,7 +97,7 @@ func (g *GameInterface) SendCommand(command string) error {
 
 // 向租赁服发送 WS 命令且无视返回值
 func (g *GameInterface) SendWSCommand(command string) error {
-	uniqueId, _:=uuid.NewUUID()
+	uniqueId, _ := uuid.NewUUID()
 	err := g.sendCommand(command, uniqueId, protocol.CommandOriginAutomationPlayer)
 	if err != nil {
 		return fmt.Errorf("SendWSCommand: %v", err)
@@ -123,6 +123,7 @@ func (g *GameInterface) SendWSCommandWithResponse(command string) (packet.Comman
 	return resp, nil
 }
 
+// ... [Need to add its use]
 func (i *GameInterface) Output(content string) error {
 	fmt.Printf("%s\n", content)
 	if !args.InGameResponse() {
@@ -133,25 +134,25 @@ func (i *GameInterface) Output(content string) error {
 	return i.SendChat(fmt.Sprintf("§b%s", msg))
 }
 
+// 在聊天栏以聊天的形式输出消息 content
 func (i *GameInterface) SendChat(content string) error {
-	return i.WritePacket(&packet.Text {
-		TextType: packet.TextTypeChat,
+	return i.WritePacket(&packet.Text{
+		TextType:         packet.TextTypeChat,
 		NeedsTranslation: false,
-		SourceName: i.ClientInfo.DisplayName,
-		Message: content,
-		XUID: i.ClientInfo.XUID,
-		PlayerRuntimeID: fmt.Sprintf("%d", i.ClientInfo.EntityUniqueID),
+		SourceName:       i.ClientInfo.DisplayName,
+		Message:          content,
+		XUID:             i.ClientInfo.XUID,
+		PlayerRuntimeID:  fmt.Sprintf("%d", i.ClientInfo.EntityUniqueID),
 	})
 }
 
+// 以 actionbar 的形式向所有在线玩家显示 message
 func (i *GameInterface) Title(message string) error {
-	title_struct:=map[string]interface{} {
-		"rawtext": []string {
+	title_struct := map[string]interface{}{
+		"rawtext": []string{
 			message,
 		},
 	}
-	json_content, _:=json.Marshal(title_struct)
+	json_content, _ := json.Marshal(title_struct)
 	return i.SendSettingsCommand(fmt.Sprintf("titleraw @a actionbar %s", json_content), false)
 }
-
-

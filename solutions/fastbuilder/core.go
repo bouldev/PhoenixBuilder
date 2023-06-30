@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"phoenixbuilder/game_control/game_interface"
-	"phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/core"
 	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
@@ -24,6 +22,8 @@ import (
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/uqHolder"
+	GameInterface "phoenixbuilder/game_control/game_interface"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -137,10 +137,10 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 					//valM,_:=getUserInputMD5()
 					//valS,_:=getUserInputMD5()
 					//valT,_:=getUserInputMD5()
-					
+
 					client := env.FBAuthClient.(*fbauth.Client)
 					valM, valS, valT := client.TransferCheckNum(firstArg, secondArg, env.Connection.(*minecraft.Conn).GameData().EntityUniqueID)
-					
+
 					/*conn.WritePacket(&packet.PyRpc{
 						Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xe, 0x53, 0x65, 0x74, 0x4d, 0x43, 0x50, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x4e, 0x75, 0x6d, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4, 0x20},
 							[]byte(valM),
@@ -157,7 +157,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 							[]byte{0xc4, 0x00},
 							[]byte{0xc4, 0x00},
 							[]byte{3},
-							[]byte{0xc4,0x20},
+							[]byte{0xc4, 0x20},
 							[]byte(valT),
 							[]byte{0xC0},
 						}, []byte{}),
@@ -338,11 +338,11 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	env.GameInterface = &GameInterface.GameInterface{
 		WritePacket: env.Connection.(*minecraft.Conn).WritePacket,
 		ClientInfo: GameInterface.ClientInfo{
-			DisplayName:      env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
+			DisplayName:     env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
 			ClientIdentity:  env.Connection.(*minecraft.Conn).IdentityData().Identity,
+			XUID:            env.Connection.(*minecraft.Conn).IdentityData().XUID,
 			EntityRuntimeID: env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
 			EntityUniqueID:  env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
-			XUID: env.Connection.(*minecraft.Conn).IdentityData().XUID,
 		},
 		Resources: env.Resources.(*ResourcesControl.Resources),
 	}

@@ -30,7 +30,7 @@ func (i *itemStackRequestWithResponse) WriteRequest(
 }
 
 // 向请求 ID 为 key 的物品操作写入返回值 resp 。
-// 当 key 不存在时，将会抛出程序惊慌。
+// 当 key 不存在时，将会抛出程序 panic 。
 // 属于私有实现。
 func (i *itemStackRequestWithResponse) writeResponse(
 	key int32,
