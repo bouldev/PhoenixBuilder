@@ -63,7 +63,7 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 			if options.MCServerConnectionTimeOut != 0 {
 				connectCtx, _ = context.WithTimeout(ctx, options.MCServerConnectionTimeOut)
 			}
-			conn, err = core.InitMCConnection(connectCtx, authenticator)
+			conn, err = core.InitializeMinecraftConnection(connectCtx, authenticator)
 			if err != nil {
 				if connectCtx.Err() != nil {
 					return nil, ErrRentalServerConnectionTimeOut
