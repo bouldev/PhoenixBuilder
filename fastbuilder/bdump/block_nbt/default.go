@@ -15,7 +15,7 @@ func (d *Default) Decode() error {
 
 // 放置目标方块但不写入方块实体数据
 func (d *Default) WriteData() error {
-	err := d.BlockEntity.Interface.SetBlockAsync(d.BlockEntity.BlockEntityData.Position, d.BlockEntity.Block.Name, d.BlockEntity.BlockEntityData.BlockStates)
+	err := d.BlockEntity.Interface.SetBlockAsync(d.BlockEntity.AdditionalData.Position, d.BlockEntity.Block.Name, d.BlockEntity.AdditionalData.BlockStates)
 	if err != nil {
 		return fmt.Errorf("placeBlockWithNBTData: %v", err)
 	}

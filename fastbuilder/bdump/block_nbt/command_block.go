@@ -3,8 +3,8 @@ package blockNBT
 import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/commands_generator"
-	"phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/fastbuilder/types"
+	GameInterface "phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
@@ -103,7 +103,7 @@ func (c *CommandBlock) Decode() error {
 	if ok {
 		got, normal := c.BlockEntity.Block.NBT["conditionalMode"].(byte)
 		if !normal {
-			return fmt.Errorf("106 ERR %#v", c.BlockEntity.Block.NBT)
+			return fmt.Errorf("Decode: ERR 106; NBT = %#v", c.BlockEntity.Block.NBT)
 		}
 		if got == byte(0) {
 			conditionalMode = false
@@ -116,7 +116,7 @@ func (c *CommandBlock) Decode() error {
 	if ok {
 		got, normal := c.BlockEntity.Block.NBT["auto"].(byte)
 		if !normal {
-			return fmt.Errorf("Decode: ERR 333 NBT = %#v", c.BlockEntity.Block.NBT)
+			return fmt.Errorf("Decode: ERR 333; NBT = %#v", c.BlockEntity.Block.NBT)
 		}
 		if got == byte(0) {
 			auto = false
@@ -142,16 +142,16 @@ func (c *CommandBlock) Decode() error {
 // 放置一个命令方块(可选)并写入命令方块数据
 func (c *CommandBlock) WriteData() error {
 	var mode uint32 = packet.CommandBlockImpulse
-	gameInterface:=c.BlockEntity.Interface.(*GameInterface.GameInterface)
+	gameInterface := c.BlockEntity.Interface.(*GameInterface.GameInterface)
 	if c.ShouldPlaceBlock {
-		if c.BlockEntity.BlockEntityData.Settings.ExcludeCommands || c.BlockEntity.BlockEntityData.FastMode {
-			err := c.BlockEntity.Interface.SetBlockAsync(c.BlockEntity.BlockEntityData.Position, c.BlockEntity.Block.Name, c.BlockEntity.BlockEntityData.BlockStates)
+		if c.BlockEntity.AdditionalData.Settings.ExcludeCommands || c.BlockEntity.AdditionalData.FastMode {
+			err := c.BlockEntity.Interface.SetBlockAsync(c.BlockEntity.AdditionalData.Position, c.BlockEntity.Block.Name, c.BlockEntity.AdditionalData.BlockStates)
 			if err != nil {
 				return fmt.Errorf("WriteData: %v", err)
 			}
 			// 如果要求仅放置命令方块亦或以快速模式放置命令方块
 		} else {
-			err := c.BlockEntity.Interface.SetBlock(c.BlockEntity.BlockEntityData.Position, c.BlockEntity.Block.Name, c.BlockEntity.BlockEntityData.BlockStates)
+			err := c.BlockEntity.Interface.SetBlock(c.BlockEntity.AdditionalData.Position, c.BlockEntity.Block.Name, c.BlockEntity.AdditionalData.BlockStates)
 			if err != nil {
 				return fmt.Errorf("WriteData: %v", err)
 			}
@@ -159,11 +159,11 @@ func (c *CommandBlock) WriteData() error {
 		}
 	}
 	// 放置命令方块
-	if c.BlockEntity.BlockEntityData.Settings.ExcludeCommands {
+	if c.BlockEntity.AdditionalData.Settings.ExcludeCommands {
 		return nil
 	}
 	// 如果不要求写入命令方块数据
-	err := c.BlockEntity.Interface.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", c.BlockEntity.BlockEntityData.Position[0], c.BlockEntity.BlockEntityData.Position[1], c.BlockEntity.BlockEntityData.Position[2]), true)
+	err := c.BlockEntity.Interface.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", c.BlockEntity.AdditionalData.Position[0], c.BlockEntity.AdditionalData.Position[1], c.BlockEntity.AdditionalData.Position[2]), true)
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}
@@ -172,12 +172,12 @@ func (c *CommandBlock) WriteData() error {
 	} else if c.BlockEntity.Block.Name == "repeating_command_block" {
 		mode = packet.CommandBlockRepeating
 	}
-	if c.BlockEntity.BlockEntityData.Settings.InvalidateCommands {
+	if c.BlockEntity.AdditionalData.Settings.InvalidateCommands {
 		c.CommandBlockData.Command = "# " + c.CommandBlockData.Command
 	}
 	err = gameInterface.WritePacket(&packet.CommandBlockUpdate{
 		Block:              true,
-		Position:           c.BlockEntity.BlockEntityData.Position,
+		Position:           c.BlockEntity.AdditionalData.Position,
 		Mode:               mode,
 		NeedsRedstone:      !c.CommandBlockData.Auto,
 		Conditional:        c.CommandBlockData.ConditionalMode,
@@ -222,6 +222,7 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 		block.Block = &types.Block{}
 		block.Block.Name = &blockName
 
+		// TODO: 优化下方的这一段代码
 		{
 			_, err := c.BlockEntity.Interface.(*GameInterface.GameInterface).SendWSCommandWithResponse("list")
 			if err != nil {
@@ -244,7 +245,7 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 	c.BlockEntity.Block.Name = blockName
 	// 确定命令方块的类型 & 如果是 operation 26 - SetCommandBlockData
 	request := commands_generator.SetBlockRequest(block, cfg)
-	if c.BlockEntity.BlockEntityData.FastMode {
+	if c.BlockEntity.AdditionalData.FastMode {
 		err := c.BlockEntity.Interface.SendSettingsCommand(request, true)
 		if err != nil {
 			return fmt.Errorf("ERR 444eee %v", err)

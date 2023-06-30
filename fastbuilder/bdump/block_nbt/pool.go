@@ -69,3 +69,25 @@ var SupportBlocksPool map[string]string = map[string]string{
 	"warped_hanging_sign":    "Sign",
 	// 告示牌
 }
+
+// 此表描述了可被 replaceitem 生效的容器。
+// key 代表容器的方块名，而 value 则代表此容器放置物品所使用的复合标签或列表
+var SupportContainerPool map[string]string = map[string]string{
+	"blast_furnace":      "Items",
+	"lit_blast_furnace":  "Items",
+	"smoker":             "Items",
+	"lit_smoker":         "Items",
+	"furnace":            "Items",
+	"lit_furnace":        "Items",
+	"chest":              "Items",
+	"barrel":             "Items",
+	"trapped_chest":      "Items",
+	"lectern":            "book",
+	"hopper":             "Items",
+	"dispenser":          "Items",
+	"dropper":            "Items",
+	"jukebox":            "RecordItem",
+	"brewing_stand":      "Items",
+	"undyed_shulker_box": "Items",
+	"shulker_box":        "Items",
+}

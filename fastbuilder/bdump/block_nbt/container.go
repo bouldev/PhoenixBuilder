@@ -2,8 +2,8 @@ package blockNBT
 
 import (
 	"fmt"
-	"phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/fastbuilder/types"
+	GameInterface "phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/mirror/chunk"
 	"strings"
 )
@@ -19,7 +19,7 @@ type Item struct {
 // Container 结构体用于描述一个容器
 type Container struct {
 	BlockEntity *BlockEntity // 该方块实体的详细数据
-	Items   []Item   // 容器内的物品数据
+	Items       []Item       // 容器内的物品数据
 }
 
 // 检查一个方块是否是已被支持的有效的容器；这里的“有效”指的是可以被 replaceitem 命令生效的容器。
@@ -206,14 +206,14 @@ func (c *Container) Decode() error {
 
 // 放置一个容器并填充物品
 func (c *Container) WriteData() error {
-	err := c.BlockEntity.Interface.SetBlock(c.BlockEntity.BlockEntityData.Position, c.BlockEntity.Block.Name, c.BlockEntity.BlockEntityData.BlockStates)
+	err := c.BlockEntity.Interface.SetBlock(c.BlockEntity.AdditionalData.Position, c.BlockEntity.Block.Name, c.BlockEntity.AdditionalData.BlockStates)
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}
 	// 放置容器
 	for _, value := range c.Items {
 		err := c.BlockEntity.Interface.(*GameInterface.GameInterface).ReplaceItemInContainer(
-			c.BlockEntity.BlockEntityData.Position,
+			c.BlockEntity.AdditionalData.Position,
 			types.ChestSlot{
 				Name:   value.Name,
 				Count:  value.Count,

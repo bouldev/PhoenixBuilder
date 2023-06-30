@@ -2,88 +2,21 @@ package blockNBT
 
 import (
 	"fmt"
-	"phoenixbuilder/game_control/game_interface"
+	GameInterface "phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/minecraft/protocol/packet"
 
 	"github.com/google/uuid"
 )
 
-// SignDatas 结构体用于描述告示牌的 NBT 在被解析后的数据
-type SignData struct {
-	TextOwner                   string // TextOwner(TAG_String) = ""
-	IgnoreLighting              byte   // IgnoreLighting(TAG_Byte) = 0
-	SignTextColor               int32  // SignTextColor(TAG_Int) = 0
-	TextIgnoreLegacyBugResolved byte   // TextIgnoreLegacyBugResolved(TAG_Byte) = 0
-	// ^ TODO: Use understandable expression, like TextReserved, etc.
-	Text                        string // Text(TAG_String) = ""
-}
-
 // Sign 结构体用于描述一个完整的告示牌
 type Sign struct {
-	BlockEntity   *BlockEntity  // 该方块实体的详细数据
-	SignData // 告示牌数据
+	BlockEntity *BlockEntity // 该方块实体的详细数据
 }
 
-// 从 s.BlockEntity.Block.NBT 提取告示牌数据并保存在 s.SignData 中
+// 我们不再检查用户提供的告示牌的 NBT 是否正确。
+// 我们信任并且永远认为它们是正确且完整的
 func (s *Sign) Decode() error {
-	var ok bool = false
-	var normal bool = false
-	var textOwner string = ""
-	var ignoreLighting byte = byte(0)
-	var signTextColor int32 = 0
-	var textIgnoreLegacyBugResolved byte = byte(0)
-	var text string = ""
-	// 初始化
-	_, ok = s.BlockEntity.Block.NBT["TextOwner"]
-	if ok {
-		textOwner, normal = s.BlockEntity.Block.NBT["TextOwner"].(string)
-		if !normal {
-			return fmt.Errorf("Decode: Could not parse s.BlockEntity.Block.NBT[\"TextOwner\"]; s.BlockEntity.Block.NBT = %#v", s.BlockEntity.Block.NBT)
-		}
-	}
-	// TextOwner
-	_, ok = s.BlockEntity.Block.NBT["IgnoreLighting"]
-	if ok {
-		ignoreLighting, normal = s.BlockEntity.Block.NBT["IgnoreLighting"].(byte)
-		if !normal {
-			return fmt.Errorf("Decode: Could not parse s.BlockEntity.Block.NBT[\"IgnoreLighting\"]; s.BlockEntity.Block.NBT = %#v", s.BlockEntity.Block.NBT)
-		}
-	}
-	// IgnoreLighting
-	_, ok = s.BlockEntity.Block.NBT["SignTextColor"]
-	if ok {
-		signTextColor, normal = s.BlockEntity.Block.NBT["SignTextColor"].(int32)
-		if !normal {
-			return fmt.Errorf("Decode: Could not parse s.BlockEntity.Block.NBT[\"SignTextColor\"]; s.BlockEntity.Block.NBT = %#v", s.BlockEntity.Block.NBT)
-		}
-	}
-	// SignTextColor
-	_, ok = s.BlockEntity.Block.NBT["TextIgnoreLegacyBugResolved"]
-	if ok {
-		textIgnoreLegacyBugResolved, normal = s.BlockEntity.Block.NBT["TextIgnoreLegacyBugResolved"].(byte)
-		if !normal {
-			return fmt.Errorf("Decode: Could not parse s.BlockEntity.Block.NBT[\"TextIgnoreLegacyBugResolved\"]; s.BlockEntity.Block.NBT = %#v", s.BlockEntity.Block.NBT)
-		}
-	}
-	// TextIgnoreLegacyBugResolved
-	_, ok = s.BlockEntity.Block.NBT["Text"]
-	if ok {
-		text, normal = s.BlockEntity.Block.NBT["Text"].(string)
-		if !normal {
-			return fmt.Errorf("Decode: Could not parse s.BlockEntity.Block.NBT[\"Text\"]; s.BlockEntity.Block.NBT = %#v", s.BlockEntity.Block.NBT)
-		}
-	}
-	// Text
-	s.SignData = SignData{
-		TextOwner:                   textOwner,
-		IgnoreLighting:              ignoreLighting,
-		SignTextColor:               signTextColor,
-		TextIgnoreLegacyBugResolved: textIgnoreLegacyBugResolved,
-		Text:                        text,
-	}
-	// 写入数据
 	return nil
-	// 返回值
 }
 
 // 放置一个告示牌并写入告示牌数据
@@ -91,17 +24,17 @@ func (s *Sign) WriteData() error {
 	var uniqueID_1 uuid.UUID
 	var uniqueID_2 uuid.UUID
 	// 初始化变量
-	if s.BlockEntity.BlockEntityData.FastMode {
-		err := s.BlockEntity.Interface.SetBlockAsync(s.BlockEntity.BlockEntityData.Position, s.BlockEntity.Block.Name, s.BlockEntity.BlockEntityData.BlockStates)
+	if s.BlockEntity.AdditionalData.FastMode {
+		err := s.BlockEntity.Interface.SetBlockAsync(s.BlockEntity.AdditionalData.Position, s.BlockEntity.Block.Name, s.BlockEntity.AdditionalData.BlockStates)
 		if err != nil {
 			return fmt.Errorf("WriteData: %v", err)
 		}
 		return nil
 	}
-	gameInterface:=s.BlockEntity.Interface.(*GameInterface.GameInterface)
+	gameInterface := s.BlockEntity.Interface.(*GameInterface.GameInterface)
 	// 放置告示牌(快速导入模式下)
 	{
-		err := gameInterface.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", s.BlockEntity.BlockEntityData.Position[0], s.BlockEntity.BlockEntityData.Position[1], s.BlockEntity.BlockEntityData.Position[2]), true)
+		err := gameInterface.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", s.BlockEntity.AdditionalData.Position[0], s.BlockEntity.AdditionalData.Position[1], s.BlockEntity.AdditionalData.Position[2]), true)
 		if err != nil {
 			return fmt.Errorf("WriteData: %v", err)
 		}
@@ -109,9 +42,9 @@ func (s *Sign) WriteData() error {
 		err = gameInterface.SendSettingsCommand(
 			fmt.Sprintf(
 				"setblock %d %d %d air",
-				s.BlockEntity.BlockEntityData.Position[0],
-				s.BlockEntity.BlockEntityData.Position[1],
-				s.BlockEntity.BlockEntityData.Position[2],
+				s.BlockEntity.AdditionalData.Position[0],
+				s.BlockEntity.AdditionalData.Position[1],
+				s.BlockEntity.AdditionalData.Position[2],
 			),
 			true,
 		)
@@ -136,9 +69,9 @@ func (s *Sign) WriteData() error {
 		// 切换手持物品栏到快捷栏 0
 		uniqueID_1, err = gameInterface.BackupStructure(
 			GameInterface.MCStructure{
-				BeginX: s.BlockEntity.BlockEntityData.Position[0] + 1,
-				BeginY: s.BlockEntity.BlockEntityData.Position[1],
-				BeginZ: s.BlockEntity.BlockEntityData.Position[2],
+				BeginX: s.BlockEntity.AdditionalData.Position[0] + 1,
+				BeginY: s.BlockEntity.AdditionalData.Position[1],
+				BeginZ: s.BlockEntity.AdditionalData.Position[2],
 				SizeX:  1,
 				SizeY:  1,
 				SizeZ:  1,
@@ -159,9 +92,9 @@ func (s *Sign) WriteData() error {
 		_, err = gameInterface.SendWSCommandWithResponse(
 			fmt.Sprintf(
 				"setblock %d %d %d glass",
-				s.BlockEntity.BlockEntityData.Position[0]+1,
-				s.BlockEntity.BlockEntityData.Position[1],
-				s.BlockEntity.BlockEntityData.Position[2],
+				s.BlockEntity.AdditionalData.Position[0]+1,
+				s.BlockEntity.AdditionalData.Position[1],
+				s.BlockEntity.AdditionalData.Position[2],
 			),
 		)
 		if err != nil {
@@ -172,9 +105,9 @@ func (s *Sign) WriteData() error {
 			GameInterface.UseItemOnBlocks{
 				HotbarSlotID: 0,
 				BlockPos: [3]int32{
-					s.BlockEntity.BlockEntityData.Position[0] + 1,
-					s.BlockEntity.BlockEntityData.Position[1],
-					s.BlockEntity.BlockEntityData.Position[2],
+					s.BlockEntity.AdditionalData.Position[0] + 1,
+					s.BlockEntity.AdditionalData.Position[1],
+					s.BlockEntity.AdditionalData.Position[2],
 				},
 				BlockName:   "minecraft:glass",
 				BlockStates: map[string]interface{}{},
@@ -185,7 +118,7 @@ func (s *Sign) WriteData() error {
 			return fmt.Errorf("WriteData: %v", err)
 		}
 		// 在玻璃上放置手中的告示牌
-		err = gameInterface.SetBlockAsync(s.BlockEntity.BlockEntityData.Position, s.BlockEntity.Block.Name, s.BlockEntity.BlockEntityData.BlockStates)
+		err = gameInterface.SetBlockAsync(s.BlockEntity.AdditionalData.Position, s.BlockEntity.Block.Name, s.BlockEntity.AdditionalData.BlockStates)
 		if err != nil {
 			return fmt.Errorf("WriteData: %v", err)
 		}
@@ -196,23 +129,17 @@ func (s *Sign) WriteData() error {
 	}
 	// 放置告示牌
 	err := gameInterface.WritePacket(&packet.BlockActorData{
-		Position: s.BlockEntity.BlockEntityData.Position,
-		NBTData: map[string]interface{}{
-			"TextOwner":                   s.SignData.TextOwner,
-			"IgnoreLighting":              s.SignData.IgnoreLighting,
-			"SignTextColor":               s.SignData.SignTextColor,
-			"TextIgnoreLegacyBugResolved": s.SignData.TextIgnoreLegacyBugResolved,
-			"Text":                        s.SignData.Text,
-		},
+		Position: s.BlockEntity.AdditionalData.Position,
+		NBTData:  s.BlockEntity.Block.NBT,
 	})
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}
 	// 写入告示牌数据
 	uniqueID_2, err = gameInterface.BackupStructure(GameInterface.MCStructure{
-		BeginX: s.BlockEntity.BlockEntityData.Position[0],
-		BeginY: s.BlockEntity.BlockEntityData.Position[1],
-		BeginZ: s.BlockEntity.BlockEntityData.Position[2],
+		BeginX: s.BlockEntity.AdditionalData.Position[0],
+		BeginY: s.BlockEntity.AdditionalData.Position[1],
+		BeginZ: s.BlockEntity.AdditionalData.Position[2],
 		SizeX:  1,
 		SizeY:  1,
 		SizeZ:  1,
@@ -243,27 +170,26 @@ func (s *Sign) WriteData() error {
 	err = gameInterface.RevertStructure(
 		uniqueID_1,
 		GameInterface.BlockPos{
-			s.BlockEntity.BlockEntityData.Position[0] + 1,
-			s.BlockEntity.BlockEntityData.Position[1],
-			s.BlockEntity.BlockEntityData.Position[2],
+			s.BlockEntity.AdditionalData.Position[0] + 1,
+			s.BlockEntity.AdditionalData.Position[1],
+			s.BlockEntity.AdditionalData.Position[2],
 		},
 	)
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}
 	// 将上文提到的玻璃处的方块恢复为原本的方块
-	err = gameInterface.RevertStructure(
-		uniqueID_2,
-		GameInterface.BlockPos{
-			s.BlockEntity.BlockEntityData.Position[0],
-			s.BlockEntity.BlockEntityData.Position[1],
-			s.BlockEntity.BlockEntityData.Position[2],
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
-	}
-	// 强行生成一次告示牌本身以抑制其可能发生的掉落
+	go func() {
+		gameInterface.RevertStructure(
+			uniqueID_2,
+			GameInterface.BlockPos{
+				s.BlockEntity.AdditionalData.Position[0],
+				s.BlockEntity.AdditionalData.Position[1],
+				s.BlockEntity.AdditionalData.Position[2],
+			},
+		)
+	}()
+	// 再强行生成一次告示牌本身以抑制其可能发生的掉落
 	return nil
 	// 返回值
 }

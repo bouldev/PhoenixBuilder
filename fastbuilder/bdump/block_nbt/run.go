@@ -15,7 +15,7 @@ var interfaceLock sync.Mutex
 func PlaceBlockWithNBTData(
 	intf env_interfaces.GameInterface,
 	blockInfo *types.Module,
-	block_data *BlockEntityData,
+	additionalData *AdditionalData,
 ) error {
 	defer interfaceLock.Unlock()
 	interfaceLock.Lock()
@@ -26,16 +26,16 @@ func PlaceBlockWithNBTData(
 	}
 	// get general block
 	newRequest := BlockEntity{
-		Interface: intf,
-		Block: generalBlock,
-		BlockEntityData: *block_data,
+		Interface:      intf,
+		Block:          generalBlock,
+		AdditionalData: *additionalData,
 	}
-	newRequest.BlockEntityData.BlockStates = blockInfo.Block.BlockStates
-	newRequest.BlockEntityData.Position = [3]int32{int32(blockInfo.Point.X), int32(blockInfo.Point.Y), int32(blockInfo.Point.Z)}
-	newRequest.BlockEntityData.Type = isNBTBlockSupported(newRequest.Block.Name)
+	newRequest.AdditionalData.BlockStates = blockInfo.Block.BlockStates
+	newRequest.AdditionalData.Position = [3]int32{int32(blockInfo.Point.X), int32(blockInfo.Point.Y), int32(blockInfo.Point.Z)}
+	newRequest.AdditionalData.Type = isNBTBlockSupported(newRequest.Block.Name)
 	// get new request of place nbt block
 	var placeBlockMethod GeneralBlockNBT
-	if block_data.Settings.AssignNBTData || newRequest.BlockEntityData.Type == "CommandBlock" {
+	if additionalData.Settings.AssignNBTData || newRequest.AdditionalData.Type == "CommandBlock" {
 		placeBlockMethod = getMethod(&newRequest)
 		err = placeBlockMethod.Decode()
 		if err != nil {

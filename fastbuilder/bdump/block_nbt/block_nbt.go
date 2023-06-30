@@ -6,6 +6,20 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 )
 
+// ------------------------- interface -------------------------
+
+/*
+GeneralBlockNBT 提供了一个通用的接口，
+以便于您可以方便的解析对应的方块实体，
+然后放置它并以最大的可能性注入 NBT 数据。
+
+该接口实际与下方的 BlockEntity 结构体绑定
+*/
+type GeneralBlockNBT interface {
+	Decode() error
+	WriteData() error
+}
+
 // ------------------------- general -------------------------
 
 // GeneralBlock 结构体用于描述通用型方块的数据
@@ -18,8 +32,8 @@ type GeneralBlock struct {
 	NBT map[string]interface{}
 }
 
-// Datas 结构体用于描述一个方块实体的其他附加数据，例如方块的绝对坐标
-type BlockEntityData struct {
+// AdditionalData 结构体用于描述一个方块实体的其他附加数据，例如方块的绝对坐标
+type AdditionalData struct {
 	// 字符串形式的方块状态，用于在放置方块时使用
 	BlockStates string
 	// 方块坐标(绝对坐标)
@@ -35,7 +49,7 @@ type BlockEntityData struct {
 	Others interface{}
 }
 
-// Package 是用于包装每个方块实体的结构体
+// BlockEntity 是用于包装每个方块实体的结构体
 type BlockEntity struct {
 	// 储存执行该方块状态放置所需的 API ，例如发包需要用到的函数等
 	// 此参数需要外部实现主动赋值，
@@ -44,32 +58,10 @@ type BlockEntity struct {
 	// 一个通用型方块的数据，例如名称、方块状态和所携带的 NBT 数据
 	Block GeneralBlock
 	// 此方块的其他附加数据，例如方块的绝对坐标
-	BlockEntityData
+	AdditionalData AdditionalData
 }
 
 // ------------------------- Container -------------------------
-
-// 此表描述了可被 replaceitem 生效的容器。
-// key 代表容器的方块名，而 value 则代表此容器放置物品所使用的复合标签或列表
-var SupportContainerPool map[string]string = map[string]string{
-	"blast_furnace":      "Items",
-	"lit_blast_furnace":  "Items",
-	"smoker":             "Items",
-	"lit_smoker":         "Items",
-	"furnace":            "Items",
-	"lit_furnace":        "Items",
-	"chest":              "Items",
-	"barrel":             "Items",
-	"trapped_chest":      "Items",
-	"lectern":            "book",
-	"hopper":             "Items",
-	"dispenser":          "Items",
-	"dropper":            "Items",
-	"jukebox":            "RecordItem",
-	"brewing_stand":      "Items",
-	"undyed_shulker_box": "Items",
-	"shulker_box":        "Items",
-}
 
 // 未被支持的容器会被用到以下两个变量
 var ErrNotASupportedContainer error = fmt.Errorf("replaceNBTMapToContainerList: Not a supported container")
@@ -78,10 +70,3 @@ var ErrNotASupportedContainer error = fmt.Errorf("replaceNBTMapToContainerList: 
 var KeyName string = "datas"
 
 // ------------------------- END -------------------------
-
-
-type GeneralBlockNBT interface {
-	Decode() error
-	WriteData() error
-}
-
