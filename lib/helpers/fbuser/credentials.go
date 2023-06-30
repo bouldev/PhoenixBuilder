@@ -86,6 +86,7 @@ func ReadInfo(userName, userPassword, userToken, serverCode, serverPassword stri
 				if strings.HasPrefix(userName, "w9/") {
 					userToken = userName
 					userName = ""
+					break
 				}
 				if err != nil {
 					return userName, userPassword, userToken, serverCode, serverPassword, err
