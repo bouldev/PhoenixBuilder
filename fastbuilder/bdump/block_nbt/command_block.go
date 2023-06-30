@@ -8,8 +8,8 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-// CommandBlockDatas 结构体用于描述命令方块的 NBT 在被解析后的数据
-type CommandBlockDatas struct {
+// Parsed Command block NBT data
+type CommandBlockData struct {
 	Command            string // Command(TAG_String) = ""
 	CustomName         string // CustomName(TAG_String) = ""
 	LastOutput         string // LastOutput(TAG_String) = ""
@@ -23,14 +23,13 @@ type CommandBlockDatas struct {
 // CommandBlock 结构体用于描述一个完整的命令方块数据
 type CommandBlock struct {
 	// 该方块实体的详细数据
-	Package *Package
-	// 命令方块数据
-	CommandBlockDatas CommandBlockDatas
+	BlockEntity *BlockEntity
+	CommandBlockData
 	// 为向下兼容而设，因为旧方法下不需要放置命令方块
-	NeedToPlaceBlock bool
+	ShouldPlaceBlock bool
 }
 
-// 从 c.Package.Block.NBT 提取命令方块数据并保存在 c.CommandBlockDatas 中
+// 从 c.Package.Block.NBT 提取命令方块数据并保存在 c.CommandBlockData 中
 func (c *CommandBlock) Decode() error {
 	var normal bool = false
 	var command string = ""
@@ -42,43 +41,43 @@ func (c *CommandBlock) Decode() error {
 	var conditionalMode bool = false
 	var auto bool = true
 	// 初始化
-	_, ok := c.Package.Block.NBT["Command"]
+	_, ok := c.BlockEntity.Block.NBT["Command"]
 	if ok {
-		command, normal = c.Package.Block.NBT["Command"].(string)
+		command, normal = c.BlockEntity.Block.NBT["Command"].(string)
 		if !normal {
-			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"Command\"]; c.Package.Block.NBT = %#v", c.Package.Block.NBT)
+			return fmt.Errorf("Decode: Crashed at c.BlockEntity.Block.NBT[\"Command\"]; c.BlockEntity.Block.NBT = %#v", c.BlockEntity.Block.NBT)
 		}
 	}
 	// Command
-	_, ok = c.Package.Block.NBT["CustomName"]
+	_, ok = c.BlockEntity.Block.NBT["CustomName"]
 	if ok {
-		customName, normal = c.Package.Block.NBT["CustomName"].(string)
+		customName, normal = c.BlockEntity.Block.NBT["CustomName"].(string)
 		if !normal {
-			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"CustomName\"]; c.Package.Block.NBT = %#v", c.Package.Block.NBT)
+			return fmt.Errorf("Decode: Crashed at c.BlockEntity.Block.NBT[\"CustomName\"]; c.Package.Block.NBT = %#v", c.BlockEntity.Block.NBT)
 		}
 	}
 	// CustomName
-	_, ok = c.Package.Block.NBT["LastOutput"]
+	_, ok = c.BlockEntity.Block.NBT["LastOutput"]
 	if ok {
-		lastOutput, normal = c.Package.Block.NBT["LastOutput"].(string)
+		lastOutput, normal = c.BlockEntity.Block.NBT["LastOutput"].(string)
 		if !normal {
-			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"LastOutput\"]; c.Package.Block.NBT = %#v", c.Package.Block.NBT)
+			return fmt.Errorf("Decode: Crashed at c.BlockEntity.Block.NBT[\"LastOutput\"]; c.BlockEntity.Block.NBT = %#v", c.BlockEntity.Block.NBT)
 		}
 	}
 	// LastOutput
-	_, ok = c.Package.Block.NBT["TickDelay"]
+	_, ok = c.BlockEntity.Block.NBT["TickDelay"]
 	if ok {
-		tickDelay, normal = c.Package.Block.NBT["TickDelay"].(int32)
+		tickDelay, normal = c.BlockEntity.Block.NBT["TickDelay"].(int32)
 		if !normal {
-			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"TickDelay\"]; c.Package.Block.NBT = %#v", c.Package.Block.NBT)
+			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"TickDelay\"]; c.BlockEntity.Block.NBT = %#v", c.BlockEntity.Block.NBT)
 		}
 	}
 	// TickDelay
-	_, ok = c.Package.Block.NBT["ExecuteOnFirstTick"]
+	_, ok = c.BlockEntity.Block.NBT["ExecuteOnFirstTick"]
 	if ok {
-		got, normal := c.Package.Block.NBT["ExecuteOnFirstTick"].(byte)
+		got, normal := c.BlockEntity.Block.NBT["ExecuteOnFirstTick"].(byte)
 		if !normal {
-			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"ExecuteOnFirstTick\"]; c.Package.Block.NBT = %#v", c.Package.Block.NBT)
+			return fmt.Errorf("Decode: Crashed at c.BlockEntity.Block.NBT[\"ExecuteOnFirstTick\"]; c.BlockEntity.Block.NBT = %#v", c.BlockEntity.Block.NBT)
 		}
 		if got == byte(0) {
 			executeOnFirstTick = false
@@ -87,11 +86,11 @@ func (c *CommandBlock) Decode() error {
 		}
 	}
 	// ExecuteOnFirstTick
-	_, ok = c.Package.Block.NBT["TrackOutput"]
+	_, ok = c.BlockEntity.Block.NBT["TrackOutput"]
 	if ok {
-		got, normal := c.Package.Block.NBT["TrackOutput"].(byte)
+		got, normal := c.BlockEntity.Block.NBT["TrackOutput"].(byte)
 		if !normal {
-			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"TrackOutput\"]; c.Package.Block.NBT = %#v", c.Package.Block.NBT)
+			return fmt.Errorf("Decode: Crashed at c.BlockEntity.Block.NBT[\"TrackOutput\"]; c.BlockEntity.Block.NBT = %#v", c.BlockEntity.Block.NBT)
 		}
 		if got == byte(0) {
 			trackOutput = false
@@ -100,11 +99,11 @@ func (c *CommandBlock) Decode() error {
 		}
 	}
 	// TrackOutput
-	_, ok = c.Package.Block.NBT["conditionalMode"]
+	_, ok = c.BlockEntity.Block.NBT["conditionalMode"]
 	if ok {
-		got, normal := c.Package.Block.NBT["conditionalMode"].(byte)
+		got, normal := c.BlockEntity.Block.NBT["conditionalMode"].(byte)
 		if !normal {
-			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"conditionalMode\"]; c.Package.Block.NBT = %#v", c.Package.Block.NBT)
+			return fmt.Errorf("106 ERR %#v", c.BlockEntity.Block.NBT)
 		}
 		if got == byte(0) {
 			conditionalMode = false
@@ -113,11 +112,11 @@ func (c *CommandBlock) Decode() error {
 		}
 	}
 	// conditionalMode
-	_, ok = c.Package.Block.NBT["auto"]
+	_, ok = c.BlockEntity.Block.NBT["auto"]
 	if ok {
-		got, normal := c.Package.Block.NBT["auto"].(byte)
+		got, normal := c.BlockEntity.Block.NBT["auto"].(byte)
 		if !normal {
-			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"auto\"]; c.Package.Block.NBT = %#v", c.Package.Block.NBT)
+			return fmt.Errorf("Decode: ERR 333 NBT = %#v", c.BlockEntity.Block.NBT)
 		}
 		if got == byte(0) {
 			auto = false
@@ -126,7 +125,7 @@ func (c *CommandBlock) Decode() error {
 		}
 	}
 	// auto
-	c.CommandBlockDatas = CommandBlockDatas{
+	c.CommandBlockData = CommandBlockData{
 		Command:            command,
 		CustomName:         customName,
 		LastOutput:         lastOutput,
@@ -141,60 +140,57 @@ func (c *CommandBlock) Decode() error {
 }
 
 // 放置一个命令方块(可选)并写入命令方块数据
-func (c *CommandBlock) WriteDatas() error {
+func (c *CommandBlock) WriteData() error {
 	var mode uint32 = packet.CommandBlockImpulse
 	// 初始化
-	gameInterface:=c.Package.Interface.(*GameInterface.GameInterface)
-	if c.NeedToPlaceBlock {
-		if c.Package.Datas.Settings.ExcludeCommands || c.Package.Datas.FastMode {
-			err := c.Package.Interface.SetBlockForgetfully(c.Package.Datas.Position, c.Package.Block.Name, c.Package.Datas.StatesString)
+	gameInterface:=c.BlockEntity.Interface.(*GameInterface.GameInterface)
+	if c.ShouldPlaceBlock {
+		if c.BlockEntity.BlockEntityData.Settings.ExcludeCommands || c.BlockEntity.BlockEntityData.FastMode {
+			err := c.BlockEntity.Interface.SetBlockAsync(c.BlockEntity.BlockEntityData.Position, c.BlockEntity.Block.Name, c.BlockEntity.BlockEntityData.BlockStates)
 			if err != nil {
-				return fmt.Errorf("WriteDatas: %v", err)
+				return fmt.Errorf("WriteData: %v", err)
 			}
 			// 如果要求仅放置命令方块亦或以快速模式放置命令方块
 		} else {
-			err := c.Package.Interface.SetBlock(c.Package.Datas.Position, c.Package.Block.Name, c.Package.Datas.StatesString)
+			err := c.BlockEntity.Interface.SetBlock(c.BlockEntity.BlockEntityData.Position, c.BlockEntity.Block.Name, c.BlockEntity.BlockEntityData.BlockStates)
 			if err != nil {
-				return fmt.Errorf("WriteDatas: %v", err)
+				return fmt.Errorf("WriteData: %v", err)
 			}
 			// 普通情形
 		}
 	}
 	// 放置命令方块
-	if c.Package.Datas.Settings.ExcludeCommands {
+	if c.BlockEntity.BlockEntityData.Settings.ExcludeCommands {
 		return nil
 	}
 	// 如果不要求写入命令方块数据
-	err := c.Package.Interface.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", c.Package.Datas.Position[0], c.Package.Datas.Position[1], c.Package.Datas.Position[2]), true)
+	err := c.BlockEntity.Interface.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", c.BlockEntity.BlockEntityData.Position[0], c.BlockEntity.BlockEntityData.Position[1], c.BlockEntity.BlockEntityData.Position[2]), true)
 	if err != nil {
-		return fmt.Errorf("WriteDatas: %v", err)
+		return fmt.Errorf("WriteData: %v", err)
 	}
-	// 传送机器人到命令方块位置
-	if c.Package.Block.Name == "chain_command_block" {
+	if c.BlockEntity.Block.Name == "chain_command_block" {
 		mode = packet.CommandBlockChain
-	} else if c.Package.Block.Name == "repeating_command_block" {
+	} else if c.BlockEntity.Block.Name == "repeating_command_block" {
 		mode = packet.CommandBlockRepeating
 	}
-	// 确定命令方块的类型
-	if c.Package.Datas.Settings.InvalidateCommands {
-		c.CommandBlockDatas.Command = "# " + c.CommandBlockDatas.Command
+	if c.BlockEntity.BlockEntityData.Settings.InvalidateCommands {
+		c.CommandBlockData.Command = "# " + c.CommandBlockData.Command
 	}
-	// 如果需要对命令无效化处理
 	err = gameInterface.WritePacket(&packet.CommandBlockUpdate{
 		Block:              true,
-		Position:           c.Package.Datas.Position,
+		Position:           c.BlockEntity.BlockEntityData.Position,
 		Mode:               mode,
-		NeedsRedstone:      !c.CommandBlockDatas.Auto,
-		Conditional:        c.CommandBlockDatas.ConditionalMode,
-		Command:            c.CommandBlockDatas.Command,
-		LastOutput:         c.CommandBlockDatas.LastOutput,
-		Name:               c.CommandBlockDatas.CustomName,
-		ShouldTrackOutput:  c.CommandBlockDatas.TrackOutput,
-		TickDelay:          c.CommandBlockDatas.TickDelay,
-		ExecuteOnFirstTick: c.CommandBlockDatas.ExecuteOnFirstTick,
+		NeedsRedstone:      !c.CommandBlockData.Auto,
+		Conditional:        c.CommandBlockData.ConditionalMode,
+		Command:            c.CommandBlockData.Command,
+		LastOutput:         c.CommandBlockData.LastOutput,
+		Name:               c.CommandBlockData.CustomName,
+		ShouldTrackOutput:  c.CommandBlockData.TrackOutput,
+		TickDelay:          c.CommandBlockData.TickDelay,
+		ExecuteOnFirstTick: c.CommandBlockData.ExecuteOnFirstTick,
 	})
 	if err != nil {
-		return fmt.Errorf("WriteDatas: %v", err)
+		return fmt.Errorf("WriteData: %v", err)
 	}
 	// 写入命令方块数据
 	return nil
@@ -202,12 +198,12 @@ func (c *CommandBlock) WriteDatas() error {
 }
 
 // 以旧方法放置命令方块；主要用于向下兼容，如 operation 36 等
-func (c *CommandBlock) PlaceCommandBlockWithLegacyMethod(
+func (c *CommandBlock) PlaceCommandBlockLegacy(
 	block *types.Module,
 	cfg *types.MainConfig,
 ) error {
 	var blockName string = "command_block"
-	c.CommandBlockDatas = CommandBlockDatas{
+	c.CommandBlockData = CommandBlockData{
 		Command:            block.CommandBlockData.Command,
 		CustomName:         block.CommandBlockData.CustomName,
 		LastOutput:         block.CommandBlockData.LastOutput,
@@ -228,9 +224,9 @@ func (c *CommandBlock) PlaceCommandBlockWithLegacyMethod(
 		block.Block.Name = &blockName
 
 		{
-			_, err := c.Package.Interface.(*GameInterface.GameInterface).SendWSCommandWithResponse("list")
+			_, err := c.BlockEntity.Interface.(*GameInterface.GameInterface).SendWSCommandWithResponse("list")
 			if err != nil {
-				return fmt.Errorf("PlaceCommandBlockWithLegacyMethod: %v", err)
+				return fmt.Errorf("PlaceCommandBlockLegacy: %v", err)
 			}
 		}
 		// 这么做的目的只是为了保证存在 operation 26 - SetCommandBlockData 的时候，
@@ -239,31 +235,31 @@ func (c *CommandBlock) PlaceCommandBlockWithLegacyMethod(
 		// 但这里并没有 GetBlockUpdateSubscribeMap 类似的实现，
 		// 所以暂且先这样吧
 
-		err := c.WriteDatas()
+		err := c.WriteData()
 		if err != nil {
-			return fmt.Errorf("PlaceCommandBlockWithLegacyMethod: %v", err)
+			return fmt.Errorf("PlaceCommandBlockLegacy: %v", err)
 		}
 		return nil
 	}
 	block.Block.Name = &blockName
-	c.Package.Block.Name = blockName
+	c.BlockEntity.Block.Name = blockName
 	// 确定命令方块的类型 & 如果是 operation 26 - SetCommandBlockData
 	request := commands_generator.SetBlockRequest(block, cfg)
-	if c.Package.Datas.FastMode {
-		err := c.Package.Interface.SendSettingsCommand(request, true)
+	if c.BlockEntity.BlockEntityData.FastMode {
+		err := c.BlockEntity.Interface.SendSettingsCommand(request, true)
 		if err != nil {
-			return fmt.Errorf("PlaceCommandBlockWithLegacyMethod: %v", err)
+			return fmt.Errorf("ERR 444eee %v", err)
 		}
 	} else {
-		_, err := c.Package.Interface.(*GameInterface.GameInterface).SendWSCommandWithResponse(request)
+		_, err := c.BlockEntity.Interface.(*GameInterface.GameInterface).SendWSCommandWithResponse(request)
 		if err != nil {
-			return fmt.Errorf("PlaceCommandBlockWithLegacyMethod: %v", err)
+			return fmt.Errorf("ERR 555ccc %v", err)
 		}
 	}
 	// 放置命令方块
-	err := c.WriteDatas()
+	err := c.WriteData()
 	if err != nil {
-		return fmt.Errorf("PlaceCommandBlockWithLegacyMethod: %v", err)
+		return fmt.Errorf("PlaceCommandBlockLegacy: %v", err)
 	}
 	// 写入命令方块数据
 	return nil

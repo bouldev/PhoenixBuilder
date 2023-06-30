@@ -318,7 +318,7 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		env.LoginInfo.ServerPasscode,
 		env.LoginInfo.Token,
 	)
-	conn, err := core.InitMCConnection(ctx, authenticator, options...)
+	conn, err := core.InitializeMinecraftConnection(ctx, authenticator, options...)
 
 	if err != nil {
 		pterm.Error.Println(err)

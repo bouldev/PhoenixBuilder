@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-var apiIsUsing sync.Mutex
+var interfaceLock sync.Mutex
 
 // 带有 NBT 数据放置方块。
 // 若你也想参与对于方块实体的其他支持，
@@ -15,28 +15,28 @@ var apiIsUsing sync.Mutex
 func PlaceBlockWithNBTData(
 	intf env_interfaces.GameInterface,
 	blockInfo *types.Module,
-	datas *Datas,
+	block_data *BlockEntityData,
 ) error {
-	defer apiIsUsing.Unlock()
-	apiIsUsing.Lock()
+	defer interfaceLock.Unlock()
+	interfaceLock.Lock()
 	// lock(or unlock) api
 	generalBlock, err := parseBlockModule(blockInfo)
 	if err != nil {
 		return fmt.Errorf("PlaceBlockWithNBTData: Failed to place the entity block named %v at (%d,%d,%d), and the error log is %v", *blockInfo.Block.Name, blockInfo.Point.X, blockInfo.Point.Y, blockInfo.Point.Z, err)
 	}
 	// get general block
-	newRequest := Package{
+	newRequest := BlockEntity{
 		Interface: intf,
 		Block: generalBlock,
-		Datas: datas,
+		BlockEntityData: *block_data,
 	}
-	newRequest.Datas.StatesString = blockInfo.Block.BlockStates
-	newRequest.Datas.Position = [3]int32{int32(blockInfo.Point.X), int32(blockInfo.Point.Y), int32(blockInfo.Point.Z)}
-	newRequest.Datas.Type = checkIfIsEffectiveNBTBlock(newRequest.Block.Name)
+	newRequest.BlockEntityData.BlockStates = blockInfo.Block.BlockStates
+	newRequest.BlockEntityData.Position = [3]int32{int32(blockInfo.Point.X), int32(blockInfo.Point.Y), int32(blockInfo.Point.Z)}
+	newRequest.BlockEntityData.Type = isNBTBlockSupported(newRequest.Block.Name)
 	// get new request of place nbt block
 	var placeBlockMethod GeneralBlockNBT
-	if datas.Settings.AssignNBTData || newRequest.Datas.Type == "CommandBlock" {
-		placeBlockMethod = getMethod(newRequest)
+	if block_data.Settings.AssignNBTData || newRequest.BlockEntityData.Type == "CommandBlock" {
+		placeBlockMethod = getMethod(&newRequest)
 		err = placeBlockMethod.Decode()
 		if err != nil {
 			return fmt.Errorf("PlaceBlockWithNBTData: %v", err)
@@ -44,11 +44,11 @@ func PlaceBlockWithNBTData(
 		// if the user wants us to assign NBT data,
 		// or the target block is a command block
 	} else {
-		placeBlockMethod = &Default{Package: &newRequest}
+		placeBlockMethod = &Default{BlockEntity: &newRequest}
 		// if the user does not want us to assign NBT data
 	}
 	// get method and decode nbt data into golang struct
-	err = placeBlockMethod.WriteDatas()
+	err = placeBlockMethod.WriteData()
 	if err != nil {
 		return fmt.Errorf("PlaceBlockWithNBTData: %v", err)
 	}

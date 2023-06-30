@@ -5,5 +5,5 @@ type GeneralBlockNBT interface {
 	// 解析 NBT(map[string]interface{}) 为 golang struct
 	Decode() error
 	// 放置方块并以合法手段写入方块实体数据
-	WriteDatas() error
+	WriteData() error
 }

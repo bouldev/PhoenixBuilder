@@ -10,7 +10,7 @@ import (
 // 从 SupportBlocksPool 检查这个方块实体是否已被支持。
 // 如果尚未被支持，则返回空字符串，否则返回这种方块的类型。
 // 以告示牌为例，所有的告示牌都可以写作为 Sign
-func checkIfIsEffectiveNBTBlock(blockName string) string {
+func isNBTBlockSupported(blockName string) string {
 	value, ok := SupportBlocksPool[blockName]
 	if ok {
 		return value
@@ -35,24 +35,19 @@ func parseBlockModule(singleBlock *types.Module) (GeneralBlock, error) {
 		States: blockStates,
 		NBT:    singleBlock.NBTMap,
 	}, nil
-	// return
 }
 
 // 取得用于放置目标方块实体的 接口/方法
-func getMethod(pack Package) GeneralBlockNBT {
-	switch pack.Datas.Type {
+func getMethod(block *BlockEntity) GeneralBlockNBT {
+	switch block.BlockEntityData.Type {
 	case "CommandBlock":
-		return &CommandBlock{Package: &pack, NeedToPlaceBlock: true}
-		// 命令方块
+		return &CommandBlock{BlockEntity: block, ShouldPlaceBlock: true}
 	case "Container":
-		return &Container{Package: &pack}
-		// 容器
+		return &Container{BlockEntity: block}
 	case "Sign":
-		return &Sign{Package: &pack}
-		// 告示牌
+		return &Sign{BlockEntity: block}
 	default:
-		return &Default{Package: &pack}
+		return &Default{BlockEntity: block}
 		// 其他尚且未被支持的方块实体
 	}
-	// 返回值
 }

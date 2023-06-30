@@ -283,7 +283,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				err := blockNBT.PlaceBlockWithNBTData(
 					gameInterface,
 					curblock,
-					&blockNBT.Datas{
+					&blockNBT.BlockEntityData{
 						Settings: cfg,
 						FastMode: isFastMode,
 						Others:   nil,
@@ -294,18 +294,18 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 			} else if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				newStruct := blockNBT.CommandBlock{
-					Package: &blockNBT.Package{
+					BlockEntity: &blockNBT.BlockEntity{
 						Interface: gameInterface,
-						Datas: &blockNBT.Datas{
+						BlockEntityData: blockNBT.BlockEntityData{
 							Position: [3]int32{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)},
 							Settings: cfg,
 							FastMode: isFastMode,
 							Others:   nil,
 						},
 					},
-					NeedToPlaceBlock: false,
+					ShouldPlaceBlock: false,
 				}
-				err := newStruct.PlaceCommandBlockWithLegacyMethod(curblock, cfg)
+				err := newStruct.PlaceCommandBlockLegacy(curblock, cfg)
 				if err != nil {
 					pterm.Warning.Printf("%v\n", err)
 				}

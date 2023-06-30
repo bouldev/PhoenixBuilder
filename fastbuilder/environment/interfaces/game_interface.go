@@ -12,5 +12,5 @@ type GameInterface interface {
 	SendWSCommandWithResponse(string) (packet.CommandOutput, error)
 	
 	SetBlock([3]int32,string,string) error
-	SetBlockForgetfully([3]int32,string,string) error
+	SetBlockAsync([3]int32,string,string) error
 }

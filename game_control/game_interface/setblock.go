@@ -28,7 +28,7 @@ func (g *GameInterface) SetBlock(pos [3]int32, name string, states string) error
 
 // 在 pos 处以 setblock 命令放置名为 name 且方块状态为 states 的方块。
 // 特别地，此方法使用 settings command 来发送命令，因此该函数在被调用后不会等待返回值
-func (g *GameInterface) SetBlockForgetfully(pos [3]int32, name string, states string) error {
+func (g *GameInterface) SetBlockAsync(pos [3]int32, name string, states string) error {
 	request := commands_generator.SetBlockRequest(&types.Module{
 		Block: &types.Block{
 			Name:        &name,

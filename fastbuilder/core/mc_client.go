@@ -8,7 +8,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-func InitMCConnection(ctx context.Context, authentication minecraft.Authenticator, options ...Option) (conn *minecraft.Conn, err error) {
+func InitializeMinecraftConnection(ctx context.Context, authentication minecraft.Authenticator, options ...Option) (conn *minecraft.Conn, err error) {
 	if checkOption(options, OptionDebug) {
 		conn = &minecraft.Conn{
 			DebugMode: true,
