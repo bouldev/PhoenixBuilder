@@ -51,7 +51,7 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 		closed:         false,
 		env:            env,
 	}
-	cl, _, err := websocket.DefaultDialer.Dial(args.AuthServer(), nil)
+	cl, _, err := websocket.DefaultDialer.Dial(args.AuthServer, nil)
 	if err != nil {
 		panic(err)
 	}

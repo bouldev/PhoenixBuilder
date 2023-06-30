@@ -126,7 +126,7 @@ func (g *GameInterface) SendWSCommandWithResponse(command string) (packet.Comman
 // ... [Need to add its use]
 func (i *GameInterface) Output(content string) error {
 	fmt.Printf("%s\n", content)
-	if !args.InGameResponse() {
+	if !args.InGameResponse {
 		return nil
 	}
 	msg := strings.Replace(content, "schematic", "sc***atic", -1)

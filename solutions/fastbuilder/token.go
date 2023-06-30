@@ -46,7 +46,7 @@ func loadFBTokenOrAskFBCredential() (token string) {
 			}
 		}
 	} else {
-		token = args.CustomTokenContent()
+		token = args.CustomTokenContent
 	}
 	return
 }

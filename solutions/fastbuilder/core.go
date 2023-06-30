@@ -39,7 +39,7 @@ import (
 )
 
 func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) {
-	if args.NoReadline() {
+	if args.NoReadline {
 		return
 	}
 	defer Fatal()
@@ -212,7 +212,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 		// 	pterm.Info.Println("ClientCacheBlobStatus", p)
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
-				if args.InGameResponse() {
+				if args.InGameResponse {
 					if p.SourceName == env.RespondUser {
 						functionHolder.Process(p.Message)
 					}
@@ -318,13 +318,13 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		panic(err)
 	}
 	if len(env.RespondUser) == 0 {
-		if args.GetCustomGameName() == "" {
+		if args.CustomGameName == "" {
 			go func() {
 				user := env.FBAuthClient.(*fbauth.Client).ShouldRespondUser()
 				env.RespondUser = user
 			}()
 		} else {
-			env.RespondUser = args.GetCustomGameName()
+			env.RespondUser = args.CustomGameName
 		}
 	}
 	env.Connection = conn
@@ -347,7 +347,7 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		Resources: env.Resources.(*ResourcesControl.Resources),
 	}
 
-	if args.ShouldEnableOmegaSystem() {
+	if args.ShouldEnableOmegaSystem {
 		_, cb := embed.EnableOmegaSystem(env)
 		go cb()
 		//cb()
@@ -380,8 +380,8 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
 
-	if args.ExternalListenAddress() != "" {
-		external.ListenExt(env, args.ExternalListenAddress())
+	if args.ExternalListenAddress != "" {
+		external.ListenExt(env, args.ExternalListenAddress)
 	}
 	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 	return

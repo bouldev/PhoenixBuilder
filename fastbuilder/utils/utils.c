@@ -1,6 +1,19 @@
 #include <stdlib.h>
 
 int compareVersion(char *latestVersion,char *currentVersion) {
+	{
+		int isValidVersion=0;
+		for(char *p=currentVersion;*p!=0;p++) {
+			if(*p=='.') {
+				isValidVersion=1;
+				break;
+			}
+		}
+		// No update checking if we don't know the version
+		if(!isValidVersion) {
+			return 0;
+		}
+	}
 	char *latestVersionParts[3];
 	int vpi=1;
 	latestVersionParts[0]=latestVersion;

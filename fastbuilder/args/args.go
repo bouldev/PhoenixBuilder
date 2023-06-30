@@ -4,176 +4,73 @@ import (
 	"os"
 	"unsafe"
 )
-
 /*
-extern void free(void *);
-
+extern char args_var_fbversion_struct;
+extern char args_var_fbplainversion_struct;
+extern char args_fb_commit_struct;
 extern char args_isDebugMode;
-extern char replaced_auth_server;
-extern char *newAuthServer;
-extern char args_disableHashCheck;
-extern char args_noPyRpc;
-extern char *startup_script;
-
-extern void parse_args(int argc, char **argv);
-
-extern char use_startup_script;
-extern char *get_fb_version(void);
-extern char *get_fb_plain_version(void);
-extern char *commit_hash(void);
-
-extern char specified_server;
-extern char *server_code;
-extern char *server_password;
-extern char custom_token;
-extern char *token_content;
-extern char *externalListenAddr;
-extern char *capture_output_file;
-extern char args_no_readline;
-extern char *pack_scripts;
-extern char *pack_scripts_out;
-extern char *custom_gamename;
-
+extern char newAuthServer;
+extern char args_disableVersionCheck;
 extern char enable_omega_system;
+extern char startup_script;
+extern char server_code;
+extern char server_password;
+extern char token_content;
+extern char externalListenAddr;
+extern char capture_output_file;
+extern char args_no_readline;
+extern char pack_scripts;
+extern char pack_scripts_out;
+extern char custom_gamename;
 extern char ingame_response;
 */
 import "C"
 
-func charify(val bool) C.char {
-	if val {
-		return C.char(1)
-	} else {
-		return C.char(0)
-	}
+// ^ cgo_import_static is disallowed for normal go files,
+// so we have to use fake definitions to take advantage of cmd/cgo
+
+func referenceHolder() {
+	// This won't really be called, but is here for honoring those C variables
+	// Don't ever try calling this, that'd be horrible
+	print(C.args_var_fbversion_struct)
+	print(C.args_var_fbplainversion_struct)
+	print(C.args_fb_commit_struct)
+	print(C.args_isDebugMode)
+	print(C.newAuthServer)
+	print(C.args_disableVersionCheck)
+	print(C.enable_omega_system)
+	print(C.startup_script)
+	print(C.server_code)
+	print(C.server_password)
+	print(C.token_content)
+	print(C.externalListenAddr)
+	print(C.capture_output_file)
+	print(C.args_no_readline)
+	print(C.pack_scripts)
+	print(C.pack_scripts_out)
+	print(C.custom_gamename)
+	print(C.ingame_response)
 }
 
-func Set_args_isDebugMode(val bool) {
-	C.args_isDebugMode = charify(val)
-}
+var FBVersion string=*(*string)(unsafe.Pointer(&__cgo_args_var_fbversion_struct))
+var FBPlainVersion string=*(*string)(unsafe.Pointer(&__cgo_args_var_fbplainversion_struct))
+var FBCommitHash string=*(*string)(unsafe.Pointer(&__cgo_args_fb_commit_struct))
+var DebugMode bool=*(*bool)(unsafe.Pointer(&__cgo_args_isDebugMode))
+var AuthServer string=*(*string)(unsafe.Pointer(&__cgo_newAuthServer))
+var ShouldDisableVersionCheck=*(*bool)(unsafe.Pointer(&__cgo_args_disableVersionCheck))
+var ShouldEnableOmegaSystem=*(*bool)(unsafe.Pointer(&__cgo_enable_omega_system))
+var StartupScript=*(*string)(unsafe.Pointer(&__cgo_startup_script))
 
-func Do_replace_authserver(val string) {
-	if boolify(C.replaced_auth_server) {
-		C.free(unsafe.Pointer(C.newAuthServer))
-	} else {
-		C.replaced_auth_server = C.char(1)
-	}
-	C.newAuthServer = C.CString(val)
-}
+//go:linkname SpecifiedServer args_has_specified_server
+func SpecifiedServer() bool
 
-func Set_disableHashCheck(val bool) {
-	C.args_disableHashCheck = charify(val)
-}
+var ServerCode=*(*string)(unsafe.Pointer(&__cgo_server_code))
+var ServerPassword=*(*string)(unsafe.Pointer(&__cgo_server_password))
 
-func Set_noPyRpc(val bool) {
-	C.args_noPyRpc = charify(val)
-}
+//go:linkname SpecifiedToken args_specified_token
+func SpecifiedToken() bool
 
-func GetFBVersion() string {
-	return C.GoString(C.get_fb_version())
-}
-
-func GetFBPlainVersion() string {
-	return C.GoString(C.get_fb_plain_version())
-}
-
-func GetFBCommitHash() string {
-	return C.GoString(C.commit_hash())
-}
-
-var ParsedArgs []string=[]string{}
-
-func ParseArgs() {
-	argv := make([]*C.char, len(os.Args))
-	for i, v := range os.Args {
-		cstr := C.CString(v)
-		defer C.free(unsafe.Pointer(cstr))
-		argv[i] = cstr
-	}
-	C.parse_args(C.int(len(os.Args)), &argv[0])
-	ParsedArgs=append([]string{}, os.Args...)
-}
-
-func ParseCustomArgs(customArgs []string) {
-	argv := make([]*C.char, len(customArgs))
-	for i, v := range customArgs {
-		cstr := C.CString(v)
-		defer C.free(unsafe.Pointer(cstr))
-		argv[i] = cstr
-	}
-	C.parse_args(C.int(len(customArgs)), &argv[0])
-	ParsedArgs=append([]string{}, customArgs...)
-}
-
-func boolify(v C.char) bool {
-	if int(v) == 0 {
-		return false
-	}
-	return true
-}
-
-func DebugMode() bool {
-	if int(C.args_isDebugMode) == 0 {
-		return false
-	}
-	return true
-}
-
-func AuthServer() string {
-	if int(C.replaced_auth_server) == 0 {
-		return "wss://api.fastbuilder.pro:2053/"
-	}
-	return C.GoString(C.newAuthServer)
-}
-
-func ShouldDisableHashCheck() bool {
-	return boolify(C.args_disableHashCheck)
-}
-
-func ShouldEnableOmegaSystem() bool {
-	return boolify(C.enable_omega_system)
-}
-
-func SetShouldDisableHashCheck() {
-	C.args_disableHashCheck = C.char(1)
-}
-
-func NoPyRpc() bool {
-	return boolify(C.args_noPyRpc)
-}
-
-func StartupScript() string {
-	if int(C.use_startup_script) == 0 {
-		return ""
-	}
-	return C.GoString(C.startup_script)
-}
-
-func SpecifiedServer() bool {
-	return boolify(C.specified_server)
-}
-
-func ServerCode() string {
-	if int(C.specified_server) == 0 {
-		return ""
-	}
-	return C.GoString(C.server_code)
-}
-
-func ServerPassword() string {
-	// No need to check as its default value is "".
-	return C.GoString(C.server_password)
-}
-
-func SpecifiedToken() bool {
-	return boolify(C.custom_token)
-}
-
-func CustomTokenContent() string {
-	if int(C.custom_token) == 0 {
-		return ""
-	}
-	return C.GoString(C.token_content)
-}
+var CustomTokenContent=*(*string)(unsafe.Pointer(&__cgo_token_content))
 
 var CustomSEConsts map[string]string = map[string]string{}
 var CustomSEUndefineConsts []string = []string{}
@@ -188,38 +85,13 @@ func do_suppress_se_const(key *C.char) {
 	CustomSEUndefineConsts = append(CustomSEUndefineConsts, C.GoString(key))
 }
 
-func ExternalListenAddress() string {
-	return C.GoString(C.externalListenAddr)
-}
-
-func CaptureOutputFile() string {
-	return C.GoString(C.capture_output_file)
-}
-
-func NoReadline() bool {
-	return boolify(C.args_no_readline)
-}
-
-func PackScripts() string {
-	return C.GoString(C.pack_scripts)
-}
-
-func PackScriptsOut() string {
-	return C.GoString(C.pack_scripts_out)
-}
-
-func GetCustomGameName() string {
-	return C.GoString(C.custom_gamename)
-}
-
-func InGameResponse() bool {
-	return boolify(C.ingame_response)
-}
-
-//export cexporttestfunc
-func cexporttestfunc() string {
-	return "test succ"
-}
+var ExternalListenAddress=*(*string)(unsafe.Pointer(&__cgo_externalListenAddr))
+var CaptureOutputFile=*(*string)(unsafe.Pointer(&__cgo_capture_output_file))
+var NoReadline=*(*bool)(unsafe.Pointer(&__cgo_args_no_readline))
+var PackScripts=*(*string)(unsafe.Pointer(&__cgo_pack_scripts))
+var PackScriptsOut=*(*string)(unsafe.Pointer(&__cgo_pack_scripts_out))
+var CustomGameName=*(*string)(unsafe.Pointer(&__cgo_custom_gamename))
+var InGameResponse=*(*bool)(unsafe.Pointer(&__cgo_ingame_response))
 
 //export go_rmdir_recursive
 func go_rmdir_recursive(path *C.char) {

@@ -13,35 +13,31 @@ import (
 )
 
 func Install(conn *minecraft.Conn, env *environment.PBEnvironment) {
-	go func() {
-		if args.NoReadline() {
-			return
-		}
-		readline.SelfTermination = make(chan bool)
-		<-readline.SelfTermination
-		readline.HardInterrupt()
-		env.Stop()
-		conn.Close()
-		fmt.Printf("%s.\n", I18n.T(I18n.QuitCorrectly))
-		env.WaitStopped()
-		os.Exit(0)
-	}()
-	go func() {
-		if args.NoReadline() {
-			return
-		}
-		for {
-			sigintchannel := make(chan os.Signal)
-			signal.Notify(sigintchannel, os.Interrupt) // ^C
-			<-sigintchannel
-			readline.Interrupt()
-		}
-	}()
+	if(!args.NoReadline) {
+		go func() {
+			readline.SelfTermination = make(chan bool)
+			<-readline.SelfTermination
+			readline.HardInterrupt()
+			env.Stop()
+			conn.Close()
+			fmt.Printf("%s.\n", I18n.T(I18n.QuitCorrectly))
+			env.WaitStopped()
+			os.Exit(0)
+		}()
+		go func() {
+			for {
+				sigintchannel := make(chan os.Signal)
+				signal.Notify(sigintchannel, os.Interrupt) // ^C
+				<-sigintchannel
+				readline.Interrupt()
+			}
+		}()
+	}
 	go func() {
 		signalchannel := make(chan os.Signal)
 		signal.Notify(signalchannel, syscall.SIGTERM)
 		signal.Notify(signalchannel, syscall.SIGQUIT) // ^\
-		if args.NoReadline() {
+		if args.NoReadline {
 			signal.Notify(signalchannel, os.Interrupt)
 		}
 		<-signalchannel

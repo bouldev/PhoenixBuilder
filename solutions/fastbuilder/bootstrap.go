@@ -34,22 +34,22 @@ func setup() {
 		}
 	}
 
-	if !args.NoReadline() {
+	if !args.NoReadline {
 		readline.InitReadline()
 	}
 }
 
 func display_info() {
 	pterm.DefaultBox.Println(pterm.LightCyan("https://github.com/LNSSPsd/PhoenixBuilder"))
-	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.GetFBVersion()))
+	pterm.Println(pterm.Yellow("PhoenixBuilder " + args.FBVersion))
 	if I18n.ShouldDisplaySpecial() {
 		fmt.Printf("%s", I18n.T(I18n.Special_Startup))
 	}
 }
 
-func hash_check() {
+func check_update() {
 	fmt.Printf(I18n.T(I18n.Notice_CheckUpdate))
-	hasUpdate, latestVersion := utils.CheckUpdate(args.GetFBVersion())
+	hasUpdate, latestVersion := utils.CheckUpdate(args.FBVersion)
 	fmt.Printf(I18n.T(I18n.Notice_OK))
 	if hasUpdate {
 		fmt.Printf(I18n.T(I18n.Notice_UpdateAvailable), latestVersion)
@@ -60,19 +60,20 @@ func hash_check() {
 }
 
 func Bootstrap() {
-	args.ParseArgs()
-	if len(args.PackScripts()) != 0 {
-		os.Exit(script_bridge.MakePackage(args.PackScripts(), args.PackScriptsOut()))
+	//args.ParseArgs()
+	// ^^ Argument parser would parse arguments before go starts now
+	if len(args.PackScripts) != 0 {
+		os.Exit(script_bridge.MakePackage(args.PackScripts, args.PackScriptsOut))
 	}
 	setup()
 	display_info()
 	defer Fatal()
-	if args.DebugMode() {
+	if args.DebugMode {
 		init_and_run_debug_client()
 		return
 	}
-	if !args.ShouldDisableHashCheck() {
-		hash_check()
+	if !args.ShouldDisableVersionCheck {
+		check_update()
 	}
 
 	token := loadFBTokenOrAskFBCredential()
@@ -85,8 +86,8 @@ func runInteractiveClient(token string) {
 	if !args.SpecifiedServer() {
 		code, serverPasswd, err = credentials.GetRentalServerCode()
 	} else {
-		code = args.ServerCode()
-		serverPasswd = args.ServerPassword()
+		code = args.ServerCode
+		serverPasswd = args.ServerPassword
 	}
 
 	if err != nil {

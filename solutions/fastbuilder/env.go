@@ -29,7 +29,7 @@ func create_environment() *environment.PBEnvironment {
 			return env.LoginInfo.ServerCode
 		},
 		"fb_version": func() string {
-			return args.GetFBVersion()
+			return args.FBVersion
 		},
 		"uc_username": func() string {
 			return env.FBUCUsername
@@ -47,8 +47,8 @@ func create_environment() *environment.PBEnvironment {
 	env.ScriptBridge = hostBridgeGamma
 	scriptHolder := script_holder.InitScriptHolder(env)
 	env.ScriptHolder = scriptHolder
-	if args.StartupScript() != "" {
-		scriptHolder.LoadScript(args.StartupScript(), env)
+	if args.StartupScript != "" {
+		scriptHolder.LoadScript(args.StartupScript, env)
 	}
 	env.Destructors = append(env.Destructors, func() {
 		scriptHolder.Destroy()

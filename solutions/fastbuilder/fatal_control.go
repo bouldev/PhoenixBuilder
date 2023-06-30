@@ -22,14 +22,14 @@ func Fatal() {
 		return
 	}
 	if err := recover(); err != nil {
-		if !args.NoReadline() {
+		if !args.NoReadline {
 			readline.HardInterrupt()
 		}
 		debug.PrintStack()
 		pterm.Error.Println(I18n.T(I18n.Crashed_Tip))
 		pterm.Error.Println(I18n.T(I18n.Crashed_StackDump_And_Error))
 		pterm.Error.Println(err)
-		if args.ShouldEnableOmegaSystem() {
+		if args.ShouldEnableOmegaSystem {
 			omegaSuggest := suggest.GetOmegaErrorSuggest(fmt.Sprintf("%v", err))
 			fmt.Print(omegaSuggest)
 		}
