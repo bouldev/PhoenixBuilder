@@ -3,7 +3,30 @@ package GameInterface
 import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol"
+
+	"phoenixbuilder/game_control/resources_control"
+	"phoenixbuilder/minecraft/protocol/packet"
 )
+
+// 描述客户端的基本信息
+type ClientInfo struct {
+	DisplayName     string // 客户端的游戏昵称
+	ClientIdentity  string // 客户端的唯一标识符 [当前还未使用]
+	XUID string
+	EntityUniqueID  int64  // 客户端的唯一 ID
+	EntityRuntimeID uint64 // 客户端的运行时 ID
+}
+
+// 用于 PhoenixBuilder 与租赁服交互。
+// 此结构体下的实现将允许您与租赁服进行交互操作，例如打开容器等
+type GameInterface struct {
+	// 用于向租赁服发送数据包的函数
+	WritePacket func(packet.Packet) error
+	// 存储客户端的基本信息
+	ClientInfo ClientInfo
+	// PhoenixBuilder 的各类公用资源
+	Resources *ResourcesControl.Resources
+}
 
 // 用作铁砧的承重方块
 const AnvilBase string = "glass"

@@ -1,4 +1,4 @@
-.PHONY: current all current-v8 current-arm64-executable ios-executable ios-v8-executable ios-lib ish-executable macos macos-v8 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64 freebsd-executable freebsd-executable-x86 freebsd-executable-x86_64 freebsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 openwrt-mt7620-mipsel_24kc
+.PHONY: current all current-v8 current-arm64-executable ios-executable ios-v8-executable ish-executable macos macos-v8 android-executable-armv7 android-executable-arm64 android-executable-x86_64 android-executable-x86 windows-executable windows-executable-x86 windows-executable-x86_64 freebsd-executable freebsd-executable-x86 freebsd-executable-x86_64 freebsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 netbsd-executable netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64 openwrt-mt7620-mipsel_24kc
 TARGETS:=build/ current current-no-readline current-v8
 PACKAGETARGETS:=
 ifeq ($(shell uname | grep "Darwin" > /dev/null ; echo $${?}),0)
@@ -6,13 +6,13 @@ ifeq ($(shell uname -m | grep -E "iPhone|iPad|iPod" > /dev/null ; echo $${?}),0)
 IOS_STRIP=/usr/bin/strip
 LIPO=/usr/bin/lipo
 LDID=/usr/bin/ldid
-TARGETS:=${TARGETS} ios-executable ios-v8-executable ios-lib
+TARGETS:=${TARGETS} ios-executable ios-v8-executable
 else
 IOS_STRIP=$(shell xcrun --sdk iphoneos -f strip)
 IOS_OBJCOPY=$(shell xcrun --sdk iphoneos -f objcopy)
 LDID=ldid2
 LIPO=/usr/bin/lipo
-TARGETS:=${TARGETS} macos ios-v8-executable ios-executable ios-lib
+TARGETS:=${TARGETS} macos ios-v8-executable ios-executable
 endif
 PACKAGETARGETS:=${PACKAGETARGETS} package/ios
 else
@@ -30,7 +30,7 @@ endif
 ### *-----------------------------------* ###
 
 ifneq (${THEOS},)
-	TARGETS:=${TARGETS} ios-executable ios-lib ios-v8-executable macos macos-v8
+	TARGETS:=${TARGETS} ios-executable ios-v8-executable macos macos-v8
 	PACKAGETARGETS:=${PACKAGETARGETS} package/ios
 endif
 ifneq ($(wildcard ${HOME}/android-ndk-r20b),)
@@ -77,7 +77,6 @@ current-v8: build/phoenixbuilder-v8
 current-arm64-executable: build/phoenixbuilder-aarch64
 ios-executable: build/phoenixbuilder-ios-executable
 ios-v8-executable: build/phoenixbuilder-v8-ios-executable
-ios-lib: build/phoenixbuilder-ios-static.a
 ish-executable: build/phoenixbuilder-ish-executable
 macos: build/phoenixbuilder-macos
 macos-v8: build/phoenixbuilder-v8-macos
@@ -144,8 +143,6 @@ build/phoenixbuilder-v8: build/ ${SRCS_GO}
 	CGO_CFLAGS=${CGO_DEF}" -DWITH_V8" CGO_ENABLED=1 go build -tags "with_v8 ${APPEND_GO_TAGS}" -trimpath -ldflags "-s -w" -o build/phoenixbuilder-v8
 build/libexternal_functions_provider.so: build/ io/external_functions_provider/provider.c
 	gcc -shared io/external_functions_provider/provider.c -o build/libexternal_functions_provider.so
-build/phoenixbuilder-static.a: build/ build/libexternal_functions_provider.so ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Lbuild -lexternal_functions_provider" CGO_ENABLED=1 go build -trimpath -buildmode=c-archive -ldflags "-s -w" -tags "no_readline,is_tweak ${APPEND_GO_TAGS}" -o build/phoenixbuilder-static.a
 build/phoenixbuilder-aarch64: build/ ${SRCS_GO}
 	cd depends/stub&&make clean&&make CC=/usr/bin/aarch64-linux-gnu-gcc&&cd -
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=/usr/bin/aarch64-linux-gnu-gcc CGO_ENABLED=1 GOARCH=arm64 go build -tags use_aarch64_linux_rl -trimpath -ldflags "-s -w" -o build/phoenixbuilder-aarch64
@@ -159,8 +156,6 @@ build/phoenixbuilder-v8-ios-executable: build/ ${SRCS_GO}
 	${LDID} -Sios-ent.xml build/phoenixbuilder-v8-ios-executable
 build/libexternal_functions_provider.dylib: build/ io/external_functions_provider/provider.c
 	`pwd`/archs/ios.sh io/external_functions_provider/provider.c -shared -o build/libexternal_functions_provider.dylib
-build/phoenixbuilder-ios-static.a: build/ build/libexternal_functions_provider.dylib ${SRCS_GO}
-	CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Lbuild -lexternal_functions_provider" CC=`pwd`/archs/ios.sh CGO_ENABLED=1 GOOS=ios GOARCH=arm64 go build -buildmode=c-archive -trimpath -ldflags "-s -w -extar ${THEOS}/toolchain/linux/iphone/bin/ar" -tags is_tweak,no_readline -o build/phoenixbuilder-ios-static.a
 build/phoenixbuilder-ish-executable: build/ ${SRCS_GO}
 	cd depends/stub&&make clean&&make CC="${HOME}/i686-unknown-linux-musl/bin/i686-unknown-linux-musl-gcc --sysroot=`pwd`/../buildroot/ish -L`pwd`/../buildroot/ish/usr/lib" && cd -
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC="${HOME}/i686-unknown-linux-musl/bin/i686-unknown-linux-musl-gcc --sysroot=`pwd`/depends/buildroot/ish" CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -tags "ish" -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ish-executable

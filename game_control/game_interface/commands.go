@@ -2,6 +2,9 @@ package GameInterface
 
 import (
 	"fmt"
+	"strings"
+	"encoding/json"
+	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 
@@ -18,7 +21,7 @@ func (g *GameInterface) SendSettingsCommand(
 	if dimensional {
 		command = fmt.Sprintf(
 			`execute @a[name="%s"] ~ ~ ~ %s`,
-			g.ClientInfo.ClientName,
+			g.ClientInfo.DisplayName,
 			command,
 		)
 	}
@@ -119,3 +122,36 @@ func (g *GameInterface) SendWSCommandWithResponse(command string) (packet.Comman
 	}
 	return resp, nil
 }
+
+func (i *GameInterface) Output(content string) error {
+	fmt.Printf("%s\n", content)
+	if !args.InGameResponse() {
+		return nil
+	}
+	msg := strings.Replace(content, "schematic", "sc***atic", -1)
+	msg = strings.Replace(msg, ".", "．", -1)
+	return i.SendChat(fmt.Sprintf("§b%s", msg))
+}
+
+func (i *GameInterface) SendChat(content string) error {
+	return i.WritePacket(&packet.Text {
+		TextType: packet.TextTypeChat,
+		NeedsTranslation: false,
+		SourceName: i.ClientInfo.DisplayName,
+		Message: content,
+		XUID: i.ClientInfo.XUID,
+		PlayerRuntimeID: fmt.Sprintf("%d", i.ClientInfo.EntityUniqueID),
+	})
+}
+
+func (i *GameInterface) Title(message string) error {
+	title_struct:=map[string]interface{} {
+		"rawtext": []string {
+			message,
+		},
+	}
+	json_content, _:=json.Marshal(title_struct)
+	return i.SendSettingsCommand(fmt.Sprintf("titleraw @a actionbar %s", json_content), false)
+}
+
+

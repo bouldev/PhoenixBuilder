@@ -24,8 +24,6 @@ import (
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/uqHolder"
-	"phoenixbuilder/io/commands"
-	utils_core "phoenixbuilder/lib/utils/core"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -77,7 +75,6 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	conn := env.Connection.(*minecraft.Conn)
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
-	commandSender := env.CommandSender.(*commands.CommandSender)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 
 	chunkAssembler := assembler.NewAssembler(assembler.REQUEST_AGGRESSIVE, time.Second*5)
@@ -222,8 +219,6 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 				}
 				break
 			}
-		case *packet.CommandOutput:
-			utils_core.ProcessCommandOutput(commandSender, p)
 		case *packet.ActorEvent:
 			if p.EventType == packet.ActorEventDeath && p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
 				conn.WritePacket(&packet.PlayerAction{
@@ -267,12 +262,6 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			if exist := chunkAssembler.AddPendingTask(p); !exist {
 				requests := chunkAssembler.GenRequestFromLevelChunk(p)
 				chunkAssembler.ScheduleRequest(requests)
-			}
-		case *packet.UpdateBlock:
-			channel, h := commandSender.BlockUpdateSubscribeMap.LoadAndDelete(p.Position)
-			if h {
-				ch := channel.(chan bool)
-				ch <- true
 			}
 		case *packet.Respawn:
 			if p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
@@ -349,10 +338,11 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	env.GameInterface = &GameInterface.GameInterface{
 		WritePacket: env.Connection.(*minecraft.Conn).WritePacket,
 		ClientInfo: GameInterface.ClientInfo{
-			ClientName:      env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
+			DisplayName:      env.Connection.(*minecraft.Conn).IdentityData().DisplayName,
 			ClientIdentity:  env.Connection.(*minecraft.Conn).IdentityData().Identity,
-			ClientRuntimeID: env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
-			ClientUniqueID:  env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+			EntityRuntimeID: env.Connection.(*minecraft.Conn).GameData().EntityRuntimeID,
+			EntityUniqueID:  env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+			XUID: env.Connection.(*minecraft.Conn).IdentityData().XUID,
 		},
 		Resources: env.Resources.(*ResourcesControl.Resources),
 	}
@@ -363,7 +353,6 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		//cb()
 	}
 
-	commandSender := commands.InitCommandSender(env)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	function.InitPresetFunctions(functionHolder)
 	fbtask.InitTaskStatusDisplay(env)
@@ -387,16 +376,6 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	})
 	hostBridgeGamma.HostConnectEstablished()
 	defer hostBridgeGamma.HostConnectTerminate()
-
-	go func() {
-		if args.ShouldMuteWorldChat() {
-			return
-		}
-		for {
-			csmsg := <-env.WorldChatChannel
-			commandSender.WorldChatOutput(csmsg[0], csmsg[1])
-		}
-	}()
 
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender

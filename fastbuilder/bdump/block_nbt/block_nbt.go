@@ -78,3 +78,10 @@ var ErrNotASupportedContainer error = fmt.Errorf("replaceNBTMapToContainerList: 
 var KeyName string = "datas"
 
 // ------------------------- END -------------------------
+
+
+type GeneralBlockNBT interface {
+	Decode() error
+	WriteData() error
+}
+

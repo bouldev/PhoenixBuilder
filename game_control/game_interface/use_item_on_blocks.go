@@ -55,7 +55,7 @@ func (g *GameInterface) ClickBlock(request UseItemOnBlocks) error {
 		return fmt.Errorf("ClickBlock: %v", err)
 	}
 	err = g.WritePacket(&packet.PlayerAction{
-		EntityRuntimeID: g.ClientInfo.ClientRuntimeID,
+		EntityRuntimeID: g.ClientInfo.EntityRuntimeID,
 		ActionType:      protocol.PlayerActionStartBuildingBlock,
 		BlockPosition:   request.BlockPos,
 	})
@@ -92,7 +92,7 @@ func (g *GameInterface) PlaceBlock(
 	}
 	// get datas of the target item stack
 	err = g.WritePacket(&packet.PlayerAction{
-		EntityRuntimeID: g.ClientInfo.ClientRuntimeID,
+		EntityRuntimeID: g.ClientInfo.EntityRuntimeID,
 		ActionType:      protocol.PlayerActionStartItemUseOn,
 		BlockPosition:   request.BlockPos,
 	})
@@ -119,7 +119,7 @@ func (g *GameInterface) PlaceBlock(
 		return fmt.Errorf("PlaceBlock: %v", err)
 	}
 	err = g.WritePacket(&packet.PlayerAction{
-		EntityRuntimeID: g.ClientInfo.ClientRuntimeID,
+		EntityRuntimeID: g.ClientInfo.EntityRuntimeID,
 		ActionType:      protocol.PlayerActionStopItemUseOn,
 		BlockPosition:   request.BlockPos,
 	})

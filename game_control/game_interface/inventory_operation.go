@@ -37,7 +37,7 @@ func (g *GameInterface) OpenInventory() (bool, error) {
 	// await responce before send packet
 	err := g.WritePacket(&packet.Interact{
 		ActionType:            packet.InteractActionOpenInventory,
-		TargetEntityRuntimeID: g.ClientInfo.ClientRuntimeID,
+		TargetEntityRuntimeID: g.ClientInfo.EntityRuntimeID,
 	})
 	if err != nil {
 		return false, fmt.Errorf("OpenInventory: %v", err)

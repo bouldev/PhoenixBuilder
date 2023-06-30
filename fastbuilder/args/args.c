@@ -20,7 +20,6 @@ char args_isDebugMode=0;
 char args_disableHashCheck=0;
 char replaced_auth_server=0;
 char *newAuthServer;
-char args_muteWorldChat=0;
 char args_noPyRpc=1;
 char use_startup_script=0;
 char *startup_script;
@@ -46,7 +45,6 @@ void print_help(const char *self_name) {
 	printf("\t--debug: Run in debug mode.\n");
 	printf("\t-A <url>, --auth-server=<url>: Use the specified authentication server, instead of the default one.\n");
 	printf("\t--no-update-check: Suppress update notifications.\n");
-	printf("\t-M, --no-world-chat: Ignore world chat on client side.\n");
 	printf("\t--force-pyrpc: Enable the PyRpcPacket interaction, client will be kicked automatically by netease's rental server.\n");
 #ifdef WITH_V8
 	printf("\t-S, --script=<*.js>: run a .js script at start\n");
@@ -296,9 +294,6 @@ int _parse_args(int argc, char **argv) {
 		case 'A':
 			replaced_auth_server=1;
 			quickcopy(&newAuthServer);
-			break;
-		case 'M':
-			args_muteWorldChat=1;
 			break;
 		case 'S':
 #ifndef WITH_V8

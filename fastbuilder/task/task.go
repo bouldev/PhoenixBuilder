@@ -10,7 +10,6 @@ import (
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/parsing"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/io/commands"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -152,11 +151,10 @@ func (holder *TaskHolder) FindTask(taskId int64) *Task {
 
 func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 	holder := env.TaskHolder.(*TaskHolder)
-	cmdsender := env.CommandSender.(*commands.CommandSender)
 	gameInterface := env.GameInterface
 	cfg, err := parsing.Parse(commandLine, configuration.GlobalFullConfig(env).Main())
 	if err != nil {
-		cmdsender.Output(fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand), err))
+		gameInterface.Output(fmt.Sprintf(I18n.T(I18n.TaskFailedToParseCommand), err))
 		return nil
 	}
 	fcfg := configuration.ConcatFullConfig(cfg, configuration.GlobalFullConfig(env).Delay())
@@ -262,15 +260,15 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			curblock, ok := <-blockschannel
 			if !ok {
 				if blkscounter == 0 {
-					cmdsender.Output(fmt.Sprintf(I18n.T(I18n.Task_D_NothingGenerated), taskid))
+					gameInterface.Output(fmt.Sprintf(I18n.T(I18n.Task_D_NothingGenerated), taskid))
 					runtime.GC()
 					task.Finalize()
 					return
 				}
 				timeUsed := time.Now().Sub(t1)
-				cmdsender.Output(fmt.Sprintf(I18n.T(I18n.Task_Summary_1), taskid, blkscounter))
-				cmdsender.Output(fmt.Sprintf(I18n.T(I18n.Task_Summary_2), taskid, timeUsed.Seconds()))
-				cmdsender.Output(fmt.Sprintf(I18n.T(I18n.Task_Summary_3), taskid, float64(blkscounter)/timeUsed.Seconds()))
+				gameInterface.Output(fmt.Sprintf(I18n.T(I18n.Task_Summary_1), taskid, blkscounter))
+				gameInterface.Output(fmt.Sprintf(I18n.T(I18n.Task_Summary_2), taskid, timeUsed.Seconds()))
+				gameInterface.Output(fmt.Sprintf(I18n.T(I18n.Task_Summary_3), taskid, float64(blkscounter)/timeUsed.Seconds()))
 				runtime.GC()
 				task.Finalize()
 				return
@@ -331,7 +329,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 		defer func() {
 			if err := recover(); err != nil {
 				debug.PrintStack()
-				cmdsender.Output(fmt.Sprintf("[Task %d] Fatal error: %v", taskid, err))
+				gameInterface.Output(fmt.Sprintf("[Task %d] Fatal error: %v", taskid, err))
 				close(blockschannel)
 			}
 		}()
@@ -339,14 +337,14 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			err := builder.Generate(cfg, asyncblockschannel)
 			close(asyncblockschannel)
 			if err != nil {
-				cmdsender.Output(fmt.Sprintf("[%s %d] %s: %v", I18n.T(I18n.TaskTTeIuKoto), taskid, I18n.T(I18n.ERRORStr), err))
+				gameInterface.Output(fmt.Sprintf("[%s %d] %s: %v", I18n.T(I18n.TaskTTeIuKoto), taskid, I18n.T(I18n.ERRORStr), err))
 			}
 			return
 		}
 		err := builder.Generate(cfg, blockschannel)
 		close(blockschannel)
 		if err != nil {
-			cmdsender.Output(fmt.Sprintf("[%s %d] %s: %v", I18n.T(I18n.TaskTTeIuKoto), taskid, I18n.T(I18n.ERRORStr), err))
+			gameInterface.Output(fmt.Sprintf("[%s %d] %s: %v", I18n.T(I18n.TaskTTeIuKoto), taskid, I18n.T(I18n.ERRORStr), err))
 		}
 	}()
 	return task

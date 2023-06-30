@@ -12,7 +12,6 @@ extern char args_isDebugMode;
 extern char replaced_auth_server;
 extern char *newAuthServer;
 extern char args_disableHashCheck;
-extern char args_muteWorldChat;
 extern char args_noPyRpc;
 extern char *startup_script;
 
@@ -63,10 +62,6 @@ func Do_replace_authserver(val string) {
 
 func Set_disableHashCheck(val bool) {
 	C.args_disableHashCheck = charify(val)
-}
-
-func Set_muteWorldChat(val bool) {
-	C.args_muteWorldChat = charify(val)
 }
 
 func Set_noPyRpc(val bool) {
@@ -140,10 +135,6 @@ func ShouldEnableOmegaSystem() bool {
 
 func SetShouldDisableHashCheck() {
 	C.args_disableHashCheck = C.char(1)
-}
-
-func ShouldMuteWorldChat() bool {
-	return boolify(C.args_muteWorldChat)
 }
 
 func NoPyRpc() bool {

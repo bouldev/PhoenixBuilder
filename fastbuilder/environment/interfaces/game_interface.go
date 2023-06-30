@@ -13,4 +13,8 @@ type GameInterface interface {
 	
 	SetBlock([3]int32,string,string) error
 	SetBlockAsync([3]int32,string,string) error
+	
+	SendChat(string) error
+	Output(string) error
+	Title(string) error
 }

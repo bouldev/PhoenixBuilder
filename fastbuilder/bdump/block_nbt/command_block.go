@@ -142,7 +142,6 @@ func (c *CommandBlock) Decode() error {
 // 放置一个命令方块(可选)并写入命令方块数据
 func (c *CommandBlock) WriteData() error {
 	var mode uint32 = packet.CommandBlockImpulse
-	// 初始化
 	gameInterface:=c.BlockEntity.Interface.(*GameInterface.GameInterface)
 	if c.ShouldPlaceBlock {
 		if c.BlockEntity.BlockEntityData.Settings.ExcludeCommands || c.BlockEntity.BlockEntityData.FastMode {
