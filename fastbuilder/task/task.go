@@ -2,7 +2,7 @@ package task
 
 import (
 	"fmt"
-	"phoenixbuilder/fastbuilder/bdump/block_nbt"
+	blockNBT "phoenixbuilder/fastbuilder/bdump/block_nbt"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/configuration"
@@ -281,7 +281,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				err := blockNBT.PlaceBlockWithNBTData(
 					gameInterface,
 					curblock,
-					&blockNBT.BlockEntityData{
+					&blockNBT.AdditionalData{
 						Settings: cfg,
 						FastMode: isFastMode,
 						Others:   nil,
@@ -294,7 +294,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				newStruct := blockNBT.CommandBlock{
 					BlockEntity: &blockNBT.BlockEntity{
 						Interface: gameInterface,
-						BlockEntityData: blockNBT.BlockEntityData{
+						AdditionalData: blockNBT.AdditionalData{
 							Position: [3]int32{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)},
 							Settings: cfg,
 							FastMode: isFastMode,
@@ -309,11 +309,11 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 				}
 			} else if curblock.ChestSlot != nil {
 				gameInterface.SendSettingsCommand(commands_generator.ReplaceItemRequest(curblock, ""), true)
-			} else if(len(cfg.Entity)!=0) {
+			} else if len(cfg.Entity) != 0 {
 				gameInterface.SendSettingsCommand(commands_generator.SummonRequest(curblock, cfg), true)
-			}else{
+			} else {
 				gameInterface.SendSettingsCommand(commands_generator.SetBlockRequest(curblock, cfg), true)
-			} 
+			}
 			if dcfg.DelayMode == types.DelayModeContinuous {
 				doDelay()
 			} else if dcfg.DelayMode == types.DelayModeDiscrete {
