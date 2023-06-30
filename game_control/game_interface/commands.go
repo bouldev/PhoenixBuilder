@@ -149,8 +149,10 @@ func (i *GameInterface) SendChat(content string) error {
 // 以 actionbar 的形式向所有在线玩家显示 message
 func (i *GameInterface) Title(message string) error {
 	title_struct := map[string]interface{}{
-		"rawtext": []string{
-			message,
+		"rawtext": []interface{}{
+			map[string]interface{}{
+				"text": message,
+			},
 		},
 	}
 	json_content, _ := json.Marshal(title_struct)
