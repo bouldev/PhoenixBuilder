@@ -3,7 +3,7 @@ package GameInterface
 import (
 	"encoding/gob"
 	"fmt"
-	"phoenixbuilder/game_control/resources_control"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
@@ -27,7 +27,7 @@ func (g *GameInterface) RenameItem(
 	containerOpeningData := g.Resources.Container.GetContainerOpeningData()
 	// 取得已打开的容器的数据
 	if containerOpeningData == nil {
-		return nil, fmt.Errorf("RanameItem: Anvil has not opened")
+		return nil, fmt.Errorf("RenameItem: Anvil has not opened")
 	}
 	// 如果铁砧未被打开
 	var itemDatas protocol.ItemInstance
@@ -36,7 +36,7 @@ func (g *GameInterface) RenameItem(
 		1,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("ChangeItemName: %v", err)
+		return nil, fmt.Errorf("RenameItem: %v", err)
 	}
 	ResourcesControl.DeepCopy(
 		&get,
@@ -58,7 +58,7 @@ func (g *GameInterface) RenameItem(
 	getOptionalSlot := func() []uint8 {
 		filterAns, err := g.Resources.Inventory.ListSlot(0, &[]int32{0})
 		if err != nil {
-			panic(fmt.Sprintf("ChangeItemName: %v", err))
+			panic(fmt.Sprintf("RenameItem: %v", err))
 		}
 		// 筛选出背包中还未被占用实际物品的物品栏
 		optionalSlot := []uint8{slot}
@@ -234,7 +234,7 @@ func (g *GameInterface) RenameItem(
 		// 写入请求到等待队列
 		err = g.WritePacket(&newItemStackRequest)
 		if err != nil {
-			panic(fmt.Sprintf("ChangeItemName: %v", err))
+			panic(fmt.Sprintf("RenameItem: %v", err))
 		}
 		// 发送物品操作请求
 		ans, err := g.Resources.ItemStackOperation.LoadResponseAndDelete(newRequestID)

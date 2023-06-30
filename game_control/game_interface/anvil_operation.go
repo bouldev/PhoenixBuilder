@@ -2,8 +2,8 @@ package GameInterface
 
 import (
 	"fmt"
-	"phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/fastbuilder/mcstructure"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -119,7 +119,7 @@ func (g *GameInterface) RenameItemByAnvil(
 		containerOpeningData := g.Resources.Container.GetContainerOpeningData()
 		// 获取已打开的容器的数据
 		if containerOpeningData == nil {
-			return res, fmt.Errorf("ChangeItemNameByUsingAnvil: Anvil have been closed")
+			return res, fmt.Errorf("RenameItemByAnvil: Anvil have been closed")
 		}
 		// 确保容器未被关闭
 		resp, err := g.MoveItem(
@@ -133,7 +133,7 @@ func (g *GameInterface) RenameItemByAnvil(
 				ContainerID: 0x0,
 				Slot:        1,
 			},
-			ItemChangingDetails {
+			ItemChangingDetails{
 				details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
 					0xc: {
 						WindowID: 0,
@@ -186,10 +186,10 @@ func (g *GameInterface) RenameItemByAnvil(
 				uint32(containerOpeningData.WindowID),
 			)
 			if err != nil {
-				panic(fmt.Sprintf("ChangeItemNameByUsingAnvil: %v", err))
+				panic(fmt.Sprintf("RenameItemByAnvil: %v", err))
 			}
 			if !successStates {
-				panic("ChangeItemNameByUsingAnvil: Failure to recover, and we have no choice but to panic this program")
+				panic("RenameItemByAnvil: Failure to recover, and we have no choice but to panic this program")
 			}
 			anvilOperationResp.Destination = nil
 		}
