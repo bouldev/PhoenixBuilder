@@ -23,7 +23,7 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 				r.Inventory.writeItemStackInfo(p.WindowID, uint8(key), value)
 			}
 		}
-		// inventory contents(global)
+		// inventory contents(basic)
 	case *packet.InventoryTransaction:
 		for _, value := range p.Actions {
 			if value.SourceType == protocol.InventoryActionSourceCreative {
@@ -40,7 +40,7 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 			if value.Status == protocol.ItemStackResponseStatusOK {
 				r.ItemStackOperation.updateItemData(value, &r.Inventory)
 			}
-			// update local inventory datas
+			// update local inventory data
 			r.ItemStackOperation.writeResponse(value.RequestID, value)
 			// write response
 		}
@@ -53,7 +53,7 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		r.Container.writeContainerOpeningData(p)
 		r.Inventory.createNewInventory(uint32(p.WindowID))
 		r.Container.respondToContainerOperation()
-		// while open a container
+		// when a container is opened
 	case *packet.ContainerClose:
 		if p.WindowID != 0 && p.WindowID != 119 && p.WindowID != 120 && p.WindowID != 124 {
 			err := r.Inventory.deleteInventory(uint32(p.WindowID))
@@ -67,13 +67,12 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		r.Container.writeContainerOpeningData(nil)
 		r.Container.writeContainerClosingData(p)
 		r.Container.respondToContainerOperation()
-		// while a container is closed
-		// ^ While - doing, otherwise use when instead
+		// when a container has been closed
 	case *packet.StructureTemplateDataResponse:
 		if !r.Structure.GetOccupyStates() {
 			panic("handlePacket: Attempt to send packet.StructureTemplateDataRequest without using ResourcesControlCenter")
 		}
 		r.Structure.writeResponse(*p)
-		// packet.StructureTemplateDataRequest
+		// used to request mcstructure data
 	}
 }
