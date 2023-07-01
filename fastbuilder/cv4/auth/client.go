@@ -108,6 +108,8 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 				authclient.peerNoEncryption = true
 				authclient.SendMessage([]byte(`{"action":"accept_no_encryption"}`))
 				close(encrypted)
+			}else if(msgaction=="server_message") {
+				pterm.Info.Printf("[Auth Server] %s\n", message["message"].(string))
 			}
 			select {
 			case authclient.serverResponse <- message:
@@ -175,7 +177,10 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 		ServerPassword: serverPassword,
 		Key:            key,
 		FBToken:        fbtoken,
-		VersionId:      2,
+		VersionId:      3,
+		// Both versionId 2 and 3 are supported currently
+		// Version ID 3 has server message support.
+		
 		// ^
 		// The implemention of version_id is in no way for the purpose
 		// of blocking the access of old versions, but for saving server
