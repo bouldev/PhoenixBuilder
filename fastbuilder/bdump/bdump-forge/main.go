@@ -11,7 +11,7 @@ import (
 
 func main() {
 	if len(os.Args) != 3 {
-		fmt.Printf("BDumpForge built with PhoenixBuilder %s\n", args.GetFBVersion())
+		fmt.Printf("BDumpForge built with PhoenixBuilder %s\n", args.FBVersion)
 		fmt.Printf("%s <input (bdx/json)> <output>\n", os.Args[0])
 		os.Exit(1)
 	}
