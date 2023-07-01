@@ -92,6 +92,16 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			default:
 			}
 		}
+
+		env.Connection.(*minecraft.Conn).WritePacket(
+			&packet.TickSync{
+				ClientRequestTimestamp:   0,
+				ServerReceptionTimestamp: 0,
+			},
+		)
+		// Used to sync the current game tick.
+		// "ResoucesControlCenter.Resources.Others.currentTick" related.
+
 		pk, data, err := conn.ReadPacketAndBytes()
 		if err != nil {
 			panic(err)

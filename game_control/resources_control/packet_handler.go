@@ -11,6 +11,9 @@ import (
 // 根据收到的数据包更新客户端的资源数据
 func (r *Resources) handlePacket(pk *packet.Packet) {
 	switch p := (*pk).(type) {
+	case *packet.TickSync:
+		r.Others.writeCurrentGameTick(p.ServerReceptionTimestamp)
+		// sync game tick
 	case *packet.CommandOutput:
 		err := r.Command.tryToWriteResponse(p.CommandOrigin.UUID, *p)
 		if err != nil {
