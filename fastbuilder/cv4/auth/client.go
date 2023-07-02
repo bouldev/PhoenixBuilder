@@ -108,7 +108,7 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 				authclient.peerNoEncryption = true
 				authclient.SendMessage([]byte(`{"action":"accept_no_encryption"}`))
 				close(encrypted)
-			}else if(msgaction=="server_message") {
+			} else if msgaction == "server_message" {
 				pterm.Info.Printf("[Auth Server] %s\n", message["message"].(string))
 			}
 			select {
@@ -166,7 +166,7 @@ type AuthRequest struct {
 	ServerPassword string `json:"serverPassword"`
 	Key            string `json:"publicKey"`
 	FBToken        string
-	VersionId      int64  `json:"version_id"`
+	VersionId      int64 `json:"version_id"`
 	//IgnoreVersionCheck bool `json:"ignore_version_check"`
 }
 
@@ -180,7 +180,7 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 		VersionId:      3,
 		// Both versionId 2 and 3 are supported currently
 		// Version ID 3 has server message support.
-		
+
 		// ^
 		// The implemention of version_id is in no way for the purpose
 		// of blocking the access of old versions, but for saving server
@@ -194,10 +194,17 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 		panic("Failed to encode json")
 	}
 	client.SendMessage(msg)
+Retry:
 	select {
 	case <-ctx.Done():
 		return "", 0, fmt.Errorf("fb auth server response time out (%v)", err)
-	case resp, _ := <-client.serverResponse:
+	case resp := <-client.serverResponse:
+		_, exist := resp["code"]
+		if !exist {
+			goto Retry
+		}
+		// The first message is `{"action":"server_message","message":"欢迎, xxx !"}`,
+		// so we need to make sure that the message we get is what we want.
 		code, _ := resp["code"].(float64)
 		if code != 0 {
 			err, _ := resp["message"].(string)
@@ -334,7 +341,7 @@ func (client *Client) TransferCheckNum(first string, second string, third int64)
 	resp, _ := <-client.serverResponse
 	code, _ := resp["code"].(float64)
 	if code != 0 {
-		panic(fmt.Errorf("Failed to transfer checknum: %s",resp["message"]))
+		panic(fmt.Errorf("Failed to transfer checknum: %s", resp["message"]))
 	}
 	valM, _ := resp["valM"].(string)
 	valS, _ := resp["valS"].(string)
