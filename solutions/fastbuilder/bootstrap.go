@@ -13,7 +13,6 @@ import (
 	"github.com/pterm/pterm"
 
 	"phoenixbuilder/fastbuilder/readline"
-	_ "phoenixbuilder/plantform_specific/fix_timer"
 )
 
 func setup() {

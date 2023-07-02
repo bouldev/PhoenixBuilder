@@ -413,5 +413,6 @@ __attribute__((constructor)) static void parse_args_win32() {
 	}
 	free(argv);
 	LocalFree(ugly_argv);
+	timeBeginPeriod(1);
 }
 #endif
