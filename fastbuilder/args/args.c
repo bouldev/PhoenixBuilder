@@ -9,6 +9,12 @@
 #endif
 #include <sys/types.h>
 #include <stdint.h>
+#ifdef WIN32
+#ifndef __MINGW32__
+#error "This file uses gcc-specific features, please consider switching to mingw gcc."
+#endif
+#include <windows.h>
+#endif
 
 #ifndef FB_VERSION
 #define FB_VERSION "(CUSTOMIZED)"
@@ -378,6 +384,7 @@ int args_specified_token() {
 	return token_content.length!=0;
 }
 
+#ifndef WIN32
 __attribute__((constructor)) static void parse_args(int argc, char **argv) {
 	int ec;
 	if((ec=_parse_args(argc,argv))!=-1) {
@@ -385,3 +392,26 @@ __attribute__((constructor)) static void parse_args(int argc, char **argv) {
 	}
 	return;
 }
+#else
+__attribute__((constructor)) static void parse_args_win32() {
+	int argc;
+	char **argv;
+	wchar_t **ugly_argv=CommandLineToArgvW(GetCommandLineW(), &argc);
+	argv=malloc(sizeof(char*)*argc);
+	for(int i=0;i<argc;i++) {
+		int len=WideCharToMultiByte(CP_UTF8, 0, ugly_argv[i], -1, NULL, 0, NULL, 0);
+		argv[i]=malloc(len);
+		WideCharToMultiByte(CP_UTF8, 0, ugly_argv[i], -1, argv[i], len, NULL, 0);
+	}
+	int ec;
+	if((ec=_parse_args(argc,argv))!=-1) {
+		exit(ec);
+	}
+	for(int i=0;i<argc;i++) {
+		free(argv[i]);
+		LocalFree(ugly_argv[i]);
+	}
+	free(argv);
+	LocalFree(ugly_argv);
+}
+#endif

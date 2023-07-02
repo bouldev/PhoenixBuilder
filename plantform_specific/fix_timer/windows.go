@@ -12,6 +12,6 @@ func init() {
 		winmmDLL            = syscall.NewLazyDLL("winmm.dll")
 		procTimeBeginPeriod = winmmDLL.NewProc("timeBeginPeriod")
 	)
-	fmt.Println("DEBUG: Try to use high precision timer")
+	//fmt.Println("DEBUG: Try to use high precision timer")
 	procTimeBeginPeriod.Call(uintptr(1))
 }
