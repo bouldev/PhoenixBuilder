@@ -12,7 +12,7 @@ import (
 func (r *Resources) handlePacket(pk *packet.Packet) {
 	switch p := (*pk).(type) {
 	case *packet.TickSync:
-		r.Others.writeCurrentGameTick(p.ServerReceptionTimestamp)
+		r.Others.writeCurrentTick(p.ServerReceptionTimestamp)
 		// sync game tick
 	case *packet.CommandOutput:
 		err := r.Command.tryToWriteResponse(p.CommandOrigin.UUID, *p)
