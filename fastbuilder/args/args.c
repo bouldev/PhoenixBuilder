@@ -350,7 +350,7 @@ int _parse_args(int argc, char **argv) {
 
 struct go_string args_var_fbversion_struct={
 	FB_VERSION " (" FB_COMMIT ")",
-	sizeof(FB_VERSION " (" FB_COMMIT ")")
+	sizeof(FB_VERSION " (" FB_COMMIT ")")-1
 };
 
 /*
@@ -369,12 +369,12 @@ struct go_string *args_func_authServer() {
 
 struct go_string args_var_fbplainversion_struct={
 	FB_VERSION,
-	sizeof(FB_VERSION)
+	sizeof(FB_VERSION)-1
 };
 
 struct go_string args_fb_commit_struct={
 	FB_COMMIT,
-	sizeof(FB_COMMIT)
+	sizeof(FB_COMMIT)-1
 };
 
 int args_has_specified_server() {

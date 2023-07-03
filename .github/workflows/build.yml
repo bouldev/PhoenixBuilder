@@ -204,6 +204,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ steps.release_version.outputs.release_version }}
+        target_commitish: libre
         files: |
           fb-upload.tar.gz
           build/*

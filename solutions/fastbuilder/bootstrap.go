@@ -48,10 +48,10 @@ func display_info() {
 
 func check_update() {
 	fmt.Printf(I18n.T(I18n.Notice_CheckUpdate))
-	hasUpdate, latestVersion := utils.CheckUpdate(args.FBVersion)
+	hasUpdate, latestVersion := utils.CheckUpdate(args.FBPlainVersion)
 	fmt.Printf(I18n.T(I18n.Notice_OK))
 	if hasUpdate {
-		fmt.Printf(I18n.T(I18n.Notice_UpdateAvailable), latestVersion)
+		fmt.Printf(I18n.T(I18n.Notice_UpdateAvailable), latestVersion+"-libre")
 		fmt.Printf(I18n.T(I18n.Notice_UpdateNotice))
 		// To ensure user won't ignore it directly, can be suppressed by command line argument.
 		os.Exit(0)
