@@ -128,6 +128,7 @@ const (
 	PositionSet_End
 	QuitCorrectly
 	Sch_FailedToResolve
+	SchematicSupportRemoved
 	SelectLanguageOnConsole
 	ServerCodeTrans
 	SimpleParser_Int_ParsingFailed
