@@ -410,7 +410,6 @@ __attribute__((constructor)) static void parse_args_win32() {
 	}
 	for(int i=0;i<argc;i++) {
 		free(argv[i]);
-		LocalFree(ugly_argv[i]);
 	}
 	free(argv);
 	LocalFree(ugly_argv);
