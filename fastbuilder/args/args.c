@@ -419,15 +419,3 @@ __attribute__((constructor)) static void parse_args_win32() {
 	FreeLibrary(winmm_lib);
 }
 #endif
-
-void args_hook_on_fatal(const char **fatal_string) {
-#ifdef WIN32
-	//printf("ONFATAL %s\n", *fatal_string);
-	int wchar_tlen=MultiByteToWideChar(CP_UTF8, 0, *fatal_string, -1, NULL, 0);
-	wchar_t *msg_text=malloc(sizeof(wchar_t)*(1+wchar_tlen));
-	MultiByteToWideChar(CP_UTF8, 0, *fatal_string, -1, msg_text, wchar_tlen);
-	msg_text[wchar_tlen]=0;
-	MessageBoxW(NULL, msg_text, L"PhoenixBuilder", MB_ICONERROR);
-	free(msg_text);
-#endif
-}
