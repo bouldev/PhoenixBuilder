@@ -13,9 +13,13 @@ import (
 	I18n "phoenixbuilder/fastbuilder/i18n"
 
 	"github.com/pterm/pterm"
+	_ "unsafe"
 )
 
 var PassFatal bool = false
+
+//go:linkname onFatal args_hook_on_fatal
+func onFatal(string)
 
 func Fatal() {
 	if PassFatal {
@@ -33,6 +37,15 @@ func Fatal() {
 			omegaSuggest := suggest.GetOmegaErrorSuggest(fmt.Sprintf("%v", err))
 			fmt.Print(omegaSuggest)
 		}
+		onFatal(fmt.Sprintf("%v\n\nStack dump:\n%s\x00",err, debug.Stack()))
+		// ^ GO ABI:
+		// AX - First arg
+		// BX - Second arg
+		// (Go String takes 2 arguments)
+		// C ABI:
+		// AX - First arg
+		// DX - Second arg
+		// String length is missing
 		if runtime.GOOS == "windows" {
 			pterm.Error.Println(I18n.T(I18n.Crashed_OS_Windows))
 			_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
