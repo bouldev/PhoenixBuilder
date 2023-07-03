@@ -67,14 +67,14 @@ type MicroOmega interface {
 	}
 	GetGameListener() PacketDispatcher
 	GameReactable
-	GetBotInfo() BotBasicInfoHolder
+	GetMicroUQHolder() MicroUQHolder
 }
 
 //type PlayerMsgListener interface {
 //	SetOnParamMsg(playerName string, cb func(chat GameChat) (catch bool)) error
 //}
 
-type PlayerInteract interface {
-	GetPlayerKit(name string) PlayerKit
-	GetPlayerKitByUUID(ud uuid.UUID) PlayerKit
-}
+// type PlayerInteract interface {
+// 	GetPlayerKit(name string) PlayerKit
+// 	GetPlayerKitByUUID(ud uuid.UUID) PlayerKit
+// }

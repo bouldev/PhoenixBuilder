@@ -6,7 +6,6 @@ import (
 	"phoenixbuilder/lib/minecraft/neomega/decouple/core"
 	"phoenixbuilder/lib/minecraft/neomega/decouple/infosender"
 	"phoenixbuilder/lib/minecraft/neomega/omega"
-	"phoenixbuilder/lib/minecraft/neomega/uqholder"
 	"phoenixbuilder/minecraft"
 )
 
@@ -21,32 +20,31 @@ type MicroOmega struct {
 	omega.InteractCore
 	omega.InfoSender
 	omega.CmdSender
-	omega.BotBasicInfoHolder
+	omega.MicroUQHolder
 	omega.BlockPlacer
 }
 
-func (o *MicroOmega) GetBotInfo() omega.BotBasicInfoHolder {
-	return o.BotBasicInfoHolder
+func (o *MicroOmega) GetMicroUQHolder() omega.MicroUQHolder {
+	return o.MicroUQHolder
 }
 
 type MicroOmegaOption struct {
-	CmdSenderOptions       cmdsender.Options
-	PrintUQHolderDebugInfo bool
+	CmdSenderOptions cmdsender.Options
 }
 
-func NewMicroOmega(conn *minecraft.Conn, options MicroOmegaOption) *MicroOmega {
+func NewMicroOmega(conn *minecraft.Conn, getMicroUQHolder func() omega.MicroUQHolder, options MicroOmegaOption) *MicroOmega {
 	reactable := core.NewReactCore()
 	interactCore := core.NewInteractCore(conn)
 	cmdSender := cmdsender.NewCmdSender(reactable, interactCore, options.CmdSenderOptions)
-	botBasicInfoHolder := uqholder.NewBotInfoHolder(conn, options.PrintUQHolderDebugInfo)
-	infoSender := infosender.NewInfoSender(interactCore, cmdSender, botBasicInfoHolder)
+	microUQHolder := getMicroUQHolder()
+	infoSender := infosender.NewInfoSender(interactCore, cmdSender, microUQHolder.GetBotBasicInfo())
 	blockPlacer := placer.NewBlockPlacer(reactable, cmdSender, interactCore)
 	return &MicroOmega{
 		reactable,
 		interactCore,
 		infoSender,
 		cmdSender,
-		botBasicInfoHolder,
+		microUQHolder,
 		blockPlacer,
 	}
 }

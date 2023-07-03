@@ -9,6 +9,8 @@ import (
 	"phoenixbuilder/lib/helpers/fbuser"
 	"phoenixbuilder/lib/minecraft/neomega/bundle"
 	"phoenixbuilder/lib/minecraft/neomega/decouple/cmdsender"
+	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/lib/minecraft/neomega/uqholder"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
@@ -92,11 +94,12 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 	}
 	fmt.Println("检查和配置租赁服状态中...")
 	var pkt packet.Packet
-	omegaCore = bundle.NewMicroOmega(conn, bundle.MicroOmegaOption{
+	omegaCore = bundle.NewMicroOmega(conn, func() omega.MicroUQHolder {
+		return uqholder.NewMicroUQHolder(conn)
+	}, bundle.MicroOmegaOption{
 		CmdSenderOptions: cmdsender.Options{
 			ExpectedCmdFeedBack: options.ExpectedCmdFeedBack,
 		},
-		PrintUQHolderDebugInfo: options.PrintUQHolderDebugInfo,
 	})
 	deadReason = make(chan error, 0)
 	challengeSolver := bot_privilege.NewPyRPCResponser(omegaCore, authenticator.GetFBUid(), fbClient.Closed(),

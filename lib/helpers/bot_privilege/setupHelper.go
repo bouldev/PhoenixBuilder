@@ -33,7 +33,7 @@ func NewSetupHelper(omega omega.MicroOmega, lostPrivilegeCallBack func()) *Setup
 
 func (o *SetupHelper) onAdventurePacket(pk packet.Packet) {
 	p := pk.(*packet.AdventureSettings)
-	if o.GetBotInfo().GetBotUniqueID() == p.PlayerUniqueID {
+	if o.GetMicroUQHolder().GetBotBasicInfo().GetBotUniqueID() == p.PlayerUniqueID {
 		if p.PermissionLevel >= packet.PermissionLevelOperator {
 			o.hasOpPrivilege = true
 			fmt.Println("机器人已获得管理员权限")
