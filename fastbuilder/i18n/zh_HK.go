@@ -102,7 +102,7 @@ var I18nDict_zh_HK map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "已設定終點座標",
 	QuitCorrectly:                       "正常退出",
 	Sch_FailedToResolve:                 "未能解析文檔",
-	SchematicSupportRemoved:             "近期，我们注意到，一些用户试图导入倒卖的文件（schematic格式），出于对创作者的创作权益保护的考量，我们取消了对此文件格式的支持。\n在我们找到更好的保护创作者的创作权益的方式之前，此功能将不会恢复。\n需要声明的是，FastBuilder 仅负责提供建筑的导入导出功能，倒卖为用户的个人行为，与 FastBuilder 无关，正如盗版书籍与阅读器的无关。\n但是，我们（FastBuilder 开发组、项目贡献者）愿意尽我们所能阻止此类事件继续发生。",
+	SchematicSupportRemoved:             "警告 - `schem' 功能已廢棄且已移除，請遷移到BDX格式。詳情請參閱 https://github.com/LNSSPsd/PhoenixBuilder/issues/313",
 	SelectLanguageOnConsole:             "請在控制台中選擇新语言",
 	ServerCodeTrans:                     "伺服器號碼",
 	SimpleParser_Int_ParsingFailed:      "解析器：未能處理整數型參數",
@@ -142,6 +142,6 @@ var I18nDict_zh_HK map[uint16]string = map[uint16]string{
 	Task_Summary_2:                      "[任務 %d] 用時: %v 秒",
 	Task_Summary_3:                      "[任務 %d] 平均速度: %v 方塊/秒",
 	UnsupportedACMEVersion:              "不支援該版本ACME結構（仅支援acme 1.2文檔版本）",
-	Warning_ACME_Deprecated:             "警告 - `acme' 功能已棄用，將於未來被移除。請轉移至其他檔案格式。\n",
+	Warning_ACME_Deprecated:             "警告 - `acme' 功能已廢棄，將於未來被移除。請遷移至其他檔案格式。\n",
 	Warning_UserHomeDir:                 "警告 - 無法獲取當前user主目錄，將設定homedir=\".\";\n",
 }

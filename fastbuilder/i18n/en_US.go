@@ -104,7 +104,7 @@ var I18nDict_en_US map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "End position set",
 	QuitCorrectly:                       "Quit correctly",
 	Sch_FailedToResolve:                 "Failed to resolve file",
-	SchematicSupportRemoved:             "Recently, we have noticed that some users are trying to import files (in schematic format) for reselling. To protect the creative rights of the authors, we have discontinued the support for this file format. This feature will not be reinstated until we find a better way to protect the rights of creators.\nIt should be stated that fb is only responsible for providing the import/export functions for buildings, and resale is a personal action of the users, unrelated to fb - just like the relationship between pirated books and readers.\nHowever, we (the FB development team, project contributors) are willing to do our best to prevent such incidents from continuing to happen.",
+	SchematicSupportRemoved:             "WARNING - `schem' is deprecated and has been removed, please migrate to BDX format instead. \nSee https://github.com/LNSSPsd/PhoenixBuilder/issues/313 for more informations.",
 	SelectLanguageOnConsole:             "Please select your new preferred language on console.",
 	ServerCodeTrans:                     "Server",
 	SimpleParser_Int_ParsingFailed:      "Parser: failed to parse an int argument",

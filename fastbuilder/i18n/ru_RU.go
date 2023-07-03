@@ -108,6 +108,7 @@ var I18nDict_ru_RU map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "Координаты конечной точки были установлены",
 	QuitCorrectly:                       "Выходите нормально",
 	Sch_FailedToResolve:                 "Не удалось проанализировать файл",
+	SchematicSupportRemoved:             "Предупреждение - `schem' является устаревшим и был удален, пожалуйста, перейдите на формат BDX вместо него. \nСм. https://github.com/LNSSPsd/PhoenixBuilder/issues/313 для получения дополнительной информации.",
 	SelectLanguageOnConsole:             "Пожалуйста, выберите новый язык в консоли",
 	ServerCodeTrans:                     "Номер сервера",
 	SimpleParser_Int_ParsingFailed:      "Анализатор: Не удалось обработать целочисленные параметры",

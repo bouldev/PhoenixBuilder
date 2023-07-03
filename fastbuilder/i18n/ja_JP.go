@@ -104,7 +104,7 @@ var I18nDict_ja_JP map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "終点位置を設定しました",
 	QuitCorrectly:                       "プログラムが正常に終了しました。",
 	Sch_FailedToResolve:                 "ファイルの読み込みに失敗しました",
-	SchematicSupportRemoved:             "最近、一部のユーザーがリセールのためのファイル（schematic形式）をインポートしようとするケースが発生していることに気づきました。クリエイターの創作権利を保護するため、私たちはこのファイル形式のサポートを停止しました。より良い方法を見つけるまで、この機能は回復されません。\n明言しておきますが、fbは建築物のインポート/エクスポート機能を提供するだけで、リセールはユーザーの個人的な行動であり、fbとは無関係です。これは、海賊版の本と読者との関係と同じです。\nしかし、私たち（FB開発チーム、プロジェクトの寄稿者）は、このような事態が続くのを防ぐために全力を尽くす意志があります。",
+	SchematicSupportRemoved:             "警告 - `schem' は非推奨となり、削除されました。代わりにBDX形式に移行してください。\n詳細については、https://github.com/LNSSPsd/PhoenixBuilder/issues/313 を参照してください。",
 	SelectLanguageOnConsole:             "コンソールで新言語を選択して下さい。",
 	ServerCodeTrans:                     "サーバー",
 	SimpleParser_Int_ParsingFailed:      "アーギュメント読み込み器: 整数アーギュメントの読み込みに失敗しました。",
