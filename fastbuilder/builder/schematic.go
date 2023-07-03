@@ -7,7 +7,7 @@ import (
 )
 
 func Schematic(config *types.MainConfig, blc chan *types.Module) error {
-	return errors.New(I18n.T(I18n.SchematicSupportRemoved))
+	return errors.New(I18n.T(I18n.Warning_Schem_Deprecated))
 	//
 	//file, err := os.Open(config.Path)
 	//if err != nil {
