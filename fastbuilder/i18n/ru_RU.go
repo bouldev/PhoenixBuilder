@@ -108,7 +108,6 @@ var I18nDict_ru_RU map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "Координаты конечной точки были установлены",
 	QuitCorrectly:                       "Выходите нормально",
 	Sch_FailedToResolve:                 "Не удалось проанализировать файл",
-	SchematicSupportRemoved:             "Предупреждение - `schem' является устаревшим и был удален, пожалуйста, перейдите на формат BDX вместо него. \nСм. https://github.com/LNSSPsd/PhoenixBuilder/issues/313 для получения дополнительной информации.",
 	SelectLanguageOnConsole:             "Пожалуйста, выберите новый язык в консоли",
 	ServerCodeTrans:                     "Номер сервера",
 	SimpleParser_Int_ParsingFailed:      "Анализатор: Не удалось обработать целочисленные параметры",
@@ -150,5 +149,6 @@ var I18nDict_ru_RU map[uint16]string = map[uint16]string{
 	Task_Summary_3:              "[миссия %d] Средняя скорость: %v квадрат/сек",
 	UnsupportedACMEVersion:      "Эта версия структуры ACME не поддерживается (поддерживается только версия файла acme 1.2)",
 	Warning_ACME_Deprecated:     "Предупреждение - Функция 'acme' устарела и будет удалена в будущем.Пожалуйста, перейдите в другой формат файла.\n",
+	Warning_Schem_Deprecated:    "Предупреждение - `schem' является устаревшим и был удален, пожалуйста, перейдите на формат BDX вместо него. \nСм. https://github.com/LNSSPsd/PhoenixBuilder/issues/313 для получения дополнительной информации.",
 	Warning_UserHomeDir:         "Предупреждение - Домашний каталог текущего пользователя не может быть получен, он будет установленhomedir=\".\";\n",
 }

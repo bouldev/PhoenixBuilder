@@ -102,7 +102,6 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "End position set",
 	QuitCorrectly:                       "Quit correctly",
 	Sch_FailedToResolve:                 "Failed to resolve file",
-	SchematicSupportRemoved:             "WARNING - `schem' is deprecated and has been removed, please migrate to BDX format instead. \nSee https://github.com/LNSSPsd/PhoenixBuilder/issues/313 for more informations.",
 	SelectLanguageOnConsole:             "Please select your new preferred language on console.",
 	ServerCodeTrans:                     "Server",
 	SimpleParser_Int_ParsingFailed:      "Parser: failed to parse an int argument",
@@ -136,5 +135,6 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	Task_Summary_3:                      "[Task %d] Average speed: %v blocks/second",
 	UnsupportedACMEVersion:              "Unsupported ACME structure version. Only acme file version 1.2 is supported.",
 	Warning_ACME_Deprecated:             "WARNING - `acme' is deprecated and will be removed in future, please migrate to other format instead.\n",
+	Warning_Schem_Deprecated:            "WARNING - `schem' is deprecated and has been removed, please migrate to BDX format instead. \nSee https://github.com/LNSSPsd/PhoenixBuilder/issues/313 for more informations.",
 	Warning_UserHomeDir:                 "WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n",
 }

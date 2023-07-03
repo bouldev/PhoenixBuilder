@@ -128,7 +128,6 @@ const (
 	PositionSet_End
 	QuitCorrectly
 	Sch_FailedToResolve
-	SchematicSupportRemoved
 	SelectLanguageOnConsole
 	ServerCodeTrans
 	SimpleParser_Int_ParsingFailed
@@ -169,6 +168,7 @@ const (
 	Task_Summary_3
 	UnsupportedACMEVersion
 	Warning_ACME_Deprecated
+	Warning_Schem_Deprecated
 	Warning_UserHomeDir
 )
 

@@ -102,7 +102,6 @@ var I18nDict_zh_TW map[uint16]string = map[uint16]string{
 	PositionSet_End:                     "已設定終點座標",
 	QuitCorrectly:                       "正常退出",
 	Sch_FailedToResolve:                 "未能解析文檔",
-	SchematicSupportRemoved:             "警告 - `schem' 功能已棄用且已移除，請轉移到BDX格式。詳見 https://github.com/LNSSPsd/PhoenixBuilder/issues/313",
 	SelectLanguageOnConsole:             "請在控制台中選擇新语言",
 	ServerCodeTrans:                     "伺服器號碼",
 	SimpleParser_Int_ParsingFailed:      "解析器：未能處理整數型參數",
@@ -143,5 +142,6 @@ var I18nDict_zh_TW map[uint16]string = map[uint16]string{
 	Task_Summary_3:                      "[任務 %d] 平均速度: %v 方塊/秒",
 	UnsupportedACMEVersion:              "不支援該版本ACME結構（仅支援acme 1.2文檔版本）",
 	Warning_ACME_Deprecated:             "警告 - `acme' 功能已棄用，將於未來被移除。請轉移至其他檔案格式。\n",
+	Warning_Schem_Deprecated:            "警告 - `schem' 功能已棄用且已移除，請轉移到BDX格式。詳見 https://github.com/LNSSPsd/PhoenixBuilder/issues/313",
 	Warning_UserHomeDir:                 "警告 - 無法獲取當前user主目錄，將設定homedir=\".\";\n",
 }
