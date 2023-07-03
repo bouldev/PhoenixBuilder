@@ -6,14 +6,11 @@ require (
 	github.com/cheggaaa/pb v1.0.29
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/hashicorp/go-version v1.6.0
-	github.com/mitchellh/mapstructure v1.5.0
-	github.com/pierrec/lz4 v2.6.1+incompatible
 	rogchap.com/v8go v0.7.0
 )
 
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
-	github.com/frankban/quicktest v1.14.5 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
 	github.com/klauspost/cpuid v1.3.1 // indirect
@@ -52,7 +49,7 @@ require (
 	github.com/yuin/gopher-lua v1.1.0
 	go.kuoruan.net/v8go-polyfills v0.5.0
 	go.uber.org/atomic v1.9.0
-	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.7.0
 	golang.org/x/term v0.5.0
 	golang.org/x/text v0.7.0
