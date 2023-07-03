@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"regexp"
 )
 
 // int compareVersion(char *latestVersion,char *currentVersion);
@@ -46,7 +47,7 @@ func GetMD5(i string) string {
 }
 
 func CheckUpdate(currentVersion string) (bool, string) {
-	resp, err:=http.Get("https://api.github.com/repos/LNSSPsd/PhoenixBuilder/releases/latest")
+	resp, err:=http.Get("https://api.github.com/repos/LNSSPsd/PhoenixBuilder/releases")
 	if(err!=nil) {
 		fmt.Printf("Failed to check update!\nPlease check your network status.\n")
 		return false, ""
@@ -56,16 +57,24 @@ func CheckUpdate(currentVersion string) (bool, string) {
 		fmt.Printf("Failed to check update!\nPlease check your network status.\n")
 		return false, ""
 	}
-	var json_structure map[string]interface{}
+	var json_structure []interface{}
 	err=json.Unmarshal(content, &json_structure)
 	if err!=nil {
 		fmt.Printf("Failed to check update due to invalid response received from GitHub.\n")
 		return false, ""
 	}
-	version, found_tag_name_item:=json_structure["tag_name"].(string)
-	if !found_tag_name_item {
-		fmt.Printf("Unknown error occured while checking the update\n")
-		return false, ""
+	libre_regexp:=regexp.MustCompile("^(v\\d+\\.\\d+\\.\\d+)-libre$")
+	for _, _ver := range json_structure {
+		ver:=_ver.(map[string]interface{})
+		if ver["draft"].(bool) || !ver["prerelease"].(bool) {
+			continue
+		}
+		regexp_res:=libre_regexp.FindAllStringSubmatch(ver["tag_name"].(string), -1)
+		if len(regexp_res)==0||len(regexp_res[0])!=2 {
+			continue
+		}
+		version:=regexp_res[0][1]
+		return C.compareVersion(C.CString(version[1:]),C.CString(currentVersion))!=0, version[1:]
 	}
-	return C.compareVersion(C.CString(version[1:]),C.CString(currentVersion))!=0, version[1:]
+	return false, ""
 }
