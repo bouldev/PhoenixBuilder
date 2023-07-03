@@ -414,7 +414,10 @@ __attribute__((constructor)) static void parse_args_win32() {
 	}
 	free(argv);
 	LocalFree(ugly_argv);
+	HMODULE winmm_lib=LoadLibraryA("winmm.dll");
+	void (*timeBeginPeriod)(int)=(void *)GetProcAddress(winmm_lib, "timeBeginPeriod");
 	timeBeginPeriod(1);
+	FreeLibrary(winmm_lib);
 }
 #endif
 
