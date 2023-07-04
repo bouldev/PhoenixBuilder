@@ -10,12 +10,6 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
-	"go.uber.org/atomic"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
-	"io"
-	"log"
-	"net"
 	"phoenixbuilder/minecraft/internal"
 	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/minecraft/protocol"
@@ -23,6 +17,12 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/minecraft/resource"
 	"phoenixbuilder/minecraft/text"
+	"go.uber.org/atomic"
+	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
+	"io"
+	"log"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -125,7 +125,7 @@ type Conn struct {
 	disconnectMessage atomic.String
 
 	shieldID atomic.Int32
-
+	
 	DebugMode bool
 }
 
@@ -242,10 +242,6 @@ func (conn *Conn) StartGameContext(ctx context.Context, data GameData) error {
 	}
 }
 
-//func (conn *Conn) GetShieldID() int32 {
-//	return conn.shieldID.Load()
-//}
-
 // DoSpawn starts the game for the client in the server. DoSpawn should be called for a Conn obtained using
 // minecraft.Dial(). Use Conn.StartGame to spawn a Conn obtained using a minecraft.Listener.
 // DoSpawn will start the spawning sequence using the game data found in conn.GameData(), which was sent
@@ -324,31 +320,6 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	return nil
 }
 
-//func (conn *Conn) WritePacketBytes(pktID uint32, data []byte) error {
-//	if conn.DebugMode {
-//		return nil
-//	}
-//	select {
-//	case <-conn.close:
-//		return conn.closeErr("write packet")
-//	default:
-//	}
-//	conn.sendMu.Lock()
-//	defer conn.sendMu.Unlock()
-//
-//	buf := internal.BufferPool.Get().(*bytes.Buffer)
-//	defer func() {
-//		// Reset the buffer so we can return it to the buffer pool safely.
-//		buf.Reset()
-//		internal.BufferPool.Put(buf)
-//	}()
-//
-//	conn.hdr.PacketID = pktID
-//	_ = conn.hdr.Write(buf)
-//	conn.bufferedSend = append(conn.bufferedSend, append(buf.Bytes(), data...))
-//	return nil
-//}
-
 // ReadPacket reads a packet from the Conn, depending on the packet ID that is found in front of the packet
 // data. If a read deadline is set, an error is returned if the deadline is reached before any packet is
 // received. ReadPacket must not be called on multiple goroutines simultaneously.
@@ -380,31 +351,30 @@ func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
 	}
 }
 
-//
-//func (conn *Conn) ReadPacketAndBytes() (pk packet.Packet, data []byte, err error) {
-//	if data, ok := conn.takeDeferredPacket(); ok {
-//		pk, err := data.decode(conn)
-//		if err != nil {
-//			conn.log.Println(err)
-//			return conn.ReadPacketAndBytes()
-//		}
-//		return pk, data.full, nil
-//	}
-//
-//	select {
-//	case <-conn.close:
-//		return nil, nil, conn.closeErr("read packet")
-//	case <-conn.readDeadline:
-//		return nil, nil, conn.wrap(context.DeadlineExceeded, "read packet")
-//	case data := <-conn.packets:
-//		pk, err := data.decode(conn)
-//		if err != nil {
-//			conn.log.Println(err)
-//			return conn.ReadPacketAndBytes()
-//		}
-//		return pk, data.full, nil
-//	}
-//}
+func (conn *Conn) ReadPacketAndBytes() (pk packet.Packet, data []byte, err error) {
+	if data, ok := conn.takeDeferredPacket(); ok {
+		pk, err := data.decode(conn)
+		if err != nil {
+			conn.log.Println(err)
+			return conn.ReadPacketAndBytes()
+		}
+		return pk, data.full, nil
+	}
+
+	select {
+	case <-conn.close:
+		return nil, nil, conn.closeErr("read packet")
+	case <-conn.readDeadline:
+		return nil, nil, conn.wrap(context.DeadlineExceeded, "read packet")
+	case data := <-conn.packets:
+		pk, err := data.decode(conn)
+		if err != nil {
+			conn.log.Println(err)
+			return conn.ReadPacketAndBytes()
+		}
+		return pk, data.full, nil
+	}
+}
 
 // ResourcePacks returns a slice of all resource packs the connection holds. For a Conn obtained using a
 // Listener, this holds all resource packs set to the Listener. For a Conn obtained using Dial, the resource
