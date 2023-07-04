@@ -349,8 +349,8 @@ int _parse_args(int argc, char **argv) {
 }
 
 struct go_string args_var_fbversion_struct={
-	FB_VERSION " (" FB_COMMIT ")",
-	sizeof(FB_VERSION " (" FB_COMMIT ")")-1
+	"Branche de Liberté " FB_VERSION " (" FB_COMMIT ")",
+	sizeof("Branche de Liberté " FB_VERSION " (" FB_COMMIT ")")-1
 };
 
 /*
