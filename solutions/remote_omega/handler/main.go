@@ -5,9 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	zmq "github.com/go-zeromq/zmq4"
-	"github.com/google/uuid"
-	"github.com/pterm/pterm"
 	"log"
 	"os"
 	"phoenixbuilder/lib/encoding/binary_read_write"
@@ -20,6 +17,10 @@ import (
 	"phoenixbuilder/lib/utils/sync_wrapper"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
+
+	zmq "github.com/go-zeromq/zmq4"
+	"github.com/google/uuid"
+	"github.com/pterm/pterm"
 )
 
 type ZMQRpcCaller struct {
