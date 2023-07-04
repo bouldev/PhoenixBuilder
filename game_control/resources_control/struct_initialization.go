@@ -27,10 +27,10 @@ func (r *Resources) Init() func(pk *packet.Packet) {
 			currentRequestID:    1,
 		},
 		Container: container{
-			lockDown:           sync.RWMutex{},
-			containerOpeningData:  nil,
+			lockDown:             sync.RWMutex{},
+			containerOpeningData: nil,
 			containerClosingData: nil,
-			responded:          make(chan struct{}, 1),
+			responded:            make(chan struct{}, 1),
 			resourcesOccupy: resourcesOccupy{
 				lockDown: sync.Mutex{},
 				holder:   "",
@@ -42,6 +42,9 @@ func (r *Resources) Init() func(pk *packet.Packet) {
 				holder:   "",
 			},
 			resp: make(chan packet.StructureTemplateDataResponse, 1),
+		},
+		Others: others{
+			currentTickRequestWithResp: sync.Map{},
 		},
 	}
 	// init struct
