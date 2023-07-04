@@ -93,12 +93,12 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			}
 		}
 
-		env.Connection.(*minecraft.Conn).WritePacket(
-			&packet.TickSync{
-				ClientRequestTimestamp:   0,
-				ServerReceptionTimestamp: 0,
-			},
-		)
+		//env.Connection.(*minecraft.Conn).WritePacket(
+		//	&packet.TickSync{
+		//		ClientRequestTimestamp:   0,
+		//		ServerReceptionTimestamp: 0,
+		//	},
+		//)
 		// Used to sync the current game tick.
 		// "ResoucesControlCenter.Resources.Others.currentTick" related.
 
