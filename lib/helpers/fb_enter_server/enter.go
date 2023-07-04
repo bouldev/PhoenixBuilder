@@ -9,6 +9,7 @@ import (
 	"phoenixbuilder/lib/helpers/fbuser"
 	"phoenixbuilder/lib/minecraft/neomega/bundle"
 	"phoenixbuilder/lib/minecraft/neomega/decouple/cmdsender"
+	neomega_core "phoenixbuilder/lib/minecraft/neomega/decouple/core"
 	"phoenixbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/lib/minecraft/neomega/uqholder"
 	"phoenixbuilder/minecraft"
@@ -93,8 +94,7 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 		}
 	}
 	fmt.Println("检查和配置租赁服状态中...")
-	var pkt packet.Packet
-	omegaCore = bundle.NewMicroOmega(conn, func() omega.MicroUQHolder {
+	omegaCore = bundle.NewMicroOmega(neomega_core.NewInteractCore(conn), func() omega.MicroUQHolder {
 		return uqholder.NewMicroUQHolder(conn)
 	}, bundle.MicroOmegaOption{
 		CmdSenderOptions: cmdsender.Options{
@@ -143,13 +143,7 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 		}
 	})
 	go func() {
-		for {
-			pkt, err = conn.ReadPacket()
-			if err != nil {
-				deadReason <- fmt.Errorf("%v: %v", ErrRentalServerDisconnected, err)
-			}
-			omegaCore.HandlePacket(pkt)
-		}
+		options.ReadLoopFunction(conn, deadReason, omegaCore)
 	}()
 	err = helper.WaitOK(ctx, challengeSolver.ChallengeCompete)
 	if err != nil {
