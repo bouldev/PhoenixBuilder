@@ -47,7 +47,6 @@ func CheckUpdate(currentVersion string) (bool, string) {
 	libre_regexp:=regexp.MustCompile("^v?((\\d+)\\.(\\d+)\\.(\\d+))-libre$")
 	current_version_reg:=libre_regexp.FindAllStringSubmatch(currentVersion, -1)
 	if len(current_version_reg)==0||len(current_version_reg[0])!=5 {
-		fmt.Printf("%s %d %#v\n",currentVersion,len(currentVersion), current_version_reg)
 		return false, ""
 	}
 	// ^ !libre_regexp.MatchString(currentVersion)
