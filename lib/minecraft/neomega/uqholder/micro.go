@@ -26,6 +26,16 @@ func NewMicroUQHolder(conn *minecraft.Conn) *MicroUQHolder {
 	}
 	return uq
 }
+
+func NewMicroUQHolderFromData(data []byte) (uq *MicroUQHolder, err error) {
+	uq = &MicroUQHolder{}
+	err = uq.Unmarshal(data)
+	if err != nil {
+		return nil, err
+	}
+	return uq, nil
+}
+
 func (u *MicroUQHolder) GetBotBasicInfo() omega.BotBasicInfoHolder {
 	return u.BotBasicInfoHolder
 }
