@@ -195,6 +195,7 @@ jobs:
       with:
         tag_name: v${{ steps.release_version.outputs.release_version }}
         prerelease: true
+        target_commitish: libre
         files: |
           fb-upload.tar.gz
           build/*
