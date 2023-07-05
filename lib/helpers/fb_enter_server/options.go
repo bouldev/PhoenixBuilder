@@ -2,6 +2,7 @@ package fb_enter_server
 
 import (
 	"fmt"
+	"phoenixbuilder/lib/minecraft/neomega/bundle"
 	"phoenixbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -34,7 +35,7 @@ type Options struct {
 	ServerCode                 string
 	ServerPassword             string
 	WriteBackToken             bool
-	ExpectedCmdFeedBack        bool
+	MicroOmegaOption           *bundle.MicroOmegaOption
 	PrintUQHolderDebugInfo     bool
 	TransferTimeOut            time.Duration
 	TransferCheckNumTimeOut    time.Duration
@@ -59,7 +60,7 @@ func MakeDefaultOption() *Options {
 		ServerCode:                 "",
 		ServerPassword:             "",
 		WriteBackToken:             true,
-		ExpectedCmdFeedBack:        false,
+		MicroOmegaOption:           bundle.MakeDefaultMicroOmegaOption(),
 		PrintUQHolderDebugInfo:     false,
 		TransferTimeOut:            time.Minute,
 		TransferCheckNumTimeOut:    time.Minute,

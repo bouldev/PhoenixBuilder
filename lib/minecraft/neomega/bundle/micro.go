@@ -28,10 +28,17 @@ func (o *MicroOmega) GetMicroUQHolder() omega.MicroUQHolder {
 }
 
 type MicroOmegaOption struct {
-	CmdSenderOptions cmdsender.Options
+	CmdSenderOptions *cmdsender.Options
 }
 
-func NewMicroOmega(interactCore omega.InteractCore, getMicroUQHolder func() omega.MicroUQHolder, options MicroOmegaOption) *MicroOmega {
+func MakeDefaultMicroOmegaOption() *MicroOmegaOption {
+	return &MicroOmegaOption{CmdSenderOptions: cmdsender.MakeDefaultCmdSenderOption()}
+}
+
+func NewMicroOmega(interactCore omega.InteractCore, getMicroUQHolder func() omega.MicroUQHolder, options *MicroOmegaOption) *MicroOmega {
+	if options == nil {
+		options = MakeDefaultMicroOmegaOption()
+	}
 	reactable := core.NewReactCore()
 	//interactCore := core.NewInteractCore(conn)
 	//conn.ReadPacketAndBytes()
