@@ -91,7 +91,10 @@ func (t *TransferAccessPoint) EnableCtrlTransfer(omega omega.MicroOmega) (err er
 			onResult([][]byte{getUQHolderBytes()})
 		},
 		"sendPacket": func(args [][]byte, onResult func([][]byte)) {
-			omega.GetGameControl().SendPacket(ConvertFromRawPacketWithShield(pool, args[0]))
+			pk, err := ConvertFromRawPacketWithShield(pool, args[0])
+			if err == nil {
+				omega.GetGameControl().SendPacket(pk)
+			}
 		},
 		"sendPacketBytes": func(args [][]byte, onResult func([][]byte)) {
 			if len(args) == 2 {

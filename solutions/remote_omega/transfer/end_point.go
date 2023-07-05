@@ -92,7 +92,11 @@ func (e *Endpoint) RecvPacket() (pk packet.Packet, shieldID int32, err error) {
 		return nil, 0, err
 	}
 	shieldID = int32(binary.LittleEndian.Uint32(msg.Frames[2]))
-	return ConvertFromRawPacketWithShield(e.pool, msg.Frames[1]), shieldID, err
+	pk, err = ConvertFromRawPacketWithShield(e.pool, msg.Frames[1])
+	if err != nil {
+		return nil, 0, err
+	}
+	return pk, shieldID, err
 }
 
 func safeDecode(pkt packet.Packet, r *protocol.Reader) (p packet.Packet, err error) {

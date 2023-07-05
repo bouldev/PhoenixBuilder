@@ -23,13 +23,17 @@ func RevertToRawPacketWithShield(pk packet.Packet) (data []byte) {
 	return writer.Bytes()
 }
 
-func ConvertFromRawPacketWithShield(pool packet.Pool, data []byte) (pk packet.Packet) {
+func ConvertFromRawPacketWithShield(pool packet.Pool, data []byte) (pk packet.Packet, err error) {
 	reader := bytes.NewBuffer(data)
 	packetID, _ := LE.Int32(binary_read_write.WrapBinaryReader(reader))
 	r := protocol.NewReader(reader, 0)
-	pk = pool[uint32(packetID)]()
+	if pkMaker, found := pool[uint32(packetID)]; found {
+		pk = pkMaker()
+	} else {
+		return nil, fmt.Errorf("pktID %v not found", uint32(packetID))
+	}
 	pk.Unmarshal(r)
-	return pk
+	return pk, nil
 }
 
 type ZMQFunctionSets map[string]func(args [][]byte, onResult func([][]byte))
