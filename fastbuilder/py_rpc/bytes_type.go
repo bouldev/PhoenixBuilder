@@ -13,7 +13,7 @@ func (o *PyRpcBytesObject) Marshal() []byte {
 	}else if(len(o.Value)<=0xffff) {
 		header=[]byte{0xc5,0x00,0x00}
 		binary.BigEndian.PutUint16(header[1:], uint16(len(o.Value)))
-	}else if(len(o.Value)<=0xffffffff) {
+	}else if(uint(len(o.Value))<=uint(0xffffffff)) {
 		header=make([]byte, 1+4)
 		header[0]=0xc6
 		binary.BigEndian.PutUint32(header[1:], uint32(len(o.Value)))
