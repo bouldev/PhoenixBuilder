@@ -144,7 +144,14 @@ func AccessServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 	go func() {
 		options.ReadLoopFunction(conn, deadReason, omegaCore)
 	}()
-	err = helper.WaitOK(ctx, challengeSolver.ChallengeCompete)
+	waitErr := make(chan error)
+	go func() {
+		waitErr <- helper.WaitOK(ctx, challengeSolver.ChallengeCompete)
+	}()
+	select {
+	case err = <-waitErr:
+	case err = <-deadReason:
+	}
 	if err != nil {
 		return nil, nil, nil, err
 	}
