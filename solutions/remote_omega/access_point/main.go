@@ -28,15 +28,14 @@ func main() {
 	accessOption.ServerPassword = serverPassword
 	accessOption.MakeBotCreative = true
 	accessOption.DisableCommandBlock = false
-	accessOption.ExpectedCmdFeedBack = false
 
 	transferHandler, err := transfer.NewTransferAccessPoint(
 		context.Background(),
-		"tcp://*:24016",
-		"tcp://*:24015",
+		transfer.DefaultPubSubAccessPoint,
+		transfer.DefaultCtrlAccessPoint,
 		nil,
 	)
-	directPubMode := true
+	directPubMode := transfer.DefaultDirectPubSubModeEnable
 	if directPubMode {
 		accessOption.ReadLoopFunction = func(conn *minecraft.Conn, deadReason chan<- error, omega omega.ReactCore) {
 			for {
