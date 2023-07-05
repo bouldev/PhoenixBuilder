@@ -28,7 +28,7 @@ func main() {
 
 	var deadReason chan error
 	var omegaCore omega.MicroOmega
-	omegaCore, deadReason, err = fb_enter_server.AccessServer(nil, accessOption)
+	_, omegaCore, deadReason, err = fb_enter_server.AccessServer(nil, accessOption)
 	if err != nil {
 		panic(err)
 	}
