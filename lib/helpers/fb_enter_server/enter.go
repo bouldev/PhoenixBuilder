@@ -16,7 +16,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.MicroOmega, deadReason chan error, err error) {
+func AccessServer(ctx context.Context, options *Options) (conn *minecraft.Conn, omegaCore *bundle.MicroOmega, deadReason chan error, err error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -34,9 +34,9 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 		err = fbClient.EstablishConnectionToAuthServer(connectCtx, options.AuthServer)
 		if err != nil {
 			if connectCtx.Err() != nil {
-				return nil, nil, ErrFBServerConnectionTimeOut
+				return nil, nil, nil, ErrFBServerConnectionTimeOut
 			}
-			return nil, nil, fmt.Errorf("%v :%v", ErrFailToConnectFBServer, err)
+			return nil, nil, nil, fmt.Errorf("%v :%v", ErrFailToConnectFBServer, err)
 		}
 	}
 	if options.FBUserToken == "" {
@@ -48,9 +48,9 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 		options.FBUserToken, err = fbauth.GetTokenByPassword(connectCtx, fbClient, options.FBUserName, options.FBUserPassword)
 		if err != nil {
 			if connectCtx.Err() != nil {
-				return nil, nil, ErrGetTokenTimeOut
+				return nil, nil, nil, ErrGetTokenTimeOut
 			}
-			return nil, nil, fmt.Errorf("%v: %v", ErrFBUserCenterLoginFail, err)
+			return nil, nil, nil, fmt.Errorf("%v: %v", ErrFBUserCenterLoginFail, err)
 		}
 		if options.WriteBackToken {
 			fbuser.WriteToken(options.FBUserToken, fbuser.LoadTokenPath())
@@ -59,7 +59,6 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 	authenticator := fbauth.NewAccessWrapper(fbClient, options.FBUserToken)
 	authenticator.SetServerInfo(options.ServerCode, options.ServerPassword)
 	fmt.Printf("正在登陆网易租赁服(服号:%v)...\n", authenticator.ServerCode)
-	var conn *minecraft.Conn
 	{
 		connectMCServer := func() (conn *minecraft.Conn, err error) {
 			connectCtx := ctx
@@ -90,7 +89,7 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 			fmt.Println("连接失败，重试中...")
 		}
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 	fmt.Println("检查和配置租赁服状态中...")
@@ -147,7 +146,7 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 	}()
 	err = helper.WaitOK(ctx, challengeSolver.ChallengeCompete)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	if options.MakeBotCreative {
 		omegaCore.GetGameControl().SendPlayerCmdAndInvokeOnResponseWithFeedback("gamemode c @s", func(output *packet.CommandOutput) {
@@ -163,5 +162,5 @@ func AccessServer(ctx context.Context, options *Options) (omegaCore *bundle.Micr
 			}
 		})
 	}
-	return omegaCore, deadReason, nil
+	return conn, omegaCore, deadReason, nil
 }
