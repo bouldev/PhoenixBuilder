@@ -144,6 +144,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 							nil,
 						}),
 					})
+					getchecknum_everPassed=true
 				}
 			}
 		}
