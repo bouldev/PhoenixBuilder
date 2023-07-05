@@ -267,6 +267,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 
 func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	if env.FBAuthClient == nil {
+		env.AuthServer = args.AuthServer
 		env.FBAuthClient = fbauth.CreateClient(env)
 	}
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
