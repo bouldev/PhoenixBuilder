@@ -101,7 +101,7 @@ func (aw *AccessWrapper) auth(ctx context.Context, publicKey []byte) (resp strin
 		ServerPassword:    aw.ServerPassword,
 		Key:               base64.StdEncoding.EncodeToString(publicKey),
 		FBToken:           aw.FBToken,
-		ProtocolVersionId: 2,
+		ProtocolVersionId: 4,
 	}
 	msg, err := json.Marshal(authreq)
 	if err != nil {
@@ -221,17 +221,13 @@ func (aw *AccessWrapper) TransferData(ctx context.Context, content string, uid s
 
 type RPCNumRequest struct {
 	Action string `json:"action"`
-	First  string `json:"1st"`
-	Second string `json:"2nd"`
-	Third  int64  `json:"3rd"`
+	Data   string `json:"data"`
 }
 
-func (aw *AccessWrapper) TransferCheckNum(ctx context.Context, first string, second string, third int64) (string, string, string, error) {
+func (aw *AccessWrapper) TransferCheckNum(ctx context.Context, data string) (string, error) {
 	rspreq := &RPCNumRequest{
 		Action: "phoenix::transfer-check-num",
-		First:  first,
-		Second: second,
-		Third:  third,
+		Data:   data,
 	}
 	msg, err := json.Marshal(rspreq)
 	if err != nil {
@@ -239,14 +235,12 @@ func (aw *AccessWrapper) TransferCheckNum(ctx context.Context, first string, sec
 	}
 	resp, err := aw.Client.SendMessageAndGetResponseWithDeadline(msg, ctx)
 	if err != nil {
-		return "", "", "", err
+		return "", err
 	}
 	code, _ := resp["code"].(float64)
 	if code != 0 {
-		return "", "", "", fmt.Errorf("failed to transfer checknum %v", resp["message"])
+		return "", fmt.Errorf("failed to transfer checknum %v", resp["message"])
 	}
-	valM, _ := resp["valM"].(string)
-	valS, _ := resp["valS"].(string)
-	valT, _ := resp["valT"].(string)
-	return valM, valS, valT, nil
+	ret, _ := resp["value"].(string)
+	return ret, nil
 }

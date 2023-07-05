@@ -180,7 +180,7 @@ func (c *Client) EstablishConnectionToAuthServer(connectContext context.Context,
 		return
 	}
 	c.waitEncrypted = make(chan struct{})
-	c.salt = []byte("2345678987654321")
+	c.salt = []byte("23456789f7654321")
 	c.serverResponse = make(chan map[string]interface{})
 	var cancelFn context.CancelFunc
 	c.readCtx, cancelFn = context.WithCancel(c.readCtx)

@@ -117,12 +117,12 @@ func AccessServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 			}
 			return data
 		},
-		func(firstArg, secondArg string, botEntityUniqueID int64) (valM, valS, valT string) {
+		func(args string) (ret string) {
 			connectCtx := ctx
 			if options.TransferTimeOut != 0 {
 				connectCtx, _ = context.WithTimeout(ctx, options.TransferCheckNumTimeOut)
 			}
-			valM, valS, valT, err = authenticator.TransferCheckNum(connectCtx, firstArg, secondArg, botEntityUniqueID)
+			ret, err = authenticator.TransferCheckNum(connectCtx, args)
 			if err != nil {
 				if connectCtx.Err() != nil {
 					deadReason <- ErrFBTransferCheckNumTimeOut
