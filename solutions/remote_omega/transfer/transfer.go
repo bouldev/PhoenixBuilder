@@ -61,19 +61,16 @@ func (t *TransferAccessPoint) PubGamePacket(pk packet.Packet) error {
 	))
 }
 
-func (t *TransferAccessPoint) PubGamePacketData(packetData []byte, pktID uint32) error {
+func (t *TransferAccessPoint) PubGamePacketData(packetData []byte) error {
 	shieldIDBytes := make([]byte, 4)
-	packetIDBytes := make([]byte, 4)
 	dataLenBytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(shieldIDBytes, uint32(t.getShieldID()))
-	binary.LittleEndian.PutUint32(packetIDBytes, uint32(pktID))
 	binary.LittleEndian.PutUint32(dataLenBytes, uint32(len(packetData)))
 	return t.pub.SendMulti(zmq.NewMsgFrom(
 		[]byte("packet"),
-		shieldIDBytes[:],
-		packetIDBytes[:],
-		packetData[:],
-		dataLenBytes[:],
+		shieldIDBytes,
+		packetData,
+		dataLenBytes,
 	))
 }
 
