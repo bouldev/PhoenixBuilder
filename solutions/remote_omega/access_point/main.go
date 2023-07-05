@@ -36,7 +36,7 @@ func main() {
 		"tcp://*:24015",
 		nil,
 	)
-	directPubMode := false
+	directPubMode := true
 	if directPubMode {
 		accessOption.ReadLoopFunction = func(conn *minecraft.Conn, deadReason chan<- error, omega omega.ReactCore) {
 			for {
@@ -46,7 +46,7 @@ func main() {
 				if err != nil {
 					deadReason <- fmt.Errorf("%v: %v", fb_enter_server.ErrRentalServerDisconnected, err)
 				}
-				err = transferHandler.PubGamePacketData(pktData, pkt.ID())
+				err = transferHandler.PubGamePacketData(pktData)
 				if err != nil {
 					deadReason <- fmt.Errorf("fail to remote dispatch packets")
 				}

@@ -26,7 +26,7 @@ func main() {
 	fmt.Println("access point ready")
 	var interactCore omega.InteractCore
 	directSendMode := true
-	directSubMode := false
+	directSubMode := true
 	if directSendMode {
 		interactCore = core.NewRemoteInteractCoreDirect(endPoint.SendPacketData)
 		interactCore.(*core.RemoteInteractCoreDirect).UpdateShieldID(endPoint.GetShieldID())

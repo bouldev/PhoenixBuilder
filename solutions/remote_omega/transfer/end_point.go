@@ -112,19 +112,26 @@ func (e *Endpoint) RecvDirectPacket() (pk packet.Packet, shieldID int32, err err
 	if err != nil {
 		return nil, 0, err
 	}
-	shieldIDBytes, packetIDBytes, packetData, dataLenBytes := msg.Frames[1], msg.Frames[2], msg.Frames[3], msg.Frames[4]
+	shieldIDBytes, packetData, dataLenBytes := msg.Frames[1], msg.Frames[2], msg.Frames[3]
 	shieldID = int32(binary.LittleEndian.Uint32(shieldIDBytes))
-	packetID := binary.LittleEndian.Uint32(packetIDBytes)
 	dataLen := binary.LittleEndian.Uint32(dataLenBytes)
 	if int(dataLen) != len(packetData) {
 		return nil, 0, fmt.Errorf("len mismatch %v!=%v\n", int(dataLen), len(packetData))
 	}
 	reader := bytes.NewBuffer(packetData)
+	header := &packet.Header{}
+	if err := header.Read(reader); err != nil {
+		return nil, 0, fmt.Errorf("error reading packet header: %v", err)
+	}
 	r := protocol.NewReader(reader, shieldID)
-	pkt := e.pool[packetID]()
-	pkt, err = safeDecode(pkt, r)
+	if pktMake, found := e.pool[header.PacketID]; found {
+		pk = pktMake()
+	} else {
+		return nil, 0, fmt.Errorf("pktID %v not found", header.PacketID)
+	}
+	pk, err = safeDecode(pk, r)
 	if err != nil {
 		return nil, 0, err
 	}
-	return pkt, shieldID, nil
+	return pk, shieldID, nil
 }
