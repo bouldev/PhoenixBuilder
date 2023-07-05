@@ -11,6 +11,7 @@ import (
 // 可以向游戏发送数据包
 type GameIntractable interface {
 	SendPacket(packet.Packet)
+	SendPacketBytes(pktID uint32, data []byte)
 }
 
 type GameReactable interface {
