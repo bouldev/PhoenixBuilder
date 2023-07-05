@@ -7,7 +7,7 @@ import (
 	zmq "github.com/go-zeromq/zmq4"
 	"github.com/pterm/pterm"
 	"os"
-	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
 )

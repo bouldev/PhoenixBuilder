@@ -1,0 +1,96 @@
+{
+    "languages": [
+        "english",
+        "simplified_chinese"
+    ],
+    "dicts": {
+        "lang.name": [
+            "English",
+            "简体中文"
+        ],
+        "fail to unmarshal json: %v": [
+            "",
+            "无法解析json: %v"
+        ],
+        "cannot connect to update server": [
+            "",
+            "无法连接到更新服务器"
+        ],
+        "error in programme code": [
+            "",
+            "程序代码错误"
+        ],
+        "fail to create cache dir": [
+            "",
+            "无法创建缓存目录"
+        ],
+        "file not found": [
+            "",
+            "文件未找到"
+        ],
+        "value not found": [
+            "",
+            "值未找到"
+        ],
+        "cannot redirect exec target: %v": [
+            "",
+            "无法重定向执行目标: %v"
+        ],
+        "fail to fetch productions info": [
+            "",
+            "无法获取产品信息"
+        ],
+        "Start FastBuilder Program": [
+            "",
+            "启动 FastBuilder 程序"
+        ],
+        "compress file broken": [
+            "",
+            "压缩文件损坏"
+        ],
+        "cannot exec target production: %v": [
+            "",
+            "无法启动目标产品: %v"
+        ],
+        "cannot get target production": [
+            "",
+            "无法获取目标产品"
+        ],
+        "cannot connect to download server, fail to run fastbuilder (system arch: %v)": [
+            "",
+            "无法从下载服务器获取产品，无法启动 FastBuilder (系统架构: %v)"
+        ],
+        "cannot get latest productions info from server, try to run fastbuilder only": [
+            "",
+            "无法从服务器获取最新产品信息，尝试仅启动 FastBuilder"
+        ],
+        "Select production you want, input the number between %v~%v: ": [
+            "",
+            "选择你想要的产品, 请输入 %v~%v 之间的数字: "
+        ],
+        "fail to read input": [
+            "",
+            "无法读取输入"
+        ],
+        "please input the number in [], please retry: ": [
+            "",
+            "请输入[方框]中的数字，请重试: "
+        ],
+        "fetching production list from server...": [
+            "",
+            "正在从服务器获取最新的产品列表..."
+        ],
+        "updating and starting specific production...": [
+            "",
+            "正在更新并启动指定产品..."
+        ],
+        "cannot connect to download server, just update and start fastbuilder...": [
+            "",
+            "无法从下载服务器获取产品，仅更新并启动 FastBuilder..."
+        ],
+        "hash mismatch": [
+            "",
+            "哈希值不匹配"
+        ]
+    }
+}

@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"phoenixbuilder/lib/helpers/fb_enter_server"
-	"phoenixbuilder/lib/helpers/fbuser"
-	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/fastbuilder/lib/rental_server_impactor"
+	"phoenixbuilder/fastbuilder/utils"
+	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/solutions/remote_omega/transfer"
@@ -14,14 +14,14 @@ import (
 func main() {
 	authServer := "wss://api.fastbuilder.pro:2053/"
 	fmt.Println("Reading Info...")
-	userName, userPassword, userToken, serverCode, serverPassword, err := fbuser.ReadInfo("", "", "", "", "")
+	username, userPassword, userToken, serverCode, serverPassword, err := utils.ReadUserInfo("", "", "", "", "")
 	if err != nil {
 		panic(err)
 	}
 
-	accessOption := fb_enter_server.MakeDefaultOption()
+	accessOption := rental_server_impactor.DefaultOptions()
 	accessOption.AuthServer = authServer
-	accessOption.FBUserName = userName
+	accessOption.FBUsername = username
 	accessOption.FBUserPassword = userPassword
 	accessOption.FBUserToken = userToken
 	accessOption.ServerCode = serverCode
@@ -46,7 +46,7 @@ func main() {
 				pktData := make([]byte, len(pktDataShared))
 				copy(pktData, pktDataShared)
 				if err != nil {
-					deadReason <- fmt.Errorf("%v: %v", fb_enter_server.ErrRentalServerDisconnected, err)
+					deadReason <- fmt.Errorf("%v: %v", rental_server_impactor.ErrRentalServerDisconnected, err)
 				}
 				err = transferHandler.PubGamePacketData(pktData)
 				if err != nil {
@@ -57,7 +57,7 @@ func main() {
 		}
 	}
 
-	conn, omegaCore, deadReason, err := fb_enter_server.AccessServer(nil, accessOption)
+	conn, omegaCore, deadReason, err := rental_server_impactor.ImpactServer(nil, accessOption)
 	if err != nil {
 		panic(err)
 	}

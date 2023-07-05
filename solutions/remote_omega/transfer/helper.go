@@ -3,9 +3,9 @@ package transfer
 import (
 	"context"
 	"fmt"
-	"phoenixbuilder/lib/minecraft/neomega/bundle"
-	"phoenixbuilder/lib/minecraft/neomega/decouple/core"
-	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/bundle"
+	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/decouple/core"
+	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 

@@ -7,9 +7,9 @@ import (
 	zmq "github.com/go-zeromq/zmq4"
 	"github.com/google/uuid"
 	"github.com/pterm/pterm"
-	"phoenixbuilder/lib/encoding/binary_read_write"
-	LE "phoenixbuilder/lib/encoding/little_endian"
-	"phoenixbuilder/lib/utils/sync_wrapper"
+	"phoenixbuilder/fastbuilder/lib/encoding/binary_read_write"
+	LE "phoenixbuilder/fastbuilder/lib/encoding/little_endian"
+	"phoenixbuilder/fastbuilder/lib/utils/sync_wrapper"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
