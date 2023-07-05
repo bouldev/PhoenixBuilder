@@ -16,7 +16,7 @@ func (o *PyRpcListObject) Marshal() []byte {
 	}else if(len(o.Value)<=0xffff) {
 		header=[]byte{0xdc,0,0}
 		binary.BigEndian.PutUint16(header[1:], uint16(len(o.Value)))
-	}else if(len(o.Value)<=0xffffffff) {
+	}else if(uint(len(o.Value))<=uint(0xffffffff)) {
 		header=make([]byte, 5)
 		header[0]=0xdd
 		binary.BigEndian.PutUint32(header[1:], uint32(len(o.Value)))
