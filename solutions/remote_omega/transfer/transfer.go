@@ -6,8 +6,10 @@ import (
 	"fmt"
 	zmq "github.com/go-zeromq/zmq4"
 	"github.com/pterm/pterm"
+	"os"
 	"phoenixbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"strings"
 )
 
 type TransferAccessPoint struct {
@@ -18,6 +20,21 @@ type TransferAccessPoint struct {
 
 func NewTransferAccessPoint(ctx context.Context, pubEndPoint, ctrlEndPoint string, getShieldID func() int32) (transfer *TransferAccessPoint, err error) {
 	pub := zmq.NewPub(ctx)
+	removeIPC := func(ipc string) error {
+		if strings.HasPrefix(ipc, "ipc://") {
+			ipcFile := ipc[len("ipc://"):]
+			if _, err := os.Stat(ipcFile); err == nil {
+				if err = os.Remove(ipcFile); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+	err = removeIPC(pubEndPoint)
+	if err != nil {
+		return nil, err
+	}
 	err = pub.Listen(pubEndPoint)
 	if err != nil {
 		return nil, err
@@ -31,6 +48,10 @@ func NewTransferAccessPoint(ctx context.Context, pubEndPoint, ctrlEndPoint strin
 		<-ctx.Done()
 		ctrl.Close()
 	}()
+	err = removeIPC(ctrlEndPoint)
+	if err != nil {
+		return nil, err
+	}
 	if err = ctrl.Listen(ctrlEndPoint); err != nil {
 		return nil, fmt.Errorf("listening: %w", err)
 	}
