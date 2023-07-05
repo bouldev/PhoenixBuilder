@@ -35,6 +35,9 @@ func main() {
 		transfer.DefaultCtrlAccessPoint,
 		nil,
 	)
+	if err != nil {
+		panic(err)
+	}
 	directPubMode := transfer.DefaultDirectPubSubModeEnable
 	if directPubMode {
 		accessOption.ReadLoopFunction = func(conn *minecraft.Conn, deadReason chan<- error, omega omega.ReactCore) {
