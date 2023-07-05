@@ -28,7 +28,14 @@ type Options struct {
 	ExpectedCmdFeedBack bool
 }
 
-func NewCmdSender(reactable omega.ReactCore, interactable omega.InteractCore, option Options) omega.CmdSender {
+func MakeDefaultCmdSenderOption() *Options {
+	return &Options{ExpectedCmdFeedBack: false}
+}
+
+func NewCmdSender(reactable omega.ReactCore, interactable omega.InteractCore, option *Options) omega.CmdSender {
+	if option == nil {
+		option = MakeDefaultCmdSenderOption()
+	}
 	c := &CmdSender{
 		InteractCore:        interactable,
 		cbByUUID:            sync.Map{},
