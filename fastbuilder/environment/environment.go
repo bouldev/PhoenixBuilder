@@ -41,6 +41,7 @@ type PBEnvironment struct {
 	LocalCert                 string
 	LRUMemoryChunkCacher      interface{}
 	ChunkFeeder               interface{}
+	AuthServer string
 }
 
 func (env *PBEnvironment) Stop() {

@@ -2,33 +2,32 @@ package main
 
 import (
 	"fmt"
-	"phoenixbuilder/lib/helpers/fb_enter_server"
-	"phoenixbuilder/lib/helpers/fbuser"
-	"phoenixbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/fastbuilder/lib/rental_server_impactor"
+	"phoenixbuilder/fastbuilder/utils"
+	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 )
 
 func main() {
 	authServer := "wss://api.fastbuilder.pro:2053/"
-	fmt.Println("Reading Info...")
-	userName, userPassword, userToken, serverCode, serverPassword, err := fbuser.ReadInfo("", "", "", "", "")
+	username, userPassword, userToken, serverCode, serverPassword, err := utils.ReadUserInfo("", "", "", "", "")
 	if err != nil {
 		panic(err)
 	}
 
-	accessOption := fb_enter_server.MakeDefaultOption()
+	accessOption := rental_server_impactor.DefaultOptions()
 	accessOption.AuthServer = authServer
-	accessOption.FBUserName = userName
+	accessOption.FBUsername = username
 	accessOption.FBUserPassword = userPassword
 	accessOption.FBUserToken = userToken
 	accessOption.ServerCode = serverCode
 	accessOption.ServerPassword = serverPassword
 	accessOption.MakeBotCreative = true
 	accessOption.DisableCommandBlock = false
-	accessOption.ExpectedCmdFeedBack = false
+	accessOption.ReasonWithPrivilegeStuff = false
 
 	var deadReason chan error
 	var omegaCore omega.MicroOmega
-	_, omegaCore, deadReason, err = fb_enter_server.AccessServer(nil, accessOption)
+	_, omegaCore, deadReason, err = rental_server_impactor.ImpactServer(nil, accessOption)
 	if err != nil {
 		panic(err)
 	}
@@ -37,5 +36,4 @@ func main() {
 		panic(err)
 	}()
 	fmt.Println(omegaCore)
-	fmt.Println("Bot ok and now exit")
 }
