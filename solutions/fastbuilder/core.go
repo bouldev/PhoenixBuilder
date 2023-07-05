@@ -2,9 +2,7 @@ package fastbuilder
 
 import (
 	"bufio"
-	"bytes"
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -31,6 +29,7 @@ import (
 	"phoenixbuilder/mirror/io/global"
 	"phoenixbuilder/mirror/io/lru"
 	"phoenixbuilder/omega/cli/embed"
+	"phoenixbuilder/fastbuilder/py_rpc"
 	"runtime"
 	"strings"
 	"time"
@@ -101,76 +100,50 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 		{
 			p, ok := pk.(*packet.PyRpc)
 			if ok {
-				if strings.Contains(string(p.Content), "GetStartType") {
-					// 2021-12-22 10:51~11:55
-					// 2023-05-30
-					// Thank netease for wasting my time again ;)
-					//fmt.Printf("%X\n", p.Content)
-					encData := p.Content[len(p.Content)-163 : len(p.Content)-1]
-					//fmt.Printf("%s\n", p.Content)
-					//fmt.Printf("%s\n", encData)
-					//fmt.Printf("%s\n", env.Uid)
-					client := env.FBAuthClient.(*fbauth.Client)
-					response := client.TransferData(string(encData), fmt.Sprintf("%s", env.Uid))
-					//fmt.Printf("%s\n", response)
-					conn.WritePacket(&packet.PyRpc{
-						Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xc, 0x53, 0x65, 0x74, 0x53, 0x74, 0x61, 0x72, 0x74, 0x54, 0x79, 0x70, 0x65, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4},
-							[]byte{byte(len(response))},
-							[]byte(response),
-							[]byte{0xc0},
-						}, []byte{}),
+				go_p_val:=p.Value.MakeGo()
+				//json_val, _:=json.MarshalIndent(go_p_val, "", "\t")
+				//fmt.Printf("Received PyRpc: %s\n", json_val)
+				pyrpc_val:=go_p_val.([]interface{})
+				command:=pyrpc_val[0].(string)
+				data:=pyrpc_val[1].([]interface{})
+				if command=="S2CHeartBeat" {
+					conn.WritePacket(&packet.PyRpc {
+						Value: py_rpc.FromGo([]interface{} {
+							"C2SHeartBeat",
+							data,
+							nil,
+						}),
 					})
-					//fmt.Printf("%s\n", response)
-				} else if strings.Contains(string(p.Content), "GetMCPCheckNum") {
-					// This shit sucks, so as netease.
-					if getchecknum_everPassed {
+				}else if(command=="GetStartType") {
+					client := env.FBAuthClient.(*fbauth.Client)
+					response := client.TransferData(data[0].(string), fmt.Sprintf("%s", env.Uid))
+					conn.WritePacket(&packet.PyRpc{
+						Value: py_rpc.FromGo([]interface{} {
+							"SetStartType",
+							[]interface{}{response},
+							nil,
+						}),
+					})
+				}else if(command=="GetMCPCheckNum") {
+					if(getchecknum_everPassed) {
 						continue
 					}
-					//fmt.Printf("%X", p.Content)
-					firstArgLenB := p.Content[19:21]
-					firstArgLen := binary.BigEndian.Uint16(firstArgLenB)
-					firstArg := string(p.Content[21 : 21+firstArgLen])
-					secondArgLen := uint16(p.Content[23+firstArgLen])
-					secondArg := string(p.Content[24+firstArgLen : 24+firstArgLen+secondArgLen])
-					//fmt.Printf("%s\n%s\n",firstArg, secondArg)
-					//fmt.Printf("%v\n", env.Connection.(*minecraft.Conn).GameData().EntityUniqueID)
-					//fmt.Printf("%X\n", p.Content)
-					//valM,_:=getUserInputMD5()
-					//valS,_:=getUserInputMD5()
-					//valT,_:=getUserInputMD5()
-
+					firstArg:=data[0].(string)
+					secondArg:=(data[1].([]interface{}))[0].(string)
 					client := env.FBAuthClient.(*fbauth.Client)
-					valM, valS, valT := client.TransferCheckNum(firstArg, secondArg, env.Connection.(*minecraft.Conn).GameData().EntityUniqueID)
-
-					/*conn.WritePacket(&packet.PyRpc{
-						Content: bytes.Join([][]byte{[]byte{0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x93, 0xc4, 0xe, 0x53, 0x65, 0x74, 0x4d, 0x43, 0x50, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x4e, 0x75, 0x6d, 0x82, 0xc4, 0x8, 0x5f, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x5f, 0x5f, 0xc4, 0x5, 0x74, 0x75, 0x70, 0x6c, 0x65, 0xc4, 0x5, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x91, 0xc4, 0x20},
-							[]byte(valM),
-							[]byte{0xc0},
-						}, []byte{}),
-					})*/
+					arg, _:=json.Marshal([]interface{} {firstArg,secondArg,env.Connection.(*minecraft.Conn).GameData().EntityUniqueID})
+					ret:=client.TransferCheckNum(string(arg))
+					ret_p:=[]interface{}{}
+					json.Unmarshal([]byte(ret), &ret_p)
 					conn.WritePacket(&packet.PyRpc{
-						Content: bytes.Join([][]byte{[]byte{0x93, 0xc4, 0x0e}, []byte("SetMCPCheckNum"), []byte{0x91, 0x98, 0xc4, 0x20},
-							[]byte(valM),
-							[]byte{0xc4, 0x20},
-							[]byte(valS),
-							[]byte{0xc2},
-							[]byte{0x90},
-							[]byte{0xc4, 0x00},
-							[]byte{0xc4, 0x00},
-							[]byte{3},
-							[]byte{0xc4, 0x20},
-							[]byte(valT),
-							[]byte{0xC0},
-						}, []byte{}),
+						Value: py_rpc.FromGo([]interface{} {
+							"SetMCPCheckNum",
+							[]interface{} {
+								ret_p,
+							},
+							nil,
+						}),
 					})
-					getchecknum_everPassed = true
-					/*go func() {
-						time.Sleep(3*time.Second)
-						resp, _ := env.GlobalAPI.(*GlobalAPI.GlobalAPI).SendCommandWithResponce("list")
-						fmt.Printf("%+v\n", resp)
-					} ()*/
-				} else {
-					//fmt.Printf("PyRpc! %s\n", p.Content)
 				}
 			}
 		}

@@ -43,7 +43,7 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 	if err != nil {
 		panic(err)
 	}
-	salt := []byte("2345678987654321")
+	salt := []byte("23456789f7654321")
 	authclient := &Client{
 		privateKey:     privateKey,
 		salt:           salt,
@@ -177,9 +177,8 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 		ServerPassword: serverPassword,
 		Key:            key,
 		FBToken:        fbtoken,
-		VersionId:      3,
-		// Both versionId 2 and 3 are supported currently
-		// Version ID 3 has server message support.
+		VersionId:      4,
+		// New format of PyRpc
 
 		// ^
 		// The implemention of version_id is in no way for the purpose
@@ -321,17 +320,13 @@ func (client *Client) TransferData(content string, uid string) string {
 
 type FNumRequest struct {
 	Action string `json:"action"`
-	First  string `json:"1st"`
-	Second string `json:"2nd"`
-	Third  int64  `json:"3rd"`
+	Data string `json:"data"`
 }
 
-func (client *Client) TransferCheckNum(first string, second string, third int64) (string, string, string) {
+func (client *Client) TransferCheckNum(data string) string {
 	rspreq := &FNumRequest{
 		Action: "phoenix::transfer-check-num",
-		First:  first,
-		Second: second,
-		Third:  third,
+		Data: data,
 	}
 	msg, err := json.Marshal(rspreq)
 	if err != nil {
@@ -343,10 +338,8 @@ func (client *Client) TransferCheckNum(first string, second string, third int64)
 	if code != 0 {
 		panic(fmt.Errorf("Failed to transfer checknum: %s", resp["message"]))
 	}
-	valM, _ := resp["valM"].(string)
-	valS, _ := resp["valS"].(string)
-	valT, _ := resp["valT"].(string)
-	return valM, valS, valT
+	val, _ := resp["value"].(string)
+	return val
 }
 
 type WorldChatRequest struct {
