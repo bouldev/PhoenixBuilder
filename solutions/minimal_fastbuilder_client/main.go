@@ -5,20 +5,20 @@ import (
 	"fmt"
 	"os"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
-	"phoenixbuilder/fastbuilder/lib/rental_server_impactor"
-	"phoenixbuilder/fastbuilder/utils"
+	"phoenixbuilder/fastbuilder/lib/rental_server_impact/access_helper"
+	"phoenixbuilder/fastbuilder/lib/rental_server_impact/info_collect_utils"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"time"
 )
 
 func main() {
 	authServer := "wss://api.fastbuilder.pro:2053/"
-	username, userPassword, userToken, serverCode, serverPassword, err := utils.ReadUserInfo("", "", "", "", "")
+	username, userPassword, userToken, serverCode, serverPassword, err := info_collect_utils.ReadUserInfo("", "", "", "", "")
 	if err != nil {
 		panic(err)
 	}
 
-	accessOption := rental_server_impactor.DefaultOptions()
+	accessOption := access_helper.DefaultOptions()
 	accessOption.AuthServer = authServer
 	accessOption.FBUsername = username
 	accessOption.FBUserPassword = userPassword
@@ -31,7 +31,7 @@ func main() {
 
 	var deadReason chan error
 	var omegaCore omega.MicroOmega
-	_, omegaCore, deadReason, err = rental_server_impactor.ImpactServer(nil, accessOption)
+	_, omegaCore, deadReason, err = access_helper.ImpactServer(nil, accessOption)
 	if err != nil {
 		panic(err)
 	}

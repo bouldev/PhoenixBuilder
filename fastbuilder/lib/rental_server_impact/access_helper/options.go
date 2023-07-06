@@ -1,4 +1,4 @@
-package rental_server_impactor
+package access_helper
 
 import (
 	"fmt"
