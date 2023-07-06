@@ -19,8 +19,6 @@ var SupportBlocksPool map[string]string = map[string]string{
 	"hopper":             "Container",
 	"dispenser":          "Container",
 	"dropper":            "Container",
-	"cauldron":           "Container",
-	"lava_cauldron":      "Container",
 	"jukebox":            "Container",
 	"brewing_stand":      "Container",
 	"undyed_shulker_box": "Container",

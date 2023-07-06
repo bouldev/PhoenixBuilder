@@ -63,10 +63,11 @@ type BlockEntity struct {
 
 // ------------------------- Container -------------------------
 
-// 未被支持的容器会被用到以下两个变量
+// 未被支持的容器会被应用此错误信息。
+// 用于 Container.go 中的 ReplaceNBTMapToContainerList 等函数
 var ErrNotASupportedContainer error = fmt.Errorf("replaceNBTMapToContainerList: Not a supported container")
 
 // 用于 Container.go 中的 ReplaceNBTMapToContainerList 等函数
-var KeyName string = "datas"
+var KeyName string = "data"
 
 // ------------------------- END -------------------------

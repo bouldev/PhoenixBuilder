@@ -22,8 +22,9 @@ type Container struct {
 	Items       []Item       // 容器内的物品数据
 }
 
-// 检查一个方块是否是已被支持的有效的容器；这里的“有效”指的是可以被 replaceitem 命令生效的容器。
-// 如果不是已被支持的容器，则返回 var NotASupportedContainer string = "Not a supported container"
+// 检查一个方块是否是已被支持的有效的容器。
+// 这里的 有效 指的是可以被 replaceitem 命令生效的容器。
+// 如果不是已被支持的容器，则返回长度为 0 的空字符串
 func (c *Container) containerSupported() string {
 	value, ok := SupportContainerPool[c.BlockEntity.Block.Name]
 	if ok {
