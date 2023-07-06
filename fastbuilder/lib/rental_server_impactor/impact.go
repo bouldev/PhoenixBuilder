@@ -24,9 +24,12 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 	}
 	clientOptions := fbauth.MakeDefaultClientOptions()
 	clientOptions.AuthServer = options.AuthServer
+	fmt.Println("connecting to fb server...")
 	fbClient := fbauth.CreateClient(clientOptions)
+	fmt.Println("done connecting to fb server")
 	if options.FBUserToken == "" {
 		var err_val string
+		fmt.Println("obtaining fb token from fb server...")
 		options.FBUserToken, err_val = fbClient.GetToken(options.FBUsername, options.FBUserPassword)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("%v: %s", ErrFBUserCenterLoginFail, err_val)
@@ -34,6 +37,7 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 		if options.WriteBackToken {
 			utils.WriteFBToken(options.FBUserToken, utils.LoadTokenPath())
 		}
+		fmt.Println("done obtaining fb token from fb server")
 	}
 	authenticator := fbauth.NewAccessWrapper(fbClient, options.ServerCode, options.ServerPassword, options.FBUserToken)
 	{
@@ -51,7 +55,8 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 			}
 			return conn, nil
 		}
-
+		fmt.Println("connecting to mc server...")
+		retryTimes := 0
 		for {
 			conn, err = connectMCServer()
 			if err == nil {
@@ -62,11 +67,14 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 			if options.ServerConnectRetryTimes <= 0 {
 				break
 			}
+			retryTimes++
+			fmt.Printf("fail connecting to mc server, retrying: %v\n", retryTimes)
 			options.ServerConnectRetryTimes--
 		}
 		if err != nil {
 			return nil, nil, nil, err
 		}
+		fmt.Println("done connecting to mc server")
 	}
 	omegaCore = bundle.NewMicroOmega(neomega_core.NewInteractCore(conn), func() omega.MicroUQHolder {
 		return uqholder.NewMicroUQHolder(conn)
@@ -80,6 +88,7 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 		options.ReadLoopFunction(conn, deadReason, omegaCore)
 	}()
 	{
+		fmt.Println("coping with rental server challenges ...")
 		challengeSolvingCtx := ctx
 		if options.ChallengeSolvingTimeout != 0 {
 			challengeSolvingCtx, _ = context.WithTimeout(ctx, options.ChallengeSolvingTimeout)
@@ -88,8 +97,10 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 		if !success {
 			return nil, nil, nil, ErrFBChallengeSolvingTimeout
 		}
+		fmt.Println("done coping with rental server challenges")
 	}
 	if options.ReasonWithPrivilegeStuff {
+		fmt.Printf("checking bot op permission and game cheat mode...\n")
 		helper := challenges.NewOperatorChallenge(omegaCore, func() {
 			if options.OpPrivilegeRemovedCallBack != nil {
 				options.OpPrivilegeRemovedCallBack()
@@ -109,13 +120,16 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 		if err != nil {
 			return nil, nil, nil, err
 		}
+		fmt.Printf("done checking bot op permission and game cheat mode\n")
 	}
 	if options.MakeBotCreative {
 		omegaCore.GetGameControl().SendPlayerCmdAndInvokeOnResponseWithFeedback("gamemode c @s", func(output *packet.CommandOutput) {
+			fmt.Printf("done setting bot to creative mode\n")
 		})
 	}
 	if options.DisableCommandBlock {
 		omegaCore.GetGameControl().SendPlayerCmdAndInvokeOnResponseWithFeedback("gamerule commandblocksenabled false", func(output *packet.CommandOutput) {
+			fmt.Printf("done setting commandblocksenabled false\n")
 		})
 	}
 	return conn, omegaCore, deadReason, nil
