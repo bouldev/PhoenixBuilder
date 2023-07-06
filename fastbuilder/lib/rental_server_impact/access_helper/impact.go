@@ -34,10 +34,10 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("%v: %s", ErrFBUserCenterLoginFail, err_val)
 		}
-		if options.WriteBackToken {
-			info_collect_utils.WriteFBToken(options.FBUserToken, info_collect_utils.LoadTokenPath())
-		}
 		fmt.Println("done obtaining fb token from fb server")
+	}
+	if options.WriteBackToken {
+		info_collect_utils.WriteFBToken(options.FBUserToken, info_collect_utils.LoadTokenPath())
 	}
 	authenticator := fbauth.NewAccessWrapper(fbClient, options.ServerCode, options.ServerPassword, options.FBUserToken)
 	{
