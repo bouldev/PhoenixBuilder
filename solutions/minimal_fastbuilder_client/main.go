@@ -23,7 +23,7 @@ func main() {
 	accessOption.ServerPassword = serverPassword
 	accessOption.MakeBotCreative = true
 	accessOption.DisableCommandBlock = false
-	accessOption.ReasonWithPrivilegeStuff = false
+	accessOption.ReasonWithPrivilegeStuff = true
 
 	var deadReason chan error
 	var omegaCore omega.MicroOmega
