@@ -76,7 +76,7 @@ func (ea *EmbeddedAdaptor) QuerySensitiveInfo(key defines.SensitiveInfoType) (re
 	case defines.SENSITIVE_INFO_SERVER_CODE_HASH:
 		rawVal = ea.env.ServerCode
 	case defines.SENSITIVE_INFO_USERNAME_HASH:
-		_frags := strings.Split(ea.env.FBUCUsername, "|")
+		_frags := strings.Split(ea.env.ClientOptions.FBUCUsername, "|")
 		if len(_frags) > 0 {
 			rawVal = _frags[0]
 		}

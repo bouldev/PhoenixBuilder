@@ -12,7 +12,7 @@ import (
 
 func ProcessTokenDefault(env *environment.PBEnvironment) bool {
 	token := env.LoginInfo.Token
-	client := fbauth.CreateClient(env)
+	client := fbauth.CreateClient(env.ClientOptions)
 	env.FBAuthClient = client
 	if token[0] == '{' {
 		token, err_msg := client.GetToken("", token)

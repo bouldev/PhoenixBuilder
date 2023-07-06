@@ -116,7 +116,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 					})
 				} else if command == "GetStartType" {
 					client := env.FBAuthClient.(*fbauth.Client)
-					response := client.TransferData(data[0].(string), fmt.Sprintf("%s", env.Uid))
+					response := client.TransferData(data[0].(string), fmt.Sprintf("%s", env.FBAuthClient.(*fbauth.Client).Uid))
 					conn.WritePacket(&packet.PyRpc{
 						Value: py_rpc.FromGo([]interface{}{
 							"SetStartType",
@@ -267,8 +267,8 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 
 func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	if env.FBAuthClient == nil {
-		env.AuthServer = args.AuthServer
-		env.FBAuthClient = fbauth.CreateClient(env)
+		env.ClientOptions.AuthServer = args.AuthServer
+		env.FBAuthClient = fbauth.CreateClient(env.ClientOptions)
 	}
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
 

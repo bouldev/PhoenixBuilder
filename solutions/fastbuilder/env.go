@@ -14,7 +14,9 @@ import (
 )
 
 func create_environment() *environment.PBEnvironment {
-	env := &environment.PBEnvironment{}
+	env := &environment.PBEnvironment{
+		ClientOptions: fbauth.MakeDefaultClientOptions(),
+	}
 	env.UQHolder = nil
 	env.Resources = nil
 	env.ActivateTaskStatus = make(chan bool)
@@ -32,7 +34,7 @@ func create_environment() *environment.PBEnvironment {
 			return args.FBVersion
 		},
 		"uc_username": func() string {
-			return env.FBUCUsername
+			return env.ClientOptions.FBUCUsername
 		},
 	}
 	for _, key := range args.CustomSEUndefineConsts {
@@ -67,7 +69,7 @@ func ConfigRealEnvironment(token string, server_code string, server_password str
 		ServerCode:     server_code,
 		ServerPasscode: server_password,
 	}
-	env.FBAuthClient = fbauth.CreateClient(env)
+	env.FBAuthClient = fbauth.CreateClient(env.ClientOptions)
 	return env
 }
 
