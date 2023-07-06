@@ -65,6 +65,6 @@ func DefaultOptions() *Options {
 		DieOnLosingOpPrivilege:     true,
 		OpPrivilegeRemovedCallBack: nil,
 		ReadLoopFunction:           DefaultReadLoopFunction,
-		ReasonWithPrivilegeStuff: true,
+		ReasonWithPrivilegeStuff:   true,
 	}
 }
