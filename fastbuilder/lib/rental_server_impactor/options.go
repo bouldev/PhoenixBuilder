@@ -26,6 +26,7 @@ var DefaultReadLoopFunction = func(conn *minecraft.Conn, deadReason chan<- error
 type Options struct {
 	AuthServer                 string
 	ServerConnectionTimeout    time.Duration
+	ChallengeSolvingTimeout    time.Duration
 	ServerConnectRetryTimes    int
 	FBUsername                 string
 	FBUserPassword             string
@@ -47,8 +48,9 @@ type Options struct {
 func DefaultOptions() *Options {
 	return &Options{
 		AuthServer:                 "",
-		ServerConnectionTimeout:  time.Minute,
-		ServerConnectRetryTimes:  0,
+		ServerConnectionTimeout:    time.Minute,
+		ChallengeSolvingTimeout:    time.Minute,
+		ServerConnectRetryTimes:    0,
 		FBUsername:                 "",
 		FBUserPassword:             "",
 		FBUserToken:                "",

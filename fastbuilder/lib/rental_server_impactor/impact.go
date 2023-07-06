@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"phoenixbuilder/fastbuilder/core"
-	"phoenixbuilder/fastbuilder/cv4/auth"
-	"phoenixbuilder/fastbuilder/environment"
-	"phoenixbuilder/fastbuilder/lib/rental_server_impactor/challenges"
-	"phoenixbuilder/fastbuilder/utils"
+	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/bundle"
 	neomega_core "phoenixbuilder/fastbuilder/lib/minecraft/neomega/decouple/core"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/uqholder"
+	"phoenixbuilder/fastbuilder/lib/rental_server_impactor/challenges"
+	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
@@ -80,6 +79,16 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 	go func() {
 		options.ReadLoopFunction(conn, deadReason, omegaCore)
 	}()
+	{
+		challengeSolvingCtx := ctx
+		if options.ChallengeSolvingTimeout != 0 {
+			challengeSolvingCtx, _ = context.WithTimeout(ctx, options.ChallengeSolvingTimeout)
+		}
+		success := challengeSolver.ChallengeCompete(challengeSolvingCtx)
+		if !success {
+			return nil, nil, nil, ErrFBChallengeSolvingTimeout
+		}
+	}
 	if options.ReasonWithPrivilegeStuff {
 		helper := challenges.NewOperatorChallenge(omegaCore, func() {
 			if options.OpPrivilegeRemovedCallBack != nil {
@@ -91,7 +100,7 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 		})
 		waitErr := make(chan error)
 		go func() {
-			waitErr <- helper.WaitForPrivilege(ctx, challengeSolver.ChallengeCompete)
+			waitErr <- helper.WaitForPrivilege(ctx)
 		}()
 		select {
 		case err = <-waitErr:
