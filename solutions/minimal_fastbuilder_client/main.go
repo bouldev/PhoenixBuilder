@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/fastbuilder/lib/rental_server_impactor"
 	"phoenixbuilder/fastbuilder/utils"
-	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/minecraft/protocol/packet"
+	"time"
 )
 
 func main() {
@@ -35,5 +39,26 @@ func main() {
 		err = <-deadReason
 		panic(err)
 	}()
-	fmt.Println(omegaCore)
+	resultWaitor := make(chan *packet.CommandOutput, 1)
+	firstTime := true
+	startTime := time.Now()
+	go func() {
+		for {
+			omegaCore.GetGameControl().SendWSCmdAndInvokeOnResponse("testforblock ~~~ air", func(output *packet.CommandOutput) {
+				resultWaitor <- output
+			})
+			select {
+			case r := <-resultWaitor:
+				if firstTime {
+					fmt.Println(r)
+					firstTime = false
+				}
+				fmt.Printf("\ralive %v", time.Since(startTime))
+				time.Sleep(time.Second / 10)
+			case <-time.NewTimer(time.Second * 3).C:
+				panic(fmt.Errorf("no response after 3 second, bot is down (alive %v)", time.Since(startTime)))
+			}
+		}
+	}()
+	bufio.NewReader(os.Stdin).ReadByte()
 }
