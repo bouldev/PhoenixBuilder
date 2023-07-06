@@ -14,30 +14,43 @@ import (
 	"fmt"
 	"io"
 
-	"phoenixbuilder/fastbuilder/environment"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 
 	"github.com/gorilla/websocket"
 	"github.com/pterm/pterm"
 )
 
+type ClientOptions struct {
+	AuthServer   string
+	FBUCUsername string
+}
+
+func MakeDefaultClientOptions() *ClientOptions {
+	return &ClientOptions{
+		AuthServer:   "wss://api.fastbuilder.pro:2053/",
+		FBUCUsername: "",
+	}
+}
+
 type Client struct {
-	privateKey   *ecdsa.PrivateKey
-	rsaPublicKey *rsa.PublicKey
-
-	salt   []byte
-	client *websocket.Conn
-
+	privateKey       *ecdsa.PrivateKey
+	rsaPublicKey     *rsa.PublicKey
+	salt             []byte
+	client           *websocket.Conn
 	peerNoEncryption bool
 	encryptor        *encryptionSession
 	serverResponse   chan map[string]interface{}
+	closed           bool
+	options          *ClientOptions
 
-	closed bool
-
-	env *environment.PBEnvironment
+	Uid              string
+	CertSigning      bool
+	LocalKey         string
+	LocalCert        string
+	WorldChatChannel chan []string
 }
 
-func CreateClient(env *environment.PBEnvironment) *Client {
+func CreateClient(options *ClientOptions) *Client {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	if err != nil {
 		panic(err)
@@ -48,9 +61,9 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 		salt:           salt,
 		serverResponse: make(chan map[string]interface{}),
 		closed:         false,
-		env:            env,
+		options:        options,
 	}
-	cl, _, err := websocket.DefaultDialer.Dial(env.AuthServer, nil)
+	cl, _, err := websocket.DefaultDialer.Dial(options.AuthServer, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -98,7 +111,7 @@ func CreateClient(env *environment.PBEnvironment) *Client {
 				chat_msg, _ := message["msg"].(string)
 				chat_sender, _ := message["username"].(string)
 				select {
-				case env.WorldChatChannel <- []string{chat_sender, chat_msg}:
+				case authclient.WorldChatChannel <- []string{chat_sender, chat_msg}:
 					continue
 				default:
 					continue
@@ -214,25 +227,25 @@ Retry:
 		}
 		uc_username, _ := resp["username"].(string)
 		u_uid, _ := resp["uid"].(string)
-		client.env.FBUCUsername = uc_username
-		client.env.Uid = u_uid
+		client.options.FBUCUsername = uc_username
+		client.Uid = u_uid
 		str, _ := resp["chainInfo"].(string)
-		client.env.CertSigning = true
+		client.CertSigning = true
 		if signingKey, success := resp["privateSigningKey"].(string); success {
-			client.env.LocalKey = signingKey
+			client.LocalKey = signingKey
 		} else {
 			pterm.Error.Println("Failed to fetch privateSigningKey from server")
-			client.env.CertSigning = false
-			client.env.LocalKey = ""
+			client.CertSigning = false
+			client.LocalKey = ""
 		}
 		if keyProve, success := resp["prove"].(string); success {
-			client.env.LocalCert = keyProve
+			client.LocalCert = keyProve
 		} else {
 			pterm.Error.Println("Failed to fetch keyProve from server")
-			client.env.CertSigning = false
-			client.env.LocalCert = ""
+			client.CertSigning = false
+			client.LocalCert = ""
 		}
-		if !client.env.CertSigning {
+		if !client.CertSigning {
 			pterm.Error.Println("CertSigning is disabled for errors above.")
 		}
 		return str, 0, nil
@@ -319,13 +332,13 @@ func (client *Client) TransferData(content string, uid string) string {
 
 type FNumRequest struct {
 	Action string `json:"action"`
-	Data string `json:"data"`
+	Data   string `json:"data"`
 }
 
 func (client *Client) TransferCheckNum(data string) string {
 	rspreq := &FNumRequest{
 		Action: "phoenix::transfer-check-num",
-		Data: data,
+		Data:   data,
 	}
 	msg, err := json.Marshal(rspreq)
 	if err != nil {

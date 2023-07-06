@@ -23,10 +23,9 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 	if options.MaximumWaitTime > 0 {
 		ctx, _ = context.WithTimeout(ctx, options.MaximumWaitTime)
 	}
-	env:=&environment.PBEnvironment{
-		AuthServer: options.AuthServer,
-	}
-	fbClient:=fbauth.CreateClient(env)
+	clientOptions := fbauth.MakeDefaultClientOptions()
+	clientOptions.AuthServer = options.AuthServer
+	fbClient := fbauth.CreateClient(clientOptions)
 	if options.FBUserToken == "" {
 		var err_val string
 		options.FBUserToken, err_val = fbClient.GetToken(options.FBUsername, options.FBUserPassword)
@@ -73,8 +72,8 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 	omegaCore = bundle.NewMicroOmega(neomega_core.NewInteractCore(conn), func() omega.MicroUQHolder {
 		return uqholder.NewMicroUQHolder(conn)
 	}, options.MicroOmegaOption)
-	deadReason = make(chan error, 0)
-	challengeSolver := challenges.NewPyRPCResponder(omegaCore, env.Uid,
+	deadReason = make(chan error)
+	challengeSolver := challenges.NewPyRPCResponder(omegaCore, fbClient.Uid,
 		fbClient.TransferData,
 		fbClient.TransferCheckNum,
 	)

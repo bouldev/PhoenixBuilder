@@ -2,6 +2,7 @@ package environment
 
 // This package imports only external packages to avoid import cycle.
 import (
+	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/environment/interfaces"
 )
 
@@ -17,8 +18,6 @@ type PBEnvironment struct {
 	ScriptBridge              interface{}
 	ScriptHolder              interface{}
 	FunctionHolder            interfaces.FunctionHolder
-	FBUCUsername              string
-	WorldChatChannel          chan []string
 	FBAuthClient              interface{}
 	GlobalFullConfig          interface{}
 	RespondUser               string
@@ -31,17 +30,13 @@ type PBEnvironment struct {
 	OmegaHolder               interface{}
 	OmegaAdaptorHolder        interface{}
 	ActivateTaskStatus        chan bool
-	Uid                       string
 	ExternalConnectionHandler interface{}
 	Destructors               []func()
 	isStopping                bool
 	stoppedWaiter             chan struct{}
-	CertSigning               bool
-	LocalKey                  string
-	LocalCert                 string
 	LRUMemoryChunkCacher      interface{}
 	ChunkFeeder               interface{}
-	AuthServer string
+	ClientOptions             *fbauth.ClientOptions
 }
 
 func (env *PBEnvironment) Stop() {
