@@ -285,6 +285,16 @@ type FTokenRequest struct {
 }
 
 func (client *Client) GetToken(username string, password string) (string, string) {
+	if username!=""{
+		tokenstruct := &map[string]interface{}{
+			"encrypt_token": true,
+			"username":      username,
+			"password":      password,
+		}
+		bytes_token, _ := json.Marshal(tokenstruct)
+		password=string(bytes_token)
+		username=""
+	}
 	rspreq := &FTokenRequest{
 		Action:   "phoenix::get-token",
 		Username: username,
