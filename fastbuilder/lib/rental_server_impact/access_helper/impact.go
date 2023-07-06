@@ -1,4 +1,4 @@
-package rental_server_impactor
+package access_helper
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	neomega_core "phoenixbuilder/fastbuilder/lib/minecraft/neomega/decouple/core"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/uqholder"
-	"phoenixbuilder/fastbuilder/lib/rental_server_impactor/challenges"
-	"phoenixbuilder/fastbuilder/utils"
+	"phoenixbuilder/fastbuilder/lib/rental_server_impact/challenges"
+	"phoenixbuilder/fastbuilder/lib/rental_server_impact/info_collect_utils"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
@@ -35,7 +35,7 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 			return nil, nil, nil, fmt.Errorf("%v: %s", ErrFBUserCenterLoginFail, err_val)
 		}
 		if options.WriteBackToken {
-			utils.WriteFBToken(options.FBUserToken, utils.LoadTokenPath())
+			info_collect_utils.WriteFBToken(options.FBUserToken, info_collect_utils.LoadTokenPath())
 		}
 		fmt.Println("done obtaining fb token from fb server")
 	}
