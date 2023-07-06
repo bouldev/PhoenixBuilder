@@ -46,9 +46,7 @@ func (o *OperatorChallenge) onAdventurePacket(pk packet.Packet) {
 	}
 }
 
-
-func (o *OperatorChallenge) WaitForPrivilege(ctx context.Context, challengeCompleted func(ctx context.Context) bool) (err error) {
-	time.Sleep(3 * time.Second)
+func (o *OperatorChallenge) WaitForPrivilege(ctx context.Context) (err error) {
 	for !o.hasOpPrivilege {
 		o.GetGameControl().SendWSCmdAndInvokeOnResponse("tp @s ~~~", func(output *packet.CommandOutput) {
 			if output.SuccessCount > 0 {
@@ -64,10 +62,6 @@ func (o *OperatorChallenge) WaitForPrivilege(ctx context.Context, challengeCompl
 	}
 	fmt.Println("Privilege granted")
 	first := true
-	success := challengeCompleted(ctx)
-	if !success {
-		return fmt.Errorf("Failed to complete privilege challenge")
-	}
 	for !o.cheatOn {
 		o.GetGameControl().SendWSCmdAndInvokeOnResponse("testforblock ~~~ air 0", func(output *packet.CommandOutput) {
 			if output.SuccessCount > 0 {

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"phoenixbuilder/fastbuilder/py_rpc"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
+	"phoenixbuilder/fastbuilder/py_rpc"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
 )
