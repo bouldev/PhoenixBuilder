@@ -44,7 +44,7 @@ func GetMD5(i string) string {
 }
 
 func CheckUpdate(currentVersion string) (bool, string) {
-	version_regexp := regexp.MustCompile("((\\d+).(\\d+).(\\d+))$")
+	version_regexp := regexp.MustCompile("?v((\\d+).(\\d+).(\\d+))$")
 	current_version_m := version_regexp.FindAllStringSubmatch(currentVersion, -1)
 	if len(current_version_m) == 0 || len(current_version_m[0]) != 5 {
 		return false, ""
