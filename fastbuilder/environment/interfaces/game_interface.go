@@ -3,15 +3,15 @@
 package interfaces
 
 import (
-	game_interface "phoenixbuilder/game_control/game_interface"
+	resources_control "phoenixbuilder/game_control/resources_control"
 )
 
 type GameInterface interface {
 	SendSettingsCommand(string, bool) error
 	SendCommand(string) error
 	SendWSCommand(string) error
-	SendCommandWithResponse(string) game_interface.CommandRespond
-	SendWSCommandWithResponse(string) game_interface.CommandRespond
+	SendCommandWithResponse(string) resources_control.CommandRespond
+	SendWSCommandWithResponse(string) resources_control.CommandRespond
 
 	SetBlock([3]int32, string, string) error
 	SetBlockAsync([3]int32, string, string) error

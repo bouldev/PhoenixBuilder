@@ -34,6 +34,18 @@ type commandRequestWithResponse struct {
 	requestWithResponse sync.Map
 }
 
+// 描述命令请求的响应体
+type CommandRespond struct {
+	// 来自租赁服的响应体
+	Respond packet.CommandOutput
+	// 获取响应体时发生错误信息，
+	// 可能不存在
+	Error error
+	// 如果获取响应体时发生了错误，
+	// 那么此字段非 0 ，否则为 0
+	ErrorType uint8
+}
+
 // ------------------------- inventoryContents -------------------------
 
 // 存放所有有效库存中的物品数据，例如背包和盔甲栏

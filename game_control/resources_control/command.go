@@ -3,6 +3,7 @@ package ResourcesControl
 import (
 	"fmt"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -50,19 +51,33 @@ func (c *commandRequestWithResponse) DeleteRequest(key uuid.UUID) {
 
 // 读取请求 ID 为 key 的命令请求的返回值，
 // 同时移除此命令请求
-func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) (packet.CommandOutput, error) {
+func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) CommandRespond {
 	value, exist := c.requestWithResponse.Load(key)
 	if !exist {
-		return packet.CommandOutput{}, fmt.Errorf("LoadResponseAndDelete: %v is not recorded", key.String())
+		return CommandRespond{
+			Error:     fmt.Errorf("LoadResponseAndDelete: %v is not recorded", key.String()),
+			ErrorType: ErrCommandRequestNotRecord,
+		}
 	}
 	// if key is not exist
 	chanGet, normal := value.(chan packet.CommandOutput)
 	if !normal {
-		return packet.CommandOutput{}, fmt.Errorf("LoadResponseAndDelete: Failed to convert value into (chan packet.CommandOutput); value = %#v", value)
+		return CommandRespond{
+			Error:     fmt.Errorf("LoadResponseAndDelete: Failed to convert value into (chan packet.CommandOutput); value = %#v", value),
+			ErrorType: ErrCommandRequestConversionFailure,
+		}
 	}
 	// convert data
-	res := <-chanGet
-	c.requestWithResponse.Delete(key)
-	return res, nil
-	// return
+	select {
+	case res := <-chanGet:
+		c.requestWithResponse.Delete(key)
+		return CommandRespond{Respond: res}
+	case <-time.After(CommandRequestDeadLine):
+		c.requestWithResponse.Delete(key)
+		return CommandRespond{
+			Error:     fmt.Errorf(`LoadResponseAndDelete: Request "%v" time out`, key.String()),
+			ErrorType: ErrCommandRequestTimeOut,
+		}
+	}
+	// process and return
 }

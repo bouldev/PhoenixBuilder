@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/types"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 )
 
 // 在 pos 处以 setblock 命令放置名为 name 且方块状态为 states 的方块。只有请求被返回时此函数再返回值
@@ -22,7 +23,7 @@ func (g *GameInterface) SetBlock(pos [3]int32, name string, states string) error
 	// get setblock command
 	resp := g.SendWSCommandWithResponse(request)
 	// send setblock request
-	if resp.ErrorType == ErrCommandRequestTimeOut {
+	if resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
 		err := g.SendSettingsCommand(request, true)
 		if err != nil {
 			return fmt.Errorf("SetBlock: %v", err)
