@@ -20,7 +20,7 @@ type BlockPos mcstructure.BlockPos
 func (g *GameInterface) BackupStructure(structure MCStructure) (uuid.UUID, error) {
 	uniqueId := generateUUID()
 	// get new uuid
-	resp, err := g.SendWSCommandWithResponse(
+	resp := g.SendWSCommandWithResponse(
 		fmt.Sprintf(
 			`structure save "%s" %d %d %d %d %d %d`,
 			uuid_to_safe_string(uniqueId),
@@ -32,11 +32,11 @@ func (g *GameInterface) BackupStructure(structure MCStructure) (uuid.UUID, error
 			structure.BeginZ+structure.SizeZ-1,
 		),
 	)
-	if err != nil {
+	if resp.Error != nil {
 		return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v", structure)
 	}
 	// backup structure
-	if resp.SuccessCount <= 0 {
+	if resp.Respond.SuccessCount <= 0 {
 		return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v; resp = %#v", structure, resp)
 	}
 	// check success states
@@ -46,7 +46,7 @@ func (g *GameInterface) BackupStructure(structure MCStructure) (uuid.UUID, error
 
 // 在 pos 处恢复名称为 unique.String() 的备份用结构并删除此结构
 func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error {
-	resp, err := g.SendWSCommandWithResponse(
+	resp := g.SendWSCommandWithResponse(
 		fmt.Sprintf(
 			`structure load "%v" %d %d %d`,
 			uuid_to_safe_string(uniqueID),
@@ -55,14 +55,14 @@ func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error 
 			pos[2],
 		),
 	)
-	if err != nil {
+	if resp.Error != nil {
 		return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
 	}
-	if resp.SuccessCount <= 0 {
+	if resp.Respond.SuccessCount <= 0 {
 		return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
 	}
 	// revert structure
-	err = g.SendSettingsCommand(
+	err := g.SendSettingsCommand(
 		fmt.Sprintf(
 			`structure delete "%v"`,
 			uuid_to_safe_string(uniqueID),

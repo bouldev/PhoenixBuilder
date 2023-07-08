@@ -61,11 +61,19 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 			continue
 		}
 		if cmd[0] == '.' {
-			resp, _ := gameInterface.SendCommandWithResponse(cmd[1:])
-			fmt.Printf("%+v\n", resp)
+			resp := gameInterface.SendCommandWithResponse(cmd[1:])
+			if resp.Error != nil {
+				pterm.Error.Printf("%v\n", resp.Error)
+			} else {
+				pterm.Success.Printf("%+v\n", resp.Respond)
+			}
 		} else if cmd[0] == '!' {
-			resp, _ := gameInterface.SendWSCommandWithResponse(cmd[1:])
-			fmt.Printf("%+v\n", resp)
+			resp := gameInterface.SendWSCommandWithResponse(cmd[1:])
+			if resp.Error != nil {
+				pterm.Error.Printf("%v\n", resp.Error)
+			} else {
+				pterm.Success.Printf("%+v\n", resp.Respond)
+			}
 		}
 		functionHolder.Process(cmd)
 	}
@@ -347,8 +355,8 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 			env.GameInterface.SendCommand(mcCmd)
 			return nil
 		}
-		resp, _ := env.GameInterface.SendCommandWithResponse(mcCmd)
-		return &resp
+		resp := env.GameInterface.SendCommandWithResponse(mcCmd)
+		return &resp.Respond
 	})
 	hostBridgeGamma.HostConnectEstablished()
 	defer hostBridgeGamma.HostConnectTerminate()

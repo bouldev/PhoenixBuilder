@@ -2,6 +2,7 @@ package GameInterface
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -19,11 +20,11 @@ import (
 func (g *GameInterface) GenerateNewAnvil(pos [3]int32, blockStates string) (
 	uuid.UUID, [3]int32, error,
 ) {
-	resp, err := g.SendWSCommandWithResponse("querytarget @s")
-	if err != nil {
-		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: %v", err)
+	resp := g.SendWSCommandWithResponse("querytarget @s")
+	if resp.Error != nil {
+		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: %v", resp.Error)
 	}
-	got, err := g.ParseTargetQueryingInfo(resp)
+	got, err := g.ParseTargetQueryingInfo(resp.Respond)
 	if err != nil {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: %v", err)
 	}
@@ -77,11 +78,11 @@ func (g *GameInterface) GenerateNewAnvil(pos [3]int32, blockStates string) (
 	if err != nil {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: %v", err)
 	}
-	resp, err = g.SendWSCommandWithResponse(fmt.Sprintf("setblock %d %d %d anvil %v", pos[0], pos[1], pos[2], blockStates))
+	resp = g.SendWSCommandWithResponse(fmt.Sprintf("setblock %d %d %d anvil %v", pos[0], pos[1], pos[2], blockStates))
 	if err != nil {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: %v", err)
 	}
-	if resp.SuccessCount <= 0 && resp.OutputMessages[0].Message != "commands.setblock.noChange" {
+	if resp.Respond.SuccessCount <= 0 && resp.Respond.OutputMessages[0].Message != "commands.setblock.noChange" {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: Failed to generate a new anvil on %v; resp = %#v", pos, resp)
 	}
 	// 放置一个铁砧并附带一个承重方块
