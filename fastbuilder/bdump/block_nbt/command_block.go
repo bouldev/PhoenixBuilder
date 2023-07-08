@@ -224,9 +224,9 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 
 		// TODO: 优化下方的这一段代码
 		{
-			_, err := c.BlockEntity.Interface.(*GameInterface.GameInterface).SendWSCommandWithResponse("list")
-			if err != nil {
-				return fmt.Errorf("PlaceCommandBlockLegacy: %v", err)
+			resp := c.BlockEntity.Interface.SendWSCommandWithResponse("list")
+			if resp.Error != nil {
+				return fmt.Errorf("PlaceCommandBlockLegacy: %v", resp.Error)
 			}
 		}
 		// 这么做的目的只是为了保证存在 operation 26 - SetCommandBlockData 的时候，
@@ -251,9 +251,9 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 			return fmt.Errorf("ERR 444eee %v", err)
 		}
 	} else {
-		_, err := c.BlockEntity.Interface.(*GameInterface.GameInterface).SendWSCommandWithResponse(request)
-		if err != nil {
-			return fmt.Errorf("ERR 555ccc %v", err)
+		resp := c.BlockEntity.Interface.SendWSCommandWithResponse(request)
+		if resp.Error != nil {
+			return fmt.Errorf("ERR 555ccc %v", resp.Error)
 		}
 	}
 	// 放置命令方块

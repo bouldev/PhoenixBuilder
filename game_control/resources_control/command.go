@@ -42,6 +42,12 @@ func (c *commandRequestWithResponse) tryToWriteResponse(
 	// return
 }
 
+// 移除请求 ID 为 key 的命令请求，
+// 主要被用于指令被网易屏蔽时的善后处理
+func (c *commandRequestWithResponse) DeleteRequest(key uuid.UUID) {
+	c.requestWithResponse.Delete(key)
+}
+
 // 读取请求 ID 为 key 的命令请求的返回值，
 // 同时移除此命令请求
 func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) (packet.CommandOutput, error) {

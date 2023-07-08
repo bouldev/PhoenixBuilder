@@ -89,18 +89,24 @@ func (s *Sign) WriteData() error {
 
 			但在生成玻璃前，我们需要备份这个玻璃原本的方块以方便之后恢复它
 		*/
-		_, err = gameInterface.SendWSCommandWithResponse(
+		err = gameInterface.SendSettingsCommand(
 			fmt.Sprintf(
 				"setblock %d %d %d glass",
 				s.BlockEntity.AdditionalData.Position[0]+1,
 				s.BlockEntity.AdditionalData.Position[1],
 				s.BlockEntity.AdditionalData.Position[2],
 			),
+			true,
 		)
 		if err != nil {
 			return fmt.Errorf("WriteData: %v", err)
 		}
-		// 生成上文提到的玻璃
+		resp := gameInterface.SendWSCommandWithResponse("list")
+		if resp.Error != nil {
+			return fmt.Errorf("WriteData: %v", resp.Error)
+		}
+		// 生成上文提到的玻璃。
+		// TODO: 优化上方这段代码
 		err = gameInterface.PlaceBlock(
 			GameInterface.UseItemOnBlocks{
 				HotbarSlotID: 0,

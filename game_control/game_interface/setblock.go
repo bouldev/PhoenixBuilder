@@ -19,11 +19,22 @@ func (g *GameInterface) SetBlock(pos [3]int32, name string, states string) error
 			Z: int(pos[2]),
 		},
 	}, &types.MainConfig{})
-	_, err := g.SendWSCommandWithResponse(request)
-	if err != nil {
-		return fmt.Errorf("SetBlock: %v", err)
+	// get setblock command
+	resp := g.SendWSCommandWithResponse(request)
+	// send setblock request
+	if resp.ErrorType == ErrCommandRequestTimeOut {
+		err := g.SendSettingsCommand(request, true)
+		if err != nil {
+			return fmt.Errorf("SetBlock: %v", err)
+		}
+		resp = g.SendWSCommandWithResponse("list")
+	}
+	// if time out
+	if resp.Error != nil {
+		return fmt.Errorf("SetBlock: %v", resp.Error)
 	}
 	return nil
+	// return
 }
 
 // 在 pos 处以 setblock 命令放置名为 name 且方块状态为 states 的方块。

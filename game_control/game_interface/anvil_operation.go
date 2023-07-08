@@ -56,11 +56,19 @@ func (g *GameInterface) RenameItemByAnvil(
 		return []AnvilOperationResponse{}, fmt.Errorf("RenameItemByAnvil: %v", err)
 	}
 	// 尝试生成一个铁砧并附带承重方块
-	_, err = g.SendWSCommandWithResponse(fmt.Sprintf("tp %d %d %d", correctPos[0], correctPos[1], correctPos[2]))
+	err = g.SendSettingsCommand(
+		fmt.Sprintf("tp %d %d %d", correctPos[0], correctPos[1], correctPos[2]),
+		true,
+	)
 	if err != nil {
 		return []AnvilOperationResponse{}, fmt.Errorf("RenameItemByAnvil: %v", err)
 	}
-	// 传送机器人到铁砧处
+	resp := g.SendWSCommandWithResponse("list")
+	if resp.Error != nil {
+		return []AnvilOperationResponse{}, fmt.Errorf("RenameItemByAnvil: %v", resp.Error)
+	}
+	// 传送机器人到铁砧处。
+	// TODO: 优化上方这段代码
 	holder := g.Resources.Container.Occupy()
 	defer g.Resources.Container.Release(holder)
 	// 获取容器资源
