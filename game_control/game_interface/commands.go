@@ -4,20 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/fastbuilder/args"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 )
-
-// 描述命令请求的响应体
-type CommandRespond struct {
-	Respond   packet.CommandOutput // 响应体本身
-	Error     error                // 错误信息
-	ErrorType uint8                // 错误类型
-}
 
 // 向租赁服发送 Sizukana 命令且无视返回值。
 // 当 sendDimensionalCmd 为真时，
@@ -72,50 +65,30 @@ func (g *GameInterface) sendCommand(
 func (g *GameInterface) sendCommandWithResponse(
 	command string,
 	origin uint32,
-) CommandRespond {
-	var resp packet.CommandOutput
-	var err error
-	var channel chan struct{}
-	// 初始化变量
+) ResourcesControl.CommandRespond {
 	uniqueId := generateUUID()
-	err = g.Resources.Command.WriteRequest(uniqueId)
+	err := g.Resources.Command.WriteRequest(uniqueId)
 	if err != nil {
-		return CommandRespond{
+		return ResourcesControl.CommandRespond{
 			Error:     fmt.Errorf("sendCommandWithResponse: %v", err),
-			ErrorType: ErrCommandRequestOthers,
+			ErrorType: ResourcesControl.ErrCommandRequestOthers,
 		}
 	}
 	// 写入请求到等待队列
 	err = g.sendCommand(command, uniqueId, origin)
 	if err != nil {
-		return CommandRespond{
+		return ResourcesControl.CommandRespond{
 			Error:     fmt.Errorf("sendCommandWithResponse: %v", err),
-			ErrorType: ErrCommandRequestOthers,
+			ErrorType: ResourcesControl.ErrCommandRequestOthers,
 		}
 	}
 	// 发送命令
-	channel = make(chan struct{}, 1)
-	go func() {
-		resp, err = g.Resources.Command.LoadResponseAndDelete(uniqueId)
-		channel <- struct{}{}
-	}()
-	select {
-	case <-channel:
-		if err != nil {
-			return CommandRespond{
-				Error:     fmt.Errorf("sendCommandWithResponse: %v", err),
-				ErrorType: ErrCommandRequestOthers,
-			}
-		}
-		return CommandRespond{Respond: resp}
-	case <-time.After(CommandRequestDeadLine):
-		g.Resources.Command.DeleteRequest(uniqueId)
-		return CommandRespond{
-			Error:     fmt.Errorf(`sendCommandWithResponse: Request "%v"(origin=%d) time out`, command, origin),
-			ErrorType: ErrCommandRequestTimeOut,
-		}
+	resp := g.Resources.Command.LoadResponseAndDelete(uniqueId)
+	if resp.Error != nil {
+		resp.Error = fmt.Errorf(`sendCommandWithResponse: %v`, resp.Error)
 	}
-	// 等待租赁服响应命令请求并取得命令请求的返回值
+	return resp
+	// 获取响应体并返回值
 }
 
 // 以玩家的身份向租赁服发送命令且无视返回值
@@ -139,7 +112,7 @@ func (g *GameInterface) SendWSCommand(command string) error {
 }
 
 // 以玩家的身份向租赁服发送命令且获取返回值
-func (g *GameInterface) SendCommandWithResponse(command string) CommandRespond {
+func (g *GameInterface) SendCommandWithResponse(command string) ResourcesControl.CommandRespond {
 	resp := g.sendCommandWithResponse(command, protocol.CommandOriginPlayer)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("SendCommandWithResponse: %v", resp.Error)
@@ -148,7 +121,7 @@ func (g *GameInterface) SendCommandWithResponse(command string) CommandRespond {
 }
 
 // 向租赁服发送 WS 命令且获取返回值
-func (g *GameInterface) SendWSCommandWithResponse(command string) CommandRespond {
+func (g *GameInterface) SendWSCommandWithResponse(command string) ResourcesControl.CommandRespond {
 	resp := g.sendCommandWithResponse(command, protocol.CommandOriginAutomationPlayer)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("SendWSCommandWithResponse: %v", resp.Error)
