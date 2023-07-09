@@ -87,21 +87,32 @@ func (o *BanTime) Init(cfg *defines.ComponentConfig, storage defines.StorageAndL
 			panic(err)
 		}
 	}
-	o.Data = &data{}
-	o.Data.OldData = make(map[string]string)
-	o.Data.BannedUUID = make(map[uuid.UUID]*bannedUUIDDetails)
-	o.Data.BannedDeviceID = make(map[string]*bannedDeviceIDDetails)
 	o.mu = sync.Mutex{}
 }
 
 func (o *BanTime) Inject(frame defines.MainFrame) {
 	o.Frame = frame
 	var err error
+
 	o.mu.Lock()
 	defer o.mu.Unlock()
+
 	if err = frame.GetJsonData(o.FileName, &o.Data); err != nil {
 		panic(err)
 	}
+	if o.Data == nil {
+		o.Data = &data{}
+	}
+	if o.Data.OldData == nil {
+		o.Data.OldData = make(map[string]string)
+	}
+	if o.Data.BannedUUID == nil {
+		o.Data.BannedUUID = make(map[uuid.UUID]*bannedUUIDDetails)
+	}
+	if o.Data.BannedDeviceID == nil {
+		o.Data.BannedDeviceID = make(map[string]*bannedDeviceIDDetails)
+	}
+
 	o.Frame.GetGameListener().AppendLoginInfoCallback(func(entry protocol.PlayerListEntry) {
 		// 旧数据 + UUID = 新数据
 		if value, ok := o.Data.OldData[entry.Username]; ok {
