@@ -66,7 +66,7 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 				pterm.Error.Printf("Failed to get respond of \"%v\", and the following is the error log.\n", cmd[1:])
 				pterm.Error.Printf("%v\n", resp.Error.Error())
 			} else {
-				pterm.Success.Printf("%+v\n", resp.Respond)
+				fmt.Printf("%+v\n", resp.Respond)
 			}
 		} else if cmd[0] == '!' {
 			resp := gameInterface.SendWSCommandWithResponse(cmd[1:])
@@ -74,7 +74,7 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 				pterm.Error.Printf("Failed to get respond of \"%v\", and the following is the error log.\n", cmd[1:])
 				pterm.Error.Printf("%v\n", resp.Error.Error())
 			} else {
-				pterm.Success.Printf("%+v\n", resp.Respond)
+				fmt.Printf("%+v\n", resp.Respond)
 			}
 		}
 		functionHolder.Process(cmd)
