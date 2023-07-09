@@ -63,14 +63,16 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 		if cmd[0] == '.' {
 			resp := gameInterface.SendCommandWithResponse(cmd[1:])
 			if resp.Error != nil {
-				pterm.Error.Printf(`Failed to get respond of "%v", and the following is the error log.%v`, cmd[1:], "\n"+resp.Error.Error()+"\n")
+				pterm.Error.Printf("Failed to get respond of \"%v\", and the following is the error log.\n", cmd[1:])
+				pterm.Error.Printf("%v\n", resp.Error.Error())
 			} else {
 				pterm.Success.Printf("%+v\n", resp.Respond)
 			}
 		} else if cmd[0] == '!' {
 			resp := gameInterface.SendWSCommandWithResponse(cmd[1:])
 			if resp.Error != nil {
-				pterm.Error.Printf(`Failed to get respond of "%v", and the following is the error log.%v`, cmd[1:], "\n"+resp.Error.Error()+"\n")
+				pterm.Error.Printf("Failed to get respond of \"%v\", and the following is the error log.\n", cmd[1:])
+				pterm.Error.Printf("%v\n", resp.Error.Error())
 			} else {
 				pterm.Success.Printf("%+v\n", resp.Respond)
 			}
