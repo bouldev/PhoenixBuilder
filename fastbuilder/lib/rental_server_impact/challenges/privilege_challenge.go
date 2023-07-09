@@ -53,8 +53,8 @@ func (o *OperatorChallenge) WaitForPrivilege(ctx context.Context) (err error) {
 				o.hasOpPrivilege = true
 			}
 		})
-		o.GetGameControl().BotSay("Please grant operator privilege")
-		fmt.Println("Please grant operator privilege")
+		o.GetGameControl().BotSay("请给予机器人Op权限或检查作弊模式")
+		fmt.Println("请给予机器人Op权限或检查作弊模式")
 		time.Sleep(1 * time.Second)
 		if ctx.Err() != nil {
 			return fmt.Errorf("Operator privilege granting timed out")
@@ -71,7 +71,8 @@ func (o *OperatorChallenge) WaitForPrivilege(ctx context.Context) (err error) {
 				if strings.Contains(output.OutputMessages[0].Message, "commands.generic.disabled") {
 					o.cheatOn = false
 					if first {
-						fmt.Println("Please enable cheating.")
+						o.GetGameControl().BotSay("请打开作弊模式")
+						fmt.Println("请打开作弊模式")
 						first = false
 					}
 				} else {
