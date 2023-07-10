@@ -3,21 +3,21 @@ package listen
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
 
 type BlockPoller struct {
-	p           *OmegaBlockModule
-	msgChan     chan lua.LValue
-	sourceCount int
-	luaSelf     lua.LValue
-	nextEvent   lua.LValue
-	pCtx        context.Context
-	ctx         context.Context
-	cancelFn    func()
+	p               *OmegaBlockModule
+	msgChan         chan lua.LValue
+	sourceCount     int
+	luaSelf         lua.LValue
+	nextEvent       lua.LValue
+	pCtx            context.Context
+	ctx             context.Context
+	cancelFn        func()
+	luaFnEventAfter *lua.LFunction
 }
 
 func MakeBlockMsg(source lua.LValue, eventData map[string]lua.LValue, L *lua.LState) lua.LValue {
@@ -58,7 +58,10 @@ func (m *BlockPoller) decreaseSource() {
 func (m *BlockPoller) MakeLValue(L *lua.LState) lua.LValue {
 	luaPoller := L.NewUserData()
 	luaPoller.Value = m
-	L.SetMetatable(luaPoller, L.GetTypeMetatable("block_poller"))
+	mt := L.GetTypeMetatable("block_poller")
+	eventAfter := mt.(*lua.LTable).RawGetString("__index").(*lua.LTable).RawGetString("event_after")
+	m.luaFnEventAfter = eventAfter.(*lua.LFunction)
+	L.SetMetatable(luaPoller, mt)
 	m.luaSelf = luaPoller
 	return luaPoller
 }
@@ -66,17 +69,23 @@ func (m *BlockPoller) MakeLValue(L *lua.LState) lua.LValue {
 func registerBlockPoller(L *lua.LState) {
 	mt := L.NewTypeMetatable("block_poller")
 	// methods
-	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
+	lt := L.NewTable()
+	L.SetFuncs(lt, map[string]lua.LGFunction{
 		"poll":           blockPollerPoll,
 		"block_get_next": blockPollerBlockGetNext,
 		"has_next":       blockPollerHasNext,
-		"set_handler":    blockPollerSetHandler,
-		"event_after":    blockPollerEventAfter,
-	}))
+		"as_async":       blockPollerAsAsync,
+	})
+	L.SetField(lt, "event_after", L.NewFunction(blockPollerEventAfter))
+	L.SetField(mt, "__index", lt)
 }
 
 func blockPollerEventAfter(L *lua.LState) int {
-	L.RaiseError("not callable")
+	m := checkBlockPoller(L)
+	timeOut := L.ToNumber(2)
+	eventData := L.Get(3)
+	eventDataTable := map[string]lua.LValue{"data": eventData}
+	go m.handleEventAfter(float64(timeOut), m.luaFnEventAfter, eventDataTable, L)
 	return 0
 }
 
@@ -97,23 +106,7 @@ func blockPollerPoll(L *lua.LState) int {
 	switch target.Type() {
 	case lua.LTFunction:
 		tf := target.(*lua.LFunction)
-		if reflect.ValueOf(tf.GFunction).Pointer() == reflect.ValueOf(blockPollerEventAfter).Pointer() {
-			timeOut := L.ToNumber(3)
-			eventData := L.Get(4)
-			m.increaseSource()
-			go func() {
-				defer m.decreaseSource()
-				select {
-				case <-m.ctx.Done():
-					return
-				case <-time.After(time.Duration(float64(timeOut) * float64(time.Second))):
-					event := MakeBlockMsg(tf, map[string]lua.LValue{"data": eventData}, L)
-					m.msgChan <- event
-				}
-			}()
-		} else {
-			err = m.pollFunction(tf, L)
-		}
+		err = m.pollFunction(tf, L)
 	case lua.LTUserData:
 		err = m.pollUserData(target.(*lua.LUserData), L)
 	default:
@@ -126,7 +119,28 @@ func blockPollerPoll(L *lua.LState) int {
 	return 1
 }
 
+// func getResArgs(L *lua.LState, fromN int) lua.LValue {
+// 	numArgs := L.GetTop()
+// 	if numArgs >= fromN {
+// 		res := L.NewTable()
+// 		for i := fromN; i <= numArgs; i++ {
+// 			arg := L.Get(i)
+// 			res.Append(arg)
+// 		}
+// 		return res
+// 	}
+// 	return nil
+// }
+
 func (m *BlockPoller) pollFunction(fn *lua.LFunction, L *lua.LState) error {
+	if fn == m.luaFnEventAfter {
+		m.increaseSource()
+		timeOut := L.ToNumber(3)
+		eventData := L.Get(4)
+		eventDataTable := map[string]lua.LValue{"data": eventData}
+		go m.handleEventAfter(float64(timeOut), m.luaFnEventAfter, eventDataTable, L)
+		return nil
+	}
 	if fnName, found := m.p.luaFns[fn]; found {
 		if fnName == LuaListenFnNameGetUserInput {
 			m.increaseSource()
@@ -142,6 +156,17 @@ func (m *BlockPoller) pollFunction(fn *lua.LFunction, L *lua.LState) error {
 		return fmt.Errorf("poll function not supported")
 	}
 	return nil
+}
+
+func (m *BlockPoller) handleEventAfter(timeOut float64, event lua.LValue, eventDataTable map[string]lua.LValue, L *lua.LState) {
+	defer m.decreaseSource()
+	select {
+	case <-m.ctx.Done():
+		return
+	case <-time.After(time.Duration(float64(timeOut) * float64(time.Second))):
+		event := MakeBlockMsg(event, eventDataTable, L)
+		m.msgChan <- event
+	}
 }
 
 func (m *BlockPoller) pollUserData(ud *lua.LUserData, L *lua.LState) error {
@@ -202,14 +227,21 @@ func blockPollerHasNext(L *lua.LState) int {
 	return 1
 }
 
-// mux_poller:set_handler(fn:func)
-func blockPollerSetHandler(L *lua.LState) int {
+// mux_poller:as_async(fn:func)
+func blockPollerAsAsync(L *lua.LState) int {
 	m := checkBlockPoller(L)
 	handler := L.ToFunction(2)
-	go func() {
+	m.p.ac.NewGoRoutine(func() {
 		for {
 			if err := m.readyNext(); err != nil {
-				L.RaiseError(err.Error())
+				// readyNext() will return error only when ctx is done,
+				// and in some cases, this is because all lua codes are done and LState is closed.
+				// this is not an error, but a normal case.
+				// when this happens, we don't need to raise error.
+				if m.ctx.Err() == nil { // ctx (all lua code) is not done
+					L.RaiseError(err.Error())
+				}
+				break
 			}
 			event := m.nextEvent
 			m.nextEvent = nil
@@ -221,7 +253,7 @@ func blockPollerSetHandler(L *lua.LState) int {
 				L.RaiseError(err.Error())
 			}
 		}
-	}()
+	})
 	L.Push(m.luaSelf)
 	return 1
 }
