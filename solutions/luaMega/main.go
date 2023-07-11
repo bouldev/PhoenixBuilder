@@ -15,6 +15,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+// 根据指定的目录读取消息 返回值为读取后的字符串 与 一个err
 func ReadOutLuaCodeFromFile(fileName string) (code string, err error) {
 	data, err := file_wrapper.GetFileData(fileName)
 	if err != nil {
@@ -26,6 +27,7 @@ func ReadOutLuaCodeFromFile(fileName string) (code string, err error) {
 
 func main() {
 	// read lua
+	//测试用读取的packet.lua
 	code, err := ReadOutLuaCodeFromFile("packet.lua")
 	if err != nil {
 		panic(err)
@@ -37,8 +39,12 @@ func main() {
 	L := lua.NewState()
 	defer L.Close()
 	// create async ctrl
+	//创建一个async控制对象
 	ac := basic_async.NewAsyncCtrl(context.Background())
+	//创建一个packetSize为128的游戏监听器
 	monkListener := monk.NewMonkListen(128)
+	//向omega中注册内置table
+	//makeLvalue即是注册这个子表中的各种属性
 	luaPacketsModule := game_packet.NewOmegaPacketsModule(monkListener)
 	L.PreloadModule("omega", submodule_holder.NewSubModuleHolder(map[string]lua.LValue{
 		"backend": backend.NewOmegaBackendModule(&monk.MonkBackend{}).MakeLValue(L),

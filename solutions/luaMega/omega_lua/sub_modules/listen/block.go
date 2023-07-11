@@ -32,7 +32,9 @@ func NewOmegaBlockModule(
 func (m *OmegaBlockModule) MakeLValue(L *lua.LState) lua.LValue {
 	blockModule := L.NewTable()
 	m.luaFns = map[lua.LValue]string{
-		L.NewFunction(m.luaGoBlockSleep):        LuaListenFnNameSleep,
+		//实现睡眠函数
+		L.NewFunction(m.luaGoBlockSleep): LuaListenFnNameSleep,
+		//实现获取用户输入
 		L.NewFunction(m.luaGoBlockGetUserInput): LuaListenFnNameGetUserInput,
 	}
 	for fn, name := range m.luaFns {
