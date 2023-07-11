@@ -78,10 +78,13 @@ func (g *BlockPlacer) PlaceCommandBlock(pos define.CubePos, commandBlockName str
 		g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
 			go func() {
 				g.blockActorLock.Lock()
-				g.SendWSCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
-				time.Sleep(50 * time.Millisecond)
+				// g.SendWSCmd(fmt.Sprintf("tp @s %v %v %v", pos.X(), pos.Y(), pos.Z()))
+				// time.Sleep(50 * time.Millisecond)
 				g.SendPacket(updatePacket)
 				g.onBlockActorCbs[pos] = func(cp define.CubePos, bad *packet.BlockActorData) {
+					g.blockActorLock.Lock()
+					delete(g.onBlockActorCbs, pos)
+					g.blockActorLock.Unlock()
 					g.SendPacket(updatePacket)
 					onDone(true)
 					done <- true
