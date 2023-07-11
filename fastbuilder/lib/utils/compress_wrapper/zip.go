@@ -9,9 +9,10 @@ import (
 	"strings"
 )
 
-func Zip(src_dir string, zipfile *os.File, ignores []string) error {
+func Zip(src_dir string, zipfile io.Writer, ignores []string) error {
 	archive := zip.NewWriter(zipfile)
 	defer archive.Close()
+	src_dir = path.Clean(src_dir)
 	return filepath.Walk(src_dir, func(filePath string, info os.FileInfo, _ error) error {
 		if filePath == src_dir {
 			return nil
