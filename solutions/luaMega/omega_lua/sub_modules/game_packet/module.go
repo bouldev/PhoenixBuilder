@@ -9,15 +9,20 @@ import (
 	luar "layeh.com/gopher-luar"
 )
 
+// 包装了 LuaGoPackets 接口的 OmegaPacketsModule 结构体
+// 存储了mc包名到go与lua的id和string的字典
 type OmegaPacketsModule struct {
-	goImplements          LuaGoPackets
-	MCPacketNameIDMapping map[string]uint32
-	MCPacketIDToLuaName   map[uint32]lua.LString
-	MCPacketIDToLuaInt    map[uint32]lua.LNumber
+	goImplements          LuaGoPackets           // 实现了 LuaGoPackets 接口的对象
+	MCPacketNameIDMapping map[string]uint32      // Minecraft 包名到包 ID 的映射
+	MCPacketIDToLuaName   map[uint32]lua.LString // Minecraft 包 ID 到 Lua 包名的映射
+	MCPacketIDToLuaInt    map[uint32]lua.LNumber // Minecraft 包 ID 到 Lua 包 ID 的映射
 }
 
+// 创建一个新的 OmegaPacketsModule 对象
 func NewOmegaPacketsModule(goImplements LuaGoPackets) *OmegaPacketsModule {
+	//获取游戏包 的Id与对应的string的对应表
 	mapping := goImplements.GetMCPacketNameIDMapping()
+	//初始化对象
 	m := &OmegaPacketsModule{
 		goImplements:          goImplements,
 		MCPacketNameIDMapping: mapping,
@@ -31,15 +36,22 @@ func NewOmegaPacketsModule(goImplements LuaGoPackets) *OmegaPacketsModule {
 	return m
 }
 
+// 生成 Lua 中的包表
 func (m *OmegaPacketsModule) MakeLValue(L *lua.LState) lua.LValue {
 	packetModule := L.NewTable()
+	//goId表示在go中的包数字代号 Name同理
 	for goId, goName := range m.MCPacketIDToLuaName {
+		//获取对应在lua代码中的id与名字
 		luaID := m.MCPacketIDToLuaInt[goId]
 		luaName := m.MCPacketIDToLuaName[goId]
+		//看上去是以三种形式存入:{包名:包名}是索要包名本身
+		//{no包名:!包名}是在all模式之下不要xxxx包
+		//{ID包名:包id}是索要这个包的id
 		L.SetTable(packetModule, luaName, luaName)
 		L.SetTable(packetModule, lua.LString("no"+goName), lua.LString("!"+goName))
 		L.SetTable(packetModule, lua.LString("ID"+goName), luaID)
 	}
+	//所有包
 	L.SetTable(packetModule, lua.LString("all"), lua.LString("all"))
 	allNames := make([]string, 0, len(m.MCPacketNameIDMapping))
 	for name := range m.MCPacketNameIDMapping {
@@ -48,12 +60,14 @@ func (m *OmegaPacketsModule) MakeLValue(L *lua.LState) lua.LValue {
 	L.SetTable(packetModule, lua.LString("all_names"), lua.LString(
 		"["+strings.Join(allNames, ",")+"]",
 	))
+	//同理获得包对应的json数据 并且存入to_json_string_slow这个键值对中
 	L.SetTable(packetModule, lua.LString("to_json_string_slow"), L.NewFunction(m.luaGoPacketsToJSONString))
 	L.SetTable(packetModule, lua.LString("to_lua_table"), L.NewFunction(m.luaGoPacketsToLuaTable))
 	registerGamePacket(L)
 	return packetModule
 }
 
+// 将 Go 包装的 Minecraft 包转换为 Lua 中的 GamePacket 对象
 func (m *OmegaPacketsModule) WrapPacketToLuaPacket(pk packet.Packet) *GamePacket {
 	pkID := pk.ID()
 	luaID := m.MCPacketIDToLuaInt[pkID]
@@ -73,7 +87,8 @@ func (m *OmegaPacketsModule) luaGoPacketsToJSONString(L *lua.LState) int {
 	return 1
 }
 
-// packet.to_lua_table(pk:packet)
+// packet.to_lua_table(pk:packet) 函数
+// 将包转化为table
 func (m *OmegaPacketsModule) luaGoPacketsToLuaTable(L *lua.LState) int {
 	pk := checkGamePacket(L)
 	luaTable := luar.New(L, pk.goPacket)
