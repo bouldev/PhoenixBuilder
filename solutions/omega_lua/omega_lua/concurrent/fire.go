@@ -1,4 +1,4 @@
-package basic_async
+package concurrent
 
 import (
 	lua "github.com/yuin/gopher-lua"

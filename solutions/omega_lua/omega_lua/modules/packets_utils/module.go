@@ -1,4 +1,4 @@
-package game_packet
+package packets_utils
 
 import (
 	"encoding/json"

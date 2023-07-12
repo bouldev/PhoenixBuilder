@@ -1,7 +1,7 @@
-package game_packet
+package packets_utils
 
 import (
-	"phoenixbuilder/solutions/luaMega/omega_lua/mux_pumper"
+	"phoenixbuilder/solutions/omega_lua/omega_lua/mux_pumper"
 )
 
 type LuaGoPackets interface {

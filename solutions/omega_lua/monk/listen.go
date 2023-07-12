@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/solutions/luaMega/omega_lua/mux_pumper"
+	"phoenixbuilder/solutions/omega_lua/omega_lua/mux_pumper"
 	"time"
 
 	"github.com/go-gl/mathgl/mgl32"

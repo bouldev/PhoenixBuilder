@@ -2,8 +2,8 @@ package listen
 
 import (
 	"context"
-	"phoenixbuilder/solutions/luaMega/omega_lua/basic_async"
-	"phoenixbuilder/solutions/luaMega/omega_lua/sub_modules/game_packet"
+	"phoenixbuilder/solutions/omega_lua/omega_lua/concurrent"
+	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/packets_utils"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -12,14 +12,14 @@ import (
 type OmegaBlockModule struct {
 	goImplements    LuaGoListen
 	luaFns          map[lua.LValue]string
-	ac              *basic_async.AsyncCtrl
-	luaPacketModule *game_packet.OmegaPacketsModule
+	ac              *concurrent.AsyncCtrl
+	luaPacketModule *packets_utils.OmegaPacketsModule
 }
 
 func NewOmegaBlockModule(
-	ac *basic_async.AsyncCtrl,
+	ac *concurrent.AsyncCtrl,
 	goImplements LuaGoListen,
-	luaPacketModule *game_packet.OmegaPacketsModule,
+	luaPacketModule *packets_utils.OmegaPacketsModule,
 ) *OmegaBlockModule {
 	m := &OmegaBlockModule{
 		ac:              ac,
