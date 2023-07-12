@@ -3,6 +3,7 @@ package pollers
 import (
 	"context"
 	"errors"
+
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -24,43 +25,50 @@ func muxEventChan(ctx context.Context, subChan EventDataChan, eventType lua.LVal
 
 type BasicMux struct {
 	*BasicDispatcher
-	parentCtx   context.Context
-	eventChan   EventChan
-	ctx         context.Context
-	cancelFn    func()
-	sourceCount int
+	parentCtx         context.Context
+	eventChan         EventChan
+	ctx               context.Context
+	cancelFn          func()
+	sourceCount       int
+	reserveOnNoSource bool
 }
 
-func NewBasicMux(ctx context.Context, callLua func(luaFn *lua.LFunction, numRet int, luaArgs ...lua.LValue)) *BasicMux {
+// reserveOnNoSource: if true, eventChan will not be closed when no source
+func NewBasicMux(ctx context.Context, luaInvoker LuaInvoker, reserveOnNoSource bool) *BasicMux {
 	eventChan := make(chan Event)
+	if !reserveOnNoSource {
+		close(eventChan)
+	}
 	m := &BasicMux{
-		parentCtx:       ctx,
-		BasicDispatcher: NewBasicDispatcher(eventChan, callLua),
+		reserveOnNoSource: reserveOnNoSource,
+		parentCtx:         ctx,
+		BasicDispatcher:   NewBasicDispatcher(eventChan, luaInvoker),
 	}
 	return m
 }
 
-// this block has next has different behaviour than dispatcher
-// where the dispather dicide has next only on the open statues of chan
-// but mux dicided on also whether there is a source
-func (m *BasicMux) LuaBlockHasNext(L *lua.LState) int {
-	hasNext := false
-	if m.BasicDispatcher.nextEvent != nil {
-		hasNext = true
-	} else {
-		select {
-		case <-m.ctx.Done(): // no source
-		case m.BasicDispatcher.nextEvent = <-m.BasicDispatcher.eventChan:
-			hasNext = true
+func (m *BasicMux) SetReserve(b bool) {
+	if m.reserveOnNoSource == b {
+		return
+	}
+	if m.sourceCount == 0 {
+		if b {
+			// reserve
+			m.eventChan = make(chan Event)
+		} else {
+			// unreserve
+			close(m.eventChan)
 		}
 	}
-	L.Push(lua.LBool(hasNext))
-	return 1
+	m.reserveOnNoSource = b
 }
 
 func (m *BasicMux) increaseSource() {
 	if m.sourceCount == 0 {
 		m.ctx, m.cancelFn = context.WithCancel(m.parentCtx) // new source
+		if !m.reserveOnNoSource {
+			m.eventChan = make(chan Event)
+		}
 	}
 	m.sourceCount++
 }
@@ -69,8 +77,9 @@ func (m *BasicMux) decreaseSource() {
 	m.sourceCount--
 	if m.sourceCount == 0 {
 		m.cancelFn()
-		//close(m.eventChan) // could add source later so don't close it
-		//m.ctx, m.cancelFn = nil, nil
+		if !m.reserveOnNoSource {
+			close(m.eventChan)
+		}
 	}
 }
 
@@ -89,14 +98,14 @@ func (m *BasicMux) AddProvider(provider EventDataProvider, eventType lua.LValue,
 type BasicDispatcher struct {
 	eventChan EventChan
 	nextEvent Event
-	callLua   func(luaFn *lua.LFunction, numRet int, luaArgs ...lua.LValue)
+	LuaInvoker
 }
 
 // when eventChan closed, all dispatch will stop
-func NewBasicDispatcher(eventChan EventChan, callLua func(luaFn *lua.LFunction, numRet int, luaArgs ...lua.LValue)) *BasicDispatcher {
+func NewBasicDispatcher(eventChan EventChan, luaInvoker LuaInvoker) *BasicDispatcher {
 	return &BasicDispatcher{
-		callLua:   callLua,
-		eventChan: eventChan,
+		LuaInvoker: luaInvoker,
+		eventChan:  eventChan,
 	}
 }
 
@@ -154,16 +163,20 @@ func (d *BasicDispatcher) blockGetNext() Event {
 }
 
 func (d *BasicDispatcher) SetHandler(cb func(event Event)) {
-	for {
-		event := d.blockGetNext()
-		if event == nil {
-			break
+	d.AddCoro(1)
+	go func() {
+		defer d.DecreaseCoro()
+		for {
+			event := d.blockGetNext()
+			if event == nil {
+				break
+			}
+			//if d.ctx.Err() != nil {
+			//	break
+			//}
+			cb(event)
 		}
-		//if d.ctx.Err() != nil {
-		//	break
-		//}
-		cb(event)
-	}
+	}()
 }
 
 func (d *BasicDispatcher) LuaBlockHasNext(L *lua.LState) int {
@@ -180,21 +193,27 @@ func (d *BasicDispatcher) LuaBlockGetNext(L *lua.LState) int {
 	}
 }
 
+type CanSetReserve interface {
+	SetReserve(b bool)
+}
+
+func checkCanSetReserve(L *lua.LState) CanSetReserve {
+	ud := L.CheckUserData(1)
+	if v, ok := ud.Value.(CanSetReserve); ok {
+		return v
+	}
+	L.ArgError(1, "poller expected")
+	return nil
+}
+
+func pollerReserve(L *lua.LState) int {
+	m := checkCanSetReserve(L)
+	m.SetReserve(L.ToBool(2))
+	return 0
+}
+
 type CanBlockGetNext interface {
 	LuaBlockGetNext(L *lua.LState) int
-}
-
-type CanBlockHasNext interface {
-	LuaBlockHasNext(L *lua.LState) int
-}
-
-type CanSetHandler interface {
-	SetHandler(cb func(event Event))
-}
-
-type CanSetLuaHandler interface {
-	SetHandler(cb func(event Event))
-	CallLua(luaFn *lua.LFunction, numRet int, luaArgs ...lua.LValue)
 }
 
 func checkCanBlockGetNext(L *lua.LState) CanBlockGetNext {
@@ -206,6 +225,15 @@ func checkCanBlockGetNext(L *lua.LState) CanBlockGetNext {
 	return nil
 }
 
+func pollerBlockGetNext(L *lua.LState) int {
+	m := checkCanBlockGetNext(L)
+	return m.LuaBlockGetNext(L)
+}
+
+type CanBlockHasNext interface {
+	LuaBlockHasNext(L *lua.LState) int
+}
+
 func checkCanBlockHasNext(L *lua.LState) CanBlockHasNext {
 	ud := L.CheckUserData(1)
 	if v, ok := ud.Value.(CanBlockHasNext); ok {
@@ -215,6 +243,20 @@ func checkCanBlockHasNext(L *lua.LState) CanBlockHasNext {
 	return nil
 }
 
+func pollerHasNext(L *lua.LState) int {
+	m := checkCanBlockHasNext(L)
+	return m.LuaBlockHasNext(L)
+}
+
+type CanSetHandler interface {
+	SetHandler(cb func(event Event))
+}
+
+type CanSetLuaHandler interface {
+	SetHandler(cb func(event Event))
+	LuaInvoker
+}
+
 func checkCanSetLuaHandler(L *lua.LState) CanSetLuaHandler {
 	ud := L.CheckUserData(1)
 	if v, ok := ud.Value.(CanSetLuaHandler); ok {
@@ -222,16 +264,6 @@ func checkCanSetLuaHandler(L *lua.LState) CanSetLuaHandler {
 	}
 	L.ArgError(1, "poller expected")
 	return nil
-}
-
-func pollerBlockGetNext(L *lua.LState) int {
-	m := checkCanBlockGetNext(L)
-	return m.LuaBlockGetNext(L)
-}
-
-func pollerHasNext(L *lua.LState) int {
-	m := checkCanBlockHasNext(L)
-	return m.LuaBlockHasNext(L)
 }
 
 func pollerHandleAsync(L *lua.LState) int {

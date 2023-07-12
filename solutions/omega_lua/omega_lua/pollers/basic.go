@@ -43,3 +43,9 @@ type EventDataProvider interface {
 type EventPoller interface {
 	EventDataProvider
 }
+
+type LuaInvoker interface {
+	CallLua(luaFn *lua.LFunction, numRet int, luaArgs ...lua.LValue)
+	AddCoro(int)
+	DecreaseCoro()
+}

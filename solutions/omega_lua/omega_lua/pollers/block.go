@@ -3,8 +3,9 @@ package pollers
 import (
 	"context"
 	"fmt"
-	lua "github.com/yuin/gopher-lua"
 	"time"
+
+	lua "github.com/yuin/gopher-lua"
 )
 
 type LuaEventDataChanMaker func(luaArgs ...lua.LValue) (EventDataChan, error)
@@ -24,6 +25,7 @@ func registerBlockPoller(L *lua.LState) {
 		"poll":           blockPollerPoll,
 		"block_get_next": pollerBlockGetNext,
 		"block_has_next": pollerHasNext,
+		"reserve":        pollerReserve,
 		"handle_async": func(L *lua.LState) int {
 			p := checkPacketPoller(L)
 			pollerHandleAsync(L)
@@ -38,13 +40,14 @@ func registerBlockPoller(L *lua.LState) {
 func NewBlockPoller(
 	ctx context.Context,
 	outerFlags map[lua.LValue]LuaEventDataChanMaker,
-	callLua func(luaFn *lua.LFunction, numRet int, luaArgs ...lua.LValue),
+	reserveOnNoSource bool,
+	luaInvoker LuaInvoker,
 ) *BlockPoller {
 	if outerFlags == nil {
 		outerFlags = map[lua.LValue]LuaEventDataChanMaker{}
 	}
 	p := &BlockPoller{
-		BasicMux:          NewBasicMux(ctx, callLua),
+		BasicMux:          NewBasicMux(ctx, luaInvoker, reserveOnNoSource),
 		eventMakersOnFlag: outerFlags,
 	}
 	return p
