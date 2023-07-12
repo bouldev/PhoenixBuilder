@@ -2,6 +2,7 @@ package pollers
 
 import (
 	"context"
+
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -16,10 +17,10 @@ func NewPacketPoller(
 	packetProviderCtx context.Context,
 	packetProviderCancelFn func(),
 	eventChan EventChan,
-	callLua func(luaFn *lua.LFunction, numRet int, luaArgs ...lua.LValue),
+	luaInvoker LuaInvoker,
 ) *PacketPoller {
 	p := &PacketPoller{
-		BasicDispatcher:        NewBasicDispatcher(eventChan, callLua),
+		BasicDispatcher:        NewBasicDispatcher(eventChan, luaInvoker),
 		packetProviderCtx:      packetProviderCtx,
 		packetProviderCancelFn: packetProviderCancelFn,
 	}
