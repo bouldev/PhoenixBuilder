@@ -46,6 +46,6 @@ type EventPoller interface {
 
 type LuaInvoker interface {
 	CallLua(luaFn *lua.LFunction, numRet int, luaArgs ...lua.LValue)
-	AddCoro(int)
+	AddCoro(count int) error
 	DecreaseCoro()
 }

@@ -163,7 +163,9 @@ func (d *BasicDispatcher) blockGetNext() Event {
 }
 
 func (d *BasicDispatcher) SetHandler(cb func(event Event)) {
-	d.AddCoro(1)
+	if err := d.AddCoro(1); err != nil {
+		return
+	}
 	go func() {
 		defer d.DecreaseCoro()
 		for {
