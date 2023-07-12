@@ -3,7 +3,7 @@ package system
 import (
 	"context"
 	"os"
-	"phoenixbuilder/solutions/luaMega/omega_lua/basic_async"
+	"phoenixbuilder/solutions/omega_lua/omega_lua/concurrent"
 	"runtime"
 	"time"
 
@@ -12,11 +12,11 @@ import (
 
 // system module os/sleep/cwd/set_timeout/set_interval/now
 type OmegaSystemModule struct {
-	ac        *basic_async.AsyncCtrl
+	ac        *concurrent.AsyncCtrl
 	startTime time.Time
 }
 
-func NewOmegaSystemModule(ac *basic_async.AsyncCtrl) *OmegaSystemModule {
+func NewOmegaSystemModule(ac *concurrent.AsyncCtrl) *OmegaSystemModule {
 	return &OmegaSystemModule{
 		ac:        ac,
 		startTime: time.Now(),
