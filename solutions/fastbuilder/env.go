@@ -2,9 +2,9 @@ package fastbuilder
 
 import (
 	"phoenixbuilder/fastbuilder/args"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/script_engine/bridge/script_holder"
 	fbtask "phoenixbuilder/fastbuilder/task"
@@ -14,8 +14,11 @@ import (
 )
 
 func create_environment() *environment.PBEnvironment {
+	clientOption := fbauth.MakeDefaultClientOptions()
+	clientOption.AuthServer = args.AuthServer
+	clientOption.RespondUserOverride = args.CustomGameName
 	env := &environment.PBEnvironment{
-		ClientOptions: fbauth.MakeDefaultClientOptions(),
+		ClientOptions: clientOption,
 	}
 	env.UQHolder = nil
 	env.Resources = nil
@@ -34,7 +37,7 @@ func create_environment() *environment.PBEnvironment {
 			return args.FBVersion
 		},
 		"uc_username": func() string {
-			return env.ClientOptions.FBUCUsername
+			return env.FBAuthClient.(*fbauth.Client).FBUCUsername
 		},
 	}
 	for _, key := range args.CustomSEUndefineConsts {

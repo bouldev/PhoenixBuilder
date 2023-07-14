@@ -11,7 +11,7 @@ import (
 )
 
 func ProcessTokenDefault(env *environment.PBEnvironment) bool {
-	client := fbauth.CreateClient(env)
+	client := fbauth.CreateClient(env.ClientOptions)
 	env.FBAuthClient = client
 	return true
 }

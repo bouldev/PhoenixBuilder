@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/uqHolder"
 	"phoenixbuilder/minecraft"
 	mc_packet "phoenixbuilder/minecraft/protocol/packet"
@@ -76,7 +77,7 @@ func (ea *EmbeddedAdaptor) QuerySensitiveInfo(key defines.SensitiveInfoType) (re
 	case defines.SENSITIVE_INFO_SERVER_CODE_HASH:
 		rawVal = ea.env.ServerCode
 	case defines.SENSITIVE_INFO_USERNAME_HASH:
-		_frags := strings.Split(ea.env.ClientOptions.FBUCUsername, "|")
+		_frags := strings.Split(ea.env.FBAuthClient.(*fbauth.Client).FBUCUsername, "|")
 		if len(_frags) > 0 {
 			rawVal = _frags[0]
 		}

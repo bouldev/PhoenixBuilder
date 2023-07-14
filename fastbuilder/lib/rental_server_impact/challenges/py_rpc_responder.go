@@ -14,12 +14,12 @@ type PyRPCResponder struct {
 	chanCheckNumResponded     chan struct{}
 	isGetStartTypeResponded   bool
 	chanGetStartTypeResponded chan struct{}
-	TransferData              func(content string, uid string) string
+	TransferData              func(content string) string
 	TransferCheckNum          func(arg string) (ret string)
 	Uid                       string
 }
 
-func NewPyRPCResponder(omega omega.MicroOmega, Uid string, TransferData func(content string, uid string) string, TransferCheckNum func(arg string) (ret string)) *PyRPCResponder {
+func NewPyRPCResponder(omega omega.MicroOmega, Uid string, TransferData func(content string) string, TransferCheckNum func(arg string) (ret string)) *PyRPCResponder {
 	responser := &PyRPCResponder{
 		MicroOmega:                omega,
 		Uid:                       Uid,
@@ -69,7 +69,7 @@ func (o *PyRPCResponder) onPyRPC(pk packet.Packet) {
 			}),
 		})
 	} else if command == "GetStartType" {
-		response := o.TransferData(data[0].(string), o.Uid)
+		response := o.TransferData(data[0].(string))
 		o.GetGameControl().SendPacket(&packet.PyRpc{
 			Value: py_rpc.FromGo([]interface{}{
 				"SetStartType",

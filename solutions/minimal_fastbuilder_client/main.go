@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	authServer := "wss://api.fastbuilder.pro:2053/"
+	authServer := "https://api.fastbuilder.pro"
 	username, userPassword, userToken, serverCode, serverPassword, err := info_collect_utils.ReadUserInfo("", "", "", "", "")
 	if err != nil {
 		panic(err)
