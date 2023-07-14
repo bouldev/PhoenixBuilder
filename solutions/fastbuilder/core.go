@@ -8,12 +8,12 @@ import (
 	"os"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/core"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/external"
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/move"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/py_rpc"
 	"phoenixbuilder/fastbuilder/readline"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
@@ -152,7 +152,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 							nil,
 						}),
 					})
-					getchecknum_everPassed=true
+					getchecknum_everPassed = true
 				}
 			}
 		}
@@ -276,6 +276,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	if env.FBAuthClient == nil {
 		env.ClientOptions.AuthServer = args.AuthServer
+		env.ClientOptions.RespondUserOverride = args.CustomGameName
 		env.FBAuthClient = fbauth.CreateClient(env.ClientOptions)
 	}
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
@@ -305,7 +306,7 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	}
 	if len(env.RespondUser) == 0 {
 		if args.CustomGameName != "" {
-			env.RespondUser=args.CustomGameName
+			env.RespondUser = args.CustomGameName
 		}
 	}
 	env.Connection = conn

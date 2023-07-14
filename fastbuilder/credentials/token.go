@@ -5,14 +5,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/environment"
 	I18n "phoenixbuilder/fastbuilder/i18n"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 )
 
 func ProcessTokenDefault(env *environment.PBEnvironment) bool {
-
-	client := fbauth.CreateClient(env)
+	client := fbauth.CreateClient(env.ClientOptions)
 	env.FBAuthClient = client
 	return true
 }

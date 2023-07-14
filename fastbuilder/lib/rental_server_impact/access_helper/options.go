@@ -24,16 +24,16 @@ var DefaultReadLoopFunction = func(conn *minecraft.Conn, deadReason chan<- error
 }
 
 type Options struct {
-	AuthServer                 string
-	ServerConnectionTimeout    time.Duration
-	ChallengeSolvingTimeout    time.Duration
-	ServerConnectRetryTimes    int
-	FBUsername                 string
-	FBUserPassword             string
-	FBUserToken                string
-	ServerCode                 string
-	ServerPassword             string
-	WriteBackToken             bool
+	AuthServer              string
+	ServerConnectionTimeout time.Duration
+	ChallengeSolvingTimeout time.Duration
+	ServerConnectRetryTimes int
+	FBUsername              string
+	FBUserPassword          string
+	FBUserToken             string
+	ServerCode              string
+	ServerPassword          string
+	// WriteBackToken             bool
 	MicroOmegaOption           *bundle.MicroOmegaOption
 	PrintUQHolderDebugInfo     bool
 	MakeBotCreative            bool
@@ -56,7 +56,6 @@ func DefaultOptions() *Options {
 		FBUserToken:                "",
 		ServerCode:                 "",
 		ServerPassword:             "",
-		WriteBackToken:             true,
 		MicroOmegaOption:           bundle.MakeDefaultMicroOmegaOption(),
 		PrintUQHolderDebugInfo:     false,
 		MakeBotCreative:            true,
@@ -66,5 +65,6 @@ func DefaultOptions() *Options {
 		OpPrivilegeRemovedCallBack: nil,
 		ReadLoopFunction:           DefaultReadLoopFunction,
 		ReasonWithPrivilegeStuff:   true,
+		// WriteBackToken:             true,
 	}
 }

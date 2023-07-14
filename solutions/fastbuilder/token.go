@@ -1,7 +1,8 @@
 package fastbuilder
 
 import (
-	"encoding/json"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"phoenixbuilder/fastbuilder/args"
@@ -13,7 +14,7 @@ import (
 	"golang.org/x/term"
 )
 
-func loadFBTokenOrAskFBCredential() (token string) {
+func loadFBTokenOrAskFBCredential() (token string, username string, password string) {
 	if !args.SpecifiedToken() {
 		token = credentials.LoadTokenPath()
 		if _, err := os.Stat(token); os.IsNotExist(err) {
@@ -26,18 +27,10 @@ func loadFBTokenOrAskFBCredential() (token string) {
 			fmt.Printf(I18n.T(I18n.EnterPasswordForFBUC))
 			fbpassword, err := term.ReadPassword(int(syscall.Stdin))
 			fmt.Printf("\n")
-			tokenstruct := &map[string]interface{}{
-				"encrypt_token": true,
-				"username":      fbun,
-				"password":      string(fbpassword),
-			}
-			bytes_token, err := json.Marshal(tokenstruct)
-			if err != nil {
-				fmt.Println(I18n.T(I18n.FBUC_Token_ErrOnGen))
-				fmt.Println(err)
-				return
-			}
-			token = string(bytes_token)
+			token=""
+			username=fbun
+			psw_sum:=sha256.Sum256([]byte(fbpassword))
+			password=hex.EncodeToString(psw_sum[:])
 		} else {
 			token, err = credentials.ReadToken(token)
 			if err != nil {

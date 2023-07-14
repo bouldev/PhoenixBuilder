@@ -75,11 +75,11 @@ func Bootstrap() {
 		check_update()
 	}
 
-	token := loadFBTokenOrAskFBCredential()
-	runInteractiveClient(token)
+	token, username, password := loadFBTokenOrAskFBCredential()
+	runInteractiveClient(token, username, password)
 }
 
-func runInteractiveClient(token string) {
+func runInteractiveClient(token, username, password string) {
 	var code, serverPasswd string
 	var err error
 	if !args.SpecifiedServer() {
@@ -93,7 +93,7 @@ func runInteractiveClient(token string) {
 		fmt.Println(err)
 		return
 	}
-	env := ConfigRealEnvironment(token, code, serverPasswd)
+	env := ConfigRealEnvironment(token, code, serverPasswd, username, password)
 	ptoken_succ := credentials.ProcessTokenDefault(env)
 	//init_and_run_client(token, code, serverPasswd)
 	if !ptoken_succ {
