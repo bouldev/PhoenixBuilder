@@ -9,6 +9,7 @@ import (
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/uqholder"
 	"phoenixbuilder/fastbuilder/lib/rental_server_impact/challenges"
+	"phoenixbuilder/fastbuilder/lib/rental_server_impact/info_collect_utils"
 	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -56,9 +57,9 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 			options.FBUserToken = authenticator.Token
 			return conn, nil
 		}
-		// if options.WriteBackToken {
-		// 	info_collect_utils.WriteFBToken(options.FBUserToken, info_collect_utils.LoadTokenPath())
-		// }
+		if options.WriteBackToken {
+			info_collect_utils.WriteFBToken(options.FBUserToken, info_collect_utils.LoadTokenPath())
+		}
 		fmt.Println("connecting to mc server...")
 		retryTimes := 0
 		for {
