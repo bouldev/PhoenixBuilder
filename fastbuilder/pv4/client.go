@@ -112,8 +112,7 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 	authreq := map[string]interface{}{}
 	if len(fbtoken) != 0 {
 		authreq["login_token"] = fbtoken
-	}
-	if len(username) != 0 {
+	} else if len(username) != 0 {
 		authreq["username"] = username
 		authreq["password"] = password
 	}
