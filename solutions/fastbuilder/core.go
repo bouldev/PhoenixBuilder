@@ -8,7 +8,7 @@ import (
 	"os"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/core"
-	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/external"
 	"phoenixbuilder/fastbuilder/function"
@@ -124,7 +124,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 					})
 				} else if command == "GetStartType" {
 					client := env.FBAuthClient.(*fbauth.Client)
-					response := client.TransferData(data[0].(string), fmt.Sprintf("%s", env.FBAuthClient.(*fbauth.Client).Uid))
+					response := client.TransferData(data[0].(string))
 					conn.WritePacket(&packet.PyRpc{
 						Value: py_rpc.FromGo([]interface{}{
 							"SetStartType",
@@ -290,6 +290,8 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		env.LoginInfo.ServerCode,
 		env.LoginInfo.ServerPasscode,
 		env.LoginInfo.Token,
+		env.LoginInfo.Username,
+		env.LoginInfo.Password,
 	)
 	conn, err := core.InitializeMinecraftConnection(ctx, authenticator, options...)
 
@@ -302,13 +304,8 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		panic(err)
 	}
 	if len(env.RespondUser) == 0 {
-		if args.CustomGameName == "" {
-			go func() {
-				user := env.FBAuthClient.(*fbauth.Client).ShouldRespondUser()
-				env.RespondUser = user
-			}()
-		} else {
-			env.RespondUser = args.CustomGameName
+		if args.CustomGameName != "" {
+			env.RespondUser=args.CustomGameName
 		}
 	}
 	env.Connection = conn

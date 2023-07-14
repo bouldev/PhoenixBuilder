@@ -33,8 +33,8 @@ struct go_string {
 char args_isDebugMode=0;
 char args_disableVersionCheck=0;
 struct go_string newAuthServer={
-	"wss://api.fastbuilder.pro:2053/",
-	31
+	"https://api.fastbuilder.pro",
+	27
 };
 struct go_string startup_script=EMPTY_GOSTRING;
 struct go_string server_code=EMPTY_GOSTRING;

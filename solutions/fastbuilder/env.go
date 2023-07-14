@@ -2,7 +2,7 @@ package fastbuilder
 
 import (
 	"phoenixbuilder/fastbuilder/args"
-	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"

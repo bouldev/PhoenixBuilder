@@ -5,37 +5,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/environment"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 )
 
 func ProcessTokenDefault(env *environment.PBEnvironment) bool {
-	token := env.LoginInfo.Token
-	client := fbauth.CreateClient(env.ClientOptions)
+
+	client := fbauth.CreateClient(env)
 	env.FBAuthClient = client
-	if token[0] == '{' {
-		token, err_msg := client.GetToken("", token)
-		if token == "" {
-			fmt.Printf("%s\n", err_msg)
-			fmt.Println(I18n.T(I18n.FBUC_LoginFailed))
-			return false
-		}
-		tokenPath := LoadTokenPath()
-		if fi, err := os.Create(tokenPath); err != nil {
-			fmt.Println(I18n.T(I18n.FBUC_Token_ErrOnCreate), err)
-			fmt.Println(I18n.T(I18n.ErrorIgnored))
-		} else {
-			env.LoginInfo.Token = token
-			_, err = fi.WriteString(token)
-			if err != nil {
-				fmt.Println(I18n.T(I18n.FBUC_Token_ErrOnSave), err)
-				fmt.Println(I18n.T(I18n.ErrorIgnored))
-			}
-			fi.Close()
-			fi = nil
-		}
-	}
 	return true
 }
 
