@@ -81,38 +81,26 @@ func ReadUserInfo(userName, userPassword, userToken, serverCode, serverPassword 
 	if userName == "" && userPassword == "" && userToken == "" {
 		userToken, err = ReadToken(LoadTokenPath())
 		if err != nil || userToken == "" {
-			for {
-				userToken, err = GetUserInput("账户密码登陆暂不可用，请输入token:")
-				if strings.HasPrefix(userToken, "w9/") {
+			for userName == "" {
+				userName, err = GetUserInput("请输入 FB 用户名或者 Token:")
+				if strings.HasPrefix(userName, "w9/") {
+					userToken = userName
+					userName = ""
 					break
 				}
 				if err != nil {
 					return userName, userPassword, userToken, serverCode, serverPassword, err
 				}
-				fmt.Println("无效输入：输入的不是token")
+			}
+			if userToken == "" {
+				for userPassword == "" {
+					userPassword, err = GetUserPasswordInput(I18n.T(I18n.EnterPasswordForFBUC))
+					if err != nil {
+						return userName, userPassword, userToken, serverCode, serverPassword, err
+					}
+				}
 			}
 		}
-		// if err != nil || userToken == "" {
-		// 	for userName == "" {
-		// 		userName, err = GetUserInput("请输入 FB 用户名或者 Token:")
-		// 		if strings.HasPrefix(userName, "w9/") {
-		// 			userToken = userName
-		// 			userName = ""
-		// 			break
-		// 		}
-		// 		if err != nil {
-		// 			return userName, userPassword, userToken, serverCode, serverPassword, err
-		// 		}
-		// 	}
-		// 	if userToken == "" {
-		// 		for userPassword == "" {
-		// 			userPassword, err = GetUserPasswordInput(I18n.T(I18n.EnterPasswordForFBUC))
-		// 			if err != nil {
-		// 				return userName, userPassword, userToken, serverCode, serverPassword, err
-		// 			}
-		// 		}
-		// 	}
-		// }
 	}
 
 	// read server code and password

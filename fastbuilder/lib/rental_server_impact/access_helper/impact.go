@@ -2,6 +2,8 @@ package access_helper
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"phoenixbuilder/fastbuilder/core"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/bundle"
@@ -27,20 +29,12 @@ func ImpactServer(ctx context.Context, options *Options) (conn *minecraft.Conn, 
 	fmt.Println("connecting to fb server...")
 	fbClient := fbauth.CreateClient(clientOptions)
 	fmt.Println("done connecting to fb server")
-	// if options.FBUserToken == "" {
-	// 	tokenstruct := &map[string]interface{}{
-	// 		"encrypt_token": true,
-	// 		"username":      options.FBUsername,
-	// 		"password":      string(options.FBUserPassword),
-	// 	}
-	// 	var bytes_token []byte
-	// 	bytes_token, err = json.Marshal(tokenstruct)
-	// 	if err != nil {
-	// 		return
-	// 	}
-	// 	options.FBUserToken = string(bytes_token)
-	// }
-	authenticator := fbauth.NewAccessWrapper(fbClient, options.ServerCode, options.ServerPassword, options.FBUserToken, options.FBUsername, string(options.FBUserPassword))
+	hashedPassword := ""
+	if options.FBUserToken == "" {
+		psw_sum := sha256.Sum256([]byte(options.FBUserPassword))
+		hashedPassword = hex.EncodeToString(psw_sum[:])
+	}
+	authenticator := fbauth.NewAccessWrapper(fbClient, options.ServerCode, options.ServerPassword, options.FBUserToken, options.FBUsername, hashedPassword)
 	{
 		connectMCServer := func() (conn *minecraft.Conn, err error) {
 			connectCtx := ctx
