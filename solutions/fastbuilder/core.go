@@ -8,12 +8,12 @@ import (
 	"os"
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/core"
-	fbauth "phoenixbuilder/fastbuilder/cv4/auth"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/external"
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/move"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/py_rpc"
 	"phoenixbuilder/fastbuilder/readline"
 	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
@@ -126,7 +126,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 					})
 				} else if command == "GetStartType" {
 					client := env.FBAuthClient.(*fbauth.Client)
-					response := client.TransferData(data[0].(string), fmt.Sprintf("%s", env.FBAuthClient.(*fbauth.Client).Uid))
+					response := client.TransferData(data[0].(string))
 					conn.WritePacket(&packet.PyRpc{
 						Value: py_rpc.FromGo([]interface{}{
 							"SetStartType",
@@ -278,7 +278,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	if env.FBAuthClient == nil {
 		env.ClientOptions.AuthServer = args.AuthServer
-		env.FBAuthClient = fbauth.CreateClient(env.ClientOptions)
+		env.FBAuthClient = fbauth.CreateClient(env)
 	}
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
 
@@ -292,6 +292,8 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		env.LoginInfo.ServerCode,
 		env.LoginInfo.ServerPasscode,
 		env.LoginInfo.Token,
+		env.LoginInfo.Username,
+		env.LoginInfo.Password,
 	)
 	conn, err := core.InitializeMinecraftConnection(ctx, authenticator, options...)
 
@@ -304,12 +306,7 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		panic(err)
 	}
 	if len(env.RespondUser) == 0 {
-		if args.CustomGameName == "" {
-			go func() {
-				user := env.FBAuthClient.(*fbauth.Client).ShouldRespondUser()
-				env.RespondUser = user
-			}()
-		} else {
+		if args.CustomGameName != "" {
 			env.RespondUser = args.CustomGameName
 		}
 	}
