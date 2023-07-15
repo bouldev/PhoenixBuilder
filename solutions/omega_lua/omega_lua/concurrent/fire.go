@@ -6,7 +6,7 @@ import (
 
 // FireLuaCodeInGoRoutine 在一个新的 Go 协程中执行给定的 Lua 代码，并返回一个错误通道
 // 热启动lua代码
-func FireLuaCodeInGoRoutine(ac *AsyncCtrl, L *lua.LState, code string) (done <-chan error) {
+func FireLuaCodeInGoRoutine(ac AsyncCtrl, L *lua.LState, code string) (done <-chan error) {
 	// 创建一个带缓冲的错误通道 用于取消这个线程
 	//办到中断这个lua代码
 	doneChan := make(chan error, 1)
@@ -18,9 +18,8 @@ func FireLuaCodeInGoRoutine(ac *AsyncCtrl, L *lua.LState, code string) (done <-c
 		err = L.DoString(code)
 	}()
 	go func() {
-		ac.WaitGroup.Wait()
+		ac.Wait()
 		doneChan <- err
 	}()
-
 	return doneChan
 }

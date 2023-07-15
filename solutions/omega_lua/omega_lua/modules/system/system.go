@@ -1,113 +1,52 @@
 package system
 
 import (
-	"context"
-	"os"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/concurrent"
-	"runtime"
+	"phoenixbuilder/solutions/omega_lua/omega_lua/pollers"
 	"time"
 
 	lua "github.com/yuin/gopher-lua"
 )
 
-// system module os/sleep/cwd/set_timeout/set_interval/now
-type OmegaSystemModule struct {
-	ac        *concurrent.AsyncCtrl
-	startTime time.Time
+type SystemModule struct {
+	LuaGoSystem
+	pollers.LuaAsyncInvoker
 }
 
-func NewOmegaSystemModule(ac *concurrent.AsyncCtrl) *OmegaSystemModule {
-	return &OmegaSystemModule{
-		ac:        ac,
-		startTime: time.Now(),
+type LuaGoSystem interface {
+	Print(string)
+	UserInputChan() <-chan string
+}
+
+func NewSystemModule(goImplements LuaGoSystem, luaAsyncInvoker pollers.LuaAsyncInvoker) *SystemModule {
+	return &SystemModule{
+		LuaGoSystem:     goImplements,
+		LuaAsyncInvoker: luaAsyncInvoker,
 	}
 }
 
-func (m *OmegaSystemModule) MakeLValue(L *lua.LState) lua.LValue {
-	return L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
-		"os":           m.luaGoSystemOs,
-		"cwd":          m.luaGoSystemCwd,
-		"now":          m.luaGoSystemNow,
-		"set_timeout":  m.luaGoSetTimeout,
-		"set_interval": m.luaGoSetTimeInterval,
+func (m *SystemModule) MakeLValue(L *lua.LState) (lua.LValue, map[lua.LValue]pollers.LuaEventDataChanMaker) {
+	luaModule := L.NewTable()
+	startTime := float64(time.Now().UnixMilli()) / 1000
+	luaModule = L.SetFuncs(luaModule, map[string]lua.LGFunction{
+		"print": m.luaGoSystemPrint,
+		"os":    m.luaGoSystemOs,
+		"cwd":   m.luaGoSystemCwd,
+		"now": func(l *lua.LState) int {
+			l.Push(lua.LNumber((float64(time.Now().UnixMilli()) / 1000) - startTime))
+			return 1
+		},
 	})
-}
-
-// system.os() arch-system:string
-func (m *OmegaSystemModule) luaGoSystemOs(L *lua.LState) int {
-	osName := runtime.GOOS
-	archName := runtime.GOARCH
-	L.Push(lua.LString(osName + "-" + archName))
-	return 1
-}
-
-// system.cwd() cwd:string
-func (m *OmegaSystemModule) luaGoSystemCwd(L *lua.LState) int {
-	cwd, err := os.Getwd()
-	if err != nil {
-		L.RaiseError(err.Error())
-		return 0
+	// poller flags for sleep and input
+	flagSleep := L.NewFunction(m.luaGoSleep)
+	flagInput := L.NewFunction(m.luaGoInput)
+	pollerFlags := map[lua.LValue]pollers.LuaEventDataChanMaker{
+		flagSleep: goSleepSourceMaker,
+		flagInput: m.goInputSourceMaker,
 	}
-	L.Push(lua.LString(cwd))
-	return 1
-}
-
-// system.now() now_second:number
-func (m *OmegaSystemModule) luaGoSystemNow(L *lua.LState) int {
-	L.Push(lua.LNumber(float64(time.Since(m.startTime).Seconds())))
-	return 1
-}
-
-// system.set_timeout(second:number, fn:func)
-func (m *OmegaSystemModule) luaGoSetTimeout(L *lua.LState) int {
-	timeout := time.Duration(float64(L.ToNumber(1)) * float64(time.Second))
-	callback := L.ToFunction(2)
-	m.ac.NewGoRoutine(func() {
-		time.Sleep(timeout)
-		err := m.ac.SafeCall(L, lua.P{
-			Fn:      callback,
-			NRet:    0,
-			Protect: true,
-		})
-		if err != nil {
-			L.RaiseError(err.Error())
-		}
-	})
-	return 0
-}
-
-// system.set_interval(second:number, fn:func)
-func (m *OmegaSystemModule) luaGoSetTimeInterval(L *lua.LState) int {
-	interval := time.Duration(float64(L.ToNumber(1)) * float64(time.Second))
-	callback := L.ToFunction(2)
-	stopCtx, stopFn := context.WithCancel(m.ac.Context())
-	go func() {
-		<-m.ac.Context().Done()
-		stopFn()
-	}()
-	m.ac.NewGoRoutine(func() {
-		ticker := time.NewTicker(interval)
-		for {
-			select {
-			case <-ticker.C:
-				err := m.ac.SafeCall(L, lua.P{
-					Fn:      callback,
-					NRet:    0,
-					Protect: true,
-				})
-				if err != nil {
-					L.RaiseError(err.Error())
-				}
-			case <-stopCtx.Done():
-				// ticker.Stop()
-				return
-			}
-		}
-	})
-	luaStopFn := L.NewFunction(func(L *lua.LState) int {
-		stopFn()
-		return 0
-	})
-	L.Push(luaStopFn)
-	return 1
+	// inject block_sleep and block_input flags into module
+	luaModule.RawSetString("block_sleep", flagSleep)
+	luaModule.RawSetString("block_input", flagInput)
+	// inject start_time into module
+	luaModule.RawSetString("start_time", lua.LNumber(startTime))
+	return luaModule, pollerFlags
 }

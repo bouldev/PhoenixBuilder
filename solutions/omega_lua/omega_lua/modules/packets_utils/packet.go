@@ -18,16 +18,12 @@ type GamePacket struct {
 // 你需要传入包本身 在lua中的名字 在lua中的id
 // 也就是goPacket luaName luaID
 // 会返回给你这个新的包的指针
-func NewGamePacket(
-	goPacket packet.Packet,
-	luaName lua.LString,
-	luaID lua.LNumber,
-) *GamePacket {
-	return &GamePacket{
+func (g *OmegaPacketsModule) NewGamePacket(goPacket packet.Packet, L *lua.LState) lua.LValue {
+	return (&GamePacket{
 		goPacket: goPacket,
-		luaName:  luaName,
-		luaID:    luaID,
-	}
+		luaName:  g.MCPacketIDToLuaName[goPacket.ID()],
+		luaID:    g.MCPacketIDToLuaInt[goPacket.ID()],
+	}).MakeLValue(L)
 }
 
 // 继承game_packet内容

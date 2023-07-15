@@ -89,6 +89,13 @@ func (c *CmdSender) SendWSCmdAndInvokeOnResponse(cmd string, cb func(output *pac
 	c.SendPacket(pkt)
 }
 
+func (c *CmdSender) SendPlayerCmd(cmd string) {
+	ud, _ := uuid.NewUUID()
+	pkt := c.packCmdWithUUID(cmd, ud, false)
+	c.SendPacket(pkt)
+	c.SendPacket(pkt)
+}
+
 func (c *CmdSender) SendPlayerCmdAndInvokeOnResponseWithFeedback(cmd string, cb func(output *packet.CommandOutput)) {
 	if !c.currentCmdFeedBack && !c.cmdFeedBackOnSent {
 		c.turnOnFeedBack()

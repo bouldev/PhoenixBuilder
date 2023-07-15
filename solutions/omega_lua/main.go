@@ -2,65 +2,90 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
+	"path"
 	"phoenixbuilder/fastbuilder/lib/utils/file_wrapper"
 	"phoenixbuilder/solutions/omega_lua/monk"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/concurrent"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/backend"
+	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/command"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/listen"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/packets_utils"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/system"
 	submodule_holder "phoenixbuilder/solutions/omega_lua/omega_lua/modules_holder"
-	"time"
+	"regexp"
+	"strconv"
+	"strings"
 
 	lua "github.com/yuin/gopher-lua"
 )
 
-// 根据指定的目录读取消息 返回值为读取后的字符串 与 一个err
-func ReadOutLuaCodeFromFile(fileName string) (code string, err error) {
-	data, err := file_wrapper.GetFileData(fileName)
+func ReadOutAllExamplesHelper(targetDir string) map[int]string {
+	// 从example目录下读取所有的lua文件, 文件名规则为 01xxx.lua,02xxx.lua
+	// 输出类似于 map[int]string{1:"01xxx.lua",2:"02xxx.lua"}
+	fs, err := ioutil.ReadDir(targetDir)
 	if err != nil {
-		return "", err
+		panic(err)
 	}
-	code = string(data)
-	return
+	result := make(map[int]string)
+	for _, f := range fs {
+		fileName := f.Name()
+		if !strings.HasSuffix(fileName, ".lua") {
+			continue
+		}
+		// 使用正则匹配读取文件名开头的数字
+		r, _ := regexp.Compile(`^\d+`)
+		idx := r.FindString(fileName)
+		tmp, err := strconv.Atoi(idx)
+		if err != nil {
+			panic(err)
+		}
+		code, _ := file_wrapper.GetFileData(path.Join(targetDir, fileName))
+		result[tmp] = string(code)
+	}
+	return result
+}
+
+func CreateLuaEnv(ctx context.Context) (ac concurrent.AsyncCtrl, L *lua.LState) {
+	L = lua.NewState()
+	ac = concurrent.NewAsyncCtrl(ctx)
+	// go implements
+	// 1. monk system
+	goSystem := monk.NewMonkSystem()
+	goPackets := monk.NewMonkPackets(128)
+	goCmdSender := monk.NewMonkCmdSender()
+	// lua wrapper
+	systemModule := system.NewSystemModule(goSystem, ac)
+	luaSystemModule, systemPollerFlags := systemModule.MakeLValue(L)
+	packetsModule := packets_utils.NewOmegaPacketsModule(goPackets)
+	luaPacketsModule := packetsModule.MakeLValue(L)
+	cmdModule := command.NewCmdModule(goCmdSender, packetsModule.NewGamePacket)
+	luaCmdModule := cmdModule.MakeLValue(L, ac)
+
+	// pollers
+	ListenModule := listen.NewListenModule(ac,
+		goPackets, packetsModule.NewGamePacket,
+		systemPollerFlags)
+	luaListenModule := ListenModule.MakeLValue(L)
+
+	// load modules
+	L.PreloadModule("omega", submodule_holder.NewSubModuleHolder(map[string]lua.LValue{
+		"system":  luaSystemModule,
+		"listen":  luaListenModule,
+		"packets": luaPacketsModule,
+		"cmds":    luaCmdModule,
+	}).Loader)
+	return ac, L
 }
 
 func main() {
 	// read lua
 	//测试用读取的packet.lua
-	code, err := ReadOutLuaCodeFromFile("packet.lua")
-	if err != nil {
-		panic(err)
-	}
-	if code == "" {
-		panic("empty lua code")
-	}
-	// create lua state
-	L := lua.NewState()
-	defer L.Close()
-	// create async ctrl
-	//创建一个async控制对象
-	ac := concurrent.NewAsyncCtrl(context.Background())
-	//创建一个packetSize为128的游戏监听器
-	monkListener := monk.NewMonkListen(128)
-	//向omega中注册内置table
-	//makeLvalue即是注册这个子表中的各种属性
-	luaPacketsModule := packets_utils.NewOmegaPacketsModule(monkListener)
-	L.PreloadModule("omega", submodule_holder.NewSubModuleHolder(map[string]lua.LValue{
-		"backend": backend.NewOmegaBackendModule(&monk.MonkBackend{}).MakeLValue(L),
-		"system":  system.NewOmegaSystemModule(ac).MakeLValue(L),
-		"packets": luaPacketsModule.MakeLValue(L),
-		"block": listen.NewOmegaBlockModule(
-			ac,
-			monk.NewMonkListen(128),
-			luaPacketsModule,
-		).MakeLValue(L),
-	}).Loader)
-	// run lua code
-	errChan := concurrent.FireLuaCodeInGoRoutine(ac, L, code)
+	allCodes := ReadOutAllExamplesHelper("examples")
+	ac, L := CreateLuaEnv(context.Background())
+	exampleIdx := 4 // 选择要运行的示例, 1,2,3,...
+	errChan := concurrent.FireLuaCodeInGoRoutine(ac, L, allCodes[exampleIdx])
 	// wait for lua code to finish
-	time.Sleep(time.Second * 2)
-	err = <-errChan
+	err := <-errChan
 	if err != nil {
 		panic(err)
 	}
