@@ -12,25 +12,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// 终端输入输出管理中心
-var inputPumperMux *mux_pumper.InputPumperMux
-
 // 游戏包的管理中心 负责分发gamePacket插件
 var gamePacketPumperMux *mux_pumper.GamePacketPumperMux
-
-// 开始终端资源分配中心
-func startInputSource() {
-	// 创建一个新的 inputPumperMux 实例
-	inputPumperMux = mux_pumper.NewInputPumperMux()
-	// 创建一个定时任务，每隔两秒向 inputPumperMux 发送一条随机字符串
-	go func() {
-		for {
-			time.Sleep(time.Second * 2)
-			input := "hello: " + uuid.New().String()
-			inputPumperMux.PumpInput(input)
-		}
-	}()
-}
 
 // 开启游戏包的资源分配中心
 func startGamePacketSource() {
@@ -92,29 +75,23 @@ func startGamePacketSource() {
 
 // 在程序启动时调用 startInputSource 和 startGamePacketSource 启动资源分配中心
 func init() {
-	go startInputSource()
 	go startGamePacketSource()
 }
 
-// MonkListen 表示一个游戏监听器，其中 packetQueueSize 表示数据包通道的缓冲区大小
-type MonkListen struct {
+// MonkPackets 表示一个游戏监听器，其中 packetQueueSize 表示数据包通道的缓冲区大小
+type MonkPackets struct {
 	packetQueueSize int
 }
 
 // NewMonkListen 创建一个新的 MonkListen 实例
-func NewMonkListen(packetQueueSize int) *MonkListen {
-	return &MonkListen{
+func NewMonkPackets(packetQueueSize int) *MonkPackets {
+	return &MonkPackets{
 		packetQueueSize: packetQueueSize,
 	}
 }
 
-// UserInputChan 返回一个只读的字符串通道，用于监听用户输入
-func (m *MonkListen) UserInputChan() <-chan string {
-	return inputPumperMux.NewListener()
-}
-
 // MakeMCPacketFeeder 根据给定的协议名称列表创建一个数据包通道，并返回该通道。该方法还会创建一个数据包提供者，并将其添加到游戏包的管理中心中
-func (m *MonkListen) MakeMCPacketFeeder(ctx context.Context, wants []string) <-chan packet.Packet {
+func (m *MonkPackets) MakeMCPacketFeeder(ctx context.Context, wants []string) <-chan packet.Packet {
 	feeder := make(chan packet.Packet, m.packetQueueSize)
 	pumper := mux_pumper.MakeMCPacketNoBlockFeeder(ctx, feeder)
 	gamePacketPumperMux.AddNewPumper(wants, pumper)
@@ -122,6 +99,6 @@ func (m *MonkListen) MakeMCPacketFeeder(ctx context.Context, wants []string) <-c
 }
 
 // GetMCPacketNameIDMapping 返回游戏包的名称和 ID 的映射
-func (m *MonkListen) GetMCPacketNameIDMapping() mux_pumper.MCPacketNameIDMapping {
+func (m *MonkPackets) GetMCPacketNameIDMapping() mux_pumper.MCPacketNameIDMapping {
 	return gamePacketPumperMux.GetMCPacketNameIDMapping()
 }

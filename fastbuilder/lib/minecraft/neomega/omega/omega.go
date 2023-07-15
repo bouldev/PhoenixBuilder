@@ -36,6 +36,7 @@ type CmdSender interface {
 	SendWSCmd(cmd string)
 	SendCmdWithUUID(cmd string, ud uuid.UUID, ws bool)
 	SendWOCmd(cmd string)
+	SendPlayerCmd(cmd string)
 	SendWSCmdAndInvokeOnResponse(string, func(output *packet.CommandOutput))
 	SendPlayerCmdAndInvokeOnResponseWithFeedback(string, func(output *packet.CommandOutput))
 }

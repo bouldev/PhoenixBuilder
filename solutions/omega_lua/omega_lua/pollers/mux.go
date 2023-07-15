@@ -7,42 +7,29 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func muxEventChan(ctx context.Context, subChan EventDataChan, eventType lua.LValue, muxChan EventChan, L *lua.LState) {
-	for {
-		select {
-		case <-ctx.Done():
-			break
-		case eventData := <-subChan:
-			if eventData == nil {
-				break
-			}
-			event := MakeEvent(eventType, eventData, L)
-			muxChan <- event
-		}
-	}
-
-}
-
 type BasicMux struct {
 	*BasicDispatcher
-	parentCtx         context.Context
-	eventChan         EventChan
-	ctx               context.Context
-	cancelFn          func()
-	sourceCount       int
+	LuaAsyncInvoker
+	parentCtx   context.Context
+	eventChan   EventChan
+	ctx         context.Context
+	cancelFn    func()
+	sourceCount int
+	// reserveOnNoSource: if true, eventChan will not be closed when no source
 	reserveOnNoSource bool
 }
 
-// reserveOnNoSource: if true, eventChan will not be closed when no source
-func NewBasicMux(ctx context.Context, luaInvoker LuaInvoker, reserveOnNoSource bool) *BasicMux {
-	eventChan := make(chan Event)
-	if !reserveOnNoSource {
-		close(eventChan)
-	}
+func NewBasicMux(parentCtx context.Context, luaAsyncInvoker LuaAsyncInvoker) *BasicMux {
+	eventChan := make(chan lua.LValue)
+	ctx, cancelFn := context.WithCancel(parentCtx)
 	m := &BasicMux{
-		reserveOnNoSource: reserveOnNoSource,
-		parentCtx:         ctx,
-		BasicDispatcher:   NewBasicDispatcher(eventChan, luaInvoker),
+		BasicDispatcher:   NewBasicDispatcher(eventChan, luaAsyncInvoker),
+		LuaAsyncInvoker:   luaAsyncInvoker,
+		eventChan:         eventChan,
+		parentCtx:         parentCtx,
+		ctx:               ctx,
+		cancelFn:          cancelFn,
+		reserveOnNoSource: true,
 	}
 	return m
 }
@@ -54,10 +41,13 @@ func (m *BasicMux) SetReserve(b bool) {
 	if m.sourceCount == 0 {
 		if b {
 			// reserve
-			m.eventChan = make(chan Event)
+			m.eventChan = make(chan lua.LValue)
 		} else {
 			// unreserve
 			close(m.eventChan)
+			// if m.ctx.Err() == nil {
+			// 	m.cancelFn()
+			// }
 		}
 	}
 	m.reserveOnNoSource = b
@@ -67,14 +57,16 @@ func (m *BasicMux) increaseSource() {
 	if m.sourceCount == 0 {
 		m.ctx, m.cancelFn = context.WithCancel(m.parentCtx) // new source
 		if !m.reserveOnNoSource {
-			m.eventChan = make(chan Event)
+			m.eventChan = make(chan lua.LValue)
 		}
 	}
 	m.sourceCount++
+	// fmt.Printf("increase source %v,\n", m.sourceCount)
 }
 
 func (m *BasicMux) decreaseSource() {
 	m.sourceCount--
+	// fmt.Printf("decrease source %v,\n", m.sourceCount)
 	if m.sourceCount == 0 {
 		m.cancelFn()
 		if !m.reserveOnNoSource {
@@ -83,11 +75,27 @@ func (m *BasicMux) decreaseSource() {
 	}
 }
 
+func muxEventChan(ctx context.Context, subChan EventDataChan, eventType lua.LValue, muxChan EventChan, L *lua.LState) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case eventData := <-subChan:
+			if eventData == nil {
+				return
+			}
+			event := MakeEvent(eventType, eventData, L)
+			muxChan <- event
+		}
+	}
+
+}
+
 func (m *BasicMux) AddSource(subChan EventDataChan, eventType lua.LValue, L *lua.LState) {
-	go func() {
+	m.Coro(func() {
 		muxEventChan(m.ctx, subChan, eventType, m.eventChan, L)
 		m.decreaseSource()
-	}()
+	})
 	m.increaseSource()
 }
 
@@ -98,35 +106,36 @@ func (m *BasicMux) AddProvider(provider EventDataProvider, eventType lua.LValue,
 type BasicDispatcher struct {
 	eventChan EventChan
 	nextEvent Event
-	LuaInvoker
+	LuaAsyncInvoker
 }
 
 // when eventChan closed, all dispatch will stop
-func NewBasicDispatcher(eventChan EventChan, luaInvoker LuaInvoker) *BasicDispatcher {
+func NewBasicDispatcher(eventChan EventChan, luaAsyncInvoker LuaAsyncInvoker) *BasicDispatcher {
 	return &BasicDispatcher{
-		LuaInvoker: luaInvoker,
-		eventChan:  eventChan,
+		LuaAsyncInvoker: luaAsyncInvoker,
+		eventChan:       eventChan,
 	}
 }
 
 func (d *BasicDispatcher) GetFeeder() EventDataChan {
-	eventDataChan := make(chan EventData)
-	go func() {
-		defer close(eventDataChan)
-		for {
-			//select {
-			//case <-d.ctx.Done():
-			//	break
-			//case
-			event := <-d.eventChan
-			if event == nil {
-				break
-			}
-			eventDataChan <- EventData(event)
-			//}
-		}
-	}()
-	return eventDataChan
+	//eventDataChan := make(chan EventData)
+	//go func() {
+	//	defer close(eventDataChan)
+	//	for {
+	//		//select {
+	//		//case <-d.ctx.Done():
+	//		//	break
+	//		//case
+	//		event := <-d.eventChan
+	//		if event == nil {
+	//			break
+	//		}
+	//		eventDataChan <- EventData(event)
+	//		//}
+	//	}
+	//}()
+	//return eventDataChan
+	return EventDataChan(d.eventChan)
 }
 
 var ErrNoMoreEvent = errors.New("no more events")
@@ -163,11 +172,7 @@ func (d *BasicDispatcher) blockGetNext() Event {
 }
 
 func (d *BasicDispatcher) SetHandler(cb func(event Event)) {
-	if err := d.AddCoro(1); err != nil {
-		return
-	}
-	go func() {
-		defer d.DecreaseCoro()
+	d.Coro(func() {
 		for {
 			event := d.blockGetNext()
 			if event == nil {
@@ -178,7 +183,7 @@ func (d *BasicDispatcher) SetHandler(cb func(event Event)) {
 			//}
 			cb(event)
 		}
-	}()
+	})
 }
 
 func (d *BasicDispatcher) LuaBlockHasNext(L *lua.LState) int {
@@ -227,7 +232,7 @@ func checkCanBlockGetNext(L *lua.LState) CanBlockGetNext {
 	return nil
 }
 
-func pollerBlockGetNext(L *lua.LState) int {
+func PollerBlockGetNext(L *lua.LState) int {
 	m := checkCanBlockGetNext(L)
 	return m.LuaBlockGetNext(L)
 }
@@ -245,7 +250,7 @@ func checkCanBlockHasNext(L *lua.LState) CanBlockHasNext {
 	return nil
 }
 
-func pollerHasNext(L *lua.LState) int {
+func PollerHasNext(L *lua.LState) int {
 	m := checkCanBlockHasNext(L)
 	return m.LuaBlockHasNext(L)
 }
@@ -256,7 +261,7 @@ type CanSetHandler interface {
 
 type CanSetLuaHandler interface {
 	SetHandler(cb func(event Event))
-	LuaInvoker
+	LuaAsyncInvoker
 }
 
 func checkCanSetLuaHandler(L *lua.LState) CanSetLuaHandler {
@@ -268,11 +273,15 @@ func checkCanSetLuaHandler(L *lua.LState) CanSetLuaHandler {
 	return nil
 }
 
-func pollerHandleAsync(L *lua.LState) int {
+func PollerHandleAsync(L *lua.LState) int {
 	m := checkCanSetLuaHandler(L)
 	handler := L.ToFunction(2)
 	m.SetHandler(func(event Event) {
-		m.CallLua(handler, 0, event)
+		m.SafeCall(L, lua.P{
+			Fn:      handler,
+			NRet:    0,
+			Protect: true,
+		}, event)
 	})
 	return 0
 }

@@ -2,7 +2,6 @@ package packets_utils
 
 import (
 	"encoding/json"
-	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
 
 	lua "github.com/yuin/gopher-lua"
@@ -65,18 +64,6 @@ func (m *OmegaPacketsModule) MakeLValue(L *lua.LState) lua.LValue {
 	L.SetTable(packetModule, lua.LString("to_lua_table"), L.NewFunction(m.luaGoPacketsToLuaTable))
 	registerGamePacket(L)
 	return packetModule
-}
-
-// 将 Go 包装的 Minecraft 包转换为 Lua 中的 GamePacket 对象
-func (m *OmegaPacketsModule) WrapPacketToLuaPacket(pk packet.Packet) *GamePacket {
-	pkID := pk.ID()
-	luaID := m.MCPacketIDToLuaInt[pkID]
-	luaName := m.MCPacketIDToLuaName[pkID]
-	return NewGamePacket(
-		pk,
-		luaName,
-		luaID,
-	)
 }
 
 // packet.to_json_string(pk:packet)

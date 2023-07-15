@@ -17,10 +17,10 @@ func NewPacketPoller(
 	packetProviderCtx context.Context,
 	packetProviderCancelFn func(),
 	eventChan EventChan,
-	luaInvoker LuaInvoker,
+	luaAsyncInvoker LuaAsyncInvoker,
 ) *PacketPoller {
 	p := &PacketPoller{
-		BasicDispatcher:        NewBasicDispatcher(eventChan, luaInvoker),
+		BasicDispatcher:        NewBasicDispatcher(eventChan, luaAsyncInvoker),
 		packetProviderCtx:      packetProviderCtx,
 		packetProviderCancelFn: packetProviderCancelFn,
 	}
@@ -35,16 +35,16 @@ func (m *PacketPoller) MakeLValue(L *lua.LState) lua.LValue {
 	return luaPoller
 }
 
-func registerPacketPoller(L *lua.LState) {
+func RegisterPacketPoller(L *lua.LState) {
 	mt := L.NewTypeMetatable("packet_poller")
 	// methods
 	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
 		"stop":           packetPollerStop,
-		"block_get_next": pollerBlockGetNext,
-		"block_has_next": pollerHasNext,
+		"block_get_next": PollerBlockGetNext,
+		"block_has_next": PollerHasNext,
 		"handle_async": func(L *lua.LState) int {
 			p := checkPacketPoller(L)
-			pollerHandleAsync(L)
+			PollerHandleAsync(L)
 			L.Push(p.luaSelf)
 			return 1
 		},
