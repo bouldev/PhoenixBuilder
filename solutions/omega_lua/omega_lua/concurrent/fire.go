@@ -9,7 +9,7 @@ import (
 func FireLuaCodeInGoRoutine(ac AsyncCtrl, L *lua.LState, code string) (done <-chan error) {
 	// 创建一个带缓冲的错误通道 用于取消这个线程
 	//办到中断这个lua代码
-	doneChan := make(chan error, 1)
+	doneChan := make(chan error)
 	var err error
 	ac.AddCoro(1)
 	go func() {
