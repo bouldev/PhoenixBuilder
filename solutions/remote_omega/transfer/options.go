@@ -1,8 +1,8 @@
 package transfer
 
 const (
-	DefaultPubSubAccessPoint      = "ipc://neomega_pub_sub.ipc" //"tcp://localhost:24016"
-	DefaultCtrlAccessPoint        = "ipc://neomega_ctrl.ipc"    //"tcp://localhost:24015"
+	DefaultPubSubAccessPoint      = "tcp://localhost:24016" //"ipc://neomega_pub_sub.ipc" //"tcp://localhost:24016"
+	DefaultCtrlAccessPoint        = "tcp://localhost:24015" // "ipc://neomega_ctrl.ipc"    //"tcp://localhost:24015"
 	DefaultDirectPubSubModeEnable = true
 	DefaultDirectSendModeEnable   = true
 )

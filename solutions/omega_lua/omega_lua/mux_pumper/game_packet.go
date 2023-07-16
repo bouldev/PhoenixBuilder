@@ -148,3 +148,27 @@ func MakeMCPacketNoBlockFeeder(ctx context.Context, pkChan chan packet.Packet) P
 	}
 	return pumper
 }
+
+type PacketDispatcher struct {
+	packetQueueSize int
+	pumperMux       *GamePacketPumperMux
+}
+
+func NewPacketDispatcher(packetQueueSize int, mux *GamePacketPumperMux) *PacketDispatcher {
+	return &PacketDispatcher{
+		packetQueueSize: packetQueueSize,
+		pumperMux:       mux,
+	}
+}
+
+func (m *PacketDispatcher) MakeMCPacketFeeder(ctx context.Context, wants []string) <-chan packet.Packet {
+	feeder := make(chan packet.Packet, m.packetQueueSize)
+	pumper := MakeMCPacketNoBlockFeeder(ctx, feeder)
+	m.pumperMux.AddNewPumper(wants, pumper)
+	return feeder
+}
+
+// GetMCPacketNameIDMapping 返回游戏包的名称和 ID 的映射
+func (m *PacketDispatcher) GetMCPacketNameIDMapping() MCPacketNameIDMapping {
+	return m.pumperMux.GetMCPacketNameIDMapping()
+}
