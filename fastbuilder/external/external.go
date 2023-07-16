@@ -7,7 +7,9 @@ import (
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/fastbuilder/uqHolder"
+	GameInterface "phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/minecraft"
+	"phoenixbuilder/minecraft/protocol"
 	"time"
 )
 
@@ -45,6 +47,7 @@ func (nbr *NoEOFByteReader) ReadByte() (b byte, err error) {
 	nbr.i++
 	return b, nil
 }
+
 func (handler *ExternalConnectionHandler) acceptConnection(conn connection.ReliableConnection) {
 	env := handler.env
 	allAlive := true
@@ -87,9 +90,19 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 						env.GameInterface.SendSettingsCommand(p.Command, false)
 						break
 					} else if p.CommandType == packet.CommandTypeNormal {
-						env.GameInterface.SendWSCommand(p.Command)
+						sendCommand(
+							env.GameInterface.(*GameInterface.GameInterface),
+							p.Command,
+							p.UUID,
+							protocol.CommandOriginAutomationPlayer,
+						)
 					} else {
-						env.GameInterface.SendCommand(p.Command)
+						sendCommand(
+							env.GameInterface.(*GameInterface.GameInterface),
+							p.Command,
+							p.UUID,
+							protocol.CommandOriginPlayer,
+						)
 					}
 				case *packet.GamePacket:
 					(env.Connection).(*minecraft.Conn).Write(p.Content)
