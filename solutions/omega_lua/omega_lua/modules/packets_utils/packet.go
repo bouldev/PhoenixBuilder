@@ -1,6 +1,9 @@
 package packets_utils
 
 import (
+	"bytes"
+	"encoding/json"
+	luar "layeh.com/gopher-luar"
 	"phoenixbuilder/minecraft/protocol/packet"
 
 	lua "github.com/yuin/gopher-lua"
@@ -43,8 +46,10 @@ func registerGamePacket(L *lua.LState) {
 	mt := L.NewTypeMetatable("game_packet")
 	// methods
 	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
-		"id":   gamePacketGetID,
-		"name": gamePacketGetName,
+		"id":        gamePacketGetID,
+		"name":      gamePacketGetName,
+		"lua_table": gamePacketToLuaTable,
+		"json_str":  gamePacketToJsonStr,
 	}))
 }
 
@@ -69,5 +74,25 @@ func gamePacketGetID(L *lua.LState) int {
 func gamePacketGetName(L *lua.LState) int {
 	g := checkGamePacket(L)
 	L.Push(g.luaName)
+	return 1
+}
+
+func gamePacketToLuaTable(L *lua.LState) int {
+	g := checkGamePacket(L)
+	L.Push(luar.New(L, g.goPacket))
+	return 1
+}
+
+func gamePacketToJsonStr(L *lua.LState) int {
+	g := checkGamePacket(L)
+	buf := bytes.NewBuffer(nil)
+	enc := json.NewEncoder(buf)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "    ")
+	err := enc.Encode(g.goPacket)
+	if err != nil {
+		L.RaiseError(err.Error())
+	}
+	L.Push(lua.LString(buf.String()))
 	return 1
 }
