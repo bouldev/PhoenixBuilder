@@ -4,17 +4,19 @@ import (
 	"bufio"
 	"context"
 	_ "embed"
+	"fmt"
 	lua "github.com/yuin/gopher-lua"
 	"os"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/solutions/omega_lua/omega_lua"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/concurrent"
+	"phoenixbuilder/solutions/omega_lua/omega_lua/lua_utils"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/mux_pumper"
 	"phoenixbuilder/solutions/remote_omega/transfer"
 )
 
-func CreateLuaEnv(ctx context.Context, omegaCore omega.MicroOmega) (ac concurrent.AsyncCtrl, L *lua.LState) {
+func CreateLuaEnv(ctx context.Context, omegaCore omega.MicroOmega, config *lua_utils.LuaConfigRaw) (ac concurrent.AsyncCtrl, L *lua.LState) {
 	L = lua.NewState()
 	ac = concurrent.NewAsyncCtrl(ctx)
 	// go implements
@@ -41,7 +43,7 @@ func CreateLuaEnv(ctx context.Context, omegaCore omega.MicroOmega) (ac concurren
 		GoPackets:        goPackets,
 		GoPacketProvider: goPackets,
 		GoCmdSender:      goCmdSender,
-	})
+	}, config)
 }
 
 //go:embed test.lua
@@ -52,7 +54,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	ac, L := CreateLuaEnv(context.Background(), omegaCore)
+	config := map[string]interface{}{
+		"Version":   "0.0.1",
+		"SomeEntry": "SomeData",
+		"Users": map[string]interface{}{
+			"2401PT": "architecture",
+			"343GS":  "somebody",
+		},
+	}
+	ac, L := CreateLuaEnv(context.Background(), omegaCore, &lua_utils.LuaConfigRaw{
+		Config: config,
+		OnConfigUpdate: func(newConfig interface{}) {
+			fmt.Printf("config upgrade to %v\n", newConfig)
+		},
+	})
 	errChan := concurrent.FireLuaCodeInGoRoutine(ac, L, string(luaCode))
 	// wait for lua code to finish
 	err = <-errChan

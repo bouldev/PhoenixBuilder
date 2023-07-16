@@ -1,11 +1,9 @@
 package packets_utils
 
 import (
-	"encoding/json"
 	"strings"
 
 	lua "github.com/yuin/gopher-lua"
-	luar "layeh.com/gopher-luar"
 )
 
 // 包装了 LuaGoPackets 接口的 OmegaPacketsModule 结构体
@@ -60,25 +58,24 @@ func (m *OmegaPacketsModule) MakeLValue(L *lua.LState) lua.LValue {
 		"["+strings.Join(allNames, ",")+"]",
 	))
 	//同理获得包对应的json数据 并且存入to_json_string_slow这个键值对中
-	L.SetTable(packetModule, lua.LString("to_json_string_slow"), L.NewFunction(m.luaGoPacketsToJSONString))
-	L.SetTable(packetModule, lua.LString("to_lua_table"), L.NewFunction(m.luaGoPacketsToLuaTable))
+	// L.SetTable(packetModule, lua.LString("to_json_string_slow"), L.NewFunction(m.luaGoPacketsToJSONString))
+	// L.SetTable(packetModule, lua.LString("to_user_data"), L.NewFunction(m.luaGoPacketsToUserData))
 	registerGamePacket(L)
 	return packetModule
 }
 
-// packet.to_json_string(pk:packet)
-func (m *OmegaPacketsModule) luaGoPacketsToJSONString(L *lua.LState) int {
-	pk := checkGamePacket(L)
-	jsonBytes, _ := json.Marshal(pk.goPacket)
-	L.Push(lua.LString(jsonBytes))
-	return 1
-}
+// // packet.to_json_string(pk:packet)
+// func (m *OmegaPacketsModule) luaGoPacketsToJSONString(L *lua.LState) int {
+// 	pk := checkGamePacket(L)
+// 	jsonBytes, _ := json.Marshal(pk.goPacket)
+// 	L.Push(lua.LString(jsonBytes))
+// 	return 1
+// }
 
-// packet.to_lua_table(pk:packet) 函数
-// 将包转化为table
-func (m *OmegaPacketsModule) luaGoPacketsToLuaTable(L *lua.LState) int {
-	pk := checkGamePacket(L)
-	luaTable := luar.New(L, pk.goPacket)
-	L.Push(luaTable)
-	return 1
-}
+// // 将包转化为 userdata
+// func (m *OmegaPacketsModule) luaGoPacketsToUserData(L *lua.LState) int {
+// 	pk := checkGamePacket(L)
+// 	luaUserData := luar.New(L, pk.goPacket)
+// 	L.Push(luaUserData)
+// 	return 1
+// }

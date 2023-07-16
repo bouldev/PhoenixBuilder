@@ -25,12 +25,13 @@ while packet_poller:block_has_next() do                                  -- 如�
     print(("packet name: %s id: %s"):format(packet:name(), packet:id())) -- 打印数据包的名称和id
     -- just 10 packets as an example
     packet_count = packet_count + 1
-    if packet_count > 10 and packet:name() == packets.CommandOutput then                            -- 我们只取10个数据包，然后退出
-        print(("detail packet %s"):format(packets.to_json_string_slow(packet)))                     -- to_json_string_slow 是一个比较慢的函数，但是它可以将数据包转换成json字符串，方便我们查看，它最好只在调试的时候使用
-        local lua_table_packet = packets.to_lua_table(packet)                                       -- to_lua_table 可以将数据包转换成lua table，方便我们取其中的数据
-        print(("detail packet (lua table) %s"):format(lua_table_packet))                            -- lua table 可以直接打印
-        print(("Origin: %s"):format(lua_table_packet.CommandOrigin.Origin))                         -- lua table 可以直接取值
-        print(("OutputMessages[0].Message: %s"):format(lua_table_packet.OutputMessages[1].Message)) -- lua 的索引从1开始，而不是通常的从0开始，请小心
+    if packet_count > 10 and packet:name() == packets.CommandOutput then                           -- 我们只取10个数据包，然后退出
+        print(("detail packet %s"):format(packet:json_str(packet)))                                -- json_str 是一个比较慢的函数，但是它可以将数据包转换成json字符串，方便我们查看，它最好只在调试的时候使用
+        local packet_userdata = packet:user_data()                                                 -- user_data 可以将数据包转换成lua user_data，方便我们取其中的数据
+        print(("detail packet (user_data) %s"):format(packet_userdata))                            -- lua user_data 可以直接打印, 但是诸如 ipair\pair 之类的函数对其不起作用
+        print(("detail packet (lua table) %s"):format(ud2lua(packet_userdata)))                    -- 使用 ud2lua 可以将其彻底转为 lua table，ipair和pair可以使用，但是转换需要额外消耗时间，如果不需要用到 pair 和 ipair，建议不要使用
+        print(("Origin: %s"):format(packet_userdata.CommandOrigin.Origin))                         -- lua user_data 可以直接取值
+        print(("OutputMessages[0].Message: %s"):format(packet_userdata.OutputMessages[1].Message)) -- lua 的索引从1开始，而不是通常的从0开始，请小心
         packet_poller:stop()
     end
 end
