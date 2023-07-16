@@ -52,8 +52,11 @@ func (o *CommonLuaGoObject) ToJsonStr() string {
 	return buf.String()
 }
 
-func (o *CommonLuaGoObject) FromLuaTable(lt *lua.LTable) error {
-	return gluamapper.Map(lt, &o.data)
+func (o *CommonLuaGoObject) FromLuaValue(lt lua.LValue) error {
+	o.data = gluamapper.ToGoValue(lt, gluamapper.Option{
+		NameFunc: func(s string) string { return s },
+	})
+	return nil
 }
 
 func (o *CommonLuaGoObject) GetData() interface{} {
@@ -94,14 +97,12 @@ func CommonGoObjectToJsonStr(L *lua.LState) int {
 func CommonGoObjectFromUserData(L *lua.LState) int {
 	g := CheckCommonGoObject(L)
 	v := L.Get(2)
-	if lt, ok := v.(*lua.LTable); ok {
-		if err := g.FromLuaTable(lt); err != nil {
-			L.RaiseError(err.Error())
-		}
-	} else if ud, ok := v.(*lua.LUserData); ok {
+	if ud, ok := v.(*lua.LUserData); ok {
 		g.data = ud.Value
 	} else {
-		L.RaiseError("not lua table or lua user data")
+		if err := g.FromLuaValue(v); err != nil {
+			L.RaiseError(err.Error())
+		}
 	}
 
 	L.Push(g.luaSelf)

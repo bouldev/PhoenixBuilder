@@ -57,7 +57,7 @@ func CreateLuaEnv(ctx context.Context, config *lua_utils.LuaConfigRaw) (ac concu
 		GoPackets:        goPackets,
 		GoPacketProvider: goPackets,
 		GoCmdSender:      goCmdSender,
-	}, config)
+	}, config, "./storage")
 }
 
 func main() {
@@ -82,7 +82,7 @@ func main() {
 			fmt.Printf("config upgrade to %v\n", newConfig)
 		},
 	})
-	exampleIdx := 3 // 选择要运行的示例, 1,2,3,4,...
+	exampleIdx := 6 // 选择要运行的示例, 1,2,3,4,...
 	errChan := concurrent.FireLuaCodeInGoRoutine(ac, L, allCodes[exampleIdx])
 	// wait for lua code to finish
 	err := <-errChan

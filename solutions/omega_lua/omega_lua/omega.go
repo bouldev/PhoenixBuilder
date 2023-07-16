@@ -23,6 +23,7 @@ type GoImplements struct {
 func CreateOmegaLuaEnv(ctx context.Context,
 	goImplements *GoImplements,
 	config *lua_utils.LuaConfigRaw,
+	baseStoragePath string,
 ) (ac concurrent.AsyncCtrl, L *lua.LState) {
 	L = lua.NewState()
 	ac = concurrent.NewAsyncCtrl(ctx)
@@ -36,6 +37,8 @@ func CreateOmegaLuaEnv(ctx context.Context,
 	luaPacketsModule := packetsModule.MakeLValue(L)
 	cmdModule := command.NewCmdModule(goImplements.GoCmdSender, packetsModule.NewGamePacket)
 	luaCmdModule := cmdModule.MakeLValue(L, ac)
+	storageModule := lua_utils.NewStorageModule(baseStoragePath)
+	luaStorageModule := storageModule.MakeLValue(L)
 
 	// pollers
 	ListenModule := listen.NewListenModule(ac,
@@ -63,6 +66,7 @@ func CreateOmegaLuaEnv(ctx context.Context,
 		"packets": luaPacketsModule,
 		"cmds":    luaCmdModule,
 		"config":  luaConfig,
+		"storage": luaStorageModule,
 	}).Loader)
 	L.SetGlobal("ud2lua", L.NewFunction(lua_utils.UserDataToLuaValue))
 	return ac, L
