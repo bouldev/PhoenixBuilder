@@ -76,6 +76,8 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 			} else {
 				fmt.Printf("%+v\n", resp.Respond)
 			}
+		} else if cmd[0] == '*' {
+			gameInterface.SendSettingsCommand(cmd[1:], false)
 		}
 		functionHolder.Process(cmd)
 	}
