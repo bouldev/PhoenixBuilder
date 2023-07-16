@@ -8,12 +8,8 @@ import (
 	"os"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/solutions/omega_lua/omega_lua"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/concurrent"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/command"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/listen"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/packets_utils"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/system"
-	submodule_holder "phoenixbuilder/solutions/omega_lua/omega_lua/modules_holder"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/mux_pumper"
 	"phoenixbuilder/solutions/remote_omega/transfer"
 )
@@ -40,28 +36,12 @@ func CreateLuaEnv(ctx context.Context, omegaCore omega.MicroOmega) (ac concurren
 	})
 	goPackets := mux_pumper.NewPacketDispatcher(128, goGamePacketPumper)
 	goCmdSender := omegaCore.GetGameControl()
-	// lua wrapper
-	systemModule := system.NewSystemModule(goSystem, ac)
-	luaSystemModule, systemPollerFlags := systemModule.MakeLValue(L)
-	packetsModule := packets_utils.NewOmegaPacketsModule(goPackets)
-	luaPacketsModule := packetsModule.MakeLValue(L)
-	cmdModule := command.NewCmdModule(goCmdSender, packetsModule.NewGamePacket)
-	luaCmdModule := cmdModule.MakeLValue(L, ac)
-
-	// pollers
-	ListenModule := listen.NewListenModule(ac,
-		goPackets, packetsModule.NewGamePacket,
-		systemPollerFlags)
-	luaListenModule := ListenModule.MakeLValue(L)
-
-	// load modules
-	L.PreloadModule("omega", submodule_holder.NewSubModuleHolder(map[string]lua.LValue{
-		"system":  luaSystemModule,
-		"listen":  luaListenModule,
-		"packets": luaPacketsModule,
-		"cmds":    luaCmdModule,
-	}).Loader)
-	return ac, L
+	return omega_lua.CreateOmegaLuaEnv(ctx, &omega_lua.GoImplements{
+		GoSystem:         goSystem,
+		GoPackets:        goPackets,
+		GoPacketProvider: goPackets,
+		GoCmdSender:      goCmdSender,
+	})
 }
 
 //go:embed test.lua

@@ -6,12 +6,8 @@ import (
 	"path"
 	"phoenixbuilder/fastbuilder/lib/utils/file_wrapper"
 	"phoenixbuilder/solutions/omega_lua/monk"
+	"phoenixbuilder/solutions/omega_lua/omega_lua"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/concurrent"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/command"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/listen"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/packets_utils"
-	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/system"
-	submodule_holder "phoenixbuilder/solutions/omega_lua/omega_lua/modules_holder"
 	"regexp"
 	"strconv"
 	"strings"
@@ -54,33 +50,21 @@ func CreateLuaEnv(ctx context.Context) (ac concurrent.AsyncCtrl, L *lua.LState) 
 	goPackets := monk.NewMonkPackets(128)
 	goCmdSender := monk.NewMonkCmdSender()
 	// lua wrapper
-	systemModule := system.NewSystemModule(goSystem, ac)
-	luaSystemModule, systemPollerFlags := systemModule.MakeLValue(L)
-	packetsModule := packets_utils.NewOmegaPacketsModule(goPackets)
-	luaPacketsModule := packetsModule.MakeLValue(L)
-	cmdModule := command.NewCmdModule(goCmdSender, packetsModule.NewGamePacket)
-	luaCmdModule := cmdModule.MakeLValue(L, ac)
-
-	// pollers
-	ListenModule := listen.NewListenModule(ac,
-		goPackets, packetsModule.NewGamePacket,
-		systemPollerFlags)
-	luaListenModule := ListenModule.MakeLValue(L)
-
-	// load modules
-	L.PreloadModule("omega", submodule_holder.NewSubModuleHolder(map[string]lua.LValue{
-		"system":  luaSystemModule,
-		"listen":  luaListenModule,
-		"packets": luaPacketsModule,
-		"cmds":    luaCmdModule,
-	}).Loader)
-	return ac, L
+	return omega_lua.CreateOmegaLuaEnv(ctx, &omega_lua.GoImplements{
+		GoSystem:         goSystem,
+		GoPackets:        goPackets,
+		GoPacketProvider: goPackets,
+		GoCmdSender:      goCmdSender,
+	})
 }
 
 func main() {
 	// read lua
 	//测试用读取的packet.lua
 	allCodes := ReadOutAllExamplesHelper("examples")
+	if len(allCodes) == 0 {
+		panic("examples not found, check your current work dir")
+	}
 	ac, L := CreateLuaEnv(context.Background())
 	exampleIdx := 4 // 选择要运行的示例, 1,2,3,4,...
 	errChan := concurrent.FireLuaCodeInGoRoutine(ac, L, allCodes[exampleIdx])
@@ -89,4 +73,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	ac.Wait()
 }
