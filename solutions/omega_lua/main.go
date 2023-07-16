@@ -82,7 +82,7 @@ func main() {
 	//测试用读取的packet.lua
 	allCodes := ReadOutAllExamplesHelper("examples")
 	ac, L := CreateLuaEnv(context.Background())
-	exampleIdx := 4 // 选择要运行的示例, 1,2,3,...
+	exampleIdx := 4 // 选择要运行的示例, 1,2,3,4,...
 	errChan := concurrent.FireLuaCodeInGoRoutine(ac, L, allCodes[exampleIdx])
 	// wait for lua code to finish
 	err := <-errChan

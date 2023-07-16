@@ -82,15 +82,13 @@ while mux_poller:block_has_next() do
 end
 
 print("来将命令和之前的监听数据包结合起来!")
-
+print("请输入命令")
 -- 来将命令和之前的监听数据包结合起来
 local mux_poller = omega.listen.new_mux_poller()
 local packet_poller = omega.listen.new_packet_poller(packets.all, packets.noCommandOutput)
-print("aa")
 mux_poller:poll(packet_poller) -- 监听数据包
 mux_poller:poll(cmds.resp)     -- 监听命令返回
 mux_poller:poll(block_input)   -- 监听用户输入
-print("bb")
 while mux_poller:block_has_next() do
     local event = mux_poller:block_get_next()
     if event.type == packet_poller then

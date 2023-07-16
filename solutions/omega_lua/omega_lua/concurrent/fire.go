@@ -16,10 +16,13 @@ func FireLuaCodeInGoRoutine(ac AsyncCtrl, L *lua.LState, code string) (done <-ch
 		defer ac.DecreaseCoro()
 		L.SetContext(ac.Context())
 		err = L.DoString(code)
+		if err != nil {
+			doneChan <- err
+		}
 	}()
 	go func() {
 		ac.Wait()
-		doneChan <- err
+		close(doneChan)
 	}()
 	return doneChan
 }

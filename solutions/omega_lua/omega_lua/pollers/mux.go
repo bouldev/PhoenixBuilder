@@ -280,7 +280,7 @@ func PollerHandleAsync(L *lua.LState) int {
 		m.SafeCall(L, lua.P{
 			Fn:      handler,
 			NRet:    0,
-			Protect: true,
+			Protect: false,
 		}, event)
 	})
 	return 0
