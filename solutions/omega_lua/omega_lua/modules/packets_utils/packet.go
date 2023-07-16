@@ -3,8 +3,9 @@ package packets_utils
 import (
 	"bytes"
 	"encoding/json"
-	luar "layeh.com/gopher-luar"
 	"phoenixbuilder/minecraft/protocol/packet"
+
+	luar "layeh.com/gopher-luar"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -48,7 +49,7 @@ func registerGamePacket(L *lua.LState) {
 	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), map[string]lua.LGFunction{
 		"id":        gamePacketGetID,
 		"name":      gamePacketGetName,
-		"lua_table": gamePacketToLuaTable,
+		"user_data": gamePacketToUserData,
 		"json_str":  gamePacketToJsonStr,
 	}))
 }
@@ -77,7 +78,7 @@ func gamePacketGetName(L *lua.LState) int {
 	return 1
 }
 
-func gamePacketToLuaTable(L *lua.LState) int {
+func gamePacketToUserData(L *lua.LState) int {
 	g := checkGamePacket(L)
 	L.Push(luar.New(L, g.goPacket))
 	return 1

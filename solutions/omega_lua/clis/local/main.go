@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"path"
 	"phoenixbuilder/fastbuilder/lib/utils/file_wrapper"
 	"phoenixbuilder/solutions/omega_lua/monk"
 	"phoenixbuilder/solutions/omega_lua/omega_lua"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/concurrent"
+	"phoenixbuilder/solutions/omega_lua/omega_lua/lua_utils"
 	"regexp"
 	"strconv"
 	"strings"
@@ -41,7 +43,7 @@ func ReadOutAllExamplesHelper(targetDir string) map[int]string {
 	return result
 }
 
-func CreateLuaEnv(ctx context.Context) (ac concurrent.AsyncCtrl, L *lua.LState) {
+func CreateLuaEnv(ctx context.Context, config *lua_utils.LuaConfigRaw) (ac concurrent.AsyncCtrl, L *lua.LState) {
 	L = lua.NewState()
 	ac = concurrent.NewAsyncCtrl(ctx)
 	// go implements
@@ -55,7 +57,7 @@ func CreateLuaEnv(ctx context.Context) (ac concurrent.AsyncCtrl, L *lua.LState) 
 		GoPackets:        goPackets,
 		GoPacketProvider: goPackets,
 		GoCmdSender:      goCmdSender,
-	})
+	}, config)
 }
 
 func main() {
@@ -65,8 +67,22 @@ func main() {
 	if len(allCodes) == 0 {
 		panic("examples not found, check your current work dir")
 	}
-	ac, L := CreateLuaEnv(context.Background())
-	exampleIdx := 4 // 选择要运行的示例, 1,2,3,4,...
+	config := map[string]interface{}{
+		"Version":   "0.0.1",
+		"SomeEntry": "SomeData",
+		"Users": map[string]interface{}{
+			"2401PT": "architecture",
+			"343GS":  "somebody",
+		},
+	}
+
+	ac, L := CreateLuaEnv(context.Background(), &lua_utils.LuaConfigRaw{
+		Config: config,
+		OnConfigUpdate: func(newConfig interface{}) {
+			fmt.Printf("config upgrade to %v\n", newConfig)
+		},
+	})
+	exampleIdx := 3 // 选择要运行的示例, 1,2,3,4,...
 	errChan := concurrent.FireLuaCodeInGoRoutine(ac, L, allCodes[exampleIdx])
 	// wait for lua code to finish
 	err := <-errChan

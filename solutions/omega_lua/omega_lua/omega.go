@@ -2,7 +2,6 @@ package omega_lua
 
 import (
 	"context"
-	lua "github.com/yuin/gopher-lua"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/concurrent"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/lua_utils"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/command"
@@ -10,6 +9,8 @@ import (
 	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/packets_utils"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/modules/system"
 	submodule_holder "phoenixbuilder/solutions/omega_lua/omega_lua/modules_holder"
+
+	lua "github.com/yuin/gopher-lua"
 )
 
 type GoImplements struct {
@@ -21,6 +22,7 @@ type GoImplements struct {
 
 func CreateOmegaLuaEnv(ctx context.Context,
 	goImplements *GoImplements,
+	config *lua_utils.LuaConfigRaw,
 ) (ac concurrent.AsyncCtrl, L *lua.LState) {
 	L = lua.NewState()
 	ac = concurrent.NewAsyncCtrl(ctx)
@@ -41,12 +43,27 @@ func CreateOmegaLuaEnv(ctx context.Context,
 		systemPollerFlags)
 	luaListenModule := ListenModule.MakeLValue(L)
 
+	// config
+	goConfig := config.Config
+	luaConfigUpgradeFn := func(L *lua.LState) int {
+		d := lua_utils.CommonGoObjectFromUserData(L)
+		luaConfig := lua_utils.CheckCommonGoObject(L)
+		newConfig := luaConfig.GetData()
+		config.OnConfigUpdate(newConfig)
+		return d
+	}
+	luaConfig := lua_utils.NewCommonLuaGoObject(goConfig, map[string]lua.LValue{
+		"upgrade": L.NewFunction(luaConfigUpgradeFn),
+	}).MakeLValue(L)
+
 	// load modules
 	L.PreloadModule("omega", submodule_holder.NewSubModuleHolder(map[string]lua.LValue{
 		"system":  luaSystemModule,
 		"listen":  luaListenModule,
 		"packets": luaPacketsModule,
 		"cmds":    luaCmdModule,
+		"config":  luaConfig,
 	}).Loader)
+	L.SetGlobal("ud2lua", L.NewFunction(lua_utils.UserDataToLuaValue))
 	return ac, L
 }
