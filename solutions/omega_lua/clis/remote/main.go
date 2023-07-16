@@ -5,7 +5,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	lua "github.com/yuin/gopher-lua"
 	"os"
 	"phoenixbuilder/fastbuilder/lib/minecraft/neomega/omega"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -14,6 +13,8 @@ import (
 	"phoenixbuilder/solutions/omega_lua/omega_lua/lua_utils"
 	"phoenixbuilder/solutions/omega_lua/omega_lua/mux_pumper"
 	"phoenixbuilder/solutions/remote_omega/transfer"
+
+	lua "github.com/yuin/gopher-lua"
 )
 
 func CreateLuaEnv(ctx context.Context, omegaCore omega.MicroOmega, config *lua_utils.LuaConfigRaw) (ac concurrent.AsyncCtrl, L *lua.LState) {
@@ -43,7 +44,7 @@ func CreateLuaEnv(ctx context.Context, omegaCore omega.MicroOmega, config *lua_u
 		GoPackets:        goPackets,
 		GoPacketProvider: goPackets,
 		GoCmdSender:      goCmdSender,
-	}, config)
+	}, config, "./storage")
 }
 
 //go:embed test.lua
