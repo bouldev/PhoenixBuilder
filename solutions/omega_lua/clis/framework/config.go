@@ -11,14 +11,14 @@ import (
 )
 
 type ComponentConfig struct {
-	Name              string `json:"名称"`
+	Name              string `json:"名称"` // xxx.lua
 	Description       string `json:"描述"`
 	Disabled          bool   `json:"是否禁用"`
-	Version           string `json:"版本"`
 	Source            string `json:"来源"`
-	RemoteFileAddress string `json:"远程地址"`
-	RemoteHashAddress string `json:"远程哈希地址"`
-	Configs           any    `json:"配置"`
+	RemoteFileAddress string `json:"远程地址"`   // optional, if set, will download remote file
+	RemoteHashAddress string `json:"远程哈希地址"` // optional, if set, will check local file hash with remote hash, if not match, will download remote file
+	Configs           any    `json:"配置"`     // real config for lua
+	// Version           string `json:"版本"` // lua component is not built-in, version is decided by remote (hash) address or always latest
 }
 
 type CombinedLuaComponent struct {
