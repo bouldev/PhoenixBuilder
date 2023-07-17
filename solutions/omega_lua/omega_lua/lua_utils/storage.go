@@ -54,11 +54,11 @@ func (s *StorageModule) read(L *lua.LState) int {
 	return 1
 }
 
-func cleanMapKey(v interface{}) any {
+func CleanMapKey(v interface{}) any {
 	if mv, ok := v.(map[interface{}]interface{}); ok {
 		r := map[string]interface{}{}
 		for k, v := range mv {
-			r[fmt.Sprintf("%v", k)] = cleanMapKey(v)
+			r[fmt.Sprintf("%v", k)] = CleanMapKey(v)
 		}
 		return r
 	} else {
@@ -74,7 +74,7 @@ func (s *StorageModule) save(L *lua.LState) int {
 	goData := gluamapper.ToGoValue(data, gluamapper.Option{
 		NameFunc: func(s string) string { return s },
 	})
-	goData = cleanMapKey(goData)
+	goData = CleanMapKey(goData)
 	err := file_wrapper.WriteJsonData(fp, goData)
 	if err != nil {
 		L.RaiseError(err.Error())

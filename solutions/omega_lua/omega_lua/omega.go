@@ -52,6 +52,7 @@ func CreateOmegaLuaEnv(ctx context.Context,
 		d := lua_utils.CommonGoObjectFromUserData(L)
 		luaConfig := lua_utils.CheckCommonGoObject(L)
 		newConfig := luaConfig.GetData()
+		newConfig = lua_utils.CleanMapKey(newConfig)
 		config.OnConfigUpdate(newConfig)
 		return d
 	}
