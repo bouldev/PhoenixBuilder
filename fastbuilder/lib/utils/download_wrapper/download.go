@@ -2,6 +2,7 @@ package download_wrapper
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,6 +42,36 @@ func DownloadMicroContent(sourceUrl string) ([]byte, error) {
 	defer resp.Body.Close()
 	contents := bytes.NewBuffer([]byte{})
 	if _, err := io.Copy(contents, resp.Body); err == nil {
+		return contents.Bytes(), nil
+	} else {
+		return nil, err
+	}
+}
+
+type readerCtx struct {
+	ctx context.Context
+	r   io.Reader
+}
+
+func (r *readerCtx) Read(p []byte) (n int, err error) {
+	if err := r.ctx.Err(); err != nil {
+		return 0, err
+	}
+	return r.r.Read(p)
+}
+
+func NewReaderCtx(ctx context.Context, r io.Reader) io.Reader {
+	return &readerCtx{ctx: ctx, r: r}
+}
+
+func DownloadMicroContentWithCtx(ctx context.Context, sourceUrl string) ([]byte, error) {
+	resp, err := http.Get(sourceUrl)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	contents := bytes.NewBuffer([]byte{})
+	if _, err := io.Copy(contents, NewReaderCtx(ctx, resp.Body)); err == nil {
 		return contents.Bytes(), nil
 	} else {
 		return nil, err
