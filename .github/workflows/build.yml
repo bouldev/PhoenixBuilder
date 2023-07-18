@@ -58,7 +58,7 @@ jobs:
       
     - name: Clone theos
       if: steps.cache-theos.outputs.cache-hit != 'true'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: 'recursive'
         repository: 'theos/theos'
@@ -177,8 +177,7 @@ jobs:
         make current
         make clean
         chmod 0644 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
-        sed "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go>~/conn.go
-        cp -f ~/conn.go ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
+        sed -i "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
     - name: Build
       run: |
         export THEOS=~/theos
