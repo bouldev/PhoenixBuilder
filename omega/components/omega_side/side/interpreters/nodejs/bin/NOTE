@@ -1,2 +1,0 @@
-这里应该有一份 python/python3 或 /python3.exe
-没有的话，在命令行输入 python --version 应该显示 Python 3.10.x 否则不能使用 python 插件或是 dotcs 插件
