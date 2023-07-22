@@ -73,6 +73,8 @@ func SignBDX(fileHash []byte, privateKeyString string, cert string) ([]byte, err
 func VerifyBDX(hashsum []byte, sign []byte) (bool, string, error) {
 	if sign[0] == 0 && sign[1] == 0x8B {
 		return VerifyBDXNew(hashsum, sign)
+	} else {
+		return false, "Unknown User(This file is using a deprecated signing method)", nil
 	}
 	hexOfHash := hex.EncodeToString(hashsum)
 	body := fmt.Sprintf(`{"hash": "%s", "sign": "%s"}`, hexOfHash, base64.StdEncoding.EncodeToString(sign))

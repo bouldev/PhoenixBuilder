@@ -5,6 +5,7 @@ import (
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/types"
 	GameInterface "phoenixbuilder/game_control/game_interface"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
@@ -252,8 +253,18 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 		}
 	} else {
 		resp := c.BlockEntity.Interface.SendWSCommandWithResponse(request)
-		if resp.Error != nil {
-			return fmt.Errorf("ERR 555ccc %v", resp.Error)
+		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
+			return fmt.Errorf("ERR 555ccc_01 %v", resp.Error)
+		}
+		if resp.Error != nil && resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
+			err := c.BlockEntity.Interface.SendSettingsCommand(request, true)
+			if err != nil {
+				return fmt.Errorf("ERR 555ccc_02 %v", err)
+			}
+			resp = c.BlockEntity.Interface.SendWSCommandWithResponse("list")
+			if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
+				return fmt.Errorf("ERR 555ccc_03: %v", err)
+			}
 		}
 	}
 	// 放置命令方块
