@@ -5,19 +5,13 @@ go 1.18
 require (
 	github.com/cheggaaa/pb v1.0.29
 	github.com/df-mc/goleveldb v1.1.9
-	github.com/go-zeromq/zmq4 v0.15.0
 	github.com/hashicorp/go-version v1.6.0
-	github.com/mitchellh/mapstructure v1.5.0
-	github.com/pebbe/zmq4 v1.2.10
-	github.com/pierrec/lz4 v2.6.1+incompatible
 	rogchap.com/v8go v0.7.0
 )
 
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
-	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9 // indirect
-	github.com/frankban/quicktest v1.14.5 // indirect
-	github.com/go-zeromq/goczmq/v4 v4.2.2 // indirect
+	github.com/df-mc/atomic v1.10.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
 	github.com/klauspost/cpuid v1.3.1 // indirect
@@ -30,13 +24,10 @@ require (
 	github.com/templexxx/xorsimd v0.4.1 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
-	github.com/yuin/gluamapper v0.0.0-20150323120927-d836955830e7 // indirect
 	golang.org/x/image v0.5.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
-	layeh.com/gopher-luar v1.0.11 // indirect
 )
 
 replace rogchap.com/v8go v0.7.0 => ./depends/v8go@v0.7.0
@@ -54,7 +45,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20211230184646-baf1f7156737
 	github.com/pterm/pterm v0.12.29
-	github.com/sandertv/go-raknet v1.9.1
+	github.com/sandertv/go-raknet v1.12.0
 	github.com/xtaci/kcp-go/v5 v5.6.1
 	github.com/yuin/gopher-lua v1.1.0
 	go.kuoruan.net/v8go-polyfills v0.5.0

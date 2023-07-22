@@ -176,8 +176,8 @@ jobs:
       run: |
         make current
         make clean
-        chmod 0777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/
-        sed -i "s/urrentProtocol byte = 10/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.9.1/conn.go
+        chmod 0777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.12.0/
+        sed -i "s/urrentProtocol byte = 11/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.12.0/conn.go
     - name: Build
       run: |
         export THEOS=~/theos
