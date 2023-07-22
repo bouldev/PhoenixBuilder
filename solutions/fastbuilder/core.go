@@ -311,6 +311,8 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	if len(env.RespondUser) == 0 {
 		if args.CustomGameName != "" {
 			env.RespondUser = args.CustomGameName
+		} else {
+			env.RespondUser = env.FBAuthClient.(*fbauth.Client).RespondUser
 		}
 	}
 	env.Connection = conn
