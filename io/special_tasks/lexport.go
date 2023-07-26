@@ -13,6 +13,7 @@ import (
 	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/task"
 	GameInterface "phoenixbuilder/game_control/game_interface"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -65,15 +66,21 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		}()
 
 		gameInterface.SendWSCommand("gamemode c")
-
-		resp := gameInterface.SendWSCommandWithResponse("querytarget @s")
-		parseResult, _ := gameInterface.ParseTargetQueryingInfo(resp.Respond)
 		var testAreaIsLoaded string = "testforblocks ~-31 -64 ~-31 ~31 319 ~31 ~-31 -64 ~-31"
-		if parseResult[0].Dimension == 1 {
-			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 127 ~31 ~-31 0 ~-31"
-		}
-		if parseResult[0].Dimension == 2 {
-			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 255 ~31 ~-31 0 ~-31"
+
+		for {
+			resp := gameInterface.SendWSCommandWithResponse("querytarget @s")
+			if resp.Error != nil && resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
+				continue
+			}
+			parseResult, _ := gameInterface.ParseTargetQueryingInfo(resp.Respond)
+			if parseResult[0].Dimension == 1 {
+				testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 127 ~31 ~-31 0 ~-31"
+			}
+			if parseResult[0].Dimension == 2 {
+				testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 255 ~31 ~-31 0 ~-31"
+			}
+			break
 		}
 		// 这个前置准备用于后面判断被导出区域是否加载
 		// 如果尝试请求一个没有被完全加载的区域，那么返回的结构将是只包括空气的结构，但不会报错
@@ -94,6 +101,9 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 
 			for {
 				resp := gameInterface.SendWSCommandWithResponse(testAreaIsLoaded)
+				if resp.Error != nil && resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
+					continue
+				}
 				if resp.Respond.OutputMessages[0].Message != "commands.generic.outOfWorld" {
 					break
 				}
