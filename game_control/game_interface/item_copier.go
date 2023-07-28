@@ -125,6 +125,12 @@ func (g *GameInterface) CopyItem(
 	// 将 source 处的物品合并到 destination 处
 	// 返回的布尔值代表合并后的物品总数是否已达到要求的数目
 	singleCodeBlock := func() (bool, error) {
+		err := openConatiner()
+		defer g.CloseContainer()
+		if err != nil {
+			return false, fmt.Errorf("singleCodeBlock: %v", err)
+		}
+		// 打开木桶并等待数据同步
 		itemOnHotBarSlot := ItemLocation{
 			WindowID:    0,
 			ContainerID: 0xc,
@@ -136,7 +142,7 @@ func (g *GameInterface) CopyItem(
 			Slot:        13,
 		}
 		// 初始化
-		_, err := subFunc(itemOnHotBarSlot, itemOnConatiner)
+		_, err = subFunc(itemOnHotBarSlot, itemOnConatiner)
 		if err != nil {
 			return false, fmt.Errorf("singleCodeBlock: %v", err)
 		}
@@ -154,7 +160,7 @@ func (g *GameInterface) CopyItem(
 		if err != nil {
 			return false, fmt.Errorf("singleCodeBlock: %v", err)
 		}
-		defer g.DeleteStructure(uniqueId)
+		defer g.RevertStructure(uniqueId, blockPos)
 		// 备份木桶
 		err = g.ReplaceItemInInventory(
 			TargetMySelf,
@@ -180,33 +186,6 @@ func (g *GameInterface) CopyItem(
 			return true, nil
 		}
 		// 将已放入木桶的物品取回
-		success, err := g.CloseContainer()
-		if err != nil {
-			return false, fmt.Errorf("singleCodeBlock: %v", err)
-		}
-		if !success {
-			return false, fmt.Errorf("singleCodeBlock: Failed to close the barrel")
-		}
-		// 关闭木桶
-		err = g.RevertStructure(uniqueId, blockPos)
-		if err != nil {
-			return false, fmt.Errorf("singleCodeBlock: %v", err)
-		}
-		// 还原木桶中的物品
-		err = openConatiner()
-		if err != nil {
-			return false, fmt.Errorf("singleCodeBlock: %v", err)
-		}
-		itemOnConatiner.WindowID = int16(g.Resources.Container.GetContainerOpeningData().WindowID)
-		// 打开木桶并等待数据同步
-		needBreak, err = subFunc(itemOnConatiner, itemOnHotBarSlot)
-		if err != nil {
-			return false, fmt.Errorf("singleCodeBlock: %v", err)
-		}
-		if needBreak {
-			return true, nil
-		}
-		// 木桶的第 14 个槽位的物品 --合并到--> 快捷栏处的槽位
 		return false, nil
 		// 返回值
 	}
