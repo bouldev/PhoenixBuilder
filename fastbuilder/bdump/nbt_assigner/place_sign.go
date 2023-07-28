@@ -1,4 +1,4 @@
-package blockNBT
+package NBTAssigner
 
 import (
 	"fmt"
@@ -8,12 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Sign 结构体用于描述一个完整的告示牌
-type Sign struct {
-	BlockEntity *BlockEntity // 该方块实体的详细数据
-}
-
-// 我们不再检查用户提供的告示牌的 NBT 是否正确。
+// 我们不再检查用户提供的告示牌的 NBT 是否正确，
 // 我们信任并且永远认为它们是正确且完整的
 func (s *Sign) Decode() error {
 	return nil

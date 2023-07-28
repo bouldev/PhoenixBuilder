@@ -2,7 +2,7 @@ package GameInterface
 
 import (
 	"fmt"
-	"phoenixbuilder/game_control/resources_control"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 )

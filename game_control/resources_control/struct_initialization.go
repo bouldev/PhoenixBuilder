@@ -43,6 +43,9 @@ func (r *Resources) Init() func(pk *packet.Packet) {
 			},
 			resp: make(chan packet.StructureTemplateDataResponse, 1),
 		},
+		Listener: packetListener{
+			listenerWithData: sync.Map{},
+		},
 		Others: others{
 			currentTickRequestWithResp: sync.Map{},
 		},

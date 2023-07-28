@@ -142,7 +142,7 @@ func (g *GameInterface) RenameItemByAnvil(
 				Slot:        1,
 			},
 			ItemChangingDetails{
-				details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
+				Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
 					0xc: {
 						WindowID: 0,
 						ChangeResult: map[uint8]protocol.ItemInstance{
