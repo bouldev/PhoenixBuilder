@@ -2,7 +2,7 @@ package task
 
 import (
 	"fmt"
-	blockNBT "phoenixbuilder/fastbuilder/bdump/block_nbt"
+	NBTAssigner "phoenixbuilder/fastbuilder/bdump/nbt_assigner"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/commands_generator"
 	"phoenixbuilder/fastbuilder/configuration"
@@ -278,10 +278,10 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 			}
 			blkscounter++
 			if curblock.NBTMap != nil {
-				err := blockNBT.PlaceBlockWithNBTData(
+				err := NBTAssigner.PlaceBlockWithNBTData(
 					gameInterface,
 					curblock,
-					&blockNBT.AdditionalData{
+					&NBTAssigner.BlockAdditionalData{
 						Settings: cfg,
 						FastMode: isFastMode,
 						Others:   nil,
@@ -291,10 +291,10 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					pterm.Warning.Printf("CreateTask: Failed to place the entity block named %v at (%d,%d,%d), and the error log is %v\n", *curblock.Block.Name, curblock.Point.X, curblock.Point.Y, curblock.Point.Z, err)
 				}
 			} else if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
-				newStruct := blockNBT.CommandBlock{
-					BlockEntity: &blockNBT.BlockEntity{
+				newStruct := NBTAssigner.CommandBlock{
+					BlockEntity: &NBTAssigner.BlockEntity{
 						Interface: gameInterface,
-						AdditionalData: blockNBT.AdditionalData{
+						AdditionalData: NBTAssigner.BlockAdditionalData{
 							Position: [3]int32{int32(curblock.Point.X), int32(curblock.Point.Y), int32(curblock.Point.Z)},
 							Settings: cfg,
 							FastMode: isFastMode,
@@ -308,7 +308,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					pterm.Warning.Printf("%v\n", err)
 				}
 			} else if curblock.ChestSlot != nil {
-				gameInterface.SendSettingsCommand(commands_generator.ReplaceItemRequest(curblock, ""), true)
+				gameInterface.SendSettingsCommand(commands_generator.ReplaceItemInContainerRequest(curblock, ""), true)
 			} else if len(cfg.Entity) != 0 {
 				gameInterface.SendSettingsCommand(commands_generator.SummonRequest(curblock, cfg), true)
 			} else {

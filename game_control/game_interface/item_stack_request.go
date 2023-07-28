@@ -2,7 +2,7 @@ package GameInterface
 
 import (
 	"fmt"
-	"phoenixbuilder/game_control/resources_control"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
@@ -13,7 +13,7 @@ type ItemChangingDetails struct {
 	// 描述多个库存(容器)中物品的变动结果。
 	// 租赁服不会在返回 ItemStackResponce 时返回完整的物品数据，因此需要您提供对应
 	// 槽位的更改结果以便于我们依此更新本地存储的库存数据
-	details map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo
+	Details map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo
 }
 
 /*
@@ -43,7 +43,7 @@ func (g *GameInterface) SendItemStackRequestWithResponse(
 		request.Requests[key].RequestID = requestID
 		g.Resources.ItemStackOperation.WriteRequest(
 			requestID,
-			details[key].details,
+			details[key].Details,
 		)
 	}
 	// 重新设定每个请求的请求 ID 并写入请求到等待队列

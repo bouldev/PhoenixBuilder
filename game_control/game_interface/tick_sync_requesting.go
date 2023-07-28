@@ -2,6 +2,7 @@ package GameInterface
 
 import (
 	"fmt"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
@@ -9,7 +10,7 @@ import (
 // 此操作不会被立即完成，
 // 因为它需要请求一个数据包
 func (g *GameInterface) GetCurrentTick() (int64, error) {
-	uniqueId := generateUUID()
+	uniqueId := ResourcesControl.GenerateUUID()
 	// get a new uuid
 	err := g.Resources.Others.WriteCurrentTickRequest(uniqueId)
 	if err != nil {

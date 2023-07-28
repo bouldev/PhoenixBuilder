@@ -8,17 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// 生成一个新的 uuid 对象并返回
-func generateUUID() uuid.UUID {
-	for {
-		uniqueId, err := uuid.NewUUID()
-		if err != nil {
-			continue
-		}
-		return uniqueId
-	}
-}
-
 // 返回 uniqueID 在字符串化之后的安全形式，
 // 因为我们得考虑 NEMC 的屏蔽词机制
 func uuid_to_safe_string(uniqueID uuid.UUID) string {

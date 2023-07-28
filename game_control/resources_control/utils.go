@@ -4,7 +4,20 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+
+	"github.com/google/uuid"
 )
+
+// 生成一个新的 uuid 对象并返回
+func GenerateUUID() uuid.UUID {
+	for {
+		uniqueId, err := uuid.NewUUID()
+		if err != nil {
+			continue
+		}
+		return uniqueId
+	}
+}
 
 // 将 source 深拷贝到 destination 。
 //

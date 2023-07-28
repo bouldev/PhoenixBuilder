@@ -1,4 +1,4 @@
-package blockNBT
+package NBTAssigner
 
 import (
 	"fmt"
@@ -8,27 +8,6 @@ import (
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
-
-// Parsed Command block NBT data
-type CommandBlockData struct {
-	Command            string // Command(TAG_String) = ""
-	CustomName         string // CustomName(TAG_String) = ""
-	LastOutput         string // LastOutput(TAG_String) = ""
-	TickDelay          int32  // TickDelay(TAG_Int) = 0
-	ExecuteOnFirstTick bool   // ExecuteOnFirstTick(TAG_Byte) = 1
-	TrackOutput        bool   // TrackOutput(TAG_Byte) = 1
-	ConditionalMode    bool   // conditionalMode(TAG_Byte) = 0
-	Auto               bool   // auto(TAG_Byte) = 1
-}
-
-// CommandBlock 结构体用于描述一个完整的命令方块数据
-type CommandBlock struct {
-	// 该方块实体的详细数据
-	BlockEntity *BlockEntity
-	CommandBlockData
-	// 为向下兼容而设，因为旧方法下不需要放置命令方块
-	ShouldPlaceBlock bool
-}
 
 // 从 c.Package.Block.NBT 提取命令方块数据并保存在 c.CommandBlockData 中
 func (c *CommandBlock) Decode() error {

@@ -2,6 +2,7 @@ package ResourcesControl
 
 import (
 	"phoenixbuilder/minecraft/protocol/packet"
+	"time"
 )
 
 // 用于在发送容器相关的数据包前执行，
@@ -13,13 +14,24 @@ func (c *container) AwaitChangesBeforeSendingPacket() {
 	c.responded = make(chan struct{}, 1)
 }
 
-// 用于已经向租赁服提交容器操作后执行，
-// 以等待租赁服响应容器的打开或关闭操作。
-// 在调用此函数后，会持续阻塞直到相关的管道受到数据。
-//
-// 无论如何，即便不需要得到响应，也仍然需要使用此函数。
+/*
+用于已经向租赁服提交容器操作后执行，
+以等待租赁服响应容器的打开或关闭操作。
+在调用此函数后，会持续等待直到租赁服响应这些请求。
+
+如果租赁服在最长截止时间到来后依旧未对这些请求响应，
+那么此函数将会返回值。
+您可以通过 c.GetContainerOpeningData() 或
+c.GetContainerClosingData() 来验证容器是否
+正确打开或关闭。
+*/
 func (c *container) AwaitChangesAfterSendingPacket() {
-	<-c.responded
+	select {
+	case <-c.responded:
+		return
+	case <-time.After(ContainerOperationDeadLine):
+		return
+	}
 }
 
 // 向 c.responded 发送已响应的通知。
