@@ -1,8 +1,10 @@
 package NBTAssigner
 
 import (
+	"encoding/gob"
 	"fmt"
 	"phoenixbuilder/fastbuilder/mcstructure"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/mirror/chunk"
 	"strings"
 )
@@ -323,6 +325,23 @@ func (i *ItemPackage) DecodeItemCustomData(
 	// 获取当前物品的 tag 数据
 	blockType := IsNBTBlockSupported(i.Item.Basic.Name)
 	if len(blockType) != 0 {
+		var copyOne map[string]interface{}
+		ResourcesControl.DeepCopy(
+			&nbt_tag_got,
+			&copyOne,
+			func() {
+				gob.Register(map[string]interface{}{})
+				gob.Register([]interface{}{})
+			},
+		)
+		delete(copyOne, "ench")
+		delete(copyOne, "display")
+		delete(copyOne, "minecraft:item_lock")
+		delete(copyOne, "minecraft:keep_on_death")
+		if len(copyOne) == 0 {
+			return nil
+		}
+		// 检查当前方块实体是否真的需要注入 NBT 数据
 		blockStates, err = get_block_states_from_legacy_block(
 			i.Item.Basic.Name, i.Item.Basic.MetaData,
 		)
@@ -334,6 +353,7 @@ func (i *ItemPackage) DecodeItemCustomData(
 			blockStates = map[string]interface{}{}
 			blockStatesString = "[]"
 		}
+		// 取得当前方块实体的方块状态及其字符串形式
 		i.Item.Custom = &ItemCustomData{
 			SubBlockData: GetPlaceBlockMethod(
 				&BlockEntity{
@@ -356,6 +376,7 @@ func (i *ItemPackage) DecodeItemCustomData(
 			ItemTag: nil,
 		}
 		return nil
+		// 赋值并返回
 	}
 	// 如果该物品是一个 NBT 方块
 	i.Item.Custom = &ItemCustomData{
