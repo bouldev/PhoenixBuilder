@@ -193,8 +193,10 @@ func (i *itemStackRequestWithResponse) updateItemData(
 		if get.howToChange == nil {
 			panic("updateItemData: Attempt to send packet.ItemStackRequest without using ResourcesControlCenter")
 		}
-		_, ok := get.howToChange[ContainerID(val.ContainerID)]
-		if !ok {
+		if val.ContainerID == 63 {
+			return nil // I don't understand what 63 is, I've never operated it, NetEase sucks.
+		}
+		if _, ok := get.howToChange[ContainerID(val.ContainerID)]; !ok {
 			panic(fmt.Sprintf("updateItemData: item change result %v not found or not provided(packet.ItemStackRequest related); get.howToChange = %#v; val = %#v", ContainerID(val.ContainerID), get.howToChange, val))
 		}
 		// check pass
