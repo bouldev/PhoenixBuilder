@@ -323,74 +323,81 @@ func (i *ItemPackage) DecodeItemCustomData(
 		return fmt.Errorf(`DecodeItemCustomData: Can not convert nbt_tag_origin into map[string]interface{}; singleItem = %#v`, singleItem)
 	}
 	// 获取当前物品的 tag 数据
-	blockType := IsNBTBlockSupported(i.Item.Basic.Name)
-	if len(blockType) != 0 {
-		var copyOne map[string]interface{}
-		ResourcesControl.DeepCopy(
-			&nbt_tag_got,
-			&copyOne,
-			func() {
-				gob.Register(map[string]interface{}{})
-				gob.Register([]interface{}{})
-			},
-		)
-		delete(copyOne, "ench")
-		delete(copyOne, "display")
-		delete(copyOne, "minecraft:item_lock")
-		delete(copyOne, "minecraft:keep_on_death")
-		if len(copyOne) == 0 {
+	{
+		blockName := ItemNameToBlockNamePool[i.Item.Basic.Name]
+		blockType := IsNBTBlockSupported(blockName)
+		// 取得该方块实体的类型
+		if len(blockType) != 0 {
+			var copyOne map[string]interface{}
+			ResourcesControl.DeepCopy(
+				&nbt_tag_got,
+				&copyOne,
+				func() {
+					gob.Register(map[string]interface{}{})
+					gob.Register([]interface{}{})
+				},
+			)
+			delete(copyOne, "ench")
+			delete(copyOne, "display")
+			delete(copyOne, "RepairCost")
+			delete(copyOne, "minecraft:item_lock")
+			delete(copyOne, "minecraft:keep_on_death")
+			if len(copyOne) == 0 {
+				return nil
+			}
+			// 检查当前方块实体是否真的需要注入 NBT 数据
+			blockStates, err = get_block_states_from_legacy_block(
+				blockName, i.Item.Basic.MetaData,
+			)
+			if err != nil {
+				blockStates = map[string]interface{}{}
+			}
+			blockStatesString, err = mcstructure.ConvertCompoundToString(blockStates, true)
+			if err != nil {
+				blockStates = map[string]interface{}{}
+				blockStatesString = "[]"
+			}
+			// 取得当前方块实体的方块状态及其字符串形式
+			i.Item.Custom = &ItemCustomData{
+				SubBlockData: GetPlaceBlockMethod(
+					&BlockEntity{
+						Interface: i.Interface,
+						Block: GeneralBlock{
+							Name:   blockName,
+							States: blockStates,
+							NBT:    nbt_tag_got,
+						},
+						AdditionalData: BlockAdditionalData{
+							BlockStates: blockStatesString,
+							Position:    i.AdditionalData.Position,
+							Type:        blockType,
+							Settings:    i.AdditionalData.Settings,
+							FastMode:    false,
+							Others:      i.AdditionalData.Others,
+						},
+					},
+				),
+				ItemTag: nil,
+			}
 			return nil
 		}
-		// 检查当前方块实体是否真的需要注入 NBT 数据
-		blockStates, err = get_block_states_from_legacy_block(
-			i.Item.Basic.Name, i.Item.Basic.MetaData,
-		)
-		if err != nil {
-			blockStates = map[string]interface{}{}
-		}
-		blockStatesString, err = mcstructure.ConvertCompoundToString(blockStates, true)
-		if err != nil {
-			blockStates = map[string]interface{}{}
-			blockStatesString = "[]"
-		}
-		// 取得当前方块实体的方块状态及其字符串形式
-		i.Item.Custom = &ItemCustomData{
-			SubBlockData: GetPlaceBlockMethod(
-				&BlockEntity{
-					Interface: i.Interface,
-					Block: GeneralBlock{
-						Name:   i.Item.Basic.Name,
-						States: blockStates,
-						NBT:    nbt_tag_got,
-					},
-					AdditionalData: BlockAdditionalData{
-						BlockStates: blockStatesString,
-						Position:    i.AdditionalData.Position,
-						Type:        blockType,
-						Settings:    i.AdditionalData.Settings,
-						FastMode:    false,
-						Others:      i.AdditionalData.Others,
-					},
-				},
-			),
-			ItemTag: nil,
-		}
-		return nil
 		// 赋值并返回
 	}
 	// 如果该物品是一个 NBT 方块
-	i.Item.Custom = &ItemCustomData{
-		SubBlockData: nil,
-		ItemTag:      nbt_tag_got,
-	}
-	i.AdditionalData.Type = IsNBTItemSupported(i.Item.Basic.Name)
-	needSpecialTreatment, err := GetGenerateItemMethod(i).SpecialCheck()
-	if err != nil {
-		return fmt.Errorf("DecodeItemCustomData: %v", err)
-	}
-	if !needSpecialTreatment {
-		i.Item.Custom = nil
-		return nil
+	{
+		i.Item.Custom = &ItemCustomData{
+			SubBlockData: nil,
+			ItemTag:      nbt_tag_got,
+		}
+		i.AdditionalData.Type = IsNBTItemSupported(i.Item.Basic.Name)
+		needSpecialTreatment, err := GetGenerateItemMethod(i).SpecialCheck()
+		if err != nil {
+			return fmt.Errorf("DecodeItemCustomData: %v", err)
+		}
+		if !needSpecialTreatment {
+			i.Item.Custom = nil
+			return nil
+		}
 	}
 	// 如果该物品是一个 NBT 物品，例如通过工作台合成的烟花
 	return nil

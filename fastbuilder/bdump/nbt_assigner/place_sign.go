@@ -180,16 +180,14 @@ func (s *Sign) WriteData() error {
 		return fmt.Errorf("WriteData: %v", err)
 	}
 	// 将上文提到的玻璃处的方块恢复为原本的方块
-	go func() {
-		gameInterface.RevertStructure(
-			uniqueID_2,
-			GameInterface.BlockPos{
-				s.BlockEntity.AdditionalData.Position[0],
-				s.BlockEntity.AdditionalData.Position[1],
-				s.BlockEntity.AdditionalData.Position[2],
-			},
-		)
-	}()
+	gameInterface.RevertStructure(
+		uniqueID_2,
+		GameInterface.BlockPos{
+			s.BlockEntity.AdditionalData.Position[0],
+			s.BlockEntity.AdditionalData.Position[1],
+			s.BlockEntity.AdditionalData.Position[2],
+		},
+	)
 	// 再强行生成一次告示牌本身以抑制其可能发生的掉落
 	return nil
 	// 返回值

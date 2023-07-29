@@ -113,6 +113,11 @@ var ErrContainerNerverOpened error = fmt.Errorf(
 	"CloseContainer: Container have been nerver opened",
 )
 
+// 如果尝试移动空气到另外一个物品栏，则会返回该错误
+var ErrMoveItemCheckFailure error = fmt.Errorf(
+	"MoveItem: Item on source is air",
+)
+
 /*
 用于将字符串型的 uuid 通过下表的映射处理为新的字符串。
 这么做是为了规避 NEMC 的屏蔽词问题。
