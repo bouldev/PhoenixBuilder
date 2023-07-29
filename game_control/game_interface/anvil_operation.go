@@ -162,7 +162,7 @@ func (g *GameInterface) RenameItemByAnvil(
 		if err != nil {
 			return res, fmt.Errorf("RenameItemByAnvil: %v", err)
 		}
-		if resp[0].Status != protocol.ItemStackResponseStatusOK {
+		if err == ErrMoveItemCheckFailure || resp[0].Status != protocol.ItemStackResponseStatusOK {
 			res = append(res, AnvilOperationResponse{
 				Successful: false,
 				Destination: &ItemLocation{

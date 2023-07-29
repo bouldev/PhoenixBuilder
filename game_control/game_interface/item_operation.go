@@ -32,6 +32,10 @@ func (g *GameInterface) MoveItem(
 	}
 	itemOnDestination, _ := g.Resources.Inventory.GetItemStackInfo(uint32(destination.WindowID), destination.Slot)
 	// 取得 source 和 destination 处的物品信息
+	if itemOnSource.Stack.NetworkID == 0 {
+		return []protocol.ItemStackResponse{}, ErrMoveItemCheckFailure
+	}
+	// 数据检查
 	if moveCount <= uint8(itemOnSource.Stack.Count) || source.WindowID == -1 {
 		placeStackRequestAction.Count = moveCount
 	} else {
