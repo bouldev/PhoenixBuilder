@@ -123,7 +123,7 @@ func (c *Container) WriteData() error {
 		if ContainerCouldOpen(c.BlockEntity.Block.Name) && value.Item.Custom != nil && value.Item.Custom.SubBlockData != nil {
 			success, spawnLocation, err := c.GetSubBlock(value.Item)
 			if err != nil {
-				return fmt.Errorf("GetSubBlock: Failed to process the sub block from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
+				return fmt.Errorf("WriteData: Failed to process the sub block from c.Contents[%d]; c.Contents[%d].Item.Custom.SubBlockData = %#v, err = %v", key, key, value.Item.Custom.SubBlockData, err)
 			}
 			if !success {
 				continue
@@ -131,7 +131,7 @@ func (c *Container) WriteData() error {
 			// 获取子方块的物品形式
 			err = c.MoveItemIntoContainer(spawnLocation, value.Item.Basic.Slot)
 			if err != nil {
-				return fmt.Errorf("GetSubBlock: Failed to process the sub block from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
+				return fmt.Errorf("WriteData: Failed to process the sub block from c.Contents[%d]; c.Contents[%d].Item.Custom.SubBlockData = %#v, err = %v", key, key, value.Item.Custom.SubBlockData, err)
 			}
 			// 将子方块移动到容器中
 			continue
@@ -140,14 +140,14 @@ func (c *Container) WriteData() error {
 		if value.Item.Custom != nil && value.Item.Custom.ItemTag != nil {
 			success, err := c.GetNBTItem(value)
 			if err != nil {
-				return fmt.Errorf("GetSubBlock: Failed to process the nbt item from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
+				return fmt.Errorf("WriteData: Failed to process the nbt item from c.Contents[%d]; c.Contents[%d].Item.Custom.ItemTag = %#v, err = %v", key, key, value.Item.Custom.ItemTag, err)
 			}
 			if !success {
 				continue
 			}
 			err = c.MoveItemIntoContainer(5, value.Item.Basic.Slot)
 			if err != nil {
-				return fmt.Errorf("GetSubBlock: Failed to process the nbt item from c.Contents[%d]; c.Contents = %#v, err = %v", key, c.Contents, err)
+				return fmt.Errorf("WriteData: Failed to process the nbt item from c.Contents[%d]; c.Contents[%d].Item.Custom.ItemTag = %#v, err = %v", key, key, value.Item.Custom.ItemTag, err)
 			}
 		}
 		// NBT 物品

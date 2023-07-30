@@ -288,7 +288,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					},
 				)
 				if err != nil {
-					pterm.Warning.Printf("CreateTask: %v", err)
+					pterm.Warning.Printf("CreateTask: %v\n", err)
 				}
 			} else if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				newStruct := NBTAssigner.CommandBlock{
