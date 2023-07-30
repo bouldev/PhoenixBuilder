@@ -85,14 +85,21 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 			if !normal {
 				return fmt.Errorf(`DecodeItemBasicData: Can not convert block_got into map[string]interface{}; singleItem = %#v`, singleItem)
 			}
-			val_origin, ok := block_got["val"]
-			if ok {
+			if val_origin, ok := block_got["val"]; ok {
 				val_got, normal := val_origin.(int16)
 				if !normal {
 					return fmt.Errorf(`DecodeItemBasicData: Can not convert val_origin into int16; singleItem = %#v`, singleItem)
 				}
 				g.Basic.MetaData = uint16(val_got)
 			} else {
+				block_name_origin, ok := block_got["name"]
+				if !ok {
+					break
+				}
+				block_name_got, normal := block_name_origin.(string)
+				if !normal {
+					return fmt.Errorf(`DecodeItemBasicData: Can not convert block_name_origin into string; singleItem = %#v`, singleItem)
+				}
 				states_origin, ok := block_got["states"]
 				if !ok {
 					break
@@ -101,7 +108,7 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 				if !normal {
 					return fmt.Errorf(`DecodeItemBasicData: Can not convert states_origin into map[string]interface{}; singleItem = %#v`, singleItem)
 				}
-				runtimeId, found := chunk.StateToRuntimeID(fmt.Sprintf("minecraft:%s", g.Basic.Name), states_got)
+				runtimeId, found := chunk.StateToRuntimeID(block_name_got, states_got)
 				if !found {
 					return fmt.Errorf(`DecodeItemBasicData: Could not convert legacy block to standard runtime id; singleItem = %#v`, singleItem)
 				}
