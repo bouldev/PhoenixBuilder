@@ -288,7 +288,7 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 					},
 				)
 				if err != nil {
-					pterm.Warning.Printf("CreateTask: Failed to place the entity block named %v at (%d,%d,%d), and the error log is %v\n", *curblock.Block.Name, curblock.Point.X, curblock.Point.Y, curblock.Point.Z, err)
+					pterm.Warning.Printf("CreateTask: %v", err)
 				}
 			} else if !cfg.ExcludeCommands && curblock.CommandBlockData != nil {
 				newStruct := NBTAssigner.CommandBlock{
