@@ -30,13 +30,10 @@ func (g *GameInterface) SetBlock(pos [3]int32, name string, states string) error
 		}
 		resp = g.SendWSCommandWithResponse("list")
 		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-			return fmt.Errorf("SetBlock: %v", err)
+			return fmt.Errorf("SetBlock: %v", resp.Error)
 		}
 	}
-	// if time out
-	if resp.Error != nil {
-		return fmt.Errorf("SetBlock: %v", resp.Error)
-	}
+	// special solutions for timeouts
 	return nil
 	// return
 }

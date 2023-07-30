@@ -257,7 +257,7 @@ func (g *GameInterface) PlaceShulkerBox(
 		}
 		resp := g.SendWSCommandWithResponse("list")
 		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-			return fmt.Errorf("PlaceShulkerBox: %v", err)
+			return fmt.Errorf("PlaceShulkerBox: %v", resp.Error)
 		}
 	}
 	// 可能潜影盒并非生成在原本给定的坐标处，此时需要进行特殊处理

@@ -242,7 +242,7 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 			}
 			resp = c.BlockEntity.Interface.SendWSCommandWithResponse("list")
 			if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-				return fmt.Errorf("ERR 555ccc_03: %v", err)
+				return fmt.Errorf("ERR 555ccc_03: %v", resp.Error)
 			}
 		}
 	}
