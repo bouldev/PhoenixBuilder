@@ -39,7 +39,7 @@ func PlaceBlockWithNBTData(
 		placeBlockMethod = GetPlaceBlockMethod(&newRequest)
 		err = placeBlockMethod.Decode()
 		if err != nil {
-			return fmt.Errorf("PlaceBlockWithNBTData: %v", err)
+			return fmt.Errorf("PlaceBlockWithNBTData: Failed to place the entity block named %v at (%d,%d,%d), and the error log is %v", *blockInfo.Block.Name, blockInfo.Point.X, blockInfo.Point.Y, blockInfo.Point.Z, err)
 		}
 		// if the user wants us to assign NBT data,
 		// or the target block is a command block
@@ -50,7 +50,7 @@ func PlaceBlockWithNBTData(
 	// get method and decode nbt data into golang struct
 	err = placeBlockMethod.WriteData()
 	if err != nil {
-		return fmt.Errorf("PlaceBlockWithNBTData: %v", err)
+		return fmt.Errorf("PlaceBlockWithNBTData: Failed to place the entity block named %v at (%d,%d,%d), and the error log is %v", *blockInfo.Block.Name, blockInfo.Point.X, blockInfo.Point.Y, blockInfo.Point.Z, err)
 	}
 	// assign nbt data
 	return nil
@@ -82,13 +82,13 @@ func GenerateItemWithNBTData(
 	if !additionalData.Decoded {
 		err = generateNBTItemMethod.Decode()
 		if err != nil {
-			return fmt.Errorf("GenerateItemWithNBTData: %v", err)
+			return fmt.Errorf("GenerateItemWithNBTData: Failed to generate the NBT item in hotbar %d, and the error log is %v", additionalData.HotBarSlot, err)
 		}
 	}
 	// get method and decode nbt data into golang struct
 	err = generateNBTItemMethod.WriteData()
 	if err != nil {
-		return fmt.Errorf("GenerateItemWithNBTData: %v", err)
+		return fmt.Errorf("GenerateItemWithNBTData: Failed to generate the NBT item in hotbar %d, and the error log is %v", additionalData.HotBarSlot, err)
 	}
 	// assign nbt data
 	return nil
