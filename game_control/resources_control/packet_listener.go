@@ -13,7 +13,7 @@ import (
 创建一个新的数据包监听器。
 
 packetID 指代本次欲监听的数据包，
-填写 -1 则代表监听所有数据包。
+为空则代表监听所有数据包。
 
 upperStorageLimit 代表缓冲区可保存的最大数据包数。
 
@@ -22,13 +22,13 @@ upperStorageLimit 代表缓冲区可保存的最大数据包数。
 它将被实时更新，直到被它的监听者关闭
 */
 func (p *packetListener) CreateNewListen(
-	packetID int32,
+	packetsID []uint32,
 	upperStorageLimit int16,
 ) (uuid.UUID, <-chan packet.Packet) {
 	uniqueId := GenerateUUID()
 	ctx, stop := context.WithCancel(context.Background())
 	newListen := singleListen{
-		packetID:       packetID,
+		packetsID:      packetsID,
 		packetReceived: make(chan packet.Packet, upperStorageLimit),
 		ctx:            ctx,
 		stop:           stop,
@@ -76,10 +76,19 @@ func (p *packetListener) distributePacket(pk packet.Packet) error {
 				err = fmt.Errorf("distributePacket: Failed to convert value into singleListen; value = %#v", value)
 				return false
 			}
-			if singleListen.packetID == -1 || singleListen.packetID == int32(pk.ID()) {
+			// 转换数据类型
+			if len(singleListen.packetsID) == 0 {
 				go singleListen.simplePacketDistributor(pk)
+				return true
+			}
+			// 如果要监听所有的数据包
+			for _, val := range singleListen.packetsID {
+				if val == pk.ID() {
+					go singleListen.simplePacketDistributor(pk)
+				}
 			}
 			return true
+			// 如果只监听特定的数据包
 		},
 	)
 	// 分发数据包到每个监听器上
