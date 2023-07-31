@@ -33,7 +33,7 @@ func (g *GameInterface) CopyItem(
 			return fmt.Errorf("openConatiner: Failed to open the barrel")
 		}
 		// 打开已生成的木桶
-		listener, packets := g.Resources.Listener.CreateNewListen(packet.IDInventoryContent, 1)
+		listener, packets := g.Resources.Listener.CreateNewListen([]uint32{packet.IDInventoryContent}, 1)
 		select {
 		case <-packets:
 		case <-time.After(ItemCopyWaitContainerDataComingDeadLine):

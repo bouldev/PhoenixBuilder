@@ -167,7 +167,7 @@ type mcstructure struct {
 // 储存单次监听请求下所需要保存的数据
 type singleListen struct {
 	// 指代本次请求中欲监听的数据包 ID
-	packetID int32
+	packetsID []uint32
 	// 用于存放本次请求中已经监听的数据包
 	packetReceived chan (packet.Packet)
 	// 标记该监听器下有多少个协程正在尝试分发数据包。
