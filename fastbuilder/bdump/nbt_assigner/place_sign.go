@@ -96,9 +96,9 @@ func (s *Sign) WriteData() error {
 		if err != nil {
 			return fmt.Errorf("WriteData: %v", err)
 		}
-		resp := gameInterface.SendWSCommandWithResponse("list")
-		if resp.Error != nil {
-			return fmt.Errorf("WriteData: %v", resp.Error)
+		err = gameInterface.AwaitChangesGeneral()
+		if err != nil {
+			return fmt.Errorf("WriteData: %v", err)
 		}
 		// 生成上文提到的玻璃。
 		// TODO: 优化上方这段代码

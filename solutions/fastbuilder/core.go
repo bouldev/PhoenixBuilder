@@ -61,18 +61,38 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 			continue
 		}
 		if cmd[0] == '.' {
-			resp := gameInterface.SendCommandWithResponse(cmd[1:])
+			resp := gameInterface.SendCommandWithResponse(
+				cmd[1:],
+				ResourcesControl.CommandRequestOptions{
+					TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+				},
+			)
 			if resp.Error != nil {
-				pterm.Error.Printf("Failed to get respond of \"%v\", and the following is the error log.\n", cmd[1:])
-				pterm.Error.Printf("%v\n", resp.Error.Error())
+				env.GameInterface.Output(
+					pterm.Error.Sprintf(
+						"Failed to get respond of \"%v\", and the following is the error log.",
+						cmd[1:],
+					),
+				)
+				env.GameInterface.Output(pterm.Error.Sprintf("%v", resp.Error.Error()))
 			} else {
 				fmt.Printf("%+v\n", resp.Respond)
 			}
 		} else if cmd[0] == '!' {
-			resp := gameInterface.SendWSCommandWithResponse(cmd[1:])
+			resp := gameInterface.SendWSCommandWithResponse(
+				cmd[1:],
+				ResourcesControl.CommandRequestOptions{
+					TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+				},
+			)
 			if resp.Error != nil {
-				pterm.Error.Printf("Failed to get respond of \"%v\", and the following is the error log.\n", cmd[1:])
-				pterm.Error.Printf("%v\n", resp.Error.Error())
+				env.GameInterface.Output(
+					pterm.Error.Sprintf(
+						"Failed to get respond of \"%v\", and the following is the error log.",
+						cmd[1:],
+					),
+				)
+				env.GameInterface.Output(pterm.Error.Sprintf("%v", resp.Error.Error()))
 			} else {
 				fmt.Printf("%+v\n", resp.Respond)
 			}
@@ -363,10 +383,15 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	hostBridgeGamma := env.ScriptBridge.(*script_bridge.HostBridgeGamma)
 	hostBridgeGamma.HostSetSendCmdFunc(func(mcCmd string, waitResponse bool) *packet.CommandOutput {
 		if !waitResponse {
-			env.GameInterface.SendCommand(mcCmd)
+			env.GameInterface.SendWSCommand(mcCmd)
 			return nil
 		}
-		resp := env.GameInterface.SendCommandWithResponse(mcCmd)
+		resp := env.GameInterface.SendWSCommandWithResponse(
+			mcCmd,
+			ResourcesControl.CommandRequestOptions{
+				TimeOut: ResourcesControl.CommandRequestNoDeadLine,
+			},
+		)
 		return &resp.Respond
 	})
 	hostBridgeGamma.HostConnectEstablished()

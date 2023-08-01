@@ -33,7 +33,12 @@ func (g *GameInterface) BackupStructure(structure MCStructure) (uuid.UUID, error
 		structure.BeginZ+structure.SizeZ-1,
 	)
 	// get command to backup structure
-	resp := g.SendWSCommandWithResponse(request)
+	resp := g.SendWSCommandWithResponse(
+		request,
+		ResourcesControl.CommandRequestOptions{
+			TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+		},
+	)
 	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
 		return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v", structure)
 	}
@@ -46,9 +51,9 @@ func (g *GameInterface) BackupStructure(structure MCStructure) (uuid.UUID, error
 		if err != nil {
 			return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v, err = %v", structure, err)
 		}
-		resp := g.SendCommandWithResponse("list")
-		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-			return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v; resp = %#v", structure, resp)
+		err = g.AwaitChangesGeneral()
+		if err != nil {
+			return uuid.UUID{}, fmt.Errorf("BackupStructure: Failed to backup the structure; structure = %#v; err = %#v", structure, err)
 		}
 	}
 	// some special solutions for when we facing Netease Mask Words System
@@ -86,7 +91,12 @@ func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error 
 		pos[2],
 	)
 	// get command to revert the structure
-	resp := g.SendWSCommandWithResponse(request)
+	resp := g.SendWSCommandWithResponse(
+		request,
+		ResourcesControl.CommandRequestOptions{
+			TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+		},
+	)
 	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
 		return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
 	}
@@ -99,9 +109,9 @@ func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error 
 		if err != nil {
 			return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v, err = %v`, uniqueID.String(), pos, err)
 		}
-		resp := g.SendCommandWithResponse("list")
-		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-			return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v, resp = %#v`, uniqueID.String(), pos, resp)
+		err = g.AwaitChangesGeneral()
+		if err != nil {
+			return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v, err = %#v`, uniqueID.String(), pos, err)
 		}
 	}
 	// some special solutions for when we facing Netease Mask Words System

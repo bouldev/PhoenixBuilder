@@ -86,7 +86,7 @@ func (c *Container) FastWrite() error {
 	}
 	// 放置容器
 	for _, value := range c.Contents {
-		err := c.BlockEntity.Interface.(*GameInterface.GameInterface).ReplaceItemInContainer(
+		err := c.BlockEntity.Interface.(*GameInterface.GameInterface).ReplaceItemInContainerAsync(
 			c.BlockEntity.AdditionalData.Position,
 			types.ChestSlot{
 				Name:   value.Item.Basic.Name,
@@ -167,7 +167,7 @@ func (c *Container) WriteData() error {
 		if value.Enhancement != nil {
 			itemComponents = value.Enhancement.ItemComponents
 		}
-		err := c.BlockEntity.Interface.(*GameInterface.GameInterface).ReplaceItemInContainer(
+		err := c.BlockEntity.Interface.(*GameInterface.GameInterface).ReplaceItemInContainerAsync(
 			c.BlockEntity.AdditionalData.Position,
 			types.ChestSlot{
 				Name:   value.Basic.Name,

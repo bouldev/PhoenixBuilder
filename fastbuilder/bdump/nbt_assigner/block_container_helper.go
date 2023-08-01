@@ -32,6 +32,7 @@ func (c *Container) getShulkerBox() error {
 			Damage: blockMetaData,
 		},
 		"",
+		true,
 	)
 	if err != nil {
 		return fmt.Errorf("GetShulkerBox: %v", err)
@@ -151,28 +152,16 @@ func (c *Container) OpenContainer() (bool, error) {
 			return false, fmt.Errorf("OpenContainer: %v", err)
 		}
 		defer api.RevertStructure(uniqueId, backupBlockPos)
-		err = api.SendSettingsCommand(
-			fmt.Sprintf(
-				"kill @e[x=%d,y=%d,z=%d,dx=0]",
-				backupBlockPos[0],
-				backupBlockPos[1],
-				backupBlockPos[2],
-			),
-			true,
-		)
-		if err != nil {
-			return false, fmt.Errorf("OpenContainer: %v", err)
-		}
 		err = api.SetBlockAsync(backupBlockPos, "air", "[]")
 		if err != nil {
 			return false, fmt.Errorf("OpenContainer: %v", err)
 		}
 		/*
-			我们需要保证潜影盒开启方向上的方块为空气且没有生物，
+			我们需要保证潜影盒开启方向上的方块为空气，
 			否则潜影盒将无法正常开启。
-			然而，对这个方块进行操作并杀死该处的生物不是预期的行为，
+			然而，对这个方块进行操作不是预期的行为，
 			所以需要确定其坐标并发起一次备份，
-			然后强行将其变更为空气并执行一次 kill 命令
+			然后强行将其变更为空气
 		*/
 	}
 	// 对潜影盒或者箱子的特殊化处理
@@ -303,9 +292,9 @@ func (c *Container) GetSubBlock(
 		return false, 0, fmt.Errorf("GetSubBlock: %v", err)
 	}
 	// 解码并放置子方块
-	resp := c.BlockEntity.Interface.SendWSCommandWithResponse("list")
-	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-		return false, 0, fmt.Errorf("GetSubBlock: %v", resp.Error)
+	err = api.AwaitChangesGeneral()
+	if err != nil {
+		return false, 0, fmt.Errorf("GetSubBlock: %v", err)
 	}
 	// 等待更改
 	success, spawnLocation, err := api.PickBlock(
@@ -335,7 +324,7 @@ func (c *Container) GetSubBlock(
 			return false, 0, fmt.Errorf("GetSubBlock: %v", err)
 		}
 		if resp[0].Destination == nil {
-			return false, 0, fmt.Errorf("WriteData: Inventory was full")
+			return false, 0, fmt.Errorf("GetSubBlock: Inventory was full")
 		}
 		spawnLocation = resp[0].Destination.Slot
 	}
@@ -392,9 +381,9 @@ func (c *Container) GetNBTItem(
 		return false, fmt.Errorf("GetNBTItem: %v", err)
 	}
 	// 解码并取得该 NBT 物品
-	resp := c.BlockEntity.Interface.SendWSCommandWithResponse("list")
-	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-		return false, fmt.Errorf("GetNBTItem: %v", resp.Error)
+	err = api.AwaitChangesGeneral()
+	if err != nil {
+		return false, fmt.Errorf("GetNBTItem: %v", err)
 	}
 	// 等待更改
 	return true, nil
@@ -479,7 +468,7 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 	{
 		for key, value := range moveIndex {
 			if key <= 8 {
-				go api.ReplaceItemInInventory(
+				err := api.ReplaceItemInInventory(
 					GameInterface.TargetMySelf,
 					GameInterface.ItemGenerateLocation{
 						Path: "slot.hotbar",
@@ -491,9 +480,13 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 						Damage: value.Basic.MetaData,
 					},
 					MarshalItemComponents(value.Enhancement.ItemComponents),
+					false,
 				)
+				if err != nil {
+					return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", err)
+				}
 			} else if value.Enhancement.Enchantments == nil {
-				go api.ReplaceItemInInventory(
+				err := api.ReplaceItemInInventory(
 					GameInterface.TargetMySelf,
 					GameInterface.ItemGenerateLocation{
 						Path: "slot.inventory",
@@ -505,12 +498,16 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 						Damage: value.Basic.MetaData,
 					},
 					MarshalItemComponents(value.Enhancement.ItemComponents),
+					false,
 				)
+				if err != nil {
+					return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", err)
+				}
 			}
 		}
-		resp := api.SendWSCommandWithResponse("list")
-		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-			return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", resp.Error)
+		err := api.AwaitChangesGeneral()
+		if err != nil {
+			return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", err)
 		}
 	}
 	/*
@@ -548,9 +545,9 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 					return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", err)
 				}
 			}
-			resp := api.SendWSCommandWithResponse("list")
-			if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-				return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", resp.Error)
+			err = api.AwaitChangesGeneral()
+			if err != nil {
+				return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", err)
 			}
 		}
 	}
@@ -591,6 +588,7 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 						Damage: value.Basic.MetaData,
 					},
 					MarshalItemComponents(value.Enhancement.ItemComponents),
+					true,
 				)
 				if err != nil {
 					return fmt.Errorf("subFunc: %v", err)
@@ -609,7 +607,9 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 						return fmt.Errorf("subFunc: %v", err)
 					}
 				}
-				go api.ReplaceItemInInventory(
+				// 附加附魔属性
+			ReTry:
+				err = api.ReplaceItemInInventory(
 					GameInterface.TargetMySelf,
 					GameInterface.ItemGenerateLocation{
 						Path: "slot.inventory",
@@ -621,17 +621,16 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 						Damage: 0,
 					},
 					"",
+					true,
 				)
-				resp := api.SendWSCommandWithResponse("list")
-				if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-					return fmt.Errorf("subFunc: %v", resp.Error)
+				if err != nil {
+					return fmt.Errorf("subFunc: %v", err)
 				}
-				// 附加附魔属性
 				itemData, err := api.Resources.Inventory.GetItemStackInfo(0, 8)
 				if err != nil {
 					return fmt.Errorf("subFunc: %v", err)
 				}
-				_, err = api.MoveItem(
+				resp, err := api.MoveItem(
 					GameInterface.ItemLocation{
 						WindowID:    0,
 						ContainerID: 0xc,
@@ -657,6 +656,9 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 				)
 				if err != nil && err != GameInterface.ErrMoveItemCheckFailure {
 					return fmt.Errorf("subFunc: %v", err)
+				}
+				if api.Resources.Container.GetContainerOpeningData() != nil && resp[0].Status != protocol.ItemStackResponseStatusOK {
+					goto ReTry
 				}
 				// 将该物品移动到背包中
 			}
@@ -737,6 +739,7 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 		got := SupportContainerPool[c.BlockEntity.Block.Name]
 		// 获取已打开容器的数据
 		for key, value := range moveIndex {
+		ReTry:
 			itemData, err := api.Resources.Inventory.GetItemStackInfo(0, key)
 			if err != nil {
 				return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", err)
@@ -747,7 +750,7 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 			}
 			// 如果当前物品是空气，
 			// 那么忽略当前物品并继续
-			_, err = api.MoveItem(
+			resp, err := api.MoveItem(
 				GameInterface.ItemLocation{
 					WindowID:    0,
 					ContainerID: 0xc,
@@ -778,6 +781,9 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 			)
 			if err != nil && err != GameInterface.ErrMoveItemCheckFailure {
 				return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", err)
+			}
+			if api.Resources.Container.GetContainerOpeningData() != nil && resp[0].Status != protocol.ItemStackResponseStatusOK {
+				goto ReTry
 			}
 			// 将当前物品移动到容器
 		}

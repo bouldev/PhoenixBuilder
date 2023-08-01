@@ -8,14 +8,20 @@ import (
 	"github.com/google/uuid"
 )
 
-// 提交请求 ID 为 key 的命令请求
-func (c *commandRequestWithResponse) WriteRequest(key uuid.UUID) error {
-	_, exist := c.requestWithResponse.Load(key)
-	if exist {
+// 提交请求 ID 为 key 的命令请求。
+// options 指定当次命令请求的自定义设置项
+func (c *commandRequestWithResponse) WriteRequest(
+	key uuid.UUID,
+	options CommandRequestOptions,
+) error {
+	_, exist0 := c.request.Load(key)
+	_, exist1 := c.response.Load(key)
+	if exist0 || exist1 {
 		return fmt.Errorf("WriteRequest: %v has already existed", key.String())
 	}
 	// if key has already exist
-	c.requestWithResponse.Store(key, make(chan packet.CommandOutput, 1))
+	c.request.Store(key, options)
+	c.response.Store(key, make(chan packet.CommandOutput, 1))
 	return nil
 	// return
 }
@@ -27,8 +33,9 @@ func (c *commandRequestWithResponse) tryToWriteResponse(
 	key uuid.UUID,
 	resp packet.CommandOutput,
 ) error {
-	value, exist := c.requestWithResponse.Load(key)
-	if !exist {
+	_, exist0 := c.request.Load(key)
+	value, exist1 := c.response.Load(key)
+	if !exist0 || !exist1 {
 		return nil
 	}
 	// if key is not exist
@@ -43,41 +50,55 @@ func (c *commandRequestWithResponse) tryToWriteResponse(
 	// return
 }
 
-// 移除请求 ID 为 key 的命令请求，
-// 主要被用于指令被网易屏蔽时的善后处理
-func (c *commandRequestWithResponse) DeleteRequest(key uuid.UUID) {
-	c.requestWithResponse.Delete(key)
-}
-
-// 读取请求 ID 为 key 的命令请求的返回值，
+// 读取请求 ID 为 key 的命令请求的响应体，
 // 同时移除此命令请求
 func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) CommandRespond {
-	value, exist := c.requestWithResponse.Load(key)
-	if !exist {
+	options_origin, exist0 := c.request.Load(key)
+	response_origin, exist1 := c.response.Load(key)
+	if !exist0 || !exist1 {
 		return CommandRespond{
 			Error:     fmt.Errorf("LoadResponseAndDelete: %v is not recorded", key.String()),
 			ErrorType: ErrCommandRequestNotRecord,
 		}
 	}
 	// if key is not exist
-	chanGet, normal := value.(chan packet.CommandOutput)
+	options_got, normal := options_origin.(CommandRequestOptions)
 	if !normal {
 		return CommandRespond{
-			Error:     fmt.Errorf("LoadResponseAndDelete: Failed to convert value into (chan packet.CommandOutput); value = %#v", value),
+			Error:     fmt.Errorf("LoadResponseAndDelete: Failed to convert options_origin into CommandRequestOptions; options_origin = %#v", options_origin),
+			ErrorType: ErrCommandRequestConversionFailure,
+		}
+	}
+	response_got, normal := response_origin.(chan packet.CommandOutput)
+	if !normal {
+		return CommandRespond{
+			Error:     fmt.Errorf("LoadResponseAndDelete: Failed to convert response_origin into (chan packet.CommandOutput); response_origin = %#v", response_origin),
 			ErrorType: ErrCommandRequestConversionFailure,
 		}
 	}
 	// convert data
-	select {
-	case res := <-chanGet:
-		c.requestWithResponse.Delete(key)
-		return CommandRespond{Respond: res}
-	case <-time.After(CommandRequestDeadLine):
-		c.requestWithResponse.Delete(key)
-		return CommandRespond{
-			Error:     fmt.Errorf(`LoadResponseAndDelete: Request "%v" time out`, key.String()),
-			ErrorType: ErrCommandRequestTimeOut,
+	{
+		if options_got.TimeOut == CommandRequestNoDeadLine {
+			res := <-response_got
+			c.request.Delete(key)
+			c.response.Delete(key)
+			return CommandRespond{Respond: res}
 		}
+		// if there is no time limit
+		select {
+		case res := <-response_got:
+			c.request.Delete(key)
+			c.response.Delete(key)
+			return CommandRespond{Respond: res}
+		case <-time.After(options_got.TimeOut):
+			c.request.Delete(key)
+			c.response.Delete(key)
+			return CommandRespond{
+				Error:     fmt.Errorf(`LoadResponseAndDelete: Request "%v" time out`, key.String()),
+				ErrorType: ErrCommandRequestTimeOut,
+			}
+		}
+		// if there's a time limit
 	}
 	// process and return
 }

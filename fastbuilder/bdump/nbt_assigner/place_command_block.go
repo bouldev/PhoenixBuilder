@@ -182,6 +182,7 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 	cfg *types.MainConfig,
 ) error {
 	var blockName string = "command_block"
+	api := c.BlockEntity.Interface.(*GameInterface.GameInterface)
 	c.CommandBlockData = CommandBlockData{
 		Command:            block.CommandBlockData.Command,
 		CustomName:         block.CommandBlockData.CustomName,
@@ -204,9 +205,9 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 
 		// TODO: 优化下方的这一段代码
 		{
-			resp := c.BlockEntity.Interface.SendWSCommandWithResponse("list")
-			if resp.Error != nil {
-				return fmt.Errorf("PlaceCommandBlockLegacy: %v", resp.Error)
+			err := api.AwaitChangesGeneral()
+			if err != nil {
+				return fmt.Errorf("PlaceCommandBlockLegacy: %v", err)
 			}
 		}
 		// 这么做的目的只是为了保证存在 operation 26 - SetCommandBlockData 的时候，
@@ -226,24 +227,29 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 	// 确定命令方块的类型 & 如果是 operation 26 - SetCommandBlockData
 	request := commands_generator.SetBlockRequest(block, cfg)
 	if c.BlockEntity.AdditionalData.FastMode {
-		err := c.BlockEntity.Interface.SendSettingsCommand(request, true)
+		err := api.SendSettingsCommand(request, true)
 		if err != nil {
 			return fmt.Errorf("ERR 444eee %v", err)
 		}
 	} else {
-		resp := c.BlockEntity.Interface.SendWSCommandWithResponse(request)
-		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-			return fmt.Errorf("ERR 555ccc_01 %v", resp.Error)
-		}
+		resp := api.SendWSCommandWithResponse(
+			request,
+			ResourcesControl.CommandRequestOptions{
+				TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+			},
+		)
 		if resp.Error != nil && resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
-			err := c.BlockEntity.Interface.SendSettingsCommand(request, true)
+			err := api.SendSettingsCommand(request, true)
 			if err != nil {
-				return fmt.Errorf("ERR 555ccc_02 %v", err)
+				return fmt.Errorf("ERR 555ccc_01: %v", err)
 			}
-			resp = c.BlockEntity.Interface.SendWSCommandWithResponse("list")
-			if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-				return fmt.Errorf("ERR 555ccc_03: %v", resp.Error)
+			err = api.AwaitChangesGeneral()
+			if err != nil {
+				return fmt.Errorf("ERR 555ccc_02: %v", err)
 			}
+		}
+		if resp.Error != nil {
+			return fmt.Errorf("ERR 555ccc_03: %v", resp.Error)
 		}
 	}
 	// 放置命令方块
