@@ -3,7 +3,6 @@ package NBTAssigner
 import (
 	"fmt"
 	GameInterface "phoenixbuilder/game_control/game_interface"
-	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
@@ -115,9 +114,9 @@ func (b *Book) WriteData() error {
 		})
 	}
 	// 签名处理
-	resp := api.SendWSCommandWithResponse("list")
-	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-		return fmt.Errorf("OpenBook: %v", resp.Error)
+	err = api.AwaitChangesGeneral()
+	if err != nil {
+		return fmt.Errorf("OpenBook: %v", err)
 	}
 	// 等待更改
 	if b.ItemPackage.Item.Basic.Name == "written_book" && b.ItemPackage.Item.Basic.Count > 1 {

@@ -12,8 +12,11 @@ import (
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/fastbuilder/utils"
+	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/io/special_tasks"
 	"phoenixbuilder/minecraft"
+
+	"github.com/pterm/pterm"
 )
 
 func InitPresetFunctions(fh *FunctionHolder) {
@@ -178,7 +181,21 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				ArgumentTypes: []byte{},
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					resp := env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
+					resp := env.GameInterface.SendCommandWithResponse(
+						fmt.Sprintf(
+							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
+							env.RespondUser,
+						),
+						ResourcesControl.CommandRequestOptions{
+							TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+						},
+					)
+					if resp.Error != nil {
+						env.GameInterface.Output(
+							pterm.Error.Sprintf("Failed to get your pos because of %v", resp.Error),
+						)
+						return
+					}
 					pos, _ := utils.SliceAtoi(resp.Respond.OutputMessages[0].Parameters)
 					if !(resp.Respond.OutputMessages[0].Message == "commands.generic.unknown") {
 						configuration.IsOp = true
@@ -201,7 +218,21 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					resp := env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
+					resp := env.GameInterface.SendCommandWithResponse(
+						fmt.Sprintf(
+							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
+							env.RespondUser,
+						),
+						ResourcesControl.CommandRequestOptions{
+							TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+						},
+					)
+					if resp.Error != nil {
+						env.GameInterface.Output(
+							pterm.Error.Sprintf("Failed to get your pos because of %v", resp.Error),
+						)
+						return
+					}
 					pos, _ := utils.SliceAtoi(resp.Respond.OutputMessages[0].Parameters)
 					if !(resp.Respond.OutputMessages[0].Message == "commands.generic.unknown") {
 						configuration.IsOp = true
@@ -223,7 +254,21 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
-					resp := env.GameInterface.SendCommandWithResponse(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser))
+					resp := env.GameInterface.SendCommandWithResponse(
+						fmt.Sprintf(
+							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
+							env.RespondUser,
+						),
+						ResourcesControl.CommandRequestOptions{
+							TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+						},
+					)
+					if resp.Error != nil {
+						env.GameInterface.Output(
+							pterm.Error.Sprintf("Failed to get your pos because of %v", resp.Error),
+						)
+						return
+					}
 					pos, _ := utils.SliceAtoi(resp.Respond.OutputMessages[0].Parameters)
 					if len(pos) == 0 {
 						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))

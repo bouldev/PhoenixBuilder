@@ -8,6 +8,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -61,13 +62,15 @@ func (g *GameInterface) sendCommand(
 }
 
 // 以 origin 的身份向租赁服发送命令并且取得响应体。
+// options 指定当次命令请求的自定义设置项。
 // 属于私有实现
 func (g *GameInterface) sendCommandWithResponse(
 	command string,
+	options ResourcesControl.CommandRequestOptions,
 	origin uint32,
 ) ResourcesControl.CommandRespond {
 	uniqueId := ResourcesControl.GenerateUUID()
-	err := g.Resources.Command.WriteRequest(uniqueId)
+	err := g.Resources.Command.WriteRequest(uniqueId, options)
 	if err != nil {
 		return ResourcesControl.CommandRespond{
 			Error:     fmt.Errorf("sendCommandWithResponse: %v", err),
@@ -85,7 +88,7 @@ func (g *GameInterface) sendCommandWithResponse(
 	// 发送命令
 	resp := g.Resources.Command.LoadResponseAndDelete(uniqueId)
 	if resp.Error != nil {
-		resp.Error = fmt.Errorf(`sendCommandWithResponse: %v`, resp.Error)
+		resp.Error = fmt.Errorf("sendCommandWithResponse: %v", resp.Error)
 	}
 	return resp
 	// 获取响应体并返回值
@@ -111,22 +114,65 @@ func (g *GameInterface) SendWSCommand(command string) error {
 	return nil
 }
 
-// 以玩家的身份向租赁服发送命令且获取返回值
-func (g *GameInterface) SendCommandWithResponse(command string) ResourcesControl.CommandRespond {
-	resp := g.sendCommandWithResponse(command, protocol.CommandOriginPlayer)
+// 以玩家的身份向租赁服发送命令且获取返回值。
+// options 指定当次命令请求的自定义设置项
+func (g *GameInterface) SendCommandWithResponse(
+	command string,
+	options ResourcesControl.CommandRequestOptions,
+) ResourcesControl.CommandRespond {
+	resp := g.sendCommandWithResponse(command, options, protocol.CommandOriginPlayer)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("SendCommandWithResponse: %v", resp.Error)
 	}
 	return resp
 }
 
-// 向租赁服发送 WS 命令且获取返回值
-func (g *GameInterface) SendWSCommandWithResponse(command string) ResourcesControl.CommandRespond {
-	resp := g.sendCommandWithResponse(command, protocol.CommandOriginAutomationPlayer)
+// 向租赁服发送 WS 命令且获取返回值。
+// options 指定当次命令请求的自定义设置项
+func (g *GameInterface) SendWSCommandWithResponse(
+	command string,
+	options ResourcesControl.CommandRequestOptions,
+) ResourcesControl.CommandRespond {
+	resp := g.sendCommandWithResponse(command, options, protocol.CommandOriginAutomationPlayer)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("SendWSCommandWithResponse: %v", resp.Error)
 	}
 	return resp
+}
+
+/*
+一个基于游戏刻流逝的通用实现，
+用于等待租赁服完成更改。
+
+该实现效率较低，正常状态下，
+平均每次调用将会阻滞 4~6 个游戏刻。
+
+该实现也并不完全安全，
+在 TPS 较低的情况下，实际表现欠佳。
+
+遗憾地，由于现在没有良好的办法用于检测更改，
+该方法因此被广泛使用且难以被替代
+*/
+func (g *GameInterface) AwaitChangesGeneral() error {
+	olderTick, err := g.GetCurrentTick()
+	if err != nil {
+		return fmt.Errorf("AwaitChangesGeneral: %v", err)
+	}
+	// 获取当前的游戏刻
+	timer := time.NewTicker(time.Second / 100)
+	defer timer.Stop()
+	// 设定计时器
+	for {
+		newerTick, err := g.GetCurrentTick()
+		if err != nil {
+			return fmt.Errorf("AwaitChangesGeneral: %v", err)
+		}
+		if newerTick >= olderTick+2 {
+			return nil
+		}
+		<-timer.C
+	}
+	// 等待游戏刻流逝至少 2 游戏刻
 }
 
 // 将 content 打印到终端，

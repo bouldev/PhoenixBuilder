@@ -10,8 +10,8 @@ type GameInterface interface {
 	SendSettingsCommand(string, bool) error
 	SendCommand(string) error
 	SendWSCommand(string) error
-	SendCommandWithResponse(string) resources_control.CommandRespond
-	SendWSCommandWithResponse(string) resources_control.CommandRespond
+	SendCommandWithResponse(string, resources_control.CommandRequestOptions) resources_control.CommandRespond
+	SendWSCommandWithResponse(string, resources_control.CommandRequestOptions) resources_control.CommandRespond
 
 	SetBlock([3]int32, string, string) error
 	SetBlockAsync([3]int32, string, string) error

@@ -5,6 +5,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
+	"time"
 )
 
 // ------------------------- Resources -------------------------
@@ -30,11 +31,23 @@ type Resources struct {
 
 // ------------------------- commandRequestWithResponce -------------------------
 
+// 指定单个命令请求中可以自定义的设置项
+type CommandRequestOptions struct {
+	// 描述当前命令请求的最长截止时间，
+	// 当抵达该时间后，将返回超时错误。
+	// 如果此字段为 0 ，则将永远等待，
+	// 直到客户端收到对应的响应体
+	TimeOut time.Duration
+}
+
 // 存放命令请求及结果
 type commandRequestWithResponse struct {
-	// 存放命令请求及返回值队列。
+	// 存放命令请求。
+	// 数据类型为 map[uuid.UUID]CommandRequestOptions
+	request sync.Map
+	// 存放命令请求的响应体。
 	// 数据类型为 map[uuid.UUID](chan packet.CommandOutput)
-	requestWithResponse sync.Map
+	response sync.Map
 }
 
 // 描述命令请求的响应体

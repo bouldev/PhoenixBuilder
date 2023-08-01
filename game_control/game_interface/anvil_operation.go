@@ -63,9 +63,9 @@ func (g *GameInterface) RenameItemByAnvil(
 	if err != nil {
 		return []AnvilOperationResponse{}, fmt.Errorf("RenameItemByAnvil: %v", err)
 	}
-	resp := g.SendWSCommandWithResponse("list")
-	if resp.Error != nil {
-		return []AnvilOperationResponse{}, fmt.Errorf("RenameItemByAnvil: %v", resp.Error)
+	err = g.AwaitChangesGeneral()
+	if err != nil {
+		return []AnvilOperationResponse{}, fmt.Errorf("RenameItemByAnvil: %v", err)
 	}
 	// 传送机器人到铁砧处。
 	// TODO: 优化上方这段代码

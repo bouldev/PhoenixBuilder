@@ -29,6 +29,7 @@ func (i *ItemPackage) ReplaceItemInInventory() error {
 			Damage: item.Basic.MetaData,
 		},
 		MarshalItemComponents(itemComponents),
+		true,
 	)
 	if err != nil {
 		return fmt.Errorf("ReplaceItemInInventory: %v", err)
@@ -58,9 +59,9 @@ func (i *ItemPackage) AddEnchantments() error {
 		}
 	}
 	// 发送附魔命令
-	resp := api.SendWSCommandWithResponse("list")
-	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-		return fmt.Errorf("AddEnchantments: %v", resp.Error)
+	err := api.AwaitChangesGeneral()
+	if err != nil {
+		return fmt.Errorf("AddEnchantments: %v", err)
 	}
 	// 等待更改
 	return nil
@@ -109,6 +110,7 @@ func (i *ItemPackage) AddDisplayName() error {
 				Damage: 0,
 			},
 			"",
+			true,
 		)
 		if err != nil {
 			return fmt.Errorf("AddDisplayName: %v", err)

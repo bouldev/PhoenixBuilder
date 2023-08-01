@@ -6,7 +6,8 @@ import "time"
 const (
 	// 描述命令请求的最长截止时间。
 	// 当超过此时间后，将会返回超时错误
-	CommandRequestDeadLine = time.Second
+	CommandRequestNoDeadLine      = 0
+	CommandRequestDefaultDeadLine = time.Second
 	// 描述容器操作(打开/关闭)的最长截止时间。
 	// 当超过此时间后，将不再等待
 	ContainerOperationDeadLine = time.Second

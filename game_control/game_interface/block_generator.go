@@ -21,7 +21,12 @@ import (
 func (g *GameInterface) GenerateNewAnvil(pos [3]int32, blockStates string) (
 	uuid.UUID, [3]int32, error,
 ) {
-	resp := g.SendWSCommandWithResponse("querytarget @s")
+	resp := g.SendWSCommandWithResponse(
+		"querytarget @s",
+		ResourcesControl.CommandRequestOptions{
+			TimeOut: ResourcesControl.CommandRequestNoDeadLine,
+		},
+	)
 	if resp.Error != nil {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: %v", resp.Error)
 	}
@@ -83,9 +88,9 @@ func (g *GameInterface) GenerateNewAnvil(pos [3]int32, blockStates string) (
 	if err != nil {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: %v", err)
 	}
-	resp = g.SendWSCommandWithResponse("list")
-	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: Failed to generate a new anvil on %v; resp = %#v", pos, resp)
+	err = g.AwaitChangesGeneral()
+	if err != nil {
+		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: Failed to generate a new anvil on %v; err = %#v", pos, err)
 	}
 	// 放置一个铁砧并附带一个承重方块
 	return uniqueId, pos, nil
@@ -106,7 +111,12 @@ func (g *GameInterface) PlaceShulkerBox(
 	var backupBlockPos [3]int32
 	// 初始化
 	if facing == 0 || facing == 1 {
-		resp := g.SendWSCommandWithResponse("querytarget @s")
+		resp := g.SendWSCommandWithResponse(
+			"querytarget @s",
+			ResourcesControl.CommandRequestOptions{
+				TimeOut: ResourcesControl.CommandRequestNoDeadLine,
+			},
+		)
 		if resp.Error != nil {
 			return fmt.Errorf("PlaceShulkerBox: %v", resp.Error)
 		}
@@ -212,7 +222,7 @@ func (g *GameInterface) PlaceShulkerBox(
 	if err != nil {
 		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
-	// 清除潜影盒处的方块、修正机器人的朝向、备份相关的方块、
+	// 清除潜影盒处的方块、修正机器人的朝向、 备份相关的方块，
 	// 然后再在备份的方块处生成一个绿宝石块。
 	// 生成的绿宝石块将被用于作为放置潜影盒的依附方块。
 	// SuperScript 最喜欢绿宝石块了！
@@ -255,9 +265,9 @@ func (g *GameInterface) PlaceShulkerBox(
 		if err != nil {
 			return fmt.Errorf("PlaceShulkerBox: %v", err)
 		}
-		resp := g.SendWSCommandWithResponse("list")
-		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
-			return fmt.Errorf("PlaceShulkerBox: %v", resp.Error)
+		err = g.AwaitChangesGeneral()
+		if err != nil {
+			return fmt.Errorf("PlaceShulkerBox: %v", err)
 		}
 	}
 	// 可能潜影盒并非生成在原本给定的坐标处，此时需要进行特殊处理

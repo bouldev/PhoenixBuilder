@@ -174,6 +174,7 @@ func (g *GameInterface) CopyItem(
 				Damage: 0,
 			},
 			"",
+			true,
 		)
 		if err != nil {
 			return false, fmt.Errorf("singleCodeBlock: %v", err)

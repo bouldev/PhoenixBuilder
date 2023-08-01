@@ -68,19 +68,19 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		gameInterface.SendWSCommand("gamemode c")
 		var testAreaIsLoaded string = "testforblocks ~-31 -64 ~-31 ~31 319 ~31 ~-31 -64 ~-31"
 
-		for {
-			resp := gameInterface.SendWSCommandWithResponse("querytarget @s")
-			if resp.Error != nil && resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
-				continue
-			}
-			parseResult, _ := gameInterface.ParseTargetQueryingInfo(resp.Respond)
-			if parseResult[0].Dimension == 1 {
-				testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 127 ~31 ~-31 0 ~-31"
-			}
-			if parseResult[0].Dimension == 2 {
-				testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 255 ~31 ~-31 0 ~-31"
-			}
-			break
+		resp := gameInterface.SendWSCommandWithResponse(
+			"querytarget @s",
+			ResourcesControl.CommandRequestOptions{
+				TimeOut: ResourcesControl.CommandRequestNoDeadLine,
+			},
+		)
+		parseResult, _ := gameInterface.ParseTargetQueryingInfo(resp.Respond)
+
+		if parseResult[0].Dimension == 1 {
+			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 127 ~31 ~-31 0 ~-31"
+		}
+		if parseResult[0].Dimension == 2 {
+			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 255 ~31 ~-31 0 ~-31"
 		}
 		// 这个前置准备用于后面判断被导出区域是否加载
 		// 如果尝试请求一个没有被完全加载的区域，那么返回的结构将是只包括空气的结构，但不会报错
@@ -97,13 +97,15 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		for key, value := range splittedAreas {
 			currentProgress := indicativeMap[key]
 			env.GameInterface.Output(pterm.Info.Sprintf("Fetching data from area [%d, %d]", currentProgress[0], currentProgress[1]))
-			gameInterface.SendWSCommandWithResponse(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2))
+			gameInterface.SendSettingsCommand(fmt.Sprintf("tp %d %d %d", value.BeginX+value.SizeX/2, value.BeginY+value.SizeY/2, value.BeginZ+value.SizeZ/2), true)
 
 			for {
-				resp := gameInterface.SendWSCommandWithResponse(testAreaIsLoaded)
-				if resp.Error != nil && resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
-					continue
-				}
+				resp := gameInterface.SendWSCommandWithResponse(
+					testAreaIsLoaded,
+					ResourcesControl.CommandRequestOptions{
+						TimeOut: ResourcesControl.CommandRequestNoDeadLine,
+					},
+				)
 				if resp.Respond.OutputMessages[0].Message != "commands.generic.outOfWorld" {
 					break
 				}
