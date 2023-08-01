@@ -222,7 +222,7 @@ func (g *GameInterface) PlaceShulkerBox(
 	if err != nil {
 		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
-	// 清除潜影盒处的方块、修正机器人的朝向、 备份相关的方块，
+	// 清除潜影盒处的方块、修正机器人的朝向、备份相关的方块，
 	// 然后再在备份的方块处生成一个绿宝石块。
 	// 生成的绿宝石块将被用于作为放置潜影盒的依附方块。
 	// SuperScript 最喜欢绿宝石块了！
