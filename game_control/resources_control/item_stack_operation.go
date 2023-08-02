@@ -155,17 +155,12 @@ func (i *itemStackRequestWithResponse) GetNewItemData(
 	newItem protocol.ItemInstance,
 	resp protocol.StackResponseSlotInfo,
 ) (protocol.ItemInstance, error) {
-	nbt := newItem.Stack.NBTData
-	// 获取物品的旧 NBT 数据
-	newItem.Stack.NBTData = nbt
 	newItem.Stack.Count = uint16(resp.Count)
 	newItem.StackNetworkID = resp.StackNetworkID
 	/*
 		newItem.Stack.MetadataValue = uint32(resp.DurabilityCorrection) [This line of code has not been tested for validity]
 	*/
-	// 更新物品数据
 	return newItem, nil
-	// 返回值
 }
 
 /*
