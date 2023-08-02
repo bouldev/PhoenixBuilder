@@ -40,7 +40,8 @@ func (g *GameInterface) RenameItem(
 	if get.Stack.NetworkID == 0 {
 		return nil, fmt.Errorf("RenameItem: Item provided is air")
 	}
-	// 得已放入铁砧的物品的物品数据并进行数据检查
+	// 得到已放入铁砧的物品的物品数据，
+	// 并进行数据检查
 	var itemDatas protocol.ItemInstance
 	ResourcesControl.DeepCopy(
 		&get,
@@ -50,7 +51,7 @@ func (g *GameInterface) RenameItem(
 			gob.Register([]interface{}{})
 		},
 	)
-	// 将得到的物品数据数据深拷贝到并 itemDatas 处
+	// 将得到的物品数据深拷贝到并 itemDatas 处
 	var backup protocol.ItemInstance
 	ResourcesControl.DeepCopy(
 		&get,
