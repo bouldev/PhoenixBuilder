@@ -163,9 +163,9 @@ func (i *itemStackRequestWithResponse) GetNewItemData(
 	/*
 		newItem.Stack.MetadataValue = uint32(resp.DurabilityCorrection) [This line of code has not been tested for validity]
 	*/
-	// update values
+	// 更新物品数据
 	return newItem, nil
-	// return
+	// 返回值
 }
 
 /*
@@ -189,7 +189,7 @@ func (i *itemStackRequestWithResponse) updateItemData(
 	if !normal {
 		panic(fmt.Sprintf("updateItemData: Failed to convert request_origin into singleItemStackRequestWithResponse; value = %#v", request_origin))
 	}
-	// load request
+	// 加载物品操作请求
 	for _, value := range resp.ContainerInfo {
 		if request_got.howToChange == nil {
 			panic("updateItemData: Results of item changes are not provided(packet.ItemStackRequest related)")
@@ -197,27 +197,40 @@ func (i *itemStackRequestWithResponse) updateItemData(
 		currentRequest, ok := request_got.howToChange[ContainerID(value.ContainerID)]
 		if !ok {
 			pterm.Warning.Printf(
-				"updateItemData: The result of the change of item %d is not provided(packet.ItemStackRequest related); request_got.howToChange = %#v; value = %#v\n",
+				"updateItemData: request_got.howToChange[%d] is not provided(packet.ItemStackRequest related); request_got.howToChange = %#v; value = %#v\n",
 				ContainerID(value.ContainerID),
 				request_got.howToChange,
 				value,
 			)
 			return nil
 		}
-		// check pass
+		// 数据检查
 		for _, val := range value.SlotInfo {
+			expectNewItem, ok := currentRequest.ChangeResult[val.Slot]
+			if !ok {
+				pterm.Warning.Printf(
+					"updateItemData: currentRequest.ChangeResult[%d] is not provided(packet.ItemStackRequest related); currentRequest.ChangeResult = %#v; val = %#v\n",
+					val.Slot,
+					currentRequest.ChangeResult,
+					val,
+				)
+				continue
+			}
+			// 数据检查
 			newItem, err := i.GetNewItemData(
-				currentRequest.ChangeResult[val.Slot],
+				expectNewItem,
 				val,
 			)
 			if err != nil {
 				panic(fmt.Sprintf("updateItemData: Failed to get new item data; currentRequest.ChangeResult[val.Slot] = %#v, val = %#v", currentRequest.ChangeResult[val.Slot], val))
 			}
+			// 取得物品的新数据
 			inventory.writeItemStackInfo(currentRequest.WindowID, val.Slot, newItem)
+			// 将物品的新数据写入到本地库存中
 		}
-		// update item info
+		// 更新本地库存中一个或多个物品的数据
 	}
-	// set item data
+	// 设置物品数据
 	return nil
-	// return
+	// 返回值
 }
