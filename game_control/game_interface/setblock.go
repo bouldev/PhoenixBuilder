@@ -37,6 +37,7 @@ func (g *GameInterface) SetBlock(pos [3]int32, name string, states string) error
 		if err != nil {
 			return fmt.Errorf("SetBlock: %v", err)
 		}
+		return nil
 	}
 	if resp.Error != nil {
 		return fmt.Errorf("SetBlock: %v", resp.Error)

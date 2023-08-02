@@ -248,7 +248,7 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 				return fmt.Errorf("ERR 555ccc_02: %v", err)
 			}
 		}
-		if resp.Error != nil {
+		if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
 			return fmt.Errorf("ERR 555ccc_03: %v", resp.Error)
 		}
 	}
