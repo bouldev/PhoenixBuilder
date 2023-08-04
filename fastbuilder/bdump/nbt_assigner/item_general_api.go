@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/types"
 	GameInterface "phoenixbuilder/game_control/game_interface"
-	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -127,18 +126,9 @@ func (i *ItemPackage) AddDisplayName() error {
 				ContainerID: 0xc,
 				Slot:        i.AdditionalData.HotBarSlot,
 			},
-			GameInterface.ItemChangingDetails{
-				Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
-					0xc: {
-						WindowID: 0,
-						ChangeResult: map[uint8]protocol.ItemInstance{
-							resp[0].Destination.Slot:    GameInterface.AirItem,
-							i.AdditionalData.HotBarSlot: itemData,
-						},
-					},
-				},
-			},
 			uint8(itemData.Stack.Count),
+			GameInterface.AirItem,
+			itemData,
 		)
 		if err != nil {
 			return fmt.Errorf("AddDisplayName: %v", err)

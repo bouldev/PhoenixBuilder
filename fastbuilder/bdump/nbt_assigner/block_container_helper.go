@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/types"
 	GameInterface "phoenixbuilder/game_control/game_interface"
-	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"strings"
 )
@@ -223,27 +222,13 @@ func (c *Container) MoveItemIntoContainer(
 			Slot:        itemLocation,
 		},
 		GameInterface.ItemLocation{
-			WindowID:    int16(containerOpeningData.WindowID),
+			WindowID:    containerOpeningData.WindowID,
 			ContainerID: got.ContainerID,
 			Slot:        destination,
 		},
-		GameInterface.ItemChangingDetails{
-			Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
-				0xc: {
-					WindowID: 0,
-					ChangeResult: map[uint8]protocol.ItemInstance{
-						itemLocation: GameInterface.AirItem,
-					},
-				},
-				ResourcesControl.ContainerID(got.ContainerID): {
-					WindowID: uint32(containerOpeningData.WindowID),
-					ChangeResult: map[uint8]protocol.ItemInstance{
-						destination: itemData,
-					},
-				},
-			},
-		},
 		uint8(itemData.Stack.Count),
+		GameInterface.AirItem,
+		itemData,
 	)
 	if err != nil && err != GameInterface.ErrMoveItemCheckFailure {
 		return fmt.Errorf("MoveItemIntoContainer: %v", err)
@@ -641,18 +626,9 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 						ContainerID: 0xc,
 						Slot:        uint8(key),
 					},
-					GameInterface.ItemChangingDetails{
-						Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
-							0xc: {
-								WindowID: 0,
-								ChangeResult: map[uint8]protocol.ItemInstance{
-									8:          GameInterface.AirItem,
-									uint8(key): itemData,
-								},
-							},
-						},
-					},
 					uint8(itemData.Stack.Count),
+					GameInterface.AirItem,
+					itemData,
 				)
 				if err != nil && err != GameInterface.ErrMoveItemCheckFailure {
 					return fmt.Errorf("subFunc: %v", err)
@@ -757,27 +733,13 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 					Slot:        key,
 				},
 				GameInterface.ItemLocation{
-					WindowID:    int16(containerOpeningData.WindowID),
+					WindowID:    containerOpeningData.WindowID,
 					ContainerID: got.ContainerID,
 					Slot:        value.Basic.Slot,
 				},
-				GameInterface.ItemChangingDetails{
-					Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
-						0xc: {
-							WindowID: 0,
-							ChangeResult: map[uint8]protocol.ItemInstance{
-								key: GameInterface.AirItem,
-							},
-						},
-						ResourcesControl.ContainerID(got.ContainerID): {
-							WindowID: uint32(containerOpeningData.WindowID),
-							ChangeResult: map[uint8]protocol.ItemInstance{
-								value.Basic.Slot: itemData,
-							},
-						},
-					},
-				},
 				uint8(itemData.Stack.Count),
+				GameInterface.AirItem,
+				itemData,
 			)
 			if err != nil && err != GameInterface.ErrMoveItemCheckFailure {
 				return []GeneralItem{}, fmt.Errorf("ItemPlanner: %v", err)
