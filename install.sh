@@ -341,53 +341,53 @@ LAUNCH_CMD=""
 report_error() {
   if [ ${DL_TOOL_NAME} == "curl" ]; then
     if [ ${1} == 22 ]; then
-      printf "\033[031Download failure! Requested resources not exist! (curl: 22)\033[0m\n"
-      printf "\033[031 ${FB_LINK}\033[0m\n"
+      printf "\033[031mDownload failure! Requested resources not exist! (curl: 22)\033[0m\n"
+      printf "\033[031m ${FB_LINK}\033[0m\n"
     elif [ ${1} == 3 ]; then
-      printf "\033[031URL malformed. (curl: 3)\033[0m\n"
-      printf "\033[031Please report this bug!\033[0m\n"
+      printf "\033[031mURL malformed. (curl: 3)\033[0m\n"
+      printf "\033[031mPlease report this bug!\033[0m\n"
     elif [ ${1} == 23 ]; then
-        printf "\033[031Could not write data to local filesystem! (curl: 23)\033[0m\n"
-        printf "\033[031Check your r/w permissions before the installation.\033[0m\n"
+        printf "\033[031mCould not write data to local filesystem! (curl: 23)\033[0m\n"
+        printf "\033[031mCheck your r/w permissions before the installation.\033[0m\n"
     else
-        printf "\033[031Download failure! Please check your connections (curl: ${DL_RET}).\nStopping.\033[0m\n"
+        printf "\033[031mDownload failure! Please check your connections (curl: ${DL_RET}).\nStopping.\033[0m\n"
     fi
   elif [ ${DL_TOOL_NAME} == "wget" ]; then
     if [ ${1} == 1 ]; then
-      printf "\033[031Generic error (wget: 1)\nTry using curl?\033[0m\n"
+      printf "\033[031mGeneric error (wget: 1)\nTry using curl?\033[0m\n"
     elif [ ${1} == 2 ]; then
-      printf "\033[031Parse error, check your .wgetrc and .netrc (wget: 2)\033[0m\n"
+      printf "\033[031mParse error, check your .wgetrc and .netrc (wget: 2)\033[0m\n"
     elif [ ${1} == 3 ]; then
-      printf "\033[031File I/O error (wget: 3)\033[0m\n"
-      printf "\033[031Check your r/w permissions before the installation.\033[0m\n"
+      printf "\033[031mFile I/O error (wget: 3)\033[0m\n"
+      printf "\033[031mCheck your r/w permissions before the installation.\033[0m\n"
     elif [ ${1} == 8 ]; then
-      printf "\033[031Download failure! Requested resources not exist! (wget: 8)\033[0m\n"
-      printf "\033[031 ${FB_LINK}\033[0m\n"
+      printf "\033[031mDownload failure! Requested resources not exist! (wget: 8)\033[0m\n"
+      printf "\033[031m ${FB_LINK}\033[0m\n"
     else
-      printf "\033[031Download failure! Please check your connections (wget: ${1}).\nStopping.\033[0m\n"
+      printf "\033[031mDownload failure! Please check your connections (wget: ${1}).\nStopping.\033[0m\n"
     fi
   elif [ ${DL_TOOL_NAME} == "aria2c" ]; then
     if [ ${1} == 1 ]; then
-      printf "\033[031Unknown error occurred (aria2c: 1)\nTry using curl?\033[0m\n"
+      printf "\033[031mUnknown error occurred (aria2c: 1)\nTry using curl?\033[0m\n"
     elif [ ${1} == 3 ]; then
-      printf "\033[031Download failure! Requested resources not exist! (aria2c: 3)\033[0m\n"
-      printf "\033[031 ${FB_LINK}\033[0m\n"
+      printf "\033[031mDownload failure! Requested resources not exist! (aria2c: 3)\033[0m\n"
+      printf "\033[031m ${FB_LINK}\033[0m\n"
     elif [ ${1} == 9 ]; then
-      printf "\033[031Disk space not enough. (aria2c: 9)\nCleanup spaces before the installation!\033[0m\n"
+      printf "\033[031mDisk space not enough. (aria2c: 9)\nCleanup spaces before the installation!\033[0m\n"
     elif [[ ${1} == 15 ]] || [[ ${1} == 16 ]] || [[ ${1} == 17 ]] || [[ ${1} == 18 ]]; then
-      printf "\033[031Could not open/create file or directory (aria2c: ${1})\033[0m\n"
-      printf "\033[031Check your r/w permissions before the installation.\033[0m\n"
+      printf "\033[031mCould not open/create file or directory (aria2c: ${1})\033[0m\n"
+      printf "\033[031mCheck your r/w permissions before the installation.\033[0m\n"
     else
-      printf "\033[031Download failure! Please check your connections (aria2c: ${1}).\nStopping.\033[0m\n"
+      printf "\033[031mDownload failure! Please check your connections (aria2c: ${1}).\nStopping.\033[0m\n"
     fi
   elif [ ${DL_TOOL_NAME} == "axel" ]; then
     if [ ${1} == 1 ]; then
-      printf "\033[031Something went wrong (axel: 1)\nTry using curl?\033[0m\n"
+      printf "\033[031mSomething went wrong (axel: 1)\nTry using curl?\033[0m\n"
     else
-      printf "\033[031Download failure! Please check your connections (axel: ${DL_RET}).\nStopping.\033[0m\n"
+      printf "\033[031mDownload failure! Please check your connections (axel: ${DL_RET}).\nStopping.\033[0m\n"
     fi
   else
-    printf "\033[031Download failure! (${DL_TOOL}: ${DL_RET}).\nStopping.\033[0m\n"
+    printf "\033[031mDownload failure! (${DL_TOOL}: ${DL_RET}).\nStopping.\033[0m\n"
   fi
   quit_installer 1
 }
