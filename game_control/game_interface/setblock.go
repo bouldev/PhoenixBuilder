@@ -63,7 +63,7 @@ func (g *GameInterface) SetBlockAsync(pos [3]int32, name string, states string) 
 	}, &types.MainConfig{})
 	err := g.SendSettingsCommand(request, true)
 	if err != nil {
-		return fmt.Errorf("SetBlockForgetfully: %v", err)
+		return fmt.Errorf("SetBlockAsync: %v", err)
 	}
 	return nil
 }

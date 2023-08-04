@@ -3,7 +3,6 @@ package GameInterface
 import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/mcstructure"
-	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -137,27 +136,13 @@ func (g *GameInterface) RenameItemByAnvil(
 				Slot:        value.Slot,
 			},
 			ItemLocation{
-				WindowID:    int16(containerOpeningData.WindowID),
+				WindowID:    containerOpeningData.WindowID,
 				ContainerID: 0x0,
 				Slot:        1,
 			},
-			ItemChangingDetails{
-				Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
-					0xc: {
-						WindowID: 0,
-						ChangeResult: map[uint8]protocol.ItemInstance{
-							value.Slot: AirItem,
-						},
-					},
-					0x0: {
-						WindowID: uint32(containerOpeningData.WindowID),
-						ChangeResult: map[uint8]protocol.ItemInstance{
-							1: datas,
-						},
-					},
-				},
-			},
 			uint8(datas.Stack.Count),
+			AirItem,
+			datas,
 		)
 		if err != nil {
 			return res, fmt.Errorf("RenameItemByAnvil: %v", err)

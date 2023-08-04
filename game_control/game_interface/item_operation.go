@@ -9,22 +9,34 @@ import (
 
 // 描述单个物品所在的位置
 type ItemLocation struct {
-	WindowID    int16 // 物品所在库存的窗口 ID
+	WindowID    uint8 // 物品所在库存的窗口 ID
 	ContainerID uint8 // 物品所在库存的库存类型 ID
 	Slot        uint8 // 物品所在的槽位
 }
 
-// 将库存编号为 source 所指代的物品移动到 destination 所指代的槽位
-// 且只移动 moveCount 个物品。
-// details 指代相应槽位的预期变动结果，它将作为更新本地库存数据的依据。
-// 当且仅当物品操作得到租赁服的响应后，此函数才会返回物品操作结果。
+/*
+将库存编号为 source 所指代的物品
+移动到 destination 所指代的槽位，
+且只移动 moveCount 个物品。
+
+sourceResult 与 destResult 分别
+指代 source 及 destination 处物
+品的预期变动结果，它将作为更新本
+地库存数据的依据。
+
+当且仅当物品操作得到租赁服的响应后，
+此函数才会返回物品操作结果。
+*/
 func (g *GameInterface) MoveItem(
 	source ItemLocation,
 	destination ItemLocation,
-	details ItemChangingDetails,
 	moveCount uint8,
+	sourceResult protocol.ItemInstance,
+	destResult protocol.ItemInstance,
 ) ([]protocol.ItemStackResponse, error) {
-	placeStackRequestAction := protocol.PlaceStackRequestAction{}
+	var ans []protocol.ItemStackResponse
+	var err error
+	var placeStackRequestAction protocol.PlaceStackRequestAction
 	// 初始化
 	itemOnSource, err := g.Resources.Inventory.GetItemStackInfo(uint32(source.WindowID), source.Slot)
 	if err != nil {
@@ -36,7 +48,7 @@ func (g *GameInterface) MoveItem(
 		return []protocol.ItemStackResponse{}, ErrMoveItemCheckFailure
 	}
 	// 数据检查
-	if moveCount <= uint8(itemOnSource.Stack.Count) || source.WindowID == -1 {
+	if moveCount <= uint8(itemOnSource.Stack.Count) {
 		placeStackRequestAction.Count = moveCount
 	} else {
 		placeStackRequestAction.Count = uint8(itemOnSource.Stack.Count)
@@ -53,18 +65,62 @@ func (g *GameInterface) MoveItem(
 		StackNetworkID: itemOnDestination.StackNetworkID,
 	}
 	// 构造 placeStackRequestAction 结构体
-	ans, err := g.SendItemStackRequestWithResponse(
-		&packet.ItemStackRequest{
-			Requests: []protocol.ItemStackRequest{
-				{
-					Actions: []protocol.StackRequestAction{
-						&placeStackRequestAction,
+	if source.ContainerID == destination.ContainerID {
+		ans, err = g.SendItemStackRequestWithResponse(
+			&packet.ItemStackRequest{
+				Requests: []protocol.ItemStackRequest{
+					{
+						Actions: []protocol.StackRequestAction{
+							&placeStackRequestAction,
+						},
 					},
 				},
 			},
-		},
-		[]ItemChangingDetails{details},
-	)
+			[]ItemChangingDetails{
+				{
+					Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
+						ResourcesControl.ContainerID(source.ContainerID): {
+							WindowID: uint32(source.WindowID),
+							ChangeResult: map[uint8]protocol.ItemInstance{
+								source.Slot:      sourceResult,
+								destination.Slot: destResult,
+							},
+						},
+					},
+				},
+			},
+		)
+	} else {
+		ans, err = g.SendItemStackRequestWithResponse(
+			&packet.ItemStackRequest{
+				Requests: []protocol.ItemStackRequest{
+					{
+						Actions: []protocol.StackRequestAction{
+							&placeStackRequestAction,
+						},
+					},
+				},
+			},
+			[]ItemChangingDetails{
+				{
+					Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
+						ResourcesControl.ContainerID(source.ContainerID): {
+							WindowID: uint32(source.WindowID),
+							ChangeResult: map[uint8]protocol.ItemInstance{
+								source.Slot: sourceResult,
+							},
+						},
+						ResourcesControl.ContainerID(destination.ContainerID): {
+							WindowID: uint32(destination.WindowID),
+							ChangeResult: map[uint8]protocol.ItemInstance{
+								destination.Slot: destResult,
+							},
+						},
+					},
+				},
+			},
+		)
+	}
 	if err != nil {
 		return []protocol.ItemStackResponse{}, fmt.Errorf("MoveItem: %v", err)
 	}

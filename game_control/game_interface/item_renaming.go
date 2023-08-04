@@ -143,7 +143,7 @@ func (g *GameInterface) RenameItem(
 		return &AnvilOperationResponse{
 			Successful: false,
 			Destination: &ItemLocation{
-				WindowID:    int16(containerOpeningData.WindowID),
+				WindowID:    containerOpeningData.WindowID,
 				ContainerID: 0,
 				Slot:        1,
 			},
