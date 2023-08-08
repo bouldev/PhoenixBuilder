@@ -7,7 +7,6 @@ import (
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/credentials"
 	I18n "phoenixbuilder/fastbuilder/i18n"
-	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
 	"phoenixbuilder/fastbuilder/utils"
 
 	"github.com/pterm/pterm"
@@ -60,10 +59,7 @@ func check_update() {
 
 func Bootstrap() {
 	//args.ParseArgs()
-	// ^^ Argument parser would parse arguments before go starts now
-	if len(args.PackScripts) != 0 {
-		os.Exit(script_bridge.MakePackage(args.PackScripts, args.PackScriptsOut))
-	}
+	// ^^ Argument parser would parse arguments before go runtime starts now
 	setup()
 	display_info()
 	defer Fatal()

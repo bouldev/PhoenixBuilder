@@ -6,7 +6,6 @@ require (
 	github.com/cheggaaa/pb v1.0.29
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/hashicorp/go-version v1.6.0
-	rogchap.com/v8go v0.7.0
 )
 
 require (
@@ -30,12 +29,8 @@ require (
 	golang.org/x/tools v0.1.12 // indirect
 )
 
-replace rogchap.com/v8go v0.7.0 => ./depends/v8go@v0.7.0
-
 require (
-	github.com/Tnze/go-mc v1.17.0
 	github.com/andybalholm/brotli v1.0.3
-	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/go-cmp v0.5.9 // indirect
@@ -47,8 +42,6 @@ require (
 	github.com/pterm/pterm v0.12.29
 	github.com/sandertv/go-raknet v1.12.0
 	github.com/xtaci/kcp-go/v5 v5.6.1
-	github.com/yuin/gopher-lua v1.1.0
-	go.kuoruan.net/v8go-polyfills v0.5.0
 	go.uber.org/atomic v1.9.0
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.7.0
@@ -56,5 +49,3 @@ require (
 	golang.org/x/text v0.7.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
-
-replace github.com/Tnze/go-mc v1.17.0 => ./depends/go-mc@v1.17.0

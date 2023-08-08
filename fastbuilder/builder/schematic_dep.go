@@ -5,7 +5,6 @@ package builder
 import (
 	"compress/gzip"
 	"fmt"
-	"github.com/Tnze/go-mc/nbt"
 	"github.com/hashicorp/go-version"
 	"github.com/pterm/pterm"
 	"io/ioutil"

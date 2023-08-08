@@ -5,8 +5,6 @@ import (
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
 	fbauth "phoenixbuilder/fastbuilder/pv4"
-	script_bridge "phoenixbuilder/fastbuilder/script_engine/bridge"
-	"phoenixbuilder/fastbuilder/script_engine/bridge/script_holder"
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/mirror/io/global"
@@ -27,38 +25,6 @@ func create_environment() *environment.PBEnvironment {
 	functionHolder := function.NewFunctionHolder(env)
 	env.FunctionHolder = functionHolder
 	env.Destructors = []func(){}
-	hostBridgeGamma := &script_bridge.HostBridgeGamma{}
-	hostBridgeGamma.Init()
-	hostBridgeGamma.HostQueryExpose = map[string]func() string{
-		"server_code": func() string {
-			return env.LoginInfo.ServerCode
-		},
-		"fb_version": func() string {
-			return args.FBVersion
-		},
-		"uc_username": func() string {
-			return env.FBAuthClient.(*fbauth.Client).FBUCUsername
-		},
-	}
-	for _, key := range args.CustomSEUndefineConsts {
-		_, found := hostBridgeGamma.HostQueryExpose[key]
-		if found {
-			delete(hostBridgeGamma.HostQueryExpose, key)
-		}
-	}
-	for key, val := range args.CustomSEConsts {
-		hostBridgeGamma.HostQueryExpose[key] = func() string { return val }
-	}
-	env.ScriptBridge = hostBridgeGamma
-	scriptHolder := script_holder.InitScriptHolder(env)
-	env.ScriptHolder = scriptHolder
-	if args.StartupScript != "" {
-		scriptHolder.LoadScript(args.StartupScript, env)
-	}
-	env.Destructors = append(env.Destructors, func() {
-		scriptHolder.Destroy()
-	})
-	hostBridgeGamma.HostRemoveBlock()
 	env.LRUMemoryChunkCacher = lru.NewLRUMemoryChunkCacher(12, false)
 	env.ChunkFeeder = global.NewChunkFeeder()
 	return env
