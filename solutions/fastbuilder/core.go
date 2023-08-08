@@ -29,7 +29,6 @@ import (
 	"phoenixbuilder/mirror/io/assembler"
 	"phoenixbuilder/mirror/io/global"
 	"phoenixbuilder/mirror/io/lru"
-	"phoenixbuilder/omega/cli/embed"
 	"runtime"
 	"strings"
 	"time"
@@ -54,10 +53,6 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 		}
 		cmd := readline.Readline(env)
 		if len(cmd) == 0 {
-			continue
-		}
-		if env.OmegaAdaptorHolder != nil && !strings.Contains(cmd, "exit") {
-			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedBackendCommand(cmd)
 			continue
 		}
 		if cmd[0] == '.' {
@@ -179,11 +174,6 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 					getchecknum_everPassed = true
 				}
 			}
-		}
-
-		if env.OmegaAdaptorHolder != nil {
-			env.OmegaAdaptorHolder.(*embed.EmbeddedAdaptor).FeedPacketAndByte(pk, data)
-			continue
 		}
 
 		go env.ResourcesUpdater.(func(pk *packet.Packet))(&pk)
@@ -360,13 +350,6 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		},
 		Resources: env.Resources.(*ResourcesControl.Resources),
 	}
-
-	if args.ShouldEnableOmegaSystem {
-		_, cb := embed.EnableOmegaSystem(env)
-		go cb()
-		//cb()
-	}
-
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	function.InitPresetFunctions(functionHolder)
 	fbtask.InitTaskStatusDisplay(env)
