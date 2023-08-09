@@ -359,7 +359,7 @@ func (i *ItemPackage) DecodeItemCustomData(
 			if err != nil {
 				blockStates = map[string]interface{}{}
 			}
-			blockStatesString, err = mcstructure.ConvertCompoundToString(blockStates, true)
+			blockStatesString, err = mcstructure.MarshalBlockStates(blockStates)
 			if err != nil {
 				blockStates = map[string]interface{}{}
 				blockStatesString = "[]"

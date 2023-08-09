@@ -97,6 +97,12 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 		}
 		switch cmd := _cmd.(type) {
 		case *command.CreateConstantString:
+			if test_block_states_string(cmd.ConstantString) {
+				formatResult, err := format_block_states(cmd.ConstantString)
+				if err == nil {
+					cmd.ConstantString = formatResult
+				}
+			}
 			blocksStrPool = append(blocksStrPool, cmd.ConstantString)
 		case *command.AddInt16ZValue0:
 			brushPosition[2] += int(cmd.Value)
@@ -326,6 +332,13 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 				return fmt.Errorf("Error: BlockID exceeded BlockPool")
 			}
 			blockName := &blocksStrPool[int(cmd.BlockConstantStringID)]
+			if test_block_states_string(cmd.BlockStatesString) {
+				blockStates, err := format_block_states(cmd.BlockStatesString)
+				if err != nil {
+					return fmt.Errorf("Error: Failed to parse the block states from string; err = %v", err)
+				}
+				cmd.BlockStatesString = blockStates
+			}
 			blc <- &types.Module{
 				Block: &types.Block{
 					Name:        blockName,
