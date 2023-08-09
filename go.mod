@@ -3,6 +3,7 @@ module phoenixbuilder
 go 1.18
 
 require (
+	github.com/Tnze/go-mc v1.19.3
 	github.com/cheggaaa/pb v1.0.29
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/hashicorp/go-version v1.6.0
