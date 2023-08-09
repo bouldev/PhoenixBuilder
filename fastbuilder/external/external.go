@@ -7,9 +7,9 @@ import (
 	"phoenixbuilder/fastbuilder/external/connection"
 	"phoenixbuilder/fastbuilder/external/packet"
 	"phoenixbuilder/fastbuilder/uqHolder"
-	GameInterface "phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/minecraft/protocol"
+	mc_packet "phoenixbuilder/minecraft/protocol/packet"
 	"time"
 )
 
@@ -90,18 +90,30 @@ func (handler *ExternalConnectionHandler) acceptConnection(conn connection.Relia
 						env.GameInterface.SendSettingsCommand(p.Command, false)
 						break
 					} else if p.CommandType == packet.CommandTypeNormal {
-						sendCommand(
-							env.GameInterface.(*GameInterface.GameInterface),
-							p.Command,
-							p.UUID,
-							protocol.CommandOriginAutomationPlayer,
+						env.Connection.(*minecraft.Conn).WritePacket(
+							&mc_packet.CommandRequest{
+								CommandLine: p.Command,
+								CommandOrigin: protocol.CommandOrigin{
+									Origin:    protocol.CommandOriginAutomationPlayer,
+									UUID:      p.UUID,
+									RequestID: "96045347-a6a3-4114-94c0-1bc4cc561694",
+								},
+								Internal:  false,
+								UnLimited: false,
+							},
 						)
 					} else {
-						sendCommand(
-							env.GameInterface.(*GameInterface.GameInterface),
-							p.Command,
-							p.UUID,
-							protocol.CommandOriginPlayer,
+						env.Connection.(*minecraft.Conn).WritePacket(
+							&mc_packet.CommandRequest{
+								CommandLine: p.Command,
+								CommandOrigin: protocol.CommandOrigin{
+									Origin:    protocol.CommandOriginPlayer,
+									UUID:      p.UUID,
+									RequestID: "96045347-a6a3-4114-94c0-1bc4cc561694",
+								},
+								Internal:  false,
+								UnLimited: false,
+							},
 						)
 					}
 				case *packet.GamePacket:
