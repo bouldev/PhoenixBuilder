@@ -71,13 +71,9 @@ func (g *GameInterface) RenameItemByAnvil(
 	holder := g.Resources.Container.Occupy()
 	defer g.Resources.Container.Release(holder)
 	// 获取容器资源
-	got, err := mcstructure.ParseStringNBT(blockStates, true)
+	blockStatesMap, err := mcstructure.UnMarshalBlockStates(blockStates)
 	if err != nil {
 		return []AnvilOperationResponse{}, fmt.Errorf("RenameItemByAnvil: %v", err)
-	}
-	blockStatesMap, normal := got.(map[string]interface{})
-	if !normal {
-		return []AnvilOperationResponse{}, fmt.Errorf("RenameItemByAnvil: Could not convert `got` into map[string]interface{}; got = %#v", got)
 	}
 	// 获取要求放置的铁砧的方块状态
 	err = g.ChangeSelectedHotbarSlot(hotBarSlotID)

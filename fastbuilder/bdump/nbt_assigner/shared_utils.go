@@ -108,13 +108,9 @@ func get_block_data_from_states(
 
 // 将 types.Module 解析为 GeneralBlock
 func ParseBlockModule(singleBlock *types.Module) (GeneralBlock, error) {
-	got, err := mcstructure.ParseStringNBT(singleBlock.Block.BlockStates, true)
+	blockStates, err := mcstructure.UnMarshalBlockStates(singleBlock.Block.BlockStates)
 	if err != nil {
-		return GeneralBlock{}, fmt.Errorf("ParseBlockModule: Could not parse block states; singleBlock.Block.BlockStates = %#v", singleBlock.Block.BlockStates)
-	}
-	blockStates, normal := got.(map[string]interface{})
-	if !normal {
-		return GeneralBlock{}, fmt.Errorf("ParseBlockModule: The target block states is not map[string]interface{}; got = %#v", got)
+		return GeneralBlock{}, fmt.Errorf("ParseBlockModule: Failed to parse the block states from string; singleBlock.Block.BlockStates = %#v, err = %v", singleBlock.Block.BlockStates, err)
 	}
 	// get block states
 	return GeneralBlock{
