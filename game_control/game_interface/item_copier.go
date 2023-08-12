@@ -118,12 +118,12 @@ func (g *GameInterface) CopyItem(
 		// 打开木桶并等待数据同步
 		itemOnHotBarSlot := ItemLocation{
 			WindowID:    0,
-			ContainerID: 0xc,
+			ContainerID: ContainerIDInventory,
 			Slot:        hotBarSlot,
 		}
 		itemOnConatiner := ItemLocation{
 			WindowID:    g.Resources.Container.GetContainerOpeningData().WindowID,
-			ContainerID: 58,
+			ContainerID: ContainerIDBarrel,
 			Slot:        13,
 		}
 		// 初始化

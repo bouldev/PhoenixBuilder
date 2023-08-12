@@ -86,10 +86,11 @@ func (s *Sign) WriteData() error {
 		*/
 		err = gameInterface.SendSettingsCommand(
 			fmt.Sprintf(
-				"setblock %d %d %d glass",
+				"setblock %d %d %d %s",
 				s.BlockEntity.AdditionalData.Position[0]+1,
 				s.BlockEntity.AdditionalData.Position[1],
 				s.BlockEntity.AdditionalData.Position[2],
+				GameInterface.PlaceBlockBase,
 			),
 			true,
 		)
@@ -110,7 +111,7 @@ func (s *Sign) WriteData() error {
 					s.BlockEntity.AdditionalData.Position[1],
 					s.BlockEntity.AdditionalData.Position[2],
 				},
-				BlockName:   "minecraft:glass",
+				BlockName:   GameInterface.PlaceBlockBase,
 				BlockStates: map[string]interface{}{},
 			},
 			4,

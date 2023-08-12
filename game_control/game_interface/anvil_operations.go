@@ -110,7 +110,7 @@ func (g *GameInterface) RenameItemByAnvil(
 				Successful: false,
 				Destination: &ItemLocation{
 					WindowID:    0,
-					ContainerID: 0xc,
+					ContainerID: ContainerIDInventory,
 					Slot:        value.Slot,
 				},
 			})
@@ -128,7 +128,7 @@ func (g *GameInterface) RenameItemByAnvil(
 		resp, err := g.MoveItem(
 			ItemLocation{
 				WindowID:    0,
-				ContainerID: 0xc,
+				ContainerID: ContainerIDInventory,
 				Slot:        value.Slot,
 			},
 			ItemLocation{
@@ -148,7 +148,7 @@ func (g *GameInterface) RenameItemByAnvil(
 				Successful: false,
 				Destination: &ItemLocation{
 					WindowID:    0,
-					ContainerID: 0xc,
+					ContainerID: ContainerIDInventory,
 					Slot:        value.Slot,
 				},
 			})

@@ -87,7 +87,7 @@ func (g *GameInterface) RenameItem(
 				StackNetworkID: backup.StackNetworkID,
 			}
 			placeStackRequestAction.Destination = protocol.StackRequestSlotInfo{
-				ContainerID:    0xc,
+				ContainerID:    ContainerIDInventory,
 				Slot:           value,
 				StackNetworkID: 0,
 			}
@@ -113,7 +113,7 @@ func (g *GameInterface) RenameItem(
 									1: AirItem,
 								},
 							},
-							0xc: {
+							ResourcesControl.ContainerID(ContainerIDInventory): {
 								WindowID: 0,
 								ChangeResult: map[uint8]protocol.ItemInstance{
 									value: backup,
@@ -132,7 +132,7 @@ func (g *GameInterface) RenameItem(
 					Successful: false,
 					Destination: &ItemLocation{
 						WindowID:    0,
-						ContainerID: 0xc,
+						ContainerID: ContainerIDInventory,
 						Slot:        value,
 					},
 				}, nil
@@ -162,7 +162,7 @@ func (g *GameInterface) RenameItem(
 			StackNetworkID: newRequestID,
 		}
 		placeStackRequestAction.Destination = protocol.StackRequestSlotInfo{
-			ContainerID:    0xc,
+			ContainerID:    ContainerIDInventory,
 			Slot:           value,
 			StackNetworkID: 0,
 		}
@@ -209,7 +209,7 @@ func (g *GameInterface) RenameItem(
 		err = g.Resources.ItemStackOperation.WriteRequest(
 			newRequestID,
 			map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
-				0xc: {
+				ResourcesControl.ContainerID(ContainerIDInventory): {
 					WindowID: 0,
 					ChangeResult: map[uint8]protocol.ItemInstance{
 						value: itemDatas,
@@ -258,7 +258,7 @@ func (g *GameInterface) RenameItem(
 				Successful: true,
 				Destination: &ItemLocation{
 					WindowID:    0,
-					ContainerID: 0xc,
+					ContainerID: ContainerIDInventory,
 					Slot:        value,
 				},
 			}, nil

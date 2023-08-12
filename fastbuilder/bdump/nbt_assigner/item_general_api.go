@@ -118,12 +118,12 @@ func (i *ItemPackage) AddDisplayName() error {
 		res, err := api.MoveItem(
 			GameInterface.ItemLocation{
 				WindowID:    0,
-				ContainerID: 0xc,
+				ContainerID: GameInterface.ContainerIDInventory,
 				Slot:        resp[0].Destination.Slot,
 			},
 			GameInterface.ItemLocation{
 				WindowID:    0,
-				ContainerID: 0xc,
+				ContainerID: GameInterface.ContainerIDInventory,
 				Slot:        i.AdditionalData.HotBarSlot,
 			},
 			uint8(itemData.Stack.Count),

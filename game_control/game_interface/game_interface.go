@@ -68,7 +68,38 @@ const (
 )
 
 // 用作铁砧的承重方块
-const AnvilBase string = "glass"
+const (
+	// 用作铁砧的承重方块
+	AnvilBase string = "minecraft:glass"
+	/*
+		用作放置方块时的依赖性方块。
+
+		部分方块需要客户端以点击方块的形式来放置，
+		例如告示牌和不同朝向的潜影盒。
+		这里则选择了绿宝石块作为被点击的方块。
+
+		SuperScript 最喜欢绿宝石块了！
+	*/
+	PlaceBlockBase string = "minecraft:emerald_block"
+)
+
+// 描述各个容器的容器 ID
+const (
+	// chest, trapped_chest,
+	// hopper, dispenser,
+	// dropper
+	ContainerIDDefault = byte(7)
+
+	ContainerIDInventory    = byte(12)
+	ContainerIDFurnace      = byte(25)
+	ContainerIDSmoker       = byte(28)
+	ContainerIDShulkerBox   = byte(30)
+	ContainerIDBlastFurnace = byte(45)
+	ContainerIDBarrel       = byte(58)
+	ContainerIDBrewingStand = byte(59)
+
+	ContainerIDUnknown = byte(255)
+)
 
 // 描述各个维度的 ID
 const (
