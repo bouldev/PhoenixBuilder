@@ -28,7 +28,7 @@ func (g *GameInterface) ChangeSelectedHotbarSlot(hotbarSlotID uint8) error {
 /*
 打开背包。
 返回值的第一项代表执行结果，为真时背包被成功打开，否则反之。
-如需要关闭已打开的背包，请直接使用函数 CloseContainer .
+如需要关闭已打开的背包，请直接使用函数 CloseContainer 。
 
 请确保打开前占用了容器资源，否则会造成程序 panic 。
 */

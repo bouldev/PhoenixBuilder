@@ -61,12 +61,12 @@ func (g *GameInterface) OpenContainer(
 返回值的第一项代表执行结果，为真时容器被成功关闭，否则反之
 */
 func (g *GameInterface) CloseContainer() (bool, error) {
-	g.Resources.Container.AwaitChangesBeforeSendingPacket()
-	// await responce before send packet
 	if g.Resources.Container.GetContainerOpeningData() == nil {
 		return false, ErrContainerNerverOpened
 	}
 	// if the container have been nerver opened
+	g.Resources.Container.AwaitChangesBeforeSendingPacket()
+	// await responce before send packet
 	err := g.WritePacket(&packet.ContainerClose{
 		WindowID:   g.Resources.Container.GetContainerOpeningData().WindowID,
 		ServerSide: false,
