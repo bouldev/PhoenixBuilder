@@ -218,14 +218,13 @@ func (g *GameInterface) PlaceShulkerBox(
 	if err != nil {
 		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
-	err = g.SetBlock(backupBlockPos, "emerald_block", "[]")
+	err = g.SetBlock(backupBlockPos, PlaceBlockBase, "[]")
 	if err != nil {
 		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
 	// 清除潜影盒处的方块、修正机器人的朝向、备份相关的方块，
-	// 然后再在备份的方块处生成一个绿宝石块。
-	// 生成的绿宝石块将被用于作为放置潜影盒的依附方块。
-	// SuperScript 最喜欢绿宝石块了！
+	// 然后再在备份的方块处生成 PlaceBlockBase 所指代的方块。
+	// 生成的 PlaceBlockBase 方块将被用于作为放置潜影盒的依附方块。
 	err = g.ChangeSelectedHotbarSlot(hotBarSlot)
 	if err != nil {
 		return fmt.Errorf("PlaceShulkerBox: %v", err)
@@ -234,7 +233,7 @@ func (g *GameInterface) PlaceShulkerBox(
 		UseItemOnBlocks{
 			HotbarSlotID: hotBarSlot,
 			BlockPos:     backupBlockPos,
-			BlockName:    "minecraft:emerald_block",
+			BlockName:    PlaceBlockBase,
 			BlockStates:  map[string]interface{}{},
 		},
 		int32(facing),
@@ -242,12 +241,12 @@ func (g *GameInterface) PlaceShulkerBox(
 	if err != nil {
 		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
-	// 更换手持物品栏为 hotBarSlot 并点击绿宝石块以放置潜影盒。
+	// 更换手持物品栏为 hotBarSlot 并点击 PlaceBlockBase 方块以放置潜影盒。
 	err = g.RevertStructure(uniqueId, backupBlockPos)
 	if err != nil {
 		return fmt.Errorf("PlaceShulkerBox: %v", err)
 	}
-	// 将绿宝石块处的方块恢复为原本方块
+	// 将 PlaceBlockBase 处的方块恢复为原本方块
 	if pos != originPos {
 		request := fmt.Sprintf(
 			"clone %d %d %d %d %d %d %d %d %d",

@@ -1,5 +1,7 @@
 package NBTAssigner
 
+import GameInterface "phoenixbuilder/game_control/game_interface"
+
 // 此表描述了现阶段已经支持了的方块实体。
 // 键代表方块名，而值代表这种方块应该归属的类型
 var SupportBlocksPool map[string]string = map[string]string{
@@ -92,22 +94,21 @@ var ItemNameToBlockNamePool map[string]string = map[string]string{
 
 // 此表描述了可被 replaceitem 生效的容器
 var SupportContainerPool map[string]ContainerConstantData = map[string]ContainerConstantData{
-	"blast_furnace":      {StorageItemValue: "Items", CouldOpen: true, ContainerID: 45},
-	"lit_blast_furnace":  {StorageItemValue: "Items", CouldOpen: true, ContainerID: 45},
-	"smoker":             {StorageItemValue: "Items", CouldOpen: true, ContainerID: 28},
-	"lit_smoker":         {StorageItemValue: "Items", CouldOpen: true, ContainerID: 28},
-	"furnace":            {StorageItemValue: "Items", CouldOpen: true, ContainerID: 25},
-	"lit_furnace":        {StorageItemValue: "Items", CouldOpen: true, ContainerID: 25},
-	"chest":              {StorageItemValue: "Items", CouldOpen: true, ContainerID: 7},
-	"trapped_chest":      {StorageItemValue: "Items", CouldOpen: true, ContainerID: 7},
-	"lectern":            {StorageItemValue: "book", CouldOpen: false, ContainerID: 255},
-	"hopper":             {StorageItemValue: "Items", CouldOpen: true, ContainerID: 7},
-	"dispenser":          {StorageItemValue: "Items", CouldOpen: true, ContainerID: 7},
-	"dropper":            {StorageItemValue: "Items", CouldOpen: true, ContainerID: 7},
-	"jukebox":            {StorageItemValue: "RecordItem", CouldOpen: false, ContainerID: 255},
-	"brewing_stand":      {StorageItemValue: "Items", CouldOpen: true, ContainerID: 59},
-	"undyed_shulker_box": {StorageItemValue: "Items", CouldOpen: true, ContainerID: 30},
-	"shulker_box":        {StorageItemValue: "Items", CouldOpen: true, ContainerID: 30},
-	// phoenixbuilder/game_control/game_interface/item_copier.go uses this field directly
-	"barrel": {StorageItemValue: "Items", CouldOpen: true, ContainerID: 58},
+	"blast_furnace":      {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDBlastFurnace},
+	"lit_blast_furnace":  {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDBlastFurnace},
+	"smoker":             {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDSmoker},
+	"lit_smoker":         {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDSmoker},
+	"furnace":            {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDFurnace},
+	"lit_furnace":        {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDFurnace},
+	"chest":              {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDDefault},
+	"trapped_chest":      {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDDefault},
+	"lectern":            {StorageItemValue: "book", CouldOpen: false, ContainerID: GameInterface.ContainerIDUnknown},
+	"hopper":             {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDDefault},
+	"dispenser":          {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDDefault},
+	"dropper":            {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDDefault},
+	"jukebox":            {StorageItemValue: "RecordItem", CouldOpen: false, ContainerID: GameInterface.ContainerIDUnknown},
+	"brewing_stand":      {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDBrewingStand},
+	"undyed_shulker_box": {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDShulkerBox},
+	"shulker_box":        {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDShulkerBox},
+	"barrel":             {StorageItemValue: "Items", CouldOpen: true, ContainerID: GameInterface.ContainerIDBarrel},
 }

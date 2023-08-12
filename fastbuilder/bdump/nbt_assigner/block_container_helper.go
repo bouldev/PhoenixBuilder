@@ -218,7 +218,7 @@ func (c *Container) MoveItemIntoContainer(
 	_, err = api.MoveItem(
 		GameInterface.ItemLocation{
 			WindowID:    0,
-			ContainerID: 0xc,
+			ContainerID: GameInterface.ContainerIDInventory,
 			Slot:        itemLocation,
 		},
 		GameInterface.ItemLocation{
@@ -618,12 +618,12 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 				resp, err := api.MoveItem(
 					GameInterface.ItemLocation{
 						WindowID:    0,
-						ContainerID: 0xc,
+						ContainerID: GameInterface.ContainerIDInventory,
 						Slot:        8,
 					},
 					GameInterface.ItemLocation{
 						WindowID:    0,
-						ContainerID: 0xc,
+						ContainerID: GameInterface.ContainerIDInventory,
 						Slot:        uint8(key),
 					},
 					uint8(itemData.Stack.Count),
@@ -729,7 +729,7 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 			resp, err := api.MoveItem(
 				GameInterface.ItemLocation{
 					WindowID:    0,
-					ContainerID: 0xc,
+					ContainerID: GameInterface.ContainerIDInventory,
 					Slot:        key,
 				},
 				GameInterface.ItemLocation{
