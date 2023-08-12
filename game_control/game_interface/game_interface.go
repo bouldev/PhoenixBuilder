@@ -61,8 +61,8 @@ const (
 
 // 描述 Pick Block 失败后要重试的最大次数
 const (
-	// 容器打开失败后要重试的最大次数
-	ContainerOpenReTryMaximumCounts = 3
+	// 容器 打开/关闭 失败后要重试的最大次数
+	ContainerOperationsReTryMaximumCounts = 3
 	// 描述 Pick Block 失败后要重试的最大次数
 	BlockPickRequestReTryMaximumCounts = 3
 )
@@ -108,9 +108,16 @@ var AirItem protocol.ItemInstance = protocol.ItemInstance{
 	},
 }
 
-// 用于关闭容器时却发现到容器从未被打开时的报错信息
-var ErrContainerNerverOpened error = fmt.Errorf(
-	"CloseContainer: Container have been nerver opened",
+// 用于容器操作相关的报错信息
+var (
+	// 用于打开容器时却发现到容器已被打开时的报错信息
+	ErrContainerHasBeenOpened error = fmt.Errorf(
+		"OpenContainer: Container has been opened",
+	)
+	// 用于关闭容器时却发现到容器从未被打开时的报错信息
+	ErrContainerNerverOpened error = fmt.Errorf(
+		"CloseContainer: Container have been nerver opened",
+	)
 )
 
 // 如果尝试移动空气到另外一个物品栏，则会返回该错误
