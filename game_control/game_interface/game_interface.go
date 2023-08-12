@@ -90,7 +90,9 @@ const (
 	// dropper
 	ContainerIDDefault = byte(7)
 
-	ContainerIDInventory    = byte(12)
+	ContainerIDInventory = byte(12)
+	ContainerIDHotBar    = byte(28)
+
 	ContainerIDFurnace      = byte(25)
 	ContainerIDSmoker       = byte(28)
 	ContainerIDShulkerBox   = byte(30)
