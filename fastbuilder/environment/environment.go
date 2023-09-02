@@ -24,6 +24,7 @@ type PBEnvironment struct {
 	GlobalFullConfig          interface{}
 	RespondUser               string
 	Connection                interface{}
+	GetCheckNumEverPassed     bool
 	UQHolder                  interface{}
 	Resources                 interface{}
 	ResourcesUpdater          interface{}

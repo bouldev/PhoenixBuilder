@@ -97,6 +97,87 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 	}
 }
 
+// Process packet if the data type is `packet.PyRpc`.
+// If not, do nothing.
+func onPyRpc(
+	pk packet.Packet,
+	env *environment.PBEnvironment,
+) {
+	p, ok := pk.(*packet.PyRpc)
+	conn := env.Connection.(*minecraft.Conn)
+	// prepare
+	if !ok {
+		return
+	}
+	if pk == nil || p.Value == nil {
+		return
+	}
+	// check packet
+	go_p_val := p.Value.MakeGo()
+	/*
+		json_val, _:=json.MarshalIndent(go_p_val, "", "\t")
+		fmt.Printf("Received PyRpc: %s\n", json_val)
+	*/
+	if go_p_val == nil {
+		return
+	}
+	pyrpc_val, ok := go_p_val.([]interface{})
+	if !ok || len(pyrpc_val) < 2 {
+		return
+	}
+	command, ok := pyrpc_val[0].(string)
+	if !ok {
+		return
+	}
+	data, ok := pyrpc_val[1].([]interface{})
+	if !ok {
+		return
+	}
+	// process data from packet
+	switch command {
+	case "S2CHeartBeat":
+		conn.WritePacket(&packet.PyRpc{
+			Value: py_rpc.FromGo([]interface{}{
+				"C2SHeartBeat",
+				data,
+				nil,
+			}),
+		})
+	case "GetStartType":
+		client := env.FBAuthClient.(*fbauth.Client)
+		response := client.TransferData(data[0].(string))
+		conn.WritePacket(&packet.PyRpc{
+			Value: py_rpc.FromGo([]interface{}{
+				"SetStartType",
+				[]interface{}{response},
+				nil,
+			}),
+		})
+	case "GetMCPCheckNum":
+		if env.GetCheckNumEverPassed {
+			break
+		}
+		firstArg := data[0].(string)
+		secondArg := (data[1].([]interface{}))[0].(string)
+		client := env.FBAuthClient.(*fbauth.Client)
+		arg, _ := json.Marshal([]interface{}{firstArg, secondArg, env.Connection.(*minecraft.Conn).GameData().EntityUniqueID})
+		ret := client.TransferCheckNum(string(arg))
+		ret_p := []interface{}{}
+		json.Unmarshal([]byte(ret), &ret_p)
+		conn.WritePacket(&packet.PyRpc{
+			Value: py_rpc.FromGo([]interface{}{
+				"SetMCPCheckNum",
+				[]interface{}{
+					ret_p,
+				},
+				nil,
+			}),
+		})
+		env.GetCheckNumEverPassed = true
+	}
+	// do something
+}
+
 func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	conn := env.Connection.(*minecraft.Conn)
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
@@ -106,7 +187,6 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		conn.WritePacket(pk)
 	})
-	getchecknum_everPassed := false
 	// currentChunkConstructor := &world_provider.ChunkConstructor{}
 	for {
 		if breaker != nil {
@@ -122,58 +202,7 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			panic(err)
 		}
 
-		{
-			p, ok := pk.(*packet.PyRpc)
-			if ok {
-				go_p_val := p.Value.MakeGo()
-				//json_val, _:=json.MarshalIndent(go_p_val, "", "\t")
-				//fmt.Printf("Received PyRpc: %s\n", json_val)
-				pyrpc_val := go_p_val.([]interface{})
-				command := pyrpc_val[0].(string)
-				data := pyrpc_val[1].([]interface{})
-				if command == "S2CHeartBeat" {
-					conn.WritePacket(&packet.PyRpc{
-						Value: py_rpc.FromGo([]interface{}{
-							"C2SHeartBeat",
-							data,
-							nil,
-						}),
-					})
-				} else if command == "GetStartType" {
-					client := env.FBAuthClient.(*fbauth.Client)
-					response := client.TransferData(data[0].(string))
-					conn.WritePacket(&packet.PyRpc{
-						Value: py_rpc.FromGo([]interface{}{
-							"SetStartType",
-							[]interface{}{response},
-							nil,
-						}),
-					})
-				} else if command == "GetMCPCheckNum" {
-					if getchecknum_everPassed {
-						continue
-					}
-					firstArg := data[0].(string)
-					secondArg := (data[1].([]interface{}))[0].(string)
-					client := env.FBAuthClient.(*fbauth.Client)
-					arg, _ := json.Marshal([]interface{}{firstArg, secondArg, env.Connection.(*minecraft.Conn).GameData().EntityUniqueID})
-					ret := client.TransferCheckNum(string(arg))
-					ret_p := []interface{}{}
-					json.Unmarshal([]byte(ret), &ret_p)
-					conn.WritePacket(&packet.PyRpc{
-						Value: py_rpc.FromGo([]interface{}{
-							"SetMCPCheckNum",
-							[]interface{}{
-								ret_p,
-							},
-							nil,
-						}),
-					})
-					getchecknum_everPassed = true
-				}
-			}
-		}
-
+		onPyRpc(pk, env)
 		go env.ResourcesUpdater.(func(pk *packet.Packet))(&pk)
 
 		env.UQHolder.(*uqHolder.UQHolder).Update(pk)
