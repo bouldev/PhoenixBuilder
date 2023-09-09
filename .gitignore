@@ -95,3 +95,4 @@ binary
 omega/mainframe/update.log
 
 lib/nemc/login_provider
+*.swp
