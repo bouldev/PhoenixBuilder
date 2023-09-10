@@ -18,10 +18,8 @@ func Install(conn *minecraft.Conn, env *environment.PBEnvironment) {
 			readline.SelfTermination = make(chan bool)
 			<-readline.SelfTermination
 			readline.HardInterrupt()
-			env.Stop()
 			conn.Close()
 			fmt.Printf("%s.\n", I18n.T(I18n.QuitCorrectly))
-			env.WaitStopped()
 			os.Exit(0)
 		}()
 		go func() {
@@ -42,10 +40,8 @@ func Install(conn *minecraft.Conn, env *environment.PBEnvironment) {
 		}
 		<-signalchannel
 		readline.HardInterrupt()
-		env.Stop()
 		conn.Close()
 		fmt.Printf("%s.\n", I18n.T(I18n.QuitCorrectly))
-		env.WaitStopped()
 		os.Exit(0)
 	}()
 }

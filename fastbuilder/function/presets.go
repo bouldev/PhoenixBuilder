@@ -184,7 +184,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
 							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
-							env.RespondUser,
+							env.RespondTo,
 						),
 						ResourcesControl.CommandRequestOptions{
 							TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
@@ -211,7 +211,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					}
 					env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
 					//env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
-					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
+					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondTo), configuration.ZeroId)
 				},
 			},
 			"begin": &FunctionChainItem{
@@ -221,7 +221,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
 							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
-							env.RespondUser,
+							env.RespondTo,
 						),
 						ResourcesControl.CommandRequestOptions{
 							TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
@@ -247,7 +247,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 						Z: pos[2],
 					}
 					env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
-					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
+					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondTo), configuration.ZeroId)
 				},
 			},
 			"end": &FunctionChainItem{
@@ -257,7 +257,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
 							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
-							env.RespondUser,
+							env.RespondTo,
 						),
 						ResourcesControl.CommandRequestOptions{
 							TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
@@ -280,7 +280,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 						Z: pos[2],
 					}
 					env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
-					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondUser), configuration.ZeroId)
+					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondTo), configuration.ZeroId)
 				},
 			},
 		},

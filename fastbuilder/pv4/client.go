@@ -34,7 +34,7 @@ func MakeDefaultClientOptions() *ClientOptions {
 
 type ClientInfo struct {
 	FBUCUsername string
-	RespondUser  string
+	RespondTo    string
 	Uid          string
 	CertSigning  bool
 	LocalKey     string
@@ -91,7 +91,7 @@ func CreateClient(options *ClientOptions) *Client {
 		}},
 		ClientOptions: options,
 		ClientInfo: ClientInfo{
-			RespondUser: options.RespondUserOverride,
+			RespondTo: options.RespondUserOverride,
 		},
 	}
 	return authclient
@@ -160,8 +160,8 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 	// If logged in by token, this field'd be empty
 	token, _ := resp["token"].(string)
 	respond_to, _ := resp["respond_to"].(string)
-	if len(respond_to) != 0 && client.RespondUser == "" {
-		client.RespondUser = respond_to
+	if len(respond_to) != 0 && client.RespondTo == "" {
+		client.RespondTo = respond_to
 	}
 	ip, _ := resp["ip_address"].(string)
 	return str, ip, token, nil

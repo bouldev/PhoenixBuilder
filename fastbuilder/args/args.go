@@ -10,17 +10,11 @@ extern char args_var_fbplainversion_struct;
 extern char args_fb_commit_struct;
 extern char args_isDebugMode;
 extern char newAuthServer;
-extern char args_disableVersionCheck;
-extern char enable_omega_system;
-extern char startup_script;
+extern char args_disableVersionChecking;
 extern char server_code;
 extern char server_password;
 extern char token_content;
-extern char externalListenAddr;
-extern char capture_output_file;
 extern char args_no_readline;
-extern char pack_scripts;
-extern char pack_scripts_out;
 extern char custom_gamename;
 extern char ingame_response;
 */
@@ -37,17 +31,11 @@ func referenceHolder() {
 	print(C.args_fb_commit_struct)
 	print(C.args_isDebugMode)
 	print(C.newAuthServer)
-	print(C.args_disableVersionCheck)
-	print(C.enable_omega_system)
-	print(C.startup_script)
+	print(C.args_disableVersionChecking)
 	print(C.server_code)
 	print(C.server_password)
 	print(C.token_content)
-	print(C.externalListenAddr)
-	print(C.capture_output_file)
 	print(C.args_no_readline)
-	print(C.pack_scripts)
-	print(C.pack_scripts_out)
 	print(C.custom_gamename)
 	print(C.ingame_response)
 }
@@ -57,9 +45,7 @@ var FBPlainVersion string=*(*string)(unsafe.Pointer(&__cgo_args_var_fbplainversi
 var FBCommitHash string=*(*string)(unsafe.Pointer(&__cgo_args_fb_commit_struct))
 var DebugMode bool=*(*bool)(unsafe.Pointer(&__cgo_args_isDebugMode))
 var AuthServer string=*(*string)(unsafe.Pointer(&__cgo_newAuthServer))
-var ShouldDisableVersionCheck=*(*bool)(unsafe.Pointer(&__cgo_args_disableVersionCheck))
-var ShouldEnableOmegaSystem=*(*bool)(unsafe.Pointer(&__cgo_enable_omega_system))
-var StartupScript=*(*string)(unsafe.Pointer(&__cgo_startup_script))
+var ShouldDisableVersionChecking=*(*bool)(unsafe.Pointer(&__cgo_args_disableVersionChecking))
 
 //go:linkname SpecifiedServer args_has_specified_server
 func SpecifiedServer() bool
@@ -72,24 +58,7 @@ func SpecifiedToken() bool
 
 var CustomTokenContent=*(*string)(unsafe.Pointer(&__cgo_token_content))
 
-var CustomSEConsts map[string]string = map[string]string{}
-var CustomSEUndefineConsts []string = []string{}
-
-//export custom_script_engine_const
-func custom_script_engine_const(key, val *C.char) {
-	CustomSEConsts[C.GoString(key)] = C.GoString(val)
-}
-
-//export do_suppress_se_const
-func do_suppress_se_const(key *C.char) {
-	CustomSEUndefineConsts = append(CustomSEUndefineConsts, C.GoString(key))
-}
-
-var ExternalListenAddress=*(*string)(unsafe.Pointer(&__cgo_externalListenAddr))
-var CaptureOutputFile=*(*string)(unsafe.Pointer(&__cgo_capture_output_file))
 var NoReadline=*(*bool)(unsafe.Pointer(&__cgo_args_no_readline))
-var PackScripts=*(*string)(unsafe.Pointer(&__cgo_pack_scripts))
-var PackScriptsOut=*(*string)(unsafe.Pointer(&__cgo_pack_scripts_out))
 var CustomGameName=*(*string)(unsafe.Pointer(&__cgo_custom_gamename))
 var InGameResponse=*(*bool)(unsafe.Pointer(&__cgo_ingame_response))
 

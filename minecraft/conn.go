@@ -324,7 +324,7 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	return nil
 }
 
-func (conn *Conn) WritePacketByte(pkID uint32, data []byte) error {
+func (conn *Conn) WritePacketBuffer(data []byte) error {
 	if conn.DebugMode {
 		return nil
 	}
@@ -343,8 +343,6 @@ func (conn *Conn) WritePacketByte(pkID uint32, data []byte) error {
 		internal.BufferPool.Put(buf)
 	}()
 
-	conn.hdr.PacketID = pkID
-	_ = conn.hdr.Write(buf)
 	l := buf.Len()
 	buf.Write(data)
 	if conn.packetFunc != nil {

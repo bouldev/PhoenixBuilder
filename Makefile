@@ -71,8 +71,6 @@ CGO_DEF := "-DFB_VERSION=\"$(VERSION)\" -DFB_COMMIT=\"$(shell git log -1 --forma
 
 current: build/phoenixbuilder
 all: ${TARGETS} build/hashes.json
-current-no-readline: build/phoenixbuilder-no-readline
-current-debug: build/phoenixbuilder-debug
 current-arm64-executable: build/phoenixbuilder-aarch64
 ios-executable: build/phoenixbuilder-ios-executable
 ish-executable: build/phoenixbuilder-ish-executable
@@ -127,9 +125,6 @@ build/:
 build/phoenixbuilder: build/ ${SRCS_GO}
 	cd depends/stub&&make clean&&cd -
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 go build -tags "${APPEND_GO_TAGS}" -trimpath -ldflags "-s -w" -o $@
-build/phoenixbuilder-no-readline: build/ ${SRCS_GO}
-	cd depends/stub&&make clean&&cd -
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 go build -tags "no_readline ${APPEND_GO_TAGS}" -trimpath -ldflags "-s -w" -o $@
 build/phoenixbuilder-with-symbols: build/ ${SRCS_GO}
 	cd depends/stub&&make clean&&cd -
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_ENABLED=1 go build -tags "${APPEND_GO_TAGS}" -trimpath -o $@
