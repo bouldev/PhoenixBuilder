@@ -1,9 +1,0 @@
-{
-	"identifier": "com.lns.serverutils",
-	"name": "Server Utils",
-	"description": "Some util commands for the automation of server",
-	"author": "Ruphane",
-	"version": "0.0.1",
-	"related_informatiion": "Licensed under GPL",
-	"entrypoint": "main.js"
-}

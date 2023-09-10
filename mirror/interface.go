@@ -60,7 +60,7 @@ type ChunkWriter interface {
 // GetWithDeadline(pos ChunkPos, deadline time.Time) 若在 deadline 前无法获得数据，那么应该返回 nil
 type ChunkReader interface {
 	Get(ChunkPos define.ChunkPos) (data *ChunkData)
-	GetWithNoFallBack(ChunkPos define.ChunkPos) (data *ChunkData)
+	GetWithNoFallback(ChunkPos define.ChunkPos) (data *ChunkData)
 }
 
 // ChunkRequester 在指定deadline时间之前获得目标区块

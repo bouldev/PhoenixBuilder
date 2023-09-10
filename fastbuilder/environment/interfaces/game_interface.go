@@ -1,5 +1,3 @@
-//go:build !is_tweak
-
 package interfaces
 
 import (

@@ -1,9 +1,0 @@
-{
-	"identifier": "com.lns.multiscripts_example",
-	"name": "Multi scripts example",
-	"description": "",
-	"author": "Ruphane",
-	"version": "0.0.1",
-	"related_informatiion": "Licensed under GPL",
-	"entrypoint": "loader.js"
-}
