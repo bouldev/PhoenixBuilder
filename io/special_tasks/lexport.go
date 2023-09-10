@@ -1,6 +1,3 @@
-//go:build !is_tweak
-// +build !is_tweak
-
 package special_tasks
 
 import (
@@ -29,7 +26,6 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		env.GameInterface.Output(pterm.Error.Sprintf("Failed to parse command: %v", err))
 		return nil
 	}
-	// 解析控制台输入
 	beginPos := cfg.Position
 	endPos := cfg.End
 	if beginPos.X > endPos.X {

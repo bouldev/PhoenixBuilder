@@ -1,2 +1,0 @@
-gcc main.c phoenixbuilder-static.a -pthread -o test
-./test

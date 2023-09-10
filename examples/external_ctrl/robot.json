@@ -1,8 +1,0 @@
-{
-  "token": "w9/BeLNV/9V_TOKEN_OF_CMA2401PT_/W",
-  "server_number": "1234567",
-  "server_passwd": "",
-  "transfer_port": "localhost:8000",
-  "ignore_update":true,
-  "auto_restart": true
-}

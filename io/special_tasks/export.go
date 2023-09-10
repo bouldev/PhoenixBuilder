@@ -1,6 +1,3 @@
-//go:build !is_tweak
-// +build !is_tweak
-
 package special_tasks
 
 import (

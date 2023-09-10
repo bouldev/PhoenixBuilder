@@ -1,6 +1,3 @@
-//go:build !is_tweak
-// +build !is_tweak
-
 package special_tasks
 
 import (
@@ -20,6 +17,6 @@ func (p SimpleChunkProvider) Get(pos define.ChunkPos) *mirror.ChunkData {
 	return p.ChunkMap[pos]
 }
 
-func (p SimpleChunkProvider) GetWithNoFallBack(pos define.ChunkPos) *mirror.ChunkData {
+func (p SimpleChunkProvider) GetWithNoFallback(pos define.ChunkPos) *mirror.ChunkData {
 	return p.ChunkMap[pos]
 }
