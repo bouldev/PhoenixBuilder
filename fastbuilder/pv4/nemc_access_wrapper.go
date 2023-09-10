@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	I18n "phoenixbuilder/fastbuilder/i18n"
-	"phoenixbuilder/fastbuilder/lib/rental_server_impact/info_collect_utils"
 )
 
 type AccessWrapper struct {
@@ -42,12 +41,16 @@ func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (addre
 		fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
 		os.MkdirAll(fbconfigdir, 0755)
 		ptoken := filepath.Join(fbconfigdir, "fbtoken")
-		info_collect_utils.WriteFBToken(token, ptoken)
+		// 0600: -rw-------
+		token_file, err:=os.OpenFile(ptoken, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+		if err!=nil {
+			return "", "", err
+		}
+		_, err=token_file.WriteString(token)
+		if err!=nil {
+			return "", "", err
+		}
+		token_file.Close()
 	}
-	if err != nil {
-		return "", "", err
-	}
-	chainInfo = chainAddr
-	address = ip
-	return address, chainInfo, nil
+	return ip, chainAddr, nil
 }

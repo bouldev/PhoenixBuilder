@@ -71,7 +71,7 @@ func (g *GameInterface) RenameItemByAnvil(
 	holder := g.Resources.Container.Occupy()
 	defer g.Resources.Container.Release(holder)
 	// 获取容器资源
-	blockStatesMap, err := mcstructure.UnMarshalBlockStates(blockStates)
+	blockStatesMap, err := mcstructure.UnmarshalBlockStates(blockStates)
 	if err != nil {
 		return []AnvilOperationResponse{}, fmt.Errorf("RenameItemByAnvil: %v", err)
 	}

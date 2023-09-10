@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"phoenixbuilder/fastbuilder/args"
-	"phoenixbuilder/fastbuilder/credentials"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"phoenixbuilder/fastbuilder/utils"
 
@@ -77,7 +76,7 @@ func runInteractiveClient(token, username, password string) {
 	var code, serverPasscode string
 	var err error
 	if !args.SpecifiedServer() {
-		code, serverPasscode, err = credentials.GetRentalServerCode()
+		code, serverPasscode, err = utils.GetRentalServerCode()
 	} else {
 		code = args.ServerCode
 		serverPasscode = args.ServerPassword

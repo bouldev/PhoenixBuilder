@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 	"phoenixbuilder/fastbuilder/args"
-	"phoenixbuilder/fastbuilder/credentials"
+	"phoenixbuilder/fastbuilder/utils"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	"strings"
 	"syscall"
@@ -16,9 +16,9 @@ import (
 
 func loadTokenOrAskForCredential() (token string, username string, password string) {
 	if !args.SpecifiedToken() {
-		token = credentials.LoadTokenPath()
+		token = utils.LoadTokenPath()
 		if _, err := os.Stat(token); os.IsNotExist(err) {
-			fbusername, err := credentials.GetInputUserName()
+			fbusername, err := utils.GetUsernameInput()
 			if err != nil {
 				panic(err)
 			}
@@ -32,7 +32,7 @@ func loadTokenOrAskForCredential() (token string, username string, password stri
 			psw_sum:=sha256.Sum256([]byte(fbpassword))
 			password=hex.EncodeToString(psw_sum[:])
 		} else {
-			token, err = credentials.ReadToken(token)
+			token, err = utils.ReadToken(token)
 			if err != nil {
 				fmt.Println(err)
 				return
