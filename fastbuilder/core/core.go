@@ -185,6 +185,8 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			panic(err)
 		}
 
+		env.ResourcesUpdater.(func(*packet.Packet))(&pk)
+
 		switch p := pk.(type) {
 		case *packet.PyRpc:
 			onPyRpc(p, env)
@@ -264,34 +266,34 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 	})
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{} {
+		Value: py_rpc.FromGo([]interface{}{
 			"SyncUsingMod",
-			[]interface{} {},
+			[]interface{}{},
 			nil,
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{} {
+		Value: py_rpc.FromGo([]interface{}{
 			"SyncVipSkinUuid",
-			[]interface{} {nil},
+			[]interface{}{nil},
 			nil,
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{} {
+		Value: py_rpc.FromGo([]interface{}{
 			"ClientLoadAddonsFinishedFromGac",
-			[]interface{} {},
+			[]interface{}{},
 			nil,
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{} {
+		Value: py_rpc.FromGo([]interface{}{
 			"ModEventC2S",
-			[]interface{} {
+			[]interface{}{
 				"Minecraft",
 				"preset",
 				"GetLoadedInstances",
-				map[string]interface{} {
+				map[string]interface{}{
 					"playerId": runtimeid,
 				},
 			},
@@ -299,16 +301,16 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{} {
+		Value: py_rpc.FromGo([]interface{}{
 			"arenaGamePlayerFinishLoad",
-			[]interface{} {},
+			[]interface{}{},
 			nil,
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{} {
+		Value: py_rpc.FromGo([]interface{}{
 			"ModEventC2S",
-			[]interface{} {
+			[]interface{}{
 				"Minecraft",
 				"vipEventSystem",
 				"PlayerUiInit",
@@ -359,6 +361,7 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 
 	env.Resources = &ResourcesControl.Resources{}
+	env.ResourcesUpdater = env.Resources.(*ResourcesControl.Resources).Init()
 	env.GameInterface = &GameInterface.GameInterface{
 		WritePacket: env.Connection.(*minecraft.Conn).WritePacket,
 		ClientInfo: GameInterface.ClientInfo{

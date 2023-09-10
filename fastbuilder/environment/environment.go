@@ -16,18 +16,18 @@ type LoginInfo struct {
 
 type PBEnvironment struct {
 	LoginInfo
-	IsDebug                   bool
-	FunctionHolder            interfaces.FunctionHolder
-	FBAuthClient              interface{}
-	GlobalFullConfig          interface{}
-	RespondTo                 string
-	Connection                interface{}
-	GetCheckNumEverPassed     bool
-	Resources                 interface{}
-	GameInterface             interfaces.GameInterface
-	TaskHolder                interface{}
-	LRUMemoryChunkCacher      interface{}
-	ChunkFeeder               interface{}
-	ClientOptions             *fbauth.ClientOptions
+	IsDebug               bool
+	FunctionHolder        interfaces.FunctionHolder
+	FBAuthClient          interface{}
+	GlobalFullConfig      interface{}
+	RespondTo             string
+	Connection            interface{}
+	GetCheckNumEverPassed bool
+	Resources             interface{}
+	ResourcesUpdater      interface{}
+	GameInterface         interfaces.GameInterface
+	TaskHolder            interface{}
+	LRUMemoryChunkCacher  interface{}
+	ChunkFeeder           interface{}
+	ClientOptions         *fbauth.ClientOptions
 }
-
