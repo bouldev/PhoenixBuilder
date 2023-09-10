@@ -1,16 +1,6 @@
 package builder
 
 import (
-	"errors"
-	I18n "phoenixbuilder/fastbuilder/i18n"
- 	"phoenixbuilder/fastbuilder/types"
-)
-
-func Acme(config *types.MainConfig, blc chan *types.Module) error {
-	return errors.New(I18n.T(I18n.Warning_ACME_Deprecated))
-}
-/*
-import (
 	"bufio"
 	"compress/gzip"
 	"encoding/binary"
@@ -148,4 +138,3 @@ func Acme(config *types.MainConfig, blc chan *types.Module) error {
 	}
 	return nil
 }
-*/

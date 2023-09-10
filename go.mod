@@ -3,6 +3,7 @@ module phoenixbuilder
 go 1.18
 
 require (
+	github.com/Tnze/go-mc v1.19.4
 	github.com/cheggaaa/pb v1.0.29
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/hashicorp/go-version v1.6.0
@@ -34,7 +35,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/klauspost/compress v1.13.6
 	github.com/lucasb-eyer/go-colorful v1.2.0
