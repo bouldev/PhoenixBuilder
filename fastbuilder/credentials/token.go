@@ -5,16 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"phoenixbuilder/fastbuilder/environment"
 	I18n "phoenixbuilder/fastbuilder/i18n"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
 )
-
-func ProcessTokenDefault(env *environment.PBEnvironment) bool {
-	client := fbauth.CreateClient(env.ClientOptions)
-	env.FBAuthClient = client
-	return true
-}
 
 func LoadTokenPath() string {
 	homedir, err := os.UserHomeDir()

@@ -88,10 +88,6 @@ func runInteractiveClient(token, username, password string) {
 		return
 	}
 	env := ConfigRealEnvironment(token, code, serverPasscode, username, password)
-	ptoken_succ := credentials.ProcessTokenDefault(env)
-	if !ptoken_succ {
-		panic("Failed to load token")
-	}
 	EstablishConnectionAndInitEnv(env)
 	go EnterReadlineThread(env, nil)
 	defer DestroyEnvironment(env)
