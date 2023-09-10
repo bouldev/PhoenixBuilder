@@ -1,7 +1,7 @@
 package main
 
-import "phoenixbuilder/solutions/fastbuilder"
+import "phoenixbuilder/fastbuilder/core"
 
 func main() {
-	fastbuilder.Bootstrap()
+	core.Bootstrap()
 }

@@ -372,12 +372,10 @@ func InitTaskStatusDisplay(env *environment.PBEnvironment) {
 	go func() {
 		for {
 			<-ticker.C
-			env.ActivateTaskStatus <- true
 		}
 	}()
 	go func() {
 		for {
-			<-env.ActivateTaskStatus
 			if configuration.GlobalFullConfig(env).Global().TaskDisplayMode == types.TaskDisplayNo {
 				continue
 			}

@@ -1,4 +1,4 @@
-package fastbuilder
+package core
 
 import (
 	"crypto/sha256"
@@ -14,7 +14,7 @@ import (
 	"golang.org/x/term"
 )
 
-func loadFBTokenOrAskFBCredential() (token string, username string, password string) {
+func loadTokenOrAskForCredential() (token string, username string, password string) {
 	if !args.SpecifiedToken() {
 		token = credentials.LoadTokenPath()
 		if _, err := os.Stat(token); os.IsNotExist(err) {

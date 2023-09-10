@@ -1,4 +1,4 @@
-package fastbuilder
+package core
 
 import (
 	"phoenixbuilder/fastbuilder/args"
@@ -18,13 +18,10 @@ func create_environment() *environment.PBEnvironment {
 	env := &environment.PBEnvironment{
 		ClientOptions: clientOption,
 	}
-	env.UQHolder = nil
 	env.Resources = nil
-	env.ActivateTaskStatus = make(chan bool)
 	env.TaskHolder = fbtask.NewTaskHolder()
 	functionHolder := function.NewFunctionHolder(env)
 	env.FunctionHolder = functionHolder
-	env.Destructors = []func(){}
 	env.LRUMemoryChunkCacher = lru.NewLRUMemoryChunkCacher(12, false)
 	env.ChunkFeeder = global.NewChunkFeeder()
 	return env
@@ -53,8 +50,6 @@ func ConfigDebugEnvironment() *environment.PBEnvironment {
 	return env
 }
 
-func DestroyEnv(env *environment.PBEnvironment) {
-	env.Stop()
-	env.WaitStopped()
+func DestroyEnvironment(env *environment.PBEnvironment) {
 	env.Connection.(*minecraft.Conn).Close()
 }

@@ -1,4 +1,4 @@
-package fastbuilder
+package core
 
 import (
 	"bufio"
@@ -7,19 +7,15 @@ import (
 	"fmt"
 	"os"
 	"phoenixbuilder/fastbuilder/args"
-	"phoenixbuilder/fastbuilder/core"
 	"phoenixbuilder/fastbuilder/environment"
-	"phoenixbuilder/fastbuilder/external"
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
-	"phoenixbuilder/fastbuilder/move"
 	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/py_rpc"
 	"phoenixbuilder/fastbuilder/readline"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/fastbuilder/uqHolder"
 	GameInterface "phoenixbuilder/game_control/game_interface"
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft"
@@ -97,22 +93,11 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 	}
 }
 
-// Process packet if the data type is `packet.PyRpc`.
-// If not, do nothing.
-func onPyRpc(
-	pk packet.Packet,
-	env *environment.PBEnvironment,
-) {
-	p, ok := pk.(*packet.PyRpc)
+func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 	conn := env.Connection.(*minecraft.Conn)
-	// prepare
-	if !ok {
+	if p.Value == nil {
 		return
 	}
-	if pk == nil || p.Value == nil {
-		return
-	}
-	// check packet
 	go_p_val := p.Value.MakeGo()
 	/*
 		json_val, _:=json.MarshalIndent(go_p_val, "", "\t")
@@ -133,7 +118,6 @@ func onPyRpc(
 	if !ok {
 		return
 	}
-	// process data from packet
 	switch command {
 	case "S2CHeartBeat":
 		conn.WritePacket(&packet.PyRpc{
@@ -175,7 +159,6 @@ func onPyRpc(
 		})
 		env.GetCheckNumEverPassed = true
 	}
-	// do something
 }
 
 func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
@@ -183,11 +166,11 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 
 	chunkAssembler := assembler.NewAssembler(assembler.REQUEST_AGGRESSIVE, time.Second*5)
-	// max 100 chunk request per second
+	// max 100 chunk requests per second
 	chunkAssembler.CreateRequestScheduler(func(pk *packet.SubChunkRequest) {
 		conn.WritePacket(pk)
 	})
-	// currentChunkConstructor := &world_provider.ChunkConstructor{}
+
 	for {
 		if breaker != nil {
 			select {
@@ -197,38 +180,18 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 			}
 		}
 
-		pk, data, err := conn.ReadPacketAndBytes()
+		pk, err := conn.ReadPacket()
 		if err != nil {
 			panic(err)
 		}
 
-		onPyRpc(pk, env)
-		go env.ResourcesUpdater.(func(pk *packet.Packet))(&pk)
-
-		env.UQHolder.(*uqHolder.UQHolder).Update(pk)
-		if env.ExternalConnectionHandler != nil {
-			env.ExternalConnectionHandler.(*external.ExternalConnectionHandler).PacketChannel <- data
-		}
-		// fmt.Println(omega_utils.PktIDInvMapping[int(pk.ID())])
 		switch p := pk.(type) {
-		// case *packet.AdventureSettings:
-		// 	if conn.GameData().EntityUniqueID == p.PlayerUniqueID {
-		// 		if p.PermissionLevel >= packet.PermissionLevelOperator {
-		// 			opPrivilegeGranted = true
-		// 		} else {
-		// 			opPrivilegeGranted = false
-		// 		}
-		// 	}
-		// case *packet.ClientCacheMissResponse:
-		// 	pterm.Info.Println("ClientCacheMissResponse", p)
-		// case *packet.ClientCacheStatus:
-		// 	pterm.Info.Println("ClientCacheStatus", p)
-		// case *packet.ClientCacheBlobStatus:
-		// 	pterm.Info.Println("ClientCacheBlobStatus", p)
+		case *packet.PyRpc:
+			onPyRpc(p, env)
 		case *packet.Text:
 			if p.TextType == packet.TextTypeChat {
 				if args.InGameResponse {
-					if p.SourceName == env.RespondUser {
+					if p.SourceName == env.RespondTo {
 						functionHolder.Process(p.Message)
 					}
 				}
@@ -278,31 +241,83 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 				requests := chunkAssembler.GenRequestFromLevelChunk(p)
 				chunkAssembler.ScheduleRequest(requests)
 			}
-		case *packet.Respawn:
-			if p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
-				move.Position = p.Position
-			}
-		case *packet.MovePlayer:
-			if p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
-				move.Position = p.Position
-			} else if p.EntityRuntimeID == move.TargetRuntimeID {
-				move.Target = p.Position
-			}
-		case *packet.CorrectPlayerMovePrediction:
-			move.MoveP += 10
-			if move.MoveP > 100 {
-				move.MoveP = 0
-			}
-			move.Position = p.Position
-			move.Jump()
-		case *packet.AddPlayer:
-			if move.TargetRuntimeID == 0 && p.EntityRuntimeID != conn.GameData().EntityRuntimeID {
-				move.Target = p.Position
-				move.TargetRuntimeID = p.EntityRuntimeID
-				//fmt.Printf("Got target: %s\n",p.Username)
-			}
 		}
 	}
+}
+
+func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.Authenticator) (conn *minecraft.Conn, err error) {
+	if args.DebugMode {
+		conn = &minecraft.Conn{
+			DebugMode: true,
+		}
+	} else {
+		dialer := minecraft.Dialer{
+			Authenticator: authenticator,
+		}
+		conn, err = dialer.DialContext(ctx, "raknet")
+	}
+	if err != nil {
+		return
+	}
+	conn.WritePacket(&packet.ClientCacheStatus{
+		Enabled: false,
+	})
+	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
+	conn.WritePacket(&packet.PyRpc{
+		Value: py_rpc.FromGo([]interface{} {
+			"SyncUsingMod",
+			[]interface{} {},
+			nil,
+		}),
+	})
+	conn.WritePacket(&packet.PyRpc{
+		Value: py_rpc.FromGo([]interface{} {
+			"SyncVipSkinUuid",
+			[]interface{} {nil},
+			nil,
+		}),
+	})
+	conn.WritePacket(&packet.PyRpc{
+		Value: py_rpc.FromGo([]interface{} {
+			"ClientLoadAddonsFinishedFromGac",
+			[]interface{} {},
+			nil,
+		}),
+	})
+	conn.WritePacket(&packet.PyRpc{
+		Value: py_rpc.FromGo([]interface{} {
+			"ModEventC2S",
+			[]interface{} {
+				"Minecraft",
+				"preset",
+				"GetLoadedInstances",
+				map[string]interface{} {
+					"playerId": runtimeid,
+				},
+			},
+			nil,
+		}),
+	})
+	conn.WritePacket(&packet.PyRpc{
+		Value: py_rpc.FromGo([]interface{} {
+			"arenaGamePlayerFinishLoad",
+			[]interface{} {},
+			nil,
+		}),
+	})
+	conn.WritePacket(&packet.PyRpc{
+		Value: py_rpc.FromGo([]interface{} {
+			"ModEventC2S",
+			[]interface{} {
+				"Minecraft",
+				"vipEventSystem",
+				"PlayerUiInit",
+				runtimeid,
+			},
+			nil,
+		}),
+	})
+	return
 }
 
 func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
@@ -313,14 +328,6 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	}
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
 
-	options := []core.Option{}
-	if env.IsDebug {
-		options = append(options, core.OptionDebug)
-	}
-	if args.ExternalListenAddress != "" {
-		external.ListenExt(env, args.ExternalListenAddress)
-	}
-
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*30)
 	authenticator := fbauth.NewAccessWrapper(
 		env.FBAuthClient.(*fbauth.Client),
@@ -330,7 +337,7 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		env.LoginInfo.Username,
 		env.LoginInfo.Password,
 	)
-	conn, err := core.InitializeMinecraftConnection(ctx, authenticator, options...)
+	conn, err := InitializeMinecraftConnection(ctx, authenticator)
 
 	if err != nil {
 		pterm.Error.Println(err)
@@ -340,23 +347,18 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 		}
 		panic(err)
 	}
-	if len(env.RespondUser) == 0 {
+	if len(env.RespondTo) == 0 {
 		if args.CustomGameName != "" {
-			env.RespondUser = args.CustomGameName
+			env.RespondTo = args.CustomGameName
 		} else {
-			env.RespondUser = env.FBAuthClient.(*fbauth.Client).RespondUser
+			env.RespondTo = env.FBAuthClient.(*fbauth.Client).RespondTo
 		}
 	}
 
 	env.Connection = conn
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 
-	env.UQHolder = uqHolder.NewUQHolder(conn.GameData().EntityRuntimeID)
-	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
-	env.UQHolder.(*uqHolder.UQHolder).CurrentTick = 0
-
 	env.Resources = &ResourcesControl.Resources{}
-	env.ResourcesUpdater = env.Resources.(*ResourcesControl.Resources).Init()
 	env.GameInterface = &GameInterface.GameInterface{
 		WritePacket: env.Connection.(*minecraft.Conn).WritePacket,
 		ClientInfo: GameInterface.ClientInfo{
@@ -372,19 +374,10 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	function.InitPresetFunctions(functionHolder)
 	fbtask.InitTaskStatusDisplay(env)
 
-	move.ConnectTime = time.Time{}
-	move.Position = conn.GameData().PlayerPosition
-	move.Pitch = conn.GameData().Pitch
-	move.Yaw = conn.GameData().Yaw
-	move.Connection = conn
-	move.RuntimeID = conn.GameData().EntityRuntimeID
-
 	signalhandler.Install(conn, env)
 
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
-
-	env.UQHolder.(*uqHolder.UQHolder).UpdateFromConn(conn)
 }
 
 func getUserInputMD5() (string, error) {

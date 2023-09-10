@@ -1,4 +1,4 @@
-package fastbuilder
+package core
 
 import (
 	"fmt"
@@ -58,8 +58,6 @@ func check_update() {
 }
 
 func Bootstrap() {
-	//args.ParseArgs()
-	// ^^ Argument parser would parse arguments before go runtime starts now
 	setup()
 	display_info()
 	defer Fatal()
@@ -67,37 +65,36 @@ func Bootstrap() {
 		init_and_run_debug_client()
 		return
 	}
-	if !args.ShouldDisableVersionCheck {
+	if !args.ShouldDisableVersionChecking {
 		check_update()
 	}
 
-	token, username, password := loadFBTokenOrAskFBCredential()
+	token, username, password := loadTokenOrAskForCredential()
 	runInteractiveClient(token, username, password)
 }
 
 func runInteractiveClient(token, username, password string) {
-	var code, serverPasswd string
+	var code, serverPasscode string
 	var err error
 	if !args.SpecifiedServer() {
-		code, serverPasswd, err = credentials.GetRentalServerCode()
+		code, serverPasscode, err = credentials.GetRentalServerCode()
 	} else {
 		code = args.ServerCode
-		serverPasswd = args.ServerPassword
+		serverPasscode = args.ServerPassword
 	}
 
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	env := ConfigRealEnvironment(token, code, serverPasswd, username, password)
+	env := ConfigRealEnvironment(token, code, serverPasscode, username, password)
 	ptoken_succ := credentials.ProcessTokenDefault(env)
-	//init_and_run_client(token, code, serverPasswd)
 	if !ptoken_succ {
 		panic("Failed to load token")
 	}
 	EstablishConnectionAndInitEnv(env)
 	go EnterReadlineThread(env, nil)
-	defer DestroyEnv(env)
+	defer DestroyEnvironment(env)
 	EnterWorkerThread(env, nil)
 }
 
@@ -105,6 +102,6 @@ func init_and_run_debug_client() {
 	env := ConfigDebugEnvironment()
 	EstablishConnectionAndInitEnv(env)
 	go EnterReadlineThread(env, nil)
-	defer DestroyEnv(env)
+	defer DestroyEnvironment(env)
 	EnterWorkerThread(env, nil)
 }

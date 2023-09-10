@@ -1,4 +1,4 @@
-package fastbuilder
+package core
 
 import (
 	"bufio"
