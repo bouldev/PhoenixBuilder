@@ -2,25 +2,17 @@ package builder
 
 import (
 	"fmt"
+	"regexp"
 	"phoenixbuilder/fastbuilder/mcstructure"
 )
 
-// 测定 str 是否是方块状态。
-// 不会检查其正确性
-func test_block_states_string(str string) bool {
-	reader := mcstructure.NewStringReader(str)
-	location, exist := reader.GetCharacterWithNoSpace()
-	if !exist {
-		return false
-	}
-	reader.Pointer = location
-	current, _ := reader.GetCurrentCharacter()
-	return current == "["
+func is_block_states(str string) bool {
+	matcher:=regexp.MustCompile(" {0,}\\[( {0,}\"(.*?)\" {0,}(=|:) {0,}((t|T)rue|(F|f)alse|null|(\\+|\\-)\\d+|\".*?(?<!\\\\)\") {0,},?){0,}\\] {0,}")
+	return matcher.MatchString(str)
 }
 
-// 将 blockStates 格式化为标准形式
 func format_block_states(blockStates string) (string, error) {
-	blockStatesMap, err := mcstructure.UnMarshalBlockStates(blockStates)
+	blockStatesMap, err := mcstructure.UnmarshalBlockStates(blockStates)
 	if err != nil {
 		return "", fmt.Errorf("format_block_states: %v", err)
 	}

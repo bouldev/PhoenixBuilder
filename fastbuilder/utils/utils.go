@@ -11,6 +11,14 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"bufio"
+	"syscall"
+	"strings"
+	"path/filepath"
+	"io/ioutil"
+	I18n "phoenixbuilder/fastbuilder/i18n"
+
+	"golang.org/x/term"
 )
 
 func SliceAtoi(sa []string) ([]int, error) {
@@ -93,4 +101,46 @@ func CheckUpdate(currentVersion string) (bool, string) {
 		break
 	}
 	return false, ""
+}
+
+
+func GetRentalServerCode() (string, string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf(I18n.T(I18n.Enter_Rental_Server_Code))
+	code, err := reader.ReadString('\n')
+	if err != nil {
+		return "", "", err
+	}
+	fmt.Printf(I18n.T(I18n.Enter_Rental_Server_Password))
+	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+	fmt.Printf("\n")
+	return strings.TrimRight(code, "\r\n"), string(bytePassword), err
+}
+
+func GetUsernameInput() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf(I18n.T(I18n.Enter_FBUC_Username))
+	fbusername, err := reader.ReadString('\n')
+	return fbusername, err
+}
+
+
+func LoadTokenPath() string {
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
+		homedir = "."
+	}
+	fbconfigdir := filepath.Join(homedir, ".config/fastbuilder")
+	os.MkdirAll(fbconfigdir, 0700)
+	token := filepath.Join(fbconfigdir, "fbtoken")
+	return token
+}
+
+func ReadToken(path string) (string, error) {
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
 }

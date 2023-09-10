@@ -108,7 +108,7 @@ func get_block_data_from_states(
 
 // 将 types.Module 解析为 GeneralBlock
 func ParseBlockModule(singleBlock *types.Module) (GeneralBlock, error) {
-	blockStates, err := mcstructure.UnMarshalBlockStates(singleBlock.Block.BlockStates)
+	blockStates, err := mcstructure.UnmarshalBlockStates(singleBlock.Block.BlockStates)
 	if err != nil {
 		return GeneralBlock{}, fmt.Errorf("ParseBlockModule: Failed to parse the block states from string; singleBlock.Block.BlockStates = %#v, err = %v", singleBlock.Block.BlockStates, err)
 	}
