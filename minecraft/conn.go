@@ -8,11 +8,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/sandertv/go-raknet"
-	"go.uber.org/atomic"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
 	"io"
 	"log"
 	"net"
@@ -26,6 +21,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/sandertv/go-raknet"
+	"go.uber.org/atomic"
+	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 // exemptedResourcePack is a resource pack that is exempted from being downloaded. These packs may be directly
@@ -324,7 +325,7 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	return nil
 }
 
-func (conn *Conn) WritePacketBuffer(data []byte) error {
+func (conn *Conn) WriteRawPacket(pkID uint32, data []byte) error {
 	if conn.DebugMode {
 		return nil
 	}
@@ -343,6 +344,8 @@ func (conn *Conn) WritePacketBuffer(data []byte) error {
 		internal.BufferPool.Put(buf)
 	}()
 
+	conn.hdr.PacketID = pkID
+	_ = conn.hdr.Write(buf)
 	l := buf.Len()
 	buf.Write(data)
 	if conn.packetFunc != nil {
