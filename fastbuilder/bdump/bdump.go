@@ -13,60 +13,9 @@ import (
 )
 
 type BDump struct {
-	Author string // Should be empty
+	Author string // Deprecated field, would generally be empty
 	Blocks []*types.Module
 }
-
-/*
-if(i.cmd=="addToBlockPalette"){
-	writebuf(1,1);
-	writebuf(i.blockName+"\0");
-}else if(i.cmd=="addX"){
-	writebuf(2,1);
-	writebuf(i.count,2);
-}else if(i.cmd=="X++"){
-	writebuf(3,1);
-}else if(i.cmd=="addY"){
-	writebuf(4,1);
-	writebuf(i.count,2);
-}else if(i.cmd=="Y++"){
-	writebuf(5,1);
-}else if(i.cmd=="addZ"){
-	writebuf(6,1);
-	writebuf(i.count,2);
-}else if(i.cmd=="placeBlock"){
-	writebuf(7,1);
-	writebuf(i.blockID,2);
-	writebuf(i.blockData,2);
-}else if(i.cmd=="Z++"){
-	writebuf(8,1);
-}else{
-	writebuf(9,1);//NOP
-}
-jumpX 10
-jumpY 11
-jumpZ 12
-reserved 13
-*X++  14
-*X--  15
-*Y++  16
-*Y--  17
-*Z++  18
-*Z--  19
-*addX 20
-*addBigX 21
-*addY 22
-*addBigY 23
-*addZ 24
-*addBigZ 25
-assignCommandBlockData 26
-placeCommandBlockWithData 27
-addSmallX 28
-addSmallY 29
-addSmallZ 30
-end 88
-isSigned    90
-*/
 
 func (bdump *BDump) formatBlocks() {
 	min := []int{2147483647, 2147483647, 2147483647}
@@ -93,7 +42,6 @@ func (bdump *BDump) writeHeader(w io.Writer) error {
 	if err != nil {
 		return err
 	}
-	// 内部文件头
 	_, err = w.Write([]byte{0})
 	if err != nil {
 		return err
@@ -304,16 +252,6 @@ func (bdump *BDump) writeBlocks(w io.Writer) error {
 				return err
 			}
 		}
-		/*
-			if mdl.DebugNBTData != nil {
-				err := writer.WriteCommand(&command.AssignDebugData{
-					Data: mdl.DebugNBTData,
-				})
-				if err != nil {
-					return err
-				}
-			}
-		*/
 	}
 	return nil
 }
