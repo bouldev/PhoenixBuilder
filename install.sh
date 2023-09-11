@@ -180,8 +180,8 @@ DL_TOOL_OUT_FLAG="-o"
 for i in "curl" "wget" "axel" "aria2c"; do
   ${WHICH_CMD} ${i} > /dev/null 2>&1
   if [ $? == 0 ]; then
-    echo "Found ${i}: $(which ${i})"
-    DL_TOOL=$(which ${i})
+    echo "Found ${i}: $(${WHICH_CMD} ${i})"
+    DL_TOOL=$(${WHICH_CMD} ${i})
     DL_TOOL_NAME="${i}"
     break
   fi
