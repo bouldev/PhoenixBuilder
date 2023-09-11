@@ -43,6 +43,7 @@ struct go_string token_content=EMPTY_GOSTRING;
 char args_no_readline=0;
 struct go_string custom_gamename=EMPTY_GOSTRING;
 char ingame_response=0;
+struct go_string listen_address=EMPTY_GOSTRING;
 
 void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
@@ -57,6 +58,7 @@ void print_help(const char *self_name) {
 	printf("\t-N, --gamename <name>: Specify the game name to use interactive commands (e.g. get), instead of using the server provided one.\n");
 	printf("\t--ingame-response: Turn on the feature to listen to commands or give output in game.\n");
 	printf("\t--del-userdata: Remove user data and exit.\n");
+	printf("\t-L, --listen <address>: Listen and handle WebSocket connection on given address, this will also suppress readline.\n");
 	printf("\n");
 	printf("\t-h, --help: Show this help context.\n");
 	printf("\t-v, --version: Show the version information of this program.\n");
@@ -185,10 +187,11 @@ int _parse_args(int argc, char **argv) {
 			{"gamename", required_argument, 0, 'N'}, // 11
 			{"ingame-response", no_argument, 0, 0}, // 12
 			{"purge-userdata", no_argument, 0, 0}, // 13
+			{"listen", required_argument, 0, 'L'}, // 14
 			{0, 0, 0, 0}
 		};
 		int option_index;
-		int c=getopt_long(argc,argv,"hA:vc:p:t:T:N:", opts, &option_index);
+		int c=getopt_long(argc,argv,"hA:vc:p:t:T:N:L:", opts, &option_index);
 		if(c==-1)
 			break;
 		switch(c) {
@@ -237,6 +240,10 @@ int _parse_args(int argc, char **argv) {
 			return 0;
 		case 'N':
 			quickset(&custom_gamename);
+			break;
+		case 'L':
+			args_no_readline=1;
+			quickset(&listen_address);
 			break;
 		default:
 			print_help(argv[0]);
