@@ -17,6 +17,7 @@ extern char token_content;
 extern char args_no_readline;
 extern char custom_gamename;
 extern char ingame_response;
+extern char listen_address;
 */
 import "C"
 
@@ -38,6 +39,7 @@ func referenceHolder() {
 	print(C.args_no_readline)
 	print(C.custom_gamename)
 	print(C.ingame_response)
+	print(C.listen_address)
 }
 
 var FBVersion string=*(*string)(unsafe.Pointer(&__cgo_args_var_fbversion_struct))
@@ -61,6 +63,7 @@ var CustomTokenContent=*(*string)(unsafe.Pointer(&__cgo_token_content))
 var NoReadline=*(*bool)(unsafe.Pointer(&__cgo_args_no_readline))
 var CustomGameName=*(*string)(unsafe.Pointer(&__cgo_custom_gamename))
 var InGameResponse=*(*bool)(unsafe.Pointer(&__cgo_ingame_response))
+var ListenAddress=*(*string)(unsafe.Pointer(&__cgo_listen_address))
 
 //export go_rmdir_recursive
 func go_rmdir_recursive(path *C.char) {
