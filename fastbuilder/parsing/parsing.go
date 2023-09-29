@@ -53,17 +53,18 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 		Block:    &types.ConstBlock{},
 		OldBlock: &types.ConstBlock{},
 		//Begin:     types.Position{},
-		End:                defaultConfig.End,
-		Position:           defaultConfig.Position,
-		Radius:             0,
-		Length:             0,
-		Width:              0,
-		Height:             0,
-		Method:             "replace",
-		OldMethod:          "keep",
-		AssignNBTData:      false,
-		ExcludeCommands:    false,
-		InvalidateCommands: false,
+		End:                    defaultConfig.End,
+		Position:               defaultConfig.Position,
+		Radius:                 0,
+		Length:                 0,
+		Width:                  0,
+		Height:                 0,
+		Method:                 "replace",
+		OldMethod:              "keep",
+		AssignNBTData:          false,
+		ExcludeCommands:        false,
+		InvalidateCommands:     false,
+		UpgradeExecuteCommands: false,
 	}
 
 	FlagSet := flag.NewFlagSet("Parser", 0)
@@ -74,6 +75,8 @@ func Parse(Message string, defaultConfig *types.MainConfig) (*types.MainConfig, 
 	FlagSet.BoolVar(&Config.AssignNBTData, "nbt", defaultConfig.AssignNBTData, "Assign NBT data to blocks by lawful means while importing")
 	FlagSet.BoolVar(&Config.ExcludeCommands, "excludecommands", defaultConfig.ExcludeCommands, "Exclude commands in command blocks")
 	FlagSet.BoolVar(&Config.InvalidateCommands, "invalidatecommands", defaultConfig.InvalidateCommands, "Invalidate commands in command blocks")
+	FlagSet.BoolVar(&Config.UpgradeExecuteCommands, "upgradeexecutecommands", defaultConfig.UpgradeExecuteCommands, "Upgrade execute commands in command blocks")
+	FlagSet.BoolVar(&Config.UpgradeExecuteCommands, "uec", defaultConfig.UpgradeExecuteCommands, "Upgrade execute commands in command blocks")
 	FlagSet.BoolVar(&Config.Strict, "strict", defaultConfig.Strict, "Break if the file isn't signed")
 	FlagSet.BoolVar(&Config.Strict, "S", defaultConfig.Strict, "Break if the file isn't signed")
 

@@ -7,6 +7,8 @@ import (
 	GameInterface "phoenixbuilder/game_control/game_interface"
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol/packet"
+
+	"github.com/pterm/pterm"
 )
 
 // 从 c.Package.Block.NBT 提取命令方块数据并保存在 c.CommandBlockData 中
@@ -123,6 +125,7 @@ func (c *CommandBlock) Decode() error {
 func (c *CommandBlock) WriteData() error {
 	var mode uint32 = packet.CommandBlockImpulse
 	gameInterface := c.BlockEntity.Interface.(*GameInterface.GameInterface)
+	// 初始化
 	if c.ShouldPlaceBlock {
 		if c.BlockEntity.AdditionalData.Settings.ExcludeCommands || c.BlockEntity.AdditionalData.FastMode {
 			err := c.BlockEntity.Interface.SetBlockAsync(c.BlockEntity.AdditionalData.Position, c.BlockEntity.Block.Name, c.BlockEntity.AdditionalData.BlockStates)
@@ -147,14 +150,49 @@ func (c *CommandBlock) WriteData() error {
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}
+	// 传送机器人到命令方块处
 	if c.BlockEntity.Block.Name == "chain_command_block" {
 		mode = packet.CommandBlockChain
 	} else if c.BlockEntity.Block.Name == "repeating_command_block" {
 		mode = packet.CommandBlockRepeating
 	}
+	// 根据命令方块的名称确定命令方块的类型
+	if c.BlockEntity.AdditionalData.Settings.UpgradeExecuteCommands {
+		new, warn, err := UpgradeExecuteCommand(c.CommandBlockData.Command)
+		if err != nil {
+			gameInterface.Output(pterm.Error.Sprintf(
+				"WriteData: Failed to upgrade commands in the command block at (%d,%d,%d); err = %v",
+				c.BlockEntity.AdditionalData.Position[0],
+				c.BlockEntity.AdditionalData.Position[1],
+				c.BlockEntity.AdditionalData.Position[2],
+				err,
+			))
+		} else if len(warn) > 0 {
+			gameInterface.Output(pterm.Warning.Sprintf(
+				"WriteData: Unable to upgrade some detect fields in the command block at (%d,%d,%d); failure_blocks = %#v, err = %v",
+				c.BlockEntity.AdditionalData.Position[0],
+				c.BlockEntity.AdditionalData.Position[1],
+				c.BlockEntity.AdditionalData.Position[2],
+				warn,
+				err,
+			))
+		} else if new != c.CommandBlockData.Command {
+			gameInterface.Output(pterm.Success.Sprintf(
+				"WriteData: The command in the command box at (%d,%d,%d) was successfully upgraded; older_command = %#v, newer_command = %#v",
+				c.BlockEntity.AdditionalData.Position[0],
+				c.BlockEntity.AdditionalData.Position[1],
+				c.BlockEntity.AdditionalData.Position[2],
+				c.CommandBlockData.Command,
+				new,
+			))
+		}
+		c.CommandBlockData.Command = new
+	}
+	// 如果需要将 execute 命令升级为新格式
 	if c.BlockEntity.AdditionalData.Settings.InvalidateCommands {
 		c.CommandBlockData.Command = "# " + c.CommandBlockData.Command
 	}
+	// 如果需要对命令进行无效化处理
 	err = gameInterface.WritePacket(&packet.CommandBlockUpdate{
 		Block:              true,
 		Position:           c.BlockEntity.AdditionalData.Position,

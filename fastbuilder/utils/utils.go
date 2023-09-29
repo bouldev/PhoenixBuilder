@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/hex"
@@ -9,14 +10,12 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	I18n "phoenixbuilder/fastbuilder/i18n"
 	"regexp"
 	"strconv"
-	"bufio"
-	"syscall"
 	"strings"
-	"path/filepath"
-	"io/ioutil"
-	I18n "phoenixbuilder/fastbuilder/i18n"
+	"syscall"
 
 	"golang.org/x/term"
 )
@@ -52,7 +51,7 @@ func GetMD5(i string) string {
 }
 
 func CheckUpdate(currentVersion string) (bool, string) {
-	libre_regexp := regexp.MustCompile("^v?((\\d+)\\.(\\d+)\\.(\\d+))-libre$")
+	libre_regexp := regexp.MustCompile(`^v?((\d+)\.(\d+)\.(\d+))-libre$`)
 	current_version_reg := libre_regexp.FindAllStringSubmatch(currentVersion, -1)
 	if len(current_version_reg) == 0 || len(current_version_reg[0]) != 5 {
 		return false, ""
@@ -103,7 +102,6 @@ func CheckUpdate(currentVersion string) (bool, string) {
 	return false, ""
 }
 
-
 func GetRentalServerCode() (string, string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf(I18n.T(I18n.Enter_Rental_Server_Code))
@@ -124,7 +122,6 @@ func GetUsernameInput() (string, error) {
 	return fbusername, err
 }
 
-
 func LoadTokenPath() string {
 	homedir, err := os.UserHomeDir()
 	if err != nil {
@@ -138,7 +135,7 @@ func LoadTokenPath() string {
 }
 
 func ReadToken(path string) (string, error) {
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

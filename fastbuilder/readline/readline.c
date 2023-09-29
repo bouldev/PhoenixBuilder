@@ -283,6 +283,7 @@ const char *flags_pool[]={
 	"--assignnbtdata", "-assignnbtdata", "-nbt"
 	"--excludecommands","-excludecommands",
 	"--invalidatecommands","-invalidatecommands",
+	"--upgradeexecutecommands","-upgradeexecutecommands",
 	"--strict","-strict","-S",
 	"--length","-l","-length",
 	"--width","-width","-w",
