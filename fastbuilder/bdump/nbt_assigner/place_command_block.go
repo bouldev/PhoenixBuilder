@@ -178,7 +178,7 @@ func (c *CommandBlock) WriteData() error {
 			))
 		} else if new != c.CommandBlockData.Command {
 			gameInterface.Output(pterm.Success.Sprintf(
-				"WriteData: The command in the command box at (%d,%d,%d) was successfully upgraded; older_command = %#v, newer_command = %#v",
+				"WriteData: The command in the command block at (%d,%d,%d) was successfully upgraded; older_command = %#v, newer_command = %#v",
 				c.BlockEntity.AdditionalData.Position[0],
 				c.BlockEntity.AdditionalData.Position[1],
 				c.BlockEntity.AdditionalData.Position[2],
