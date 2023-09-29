@@ -29,6 +29,7 @@ func (p *CommandParser) ExpectHeader(expect string, isCommandHeader bool) (is bo
 	if isCommandHeader && p.Next() != "/" {
 		p.SetPtr(p.Pointer() - 1)
 	}
+	p.JumpSpace()
 	// 跳过 空格 及 斜杠(可选)
 	older := p.Pointer()
 	l := len(expect)
