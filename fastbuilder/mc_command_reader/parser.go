@@ -26,10 +26,13 @@ func (c *CommandReader) Parser() *CommandParser {
 // 否则将会保持不变
 func (p *CommandParser) ExpectHeader(expect string, isCommandHeader bool) (is bool) {
 	p.JumpSpace()
-	if isCommandHeader && p.Next() != "/" {
-		p.SetPtr(p.Pointer() - 1)
+	if isCommandHeader {
+		if p.Next() != "/" {
+			p.SetPtr(p.Pointer() - 1)
+		} else {
+			p.JumpSpace()
+		}
 	}
-	p.JumpSpace()
 	// 跳过 空格 及 斜杠(可选)
 	older := p.Pointer()
 	l := len(expect)
