@@ -20,20 +20,21 @@ const (
 )
 
 type MainConfig struct {
-	Execute               string
-	Block, OldBlock       *ConstBlock
-	Entity                string
-	End, Position         Position //Position=Begin
-	ResumeFrom            float64
-	Radius                int
-	Length, Width, Height int
-	MapX, MapZ, MapY      int
-	Method, OldMethod     string
-	Facing, Path, Shape   string
-	AssignNBTData         bool
-	ExcludeCommands       bool
-	InvalidateCommands    bool
-	Strict                bool
+	Execute                string
+	Block, OldBlock        *ConstBlock
+	Entity                 string
+	End, Position          Position //Position=Begin
+	ResumeFrom             float64
+	Radius                 int
+	Length, Width, Height  int
+	MapX, MapZ, MapY       int
+	Method, OldMethod      string
+	Facing, Path, Shape    string
+	AssignNBTData          bool
+	ExcludeCommands        bool
+	InvalidateCommands     bool
+	UpgradeExecuteCommands bool
+	Strict                 bool
 }
 
 type DelayConfig struct {
