@@ -14,8 +14,8 @@ type TargetQueryingInfo struct {
 	YRot      float32
 }
 
-// 解析 querytarget 命令的返回值为列表，因为同一时刻可以查询多个实体的相关数据。
-// 列表内单个数据的数据类型为 QuerytargetInfo 结构体
+// 解析 querytarget 命令的返回值并以切片返回，
+// 因为同一时刻可以查询多个实体的相关信息
 func (g *GameInterface) ParseTargetQueryingInfo(pk packet.CommandOutput) ([]TargetQueryingInfo, error) {
 	res := []TargetQueryingInfo{}
 	// 初始化

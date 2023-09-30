@@ -8,18 +8,23 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-// 将已放入铁砧第一格(注意是第一格)的物品的物品名称修改为 name 并返还到背包中的 slot 处。
-// 当且仅当租赁服回应操作结果后此函数再返回值。
-//
-// 返回值的第一项代表物品名称的修改结果。
-// 当发生错误时此参数将始终为 nil
-//
-// 当遭遇改名失败时，将尝试撤销名称修改请求。
-// 如果原有物品栏已被占用，则会尝试将铁砧中的失败品
-// 返还到背包中另外一个可用的物品栏。
-// 如果背包中所有物品栏都已被占用，则物品会被留在铁砧内。
-//
-// 部分情况下此函数可能会遇见无法处理的错误，届时程序将抛出严重错误(panic)
+/*
+将已放入铁砧第一格(注意是第一格)的物品的物品名称修改为 name ，
+并存放至 AnvilOperationResponse.Destination 所指代的位置。
+此字段可能不存在，如果不存在，则代表物品已被丢出。
+
+当且仅当租赁服回应操作结果后此函数再返回值。
+
+返回值的第一项代表物品名称的修改结果。
+当发生错误时此参数将始终为 nil
+
+当遭遇改名失败时，将尝试撤销名称修改请求。
+如果原有物品栏已被占用，则会尝试将铁砧中的失败品
+返还到背包中另外一个可用的物品栏。
+如果背包中所有物品栏都已被占用，则物品会被留在铁砧内。
+
+部分情况下此函数可能会遇见无法处理的错误，届时程序将抛出严重错误(panic)
+*/
 func (g *GameInterface) RenameItem(
 	name string,
 	slot uint8,
@@ -51,7 +56,7 @@ func (g *GameInterface) RenameItem(
 			gob.Register([]interface{}{})
 		},
 	)
-	// 将得到的物品数据深拷贝到并 itemDatas 处
+	// 将得到的物品数据深拷贝到 itemDatas 处
 	var backup protocol.ItemInstance
 	ResourcesControl.DeepCopy(
 		&get,

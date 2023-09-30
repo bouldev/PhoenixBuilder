@@ -161,7 +161,7 @@ func (c *CommandBlock) WriteData() error {
 		new, warn, err := UpgradeExecuteCommand(c.CommandBlockData.Command)
 		if err != nil {
 			gameInterface.Output(pterm.Error.Sprintf(
-				"WriteData: Failed to upgrade commands in the command block at (%d,%d,%d); err = %v",
+				"WriteData: Conversion failure. Occurred in the command block at (%d,%d,%d); err = %v",
 				c.BlockEntity.AdditionalData.Position[0],
 				c.BlockEntity.AdditionalData.Position[1],
 				c.BlockEntity.AdditionalData.Position[2],
@@ -169,7 +169,7 @@ func (c *CommandBlock) WriteData() error {
 			))
 		} else if len(warn) > 0 {
 			gameInterface.Output(pterm.Warning.Sprintf(
-				"WriteData: Unable to upgrade some detect fields in the command block at (%d,%d,%d); failure_blocks = %#v, err = %v",
+				"WriteData: The mapping of the block data value to the block state was not found in some detect fields. Occurred in the command block at (%d,%d,%d); failure_blocks = %#v, err = %v",
 				c.BlockEntity.AdditionalData.Position[0],
 				c.BlockEntity.AdditionalData.Position[1],
 				c.BlockEntity.AdditionalData.Position[2],
@@ -178,12 +178,10 @@ func (c *CommandBlock) WriteData() error {
 			))
 		} else if new != c.CommandBlockData.Command {
 			gameInterface.Output(pterm.Success.Sprintf(
-				"WriteData: The command in the command block at (%d,%d,%d) was successfully upgraded; older_command = %#v, newer_command = %#v",
+				"WriteData: [DEBUG] Command at (%d,%d,%d) was successful to upgrade",
 				c.BlockEntity.AdditionalData.Position[0],
 				c.BlockEntity.AdditionalData.Position[1],
 				c.BlockEntity.AdditionalData.Position[2],
-				c.CommandBlockData.Command,
-				new,
 			))
 		}
 		c.CommandBlockData.Command = new

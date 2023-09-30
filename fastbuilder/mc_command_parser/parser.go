@@ -1,17 +1,8 @@
-package mc_command_reader
+package mc_command_parser
 
-import "strings"
-
-// 描述一个单个的命令解析器，
-// 其底层由命令阅读器构成
-type CommandParser struct {
-	*CommandReader
-}
-
-// 返回当前阅读器对应的命令解析器
-func (c *CommandReader) Parser() *CommandParser {
-	return &CommandParser{c}
-}
+import (
+	"strings"
+)
 
 // 以当前阅读进度为起始，
 // 匹配一个前缀 expect 。
@@ -25,22 +16,26 @@ func (c *CommandReader) Parser() *CommandParser {
 // 底层阅读器的阅读进度将会更新，
 // 否则将会保持不变
 func (p *CommandParser) ExpectHeader(expect string, isCommandHeader bool) (is bool) {
-	p.JumpSpace()
+	r := p.reader
+	// 初始化
+	r.JumpSpace()
 	if isCommandHeader {
-		if p.Next() != "/" {
-			p.SetPtr(p.Pointer() - 1)
-		} else {
-			p.JumpSpace()
+		switch r.Next(true) {
+		case "/":
+			r.JumpSpace()
+		case "":
+		default:
+			r.SetPtr(r.Pointer() - 1)
 		}
 	}
 	// 跳过 空格 及 斜杠(可选)
-	older := p.Pointer()
+	older := r.Pointer()
 	l := len(expect)
-	if len(p.String()) >= p.Pointer()+l && strings.ToLower(p.Sentence(l)) == expect {
+	if len(r.String()) >= r.Pointer()+l && strings.ToLower(r.Sentence(l)) == expect {
 		return true
 	}
 	// 当前缀与 expect 匹配
-	p.SetPtr(older)
+	r.SetPtr(older)
 	return false
 	// 当前缀不与 expect 匹配
 }
@@ -48,35 +43,39 @@ func (p *CommandParser) ExpectHeader(expect string, isCommandHeader bool) (is bo
 // 以当前阅读进度为起始，
 // 解析并返回一个目标选择器
 func (p *CommandParser) ParseSelector() (selector Selector) {
-	switch p.Next() {
+	r := p.reader
+	// prepare
+	switch r.Next(false) {
 	case `@`:
-		older := p.Pointer() - 1
+		older := r.Pointer() - 1
 		func() {
 			for {
-				switch p.Next() {
+				switch r.Next(false) {
 				case " ", "[", "~", "^", "\n", "+", "\t":
-					p.SetPtr(p.Pointer() - 1)
-					selector.Main = p.SentenceThroughPtr(older, nil)
+					r.SetPtr(r.Pointer() - 1)
+					selector.Main = r.CutSentence(older)
 					return
 				}
 			}
 		}()
-		p.JumpSpace()
+		r.JumpSpace()
 		// ^ @s
 		// e.g. `@p`
-		if p.Next() != `[` {
-			p.SetPtr(p.Pointer() - 1)
+		switch r.Next(true) {
+		case "[", "":
+		default:
+			r.SetPtr(r.Pointer() - 1)
 			return
 		}
 		// ^ (Pre-Check) @s...[
 		// e.g. `@e   [`
-		older = p.Pointer() - 1
+		older = r.Pointer() - 1
 		for {
-			switch p.Next() {
+			switch r.Next(false) {
 			case `"`:
-				p.ParseString()
+				r.ParseString()
 			case `]`:
-				tmp := p.SentenceThroughPtr(older, nil)
+				tmp := r.CutSentence(older)
 				selector.Sub = &tmp
 				return
 			}
@@ -84,48 +83,55 @@ func (p *CommandParser) ParseSelector() (selector Selector) {
 		// ^ @s...[...]
 		// e.g. `@s [name=abc,tag="\"abcdefg\\/higklmn\""]`
 	case `"`:
-		selector.Main = p.ParseString()
+		selector.Main = r.ParseString()
 		return
 		// ^ "..."
 		// e.g. `"Happy\\2018/new"`
 	default:
-		older := p.Pointer() - 1
+		older := r.Pointer() - 1
 		for {
-			switch p.Next() {
-			case " ", "\n", "+", "\t":
-				p.SetPtr(p.Pointer() - 1)
-				selector.Main = p.SentenceThroughPtr(older, nil)
+			switch op := r.Next(true); op {
+			case " ", "\n", "+", "\t", "":
+				if op != "" {
+					r.SetPtr(r.Pointer() - 1)
+				}
+				if selector.Main = r.CutSentence(older); len(selector.Main) == 0 {
+					panic("ParseSelector: EOF")
+				}
 				return
 			}
 		}
 		// ^ ...
 		// e.g. `你好世界`
 	}
+	// process and return
 }
 
 // 以当前阅读进度为起始，
 // 解析一组坐标并返回其对应的字符串切片
 func (p *CommandParser) ParsePosition() (pos [3]string) {
+	r := p.reader
+	// prepare
 	for i := 0; i < 3; i++ {
 		if i > 0 {
-			p.JumpSpace()
+			r.JumpSpace()
 		}
 		// jump space
-		switch op := p.Next(); op {
+		switch op := r.Next(false); op {
 		case "~", "^":
 			pos[i] = op
 		default:
-			p.SetPtr(p.Pointer() - 1)
+			r.SetPtr(r.Pointer() - 1)
 		}
 		// get symbol
-		switch op := p.Next(); op {
+		switch op := r.Next(true); op {
 		case "+", "-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
-			p.SetPtr(p.Pointer() - 1)
+			r.SetPtr(r.Pointer() - 1)
 			if len(pos[i]) == 0 && i != 1 {
-				tmp, _ := p.ParseNumber(false)
+				tmp, _ := r.ParseNumber(false)
 				pos[i] = pos[i] + tmp
 			} else {
-				tmp, _ := p.ParseNumber(true)
+				tmp, _ := r.ParseNumber(true)
 				pos[i] = pos[i] + tmp
 			}
 			if pos[i] == "~0" || pos[i] == "^0" {
@@ -135,15 +141,19 @@ func (p *CommandParser) ParsePosition() (pos [3]string) {
 			if i != 2 {
 				switch op {
 				case "~", "^":
-					p.SetPtr(p.Pointer() - 1)
+					r.SetPtr(r.Pointer() - 1)
 				case " ", "\n", "\t":
+				case "":
+					if len(pos[i]) == 0 {
+						panic("ParsePosition: EOF")
+					}
 				default:
 					panic("ParsePosition: Invalid position")
 				}
 			} else if len(pos[i]) == 0 {
 				panic("ParsePosition: Invalid position")
-			} else {
-				p.SetPtr(p.Pointer() - 1)
+			} else if op != "" {
+				r.SetPtr(r.Pointer() - 1)
 			}
 		}
 		// get position
@@ -157,27 +167,32 @@ func (p *CommandParser) ParsePosition() (pos [3]string) {
 // 解析被测方块的各项预期参数
 func (p *CommandParser) ParseDetectArgs() (detectArgs DetectArgs) {
 	var isInt bool
+	r := p.reader
+	// prepare
 	detectArgs.BlockPosition = p.ParsePosition()
-
-	p.JumpSpace()
-	older := p.Pointer()
+	// block position
+	r.JumpSpace()
+	older := r.Pointer()
 	func() {
 		for {
-			switch p.Next() {
+			switch r.Next(true) {
 			case " ", "\n", "\t":
-				p.SetPtr(p.Pointer() - 1)
+				r.SetPtr(r.Pointer() - 1)
+				return
+			case "":
 				return
 			case "+":
 				panic("ParseDetectArgs: Invalid block data value")
 			}
 		}
 	}()
-	detectArgs.BlockName = p.SentenceThroughPtr(older, nil)
-
-	p.JumpSpace()
-	if detectArgs.BlockData, isInt = p.ParseNumber(true); !isInt {
+	detectArgs.BlockName = r.CutSentence(older)
+	// block name
+	r.JumpSpace()
+	if detectArgs.BlockData, isInt = r.ParseNumber(true); !isInt {
 		panic("CommandParser: Block data provided must be an integer")
 	}
-
+	// block data
 	return
+	// return
 }
