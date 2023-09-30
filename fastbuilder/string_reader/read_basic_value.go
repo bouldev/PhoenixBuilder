@@ -1,4 +1,4 @@
-package mc_command_reader
+package string_reader
 
 import (
 	"encoding/json"
@@ -7,12 +7,14 @@ import (
 // 以当前阅读进度为起始，
 // 跳过空格、换行符和制表符，
 // 直到抵达非空字符或 EOF 时止
-func (c *CommandReader) JumpSpace() {
+func (s *StringReader) JumpSpace() {
 	for {
-		switch c.Next() {
+		switch s.Next(true) {
 		case " ", "\n", "\t":
+		case "":
+			return
 		default:
-			c.SetPtr(c.Pointer() - 1)
+			s.SetPtr(s.Pointer() - 1)
 			return
 		}
 	}
@@ -21,16 +23,14 @@ func (c *CommandReader) JumpSpace() {
 // 以当前阅读进度为起始，
 // 解析并返回一个字符串。
 // e.g. `233\\\""` -> `233\"`
-func (c *CommandReader) ParseString() (res string) {
-	older := c.Pointer() - 1
+func (s *StringReader) ParseString() (res string) {
+	older := s.Pointer() - 1
 	for {
-		k := c.Next()
-		//fmt.Println(k)
-		switch k {
+		switch s.Next(false) {
 		case `\`:
-			c.SetPtr(c.Pointer() + 1)
+			s.SetPtr(s.Pointer() + 1)
 		case `"`:
-			tmp := c.SentenceThroughPtr(older, nil)
+			tmp := s.CutSentence(older)
 			json.Unmarshal([]byte(tmp), &res)
 			return res
 		}
@@ -44,48 +44,47 @@ omission 为真时将对数字进行完全简化。
 
 e.g.
 
-	`02.300 ` -> `2.3`
-	`+0 ` -> `0`
-	`-0 ` -> `0`
-	`+2+3 ` -> `2`
+	`02.300` -> `2.3`
+	`+0` -> `0`
+	`-0` -> `0`
+	`+2+3` -> `2`
 
 ^ in general
 
-	`02.000 ` -> `2`
+	`02.000` -> `2`
 
 ^ omission = true
 
-	`02.000 ` -> `2.0`
+	`02.000` -> `2.0`
 
 ^ omission = false
 
 The following example will panic.
 
-	`2.0` -> EOF
-	`2. ` -> EOF
-	`+ ` -> EOF
-	`.2 ` -> Invalid number
-	`+- ` -> Invalid number
-	`2..0 ` -> Invalid number
+	`2.` -> EOF
+	`+` -> EOF
+	`.2` -> Invalid number
+	`+-` -> Invalid number
+	`2..0` -> Invalid number
 */
-func (c *CommandParser) ParseNumber(omission bool) (res string, isInt bool) {
+func (s *StringReader) ParseNumber(omission bool) (res string, isInt bool) {
 	isNegative := false
 	isFirstOp := true
 	isZero := true
 	hasPoint := false
 	// init values
-	switch op := c.Next(); op {
+	switch op := s.Next(false); op {
 	case "+":
 	case "-":
 		isNegative = true
 	default:
-		c.SetPtr(c.Pointer() - 1)
+		s.SetPtr(s.Pointer() - 1)
 	}
 	// get symbol
-	older := c.Pointer()
+	older := s.Pointer()
 	func() {
 		for {
-			switch op := c.Next(); op {
+			switch op := s.Next(true); op {
 			case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
 				if isFirstOp {
 					isFirstOp = false
@@ -108,8 +107,10 @@ func (c *CommandParser) ParseNumber(omission bool) (res string, isInt bool) {
 			case "-":
 				panic("ParseNumber: Invalid number")
 			default:
-				c.SetPtr(c.Pointer() - 1)
-				res = c.SentenceThroughPtr(older, nil)
+				if op != "" {
+					s.SetPtr(s.Pointer() - 1)
+				}
+				res = s.CutSentence(older)
 				if len(res) == 0 && !isFirstOp {
 					res = "0"
 				}

@@ -1,7 +1,13 @@
 package main
 
-import "phoenixbuilder/fastbuilder/core"
+import (
+	"fmt"
+	NBTAssigner "phoenixbuilder/fastbuilder/bdump/nbt_assigner"
+)
 
 func main() {
-	core.Bootstrap()
+	fmt.Println(
+		NBTAssigner.UpgradeExecuteCommand("execute@s~1.0"),
+	)
+	//core.Bootstrap()
 }

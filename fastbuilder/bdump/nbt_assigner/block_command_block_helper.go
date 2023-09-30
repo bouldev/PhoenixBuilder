@@ -2,7 +2,7 @@ package NBTAssigner
 
 import (
 	"fmt"
-	"phoenixbuilder/fastbuilder/mc_command_reader"
+	"phoenixbuilder/fastbuilder/mc_command_parser"
 	"phoenixbuilder/fastbuilder/mcstructure"
 	"strconv"
 	"strings"
@@ -41,13 +41,13 @@ func upgradeBlock(name string, data int64) (states *string, err error) {
 
 // 从 command 解析一个 execute 命令。
 // 若返回 nil ，则当前不是一个 execute 命令
-func parseExecuteCommand(command string, err *any) *mc_command_reader.ExecuteCommand {
+func parseExecuteCommand(command string, err *any) *mc_command_parser.ExecuteCommand {
 	defer func() {
 		if errMessage := recover(); errMessage != nil {
 			*err = errMessage
 		}
 	}()
-	return mc_command_reader.ParseExecuteCommand(command)
+	return mc_command_parser.ParseExecuteCommand(command)
 }
 
 // 将旧版本的 execute 命令升级为新格式。
