@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	NBTAssigner "phoenixbuilder/fastbuilder/bdump/nbt_assigner"
-)
+import "phoenixbuilder/fastbuilder/core"
 
 func main() {
 	core.Bootstrap()
