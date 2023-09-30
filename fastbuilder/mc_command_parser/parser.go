@@ -59,7 +59,7 @@ func (p *CommandParser) ParseSelector() (selector Selector) {
 			}
 		}()
 		r.JumpSpace()
-		// ^ @s
+		// ^ @...
 		// e.g. `@p`
 		switch r.Next(true) {
 		case "[", "":
@@ -67,7 +67,7 @@ func (p *CommandParser) ParseSelector() (selector Selector) {
 			r.SetPtr(r.Pointer() - 1)
 			return
 		}
-		// ^ (Pre-Check) @s...[
+		// ^ (Pre-Check) @...[
 		// e.g. `@e   [`
 		older = r.Pointer() - 1
 		for {
@@ -80,7 +80,7 @@ func (p *CommandParser) ParseSelector() (selector Selector) {
 				return
 			}
 		}
-		// ^ @s...[...]
+		// ^ @...[...]
 		// e.g. `@s [name=abc,tag="\"abcdefg\\/higklmn\""]`
 	case `"`:
 		selector.Main = r.ParseString()
