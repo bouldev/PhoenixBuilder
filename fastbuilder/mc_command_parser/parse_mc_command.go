@@ -106,6 +106,9 @@ func ParseBlockStates(blockStates string) (m map[string]interface{}) {
 				m[key] = byte(0)
 			}
 			// e.g. `TrUE`, "FALSE"
+		default:
+			panic("ParseBlockStates: Invalid block states string")
+			// unknown format
 		}
 		// get value of the key
 		r.JumpSpace()
@@ -113,6 +116,8 @@ func ParseBlockStates(blockStates string) (m map[string]interface{}) {
 		case ",":
 		case "]":
 			return
+		default:
+			panic("ParseBlockStates: Invalid block states string")
 		}
 		// prepare for the next state
 	}
