@@ -44,19 +44,21 @@ func ParseBlockStates(blockStates string) (m map[string]interface{}) {
 	p := NewCommandParser(&blockStates)
 	r := p.reader
 	// prepare
+	r.JumpSpace()
 	if r.Next(true) == "[" {
 		m = make(map[string]interface{})
 	} else {
 		return
 	}
 	// check header
+	r.JumpSpace()
 	switch r.Next(false) {
 	case "]":
 		return
 	default:
 		r.SetPtr(r.Pointer() - 1)
 	}
-	// blockStates == "[]"
+	// when the block state is empty
 	for {
 		r.JumpSpace()
 		if r.Next(false) != `"` {
