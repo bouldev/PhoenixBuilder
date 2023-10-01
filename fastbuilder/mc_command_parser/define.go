@@ -19,6 +19,11 @@ func NewCommandParser(command *string) *CommandParser {
 
 // ------------------------- Parameter ------------------------
 
+// "color":"orange" [current]
+// or
+// "color"="orange"
+const BlockStatesDefaultSeparator string = ":"
+
 // 描述一个目标选择器及其参数
 type Selector struct {
 	Main string

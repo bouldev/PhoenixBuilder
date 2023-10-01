@@ -2,6 +2,7 @@ package string_reader
 
 import (
 	"encoding/json"
+	"strings"
 )
 
 // 以当前阅读进度为起始，
@@ -18,6 +19,23 @@ func (s *StringReader) JumpSpace() {
 			return
 		}
 	}
+}
+
+// 以当前阅读进度为起始，
+// 解析并返回一个布尔值
+func (s *StringReader) ParseBool() (res bool) {
+	if part1 := s.Sentence(4); len(part1) < 4 {
+		panic("ParseBool: EOF")
+	} else if strings.ToLower(part1) == "true" {
+		res = true
+	} else {
+		part2 := s.Next(false)
+		res = strings.ToLower(part1+part2) != "false"
+		if res {
+			panic("ParseBool: Invalid boolean")
+		}
+	}
+	return
 }
 
 // 以当前阅读进度为起始，

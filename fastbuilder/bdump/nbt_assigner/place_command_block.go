@@ -178,7 +178,7 @@ func (c *CommandBlock) WriteData() error {
 			))
 		} else if new != c.CommandBlockData.Command {
 			gameInterface.Output(pterm.Success.Sprintf(
-				"WriteData: [DEBUG] Command at (%d,%d,%d) was successful to upgrade",
+				"WriteData: [DEBUG] Command at (%d,%d,%d) was successful to upgrade.",
 				c.BlockEntity.AdditionalData.Position[0],
 				c.BlockEntity.AdditionalData.Position[1],
 				c.BlockEntity.AdditionalData.Position[2],
