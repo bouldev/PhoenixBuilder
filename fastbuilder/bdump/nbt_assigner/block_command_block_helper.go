@@ -41,13 +41,16 @@ func upgradeBlock(name string, data int64) (states *string, err error) {
 
 // 从 command 解析一个 execute 命令。
 // 若返回 nil ，则当前不是一个 execute 命令
-func parseExecuteCommand(command string, err *any) *mc_command_parser.ExecuteCommand {
-	defer func() {
-		if errMessage := recover(); errMessage != nil {
-			*err = errMessage
-		}
+func parseExecuteCommand(command string) (e *mc_command_parser.ExecuteCommand, err error) {
+	func() {
+		defer func() {
+			if errMessage := recover(); errMessage != nil {
+				err = fmt.Errorf("parseExecuteCommand: %v", errMessage)
+			}
+		}()
+		e = mc_command_parser.ParseExecuteCommand(command)
 	}()
-	return mc_command_parser.ParseExecuteCommand(command)
+	return
 }
 
 // 将旧版本的 execute 命令升级为新格式。
@@ -56,7 +59,7 @@ func parseExecuteCommand(command string, err *any) *mc_command_parser.ExecuteCom
 // 我们未能为其中的方块找到其对应的方块状态的映射。
 // warningLogs 含有的元素即代表这些未能找到映射的方块
 func UpgradeExecuteCommand(command string) (new string, warningLogs []string, err error) {
-	var errTemp any
+	var args *mc_command_parser.ExecuteCommand
 	res := []string{}
 	nextBlock := command
 	wholeSelector := ""
@@ -64,9 +67,9 @@ func UpgradeExecuteCommand(command string) (new string, warningLogs []string, er
 	for {
 		current := ""
 		// init value
-		args := parseExecuteCommand(nextBlock, &errTemp)
-		if errTemp != nil {
-			return command, nil, fmt.Errorf("UpgradeExecuteCommand: %v", errTemp)
+		args, err = parseExecuteCommand(nextBlock)
+		if err != nil {
+			return command, nil, fmt.Errorf("UpgradeExecuteCommand: %v", err)
 		}
 		if args == nil {
 			break

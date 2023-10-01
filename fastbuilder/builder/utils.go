@@ -2,13 +2,14 @@ package builder
 
 import (
 	"fmt"
-	"regexp"
 	"phoenixbuilder/fastbuilder/mcstructure"
+	"phoenixbuilder/fastbuilder/string_reader"
 )
 
 func is_block_states(str string) bool {
-	matcher:=regexp.MustCompile(" {0,}\\[( {0,}\"(.*?)\" {0,}(=|:) {0,}((t|T)rue|(F|f)alse|null|(\\+|\\-)\\d+|\".*?(?<!\\\\)\") {0,},?){0,}\\] {0,}")
-	return matcher.MatchString(str)
+	reader := string_reader.NewStringReader(&str)
+	reader.JumpSpace()
+	return reader.Next(true) == "["
 }
 
 func format_block_states(blockStates string) (string, error) {
