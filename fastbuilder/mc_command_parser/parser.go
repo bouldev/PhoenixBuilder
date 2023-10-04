@@ -190,7 +190,7 @@ func (p *CommandParser) ParseDetectArgs() (detectArgs DetectArgs) {
 	// block name
 	r.JumpSpace()
 	if detectArgs.BlockData, isInt = r.ParseNumber(true); !isInt {
-		panic("CommandParser: Block data provided must be an integer")
+		panic("ParseDetectArgs: Block data provided must be an integer")
 	}
 	// block data
 	return
