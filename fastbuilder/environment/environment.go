@@ -23,6 +23,7 @@ type PBEnvironment struct {
 	RespondTo             string
 	Connection            interface{}
 	GetCheckNumEverPassed bool
+	CachedPacket          interface{}
 	Resources             interface{}
 	ResourcesUpdater      interface{}
 	GameInterface         interfaces.GameInterface
