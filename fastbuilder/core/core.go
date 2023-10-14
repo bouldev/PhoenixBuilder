@@ -388,27 +388,45 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 }
 
 func SolveMCPCheckChallenges(env *environment.PBEnvironment) {
-	readPkt := env.Connection.(*minecraft.Conn).ReadPacket
-	channel := make(chan packet.Packet, 32767)
+	challengeTimeout := false
+	challengeSolved := make(chan struct{}, 1)
+	cachedPkt := make(chan packet.Packet, 32767)
 	timer := time.NewTimer(time.Second * 30)
-	for {
-		pk, err := readPkt()
-		if err != nil {
-			panic(err)
-		}
-		select {
-		case channel <- pk:
+	// prepare
+	go func() {
+		for {
+			if challengeTimeout {
+				return
+			}
+			// challenge timeout
+			pk, err := env.Connection.(*minecraft.Conn).ReadPacket()
+			if err != nil {
+				panic(fmt.Sprintf("SolveMCPCheckChallenges: %v", err))
+			}
+			// read packet
+			cachedPkt <- pk
+			// cache the current packet
 			if pyRpcPkt, success := pk.(*packet.PyRpc); success {
 				onPyRpc(pyRpcPkt, env)
-				if env.GetCheckNumEverPassed {
-					env.CachedPacket = (<-chan packet.Packet)(channel)
-					return
-				}
 			}
-		case <-timer.C:
-			panic(fmt.Sprintf("SolveMCPCheckChallenges: Failed to pass the MCPCheck challenges, please try again later"))
+			if env.GetCheckNumEverPassed {
+				challengeSolved <- struct{}{}
+				return
+			}
+			// process the current packet
 		}
+	}()
+	// read packet and process
+	select {
+	case <-challengeSolved:
+		close(cachedPkt)
+		env.CachedPacket = (<-chan packet.Packet)(cachedPkt)
+		return
+	case <-timer.C:
+		challengeTimeout = true
+		panic("SolveMCPCheckChallenges: Failed to pass the MCPC check challenges, please try again later")
 	}
+	// wait for the challenge to end
 }
 
 func getUserInputMD5() (string, error) {
