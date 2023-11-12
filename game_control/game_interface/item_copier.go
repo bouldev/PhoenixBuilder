@@ -202,12 +202,7 @@ func (g *GameInterface) CopyItem(
 		if err != nil {
 			return fmt.Errorf("CopyItem: %v", err)
 		}
-		err = openConatiner()
-		if err != nil {
-			return fmt.Errorf("CopyItem: %v", err)
-		}
-		defer g.CloseContainer()
-		// 生成木桶，然后打开其并等待数据同步
+		// 生成木桶
 		for {
 			stop, err := singleCodeBlock()
 			if err != nil {
