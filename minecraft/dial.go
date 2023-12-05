@@ -141,7 +141,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 				break
 			}
 		*/
-		netConn, err = dialer.DialContext(ctx, addressWithPongPort(pong, address))
+		netConn, err = dialer.DialContext(ctx, address)
 	default:
 		// If not set to 'raknet', we fall back to the default net.Dial method to find a proper connection for
 		// the network passed.
