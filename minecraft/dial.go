@@ -134,11 +134,13 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	case "raknet":
 		// If the network is specifically 'raknet', we use the raknet library to dial a RakNet connection.
 		dialer := raknet.Dialer{ErrorLog: log.New(io.Discard, "", 0)}
-		var pong []byte
-		pong, err = dialer.PingContext(ctx, address)
-		if err != nil {
-			break
-		}
+		/*
+			var pong []byte
+			pong, err = dialer.PingContext(ctx, address)
+			if err != nil {
+				break
+			}
+		*/
 		netConn, err = dialer.DialContext(ctx, addressWithPongPort(pong, address))
 	default:
 		// If not set to 'raknet', we fall back to the default net.Dial method to find a proper connection for
