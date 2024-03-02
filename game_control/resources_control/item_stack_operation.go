@@ -43,12 +43,7 @@ func (i *itemStackRequestWithResponse) writeResponse(
 		panic("writeResponse: Attempt to send packet.ItemStackRequest without using ResourcesControlCenter")
 	}
 	// if key is not exist
-	get, normal := value.(singleItemStackRequestWithResponse)
-	if !normal {
-		panic(fmt.Sprintf("writeResponse: Failed to convert value into singleItemStackRequestWithResponse; value = %#v", value))
-	}
-	// convert data
-	get.resp <- resp
+	value.resp <- resp
 	// send response
 }
 
@@ -60,12 +55,7 @@ func (i *itemStackRequestWithResponse) LoadResponseAndDelete(key int32) (protoco
 		return protocol.ItemStackResponse{}, fmt.Errorf("LoadResponseAndDelete: %v is not recorded", key)
 	}
 	// if key is not exist
-	get, normal := value.(singleItemStackRequestWithResponse)
-	if !normal {
-		return protocol.ItemStackResponse{}, fmt.Errorf("tryToWriteResponse: Failed to convert value into singleItemStackRequestWithResponse; value = %#v", value)
-	}
-	// convert data
-	ret := <-get.resp
+	ret := <-value.resp
 	i.requestWithResponse.Delete(key)
 	return ret, nil
 	// return
@@ -176,25 +166,21 @@ func (i *itemStackRequestWithResponse) updateItemData(
 	resp protocol.ItemStackResponse,
 	inventory *inventoryContents,
 ) error {
-	request_origin, exist := i.requestWithResponse.Load(resp.RequestID)
+	request, exist := i.requestWithResponse.Load(resp.RequestID)
 	if !exist {
 		panic("updateItemData: Attempt to send packet.ItemStackRequest without using ResourcesControlCenter")
 	}
-	request_got, normal := request_origin.(singleItemStackRequestWithResponse)
-	if !normal {
-		panic(fmt.Sprintf("updateItemData: Failed to convert request_origin into singleItemStackRequestWithResponse; value = %#v", request_origin))
-	}
 	// 加载物品操作请求
 	for _, value := range resp.ContainerInfo {
-		if request_got.howToChange == nil {
+		if request.howToChange == nil {
 			panic("updateItemData: Results of item changes are not provided(packet.ItemStackRequest related)")
 		}
-		currentRequest, ok := request_got.howToChange[ContainerID(value.ContainerID)]
+		currentRequest, ok := request.howToChange[ContainerID(value.ContainerID)]
 		if !ok {
 			pterm.Warning.Printf(
 				"updateItemData: request_got.howToChange[%d] is not provided(packet.ItemStackRequest related); request_got.howToChange = %#v; value = %#v\n",
 				ContainerID(value.ContainerID),
-				request_got.howToChange,
+				request.howToChange,
 				value,
 			)
 			return nil

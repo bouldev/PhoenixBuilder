@@ -2,6 +2,7 @@ package ResourcesControl
 
 import (
 	"fmt"
+	"phoenixbuilder/fastbuilder/sync_map"
 	"phoenixbuilder/minecraft/protocol"
 	"sort"
 )
@@ -13,9 +14,10 @@ func (i *inventoryContents) ListWindowID() []uint32 {
 	defer i.lockDown.RUnlock()
 	// init
 	ans := []uint32{}
-	for key := range i.datas {
+	i.datas.Range(func(key uint32, value *sync_map.Map[uint8, protocol.ItemInstance]) bool {
 		ans = append(ans, key)
-	}
+		return true
+	})
 	// get window id list
 	return ans
 	// return
@@ -38,9 +40,9 @@ func (i *inventoryContents) ListSlot(
 	i.lockDown.RLock()
 	defer i.lockDown.RUnlock()
 	// lock down resources
-	got, ok := i.datas[windowID]
+	got, ok := i.datas.Load(windowID)
 	if !ok {
-		return []uint8{}, fmt.Errorf("ListSlot: %v is not recorded in i.datas; i.datas = %#v", windowID, i.datas)
+		return []uint8{}, fmt.Errorf("ListSlot: %v is not recorded in i.datas", windowID)
 	}
 	// if windowsID is not exist
 	newFilter := map[int32]interface{}{}
@@ -51,11 +53,12 @@ func (i *inventoryContents) ListSlot(
 	}
 	// init map for filter
 	tmp := []int{}
-	for key, value := range got {
+	got.Range(func(key uint8, value protocol.ItemInstance) bool {
 		if filter == nil || newFilter[value.Stack.ItemType.NetworkID] != nil {
 			tmp = append(tmp, int(key))
 		}
-	}
+		return true
+	})
 	// get slots list
 	sort.Stable(sort.IntSlice(tmp))
 	// sort
@@ -68,13 +71,16 @@ func (i *inventoryContents) ListSlot(
 }
 
 // 获取 windowID 所对应的库存数据
-func (i *inventoryContents) GetInventoryInfo(windowID uint32) (map[uint8]protocol.ItemInstance, error) {
+func (i *inventoryContents) GetInventoryInfo(windowID uint32) (
+	*sync_map.Map[uint8, protocol.ItemInstance],
+	error,
+) {
 	i.lockDown.RLock()
 	defer i.lockDown.RUnlock()
 	// init
-	res, ok := i.datas[windowID]
+	res, ok := i.datas.Load(windowID)
 	if !ok {
-		return map[uint8]protocol.ItemInstance{}, fmt.Errorf("GetInventoryInfo: %v is not recorded in i.datas; i.datas = %#v", windowID, i.datas)
+		return nil, fmt.Errorf("GetInventoryInfo: %v is not recorded in i.datas", windowID)
 	}
 	// if windowsID is not exist
 	return res, nil
@@ -86,14 +92,14 @@ func (i *inventoryContents) GetItemStackInfo(windowID uint32, slotLocation uint8
 	i.lockDown.RLock()
 	defer i.lockDown.RUnlock()
 	// init
-	got, ok := i.datas[windowID]
+	got, ok := i.datas.Load(windowID)
 	if !ok {
-		return protocol.ItemInstance{}, fmt.Errorf("GetItemStackInfo: %v is not recorded in i.datas; i.datas = %#v", windowID, i.datas)
+		return protocol.ItemInstance{}, fmt.Errorf("GetItemStackInfo: %v is not recorded in i.datas", windowID)
 	}
 	// if windowsID is not exist
-	ret, ok := got[slotLocation]
+	ret, ok := got.Load(slotLocation)
 	if !ok {
-		return protocol.ItemInstance{}, fmt.Errorf("GetItemStackInfo: %v is not recorded in i.datas[%v]; i.datas[%v] = %#v", slotLocation, windowID, windowID, i.datas[windowID])
+		return protocol.ItemInstance{}, fmt.Errorf("GetItemStackInfo: %v is not recorded in i.datas[%v]; i.datas[%v] = %#v", slotLocation, windowID, windowID, got)
 	}
 	// if slot is not exist
 	return ret, nil
@@ -105,11 +111,8 @@ func (i *inventoryContents) createNewInventory(windowID uint32) {
 	i.lockDown.Lock()
 	defer i.lockDown.Unlock()
 	// init
-	if i.datas == nil {
-		i.datas = make(map[uint32]map[uint8]protocol.ItemInstance)
-	}
-	if i.datas[windowID] == nil {
-		i.datas[windowID] = make(map[uint8]protocol.ItemInstance)
+	if _, ok := i.datas.Load(windowID); !ok {
+		i.datas.Store(windowID, &sync_map.Map[uint8, protocol.ItemInstance]{})
 	}
 	// create new inventory
 }
@@ -121,7 +124,8 @@ func (i *inventoryContents) writeItemStackInfo(windowID uint32, slotLocation uin
 	i.lockDown.Lock()
 	defer i.lockDown.Unlock()
 	// lock down resources
-	i.datas[windowID][slotLocation] = itemStackInfo
+	target_inventory, _ := i.datas.Load(windowID)
+	target_inventory.Store(slotLocation, itemStackInfo)
 	// write datas
 }
 
@@ -131,17 +135,12 @@ func (i *inventoryContents) deleteInventory(windowID uint32) error {
 	i.lockDown.Lock()
 	defer i.lockDown.Unlock()
 	// init
-	_, ok := i.datas[windowID]
+	_, ok := i.datas.Load(windowID)
 	if !ok {
-		return fmt.Errorf("deleteInventory: %v is not recorded in i.datas; i.datas = %#v", windowID, i.datas)
+		return fmt.Errorf("deleteInventory: %v is not recorded in i.datas", windowID)
 	}
 	// if windowID is not exist
-	delete(i.datas, windowID)
-	newMap := map[uint32]map[uint8]protocol.ItemInstance{}
-	for key, value := range i.datas {
-		newMap[key] = value
-	}
-	i.datas = newMap
+	i.datas.Delete(windowID)
 	// remove inventory from i.datas
 	return nil
 	// return

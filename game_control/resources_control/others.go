@@ -26,17 +26,10 @@ func (o *others) WriteCurrentTickRequest(key uuid.UUID) error {
 // ServerReceptionTimestamp 字段
 func (o *others) writeTickSyncPacketResponse(resp packet.TickSync) error {
 	var err error = nil
-	o.currentTickRequestWithResp.Range(func(key, value any) bool {
-		chanGet, normal := value.(chan int64)
-		if !normal {
-			err = fmt.Errorf("writeTickSyncPacketResponse: Failed to convert value into (chan int64); key(RequestID) = %#v, value = %#v", key, value)
-			return false
-		}
-		// convert data
-		chanGet <- resp.ServerReceptionTimestamp
-		close(chanGet)
+	o.currentTickRequestWithResp.Range(func(key uuid.UUID, value chan int64) bool {
+		value <- resp.ServerReceptionTimestamp
+		close(value)
 		return true
-		// return
 	})
 	// write responce for all the request
 	return err
@@ -53,15 +46,8 @@ func (o *others) Load_TickSync_Packet_Responce_and_Delete_Request(
 		return 0, fmt.Errorf("Load_TickSync_Packet_Responce_and_Delete_Request: %v is not recorded", key.String())
 	}
 	// if key is not exist
-	chanGet, normal := value.(chan int64)
-	if !normal {
-		return 0, fmt.Errorf("Load_TickSync_Packet_Responce_and_Delete_Request: Failed to convert value into (chan int64); value = %#v", value)
-	}
-	// convert data
-	res := <-chanGet
+	res := <-value
 	o.currentTickRequestWithResp.Delete(key)
 	return res, nil
 	// return
 }
-
-// ------------------------- END -------------------------
