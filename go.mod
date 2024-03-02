@@ -1,6 +1,6 @@
 module phoenixbuilder
 
-go 1.18
+go 1.21.6
 
 require (
 	github.com/Tnze/go-mc v1.19.4
