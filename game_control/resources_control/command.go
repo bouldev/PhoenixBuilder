@@ -39,13 +39,8 @@ func (c *commandRequestWithResponse) tryToWriteResponse(
 		return nil
 	}
 	// if key is not exist
-	chanGet, normal := value.(chan packet.CommandOutput)
-	if !normal {
-		return fmt.Errorf("tryToWriteResponse: Failed to convert value into (chan packet.CommandOutput); value = %#v", value)
-	}
-	// convert data
-	chanGet <- resp
-	close(chanGet)
+	value <- resp
+	close(value)
 	return nil
 	// return
 }
@@ -53,8 +48,8 @@ func (c *commandRequestWithResponse) tryToWriteResponse(
 // 读取请求 ID 为 key 的命令请求的响应体，
 // 同时移除此命令请求
 func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) CommandRespond {
-	options_origin, exist0 := c.request.Load(key)
-	response_origin, exist1 := c.response.Load(key)
+	options, exist0 := c.request.Load(key)
+	response, exist1 := c.response.Load(key)
 	if !exist0 || !exist1 {
 		return CommandRespond{
 			Error:     fmt.Errorf("LoadResponseAndDelete: %v is not recorded", key.String()),
@@ -62,35 +57,20 @@ func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) Comman
 		}
 	}
 	// if key is not exist
-	options_got, normal := options_origin.(CommandRequestOptions)
-	if !normal {
-		return CommandRespond{
-			Error:     fmt.Errorf("LoadResponseAndDelete: Failed to convert options_origin into CommandRequestOptions; options_origin = %#v", options_origin),
-			ErrorType: ErrCommandRequestConversionFailure,
-		}
-	}
-	response_got, normal := response_origin.(chan packet.CommandOutput)
-	if !normal {
-		return CommandRespond{
-			Error:     fmt.Errorf("LoadResponseAndDelete: Failed to convert response_origin into (chan packet.CommandOutput); response_origin = %#v", response_origin),
-			ErrorType: ErrCommandRequestConversionFailure,
-		}
-	}
-	// convert data
 	{
-		if options_got.TimeOut == CommandRequestNoDeadLine {
-			res := <-response_got
+		if options.TimeOut == CommandRequestNoDeadLine {
+			res := <-response
 			c.request.Delete(key)
 			c.response.Delete(key)
 			return CommandRespond{Respond: res}
 		}
 		// if there is no time limit
 		select {
-		case res := <-response_got:
+		case res := <-response:
 			c.request.Delete(key)
 			c.response.Delete(key)
 			return CommandRespond{Respond: res}
-		case <-time.After(options_got.TimeOut):
+		case <-time.After(options.TimeOut):
 			c.request.Delete(key)
 			c.response.Delete(key)
 			return CommandRespond{

@@ -2,10 +2,13 @@ package ResourcesControl
 
 import (
 	"context"
+	"phoenixbuilder/fastbuilder/sync_map"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // ------------------------- Resources -------------------------
@@ -42,12 +45,10 @@ type CommandRequestOptions struct {
 
 // 存放命令请求及结果
 type commandRequestWithResponse struct {
-	// 存放命令请求。
-	// 数据类型为 map[uuid.UUID]CommandRequestOptions
-	request sync.Map
-	// 存放命令请求的响应体。
-	// 数据类型为 map[uuid.UUID](chan packet.CommandOutput)
-	response sync.Map
+	// 存放命令请求
+	request sync_map.Map[uuid.UUID, CommandRequestOptions]
+	// 存放命令请求的响应体
+	response sync_map.Map[uuid.UUID, chan packet.CommandOutput]
 }
 
 // 描述命令请求的响应体
@@ -71,7 +72,7 @@ type inventoryContents struct {
 	// uint32 代表打开的库存的窗口 ID ，即 WindowID ；
 	// uint8 代表物品所在的槽位；
 	// 最内层的 protocol.ItemInstance 存放物品数据
-	datas map[uint32]map[uint8]protocol.ItemInstance
+	datas sync_map.Map[uint32, *sync_map.Map[uint8, protocol.ItemInstance]]
 }
 
 // ------------------------- itemStackReuqestWithResponse -------------------------
@@ -84,9 +85,8 @@ type inventoryContents struct {
 因此，为了绝对的安全，如果尝试绕过相关实现而直接发送物品操作数据包，则会造成程序 panic
 */
 type itemStackRequestWithResponse struct {
-	// 存放物品操作的请求队列。
-	// 数据类型为 map[int32]singleItemStackRequestWithResponse
-	requestWithResponse sync.Map
+	// 存放物品操作的请求队列
+	requestWithResponse sync_map.Map[int32, singleItemStackRequestWithResponse]
 	/*
 		记录已累计的 RequestID 。
 
@@ -198,9 +198,8 @@ type singleListen struct {
 
 // 数据包监听器
 type packetListener struct {
-	// 数据类型为 map[uuid.UUID]singleListen 。
 	// 键代表监听器，而值代表此监听器下已保存的数据
-	listenerWithData sync.Map
+	listenerWithData sync_map.Map[uuid.UUID, singleListen]
 }
 
 // ------------------------- others -------------------------
@@ -209,6 +208,5 @@ type packetListener struct {
 type others struct {
 	// 存放 TickSync 请求并保存其对应的返回值，
 	// 它用于获取当前的游戏刻。
-	// 数据类型为 map[uuid.UUID]chan int64
-	currentTickRequestWithResp sync.Map
+	currentTickRequestWithResp sync_map.Map[uuid.UUID, chan int64]
 }

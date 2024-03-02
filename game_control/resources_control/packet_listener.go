@@ -70,21 +70,15 @@ func (p *packetListener) distributePacket(pk packet.Packet) error {
 	var err error
 	// 初始化
 	p.listenerWithData.Range(
-		func(key, value any) bool {
-			singleListen, success := value.(singleListen)
-			if !success {
-				err = fmt.Errorf("distributePacket: Failed to convert value into singleListen; value = %#v", value)
-				return false
-			}
-			// 转换数据类型
-			if len(singleListen.packetsID) == 0 {
-				go singleListen.simplePacketDistributor(pk)
+		func(key uuid.UUID, value singleListen) bool {
+			if len(value.packetsID) == 0 {
+				go value.simplePacketDistributor(pk)
 				return true
 			}
 			// 如果要监听所有的数据包
-			for _, val := range singleListen.packetsID {
+			for _, val := range value.packetsID {
 				if val == pk.ID() {
-					go singleListen.simplePacketDistributor(pk)
+					go value.simplePacketDistributor(pk)
 				}
 			}
 			return true
@@ -101,16 +95,11 @@ func (p *packetListener) distributePacket(pk packet.Packet) error {
 
 // 终止并关闭 listener 所指代的监听器
 func (p *packetListener) StopAndDestroy(listener uuid.UUID) error {
-	single_listen_origin, ok := p.listenerWithData.Load(listener)
+	single_listen, ok := p.listenerWithData.Load(listener)
 	if !ok {
 		return fmt.Errorf("StopAndDestroy: %v is not recorded", listener.String())
 	}
-	singleListen, success := single_listen_origin.(singleListen)
-	if !success {
-		return fmt.Errorf("StopAndDestroy: Failed to convert single_listen_origin into singleListen; single_listen_origin = %#v", single_listen_origin)
-	}
-	// convert data into known data type
-	singleListen.stop()
+	single_listen.stop()
 	p.listenerWithData.Delete(listener)
 	// send stop command and delete listener
 	return nil

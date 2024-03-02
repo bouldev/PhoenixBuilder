@@ -1,9 +1,12 @@
 package ResourcesControl
 
 import (
+	"phoenixbuilder/fastbuilder/sync_map"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 /*
@@ -16,15 +19,15 @@ import (
 func (r *Resources) Init() func(pk *packet.Packet) {
 	*r = Resources{
 		Command: commandRequestWithResponse{
-			request:  sync.Map{},
-			response: sync.Map{},
+			request:  sync_map.Map[uuid.UUID, CommandRequestOptions]{},
+			response: sync_map.Map[uuid.UUID, chan packet.CommandOutput]{},
 		},
 		Inventory: inventoryContents{
 			lockDown: sync.RWMutex{},
-			datas:    make(map[uint32]map[uint8]protocol.ItemInstance),
+			datas:    sync_map.Map[uint32, *sync_map.Map[uint8, protocol.ItemInstance]]{},
 		},
 		ItemStackOperation: itemStackRequestWithResponse{
-			requestWithResponse: sync.Map{},
+			requestWithResponse: sync_map.Map[int32, singleItemStackRequestWithResponse]{},
 			currentRequestID:    1,
 		},
 		Container: container{
@@ -45,10 +48,10 @@ func (r *Resources) Init() func(pk *packet.Packet) {
 			resp: make(chan packet.StructureTemplateDataResponse, 1),
 		},
 		Listener: packetListener{
-			listenerWithData: sync.Map{},
+			listenerWithData: sync_map.Map[uuid.UUID, singleListen]{},
 		},
 		Others: others{
-			currentTickRequestWithResp: sync.Map{},
+			currentTickRequestWithResp: sync_map.Map[uuid.UUID, chan int64]{},
 		},
 	}
 	// init struct
