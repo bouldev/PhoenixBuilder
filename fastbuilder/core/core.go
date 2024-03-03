@@ -11,7 +11,7 @@ import (
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	fbauth "phoenixbuilder/fastbuilder/pv4"
-	"phoenixbuilder/fastbuilder/py_rpc"
+	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/py_rpc_parser"
 	"phoenixbuilder/fastbuilder/readline"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
@@ -201,28 +201,28 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 	})
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc_parser.FromGo([]interface{}{
 			"SyncUsingMod",
 			[]interface{}{},
 			nil,
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc_parser.FromGo([]interface{}{
 			"SyncVipSkinUuid",
 			[]interface{}{nil},
 			nil,
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc_parser.FromGo([]interface{}{
 			"ClientLoadAddonsFinishedFromGac",
 			[]interface{}{},
 			nil,
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc_parser.FromGo([]interface{}{
 			"ModEventC2S",
 			[]interface{}{
 				"Minecraft",
@@ -236,14 +236,14 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc_parser.FromGo([]interface{}{
 			"arenaGamePlayerFinishLoad",
 			[]interface{}{},
 			nil,
 		}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.FromGo([]interface{}{
+		Value: py_rpc_parser.FromGo([]interface{}{
 			"ModEventC2S",
 			[]interface{}{
 				"Minecraft",
@@ -347,7 +347,7 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 	switch command {
 	case "S2CHeartBeat":
 		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc.FromGo([]interface{}{
+			Value: py_rpc_parser.FromGo([]interface{}{
 				"C2SHeartBeat",
 				data,
 				nil,
@@ -357,7 +357,7 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 		client := env.FBAuthClient.(*fbauth.Client)
 		response := client.TransferData(data[0].(string))
 		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc.FromGo([]interface{}{
+			Value: py_rpc_parser.FromGo([]interface{}{
 				"SetStartType",
 				[]interface{}{response},
 				nil,
@@ -375,7 +375,7 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 		ret_p := []interface{}{}
 		json.Unmarshal([]byte(ret), &ret_p)
 		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc.FromGo([]interface{}{
+			Value: py_rpc_parser.FromGo([]interface{}{
 				"SetMCPCheckNum",
 				[]interface{}{
 					ret_p,
