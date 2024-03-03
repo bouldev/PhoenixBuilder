@@ -11,7 +11,7 @@ import (
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	fbauth "phoenixbuilder/fastbuilder/pv4"
-	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/py_rpc_parser"
+	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/parser"
 	"phoenixbuilder/fastbuilder/readline"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
