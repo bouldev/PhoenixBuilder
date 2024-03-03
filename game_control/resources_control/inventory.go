@@ -72,8 +72,8 @@ func (i *inventoryContents) ListSlot(
 
 // 获取 windowID 所对应的库存数据
 func (i *inventoryContents) GetInventoryInfo(windowID uint32) (
-	*sync_map.Map[uint8, protocol.ItemInstance],
-	error,
+	inventory map[uint8]protocol.ItemInstance,
+	err error,
 ) {
 	i.lockDown.RLock()
 	defer i.lockDown.RUnlock()
@@ -82,13 +82,22 @@ func (i *inventoryContents) GetInventoryInfo(windowID uint32) (
 	if !ok {
 		return nil, fmt.Errorf("GetInventoryInfo: %v is not recorded in i.datas", windowID)
 	}
-	// if windowsID is not exist
-	return res, nil
+	// get data and check condition
+	inventory = make(map[uint8]protocol.ItemInstance)
+	res.Range(func(key uint8, value protocol.ItemInstance) bool {
+		inventory[key] = value
+		return true
+	})
+	// sync data to inventory
+	return
 	// return
 }
 
 // 从 windowID 库存中获取 slotLocation 槽位的物品数据
-func (i *inventoryContents) GetItemStackInfo(windowID uint32, slotLocation uint8) (protocol.ItemInstance, error) {
+func (i *inventoryContents) GetItemStackInfo(windowID uint32, slotLocation uint8) (
+	protocol.ItemInstance,
+	error,
+) {
 	i.lockDown.RLock()
 	defer i.lockDown.RUnlock()
 	// init
@@ -118,7 +127,11 @@ func (i *inventoryContents) createNewInventory(windowID uint32) {
 }
 
 // 修改 windowID 库存中 slotLocation 槽位的物品数据，属于私有实现
-func (i *inventoryContents) writeItemStackInfo(windowID uint32, slotLocation uint8, itemStackInfo protocol.ItemInstance) {
+func (i *inventoryContents) writeItemStackInfo(
+	windowID uint32,
+	slotLocation uint8,
+	itemStackInfo protocol.ItemInstance,
+) {
 	i.createNewInventory(windowID)
 	// create new inventory if needed
 	i.lockDown.Lock()
