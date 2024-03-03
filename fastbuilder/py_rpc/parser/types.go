@@ -1,4 +1,4 @@
-package py_rpc
+package py_rpc_parser
 
 const (
 	NoneType = iota

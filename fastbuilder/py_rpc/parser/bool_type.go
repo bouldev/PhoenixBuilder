@@ -1,4 +1,4 @@
-package py_rpc
+package py_rpc_parser
 
 type PyRpcBoolObject struct {
 	Value bool
@@ -12,15 +12,15 @@ func (o *PyRpcBoolObject) Marshal() []byte {
 }
 
 func (o *PyRpcBoolObject) Parse(v []byte) uint {
-	if v[0]==0xc2 {
-		o.Value=false
-	}else{
-		o.Value=true
+	if v[0] == 0xc2 {
+		o.Value = false
+	} else {
+		o.Value = true
 	}
 	return 1
 }
 
-func (_ *PyRpcBoolObject) Type() uint {
+func (*PyRpcBoolObject) Type() uint {
 	return BoolType
 }
 
@@ -29,6 +29,6 @@ func (o *PyRpcBoolObject) MakeGo() interface{} {
 }
 
 func (o *PyRpcBoolObject) FromGo(v interface{}) {
-	pv:=v.(bool)
-	o.Value=pv
+	pv := v.(bool)
+	o.Value = pv
 }
