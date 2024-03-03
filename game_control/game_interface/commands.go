@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/fastbuilder/args"
+	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/parser"
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -35,6 +36,32 @@ func (g *GameInterface) SendSettingsCommand(
 		return fmt.Errorf("SendSettingsCommand: %v", err)
 	}
 	return nil
+}
+
+func (g *GameInterface) send_netease_ai_command_with_response(
+	command string,
+) {
+	g.Resources.Listener.CreateNewListen([]uint32{
+		packet.IDPyRpc,
+		packet.IDCommandOutput,
+	}, 2)
+	request_id := ResourcesControl.GenerateUUID()
+	g.WritePacket(&packet.PyRpc{
+		Value: py_rpc_parser.FromGo([]interface{}{
+			"ModEventC2S",
+			[]interface{}{
+				"Minecraft",
+				"aiCommand",
+				"ExecuteCommandEvent",
+				map[string]interface{}{
+					"cmd":  command,
+					"uuid": request_id,
+				},
+			},
+			nil,
+		}),
+	})
+	// generate request ID and send request
 }
 
 // 以 origin 的身份向租赁服发送命令且无视返回值。
