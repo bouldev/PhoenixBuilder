@@ -19,8 +19,8 @@ type ExecuteCommandOutputEvent struct {
 	CommandRequestID uuid.UUID `json:"uuid"`          // e.g. "bd903e4a-8617-4053-8321-821365777777"
 }
 
-// Return the name of e
-func (e *ExecuteCommandOutputEvent) Name() string {
+// Return the event name of e
+func (e *ExecuteCommandOutputEvent) EventName() string {
 	return "ExecuteCommandOutputEvent"
 }
 
