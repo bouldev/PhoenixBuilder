@@ -6,15 +6,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// 魔法指令对命令请求的响应体，
+// 魔法指令 对命令请求的响应体，
 // 用于描述命令是否执行成功
 type AfterExecuteCommandEvent struct {
 	Success          bool      `json:"executeResult"` // e.g. bool
 	CommandRequestID uuid.UUID `json:"uuid"`          // e.g. "bd903e4a-8617-4053-8321-821365777777"
 }
 
-// Return the name of a
-func (a *AfterExecuteCommandEvent) Name() string {
+// Return the event name of a
+func (a *AfterExecuteCommandEvent) EventName() string {
 	return "AfterExecuteCommandEvent"
 }
 
