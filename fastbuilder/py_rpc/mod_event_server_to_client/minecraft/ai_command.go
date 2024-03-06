@@ -1,12 +1,12 @@
 package minecraft
 
 import (
-	"phoenixbuilder/fastbuilder/py_rpc/mod_event_server_to_client/general_interface"
+	"phoenixbuilder/fastbuilder/py_rpc/general_interface/mod_event"
 	"phoenixbuilder/fastbuilder/py_rpc/mod_event_server_to_client/minecraft/ai_command"
 )
 
 // 魔法指令
-type AICommand struct{ general_interface.Event }
+type AICommand struct{ mod_event.Module }
 
 // Return the module name of a
 func (a *AICommand) ModuleName() string {
@@ -14,8 +14,8 @@ func (a *AICommand) ModuleName() string {
 }
 
 // Return a pool/map that contains all the event of a
-func (a *AICommand) EventPool() map[string]general_interface.Event {
-	return map[string]general_interface.Event{
+func (a *AICommand) EventPool() map[string]mod_event.Event {
+	return map[string]mod_event.Event{
 		"ExecuteCommandOutputEvent": &ai_command.ExecuteCommandOutputEvent{},
 		"AfterExecuteCommandEvent":  &ai_command.AfterExecuteCommandEvent{},
 		"AvailableCheckFailed":      &ai_command.AvailableCheckFailed{},

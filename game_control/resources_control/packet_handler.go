@@ -15,8 +15,6 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		r.Others.writeTickSyncPacketResponse(*p)
 		// sync game tick
 	case *packet.CommandOutput:
-		fmt.Printf("%#v\n", *p)
-		fmt.Println(p.CommandOrigin.UUID.String())
 		err := r.Command.tryToWriteResponse(p.CommandOrigin.UUID, *p)
 		if err != nil {
 			pterm.Error.Printf("handlePacket: %v\n", err)

@@ -1,10 +1,12 @@
 package py_rpc
 
 import (
-	"phoenixbuilder/fastbuilder/py_rpc/mod_event_server_to_client/general_interface"
+	"fmt"
+	"phoenixbuilder/fastbuilder/py_rpc/general_interface/mod_event"
+	"phoenixbuilder/fastbuilder/py_rpc/mod_event_server_to_client"
 )
 
-type ModEventS2C struct{ general_interface.Package }
+type ModEventS2C struct{ mod_event.Package }
 
 // Return the name of m
 func (m *ModEventS2C) Name() string {
@@ -22,7 +24,6 @@ func (m *ModEventS2C) MakeGo() (res any) {
 }
 
 // Sync data to m from obj
-/*
 func (m *ModEventS2C) FromGo(obj any) error {
 	object, success := obj.([]any)
 	if !success {
@@ -50,7 +51,18 @@ func (m *ModEventS2C) FromGo(obj any) error {
 	}
 	// get data
 	park, ok := mod_event_server_to_client.PackagePool()[package_name]
-	event, ok := park.EventPool()[event_name]
-	event.FromGo(event_data)
+	if !ok {
+		park = &mod_event.Default{PACKAGE_NAME: package_name}
+	}
+	// if this package is not supported
+	park.InitModuleFromPool(module_name, park.ModulePool())
+	park.InitEventFromPool(event_name, park.EventPool())
+	err := park.FromGo(event_data)
+	if err != nil {
+		return fmt.Errorf(`FromGo: %v`, err)
+	}
+	m.Package = park
+	// init and sync data
+	return nil
+	// return
 }
-*/
