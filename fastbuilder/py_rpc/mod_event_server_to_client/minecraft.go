@@ -16,7 +16,8 @@ func (m *Minecraft) PackageName() string {
 // Return a pool/map that contains all the module of m
 func (m *Minecraft) ModulePool() map[string]mod_event.Module {
 	return map[string]mod_event.Module{
-		"aiCommand": &minecraft.AICommand{Module: &mod_event.DefaultModule{}},
-		"pet":       &minecraft.Pet{Module: &mod_event.DefaultModule{}},
+		"aiCommand":   &minecraft.AICommand{Module: &mod_event.DefaultModule{}},
+		"pet":         &minecraft.Pet{Module: &mod_event.DefaultModule{}},
+		"chatPhrases": &minecraft.ChatPhrases{Module: &mod_event.DefaultModule{}},
 	}
 }
