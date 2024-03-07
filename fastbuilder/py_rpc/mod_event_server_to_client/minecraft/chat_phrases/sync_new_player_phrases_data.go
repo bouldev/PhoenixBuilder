@@ -63,15 +63,15 @@ func (s *SyncNewPlayerPhrasesData) FromGo(obj any) error {
 			// convert data
 			content, success := p["content"].(string)
 			if !success {
-				return fmt.Errorf(`FromGo: Failed to convert p["content"] to map[string]interface{}; p = %#v`, p)
+				return fmt.Errorf(`FromGo: Failed to convert p["content"] to string; p = %#v`, p)
 			}
 			id_converted, success := p["id"].(int64)
 			if !success {
-				return fmt.Errorf(`FromGo: Failed to convert p["id"] to map[string]interface{}; p = %#v`, p)
+				return fmt.Errorf(`FromGo: Failed to convert p["id"] to int64; p = %#v`, p)
 			}
 			item_id, success := p["itemId"].(string)
 			if !success {
-				return fmt.Errorf(`FromGo: Failed to convert p["itemId"] to map[string]interface{}; p = %#v`, p)
+				return fmt.Errorf(`FromGo: Failed to convert p["itemId"] to string; p = %#v`, p)
 			}
 			// get data
 			*s = append(*s, PhrasesData{
