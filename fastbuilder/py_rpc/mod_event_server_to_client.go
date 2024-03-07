@@ -30,7 +30,7 @@ func (m *ModEventS2C) FromGo(obj any) error {
 		return fmt.Errorf("FromGo: Failed to convert obj to []interface{}; obj = %#v", obj)
 	}
 	if len(object) != 4 {
-		return fmt.Errorf("FromGo: The length of object is not equal to 4; object = %#v", object...)
+		return fmt.Errorf("FromGo: The length of object is not equal to 4; object = %#v", object)
 	}
 	// convert data and check it
 	package_name, success := object[0].(string)

@@ -17,5 +17,6 @@ func (m *Minecraft) PackageName() string {
 func (m *Minecraft) ModulePool() map[string]mod_event.Module {
 	return map[string]mod_event.Module{
 		"aiCommand": &minecraft.AICommand{Module: &mod_event.DefaultModule{}},
+		"pet":       &minecraft.Pet{Module: &mod_event.DefaultModule{}},
 	}
 }
