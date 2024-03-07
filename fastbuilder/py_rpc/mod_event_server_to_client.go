@@ -2,7 +2,7 @@ package py_rpc
 
 import (
 	"fmt"
-	"phoenixbuilder/fastbuilder/py_rpc/general_interface/mod_event"
+	"phoenixbuilder/fastbuilder/py_rpc/interface/mod_event"
 	"phoenixbuilder/fastbuilder/py_rpc/mod_event_server_to_client"
 )
 

@@ -1,7 +1,7 @@
 package mod_event_server_to_client
 
 import (
-	"phoenixbuilder/fastbuilder/py_rpc/general_interface/mod_event"
+	"phoenixbuilder/fastbuilder/py_rpc/interface/mod_event"
 )
 
 // Return a pool/map that contains
