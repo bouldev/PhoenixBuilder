@@ -5,7 +5,7 @@ import (
 	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_packet/mod_event_server_to_client/minecraft/chat_phrases"
 )
 
-// 网易提供的快捷游戏短语
+// 快捷游戏短语
 type ChatPhrases struct{ mod_event.Module }
 
 // Return the module name of c

@@ -19,5 +19,6 @@ func (m *Minecraft) ModulePool() map[string]mod_event.Module {
 		"aiCommand":   &minecraft.AICommand{Module: &mod_event.DefaultModule{}},
 		"pet":         &minecraft.Pet{Module: &mod_event.DefaultModule{}},
 		"chatPhrases": &minecraft.ChatPhrases{Module: &mod_event.DefaultModule{}},
+		"achievement": &minecraft.Achievement{Module: &mod_event.DefaultModule{}},
 	}
 }
