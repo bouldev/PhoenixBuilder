@@ -4,7 +4,7 @@ import (
 	//"bytes"
 	//"fmt"
 
-	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc_parser"
+	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/py_rpc_parser"
 	"phoenixbuilder/minecraft/protocol"
 )
 
