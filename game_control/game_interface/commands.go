@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/fastbuilder/args"
-	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/parser"
+	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc_parser"
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"

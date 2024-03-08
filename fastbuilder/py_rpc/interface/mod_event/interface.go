@@ -2,7 +2,7 @@ package mod_event
 
 // Express a package which contains in a PyRpc/ModEvent packet
 type Package interface {
-	// Return the name of Package
+	// Return the name of this package
 	PackageName() string
 	// Return a pool/map that contains all the module of this package
 	ModulePool() map[string]Module
@@ -17,7 +17,7 @@ type Package interface {
 
 // Describe a module which contains in a package
 type Module interface {
-	// Return the module name of Module
+	// Return the module name of this module
 	ModuleName() string
 	// Return a pool/map that contains all the event of this module
 	EventPool() map[string]Event

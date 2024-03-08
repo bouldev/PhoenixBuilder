@@ -11,7 +11,7 @@ import (
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	fbauth "phoenixbuilder/fastbuilder/pv4"
-	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/parser"
+	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc_parser"
 	"phoenixbuilder/fastbuilder/readline"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
@@ -326,7 +326,7 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 	}
 	go_p_val := p.Value.MakeGo()
 	/*
-		json_val, _:=json.MarshalIndent(go_p_val, "", "\t")
+		json_val, _ := json.MarshalIndent(go_p_val, "", "\t")
 		fmt.Printf("Received PyRpc: %s\n", json_val)
 	*/
 	if go_p_val == nil {
@@ -434,7 +434,6 @@ func SolveMCPCheckChallenges(env *environment.PBEnvironment) {
 				panic(fmt.Sprintf("SolveMCPCheckChallenges: %v", err))
 			}
 			// read packet
-			cachedPkt <- pk
 			// cache the current packet
 			switch p := pk.(type) {
 			case *packet.PyRpc:
@@ -442,6 +441,8 @@ func SolveMCPCheckChallenges(env *environment.PBEnvironment) {
 			case *packet.CommandOutput:
 				commandOutput <- *p
 				return
+			default:
+				cachedPkt <- pk
 			}
 			if len(challengeSolved) == 0 && env.GetCheckNumEverPassed {
 				challengeSolved <- struct{}{}
