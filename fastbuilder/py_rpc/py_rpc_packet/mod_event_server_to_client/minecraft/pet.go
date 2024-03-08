@@ -5,7 +5,7 @@ import (
 	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_packet/mod_event_server_to_client/minecraft/pet"
 )
 
-// 网易宠物(狐狸, etc.)
+// 宠物(狐狸, etc.)
 type Pet struct{ mod_event.Module }
 
 // Return the module name of p
