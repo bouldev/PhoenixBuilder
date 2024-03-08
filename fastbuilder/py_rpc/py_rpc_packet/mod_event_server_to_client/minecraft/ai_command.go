@@ -1,8 +1,8 @@
 package minecraft
 
 import (
-	"phoenixbuilder/fastbuilder/py_rpc/interface/mod_event"
-	"phoenixbuilder/fastbuilder/py_rpc/mod_event_server_to_client/minecraft/ai_command"
+	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_packet/interface/mod_event"
+	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_packet/mod_event_server_to_client/minecraft/ai_command"
 )
 
 // 魔法指令
