@@ -12,7 +12,7 @@ func (s *SetMCPCheckNum) Name() string {
 
 // Convert s to go object which only contains go-built-in types
 func (s *SetMCPCheckNum) MakeGo() (res any) {
-	return []any{*s}
+	return []any(*s)
 }
 
 // Sync data to s from obj

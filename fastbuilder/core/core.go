@@ -11,6 +11,7 @@ import (
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	fbauth "phoenixbuilder/fastbuilder/pv4"
+	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content"
 	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/py_rpc_parser"
 	"phoenixbuilder/fastbuilder/readline"
 	"phoenixbuilder/fastbuilder/signalhandler"
@@ -324,67 +325,42 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 	if p.Value == nil {
 		return
 	}
-	go_p_val := p.Value.MakeGo()
-	/*
-		json_val, _ := json.MarshalIndent(go_p_val, "", "\t")
-		fmt.Printf("Received PyRpc: %s\n", json_val)
-	*/
-	if go_p_val == nil {
-		return
+	// prepare
+	content, err := py_rpc_content.Unmarshal(p.Value.MakeGo().([]any))
+	if err != nil {
+		env.GameInterface.Output(pterm.Warning.Sprintf("onPyRpc: %v", err))
 	}
-	pyrpc_val, ok := go_p_val.([]interface{})
-	if !ok || len(pyrpc_val) < 2 {
-		return
-	}
-	command, ok := pyrpc_val[0].(string)
-	if !ok {
-		return
-	}
-	data, ok := pyrpc_val[1].([]interface{})
-	if !ok {
-		return
-	}
-	switch command {
-	case "S2CHeartBeat":
-		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc_parser.FromGo([]interface{}{
-				"C2SHeartBeat",
-				data,
-				nil,
-			}),
-		})
-	case "GetStartType":
+	// unmarshal
+	switch c := content.(type) {
+	case *py_rpc_content.HeartBeat:
+		c.Type = py_rpc_content.ClientToServerHeartBeat
+		conn.WritePacket(&packet.PyRpc{Value: py_rpc_content.PackageContent(c)})
+	case *py_rpc_content.StartType:
 		client := env.FBAuthClient.(*fbauth.Client)
-		response := client.TransferData(data[0].(string))
-		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc_parser.FromGo([]interface{}{
-				"SetStartType",
-				[]interface{}{response},
-				nil,
-			}),
-		})
-	case "GetMCPCheckNum":
+		c.Content = client.TransferData(c.Content)
+		c.Type = py_rpc_content.StartTypeResponse
+		conn.WritePacket(&packet.PyRpc{Value: py_rpc_content.PackageContent(c)})
+	case *py_rpc_content.GetMCPCheckNum:
 		if env.GetCheckNumEverPassed {
 			break
 		}
-		firstArg := data[0].(string)
-		secondArg := (data[1].([]interface{}))[0].(string)
 		client := env.FBAuthClient.(*fbauth.Client)
-		arg, _ := json.Marshal([]interface{}{firstArg, secondArg, env.Connection.(*minecraft.Conn).GameData().EntityUniqueID})
+		arg, _ := json.Marshal([]interface{}{
+			c.FirstArg,
+			c.SecondArg.Arg,
+			env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+		})
 		ret := client.TransferCheckNum(string(arg))
 		ret_p := []interface{}{}
 		json.Unmarshal([]byte(ret), &ret_p)
 		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc_parser.FromGo([]interface{}{
-				"SetMCPCheckNum",
-				[]interface{}{
-					ret_p,
-				},
-				nil,
-			}),
+			Value: py_rpc_content.PackageContent(
+				&py_rpc_content.SetMCPCheckNum{ret_p},
+			),
 		})
 		env.GetCheckNumEverPassed = true
 	}
+	// do some actions for some specific PyRpc packets
 }
 
 func WaitMCPCheckChallengesDown(

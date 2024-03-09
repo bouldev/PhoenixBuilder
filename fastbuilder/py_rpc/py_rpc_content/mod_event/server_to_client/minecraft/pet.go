@@ -17,5 +17,6 @@ func (p *Pet) ModuleName() string {
 func (p *Pet) EventPool() map[string]mei.Event {
 	return map[string]mei.Event{
 		"check_server_contain_pet": &pet.CheckServerContainPet{},
+		"pet_skill_remove_beacon":  &pet.PetSkillRemoveBeacon{},
 	}
 }

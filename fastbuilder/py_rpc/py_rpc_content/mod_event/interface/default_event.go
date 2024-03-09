@@ -23,7 +23,7 @@ func (d *DefaultEvent) MakeGo() (res any) {
 func (d *DefaultEvent) FromGo(res any) error {
 	result, success := res.(map[string]any)
 	if !success {
-		return fmt.Errorf("FromGo: Failed to covert res to map[string]interface{}; res= %#v", res)
+		return fmt.Errorf("FromGo: Failed to covert res to map[string]interface{}; res = %#v", res)
 	}
 	// convert data
 	d.Data = result
