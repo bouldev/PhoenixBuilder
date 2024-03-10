@@ -8,7 +8,7 @@ import (
 
 // Convert content to go object which
 // only contains go-built-in types
-func Marshal(content PyRpcContent) (res []any) {
+func Marshal(content PyRpcContent) (res any) {
 	return []any{
 		content.Name(),
 		content.MakeGo(),
@@ -17,7 +17,11 @@ func Marshal(content PyRpcContent) (res []any) {
 }
 
 // Convert obj to PyRpcContent
-func Unmarshal(object []any) (content PyRpcContent, err error) {
+func Unmarshal(obj any) (content PyRpcContent, err error) {
+	object, success := obj.([]any)
+	if !success {
+		return nil, fmt.Errorf("Unmarshal: Unsupported PyRpc packet; obj = %#v", obj)
+	}
 	if len(object) < 2 {
 		return nil, fmt.Errorf("Unmarshal: The length of object is less than 2; object = %#v", object)
 	}
