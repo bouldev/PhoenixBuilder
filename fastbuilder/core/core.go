@@ -12,7 +12,11 @@ import (
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content"
-	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/py_rpc_parser"
+	cts "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server"
+	cts_mc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft"
+	cts_mc_p "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft/preset"
+	cts_mc_v "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft/vip_event_system"
+	mei "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/interface"
 	"phoenixbuilder/fastbuilder/readline"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
@@ -202,59 +206,51 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 	})
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_parser.FromGo([]interface{}{
-			"SyncUsingMod",
-			[]interface{}{},
-			nil,
-		}),
+		Value: py_rpc_content.PackageContent(
+			&py_rpc_content.SyncUsingMod{},
+		),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_parser.FromGo([]interface{}{
-			"SyncVipSkinUuid",
-			[]interface{}{nil},
-			nil,
-		}),
+		Value: py_rpc_content.PackageContent(
+			&py_rpc_content.SyncVipSkinUUID{nil},
+		),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_parser.FromGo([]interface{}{
-			"ClientLoadAddonsFinishedFromGac",
-			[]interface{}{},
-			nil,
-		}),
+		Value: py_rpc_content.PackageContent(
+			&py_rpc_content.ClientLoadAddonsFinishedFromGac{},
+		),
 	})
-	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_parser.FromGo([]interface{}{
-			"ModEventC2S",
-			[]interface{}{
-				"Minecraft",
-				"preset",
-				"GetLoadedInstances",
-				map[string]interface{}{
-					"playerId": runtimeid,
+	{
+		event := cts_mc_p.GetLoadedInstances{PlayerRuntimeID: runtimeid}
+		module := cts_mc.Preset{Module: &mei.DefaultModule{Event: &event}}
+		park := cts.Minecraft{Default: mei.Default{Module: &module}}
+		conn.WritePacket(&packet.PyRpc{
+			Value: py_rpc_content.PackageContent(
+				&py_rpc_content.ModEvent{
+					Package: &park,
+					Type:    py_rpc_content.ModEventClientToServer,
 				},
-			},
-			nil,
-		}),
-	})
+			),
+		})
+	}
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_parser.FromGo([]interface{}{
-			"arenaGamePlayerFinishLoad",
-			[]interface{}{},
-			nil,
-		}),
+		Value: py_rpc_content.PackageContent(
+			&py_rpc_content.ArenaGamePlayerFinishLoad{},
+		),
 	})
-	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_parser.FromGo([]interface{}{
-			"ModEventC2S",
-			[]interface{}{
-				"Minecraft",
-				"vipEventSystem",
-				"PlayerUiInit",
-				runtimeid,
-			},
-			nil,
-		}),
-	})
+	{
+		event := cts_mc_v.PlayerUiInit{RuntimeID: runtimeid}
+		module := cts_mc.VIPEventSystem{Module: &mei.DefaultModule{Event: &event}}
+		park := cts.Minecraft{Default: mei.Default{Module: &module}}
+		conn.WritePacket(&packet.PyRpc{
+			Value: py_rpc_content.PackageContent(
+				&py_rpc_content.ModEvent{
+					Package: &park,
+					Type:    py_rpc_content.ModEventClientToServer,
+				},
+			),
+		})
+	}
 	return
 }
 
@@ -345,13 +341,13 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 			break
 		}
 		client := env.FBAuthClient.(*fbauth.Client)
-		arg, _ := json.Marshal([]interface{}{
+		arg, _ := json.Marshal([]any{
 			c.FirstArg,
 			c.SecondArg.Arg,
 			env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
 		})
 		ret := client.TransferCheckNum(string(arg))
-		ret_p := []interface{}{}
+		ret_p := []any{}
 		json.Unmarshal([]byte(ret), &ret_p)
 		conn.WritePacket(&packet.PyRpc{
 			Value: py_rpc_content.PackageContent(
