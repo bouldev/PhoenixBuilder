@@ -325,6 +325,7 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 	content, err := py_rpc_content.Unmarshal(p.Value.MakeGo())
 	if err != nil {
 		env.GameInterface.Output(pterm.Warning.Sprintf("onPyRpc: %v", err))
+		return
 	}
 	// unmarshal
 	switch c := content.(type) {
