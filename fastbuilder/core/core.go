@@ -89,10 +89,38 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 				)
 				env.GameInterface.Output(pterm.Error.Sprintf("%v", resp.Error.Error()))
 			} else {
-				fmt.Printf("%+v\n", resp.Respond)
+				env.GameInterface.Output(fmt.Sprintf("%+v\n", *resp.Respond))
 			}
 		} else if cmd[0] == '*' {
 			gameInterface.SendSettingsCommand(cmd[1:], false)
+		} else if cmd[0] == '~' {
+			resp := gameInterface.(*GameInterface.GameInterface).SendAICommandWithResponse(
+				cmd[1:],
+				ResourcesControl.CommandRequestOptions{
+					TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+				},
+			)
+			if resp.Error != nil {
+				env.GameInterface.Output(
+					pterm.Error.Sprintf(
+						"Failed to get respond of \"%v\", and the following is the error log.",
+						cmd[1:],
+					),
+				)
+				env.GameInterface.Output(pterm.Error.Sprintf("%v", resp.Error.Error()))
+			} else {
+				env.GameInterface.Output(
+					pterm.Info.Sprintf(
+						"PyRpc Result:\n%+v\nPyRpc Output:\n%+v\nPyRpc Output:\n%+v\nPyRpc PreCheckError:\n%+v\nStandard Response:\n%+v",
+						resp.AICommand.Result,
+						resp.AICommand.Output,
+						resp.AICommand.PreCheckError,
+						*resp.Respond,
+					),
+				)
+				fmt.Printf("Result:%+v\n", resp.AICommand)
+				fmt.Printf("%+v\n", resp.Respond)
+			}
 		}
 		functionHolder.Process(cmd)
 	}

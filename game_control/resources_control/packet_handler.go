@@ -2,6 +2,9 @@ package ResourcesControl
 
 import (
 	"fmt"
+	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content"
+	mei "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/interface"
+	stc_mc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/server_to_client/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 
@@ -20,6 +23,26 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 			pterm.Error.Printf("handlePacket: %v\n", err)
 		}
 		// send ws command with response
+	case *packet.PyRpc:
+		if p.Value == nil {
+			return
+		}
+		// prepare
+		content, err := py_rpc_content.Unmarshal(p.Value.MakeGo())
+		if err != nil {
+			pterm.Warning.Sprintf("handlePacket: %v", err)
+			return
+		}
+		// unmarshal
+		switch c := content.(type) {
+		case *py_rpc_content.ModEvent:
+			switch module := c.Package.(*mei.Default).Module.(type) {
+			case *stc_mc.AICommand:
+				r.Command.onAICommand(*module)
+				// netease ai command
+			}
+		}
+		// do some actions for some specific PyRpc packets
 	case *packet.InventoryContent:
 		for key, value := range p.Content {
 			if value.Stack.ItemType.NetworkID != -1 {

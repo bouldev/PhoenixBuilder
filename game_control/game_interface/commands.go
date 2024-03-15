@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/fastbuilder/args"
-	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/py_rpc_parser"
+	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content"
+	cts "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server"
+	cts_mc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft"
+	cts_mc_a "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft/ai_command"
+	mei "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/interface"
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -38,35 +42,9 @@ func (g *GameInterface) SendSettingsCommand(
 	return nil
 }
 
-func (g *GameInterface) send_netease_ai_command_with_response(
-	command string,
-) {
-	g.Resources.Listener.CreateNewListen([]uint32{
-		packet.IDPyRpc,
-		packet.IDCommandOutput,
-	}, 2)
-	request_id := ResourcesControl.GenerateUUID()
-	g.WritePacket(&packet.PyRpc{
-		Value: py_rpc_parser.FromGo([]interface{}{
-			"ModEventC2S",
-			[]interface{}{
-				"Minecraft",
-				"aiCommand",
-				"ExecuteCommandEvent",
-				map[string]interface{}{
-					"cmd":  command,
-					"uuid": request_id,
-				},
-			},
-			nil,
-		}),
-	})
-	// generate request ID and send request
-}
-
 // 以 origin 的身份向租赁服发送命令且无视返回值。
 // 属于私有实现
-func (g *GameInterface) sendCommand(
+func (g *GameInterface) send_command(
 	command string,
 	uniqueId uuid.UUID,
 	origin uint32,
@@ -88,34 +66,64 @@ func (g *GameInterface) sendCommand(
 	return nil
 }
 
+// 向租赁服发送魔法指令且无视返回值。
+// 属于私有实现
+func (g *GameInterface) send_netease_ai_command(
+	command string,
+	uniqueId uuid.UUID,
+) {
+	event := cts_mc_a.ExecuteCommandEvent{
+		CommandLine:      command,
+		CommandRequestID: uniqueId,
+	}
+	module := cts_mc.AICommand{Module: &mei.DefaultModule{Event: &event}}
+	park := cts.Minecraft{Default: mei.Default{Module: &module}}
+	// construct request
+	g.WritePacket(&packet.PyRpc{
+		Value: py_rpc_content.PackageContent(
+			&py_rpc_content.ModEvent{
+				Package: &park,
+				Type:    py_rpc_content.ModEventClientToServer,
+			},
+		),
+	})
+	// send packet
+}
+
 // 以 origin 的身份向租赁服发送命令并且取得响应体。
+// 当 origin 不存在时，将发送魔法指令。
 // options 指定当次命令请求的自定义设置项。
 // 属于私有实现
-func (g *GameInterface) sendCommandWithResponse(
+func (g *GameInterface) send_command_with_response(
 	command string,
 	options ResourcesControl.CommandRequestOptions,
-	origin uint32,
+	origin *uint32,
 ) ResourcesControl.CommandRespond {
 	uniqueId := ResourcesControl.GenerateUUID()
 	err := g.Resources.Command.WriteRequest(uniqueId, options)
 	if err != nil {
 		return ResourcesControl.CommandRespond{
-			Error:     fmt.Errorf("sendCommandWithResponse: %v", err),
+			Error:     fmt.Errorf("send_command_with_response: %v", err),
 			ErrorType: ResourcesControl.ErrCommandRequestOthers,
 		}
 	}
 	// 写入请求到等待队列
-	err = g.sendCommand(command, uniqueId, origin)
-	if err != nil {
-		return ResourcesControl.CommandRespond{
-			Error:     fmt.Errorf("sendCommandWithResponse: %v", err),
-			ErrorType: ResourcesControl.ErrCommandRequestOthers,
+	switch origin {
+	case nil:
+		g.send_netease_ai_command(command, uniqueId)
+	default:
+		err = g.send_command(command, uniqueId, *origin)
+		if err != nil {
+			return ResourcesControl.CommandRespond{
+				Error:     fmt.Errorf("send_command_with_response: %v", err),
+				ErrorType: ResourcesControl.ErrCommandRequestOthers,
+			}
 		}
 	}
 	// 发送命令
 	resp := g.Resources.Command.LoadResponseAndDelete(uniqueId)
 	if resp.Error != nil {
-		resp.Error = fmt.Errorf("sendCommandWithResponse: %v", resp.Error)
+		resp.Error = fmt.Errorf("send_command_with_response: %v", resp.Error)
 	}
 	return resp
 	// 获取响应体并返回值
@@ -124,7 +132,7 @@ func (g *GameInterface) sendCommandWithResponse(
 // 以玩家的身份向租赁服发送命令且无视返回值
 func (g *GameInterface) SendCommand(command string) error {
 	uniqueId, _ := uuid.NewUUID()
-	err := g.sendCommand(command, uniqueId, protocol.CommandOriginPlayer)
+	err := g.send_command(command, uniqueId, protocol.CommandOriginPlayer)
 	if err != nil {
 		return fmt.Errorf("SendCommand: %v", err)
 	}
@@ -134,7 +142,7 @@ func (g *GameInterface) SendCommand(command string) error {
 // 向租赁服发送 WS 命令且无视返回值
 func (g *GameInterface) SendWSCommand(command string) error {
 	uniqueId, _ := uuid.NewUUID()
-	err := g.sendCommand(command, uniqueId, protocol.CommandOriginAutomationPlayer)
+	err := g.send_command(command, uniqueId, protocol.CommandOriginAutomationPlayer)
 	if err != nil {
 		return fmt.Errorf("SendWSCommand: %v", err)
 	}
@@ -147,7 +155,8 @@ func (g *GameInterface) SendCommandWithResponse(
 	command string,
 	options ResourcesControl.CommandRequestOptions,
 ) ResourcesControl.CommandRespond {
-	resp := g.sendCommandWithResponse(command, options, protocol.CommandOriginPlayer)
+	origin := uint32(protocol.CommandOriginPlayer)
+	resp := g.send_command_with_response(command, options, &origin)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("SendCommandWithResponse: %v", resp.Error)
 	}
@@ -160,9 +169,23 @@ func (g *GameInterface) SendWSCommandWithResponse(
 	command string,
 	options ResourcesControl.CommandRequestOptions,
 ) ResourcesControl.CommandRespond {
-	resp := g.sendCommandWithResponse(command, options, protocol.CommandOriginAutomationPlayer)
+	origin := uint32(protocol.CommandOriginAutomationPlayer)
+	resp := g.send_command_with_response(command, options, &origin)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("SendWSCommandWithResponse: %v", resp.Error)
+	}
+	return resp
+}
+
+// 向租赁服发送 魔法指令 且获取返回值。
+// options 指定当次命令请求的自定义设置项
+func (g *GameInterface) SendAICommandWithResponse(
+	command string,
+	options ResourcesControl.CommandRequestOptions,
+) ResourcesControl.CommandRespond {
+	resp := g.send_command_with_response(command, options, nil)
+	if resp.Error != nil {
+		resp.Error = fmt.Errorf("SendAICommandWithResponse: %v", resp.Error)
 	}
 	return resp
 }
