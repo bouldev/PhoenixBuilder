@@ -70,7 +70,7 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 				TimeOut: ResourcesControl.CommandRequestNoDeadLine,
 			},
 		)
-		parseResult, _ := gameInterface.ParseTargetQueryingInfo(resp.Respond)
+		parseResult, _ := gameInterface.ParseTargetQueryingInfo(*resp.Respond)
 
 		if parseResult[0].Dimension == 1 {
 			testAreaIsLoaded = "testforblocks ~-31 0 ~-31 ~31 127 ~31 ~-31 0 ~-31"
