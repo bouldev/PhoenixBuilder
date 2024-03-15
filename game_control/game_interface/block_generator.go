@@ -30,7 +30,7 @@ func (g *GameInterface) GenerateNewAnvil(pos [3]int32, blockStates string) (
 	if resp.Error != nil {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: %v", resp.Error)
 	}
-	got, err := g.ParseTargetQueryingInfo(resp.Respond)
+	got, err := g.ParseTargetQueryingInfo(*resp.Respond)
 	if err != nil {
 		return uuid.UUID{}, [3]int32{}, fmt.Errorf("GenerateNewAnvil: %v", err)
 	}
@@ -120,7 +120,7 @@ func (g *GameInterface) PlaceShulkerBox(
 		if resp.Error != nil {
 			return fmt.Errorf("PlaceShulkerBox: %v", resp.Error)
 		}
-		got, err := g.ParseTargetQueryingInfo(resp.Respond)
+		got, err := g.ParseTargetQueryingInfo(*resp.Respond)
 		if err != nil {
 			return fmt.Errorf("PlaceShulkerBox: %v", err)
 		}

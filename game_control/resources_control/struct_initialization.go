@@ -19,8 +19,9 @@ import (
 func (r *Resources) Init() func(pk *packet.Packet) {
 	*r = Resources{
 		Command: commandRequestWithResponse{
-			request:  sync_map.Map[uuid.UUID, CommandRequestOptions]{},
-			response: sync_map.Map[uuid.UUID, chan packet.CommandOutput]{},
+			request:       sync_map.Map[uuid.UUID, CommandRequestOptions]{},
+			response:      sync_map.Map[uuid.UUID, *CommandRespond]{},
+			couldLoadResp: sync_map.Map[uuid.UUID, chan struct{}]{},
 		},
 		Inventory: inventoryContents{
 			lockDown: sync.RWMutex{},
