@@ -2,7 +2,8 @@ name: Build binaries and Upload to Release
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - "libre"
     paths:
       - "version"
   workflow_dispatch: {}
@@ -13,7 +14,7 @@ jobs:
     steps:
       
     - name: Checkout repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         submodules: recursive
       
@@ -56,7 +57,7 @@ jobs:
       
     - name: Clone theos
       if: steps.cache-theos.outputs.cache-hit != 'true'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
       with:
         submodules: 'recursive'
         repository: 'theos/theos'
@@ -87,16 +88,6 @@ jobs:
         tar -xJf MacOSX11.0.sdk.tar.xz
         rm MacOSX11.0.sdk.tar.xz
         mv MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
-    #- name: Clone macOS SDK
-    #  uses: actions/checkout@v2
-    #  with:
-    #    repository: 'phracker/MacOSX-SDKs'
-    #    path: 'macOS-sdks'
-    #- name: Configure macOS SDK
-    #  run: |
-    #    mv $GITHUB_WORKSPACE/macOS-sdks/MacOSX11.0.sdk ~/theos/sdks/MacOSX11.0.sdk
-    #    rm -rf $GITHUB_WORKSPACE/macOS-sdks
-    # Debian/Ubuntu provided LLVM only support native targets, using Homebrew prebuilt for all targets
     - name: Setup LLVM dependencies
       run: |
         sudo apt install libedit2 libxml2 libncursesw6 binutils elfutils
@@ -201,6 +192,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ steps.release_version.outputs.release_version }}
+        prerelease: true
         target_commitish: libre
         files: |
           fb-upload.tar.gz
@@ -244,4 +236,3 @@ jobs:
     #    echo "put fb-upload.tar.gz">~/a
     #    sftp -P 8964 -i ~/fbkey -b ~/a $FBUSER@$FBIP
     #    ssh -i ~/fbkey $FBUSER@$FBIP -p 8964 "mkdir -p fbbinaries;mv fb-upload.tar.gz fbbinaries/;cd fbbinaries;tar -xzf *.tar.gz;rm *.tar.gz;mv build/* ./;rmdir build;rm -rf /var/www/storage/*;mv * /var/www/storage/;cd ..;rmdir fbbinaries"
-
