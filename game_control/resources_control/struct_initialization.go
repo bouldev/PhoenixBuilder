@@ -6,6 +6,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
 
+	"github.com/elliotchance/orderedmap/v2"
 	"github.com/google/uuid"
 )
 
@@ -19,9 +20,11 @@ import (
 func (r *Resources) Init() func(pk *packet.Packet) {
 	*r = Resources{
 		Command: commandRequestWithResponse{
-			request:       sync_map.Map[uuid.UUID, CommandRequestOptions]{},
-			response:      sync_map.Map[uuid.UUID, *CommandRespond]{},
-			couldLoadResp: sync_map.Map[uuid.UUID, chan struct{}]{},
+			ai_command_resp: nil,
+			request_lock:    sync.RWMutex{},
+			request:         orderedmap.NewOrderedMap[uuid.UUID, CommandRequestOptions](),
+			response:        sync_map.Map[uuid.UUID, *CommandRespond]{},
+			signal:          sync_map.Map[uuid.UUID, chan uint8]{},
 		},
 		Inventory: inventoryContents{
 			lockDown: sync.RWMutex{},

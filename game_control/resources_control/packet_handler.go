@@ -3,7 +3,7 @@ package ResourcesControl
 import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content"
-	mei "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/interface"
+	stc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/server_to_client"
 	stc_mc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/server_to_client/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -18,7 +18,7 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		r.Others.writeTickSyncPacketResponse(*p)
 		// sync game tick
 	case *packet.CommandOutput:
-		err := r.Command.tryToWriteResponse(p.CommandOrigin.UUID, *p)
+		err := r.Command.try_to_write_response(p.CommandOrigin.UUID, *p)
 		if err != nil {
 			pterm.Error.Printf("handlePacket: %v\n", err)
 		}
@@ -36,9 +36,14 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		// unmarshal
 		switch c := content.(type) {
 		case *py_rpc_content.ModEvent:
-			switch module := c.Package.(*mei.Default).Module.(type) {
+			park, success := c.Package.(*stc.Minecraft)
+			if !success {
+				return
+			}
+			// minrcraft package
+			switch module := park.Module.(type) {
 			case *stc_mc.AICommand:
-				r.Command.onAICommand(*module)
+				r.Command.on_ai_command(*module)
 				// netease ai command
 			}
 		}

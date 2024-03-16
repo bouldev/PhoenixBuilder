@@ -67,6 +67,7 @@ func (g *GameInterface) send_command(
 }
 
 // 向租赁服发送魔法指令且无视返回值。
+// 单独调用此函数会造成程序 panic 。
 // 属于私有实现
 func (g *GameInterface) send_netease_ai_command(
 	command string,
@@ -99,8 +100,16 @@ func (g *GameInterface) send_command_with_response(
 	options ResourcesControl.CommandRequestOptions,
 	origin *uint32,
 ) ResourcesControl.CommandRespond {
+	var command_type string
 	uniqueId := ResourcesControl.GenerateUUID()
-	err := g.Resources.Command.WriteRequest(uniqueId, options)
+	// 初始化
+	switch origin {
+	case nil:
+		command_type = ResourcesControl.CommandTypeAICommand
+	default:
+		command_type = ResourcesControl.CommandTypeStandard
+	}
+	err := g.Resources.Command.WriteRequest(uniqueId, options, command_type)
 	if err != nil {
 		return ResourcesControl.CommandRespond{
 			Error:     fmt.Errorf("send_command_with_response: %v", err),

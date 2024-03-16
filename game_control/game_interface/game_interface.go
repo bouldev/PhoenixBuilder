@@ -59,7 +59,6 @@ const (
 	ItemCopyWaitContainerDataComingDeadLine = time.Second
 )
 
-// 描述 Pick Block 失败后要重试的最大次数
 const (
 	// 容器 打开/关闭 失败后要重试的最大次数
 	ContainerOperationsReTryMaximumCounts = 3
