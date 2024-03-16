@@ -41,7 +41,7 @@ const (
 	// 标准命令
 	CommandTypeStandard = "packet.CommandRequest"
 	// 网易魔法指令
-	CommandTypeAICommand = "packet.PyRpc/C2SModEvent/ExecuteCommandEvent"
+	CommandTypeAICommand = "packet.PyRpc/C2SModEvent/Minecraft/aiCommand/ExecuteCommandEvent"
 )
 
 // 描述与命令请求相关的信号

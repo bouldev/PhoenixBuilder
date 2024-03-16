@@ -66,9 +66,13 @@ func (c *commandRequestWithResponse) try_to_write_response(
 		return nil
 	}
 	// for netease ai command
+	c.request_lock.RLock()
 	options := c.request.GetElement(key)
+	c.request_lock.RUnlock()
+	// get options
 	channel, exist0 := c.signal.Load(key)
 	response, exist1 := c.response.Load(key)
+	// load data
 	if options == nil || !exist0 || !exist1 {
 		return nil
 	}
@@ -110,7 +114,6 @@ func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
 		// set output data
 	case *ai_command.AvailableCheckFailed:
 		c.request_lock.RLock()
-		defer c.request_lock.RUnlock()
 		var options CommandRequestOptions
 		var command_request_id uuid.UUID
 		var resp *CommandRespond
@@ -127,7 +130,8 @@ func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
 				break
 			}
 		}
-		// get the oldest ai command request
+		c.request_lock.RUnlock()
+		// get the oldest ai command request and release lock
 		channel, exist := c.signal.Load(command_request_id)
 		if resp == nil || !exist {
 			panic("on_ai_command: Attempt to send NeteaseAICommand(packet.PyRpc/CS2ModEvent/ExecuteCommandEvent) without using ResourcesControlCenter")
@@ -143,9 +147,9 @@ func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
 		// if we don't have to track the response
 	case *ai_command.AfterExecuteCommandEvent:
 		c.request_lock.RLock()
-		defer c.request_lock.RUnlock()
-		// prepare
 		options := c.request.GetElement(e.CommandRequestID)
+		c.request_lock.RUnlock()
+		// get options
 		resp, exist0 := c.response.Load(e.CommandRequestID)
 		channel, exist1 := c.signal.Load(e.CommandRequestID)
 		if options == nil || !exist0 || !exist1 {

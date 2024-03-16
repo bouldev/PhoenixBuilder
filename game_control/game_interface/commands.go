@@ -25,6 +25,18 @@ func (g *GameInterface) SendSettingsCommand(
 	command string,
 	dimensional bool,
 ) error {
+	if args.SkipMCPCheckChallenges {
+		g.send_command_with_options(
+			command,
+			ResourcesControl.CommandRequestOptions{
+				TimeOut:        ResourcesControl.CommandRequestNoDeadLine,
+				WithNoResponse: true,
+			},
+			nil,
+		)
+		return nil
+	}
+	// for restrictive situation
 	if dimensional {
 		command = fmt.Sprintf(
 			`execute @a[name="%s"] ~ ~ ~ %s`,
@@ -32,6 +44,7 @@ func (g *GameInterface) SendSettingsCommand(
 			command,
 		)
 	}
+	// construct commands
 	err := g.WritePacket(&packet.SettingsCommand{
 		CommandLine:    command,
 		SuppressOutput: true,
@@ -39,7 +52,9 @@ func (g *GameInterface) SendSettingsCommand(
 	if err != nil {
 		return fmt.Errorf("SendSettingsCommand: %v", err)
 	}
+	// send packet
 	return nil
+	// return
 }
 
 // 以 origin 的身份向租赁服发送命令且无视返回值。
@@ -49,6 +64,11 @@ func (g *GameInterface) send_command(
 	uniqueId uuid.UUID,
 	origin uint32,
 ) error {
+	if args.SkipMCPCheckChallenges {
+		g.send_netease_ai_command(command, uniqueId)
+		return nil
+	}
+	// for restrictive situation
 	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
 	err := g.WritePacket(&packet.CommandRequest{
 		CommandLine: command,
@@ -63,7 +83,9 @@ func (g *GameInterface) send_command(
 	if err != nil {
 		return fmt.Errorf("sendCommand: %v", err)
 	}
+	// for normal situation
 	return nil
+	// return
 }
 
 // 向租赁服发送魔法指令且无视返回值。
@@ -91,50 +113,95 @@ func (g *GameInterface) send_netease_ai_command(
 	// send packet
 }
 
-// 以 origin 的身份向租赁服发送命令并且取得响应体。
-// 当 origin 不存在时，将发送魔法指令。
-// options 指定当次命令请求的自定义设置项。
-// 属于私有实现
-func (g *GameInterface) send_command_with_response(
+/*
+以 origin 的身份向租赁服发送命令。
+当 origin 不存在时，将发送魔法指令。
+
+options 用于指定当次命令请求的自定义设置项。
+如果要求不跟踪命令请求的响应体，
+则数据包成功发送后将会返回空值。
+
+属于私有实现
+*/
+func (g *GameInterface) send_command_with_options(
 	command string,
 	options ResourcesControl.CommandRequestOptions,
 	origin *uint32,
-) ResourcesControl.CommandRespond {
+) *ResourcesControl.CommandRespond {
 	var command_type string
 	uniqueId := ResourcesControl.GenerateUUID()
 	// 初始化
-	switch origin {
-	case nil:
-		command_type = ResourcesControl.CommandTypeAICommand
-	default:
-		command_type = ResourcesControl.CommandTypeStandard
-	}
-	err := g.Resources.Command.WriteRequest(uniqueId, options, command_type)
-	if err != nil {
-		return ResourcesControl.CommandRespond{
-			Error:     fmt.Errorf("send_command_with_response: %v", err),
-			ErrorType: ResourcesControl.ErrCommandRequestOthers,
+	{
+		switch origin {
+		case nil:
+			command_type = ResourcesControl.CommandTypeAICommand
+		default:
+			command_type = ResourcesControl.CommandTypeStandard
 		}
+		// get command type
+		if args.SkipMCPCheckChallenges {
+			command_type = ResourcesControl.CommandTypeAICommand
+		}
+		// adjust for restrictive situation
+		err := g.Resources.Command.WriteRequest(uniqueId, options, command_type)
+		if err != nil {
+			return &ResourcesControl.CommandRespond{
+				Error:     fmt.Errorf("send_command_with_options: %v", err),
+				ErrorType: ResourcesControl.ErrCommandRequestOthers,
+			}
+		}
+		// write request
+		if origin != nil {
+			command_type = ResourcesControl.CommandTypeStandard
+		}
+		// revert adjust
 	}
 	// 写入请求到等待队列
 	switch origin {
 	case nil:
 		g.send_netease_ai_command(command, uniqueId)
 	default:
-		err = g.send_command(command, uniqueId, *origin)
+		err := g.send_command(command, uniqueId, *origin)
 		if err != nil {
-			return ResourcesControl.CommandRespond{
-				Error:     fmt.Errorf("send_command_with_response: %v", err),
+			return &ResourcesControl.CommandRespond{
+				Error:     fmt.Errorf("send_command_with_options: %v", err),
 				ErrorType: ResourcesControl.ErrCommandRequestOthers,
 			}
 		}
 	}
 	// 发送命令
+	if options.WithNoResponse {
+		return nil
+	}
+	// 如果不需要跟踪响应体
 	resp := g.Resources.Command.LoadResponseAndDelete(uniqueId)
 	if resp.Error != nil {
-		resp.Error = fmt.Errorf("send_command_with_response: %v", resp.Error)
+		resp.Error = fmt.Errorf("send_command_with_options: %v", resp.Error)
 	}
-	return resp
+	if args.SkipMCPCheckChallenges && origin != nil && resp.Respond != nil {
+		resp.Respond.CommandOrigin.Origin = *origin
+	}
+	if args.SkipMCPCheckChallenges && origin != nil && resp.Respond == nil {
+		resp.Respond = &packet.CommandOutput{
+			CommandOrigin: protocol.CommandOrigin{
+				Origin:         *origin,
+				UUID:           uniqueId,
+				RequestID:      "96045347-a6a3-4114-94c0-1bc4cc561694",
+				PlayerUniqueID: 0,
+			},
+			OutputType:   4,
+			SuccessCount: 0,
+			OutputMessages: []protocol.CommandOutputMessage{
+				{
+					Success:    false,
+					Message:    "commands.generic.syntax",
+					Parameters: []string{},
+				},
+			},
+			DataSet: "",
+		}
+	}
+	return &resp
 	// 获取响应体并返回值
 }
 
@@ -165,11 +232,11 @@ func (g *GameInterface) SendCommandWithResponse(
 	options ResourcesControl.CommandRequestOptions,
 ) ResourcesControl.CommandRespond {
 	origin := uint32(protocol.CommandOriginPlayer)
-	resp := g.send_command_with_response(command, options, &origin)
+	resp := g.send_command_with_options(command, options, &origin)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("SendCommandWithResponse: %v", resp.Error)
 	}
-	return resp
+	return *resp
 }
 
 // 向租赁服发送 WS 命令且获取返回值。
@@ -179,11 +246,11 @@ func (g *GameInterface) SendWSCommandWithResponse(
 	options ResourcesControl.CommandRequestOptions,
 ) ResourcesControl.CommandRespond {
 	origin := uint32(protocol.CommandOriginAutomationPlayer)
-	resp := g.send_command_with_response(command, options, &origin)
+	resp := g.send_command_with_options(command, options, &origin)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("SendWSCommandWithResponse: %v", resp.Error)
 	}
-	return resp
+	return *resp
 }
 
 // 向租赁服发送 魔法指令 且获取返回值。
@@ -192,11 +259,11 @@ func (g *GameInterface) SendAICommandWithResponse(
 	command string,
 	options ResourcesControl.CommandRequestOptions,
 ) ResourcesControl.CommandRespond {
-	resp := g.send_command_with_response(command, options, nil)
+	resp := g.send_command_with_options(command, options, nil)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("SendAICommandWithResponse: %v", resp.Error)
 	}
-	return resp
+	return *resp
 }
 
 /*

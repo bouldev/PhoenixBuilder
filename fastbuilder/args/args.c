@@ -32,6 +32,7 @@ struct go_string {
 
 char args_isDebugMode=0;
 char args_disableVersionChecking=0;
+char args_skipMCPCheckChallenges=0;
 struct go_string newAuthServer={
 	"https://api.fastbuilder.pro",
 	27
@@ -48,6 +49,7 @@ struct go_string listen_address=EMPTY_GOSTRING;
 void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
 	printf("\t--debug: Run in debug mode.\n");
+	printf("\t-s, --skip-mcpc-check-challenges: PyRpc/C2SModEvent/Minecraft packets related SetStartType and SetMCPCheckNum are blocked from being sent.\n");
 	printf("\t-A <url>, --auth-server=<url>: Use the specified authentication server, instead of the default one.\n");
 	printf("\t--no-update-checking: Suppress update notification.\n");
 	printf("\t-c, --code=<server code>: Specify a server code.\n");
@@ -188,10 +190,11 @@ int _parse_args(int argc, char **argv) {
 			{"ingame-response", no_argument, 0, 0}, // 12
 			{"purge-userdata", no_argument, 0, 0}, // 13
 			{"listen", required_argument, 0, 'L'}, // 14
+			{"skip-mcpc-check-challenges", no_argument, 0, 's'}, // 15
 			{0, 0, 0, 0}
 		};
 		int option_index;
-		int c=getopt_long(argc,argv,"hA:vc:p:t:T:N:L:", opts, &option_index);
+		int c=getopt_long(argc,argv,"shA:vc:p:t:T:N:L:", opts, &option_index);
 		if(c==-1)
 			break;
 		switch(c) {
@@ -216,6 +219,9 @@ int _parse_args(int argc, char **argv) {
 				config_cleanup();
 				break;
 			};
+			break;
+		case 's':
+			args_skipMCPCheckChallenges=1;
 			break;
 		case 'h':
 			print_help(argv[0]);
