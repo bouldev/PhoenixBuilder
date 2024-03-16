@@ -55,7 +55,10 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 		if len(cmd) == 0 {
 			continue
 		}
-		if cmd[0] == '.' {
+		switch cmd[0] {
+		case '*':
+			gameInterface.SendSettingsCommand(cmd[1:], false)
+		case '.':
 			resp := gameInterface.SendCommandWithResponse(
 				cmd[1:],
 				ResourcesControl.CommandRequestOptions{
@@ -71,9 +74,9 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 				)
 				env.GameInterface.Output(pterm.Error.Sprintf("%v", resp.Error.Error()))
 			} else {
-				fmt.Printf("%+v\n", resp.Respond)
+				env.GameInterface.Output(fmt.Sprintf("%+v", resp.Respond))
 			}
-		} else if cmd[0] == '!' {
+		case '!':
 			resp := gameInterface.SendWSCommandWithResponse(
 				cmd[1:],
 				ResourcesControl.CommandRequestOptions{
@@ -89,11 +92,9 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 				)
 				env.GameInterface.Output(pterm.Error.Sprintf("%v", resp.Error.Error()))
 			} else {
-				env.GameInterface.Output(fmt.Sprintf("%+v\n", *resp.Respond))
+				env.GameInterface.Output(fmt.Sprintf("%+v", *resp.Respond))
 			}
-		} else if cmd[0] == '*' {
-			gameInterface.SendSettingsCommand(cmd[1:], false)
-		} else if cmd[0] == '~' {
+		case '~':
 			resp := gameInterface.(*GameInterface.GameInterface).SendAICommandWithResponse(
 				cmd[1:],
 				ResourcesControl.CommandRequestOptions{
@@ -109,17 +110,24 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 				)
 				env.GameInterface.Output(pterm.Error.Sprintf("%v", resp.Error.Error()))
 			} else {
-				env.GameInterface.Output(
-					pterm.Info.Sprintf(
-						"PyRpc Result:\n%+v\nPyRpc Output:\n%+v\nPyRpc Output:\n%+v\nPyRpc PreCheckError:\n%+v\nStandard Response:\n%+v",
-						resp.AICommand.Result,
-						resp.AICommand.Output,
-						resp.AICommand.PreCheckError,
-						*resp.Respond,
-					),
+				output := fmt.Sprintf(
+					"PyRpc Result\n%+v\n\nPyRpc Output\n",
+					resp.AICommand.Result,
 				)
-				fmt.Printf("Result:%+v\n", resp.AICommand)
-				fmt.Printf("%+v\n", resp.Respond)
+				if resp.AICommand.Output == nil {
+					output = fmt.Sprintf("%s%+v\n", output, nil)
+				} else {
+					for _, value := range resp.AICommand.Output {
+						output = fmt.Sprintf("%s%#v\n", output, value)
+					}
+				}
+				output = fmt.Sprintf(
+					"%s\nPyRpc PreCheckError\n%+v\n\nStandard Response\n%+v",
+					output,
+					resp.AICommand.PreCheckError,
+					resp.Respond,
+				)
+				env.GameInterface.Output(pterm.Info.Sprint(output))
 			}
 		}
 		functionHolder.Process(cmd)

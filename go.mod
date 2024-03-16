@@ -23,6 +23,7 @@ require (
 require (
 	github.com/andybalholm/brotli v1.0.3
 	github.com/disintegration/imaging v1.6.2
+	github.com/elliotchance/orderedmap/v2 v2.2.0
 	github.com/go-gl/mathgl v1.0.0
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.3.0

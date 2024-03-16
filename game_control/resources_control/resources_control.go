@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/elliotchance/orderedmap/v2"
 	"github.com/google/uuid"
 )
 
@@ -43,20 +44,27 @@ const (
 	CommandTypeAICommand = "packet.PyRpc/C2SModEvent/ExecuteCommandEvent"
 )
 
-// 指定单个命令请求中可以自定义的设置项
-type CommandRequestOptions struct {
-	// 描述当前命令请求的最长截止时间，
-	// 当抵达该时间后，将返回超时错误。
-	// 如果此字段为 0 ，则将永远等待，
-	// 直到客户端收到对应的响应体
-	TimeOut time.Duration
-}
+// 描述与命令请求相关的信号
+const (
+	// 魔法指令 的命令请求在收到
+	// 标准响应体后会使用的信号
+	SignalRespondReceived = uint8(iota)
+	// 命令响应体可以被加载时会使用的信号
+	SignalCouldLoadRespond
+)
 
-// 存放命令请求及结果
+/*
+存放命令请求及结果
+
+!!! 重要 !!!
+任何与 魔法指令 相关的操作都应该通过此结构体下的有关实现来完成，否则可能会造成严重后果。
+因此，为了不出现问题，如果尝试绕过相关实现而直接发送 魔法指令 相关的数据包，则会造成程序 panic
+*/
 type commandRequestWithResponse struct {
 	/*
 		魔法指令 共计有两种响应体，
-		其一是 PyRpc 数据包，另外一种则是标准响应体，
+		其一是 PyRpc 数据包(由多个数据包共同描述)，
+		另外一种则是标准响应体，
 		即数据类型为 packet.CommandOutput 的响应体。
 
 		不幸的是，这两个响应体相互独立，
@@ -68,24 +76,52 @@ type commandRequestWithResponse struct {
 		在下一个 PyRpc 类型的响应体到来后，
 		将该字段与 PyRpc 响应体相互匹配
 	*/
-	aiCommandResp *packet.CommandOutput
-	// 存放已预通知的命令请求
-	request sync_map.Map[uuid.UUID, CommandRequestOptions]
+	ai_command_resp *packet.CommandOutput
+	/*
+		存放命令请求。
+		互斥锁用于防止可能的并发读写。
+
+		考虑到 魔法指令 的一些特性，
+		也就是在前置检查失败时，
+		命令请求的响应体不会记录原始请求的 UUID 。
+		因此我们需要依靠请求提交的时间顺序来推断
+		收到影响的与 魔法指令 相关的命令请求，而
+		orderedmap 便提供了有序 map 的功能。
+
+		因此，为了确保可以正确推断，
+		如果尝试绕过相关实现而直接发送 魔法指令 相关的数据包，
+		则会造成程序 panic
+	*/
+	request_lock sync.RWMutex
+	request      *orderedmap.OrderedMap[uuid.UUID, CommandRequestOptions]
 	// 存放命令请求对应的响应体
 	response sync_map.Map[uuid.UUID, *CommandRespond]
-	// 当对应目录请求的响应体中的全部数据都已被设置完毕后，
-	// 对应键上的管道将收到数据，
-	// 这意味着另外一个 go 惯例将可以读取对应请求的响应体
-	couldLoadResp sync_map.Map[uuid.UUID, chan struct{}]
+	// 用于传递信号，例如通知可以加载命令响应体，
+	// 或通知 魔法指令 中的标准响应体已经到来
+	signal sync_map.Map[uuid.UUID, chan uint8]
 }
 
+// 指定单个命令请求中可以自定义的设置项
+type CommandRequestOptions struct {
+	// 描述当前命令请求的最长截止时间，
+	// 当抵达该时间后，将返回超时错误。
+	// 如果此字段为 0 ，则将永远等待，
+	// 直到客户端收到对应的响应体
+	TimeOut time.Duration
+	// 指定当前命令无需追踪其对应的返回值
+	WithNoResponse bool
+}
+
+// 描述 魔法指令 的响应体。
+// 该响应体不是命令请求的标准响应体，
+// 而是由多个 PyRpc 数据包共同描述
 type AICommandDetails struct {
-	// 描述 魔法指令 的执行结果
+	// 描述 魔法指令 是否成功
 	Result ai_command.AfterExecuteCommandEvent
 	// 描述 魔法指令 的输出。
-	// 如果命令失败，此字段不存在
-	Output *ai_command.ExecuteCommandOutputEvent
-	// 魔法指令 对命令请求在前置检查失败时的响应体，
+	// 如果命令失败，则此切片为空
+	Output []ai_command.ExecuteCommandOutputEvent
+	// 命令请求在前置检查失败时的响应体，
 	// 通常在 作弊未开启 或 机器人不具备操作员权限 时触发，
 	// 可能不存在
 	PreCheckError *ai_command.AvailableCheckFailed
@@ -93,11 +129,12 @@ type AICommandDetails struct {
 
 // 描述命令请求的响应体
 type CommandRespond struct {
-	// 来自租赁服的响应体。
+	// 命令请求的标准响应体。
 	// 如果原始请求是 魔法指令 ，
 	// 则可能不存在
 	Respond *packet.CommandOutput
-	// 描述 魔法指令 的额外响应部分。
+	// 描述 魔法指令 的独有响应体，
+	// 该部分由多个 PyRpc 数据包决定。
 	// 如果原始请求不是 魔法指令 ，
 	// 则该字段不存在
 	AICommand *AICommandDetails
