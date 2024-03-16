@@ -189,10 +189,16 @@ func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) Comman
 				continue
 			}
 			close(channel)
+			// get flag and close the channel
+			c.request_lock.Lock()
 			c.request.Delete(key)
+			c.request_lock.Unlock()
+			// delete request
 			c.signal.Delete(key)
+			// delte signal
 			resp, _ := c.response.LoadAndDelete(key)
 			return *resp
+			// load response and return
 		}
 		// if there is no time limit
 		select {
@@ -202,13 +208,24 @@ func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) Comman
 				continue
 			}
 			close(channel)
+			// get flag and close the channel
+			c.request_lock.Lock()
 			c.request.Delete(key)
+			c.request_lock.Unlock()
+			// delete request
 			c.signal.Delete(key)
+			// delte signal
 			resp, _ := c.response.LoadAndDelete(key)
 			return *resp
+			// load response return
 		case <-time.After(options.Value.TimeOut):
-			c.request.Delete(key)
-			c.signal.Delete(key)
+			c.request_lock.Lock()
+			if options := c.request.GetElement(key); options != nil && !options.Value.WithNoResponse {
+				c.request.Delete(key)
+				c.response.Delete(key)
+				c.signal.Delete(key)
+			}
+			c.request_lock.Unlock()
 			return CommandRespond{
 				Error:     fmt.Errorf(`LoadResponseAndDelete: Request "%v" time out`, key.String()),
 				ErrorType: ErrCommandRequestTimeOut,
