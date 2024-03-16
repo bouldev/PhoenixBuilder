@@ -90,12 +90,12 @@ freebsd-executable-arm64: build/phoenixbuilder-freebsd-executable-arm64
 #freebsd-executable-armv7: build/phoenixbuilder-freebsd-executable-armv7
 # RISC-V targets will be supported in future Go releases (Or use patched versions)
 #freebsd-executable-riscv64: build/phoenixbuilder-freebsd-executable-riscv64
-netbsd-executable: netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64
-netbsd-executable-x86: build/phoenixbuilder-netbsd-executable-x86
-netbsd-executable-x86_64: build/phoenixbuilder-netbsd-executable-x86_64
+#netbsd-executable: netbsd-executable-x86 netbsd-executable-x86_64 netbsd-executable-arm64
+#netbsd-executable-x86: build/phoenixbuilder-netbsd-executable-x86
+#netbsd-executable-x86_64: build/phoenixbuilder-netbsd-executable-x86_64
 #netbsd-executable-armv6: build/phoenixbuilder-netbsd-executable-armv6
 #netbsd-executable-armv7: build/phoenixbuilder-netbsd-executable-armv7
-netbsd-executable-arm64: build/phoenixbuilder-netbsd-executable-arm64
+#netbsd-executable-arm64: build/phoenixbuilder-netbsd-executable-arm64
 openbsd-executable: openbsd-executable-x86 openbsd-executable-x86_64
 # disable openbsd-executable-arm64 until I figure it out
 openbsd-executable-x86: build/phoenixbuilder-openbsd-executable-x86
@@ -201,21 +201,21 @@ build/phoenixbuilder-freebsd-executable-x86_64:
 build/phoenixbuilder-freebsd-executable-arm64:
 	cd depends/stub&&make clean&&make ZLIB_SOVERSION=6 ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/../buildroot/freebsd/bin/clang -target aarch64-unknown-freebsd --sysroot=`pwd`/../buildroot/freebsd/arm64 -L`pwd`/../buildroot/freebsd/arm64/usr/lib -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument"&&cd -
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/freebsd/arm64/lib -Ldepends/buildroot/freebsd/arm64/usr/lib -Wl,-rpath,/usr/local/lib,-rpath,/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/freebsd/bin/clang -target aarch64-unknown-freebsd --sysroot=`pwd`/depends/buildroot/freebsd/arm64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=freebsd GOARCH=arm64 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-freebsd-executable-arm64
-build/phoenixbuilder-netbsd-executable-x86:
-	cd depends/stub&&make clean&&make ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/../buildroot/netbsd/bin/clang -target i386--netbsd --sysroot=`pwd`/../buildroot/netbsd/i386 -L`pwd`/../buildroot/netbsd/i386/usr/lib -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument"&&cd -
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/i386/lib -Ldepends/buildroot/netbsd/i386/usr/lib -Wl,-rpath,/usr/pkg/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/netbsd/bin/clang -target i386--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/i386 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=netbsd GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-x86
-build/phoenixbuilder-netbsd-executable-x86_64:
-	cd depends/stub&&make clean&&make ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/../buildroot/netbsd/bin/clang -target amd64--netbsd --sysroot=`pwd`/../buildroot/netbsd/amd64 -L`pwd`/../buildroot/netbsd/amd64/usr/lib -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument"&&cd -
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/amd64/lib -Ldepends/buildroot/netbsd/amd64/usr/lib -Wl,-rpath,/usr/pkg/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/netbsd/bin/clang -target amd64--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/amd64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=netbsd GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-x86_64
+#build/phoenixbuilder-netbsd-executable-x86:
+#	cd depends/stub&&make clean&&make ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/../buildroot/netbsd/bin/clang -target i386--netbsd --sysroot=`pwd`/../buildroot/netbsd/i386 -L`pwd`/../buildroot/netbsd/i386/usr/lib -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument"&&cd -
+#	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/i386/lib -Ldepends/buildroot/netbsd/i386/usr/lib -Wl,-rpath,/usr/pkg/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/netbsd/bin/clang -target i386--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/i386 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" GOOS=netbsd GOARCH=386 CGO_ENABLED=1 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-x86
+#build/phoenixbuilder-netbsd-executable-x86_64:
+#	cd depends/stub&&make clean&&make ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/../buildroot/netbsd/bin/clang -target amd64--netbsd --sysroot=`pwd`/../buildroot/netbsd/amd64 -L`pwd`/../buildroot/netbsd/amd64/usr/lib -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument"&&cd -
+#	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/amd64/lib -Ldepends/buildroot/netbsd/amd64/usr/lib -Wl,-rpath,/usr/pkg/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/netbsd/bin/clang -target amd64--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/amd64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=netbsd GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-x86_64
 # ld.lld: error: unknown emulation: armelf_nbsd
 # We need alternative ld for arm
 #build/phoenixbuilder-netbsd-executable-armv6:
 #	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/armv6/lib -Ldepends/buildroot/netbsd/armv6/usr/lib -Wl,-rpath,/usr/pkg/lib" CC="${HOME}/llvm/bin/clang -target armv6--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/armv6 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=netbsd GOARCH=arm GOARM=6 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-armv6
 #build/phoenixbuilder-netbsd-executable-armv7:
 #	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/armv7/lib -Ldepends/buildroot/netbsd/armv7/usr/lib -Wl,-rpath,/usr/pkg/lib" CC="${HOME}/llvm/bin/clang -target armv7--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/armv7 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=netbsd GOARCH=arm GOARM=7 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-armv7
-build/phoenixbuilder-netbsd-executable-arm64:
-	cd depends/stub&&make clean&&make ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/../buildroot/netbsd/bin/clang -target aarch64--netbsd --sysroot=`pwd`/../buildroot/netbsd/arm64 -L`pwd`/../buildroot/netbsd/arm64/usr/lib -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument"&&cd -
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/arm64/lib -Ldepends/buildroot/netbsd/arm64/usr/lib -Wl,-rpath,/usr/pkg/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/netbsd/bin/clang -target aarch64--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/arm64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=netbsd GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-arm64
+#build/phoenixbuilder-netbsd-executable-arm64:
+#	cd depends/stub&&make clean&&make ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/../buildroot/netbsd/bin/clang -target aarch64--netbsd --sysroot=`pwd`/../buildroot/netbsd/arm64 -L`pwd`/../buildroot/netbsd/arm64/usr/lib -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument"&&cd -
+#	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CGO_LDFLAGS="-Ldepends/buildroot/netbsd/arm64/lib -Ldepends/buildroot/netbsd/arm64/usr/lib -Wl,-rpath,/usr/pkg/lib" ALT_CLANG="${HOME}/llvm/bin/clang" CC="`pwd`/depends/buildroot/netbsd/bin/clang -target aarch64--netbsd --sysroot=`pwd`/depends/buildroot/netbsd/arm64 -fuse-ld=${HOME}/llvm/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=netbsd GOARCH=arm64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-netbsd-executable-arm64
 build/phoenixbuilder-openbsd-executable-x86:
 	cd depends/stub&&make clean&&make ZLIB_SOVERSION=7.0 ALT_LD="${HOME}/llvm/bin/ld.lld" CC="${HOME}/llvm/bin/clang -target i386-unknown-openbsd --sysroot=`pwd`/../buildroot/openbsd/i386 -L`pwd`/../buildroot/openbsd/i386/usr/lib -fuse-ld=`pwd`/../buildroot/openbsd/bin/ld.lld -Wno-unused-command-line-argument"&&cd -
 	GODEBUG=madvdontneed=1 CGO_LDFLAGS="-Ldepends/buildroot/openbsd/i386/usr/lib -Wl,-rpath,/usr/local/lib" CGO_CFLAGS=${CGO_DEF} ALT_LD="${HOME}/llvm/bin/ld.lld" CC="${HOME}/llvm/bin/clang -target i386-unknown-openbsd --sysroot=`pwd`/depends/buildroot/openbsd/i386 -fuse-ld=`pwd`/depends/buildroot/openbsd/bin/ld.lld -Wno-unused-command-line-argument" CGO_ENABLED=1 GOOS=openbsd GOARCH=386 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-openbsd-executable-x86
