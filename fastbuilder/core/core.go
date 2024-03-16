@@ -326,7 +326,11 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	}
 
 	env.Connection = conn
-	SolveMCPCheckChallenges(env)
+	if args.SkipMCPCheckChallenges {
+		env.CachedPacket = (<-chan packet.Packet)(make(chan packet.Packet))
+	} else {
+		SolveMCPCheckChallenges(env)
+	}
 	pterm.Println(pterm.Yellow(I18n.T(I18n.ConnectionEstablished)))
 
 	env.Resources = &ResourcesControl.Resources{}
@@ -350,79 +354,6 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 
 	taskholder := env.TaskHolder.(*fbtask.TaskHolder)
 	types.ForwardedBrokSender = taskholder.BrokSender
-}
-
-func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
-	conn := env.Connection.(*minecraft.Conn)
-	if p.Value == nil {
-		return
-	}
-	// prepare
-	content, err := py_rpc_content.Unmarshal(p.Value.MakeGo())
-	if err != nil {
-		env.GameInterface.Output(pterm.Warning.Sprintf("onPyRpc: %v", err))
-		return
-	}
-	// unmarshal
-	switch c := content.(type) {
-	case *py_rpc_content.HeartBeat:
-		c.Type = py_rpc_content.ClientToServerHeartBeat
-		conn.WritePacket(&packet.PyRpc{Value: py_rpc_content.PackageContent(c)})
-	case *py_rpc_content.StartType:
-		client := env.FBAuthClient.(*fbauth.Client)
-		c.Content = client.TransferData(c.Content)
-		c.Type = py_rpc_content.StartTypeResponse
-		conn.WritePacket(&packet.PyRpc{Value: py_rpc_content.PackageContent(c)})
-	case *py_rpc_content.GetMCPCheckNum:
-		if env.GetCheckNumEverPassed {
-			break
-		}
-		client := env.FBAuthClient.(*fbauth.Client)
-		arg, _ := json.Marshal([]any{
-			c.FirstArg,
-			c.SecondArg.Arg,
-			env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
-		})
-		ret := client.TransferCheckNum(string(arg))
-		ret_p := []any{}
-		json.Unmarshal([]byte(ret), &ret_p)
-		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc_content.PackageContent(
-				&py_rpc_content.SetMCPCheckNum{ret_p},
-			),
-		})
-		env.GetCheckNumEverPassed = true
-	}
-	// do some actions for some specific PyRpc packets
-}
-
-func WaitMCPCheckChallengesDown(
-	env *environment.PBEnvironment,
-	command_output chan packet.CommandOutput,
-) {
-	ticker := time.NewTicker(time.Millisecond * 50)
-	defer ticker.Stop()
-	for {
-		err := env.Connection.(*minecraft.Conn).WritePacket(&packet.CommandRequest{
-			CommandLine: "WaitMCPCheckChallengesDown",
-			CommandOrigin: protocol.CommandOrigin{
-				Origin:    protocol.CommandOriginAutomationPlayer,
-				UUID:      ResourcesControl.GenerateUUID(),
-				RequestID: "96045347-a6a3-4114-94c0-1bc4cc561694",
-			},
-			Internal:  false,
-			UnLimited: false,
-		})
-		if err != nil {
-			panic(fmt.Sprintf("WaitMCPCheckChallengesDown: %v", err))
-		}
-		select {
-		case <-command_output:
-			close(command_output)
-			return
-		case <-ticker.C:
-		}
-	}
 }
 
 func SolveMCPCheckChallenges(env *environment.PBEnvironment) {
@@ -472,6 +403,82 @@ func SolveMCPCheckChallenges(env *environment.PBEnvironment) {
 		panic("SolveMCPCheckChallenges: Failed to pass the MCPC check challenges, please try again later")
 	}
 	// wait for the challenge to end
+}
+
+func WaitMCPCheckChallengesDown(
+	env *environment.PBEnvironment,
+	command_output chan packet.CommandOutput,
+) {
+	ticker := time.NewTicker(time.Millisecond * 50)
+	defer ticker.Stop()
+	for {
+		err := env.Connection.(*minecraft.Conn).WritePacket(&packet.CommandRequest{
+			CommandLine: "WaitMCPCheckChallengesDown",
+			CommandOrigin: protocol.CommandOrigin{
+				Origin:    protocol.CommandOriginAutomationPlayer,
+				UUID:      ResourcesControl.GenerateUUID(),
+				RequestID: "96045347-a6a3-4114-94c0-1bc4cc561694",
+			},
+			Internal:  false,
+			UnLimited: false,
+		})
+		if err != nil {
+			panic(fmt.Sprintf("WaitMCPCheckChallengesDown: %v", err))
+		}
+		select {
+		case <-command_output:
+			close(command_output)
+			return
+		case <-ticker.C:
+		}
+	}
+}
+
+func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
+	conn := env.Connection.(*minecraft.Conn)
+	if p.Value == nil {
+		return
+	}
+	// prepare
+	content, err := py_rpc_content.Unmarshal(p.Value.MakeGo())
+	if err != nil {
+		env.GameInterface.Output(pterm.Warning.Sprintf("onPyRpc: %v", err))
+		return
+	}
+	// unmarshal
+	switch c := content.(type) {
+	case *py_rpc_content.HeartBeat:
+		c.Type = py_rpc_content.ClientToServerHeartBeat
+		conn.WritePacket(&packet.PyRpc{Value: py_rpc_content.PackageContent(c)})
+	case *py_rpc_content.StartType:
+		if args.SkipMCPCheckChallenges {
+			break
+		}
+		client := env.FBAuthClient.(*fbauth.Client)
+		c.Content = client.TransferData(c.Content)
+		c.Type = py_rpc_content.StartTypeResponse
+		conn.WritePacket(&packet.PyRpc{Value: py_rpc_content.PackageContent(c)})
+	case *py_rpc_content.GetMCPCheckNum:
+		if args.SkipMCPCheckChallenges || env.GetCheckNumEverPassed {
+			break
+		}
+		client := env.FBAuthClient.(*fbauth.Client)
+		arg, _ := json.Marshal([]any{
+			c.FirstArg,
+			c.SecondArg.Arg,
+			env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
+		})
+		ret := client.TransferCheckNum(string(arg))
+		ret_p := []any{}
+		json.Unmarshal([]byte(ret), &ret_p)
+		conn.WritePacket(&packet.PyRpc{
+			Value: py_rpc_content.PackageContent(
+				&py_rpc_content.SetMCPCheckNum{ret_p},
+			),
+		})
+		env.GetCheckNumEverPassed = true
+	}
+	// do some actions for some specific PyRpc packets
 }
 
 func getUserInputMD5() (string, error) {
