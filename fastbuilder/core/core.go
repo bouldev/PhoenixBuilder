@@ -328,6 +328,8 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	env.Connection = conn
 	if args.SkipMCPCheckChallenges {
 		env.CachedPacket = (<-chan packet.Packet)(make(chan packet.Packet))
+		pterm.Warning.Println("Login to the rental server without passing the MCPCheckChallenges!")
+		pterm.Info.Println("Gamerule `sendcommandfeedback` will be updated to false(if we can) in order to reduce screen brushing.")
 	} else {
 		SolveMCPCheckChallenges(env)
 	}
@@ -345,6 +347,9 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 			EntityUniqueID:  env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
 		},
 		Resources: env.Resources.(*ResourcesControl.Resources),
+	}
+	if args.SkipMCPCheckChallenges {
+		env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback false", true)
 	}
 	functionHolder := env.FunctionHolder.(*function.FunctionHolder)
 	function.InitPresetFunctions(functionHolder)
