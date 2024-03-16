@@ -49,7 +49,7 @@ struct go_string listen_address=EMPTY_GOSTRING;
 void print_help(const char *self_name) {
 	printf("%s [options]\n",self_name);
 	printf("\t--debug: Run in debug mode.\n");
-	printf("\t-s, --skip-mcpc-check-challenges: PyRpc/C2SModEvent/Minecraft packets related SetStartType and SetMCPCheckNum are blocked from being sent.\n");
+	printf("\t-s, --skip-mcpc-check-challenges: PyRpc packets related SetStartType and SetMCPCheckNum are blocked from being sent.\n");
 	printf("\t-A <url>, --auth-server=<url>: Use the specified authentication server, instead of the default one.\n");
 	printf("\t--no-update-checking: Suppress update notification.\n");
 	printf("\t-c, --code=<server code>: Specify a server code.\n");
