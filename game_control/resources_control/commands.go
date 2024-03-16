@@ -220,12 +220,12 @@ func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) Comman
 			// load response return
 		case <-time.After(options.Value.TimeOut):
 			c.request_lock.Lock()
-			if options := c.request.GetElement(key); options != nil && !options.Value.WithNoResponse {
-				c.request.Delete(key)
-				c.response.Delete(key)
-				c.signal.Delete(key)
-			}
+			c.request.Delete(key)
 			c.request_lock.Unlock()
+			// delete request
+			c.response.Delete(key)
+			c.signal.Delete(key)
+			// delete response and signal
 			return CommandRespond{
 				Error:     fmt.Errorf(`LoadResponseAndDelete: Request "%v" time out`, key.String()),
 				ErrorType: ErrCommandRequestTimeOut,
