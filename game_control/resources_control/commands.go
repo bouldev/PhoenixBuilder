@@ -178,9 +178,11 @@ func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) Comman
 	c.request_lock.RLock()
 	options := c.request.GetElement(key)
 	c.request_lock.RUnlock()
+	// load request
+	resp, exist0 := c.response.Load(key)
 	channel, exist1 := c.signal.Load(key)
-	// load data from key
-	if options == nil || !exist1 {
+	// load others data
+	if options == nil || !exist0 || !exist1 {
 		return CommandRespond{
 			Error:     fmt.Errorf("LoadResponseAndDelete: %v is not recorded", key.String()),
 			ErrorType: ErrCommandRequestNotRecord,
@@ -199,10 +201,10 @@ func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) Comman
 			c.request_lock.Unlock()
 			// delete request
 			c.signal.Delete(key)
-			// delte signal
-			resp, _ := c.response.LoadAndDelete(key)
+			c.response.Delete(key)
+			// delte response and signal
 			return *resp
-			// load response and return
+			// return
 		}
 		// if there is no time limit
 		select {
@@ -217,19 +219,22 @@ func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) Comman
 			c.request.Delete(key)
 			c.request_lock.Unlock()
 			// delete request
-			c.signal.Delete(key)
-			// delte signal
-			resp, _ := c.response.LoadAndDelete(key)
-			return *resp
-			// load response return
-		case <-time.After(options.Value.TimeOut):
-			c.request_lock.Lock()
-			c.request.Delete(key)
-			c.request_lock.Unlock()
-			// delete request
 			c.response.Delete(key)
 			c.signal.Delete(key)
-			// delete response and signal
+			// delte response and signal
+			return *resp
+			// return
+		case <-time.After(options.Value.TimeOut):
+		    if resp.Type != CommandTypeAICommand {
+		        c.request_lock.Lock()
+		        c.request.Delete(key)
+		        c.request_lock.Unlock()
+		        // delete request
+		        c.response.Delete(key)
+		        c.signal.Delete(key)
+		        // delete response and signal
+		    }
+		    // delete data by key
 			return CommandRespond{
 				Error:     fmt.Errorf(`LoadResponseAndDelete: Request "%v" time out`, key.String()),
 				ErrorType: ErrCommandRequestTimeOut,
