@@ -191,6 +191,15 @@ func (g *GameInterface) send_command_with_options(
 		new := DefaultCommandOutput
 		new.CommandOrigin.Origin = *origin
 		new.CommandOrigin.UUID = uniqueId
+		new.OutputMessages = append(
+			new.OutputMessages,
+			protocol.CommandOutputMessage{
+				Success:    false,
+				Message:    "commands.generic.syntax",
+				Parameters: []string{"", command, ""},
+			},
+		)
+		new.DataSet = "{\n   \"statusCode\" : -2147483648\n}\n"
 		resp.Respond = &new
 	}
 	// 针对限制性情况的响应体微调
