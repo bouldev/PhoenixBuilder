@@ -6,6 +6,8 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // ------------------------- general -------------------------
@@ -122,6 +124,26 @@ const (
 	Nether_MinPosy    = int32(0)   // 下界
 	End_MinPosy                    // 末地
 )
+
+// 描述一个默认状态下的命令响应体
+var DefaultCommandOutput = packet.CommandOutput{
+	CommandOrigin: protocol.CommandOrigin{
+		Origin:         5,
+		UUID:           uuid.UUID{},
+		RequestID:      "96045347-a6a3-4114-94c0-1bc4cc561694",
+		PlayerUniqueID: 0,
+	},
+	OutputType:   4,
+	SuccessCount: 0,
+	OutputMessages: []protocol.CommandOutputMessage{
+		{
+			Success:    false,
+			Message:    "commands.generic.syntax",
+			Parameters: []string{},
+		},
+	},
+	DataSet: "",
+}
 
 // 描述一个空气物品
 var AirItem protocol.ItemInstance = protocol.ItemInstance{

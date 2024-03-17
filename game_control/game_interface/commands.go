@@ -26,15 +26,10 @@ func (g *GameInterface) SendSettingsCommand(
 	dimensional bool,
 ) error {
 	if args.SkipMCPCheckChallenges {
-		g.send_command_with_options(
-			command,
-			ResourcesControl.CommandRequestOptions{
-				TimeOut:        ResourcesControl.CommandRequestNoDeadLine,
-				WithNoResponse: true,
-			},
-			nil,
-		)
-		return nil
+		err := g.SendAICommand(command)
+		if err != nil {
+			return fmt.Errorf("SendSettingsCommand: %v", err)
+		}
 	}
 	// for restrictive situation
 	if dimensional {
@@ -65,7 +60,10 @@ func (g *GameInterface) send_command(
 	origin uint32,
 ) error {
 	if args.SkipMCPCheckChallenges {
-		g.send_netease_ai_command(command, uniqueId)
+		err := g.send_netease_ai_command(command, uniqueId)
+		if err != nil {
+			return fmt.Errorf("sendCommand: %v", err)
+		}
 		return nil
 	}
 	// for restrictive situation
@@ -94,7 +92,7 @@ func (g *GameInterface) send_command(
 func (g *GameInterface) send_netease_ai_command(
 	command string,
 	uniqueId uuid.UUID,
-) {
+) error {
 	event := cts_mc_a.ExecuteCommandEvent{
 		CommandLine:      command,
 		CommandRequestID: uniqueId,
@@ -102,7 +100,7 @@ func (g *GameInterface) send_netease_ai_command(
 	module := cts_mc.AICommand{Module: &mei.DefaultModule{Event: &event}}
 	park := cts.Minecraft{Default: mei.Default{Module: &module}}
 	// construct request
-	g.WritePacket(&packet.PyRpc{
+	err := g.WritePacket(&packet.PyRpc{
 		Value: py_rpc_content.PackageContent(
 			&py_rpc_content.ModEvent{
 				Package: &park,
@@ -110,7 +108,12 @@ func (g *GameInterface) send_netease_ai_command(
 			},
 		),
 	})
+	if err != nil {
+		return fmt.Errorf("send_netease_ai_command: %v", err)
+	}
 	// send packet
+	return nil
+	// return
 }
 
 /*
@@ -129,6 +132,7 @@ func (g *GameInterface) send_command_with_options(
 	origin *uint32,
 ) *ResourcesControl.CommandRespond {
 	var command_type string
+	var err error
 	uniqueId := ResourcesControl.GenerateUUID()
 	// 初始化
 	{
@@ -138,35 +142,35 @@ func (g *GameInterface) send_command_with_options(
 		default:
 			command_type = ResourcesControl.CommandTypeStandard
 		}
-		// get command type
+		// 取得命令类型
 		if args.SkipMCPCheckChallenges {
 			command_type = ResourcesControl.CommandTypeAICommand
 		}
-		// adjust for restrictive situation
-		err := g.Resources.Command.WriteRequest(uniqueId, options, command_type)
+		// 类型微调
+		err = g.Resources.Command.WriteRequest(uniqueId, options, command_type)
 		if err != nil {
 			return &ResourcesControl.CommandRespond{
 				Error:     fmt.Errorf("send_command_with_options: %v", err),
 				ErrorType: ResourcesControl.ErrCommandRequestOthers,
 			}
 		}
-		// write request
+		// 写入请求
 		if origin != nil {
 			command_type = ResourcesControl.CommandTypeStandard
 		}
-		// revert adjust
+		// 恢复微调
 	}
 	// 写入请求到等待队列
 	switch origin {
 	case nil:
-		g.send_netease_ai_command(command, uniqueId)
+		err = g.send_netease_ai_command(command, uniqueId)
 	default:
-		err := g.send_command(command, uniqueId, *origin)
-		if err != nil {
-			return &ResourcesControl.CommandRespond{
-				Error:     fmt.Errorf("send_command_with_options: %v", err),
-				ErrorType: ResourcesControl.ErrCommandRequestOthers,
-			}
+		err = g.send_command(command, uniqueId, *origin)
+	}
+	if err != nil {
+		return &ResourcesControl.CommandRespond{
+			Error:     fmt.Errorf("send_command_with_options: %v", err),
+			ErrorType: ResourcesControl.ErrCommandRequestOthers,
 		}
 	}
 	// 发送命令
@@ -178,51 +182,82 @@ func (g *GameInterface) send_command_with_options(
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("send_command_with_options: %v", resp.Error)
 	}
+	// 加载响应体
 	if args.SkipMCPCheckChallenges && origin != nil && resp.Respond != nil {
 		resp.Respond.CommandOrigin.Origin = *origin
+		resp.Respond.CommandOrigin.RequestID = "96045347-a6a3-4114-94c0-1bc4cc561694"
 	}
 	if args.SkipMCPCheckChallenges && origin != nil && resp.Respond == nil {
-		resp.Respond = &packet.CommandOutput{
-			CommandOrigin: protocol.CommandOrigin{
-				Origin:         *origin,
-				UUID:           uniqueId,
-				RequestID:      "96045347-a6a3-4114-94c0-1bc4cc561694",
-				PlayerUniqueID: 0,
-			},
-			OutputType:   4,
-			SuccessCount: 0,
-			OutputMessages: []protocol.CommandOutputMessage{
-				{
-					Success:    false,
-					Message:    "commands.generic.syntax",
-					Parameters: []string{},
-				},
-			},
-			DataSet: "",
-		}
+		new := DefaultCommandOutput
+		new.CommandOrigin.Origin = *origin
+		new.CommandOrigin.UUID = uniqueId
+		resp.Respond = &new
 	}
+	// 针对限制性情况的响应体微调
 	return &resp
-	// 获取响应体并返回值
+	// 返回值
 }
 
 // 以玩家的身份向租赁服发送命令且无视返回值
 func (g *GameInterface) SendCommand(command string) error {
+	if args.SkipMCPCheckChallenges {
+		err := g.SendAICommand(command)
+		if err != nil {
+			return fmt.Errorf("SendCommand: %v", err)
+		}
+		return nil
+	}
+	// for restrictive situation
 	uniqueId, _ := uuid.NewUUID()
 	err := g.send_command(command, uniqueId, protocol.CommandOriginPlayer)
 	if err != nil {
 		return fmt.Errorf("SendCommand: %v", err)
 	}
 	return nil
+	// for normal situation
 }
 
 // 向租赁服发送 WS 命令且无视返回值
 func (g *GameInterface) SendWSCommand(command string) error {
+	if args.SkipMCPCheckChallenges {
+		err := g.SendAICommand(command)
+		if err != nil {
+			return fmt.Errorf("SendWSCommand: %v", err)
+		}
+		return nil
+	}
+	// for restrictive situation
 	uniqueId, _ := uuid.NewUUID()
 	err := g.send_command(command, uniqueId, protocol.CommandOriginAutomationPlayer)
 	if err != nil {
 		return fmt.Errorf("SendWSCommand: %v", err)
 	}
 	return nil
+	// for normal situation
+}
+
+// 向租赁服发送 魔法指令 且无视返回值
+func (g *GameInterface) SendAICommand(command string) error {
+	uniqueId, _ := uuid.NewUUID()
+	// get command request id
+	err := g.Resources.Command.WriteRequest(
+		uniqueId,
+		ResourcesControl.CommandRequestOptions{
+			WithNoResponse: true,
+		},
+		ResourcesControl.CommandTypeAICommand,
+	)
+	if err != nil {
+		return fmt.Errorf("SendAICommand: %v", err)
+	}
+	// write request
+	err = g.send_netease_ai_command(command, uniqueId)
+	if err != nil {
+		return fmt.Errorf("SendAICommand: %v", err)
+	}
+	// send command
+	return nil
+	// return
 }
 
 // 以玩家的身份向租赁服发送命令且获取返回值。

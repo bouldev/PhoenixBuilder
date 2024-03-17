@@ -34,6 +34,10 @@ func setup() {
 	if !args.NoReadline {
 		readline.InitReadline()
 	}
+	if args.SkipMCPCheckChallenges {
+		fmt.Println("Wanring: Will login to the rental server without passing MCPCheckChallenges.")
+		fmt.Println("Info: Gamerule `sendcommandfeedback` will be updated to false(if we can) in order to reduce screen brushing.")
+	}
 }
 
 func display_info() {
