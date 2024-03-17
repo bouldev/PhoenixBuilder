@@ -73,7 +73,7 @@ current: build/phoenixbuilder
 all: ${TARGETS} build/hashes.json
 current-arm64-executable: build/phoenixbuilder-aarch64
 ios-executable: build/phoenixbuilder-ios-executable
-ish-executable: build/phoenixbuilder-ish-executable
+#ish-executable: build/phoenixbuilder-ish-executable
 macos: build/phoenixbuilder-macos
 android-executable-armv7: build/phoenixbuilder-android-static-executable-armv7 build/phoenixbuilder-android-termux-shared-executable-armv7 build/phoenixbuilder-android-shared-executable-armv7
 android-executable-arm64: build/phoenixbuilder-android-static-executable-arm64 build/phoenixbuilder-android-termux-shared-executable-arm64 build/phoenixbuilder-android-shared-executable-arm64
@@ -139,9 +139,9 @@ build/phoenixbuilder-ios-executable: build/ ${SRCS_GO}
 	${LDID} -Sios-ent.xml build/phoenixbuilder-ios-executable
 build/libexternal_functions_provider.dylib: build/ io/external_functions_provider/provider.c
 	`pwd`/archs/ios.sh io/external_functions_provider/provider.c -shared -o build/libexternal_functions_provider.dylib
-build/phoenixbuilder-ish-executable: build/ ${SRCS_GO}
-	cd depends/stub&&make clean&&make CC="${HOME}/i686-unknown-linux-musl/bin/i686-unknown-linux-musl-gcc --sysroot=`pwd`/../buildroot/ish -L`pwd`/../buildroot/ish/usr/lib" && cd -
-	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC="${HOME}/i686-unknown-linux-musl/bin/i686-unknown-linux-musl-gcc --sysroot=`pwd`/depends/buildroot/ish" CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -tags "ish" -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ish-executable
+#build/phoenixbuilder-ish-executable: build/ ${SRCS_GO}
+#	cd depends/stub&&make clean&&make CC="${HOME}/i686-unknown-linux-musl/bin/i686-unknown-linux-musl-gcc --sysroot=`pwd`/../buildroot/ish -L`pwd`/../buildroot/ish/usr/lib" && cd -
+#	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC="${HOME}/i686-unknown-linux-musl/bin/i686-unknown-linux-musl-gcc --sysroot=`pwd`/depends/buildroot/ish" CGO_ENABLED=1 GOOS=linux GOARCH=386 go build -tags "ish" -trimpath -ldflags "-s -w" -o build/phoenixbuilder-ish-executable
 build/phoenixbuilder-macos-x86_64: build/ ${SRCS_GO}
 	GODEBUG=madvdontneed=1 CGO_CFLAGS=${CGO_DEF} CC=`pwd`/archs/macos.sh CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o build/phoenixbuilder-macos-x86_64
 build/phoenixbuilder-macos-arm64: build/ ${SRCS_GO}
