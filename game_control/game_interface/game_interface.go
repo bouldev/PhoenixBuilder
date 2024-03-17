@@ -133,16 +133,10 @@ var DefaultCommandOutput = packet.CommandOutput{
 		RequestID:      "96045347-a6a3-4114-94c0-1bc4cc561694",
 		PlayerUniqueID: 0,
 	},
-	OutputType:   4,
-	SuccessCount: 0,
-	OutputMessages: []protocol.CommandOutputMessage{
-		{
-			Success:    false,
-			Message:    "commands.generic.syntax",
-			Parameters: []string{},
-		},
-	},
-	DataSet: "",
+	OutputType:     4,
+	SuccessCount:   0,
+	OutputMessages: []protocol.CommandOutputMessage{},
+	DataSet:        "",
 }
 
 // 描述一个空气物品
