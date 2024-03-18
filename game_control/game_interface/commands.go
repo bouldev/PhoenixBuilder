@@ -62,7 +62,7 @@ func (g *GameInterface) send_command(
 	if args.SkipMCPCheckChallenges {
 		err := g.send_netease_ai_command(command, uniqueId)
 		if err != nil {
-			return fmt.Errorf("sendCommand: %v", err)
+			return fmt.Errorf("send_command: %v", err)
 		}
 		return nil
 	}
@@ -79,7 +79,7 @@ func (g *GameInterface) send_command(
 		UnLimited: false,
 	})
 	if err != nil {
-		return fmt.Errorf("sendCommand: %v", err)
+		return fmt.Errorf("send_command: %v", err)
 	}
 	// for normal situation
 	return nil
