@@ -61,7 +61,8 @@ func (c *commandRequestWithResponse) try_to_write_response(
 	key uuid.UUID,
 	resp packet.CommandOutput,
 ) error {
-	if len(resp.CommandOrigin.RequestID) == 0 {
+	if resp.OutputType == packet.CommandOutputTypeDataSet && len(
+		resp.CommandOrigin.RequestID) == 0 && len(resp.DataSet) != 0 {
 		c.ai_command_resp = &resp
 		return nil
 	}
@@ -225,16 +226,16 @@ func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) Comman
 			return *resp
 			// return
 		case <-time.After(options.Value.TimeOut):
-		    if resp.Type != CommandTypeAICommand {
-		        c.request_lock.Lock()
-		        c.request.Delete(key)
-		        c.request_lock.Unlock()
-		        // delete request
-		        c.response.Delete(key)
-		        c.signal.Delete(key)
-		        // delete response and signal
-		    }
-		    // delete data by key
+			if resp.Type != CommandTypeAICommand {
+				c.request_lock.Lock()
+				c.request.Delete(key)
+				c.request_lock.Unlock()
+				// delete request
+				c.response.Delete(key)
+				c.signal.Delete(key)
+				// delete response and signal
+			}
+			// delete data by key
 			return CommandRespond{
 				Error:     fmt.Errorf(`LoadResponseAndDelete: Request "%v" time out`, key.String()),
 				ErrorType: ErrCommandRequestTimeOut,

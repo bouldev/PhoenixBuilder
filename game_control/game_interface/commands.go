@@ -67,21 +67,24 @@ func (g *GameInterface) send_command(
 		return nil
 	}
 	// for restrictive situation
-	requestId, _ := uuid.Parse("96045347-a6a3-4114-94c0-1bc4cc561694")
-	err := g.WritePacket(&packet.CommandRequest{
+	pkt := packet.CommandRequest{
 		CommandLine: command,
 		CommandOrigin: protocol.CommandOrigin{
-			Origin:    origin,
-			UUID:      uniqueId,
-			RequestID: requestId.String(),
+			Origin: origin,
+			UUID:   uniqueId,
 		},
 		Internal:  false,
 		UnLimited: false,
-	})
+	}
+	if origin == protocol.CommandOriginAutomationPlayer {
+		pkt.CommandOrigin.RequestID = "96045347-a6a3-4114-94c0-1bc4cc561694"
+	}
+	// construct command request packet
+	err := g.WritePacket(&pkt)
 	if err != nil {
 		return fmt.Errorf("send_command: %v", err)
 	}
-	// for normal situation
+	// send packet
 	return nil
 	// return
 }
@@ -133,7 +136,7 @@ func (g *GameInterface) send_command_with_options(
 ) *ResourcesControl.CommandRespond {
 	var command_type string
 	var err error
-	uniqueId := ResourcesControl.GenerateUUID()
+	command_request_id := ResourcesControl.GenerateUUID()
 	// 初始化
 	{
 		switch origin {
@@ -147,7 +150,7 @@ func (g *GameInterface) send_command_with_options(
 			command_type = ResourcesControl.CommandTypeAICommand
 		}
 		// 类型微调
-		err = g.Resources.Command.WriteRequest(uniqueId, options, command_type)
+		err = g.Resources.Command.WriteRequest(command_request_id, options, command_type)
 		if err != nil {
 			return &ResourcesControl.CommandRespond{
 				Error:     fmt.Errorf("send_command_with_options: %v", err),
@@ -163,9 +166,9 @@ func (g *GameInterface) send_command_with_options(
 	// 写入请求到等待队列
 	switch origin {
 	case nil:
-		err = g.send_netease_ai_command(command, uniqueId)
+		err = g.send_netease_ai_command(command, command_request_id)
 	default:
-		err = g.send_command(command, uniqueId, *origin)
+		err = g.send_command(command, command_request_id, *origin)
 	}
 	if err != nil {
 		return &ResourcesControl.CommandRespond{
@@ -178,29 +181,38 @@ func (g *GameInterface) send_command_with_options(
 		return nil
 	}
 	// 如果不需要跟踪响应体
-	resp := g.Resources.Command.LoadResponseAndDelete(uniqueId)
+	resp := g.Resources.Command.LoadResponseAndDelete(command_request_id)
 	if resp.Error != nil {
 		resp.Error = fmt.Errorf("send_command_with_options: %v", resp.Error)
 	}
 	// 加载响应体
-	if args.SkipMCPCheckChallenges && origin != nil && resp.Respond != nil {
-		resp.Respond.CommandOrigin.Origin = *origin
-		resp.Respond.CommandOrigin.RequestID = "96045347-a6a3-4114-94c0-1bc4cc561694"
-	}
-	if args.SkipMCPCheckChallenges && origin != nil && resp.Respond == nil {
-		new := DefaultCommandOutput
-		new.CommandOrigin.Origin = *origin
-		new.CommandOrigin.UUID = uniqueId
-		new.OutputMessages = append(
-			new.OutputMessages,
-			protocol.CommandOutputMessage{
-				Success:    false,
-				Message:    "commands.generic.syntax",
-				Parameters: []string{"", command, ""},
-			},
-		)
-		new.DataSet = "{\n   \"statusCode\" : -2147483648\n}\n"
-		resp.Respond = &new
+	if args.SkipMCPCheckChallenges && origin != nil {
+		switch resp.Respond {
+		case nil:
+			new := DefaultCommandOutput
+			new.CommandOrigin.Origin = *origin
+			new.CommandOrigin.UUID = command_request_id
+			new.OutputMessages = []protocol.CommandOutputMessage{
+				{
+					Success:    false,
+					Message:    "commands.generic.syntax",
+					Parameters: []string{"", command, ""},
+				},
+			}
+			if *origin == protocol.CommandOriginAutomationPlayer {
+				new.DataSet = "{\n   \"statusCode\" : -2147483648\n}\n"
+			}
+			resp.Respond = &new
+		default:
+			resp.Respond.CommandOrigin.Origin = *origin
+		}
+		switch *origin {
+		case protocol.CommandOriginAutomationPlayer:
+			resp.Respond.OutputType = packet.CommandOutputTypeDataSet
+		default:
+			resp.Respond.OutputType = packet.CommandOutputTypeAllOutput
+			resp.Respond.DataSet = ""
+		}
 	}
 	// 针对限制性情况的响应体微调
 	return &resp
