@@ -128,9 +128,9 @@ const (
 // 描述一个默认状态下的命令响应体
 var DefaultCommandOutput = packet.CommandOutput{
 	CommandOrigin: protocol.CommandOrigin{
-		Origin:         5,
+		Origin:         0,
 		UUID:           uuid.UUID{},
-		RequestID:      "96045347-a6a3-4114-94c0-1bc4cc561694",
+		RequestID:      "",
 		PlayerUniqueID: 0,
 	},
 	OutputType:     4,

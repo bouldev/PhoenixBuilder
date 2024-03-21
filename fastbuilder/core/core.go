@@ -74,7 +74,7 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 				)
 				env.GameInterface.Output(pterm.Error.Sprintf("%v", resp.Error.Error()))
 			} else {
-				env.GameInterface.Output(fmt.Sprintf("%+v", resp.Respond))
+				env.GameInterface.Output(fmt.Sprintf("%+v", *resp.Respond))
 			}
 		case '!':
 			resp := gameInterface.SendWSCommandWithResponse(
