@@ -1,15 +1,16 @@
-// +build windows android,arm no_readline
+//go:build windows || (android && arm) || no_readline
 
 package readline
 
 // Windows is not supported, so read from terminal directly.
 
 import (
-	"os"
-	"fmt"
 	"bufio"
-	"strings"
+	"os"
 	"phoenixbuilder/fastbuilder/environment"
+	"strings"
+
+	"github.com/pterm/pterm"
 )
 
 var SelfTermination chan bool
@@ -23,7 +24,7 @@ func Interrupt() {
 }
 
 func InitReadline() {
-	fmt.Printf("Warning: Feature readline is not compatible with current platform.\n")
+	pterm.Warning.Println("Feature readline is not compatible with current platform.")
 }
 
 func Readline(env *environment.PBEnvironment) string {
