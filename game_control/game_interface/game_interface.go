@@ -40,6 +40,23 @@ type GameInterface struct {
 
 // ------------------------- constants -------------------------
 
+/*
+一个约定俗成的常量，
+其使用最早可被追溯到三年前，
+且目前仍被广泛使用。
+
+该字段的目的是未知的，
+但我们至今仍然保留这一传统，
+因为它可以有助于区分命令响
+应体对应的原始请求的类型。
+
+该字段被用于指代
+packet.CommandRequest 中
+的 CommandOrigin.RequestID 字段，
+且应当仅被用于 Websocket 命令的发送
+*/
+const DefaultCommandRequestID = "96045347-a6a3-4114-94c0-1bc4cc561694"
+
 // 描述最基本的四大选择器
 const (
 	TargetMySelf        string = "@s"
@@ -138,23 +155,6 @@ var DefaultCommandOutput = packet.CommandOutput{
 	OutputMessages: []protocol.CommandOutputMessage{},
 	DataSet:        "",
 }
-
-/*
-一个约定俗成的常量，
-其使用最早可被追溯到三年前，
-且目前仍被广泛使用。
-
-该字段的目的是未知的，
-但我们至今仍然保留这一传统，
-因为它可以有助于区分命令响
-应体对应的原始请求的类型。
-
-该字段被用于指代
-packet.CommandRequest 中
-的 CommandOrigin.RequestID 字段，
-且应当仅被用于 Websocket 命令的发送
-*/
-var DefaultCommandRequestID = "96045347-a6a3-4114-94c0-1bc4cc561694"
 
 // 描述一个空气物品
 var AirItem protocol.ItemInstance = protocol.ItemInstance{
