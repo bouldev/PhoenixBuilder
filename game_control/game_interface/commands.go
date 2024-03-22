@@ -77,7 +77,7 @@ func (g *GameInterface) send_command(
 		UnLimited: false,
 	}
 	if origin == protocol.CommandOriginAutomationPlayer {
-		pkt.CommandOrigin.RequestID = "96045347-a6a3-4114-94c0-1bc4cc561694"
+		pkt.CommandOrigin.RequestID = DefaultCommandRequestID
 	}
 	// construct command request packet
 	err := g.WritePacket(&pkt)
@@ -189,10 +189,10 @@ func (g *GameInterface) send_command_with_options(
 	if args.SkipMCPCheckChallenges && origin != nil {
 		switch resp.Respond {
 		case nil:
-			new := DefaultCommandOutput
-			new.CommandOrigin.Origin = *origin
-			new.CommandOrigin.UUID = command_request_id
-			new.OutputMessages = []protocol.CommandOutputMessage{
+			fake_resp := DefaultCommandOutput
+			fake_resp.CommandOrigin.Origin = *origin
+			fake_resp.CommandOrigin.UUID = command_request_id
+			fake_resp.OutputMessages = []protocol.CommandOutputMessage{
 				{
 					Success:    false,
 					Message:    "commands.generic.syntax",
@@ -200,17 +200,18 @@ func (g *GameInterface) send_command_with_options(
 				},
 			}
 			if *origin == protocol.CommandOriginAutomationPlayer {
-				new.DataSet = "{\n   \"statusCode\" : -2147483648\n}\n"
+				fake_resp.DataSet = "{\n   \"statusCode\" : -2147483648\n}\n"
 			}
-			resp.Respond = &new
+			resp.Respond = &fake_resp
 		default:
 			resp.Respond.CommandOrigin.Origin = *origin
 		}
 		switch *origin {
 		case protocol.CommandOriginAutomationPlayer:
+			resp.Respond.CommandOrigin.RequestID = DefaultCommandRequestID
 			resp.Respond.OutputType = packet.CommandOutputTypeDataSet
 		default:
-			resp.Respond.OutputType = packet.CommandOutputTypeAllOutput
+			resp.Respond.OutputType = packet.CommandOutputTypeNone
 			resp.Respond.DataSet = ""
 		}
 	}

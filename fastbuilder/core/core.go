@@ -422,7 +422,7 @@ func WaitMCPCheckChallengesDown(
 			CommandOrigin: protocol.CommandOrigin{
 				Origin:    protocol.CommandOriginAutomationPlayer,
 				UUID:      ResourcesControl.GenerateUUID(),
-				RequestID: "96045347-a6a3-4114-94c0-1bc4cc561694",
+				RequestID: GameInterface.DefaultCommandRequestID,
 			},
 			Internal:  false,
 			UnLimited: false,

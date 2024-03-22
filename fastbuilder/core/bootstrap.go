@@ -35,8 +35,10 @@ func setup() {
 		readline.InitReadline()
 	}
 	if args.SkipMCPCheckChallenges {
-		fmt.Println("Wanring: Will login to the rental server without passing MCPCheckChallenges.")
-		fmt.Println("Info: Gamerule `sendcommandfeedback` will be updated to false(if we can) in order to reduce screen brushing.")
+		pterm.Warning.Println("Will login to the rental server without passing MCPCheckChallenges.")
+		pterm.Info.Println("The implementation of command execution has been replaced with sending Netease ai commands.")
+		pterm.Info.Println("When a command is executed as `CommandOriginPlayer` role, the response is always received. The OutputType corresponding to the response will reset to `CommandOutputTypeNone` because we don't know the actual value of `sendcommandfeedback` game rule.")
+		pterm.Info.Println("Gamerule `sendcommandfeedback` will be updated to false(if we can) in order to reduce screen brushing.")
 	}
 }
 
