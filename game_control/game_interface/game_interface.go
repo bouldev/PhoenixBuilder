@@ -142,15 +142,17 @@ const (
 	End_MinPosy                    // 末地
 )
 
-// 描述一个默认状态下的命令响应体
+// 描述一个默认状态下的
+// Websocket 命令请求所
+// 对应的响应体
 var DefaultCommandOutput = packet.CommandOutput{
 	CommandOrigin: protocol.CommandOrigin{
-		Origin:         0,
+		Origin:         protocol.CommandOriginAutomationPlayer,
 		UUID:           uuid.UUID{},
-		RequestID:      "",
+		RequestID:      DefaultCommandRequestID,
 		PlayerUniqueID: 0,
 	},
-	OutputType:     4,
+	OutputType:     packet.CommandOutputTypeDataSet,
 	SuccessCount:   0,
 	OutputMessages: []protocol.CommandOutputMessage{},
 	DataSet:        "",
