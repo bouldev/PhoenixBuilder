@@ -211,6 +211,7 @@ func (g *GameInterface) send_command_with_options(
 			resp.Respond.CommandOrigin.RequestID = DefaultCommandRequestID
 			resp.Respond.OutputType = packet.CommandOutputTypeDataSet
 		default:
+			resp.Respond.CommandOrigin.RequestID = ""
 			resp.Respond.OutputType = packet.CommandOutputTypeNone
 			resp.Respond.DataSet = ""
 		}
