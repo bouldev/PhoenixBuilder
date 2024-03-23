@@ -95,7 +95,7 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 				env.GameInterface.Output(fmt.Sprintf("%+v", *resp.Respond))
 			}
 		case '~':
-			resp := gameInterface.(*GameInterface.GameInterface).SendAICommandWithResponse(
+			resp := gameInterface.SendAICommandWithResponse(
 				cmd[1:],
 				ResourcesControl.CommandRequestOptions{
 					TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
