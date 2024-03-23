@@ -6,10 +6,14 @@ import (
 
 type GameInterface interface {
 	SendSettingsCommand(string, bool) error
+
 	SendCommand(string) error
 	SendWSCommand(string) error
+	SendAICommand(string) error
+
 	SendCommandWithResponse(string, resources_control.CommandRequestOptions) resources_control.CommandRespond
 	SendWSCommandWithResponse(string, resources_control.CommandRequestOptions) resources_control.CommandRespond
+	SendAICommandWithResponse(string, resources_control.CommandRequestOptions) resources_control.CommandRespond
 
 	SetBlock([3]int32, string, string) error
 	SetBlockAsync([3]int32, string, string) error
