@@ -91,7 +91,20 @@ type CommandRequestOptions struct {
 	// 如果此字段为 0 ，则将永远等待，
 	// 直到客户端收到对应的响应体
 	TimeOut time.Duration
-	// 指定当前命令无需追踪其对应的返回值
+	/*
+		指定当前命令无需追踪其对应的返回值。
+
+		值得注意的是，响应体在实质上仍被追踪，
+		它仍会被计入请求列表并经过资源控制中心，
+		同时作为与其他命令请求同级的存在。
+		区别于其他响应体，
+		该字段为真的响应体会在对应的响应体到来时，
+		由资源控制中心在内部赋值、加载和删除。
+
+		因此，基于以上的缘由，
+		此字段应当仅用于 魔法指令 的执行，
+		因为 魔法指令 被要求必须经由资源控制中心发送
+	*/
 	WithNoResponse bool
 }
 
@@ -99,8 +112,9 @@ type CommandRequestOptions struct {
 // 该响应体不是命令请求的标准响应体，
 // 而是由多个 PyRpc 数据包共同描述
 type AICommandDetails struct {
-	// 描述 魔法指令 是否成功
-	Result ai_command.AfterExecuteCommandEvent
+	// 描述 魔法指令 是否成功。
+	// 若前置检查失败，则此字段为空值
+	Result *ai_command.AfterExecuteCommandEvent
 	// 描述 魔法指令 的输出。
 	// 如果命令失败，则此切片为空
 	Output []ai_command.ExecuteCommandOutputEvent
