@@ -138,7 +138,6 @@ func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
 			panic("on_ai_command: Attempt to send NeteaseAICommand(packet.PyRpc/CS2ModEvent/ExecuteCommandEvent) without using ResourcesControlCenter")
 		}
 		// load data and check
-		resp.AICommand.Result.CommandRequestID = command_request_id
 		resp.AICommand.PreCheckError = e
 		channel <- SignalCouldLoadRespond
 		// set data and send signal
@@ -162,7 +161,7 @@ func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
 			channel <- SignalRespondReceived
 		}
 		// set standard response
-		resp.AICommand.Result = *e
+		resp.AICommand.Result = e
 		channel <- SignalCouldLoadRespond
 		// set data and send signal
 		if options.Value.WithNoResponse {

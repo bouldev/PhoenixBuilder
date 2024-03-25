@@ -40,7 +40,7 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 			if !success {
 				return
 			}
-			// minrcraft package
+			// minecraft package
 			switch module := park.Module.(type) {
 			case *stc_mc.AICommand:
 				r.Command.on_ai_command(*module)
