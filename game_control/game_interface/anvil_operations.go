@@ -119,9 +119,9 @@ func (g *GameInterface) RenameItemByAnvil(
 		// 获取被改物品的相关信息。
 		// 如果发生了错误或指定的物品为空气，
 		// 则会跳过这个物品
-		containerOpeningData := g.Resources.Container.GetContainerOpeningData()
+		container_opening_data := g.Resources.Container.GetContainerOpeningData()
 		// 获取已打开的容器的数据
-		if containerOpeningData == nil {
+		if container_opening_data == nil {
 			return res, fmt.Errorf("RenameItemByAnvil: Anvil have been closed")
 		}
 		// 确保容器未被关闭
@@ -132,7 +132,7 @@ func (g *GameInterface) RenameItemByAnvil(
 				Slot:        value.Slot,
 			},
 			ItemLocation{
-				WindowID:    containerOpeningData.WindowID,
+				WindowID:    container_opening_data.WindowID,
 				ContainerID: 0x0,
 				Slot:        1,
 			},
@@ -155,7 +155,7 @@ func (g *GameInterface) RenameItemByAnvil(
 			continue
 		}
 		// 移动物品到铁砧
-		backup, err := g.Resources.Inventory.GetItemStackInfo(uint32(containerOpeningData.WindowID), 1)
+		backup, err := g.Resources.Inventory.GetItemStackInfo(uint32(container_opening_data.WindowID), 1)
 		if err != nil {
 			panic(fmt.Errorf("RenameItemByAnvil: %v", err))
 		}
@@ -172,7 +172,7 @@ func (g *GameInterface) RenameItemByAnvil(
 					Slot:           1,
 					StackNetworkID: backup.StackNetworkID,
 				},
-				uint32(containerOpeningData.WindowID),
+				uint32(container_opening_data.WindowID),
 			)
 			if err != nil {
 				panic(fmt.Sprintf("RenameItemByAnvil: %v", err))

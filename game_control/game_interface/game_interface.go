@@ -123,23 +123,23 @@ const (
 
 // 描述各个维度的 ID
 const (
-	OverWorldID = byte(iota) // 主世界
-	NetherID                 // 下界
-	EndID                    // 末地
+	OverWorldID = byte(iota)
+	NetherID
+	EndID
 )
 
 // 描述各个维度可放置方块的最高高度
 const (
-	OverWorld_MaxPosy = int32(319) // 主世界
-	Nether_MaxPosy    = int32(127) // 下界
-	End_MaxPosy       = int32(255) // 末地
+	OverWorld_MaxPosy = int32(319)
+	Nether_MaxPosy    = int32(127)
+	End_MaxPosy       = int32(255)
 )
 
 // 描述各个维度可放置方块的最低高度
 const (
-	OverWorld_MinPosy = int32(-64) // 主世界
-	Nether_MinPosy    = int32(0)   // 下界
-	End_MinPosy                    // 末地
+	OverWorld_MinPosy = int32(-64)
+	Nether_MinPosy    = int32(0)
+	End_MinPosy
 )
 
 // 描述一个默认状态下的

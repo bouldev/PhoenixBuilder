@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/configuration"
 	"phoenixbuilder/fastbuilder/environment"
@@ -181,6 +182,9 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				ArgumentTypes: []byte{},
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
+					if args.SkipMCPCheckChallenges {
+						defer env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback false", false)
+					}
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
 							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
@@ -218,6 +222,9 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
+					if args.SkipMCPCheckChallenges {
+						defer env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback false", false)
+					}
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
 							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
@@ -254,6 +261,9 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
+					if args.SkipMCPCheckChallenges {
+						defer env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback false", false)
+					}
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
 							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",

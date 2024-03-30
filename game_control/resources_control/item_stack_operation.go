@@ -9,21 +9,21 @@ import (
 )
 
 // 提交物品请求 ID 为 key 的物品操作。
-// howToChange 指代相应槽位的变动结果，这用于更新本地库存数据
-func (i *itemStackRequestWithResponse) WriteRequest(
+// how_to_change 指代相应槽位的变动结果，这用于更新本地库存数据
+func (i *item_stack_request_with_response) WriteRequest(
 	key int32,
-	howToChange map[ContainerID]StackRequestContainerInfo,
+	how_to_change map[ContainerID]StackRequestContainerInfo,
 ) error {
-	_, exist := i.requestWithResponse.Load(key)
+	_, exist := i.request_with_response.Load(key)
 	if exist {
 		return fmt.Errorf("WriteRequest: %v has already existed", key)
 	}
 	// if key has already exist
-	i.requestWithResponse.Store(
+	i.request_with_response.Store(
 		key,
-		singleItemStackRequestWithResponse{
-			resp:        make(chan protocol.ItemStackResponse, 1),
-			howToChange: howToChange,
+		singleitem_stack_request_with_response{
+			resp:          make(chan protocol.ItemStackResponse, 1),
+			how_to_change: how_to_change,
 		},
 	)
 	// write request
@@ -34,13 +34,13 @@ func (i *itemStackRequestWithResponse) WriteRequest(
 // 向请求 ID 为 key 的物品操作写入返回值 resp 。
 // 当 key 不存在时，将会抛出程序 panic 。
 // 属于私有实现。
-func (i *itemStackRequestWithResponse) writeResponse(
+func (i *item_stack_request_with_response) write_response(
 	key int32,
 	resp protocol.ItemStackResponse,
 ) {
-	value, exist := i.requestWithResponse.Load(key)
+	value, exist := i.request_with_response.Load(key)
 	if !exist {
-		panic("writeResponse: Attempt to send packet.ItemStackRequest without using ResourcesControlCenter")
+		panic("write_response: Attempt to send packet.ItemStackRequest without using ResourcesControlCenter")
 	}
 	// if key is not exist
 	value.resp <- resp
@@ -49,32 +49,32 @@ func (i *itemStackRequestWithResponse) writeResponse(
 
 // 读取请求 ID 为 key 的物品操作请求的返回值，
 // 同时移除此物品操作请求
-func (i *itemStackRequestWithResponse) LoadResponseAndDelete(key int32) (protocol.ItemStackResponse, error) {
-	value, exist := i.requestWithResponse.Load(key)
+func (i *item_stack_request_with_response) LoadResponseAndDelete(key int32) (protocol.ItemStackResponse, error) {
+	value, exist := i.request_with_response.Load(key)
 	if !exist {
 		return protocol.ItemStackResponse{}, fmt.Errorf("LoadResponseAndDelete: %v is not recorded", key)
 	}
 	// if key is not exist
 	ret := <-value.resp
-	i.requestWithResponse.Delete(key)
+	i.request_with_response.Delete(key)
 	return ret, nil
 	// return
 }
 
 // 以原子操作获取上一次的请求 ID ，即 RequestID 。
 // 如果从未进行过物品操作，则将会返回 1
-func (i *itemStackRequestWithResponse) GetCurrentRequestID() int32 {
-	return atomic.LoadInt32(&i.currentRequestID)
+func (i *item_stack_request_with_response) GetCurrentRequestID() int32 {
+	return atomic.LoadInt32(&i.current_request_id)
 }
 
 // 以原子操作获取一个新的请求 ID ，即 RequestID
-func (i *itemStackRequestWithResponse) GetNewRequestID() int32 {
-	return atomic.AddInt32(&i.currentRequestID, -2)
+func (i *item_stack_request_with_response) GetNewRequestID() int32 {
+	return atomic.AddInt32(&i.current_request_id, -2)
 }
 
 // 利用 newItemName 更新 item 中存储的物品名称信息。
 // 如果传入的 newItemName 为空字符串，则将会从 item 中移除物品名称信息
-func (i *itemStackRequestWithResponse) SetItemName(
+func (i *item_stack_request_with_response) SetItemName(
 	item *protocol.ItemInstance,
 	newItemName string,
 ) error {
@@ -141,7 +141,7 @@ func (i *itemStackRequestWithResponse) SetItemName(
 
 // 根据 newItem 中预期的新数据和租赁服返回的 resp ，
 // 返回完整的新物品数据。
-func (i *itemStackRequestWithResponse) GetNewItemData(
+func (i *item_stack_request_with_response) GetNewItemData(
 	newItem protocol.ItemInstance,
 	resp protocol.StackResponseSlotInfo,
 ) (protocol.ItemInstance, error) {
@@ -162,25 +162,25 @@ inventory 必须是一个指针，它指向了客户端库存数据在内存中�
 来加载原有的请求数据，并访问其中描述的物品变动的预期结果，
 然后依此字段和 resp 字段更新本地库存数据。
 */
-func (i *itemStackRequestWithResponse) updateItemData(
+func (i *item_stack_request_with_response) update_item_data(
 	resp protocol.ItemStackResponse,
-	inventory *inventoryContents,
+	inventory *inventory_contents,
 ) error {
-	request, exist := i.requestWithResponse.Load(resp.RequestID)
+	request, exist := i.request_with_response.Load(resp.RequestID)
 	if !exist {
-		panic("updateItemData: Attempt to send packet.ItemStackRequest without using ResourcesControlCenter")
+		panic("update_item_data: Attempt to send packet.ItemStackRequest without using ResourcesControlCenter")
 	}
 	// 加载物品操作请求
 	for _, value := range resp.ContainerInfo {
-		if request.howToChange == nil {
-			panic("updateItemData: Results of item changes are not provided(packet.ItemStackRequest related)")
+		if request.how_to_change == nil {
+			panic("update_item_data: Results of item changes are not provided(packet.ItemStackRequest related)")
 		}
-		currentRequest, ok := request.howToChange[ContainerID(value.ContainerID)]
+		currentRequest, ok := request.how_to_change[ContainerID(value.ContainerID)]
 		if !ok {
 			pterm.Warning.Printf(
-				"updateItemData: request_got.howToChange[%d] is not provided(packet.ItemStackRequest related); request_got.howToChange = %#v; value = %#v\n",
+				"update_item_data: request_got.how_to_change[%d] is not provided(packet.ItemStackRequest related); request_got.how_to_change = %#v; value = %#v\n",
 				ContainerID(value.ContainerID),
-				request.howToChange,
+				request.how_to_change,
 				value,
 			)
 			return nil
@@ -190,7 +190,7 @@ func (i *itemStackRequestWithResponse) updateItemData(
 			expectNewItem, ok := currentRequest.ChangeResult[val.Slot]
 			if !ok {
 				pterm.Warning.Printf(
-					"updateItemData: currentRequest.ChangeResult[%d] is not provided(packet.ItemStackRequest related); currentRequest.ChangeResult = %#v; val = %#v\n",
+					"update_item_data: currentRequest.ChangeResult[%d] is not provided(packet.ItemStackRequest related); currentRequest.ChangeResult = %#v; val = %#v\n",
 					val.Slot,
 					currentRequest.ChangeResult,
 					val,
@@ -203,10 +203,10 @@ func (i *itemStackRequestWithResponse) updateItemData(
 				val,
 			)
 			if err != nil {
-				panic(fmt.Sprintf("updateItemData: Failed to get new item data; currentRequest.ChangeResult[val.Slot] = %#v, val = %#v", currentRequest.ChangeResult[val.Slot], val))
+				panic(fmt.Sprintf("update_item_data: Failed to get new item data; currentRequest.ChangeResult[val.Slot] = %#v, val = %#v", currentRequest.ChangeResult[val.Slot], val))
 			}
 			// 取得物品的新数据
-			inventory.writeItemStackInfo(currentRequest.WindowID, val.Slot, newItem)
+			inventory.write_item_stack_info(currentRequest.WindowID, val.Slot, newItem)
 			// 将物品的新数据写入到本地库存中
 		}
 		// 更新本地库存中一个或多个物品的数据

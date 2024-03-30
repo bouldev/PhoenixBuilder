@@ -2,6 +2,7 @@ package task
 
 import (
 	"fmt"
+	"phoenixbuilder/fastbuilder/args"
 	NBTAssigner "phoenixbuilder/fastbuilder/bdump/nbt_assigner"
 	"phoenixbuilder/fastbuilder/builder"
 	"phoenixbuilder/fastbuilder/commands_generator"
@@ -252,7 +253,9 @@ func CreateTask(commandLine string, env *environment.PBEnvironment) *Task {
 		} else {
 			//isFastMode=false
 			gameInterface.SendWSCommand("gamemode c")
-			gameInterface.SendWSCommand("gamerule sendcommandfeedback true")
+			if !args.SkipMCPCheckChallenges {
+				gameInterface.SendWSCommand("gamerule sendcommandfeedback true")
+			}
 		}
 		for {
 			task.ContinueLock.Lock()

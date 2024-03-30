@@ -21,43 +21,43 @@ upperStorageLimit 代表缓冲区可保存的最大数据包数。
 而返回的管道则代表用于储存数据包的缓冲区，
 它将被实时更新，直到被它的监听者关闭
 */
-func (p *packetListener) CreateNewListen(
-	packetsID []uint32,
+func (p *packet_listener) CreateNewListen(
+	packets_id []uint32,
 	upperStorageLimit int16,
 ) (uuid.UUID, <-chan packet.Packet) {
 	uniqueId := GenerateUUID()
 	ctx, stop := context.WithCancel(context.Background())
-	newListen := singleListen{
-		packetsID:      packetsID,
-		packetReceived: make(chan packet.Packet, upperStorageLimit),
-		ctx:            ctx,
-		stop:           stop,
+	newListen := single_listen{
+		packets_id:      packets_id,
+		packet_received: make(chan packet.Packet, upperStorageLimit),
+		ctx:             ctx,
+		stop:            stop,
 	}
-	p.listenerWithData.Store(uniqueId, newListen)
-	return uniqueId, newListen.packetReceived
+	p.listener_with_data.Store(uniqueId, newListen)
+	return uniqueId, newListen.packet_received
 }
 
-// 将数据包 pk 发送到管道 s.packetReceived 。
+// 将数据包 pk 发送到管道 s.packet_received 。
 // 此函数可能会被阻塞，因此需要以协程执行。
 // 如果 s 所对应的监听已被它的监听者中止，
 // 那么此函数将会返回值，无论其是否已被阻塞。
 // 属于私有实现
-func (s *singleListen) simplePacketDistributor(
+func (s *single_listen) simple_packet_distributor(
 	pk packet.Packet,
 ) {
-	if atomic.LoadInt32(&s.runningCounts) >= MaximumCoroutinesRunningCount {
+	if atomic.LoadInt32(&s.running_counts) >= MaximumCoroutinesRunningCount {
 		return
 	}
 	// 如果该监听器下已运行的协程数超过了最大允许数量，
 	// 则丢当前数据包，直接返回值
-	atomic.AddInt32(&s.runningCounts, 1)
-	defer atomic.AddInt32(&s.runningCounts, -1)
+	atomic.AddInt32(&s.running_counts, 1)
+	defer atomic.AddInt32(&s.running_counts, -1)
 	// 更新该监听器下已运行的协程数
 	select {
 	case <-s.ctx.Done():
 		// 如果监听器已被它的监听者终止并关闭，
 		// 那么本协程需要立即销毁
-	case s.packetReceived <- pk:
+	case s.packet_received <- pk:
 		// 将数据包发送到管道，
 		// 将在管道缓冲区已满时遭遇阻塞
 	}
@@ -66,19 +66,19 @@ func (s *singleListen) simplePacketDistributor(
 
 // 将数据包 pk 分发到每个监听器上。
 // 属于私有实现
-func (p *packetListener) distributePacket(pk packet.Packet) error {
+func (p *packet_listener) distribute_packet(pk packet.Packet) error {
 	var err error
 	// 初始化
-	p.listenerWithData.Range(
-		func(key uuid.UUID, value singleListen) bool {
-			if len(value.packetsID) == 0 {
-				go value.simplePacketDistributor(pk)
+	p.listener_with_data.Range(
+		func(key uuid.UUID, value single_listen) bool {
+			if len(value.packets_id) == 0 {
+				go value.simple_packet_distributor(pk)
 				return true
 			}
 			// 如果要监听所有的数据包
-			for _, val := range value.packetsID {
+			for _, val := range value.packets_id {
 				if val == pk.ID() {
-					go value.simplePacketDistributor(pk)
+					go value.simple_packet_distributor(pk)
 				}
 			}
 			return true
@@ -94,13 +94,13 @@ func (p *packetListener) distributePacket(pk packet.Packet) error {
 }
 
 // 终止并关闭 listener 所指代的监听器
-func (p *packetListener) StopAndDestroy(listener uuid.UUID) error {
-	single_listen, ok := p.listenerWithData.Load(listener)
+func (p *packet_listener) StopAndDestroy(listener uuid.UUID) error {
+	single_listen, ok := p.listener_with_data.Load(listener)
 	if !ok {
 		return fmt.Errorf("StopAndDestroy: %v is not recorded", listener.String())
 	}
 	single_listen.stop()
-	p.listenerWithData.Delete(listener)
+	p.listener_with_data.Delete(listener)
 	// send stop command and delete listener
 	return nil
 	// return

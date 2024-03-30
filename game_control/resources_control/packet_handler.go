@@ -51,7 +51,7 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 	case *packet.InventoryContent:
 		for key, value := range p.Content {
 			if value.Stack.ItemType.NetworkID != -1 {
-				r.Inventory.writeItemStackInfo(p.WindowID, uint8(key), value)
+				r.Inventory.write_item_stack_info(p.WindowID, uint8(key), value)
 			}
 		}
 		// inventory contents(basic)
@@ -60,19 +60,19 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 			if value.SourceType == protocol.InventoryActionSourceCreative {
 				continue
 			}
-			r.Inventory.writeItemStackInfo(uint32(value.WindowID), uint8(value.InventorySlot), value.NewItem)
+			r.Inventory.write_item_stack_info(uint32(value.WindowID), uint8(value.InventorySlot), value.NewItem)
 		}
 		// inventory contents(for enchant command...)
 	case *packet.InventorySlot:
-		r.Inventory.writeItemStackInfo(p.WindowID, uint8(p.Slot), p.NewItem)
+		r.Inventory.write_item_stack_info(p.WindowID, uint8(p.Slot), p.NewItem)
 		// inventory contents(for chest...) [NOT TEST]
 	case *packet.ItemStackResponse:
 		for _, value := range p.Responses {
 			if value.Status == protocol.ItemStackResponseStatusOK {
-				r.ItemStackOperation.updateItemData(value, &r.Inventory)
+				r.ItemStackOperation.update_item_data(value, &r.Inventory)
 			}
 			// update local inventory data
-			r.ItemStackOperation.writeResponse(value.RequestID, value)
+			r.ItemStackOperation.write_response(value.RequestID, value)
 			// write response
 		}
 		// item stack request
@@ -80,14 +80,14 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		if !r.Container.GetOccupyStates() {
 			panic("handlePacket: Attempt to send packet.ContainerOpen without using ResourcesControlCenter")
 		}
-		r.Container.writeContainerClosingData(nil)
-		r.Container.writeContainerOpeningData(p)
-		r.Inventory.createNewInventory(uint32(p.WindowID))
-		r.Container.respondToContainerOperation()
+		r.Container.write_container_closing_data(nil)
+		r.Container.write_container_opening_data(p)
+		r.Inventory.create_new_inventory(uint32(p.WindowID))
+		r.Container.respond_to_container_operation()
 		// when a container is opened
 	case *packet.ContainerClose:
 		if p.WindowID != 0 && p.WindowID != 119 && p.WindowID != 120 && p.WindowID != 124 {
-			err := r.Inventory.deleteInventory(uint32(p.WindowID))
+			err := r.Inventory.delete_inventory(uint32(p.WindowID))
 			if err != nil {
 				panic(fmt.Sprintf("handlePacket: Try to removed an inventory which not existed; p.WindowID = %v", p.WindowID))
 			}
@@ -95,9 +95,9 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		if !p.ServerSide && !r.Container.GetOccupyStates() {
 			panic("handlePacket: Attempt to send packet.ContainerClose without using ResourcesControlCenter")
 		}
-		r.Container.writeContainerOpeningData(nil)
-		r.Container.writeContainerClosingData(p)
-		r.Container.respondToContainerOperation()
+		r.Container.write_container_opening_data(nil)
+		r.Container.write_container_closing_data(p)
+		r.Container.respond_to_container_operation()
 		// when a container has been closed
 	case *packet.StructureTemplateDataResponse:
 		if !r.Structure.GetOccupyStates() {
@@ -107,7 +107,7 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		// used to request mcstructure data
 	}
 	// process packet
-	err := r.Listener.distributePacket(*pk)
+	err := r.Listener.distribute_packet(*pk)
 	if err != nil {
 		panic(fmt.Sprintf("handlePacket: %v", err))
 	}
