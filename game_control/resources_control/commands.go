@@ -19,7 +19,7 @@ request_type 指代原始的命令请求的类型，
 
 options 指定当次命令请求的自定义设置项
 */
-func (c *commandRequestWithResponse) WriteRequest(
+func (c *command_request_with_response) WriteRequest(
 	key uuid.UUID,
 	options CommandRequestOptions,
 	request_type string,
@@ -57,7 +57,7 @@ func (c *commandRequestWithResponse) WriteRequest(
 // 尝试向请求 ID 为 key 的命令请求写入返回值 resp 。
 // 属于私有实现。
 // 如果 key 不存在，亦不会返回错误
-func (c *commandRequestWithResponse) try_to_write_response(
+func (c *command_request_with_response) try_to_write_response(
 	key uuid.UUID,
 	resp packet.CommandOutput,
 ) error {
@@ -93,7 +93,7 @@ func (c *commandRequestWithResponse) try_to_write_response(
 // 如果响应体对应的命令请求未被找到，
 // 则会造成程序 panic 。
 // 属于私有实现
-func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
+func (c *command_request_with_response) on_ai_command(event stc_mc.AICommand) {
 	defer func() {
 		c.ai_command_resp = nil
 	}()
@@ -103,7 +103,7 @@ func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
 		resp, exist0 := c.response.Load(e.CommandRequestID)
 		channel, exist1 := c.signal.Load(e.CommandRequestID)
 		if !exist0 || !exist1 {
-			panic("on_ai_command: Attempt to send NeteaseAICommand(packet.PyRpc/CS2ModEvent/ExecuteCommandEvent) without using ResourcesControlCenter")
+			panic("on_ai_command: Attempt to send NeteaseAICommand(packet.PyRpc/ModEventCS2/ExecuteCommandEvent) without using ResourcesControlCenter")
 		}
 		// load data by command request id
 		if resp.Respond == nil && c.ai_command_resp != nil {
@@ -135,7 +135,7 @@ func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
 		// get the oldest ai command request and release lock
 		channel, exist := c.signal.Load(command_request_id)
 		if resp == nil || !exist {
-			panic("on_ai_command: Attempt to send NeteaseAICommand(packet.PyRpc/CS2ModEvent/ExecuteCommandEvent) without using ResourcesControlCenter")
+			panic("on_ai_command: Attempt to send NeteaseAICommand(packet.PyRpc/ModEventCS2/ExecuteCommandEvent) without using ResourcesControlCenter")
 		}
 		// load data and check
 		resp.AICommand.PreCheckError = e
@@ -153,7 +153,7 @@ func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
 		resp, exist0 := c.response.Load(e.CommandRequestID)
 		channel, exist1 := c.signal.Load(e.CommandRequestID)
 		if options == nil || !exist0 || !exist1 {
-			panic("on_ai_command: Attempt to send NeteaseAICommand(packet.PyRpc/CS2ModEvent/ExecuteCommandEvent) without using ResourcesControlCenter")
+			panic("on_ai_command: Attempt to send NeteaseAICommand(packet.PyRpc/ModEventCS2/ExecuteCommandEvent) without using ResourcesControlCenter")
 		}
 		// load data from command request id
 		if resp.Respond == nil && c.ai_command_resp != nil {
@@ -174,7 +174,7 @@ func (c *commandRequestWithResponse) on_ai_command(event stc_mc.AICommand) {
 
 // 读取请求 ID 为 key 的命令请求的响应体，
 // 同时移除此命令请求
-func (c *commandRequestWithResponse) LoadResponseAndDelete(key uuid.UUID) CommandRespond {
+func (c *command_request_with_response) LoadResponseAndDelete(key uuid.UUID) CommandRespond {
 	c.request_lock.RLock()
 	options := c.request.GetElement(key)
 	c.request_lock.RUnlock()

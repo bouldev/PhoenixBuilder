@@ -98,7 +98,7 @@ func EnterReadlineThread(env *environment.PBEnvironment, breaker chan struct{}) 
 			resp := gameInterface.SendAICommandWithResponse(
 				cmd[1:],
 				ResourcesControl.CommandRequestOptions{
-					TimeOut: ResourcesControl.CommandRequestDefaultDeadLine,
+					TimeOut: ResourcesControl.CommandRequestNoDeadLine,
 				},
 			)
 			if resp.Error != nil {

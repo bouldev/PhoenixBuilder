@@ -211,7 +211,7 @@ func (c *Container) MoveItemIntoContainer(
 	if err != nil {
 		return fmt.Errorf("MoveItemIntoContainer: %v", err)
 	}
-	containerOpeningData := api.Resources.Container.GetContainerOpeningData()
+	container_opening_data := api.Resources.Container.GetContainerOpeningData()
 	got := SupportContainerPool[c.BlockEntity.Block.Name]
 	// 获取 itemLocation 处的物品数据，
 	// 以及已打开容器的数据
@@ -222,7 +222,7 @@ func (c *Container) MoveItemIntoContainer(
 			Slot:        itemLocation,
 		},
 		GameInterface.ItemLocation{
-			WindowID:    containerOpeningData.WindowID,
+			WindowID:    container_opening_data.WindowID,
 			ContainerID: got.ContainerID,
 			Slot:        destination,
 		},
@@ -711,7 +711,7 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 		}
 		defer api.CloseContainer()
 		// 占用容器资源并打开容器
-		containerOpeningData := api.Resources.Container.GetContainerOpeningData()
+		container_opening_data := api.Resources.Container.GetContainerOpeningData()
 		got := SupportContainerPool[c.BlockEntity.Block.Name]
 		// 获取已打开容器的数据
 		for key, value := range moveIndex {
@@ -733,7 +733,7 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 					Slot:        key,
 				},
 				GameInterface.ItemLocation{
-					WindowID:    containerOpeningData.WindowID,
+					WindowID:    container_opening_data.WindowID,
 					ContainerID: got.ContainerID,
 					Slot:        value.Basic.Slot,
 				},

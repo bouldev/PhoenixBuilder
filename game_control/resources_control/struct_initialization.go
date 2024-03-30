@@ -19,43 +19,43 @@ import (
 */
 func (r *Resources) Init() func(pk *packet.Packet) {
 	*r = Resources{
-		Command: commandRequestWithResponse{
+		Command: command_request_with_response{
 			ai_command_resp: nil,
 			request_lock:    sync.RWMutex{},
 			request:         orderedmap.NewOrderedMap[uuid.UUID, CommandRequestOptions](),
 			response:        sync_map.Map[uuid.UUID, *CommandRespond]{},
 			signal:          sync_map.Map[uuid.UUID, chan uint8]{},
 		},
-		Inventory: inventoryContents{
-			lockDown: sync.RWMutex{},
-			datas:    sync_map.Map[uint32, *sync_map.Map[uint8, protocol.ItemInstance]]{},
+		Inventory: inventory_contents{
+			lock_down: sync.RWMutex{},
+			data:      sync_map.Map[uint32, *sync_map.Map[uint8, protocol.ItemInstance]]{},
 		},
-		ItemStackOperation: itemStackRequestWithResponse{
-			requestWithResponse: sync_map.Map[int32, singleItemStackRequestWithResponse]{},
-			currentRequestID:    1,
+		ItemStackOperation: item_stack_request_with_response{
+			request_with_response: sync_map.Map[int32, singleitem_stack_request_with_response]{},
+			current_request_id:    1,
 		},
 		Container: container{
-			lockDown:             sync.RWMutex{},
-			containerOpeningData: nil,
-			containerClosingData: nil,
-			responded:            make(chan struct{}, 1),
-			resourcesOccupy: resourcesOccupy{
-				lockDown: sync.Mutex{},
-				holder:   "",
+			lock_down:              sync.RWMutex{},
+			container_opening_data: nil,
+			container_closing_data: nil,
+			responded:              make(chan struct{}, 1),
+			resources_occupy: resources_occupy{
+				lock_down: sync.Mutex{},
+				holder:    "",
 			},
 		},
 		Structure: mcstructure{
-			resourcesOccupy: resourcesOccupy{
-				lockDown: sync.Mutex{},
-				holder:   "",
+			resources_occupy: resources_occupy{
+				lock_down: sync.Mutex{},
+				holder:    "",
 			},
 			resp: make(chan packet.StructureTemplateDataResponse, 1),
 		},
-		Listener: packetListener{
-			listenerWithData: sync_map.Map[uuid.UUID, singleListen]{},
+		Listener: packet_listener{
+			listener_with_data: sync_map.Map[uuid.UUID, single_listen]{},
 		},
 		Others: others{
-			currentTickRequestWithResp: sync_map.Map[uuid.UUID, chan int64]{},
+			current_tick_request_with_resp: sync_map.Map[uuid.UUID, chan int64]{},
 		},
 	}
 	// init struct

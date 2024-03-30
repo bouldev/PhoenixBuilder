@@ -29,14 +29,14 @@ func (g *GameInterface) RenameItem(
 	name string,
 	slot uint8,
 ) (*AnvilOperationResponse, error) {
-	containerOpeningData := g.Resources.Container.GetContainerOpeningData()
+	container_opening_data := g.Resources.Container.GetContainerOpeningData()
 	// 取得已打开的容器的数据
-	if containerOpeningData == nil {
+	if container_opening_data == nil {
 		return nil, fmt.Errorf("RenameItem: Anvil has not opened")
 	}
 	// 如果铁砧未被打开
 	get, err := g.Resources.Inventory.GetItemStackInfo(
-		uint32(containerOpeningData.WindowID),
+		uint32(container_opening_data.WindowID),
 		1,
 	)
 	if err != nil {
@@ -113,7 +113,7 @@ func (g *GameInterface) RenameItem(
 					{
 						Details: map[ResourcesControl.ContainerID]ResourcesControl.StackRequestContainerInfo{
 							0x0: {
-								WindowID: uint32(containerOpeningData.WindowID),
+								WindowID: uint32(container_opening_data.WindowID),
 								ChangeResult: map[uint8]protocol.ItemInstance{
 									1: AirItem,
 								},
@@ -148,7 +148,7 @@ func (g *GameInterface) RenameItem(
 		return &AnvilOperationResponse{
 			Successful: false,
 			Destination: &ItemLocation{
-				WindowID:    containerOpeningData.WindowID,
+				WindowID:    container_opening_data.WindowID,
 				ContainerID: 0,
 				Slot:        1,
 			},
@@ -221,19 +221,19 @@ func (g *GameInterface) RenameItem(
 					},
 				},
 				0x0: {
-					WindowID: uint32(containerOpeningData.WindowID),
+					WindowID: uint32(container_opening_data.WindowID),
 					ChangeResult: map[uint8]protocol.ItemInstance{
 						1: AirItem,
 					},
 				},
 				0x1: {
-					WindowID: uint32(containerOpeningData.WindowID),
+					WindowID: uint32(container_opening_data.WindowID),
 					ChangeResult: map[uint8]protocol.ItemInstance{
 						2: AirItem,
 					},
 				},
 				0x3c: {
-					WindowID: uint32(containerOpeningData.WindowID),
+					WindowID: uint32(container_opening_data.WindowID),
 					ChangeResult: map[uint8]protocol.ItemInstance{
 						0x32: AirItem,
 					},

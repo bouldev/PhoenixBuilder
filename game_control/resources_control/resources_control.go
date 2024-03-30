@@ -18,17 +18,17 @@ import (
 // 管理和保存 PhoenixBuilder 的各类公用资源
 type Resources struct {
 	// 管理命令请求队列及命令返回值
-	Command commandRequestWithResponse
+	Command command_request_with_response
 	// 管理本地库存数据，如背包物品
-	Inventory inventoryContents
+	Inventory inventory_contents
 	// 管理物品操作请求及结果
-	ItemStackOperation itemStackRequestWithResponse
+	ItemStackOperation item_stack_request_with_response
 	// 管理容器资源的占用状态，同时存储容器操作的结果
 	Container container
 	// 管理结构资源并保存结构请求的回应
 	Structure mcstructure
 	// 数据包监听器
-	Listener packetListener
+	Listener packet_listener
 	// 管理和保存其他小型的资源，
 	// 例如游戏刻相关
 	Others others
@@ -43,7 +43,7 @@ type Resources struct {
 任何与 魔法指令 相关的操作都应该通过此结构体下的有关实现来完成，否则可能会造成严重后果。
 因此，为了不出现问题，如果尝试绕过相关实现而直接发送 魔法指令 相关的数据包，则会造成程序 panic
 */
-type commandRequestWithResponse struct {
+type command_request_with_response struct {
 	/*
 		魔法指令 共计有两种响应体，
 		其一是 PyRpc 数据包(由多个数据包共同描述)，
@@ -62,19 +62,23 @@ type commandRequestWithResponse struct {
 	ai_command_resp *packet.CommandOutput
 	/*
 		存放命令请求。
-		互斥锁用于防止可能的并发读写。
+		request_lock 用于防止可能的并发读写。
 
 		考虑到 魔法指令 的一些特性，
 		也就是在前置检查失败时，
-		命令请求的响应体不会记录原始请求的 UUID 。
-		因此我们需要依靠请求提交的时间顺序来推断
-		收到影响的与 魔法指令 相关的命令请求，而
-		orderedmap 便提供了有序 map 的功能。
+		魔法指令 的响应体不会记录原始请求的 UUID ，
+		因此我们需要依靠数据包从客户端发往服务器的实
+		际时间来推断响应体对应的 魔法指令 命令请求，
+		而 orderedmap 便提供了有序 map 的功能。
 
-		因此，为了确保可以正确推断，
-		如果尝试绕过相关实现而直接发送 魔法指令 相关的数据包，
-		则会造成程序 panic
+		除此外，还需要需要保证 魔法指令 的注册及相应
+		数据包的发送所构成的整个过程保持原子性，
+		因此我们提供使用 resources_occupy 来保持了这一点。
+
+		固，如果尝试绕过相关实现而直接发送 魔法指令 相
+		关的数据包，则会造成程序 panic
 	*/
+	resources_occupy
 	request_lock sync.RWMutex
 	request      *orderedmap.OrderedMap[uuid.UUID, CommandRequestOptions]
 	// 存放命令请求对应的响应体
@@ -147,16 +151,16 @@ type CommandRespond struct {
 	ErrorType uint8
 }
 
-// ------------------------- inventoryContents -------------------------
+// ------------------------- inventory_contents -------------------------
 
 // 存放所有有效库存中的物品数据，例如背包和盔甲栏
-type inventoryContents struct {
+type inventory_contents struct {
 	// 防止并发读写而设置的读写锁
-	lockDown sync.RWMutex
+	lock_down sync.RWMutex
 	// uint32 代表打开的库存的窗口 ID ，即 WindowID ；
 	// uint8 代表物品所在的槽位；
 	// 最内层的 protocol.ItemInstance 存放物品数据
-	datas sync_map.Map[uint32, *sync_map.Map[uint8, protocol.ItemInstance]]
+	data sync_map.Map[uint32, *sync_map.Map[uint8, protocol.ItemInstance]]
 }
 
 // ------------------------- itemStackReuqestWithResponse -------------------------
@@ -168,9 +172,9 @@ type inventoryContents struct {
 任何物品操作都应该通过此结构体下的有关实现来完成，否则可能会造成严重后果。
 因此，为了绝对的安全，如果尝试绕过相关实现而直接发送物品操作数据包，则会造成程序 panic
 */
-type itemStackRequestWithResponse struct {
+type item_stack_request_with_response struct {
 	// 存放物品操作的请求队列
-	requestWithResponse sync_map.Map[int32, singleItemStackRequestWithResponse]
+	request_with_response sync_map.Map[int32, singleitem_stack_request_with_response]
 	/*
 		记录已累计的 RequestID 。
 
@@ -186,17 +190,17 @@ type itemStackRequestWithResponse struct {
 
 		因此，绝对地，请使用已提供的 API 发送物品操作请求，否则将导致程序 panic
 	*/
-	currentRequestID int32
+	current_request_id int32
 }
 
 // 每个物品操作请求都会使用这样一个结构体，它用于描述单个的物品操作请求
-type singleItemStackRequestWithResponse struct {
+type singleitem_stack_request_with_response struct {
 	// 描述物品操作请求的返回值
 	resp chan protocol.ItemStackResponse
 	// 描述多个库存(容器)中物品的变动结果。
 	// 租赁服不会在返回 ItemStackResponce 时返回完整的物品数据，因此需要您提供对应
 	// 槽位的更改结果以便于我们依此更新本地存储的库存数据
-	howToChange map[ContainerID]StackRequestContainerInfo
+	how_to_change map[ContainerID]StackRequestContainerInfo
 }
 
 // 描述单个库存(容器)中物品的变动结果
@@ -227,12 +231,14 @@ type ContainerID uint8
 然后再发送相应数据包，完成后再释放此公用资源
 */
 type container struct {
+	// 描述容器资源的占用状态及占用者
+	resources_occupy
 	// 防止并发读写而安排的读写锁
-	lockDown sync.RWMutex
+	lock_down sync.RWMutex
 	// 存放容器被打开时的数据。
 	// 当客户端打开容器后，租赁服会以此数据包回应，届时此变量将被赋值。
 	// 当容器被关闭或从未被打开，则此变量将会为 nil
-	containerOpeningData *packet.ContainerOpen
+	container_opening_data *packet.ContainerOpen
 	/*
 		存放容器被关闭时的数据。
 
@@ -242,11 +248,9 @@ type container struct {
 		当侦测到来自租赁服的响应，此变量将被赋值。
 		当容器被打开或从未被关闭，则此变量将会为 nil
 	*/
-	containerClosingData *packet.ContainerClose
+	container_closing_data *packet.ContainerClose
 	// 其他实现在打开或关闭容器后可能需要等待回应，此管道便是为了完成这一实现
 	responded chan struct{}
-	// 描述容器资源的占用状态及占用者
-	resourcesOccupy
 }
 
 // ------------------------- mcstructure -------------------------
@@ -254,23 +258,23 @@ type container struct {
 // 记录结构资源并保存结构请求的回应
 type mcstructure struct {
 	// 描述结构资源的占用状态及占用者
-	resourcesOccupy
+	resources_occupy
 	// 保存结构请求的响应体
 	resp chan packet.StructureTemplateDataResponse
 }
 
-// ------------------------- packetListener -------------------------
+// ------------------------- packet_listener -------------------------
 
 // 储存单次监听请求下所需要保存的数据
-type singleListen struct {
+type single_listen struct {
 	// 指代本次请求中欲监听的数据包 ID
-	packetsID []uint32
+	packets_id []uint32
 	// 用于存放本次请求中已经监听的数据包
-	packetReceived chan (packet.Packet)
+	packet_received chan (packet.Packet)
 	// 标记该监听器下有多少个协程正在尝试分发数据包。
 	// 我们最多允许同时存在 MaximumCoroutinesRunningCount 个这样的协程，
 	// 对于超出的部分，对应的数据包将被丢弃
-	runningCounts int32
+	running_counts int32
 	// 如果监听者终止并关闭了当次监听，
 	// 则相应的上层实现会取消该上下文，
 	// 以表明相关联的所有监听协程均应当关闭
@@ -281,9 +285,9 @@ type singleListen struct {
 }
 
 // 数据包监听器
-type packetListener struct {
+type packet_listener struct {
 	// 键代表监听器，而值代表此监听器下已保存的数据
-	listenerWithData sync_map.Map[uuid.UUID, singleListen]
+	listener_with_data sync_map.Map[uuid.UUID, single_listen]
 }
 
 // ------------------------- others -------------------------
@@ -292,5 +296,5 @@ type packetListener struct {
 type others struct {
 	// 存放 TickSync 请求并保存其对应的返回值，
 	// 它用于获取当前的游戏刻。
-	currentTickRequestWithResp sync_map.Map[uuid.UUID, chan int64]
+	current_tick_request_with_resp sync_map.Map[uuid.UUID, chan int64]
 }

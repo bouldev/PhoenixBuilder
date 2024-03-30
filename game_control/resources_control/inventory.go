@@ -9,12 +9,12 @@ import (
 
 // 列出所有可访问库存的窗口 ID ，即 WindowID 。
 // 返回的切片内的数字信息是无序的
-func (i *inventoryContents) ListWindowID() []uint32 {
-	i.lockDown.RLock()
-	defer i.lockDown.RUnlock()
+func (i *inventory_contents) ListWindowID() []uint32 {
+	i.lock_down.RLock()
+	defer i.lock_down.RUnlock()
 	// init
 	ans := []uint32{}
-	i.datas.Range(func(key uint32, value *sync_map.Map[uint8, protocol.ItemInstance]) bool {
+	i.data.Range(func(key uint32, value *sync_map.Map[uint8, protocol.ItemInstance]) bool {
 		ans = append(ans, key)
 		return true
 	})
@@ -33,14 +33,14 @@ func (i *inventoryContents) ListWindowID() []uint32 {
 // 槽位中为苹果和空气的物品栏编号。
 //
 // 如果不希望使用过滤器，那么请在此参数处填写 nil
-func (i *inventoryContents) ListSlot(
+func (i *inventory_contents) ListSlot(
 	windowID uint32,
 	filter *[]int32,
 ) ([]uint8, error) {
-	i.lockDown.RLock()
-	defer i.lockDown.RUnlock()
+	i.lock_down.RLock()
+	defer i.lock_down.RUnlock()
 	// lock down resources
-	got, ok := i.datas.Load(windowID)
+	got, ok := i.data.Load(windowID)
 	if !ok {
 		return []uint8{}, fmt.Errorf("ListSlot: %v is not recorded in i.datas", windowID)
 	}
@@ -71,14 +71,14 @@ func (i *inventoryContents) ListSlot(
 }
 
 // 获取 windowID 所对应的库存数据
-func (i *inventoryContents) GetInventoryInfo(windowID uint32) (
+func (i *inventory_contents) GetInventoryInfo(windowID uint32) (
 	inventory map[uint8]protocol.ItemInstance,
 	err error,
 ) {
-	i.lockDown.RLock()
-	defer i.lockDown.RUnlock()
+	i.lock_down.RLock()
+	defer i.lock_down.RUnlock()
 	// init
-	res, ok := i.datas.Load(windowID)
+	res, ok := i.data.Load(windowID)
 	if !ok {
 		return nil, fmt.Errorf("GetInventoryInfo: %v is not recorded in i.datas", windowID)
 	}
@@ -94,14 +94,14 @@ func (i *inventoryContents) GetInventoryInfo(windowID uint32) (
 }
 
 // 从 windowID 库存中获取 slotLocation 槽位的物品数据
-func (i *inventoryContents) GetItemStackInfo(windowID uint32, slotLocation uint8) (
+func (i *inventory_contents) GetItemStackInfo(windowID uint32, slotLocation uint8) (
 	protocol.ItemInstance,
 	error,
 ) {
-	i.lockDown.RLock()
-	defer i.lockDown.RUnlock()
+	i.lock_down.RLock()
+	defer i.lock_down.RUnlock()
 	// init
-	got, ok := i.datas.Load(windowID)
+	got, ok := i.data.Load(windowID)
 	if !ok {
 		return protocol.ItemInstance{}, fmt.Errorf("GetItemStackInfo: %v is not recorded in i.datas", windowID)
 	}
@@ -116,44 +116,44 @@ func (i *inventoryContents) GetItemStackInfo(windowID uint32, slotLocation uint8
 }
 
 // 创建窗口 ID 为 windowID 的库存，如果库存不存在的话
-func (i *inventoryContents) createNewInventory(windowID uint32) {
-	i.lockDown.Lock()
-	defer i.lockDown.Unlock()
+func (i *inventory_contents) create_new_inventory(windowID uint32) {
+	i.lock_down.Lock()
+	defer i.lock_down.Unlock()
 	// init
-	if _, ok := i.datas.Load(windowID); !ok {
-		i.datas.Store(windowID, &sync_map.Map[uint8, protocol.ItemInstance]{})
+	if _, ok := i.data.Load(windowID); !ok {
+		i.data.Store(windowID, &sync_map.Map[uint8, protocol.ItemInstance]{})
 	}
 	// create new inventory
 }
 
 // 修改 windowID 库存中 slotLocation 槽位的物品数据，属于私有实现
-func (i *inventoryContents) writeItemStackInfo(
+func (i *inventory_contents) write_item_stack_info(
 	windowID uint32,
 	slotLocation uint8,
 	itemStackInfo protocol.ItemInstance,
 ) {
-	i.createNewInventory(windowID)
+	i.create_new_inventory(windowID)
 	// create new inventory if needed
-	i.lockDown.Lock()
-	defer i.lockDown.Unlock()
+	i.lock_down.Lock()
+	defer i.lock_down.Unlock()
 	// lock down resources
-	target_inventory, _ := i.datas.Load(windowID)
+	target_inventory, _ := i.data.Load(windowID)
 	target_inventory.Store(slotLocation, itemStackInfo)
 	// write datas
 }
 
 // 删除 windowID 所对应的库存。
 // 例如，当容器被关闭后，那么可以通过此函数删除此容器的库存数据，属于私有实现
-func (i *inventoryContents) deleteInventory(windowID uint32) error {
-	i.lockDown.Lock()
-	defer i.lockDown.Unlock()
+func (i *inventory_contents) delete_inventory(windowID uint32) error {
+	i.lock_down.Lock()
+	defer i.lock_down.Unlock()
 	// init
-	_, ok := i.datas.Load(windowID)
+	_, ok := i.data.Load(windowID)
 	if !ok {
-		return fmt.Errorf("deleteInventory: %v is not recorded in i.datas", windowID)
+		return fmt.Errorf("delete_inventory: %v is not recorded in i.datas", windowID)
 	}
 	// if windowID is not exist
-	i.datas.Delete(windowID)
+	i.data.Delete(windowID)
 	// remove inventory from i.datas
 	return nil
 	// return

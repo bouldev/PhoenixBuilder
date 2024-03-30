@@ -134,11 +134,12 @@ func (g *GameInterface) send_command_with_options(
 	options ResourcesControl.CommandRequestOptions,
 	origin *uint32,
 ) *ResourcesControl.CommandRespond {
-	var command_type string
 	var err error
 	command_request_id := ResourcesControl.GenerateUUID()
 	// 初始化
 	{
+		var command_type string
+		// 初始化
 		switch origin {
 		case nil:
 			command_type = ResourcesControl.CommandTypeAICommand
@@ -158,10 +159,6 @@ func (g *GameInterface) send_command_with_options(
 			}
 		}
 		// 写入请求
-		if origin != nil {
-			command_type = ResourcesControl.CommandTypeStandard
-		}
-		// 恢复微调
 	}
 	// 写入请求到等待队列
 	switch origin {
@@ -187,6 +184,8 @@ func (g *GameInterface) send_command_with_options(
 	}
 	// 加载响应体
 	if args.SkipMCPCheckChallenges && origin != nil {
+		resp.Type = ResourcesControl.CommandTypeStandard
+		// 覆写原始命令请求的类型
 		switch resp.Respond {
 		case nil:
 			fake_resp := DefaultCommandOutput
@@ -206,6 +205,7 @@ func (g *GameInterface) send_command_with_options(
 		default:
 			resp.Respond.CommandOrigin.Origin = *origin
 		}
+		// 覆写 命令来源 和 命令输出 相关的字段
 		switch *origin {
 		case protocol.CommandOriginAutomationPlayer:
 			resp.Respond.CommandOrigin.RequestID = DefaultCommandRequestID
@@ -215,6 +215,7 @@ func (g *GameInterface) send_command_with_options(
 			resp.Respond.OutputType = packet.CommandOutputTypeNone
 			resp.Respond.DataSet = ""
 		}
+		// 覆写 请求ID、输出类型 和 数据集
 	}
 	// 针对限制性情况的响应体微调
 	return &resp
@@ -261,8 +262,10 @@ func (g *GameInterface) SendWSCommand(command string) error {
 
 // 向租赁服发送 魔法指令 且无视返回值
 func (g *GameInterface) SendAICommand(command string) error {
+	holder := g.Resources.Command.Occupy()
+	defer g.Resources.Command.Release(holder)
 	uniqueId, _ := uuid.NewUUID()
-	// get command request id
+	// prepare
 	err := g.Resources.Command.WriteRequest(
 		uniqueId,
 		ResourcesControl.CommandRequestOptions{

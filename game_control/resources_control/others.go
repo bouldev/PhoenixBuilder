@@ -11,12 +11,12 @@ import (
 
 // 提交请求 ID 为 key 的请求用于获取当前的游戏刻
 func (o *others) WriteCurrentTickRequest(key uuid.UUID) error {
-	_, exist := o.currentTickRequestWithResp.Load(key)
+	_, exist := o.current_tick_request_with_resp.Load(key)
 	if exist {
 		return fmt.Errorf("WriteCurrentTickRequest: %v has already existed", key.String())
 	}
 	// if key has already exist
-	o.currentTickRequestWithResp.Store(key, make(chan int64, 1))
+	o.current_tick_request_with_resp.Store(key, make(chan int64, 1))
 	return nil
 	// return
 }
@@ -26,7 +26,7 @@ func (o *others) WriteCurrentTickRequest(key uuid.UUID) error {
 // ServerReceptionTimestamp 字段
 func (o *others) writeTickSyncPacketResponse(resp packet.TickSync) error {
 	var err error = nil
-	o.currentTickRequestWithResp.Range(func(key uuid.UUID, value chan int64) bool {
+	o.current_tick_request_with_resp.Range(func(key uuid.UUID, value chan int64) bool {
 		value <- resp.ServerReceptionTimestamp
 		close(value)
 		return true
@@ -41,13 +41,13 @@ func (o *others) writeTickSyncPacketResponse(resp packet.TickSync) error {
 func (o *others) Load_TickSync_Packet_Responce_and_Delete_Request(
 	key uuid.UUID,
 ) (int64, error) {
-	value, exist := o.currentTickRequestWithResp.Load(key)
+	value, exist := o.current_tick_request_with_resp.Load(key)
 	if !exist {
 		return 0, fmt.Errorf("Load_TickSync_Packet_Responce_and_Delete_Request: %v is not recorded", key.String())
 	}
 	// if key is not exist
 	res := <-value
-	o.currentTickRequestWithResp.Delete(key)
+	o.current_tick_request_with_resp.Delete(key)
 	return res, nil
 	// return
 }
