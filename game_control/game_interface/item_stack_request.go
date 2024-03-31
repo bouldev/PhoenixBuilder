@@ -29,20 +29,20 @@ func (g *GameInterface) SendItemStackRequestWithResponse(
 	request *packet.ItemStackRequest,
 	details []ItemChangingDetails,
 ) ([]protocol.ItemStackResponse, error) {
-	requestIDList := []int32{}
+	request_id_list := []int32{}
 	res := []protocol.ItemStackResponse{}
 	// 初始化
 	for range request.Requests {
-		requestIDList = append(
-			requestIDList,
+		request_id_list = append(
+			request_id_list,
 			g.Resources.ItemStackOperation.GetNewRequestID(),
 		)
 	}
 	for key := range request.Requests {
-		requestID := requestIDList[key]
-		request.Requests[key].RequestID = requestID
+		request_id := request_id_list[key]
+		request.Requests[key].RequestID = request_id
 		g.Resources.ItemStackOperation.WriteRequest(
-			requestID,
+			request_id,
 			details[key].Details,
 		)
 	}
@@ -52,7 +52,7 @@ func (g *GameInterface) SendItemStackRequestWithResponse(
 		return nil, fmt.Errorf("SendItemStackRequestWithResponse: %v", err)
 	}
 	// 发送物品操作请求
-	for _, value := range requestIDList {
+	for _, value := range request_id_list {
 		got, err := g.Resources.ItemStackOperation.LoadResponseAndDelete(value)
 		if err != nil {
 			return nil, fmt.Errorf("SendItemStackRequestWithResponse: %v", err)

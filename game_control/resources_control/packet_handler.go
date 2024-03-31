@@ -15,7 +15,7 @@ import (
 func (r *Resources) handlePacket(pk *packet.Packet) {
 	switch p := (*pk).(type) {
 	case *packet.TickSync:
-		r.Others.writeTickSyncPacketResponse(*p)
+		r.Others.write_tick_sync_resp(*p)
 		// sync game tick
 	case *packet.CommandOutput:
 		err := r.Command.try_to_write_response(p.CommandOrigin.UUID, *p)

@@ -12,7 +12,7 @@ import (
 func (g *GameInterface) GetCurrentTick() (int64, error) {
 	uniqueId := ResourcesControl.GenerateUUID()
 	// get a new uuid
-	err := g.Resources.Others.WriteCurrentTickRequest(uniqueId)
+	err := g.Resources.Others.WriteGameTickRequest(uniqueId)
 	if err != nil {
 		return 0, fmt.Errorf("GetCurrentTick: %v", err)
 	}
@@ -25,7 +25,7 @@ func (g *GameInterface) GetCurrentTick() (int64, error) {
 		return 0, fmt.Errorf("GetCurrentTick: %v", err)
 	}
 	// send packet
-	ans, err := g.Resources.Others.Load_TickSync_Packet_Responce_and_Delete_Request(uniqueId)
+	ans, err := g.Resources.Others.LoadTickSyncResponse(uniqueId)
 	if err != nil {
 		return 0, fmt.Errorf("GetCurrentTick: %v", err)
 	}
