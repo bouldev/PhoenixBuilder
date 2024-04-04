@@ -181,10 +181,11 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType:  FunctionTypeSimple,
 				ArgumentTypes: []byte{},
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
-					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
 					if args.SkipMCPCheckChallenges {
-						defer env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback false", false)
+						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))
+						return
 					}
+					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
 							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
@@ -221,10 +222,11 @@ func InitPresetFunctions(fh *FunctionHolder) {
 			"begin": &FunctionChainItem{
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
-					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
 					if args.SkipMCPCheckChallenges {
-						defer env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback false", false)
+						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))
+						return
 					}
+					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
 							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
@@ -260,10 +262,11 @@ func InitPresetFunctions(fh *FunctionHolder) {
 			"end": &FunctionChainItem{
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
-					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
 					if args.SkipMCPCheckChallenges {
-						defer env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback false", false)
+						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))
+						return
 					}
+					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
 							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
