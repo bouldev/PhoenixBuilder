@@ -30,6 +30,7 @@ func (g *GameInterface) SendSettingsCommand(
 		if err != nil {
 			return fmt.Errorf("SendSettingsCommand: %v", err)
 		}
+		return nil
 	}
 	// for restrictive situation
 	if dimensional {

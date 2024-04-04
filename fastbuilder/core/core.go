@@ -251,11 +251,13 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 			&py_rpc_content.SyncVipSkinUUID{nil},
 		),
 	})
-	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_content.PackageContent(
-			&py_rpc_content.ClientLoadAddonsFinishedFromGac{},
-		),
-	})
+	if !args.SkipMCPCheckChallenges {
+		conn.WritePacket(&packet.PyRpc{
+			Value: py_rpc_content.PackageContent(
+				&py_rpc_content.ClientLoadAddonsFinishedFromGac{},
+			),
+		})
+	}
 	{
 		event := cts_mc_p.GetLoadedInstances{PlayerRuntimeID: runtimeid}
 		module := cts_mc.Preset{Module: &mei.DefaultModule{Event: &event}}
