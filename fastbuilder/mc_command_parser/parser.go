@@ -91,7 +91,7 @@ func (p *CommandParser) ParseSelector() (selector Selector) {
 		older := r.Pointer() - 1
 		for {
 			switch op := r.Next(true); op {
-			case " ", "\n", "+", "\t", "":
+			case " ", "~", "^", "\n", "+", "\t", "":
 				if op != "" {
 					r.SetPtr(r.Pointer() - 1)
 				}
