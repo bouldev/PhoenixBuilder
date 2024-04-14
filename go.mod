@@ -6,6 +6,7 @@ require (
 	github.com/Tnze/go-mc v1.19.4
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/hashicorp/go-version v1.6.0
+	github.com/ugorji/go/codec v1.2.12
 )
 
 require (
