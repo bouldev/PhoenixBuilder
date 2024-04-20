@@ -2,10 +2,13 @@ package packet
 
 import (
 	"phoenixbuilder/minecraft/protocol"
+	"reflect"
 
 	// A Python library which named "msgpack"
 	"github.com/ugorji/go/codec"
 )
+
+var MapType = reflect.TypeOf(map[string]any{})
 
 type PyRpc struct {
 	Value any
@@ -18,11 +21,14 @@ func (*PyRpc) ID() uint32 {
 
 func (pk *PyRpc) goValueToMsgPackBytes() (outBytes []byte) {
 	var msgPackHandler codec.MsgpackHandle
+	msgPackHandler.MapType = MapType
 	codec.NewEncoderBytes(&outBytes, &msgPackHandler).Encode(pk.Value)
 	return outBytes
 }
+
 func (pk *PyRpc) goValueFromMsgPackBytes(inBytes []byte) {
 	var msgPackHandler codec.MsgpackHandle
+	msgPackHandler.MapType = MapType
 	msgPackHandler.RawToString = true
 	codec.NewDecoderBytes(inBytes, &msgPackHandler).Decode(&pk.Value)
 }
