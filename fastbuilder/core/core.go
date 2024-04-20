@@ -445,18 +445,25 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 	case *py_rpc.HeartBeat:
 		c.Type = py_rpc.ClientToServerHeartBeat
 		conn.WritePacket(&packet.PyRpc{Value: py_rpc.Marshal(c)})
+		// heart beat to test the device is still alive?
+		// it seems that we just need to return it back to the server is OK
 	case *py_rpc.StartType:
 		if args.SkipMCPCheckChallenges {
 			break
 		}
+		// if the user request us do not pass this challenge
 		client := env.FBAuthClient.(*fbauth.Client)
 		c.Content = client.TransferData(c.Content)
 		c.Type = py_rpc.StartTypeResponse
 		conn.WritePacket(&packet.PyRpc{Value: py_rpc.Marshal(c)})
+		// get data and send packet
 	case *py_rpc.GetMCPCheckNum:
 		if args.SkipMCPCheckChallenges || env.GetCheckNumEverPassed {
 			break
 		}
+		// if the challenges has been down,
+		// or the user request us do not pass this challenge,
+		// we do NOTHING
 		client := env.FBAuthClient.(*fbauth.Client)
 		arg, _ := json.Marshal([]any{
 			c.FirstArg,
@@ -464,12 +471,21 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 			env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
 		})
 		ret := client.TransferCheckNum(string(arg))
+		// create request to the auth server and get response
 		ret_p := []any{}
 		json.Unmarshal([]byte(ret), &ret_p)
+		if len(ret_p) > 7 {
+			ret6, ok := ret_p[6].(float64)
+			if ok {
+				ret_p[6] = int64(ret6)
+			}
+		}
+		// unmarshal response and adjust the data included
 		conn.WritePacket(&packet.PyRpc{
 			Value: py_rpc.Marshal(&py_rpc.SetMCPCheckNum{ret_p}),
 		})
 		env.GetCheckNumEverPassed = true
+		// send packet and mark this challenges was finished
 	}
 	// do some actions for some specific PyRpc packets
 }
