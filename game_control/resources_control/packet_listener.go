@@ -66,9 +66,7 @@ func (s *single_listen) simple_packet_distributor(
 
 // 将数据包 pk 分发到每个监听器上。
 // 属于私有实现
-func (p *packet_listener) distribute_packet(pk packet.Packet) error {
-	var err error
-	// 初始化
+func (p *packet_listener) distribute_packet(pk packet.Packet) {
 	p.listener_with_data.Range(
 		func(key uuid.UUID, value single_listen) bool {
 			if len(value.packets_id) == 0 {
@@ -86,11 +84,6 @@ func (p *packet_listener) distribute_packet(pk packet.Packet) error {
 		},
 	)
 	// 分发数据包到每个监听器上
-	if err != nil {
-		return err
-	}
-	return nil
-	// 返回值
 }
 
 // 终止并关闭 listener 所指代的监听器

@@ -2,9 +2,9 @@ package ResourcesControl
 
 import (
 	"fmt"
-	mei "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/interface"
-	stc_mc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/server_to_client/minecraft"
-	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/server_to_client/minecraft/ai_command"
+	mei "phoenixbuilder/fastbuilder/py_rpc/mod_event/interface"
+	stc_mc "phoenixbuilder/fastbuilder/py_rpc/mod_event/server_to_client/minecraft"
+	"phoenixbuilder/fastbuilder/py_rpc/mod_event/server_to_client/minecraft/ai_command"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"time"
 

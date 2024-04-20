@@ -3,13 +3,20 @@ package packet
 import (
 	//"bytes"
 	//"fmt"
-
-	py_rpc_parser "phoenixbuilder/fastbuilder/py_rpc/py_rpc_parser"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/ugorji/go/codec"
 )
 
+var msgPackHandler codec.MsgpackHandle
+
+func init() {
+	msgPackHandler.RawToString = true
+	msgPackHandler.StringToRaw = true
+}
+
 type PyRpc struct {
-	Value py_rpc_parser.PyRpcObject
+	Value any
 }
 
 // ID ...
@@ -17,10 +24,24 @@ func (*PyRpc) ID() uint32 {
 	return IDPyRpc
 }
 
+func (pk *PyRpc) goValueToMsgPackBytes() (outBytes []byte) {
+	var msgPackHandler codec.MsgpackHandle
+	msgPackHandler.RawToString = true
+	msgPackHandler.StringToRaw = true
+	codec.NewEncoderBytes(&outBytes, &msgPackHandler).Encode(pk.Value)
+	return outBytes
+}
+func (pk *PyRpc) goValueFromMsgPackBytes(inBytes []byte) {
+	var msgPackHandler codec.MsgpackHandle
+	msgPackHandler.RawToString = true
+	msgPackHandler.StringToRaw = true
+	codec.NewDecoderBytes(inBytes, &msgPackHandler).Decode(&pk.Value)
+}
+
 // Marshal ...
 func (pk *PyRpc) Marshal(w *protocol.Writer) {
 	//w.ByteSlice(&pk.Content)
-	content := pk.Value.Marshal()
+	content := pk.goValueToMsgPackBytes()
 	w.ByteSlice(&content)
 	w.Bytes(&[]byte{0xae, 0x23, 0xdb, 0x05})
 	//fmt.Printf("%d\n",len(pk.Content))
@@ -39,7 +60,7 @@ func (pk *PyRpc) Marshal(w *protocol.Writer) {
 func (pk *PyRpc) Unmarshal(r *protocol.Reader) {
 	var content []byte
 	r.ByteSlice(&content)
-	pk.Value = py_rpc_parser.Unmarshal(content)
+	pk.goValueFromMsgPackBytes(content)
 	//r.ByteSlice(&pk.Content)
 	/*var bt byte
 	var bt2 byte
