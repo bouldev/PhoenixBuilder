@@ -2,7 +2,7 @@ package ResourcesControl
 
 import (
 	"context"
-	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/server_to_client/minecraft/ai_command"
+	"phoenixbuilder/fastbuilder/py_rpc/mod_event/server_to_client/minecraft/ai_command"
 	"phoenixbuilder/fastbuilder/sync_map"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"

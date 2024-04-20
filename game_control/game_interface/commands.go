@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"phoenixbuilder/fastbuilder/args"
-	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content"
-	cts "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server"
-	cts_mc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft"
-	cts_mc_a "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft/ai_command"
-	mei "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/interface"
+	"phoenixbuilder/fastbuilder/py_rpc"
+	cts "phoenixbuilder/fastbuilder/py_rpc/mod_event/client_to_server"
+	cts_mc "phoenixbuilder/fastbuilder/py_rpc/mod_event/client_to_server/minecraft"
+	cts_mc_a "phoenixbuilder/fastbuilder/py_rpc/mod_event/client_to_server/minecraft/ai_command"
+	mei "phoenixbuilder/fastbuilder/py_rpc/mod_event/interface"
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -105,12 +105,10 @@ func (g *GameInterface) send_netease_ai_command(
 	park := cts.Minecraft{Default: mei.Default{Module: &module}}
 	// construct request
 	err := g.WritePacket(&packet.PyRpc{
-		Value: py_rpc_content.PackageContent(
-			&py_rpc_content.ModEvent{
-				Package: &park,
-				Type:    py_rpc_content.ModEventClientToServer,
-			},
-		),
+		Value: py_rpc.Marshal(&py_rpc.ModEvent{
+			Package: &park,
+			Type:    py_rpc.ModEventClientToServer,
+		}),
 	})
 	if err != nil {
 		return fmt.Errorf("send_netease_ai_command: %v", err)

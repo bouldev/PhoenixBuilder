@@ -11,12 +11,12 @@ import (
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
 	fbauth "phoenixbuilder/fastbuilder/pv4"
-	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content"
-	cts "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server"
-	cts_mc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft"
-	cts_mc_p "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft/preset"
-	cts_mc_v "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/client_to_server/minecraft/vip_event_system"
-	mei "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/interface"
+	"phoenixbuilder/fastbuilder/py_rpc"
+	cts "phoenixbuilder/fastbuilder/py_rpc/mod_event/client_to_server"
+	cts_mc "phoenixbuilder/fastbuilder/py_rpc/mod_event/client_to_server/minecraft"
+	cts_mc_p "phoenixbuilder/fastbuilder/py_rpc/mod_event/client_to_server/minecraft/preset"
+	cts_mc_v "phoenixbuilder/fastbuilder/py_rpc/mod_event/client_to_server/minecraft/vip_event_system"
+	mei "phoenixbuilder/fastbuilder/py_rpc/mod_event/interface"
 	"phoenixbuilder/fastbuilder/readline"
 	"phoenixbuilder/fastbuilder/signalhandler"
 	fbtask "phoenixbuilder/fastbuilder/task"
@@ -242,20 +242,14 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 	})
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_content.PackageContent(
-			&py_rpc_content.SyncUsingMod{},
-		),
+		Value: py_rpc.Marshal(&py_rpc.SyncUsingMod{}),
 	})
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_content.PackageContent(
-			&py_rpc_content.SyncVipSkinUUID{nil},
-		),
+		Value: py_rpc.Marshal(&py_rpc.SyncVipSkinUUID{nil}),
 	})
 	if !args.SkipMCPCheckChallenges {
 		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc_content.PackageContent(
-				&py_rpc_content.ClientLoadAddonsFinishedFromGac{},
-			),
+			Value: py_rpc.Marshal(&py_rpc.ClientLoadAddonsFinishedFromGac{}),
 		})
 	}
 	{
@@ -263,30 +257,24 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 		module := cts_mc.Preset{Module: &mei.DefaultModule{Event: &event}}
 		park := cts.Minecraft{Default: mei.Default{Module: &module}}
 		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc_content.PackageContent(
-				&py_rpc_content.ModEvent{
-					Package: &park,
-					Type:    py_rpc_content.ModEventClientToServer,
-				},
-			),
+			Value: py_rpc.Marshal(&py_rpc.ModEvent{
+				Package: &park,
+				Type:    py_rpc.ModEventClientToServer,
+			}),
 		})
 	}
 	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc_content.PackageContent(
-			&py_rpc_content.ArenaGamePlayerFinishLoad{},
-		),
+		Value: py_rpc.Marshal(&py_rpc.ArenaGamePlayerFinishLoad{}),
 	})
 	{
 		event := cts_mc_v.PlayerUiInit{RuntimeID: runtimeid}
 		module := cts_mc.VIPEventSystem{Module: &mei.DefaultModule{Event: &event}}
 		park := cts.Minecraft{Default: mei.Default{Module: &module}}
 		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc_content.PackageContent(
-				&py_rpc_content.ModEvent{
-					Package: &park,
-					Type:    py_rpc_content.ModEventClientToServer,
-				},
-			),
+			Value: py_rpc.Marshal(&py_rpc.ModEvent{
+				Package: &park,
+				Type:    py_rpc.ModEventClientToServer,
+			}),
 		})
 	}
 	return
@@ -447,25 +435,25 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 		return
 	}
 	// prepare
-	content, err := py_rpc_content.Unmarshal(p.Value.MakeGo())
+	content, err := py_rpc.Unmarshal(p.Value)
 	if err != nil {
 		env.GameInterface.Output(pterm.Warning.Sprintf("onPyRpc: %v", err))
 		return
 	}
 	// unmarshal
 	switch c := content.(type) {
-	case *py_rpc_content.HeartBeat:
-		c.Type = py_rpc_content.ClientToServerHeartBeat
-		conn.WritePacket(&packet.PyRpc{Value: py_rpc_content.PackageContent(c)})
-	case *py_rpc_content.StartType:
+	case *py_rpc.HeartBeat:
+		c.Type = py_rpc.ClientToServerHeartBeat
+		conn.WritePacket(&packet.PyRpc{Value: py_rpc.Marshal(c)})
+	case *py_rpc.StartType:
 		if args.SkipMCPCheckChallenges {
 			break
 		}
 		client := env.FBAuthClient.(*fbauth.Client)
 		c.Content = client.TransferData(c.Content)
-		c.Type = py_rpc_content.StartTypeResponse
-		conn.WritePacket(&packet.PyRpc{Value: py_rpc_content.PackageContent(c)})
-	case *py_rpc_content.GetMCPCheckNum:
+		c.Type = py_rpc.StartTypeResponse
+		conn.WritePacket(&packet.PyRpc{Value: py_rpc.Marshal(c)})
+	case *py_rpc.GetMCPCheckNum:
 		if args.SkipMCPCheckChallenges || env.GetCheckNumEverPassed {
 			break
 		}
@@ -479,9 +467,7 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 		ret_p := []any{}
 		json.Unmarshal([]byte(ret), &ret_p)
 		conn.WritePacket(&packet.PyRpc{
-			Value: py_rpc_content.PackageContent(
-				&py_rpc_content.SetMCPCheckNum{ret_p},
-			),
+			Value: py_rpc.Marshal(&py_rpc.SetMCPCheckNum{ret_p}),
 		})
 		env.GetCheckNumEverPassed = true
 	}

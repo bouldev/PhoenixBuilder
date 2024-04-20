@@ -2,9 +2,9 @@ package ResourcesControl
 
 import (
 	"fmt"
-	"phoenixbuilder/fastbuilder/py_rpc/py_rpc_content"
-	stc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/server_to_client"
-	stc_mc "phoenixbuilder/fastbuilder/py_rpc/py_rpc_content/mod_event/server_to_client/minecraft"
+	"phoenixbuilder/fastbuilder/py_rpc"
+	stc "phoenixbuilder/fastbuilder/py_rpc/mod_event/server_to_client"
+	stc_mc "phoenixbuilder/fastbuilder/py_rpc/mod_event/server_to_client/minecraft"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 
@@ -28,14 +28,14 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 			return
 		}
 		// prepare
-		content, err := py_rpc_content.Unmarshal(p.Value.MakeGo())
+		content, err := py_rpc.Unmarshal(p.Value)
 		if err != nil {
 			pterm.Warning.Sprintf("handlePacket: %v", err)
 			return
 		}
 		// unmarshal
 		switch c := content.(type) {
-		case *py_rpc_content.ModEvent:
+		case *py_rpc.ModEvent:
 			park, success := c.Package.(*stc.Minecraft)
 			if !success {
 				return
@@ -107,9 +107,6 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		// used to request mcstructure data
 	}
 	// process packet
-	err := r.Listener.distribute_packet(*pk)
-	if err != nil {
-		panic(fmt.Sprintf("handlePacket: %v", err))
-	}
+	r.Listener.distribute_packet(*pk)
 	// distribute packet(for packet listener)
 }
