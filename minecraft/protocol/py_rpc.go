@@ -147,10 +147,6 @@ Format value to make all the map included
 are "map[string]any" or "map[uint64]any"
 or "map[int64]any".
 
-In particular, if value is not []any, then
-this function will return nil as its result
-and nil as its err.
-
 Formatting may cause changes to the original
 value, which is uncertain.
 */
