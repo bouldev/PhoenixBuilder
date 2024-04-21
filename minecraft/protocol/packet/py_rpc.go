@@ -1,17 +1,13 @@
 package packet
 
 import (
+	"fmt"
 	"phoenixbuilder/minecraft/protocol"
-	"reflect"
-
-	// A Python library which named "msgpack"
-	"github.com/ugorji/go/codec"
 )
-
-var MapType = reflect.TypeOf(map[string]any{})
 
 type PyRpc struct {
 	Value any
+	Error error
 }
 
 // ID ...
@@ -19,30 +15,38 @@ func (*PyRpc) ID() uint32 {
 	return IDPyRpc
 }
 
-func (pk *PyRpc) goValueToMsgPackBytes() (outBytes []byte) {
-	var msgPackHandler codec.MsgpackHandle
-	msgPackHandler.MapType = MapType
-	codec.NewEncoderBytes(&outBytes, &msgPackHandler).Encode(pk.Value)
-	return outBytes
-}
-
-func (pk *PyRpc) goValueFromMsgPackBytes(inBytes []byte) {
-	var msgPackHandler codec.MsgpackHandle
-	msgPackHandler.MapType = MapType
-	msgPackHandler.RawToString = true
-	codec.NewDecoderBytes(inBytes, &msgPackHandler).Decode(&pk.Value)
-}
-
 // Marshal ...
 func (pk *PyRpc) Marshal(w *protocol.Writer) {
-	content := pk.goValueToMsgPackBytes()
+	content, err := protocol.MarshalMsgpack(pk.Value)
+	if err != nil {
+		pk.Error = fmt.Errorf("Marshal: %v", err)
+		panic(pk.Error)
+	}
+	// marshal pk.Value to content
 	w.ByteSlice(&content)
 	w.Bytes(&[]byte{0xae, 0x23, 0xdb, 0x05})
+	// write content with magic bytes to the writer
 }
 
 // Unmarshal ...
 func (pk *PyRpc) Unmarshal(r *protocol.Reader) {
 	var content []byte
+	var err error
 	r.ByteSlice(&content)
-	pk.goValueFromMsgPackBytes(content)
+	// prepare
+	pk.Value, err = protocol.UnmarshalMsgpack(content)
+	if err != nil {
+		panic(fmt.Sprintf("Unmarshal: %v", err))
+	}
+	// unmarshal content
+	value, success := pk.Value.([]any)
+	if !success {
+		return
+	}
+	pk.Value, err = protocol.FormatSliceInMsgpack(value)
+	if err != nil {
+		pk.Error = fmt.Errorf("Unmarshal: %v", err)
+		panic(pk.Error)
+	}
+	// format the decoded data
 }

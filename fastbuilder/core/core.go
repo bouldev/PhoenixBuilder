@@ -431,13 +431,20 @@ func WaitMCPCheckChallengesDown(
 
 func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 	conn := env.Connection.(*minecraft.Conn)
+	if p.Error != nil {
+		panic(fmt.Sprintf("onPyRpc: %v", p.Error))
+	}
 	if p.Value == nil {
 		return
 	}
 	// prepare
 	content, err := py_rpc.Unmarshal(p.Value)
 	if err != nil {
-		env.GameInterface.Output(pterm.Warning.Sprintf("onPyRpc: %v", err))
+		if env.GameInterface == nil {
+			pterm.Warning.Printf("onPyRpc: %v\n", err)
+		} else {
+			env.GameInterface.Output(pterm.Warning.Sprintf("onPyRpc: %v", err))
+		}
 		return
 	}
 	// unmarshal

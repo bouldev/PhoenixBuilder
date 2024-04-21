@@ -15,9 +15,9 @@ type HeartBeat struct {
 }
 
 type HeartBeatContent struct {
-	Is64      any   `json:"is_64"`      // e.g. interface {}(nil)
-	IsAndroid any   `json:"is_android"` // e.g. interface {}(nil)
-	T         int64 `json:"t"`          // e.g. int64(1709452338)
+	Is64      any    `json:"is_64"`      // e.g. interface {}(nil)
+	IsAndroid any    `json:"is_android"` // e.g. interface {}(nil)
+	T         uint64 `json:"t"`          // e.g. uint64(1709452338)
 }
 
 // Return the name of s
@@ -50,9 +50,9 @@ func (h *HeartBeat) FromGo(obj any) error {
 	if !success {
 		return fmt.Errorf("FromGo: Failed to convert object[0] to map[string]interface{}; object[0] = %#v", object[0])
 	}
-	T, success := content["t"].(int64)
+	T, success := content["t"].(uint64)
 	if !success {
-		return fmt.Errorf(`FromGo: Failed to convert content["t"] to int64; content["t"] = %#v`, content["t"])
+		return fmt.Errorf(`FromGo: Failed to convert content["t"] to uint64; content["t"] = %#v`, content["t"])
 	}
 	// get data
 	h.Content = HeartBeatContent{

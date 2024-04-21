@@ -5,18 +5,18 @@ import (
 	"fmt"
 )
 
-// Convert content to go object which
+// Convert py_rpc to go object which
 // only contains go-built-in types
-func Marshal(content PyRpc) (res any) {
+func Marshal(py_rpc PyRpc) (res any) {
 	return []any{
-		content.Name(),
-		content.MakeGo(),
+		py_rpc.Name(),
+		py_rpc.MakeGo(),
 		nil,
 	}
 }
 
 // Convert obj to PyRpc
-func Unmarshal(obj any) (content PyRpc, err error) {
+func Unmarshal(obj any) (py_rpc PyRpc, err error) {
 	object, success := obj.([]any)
 	if !success {
 		return nil, fmt.Errorf("Unmarshal: Unsupported PyRpc packet; obj = %#v", obj)
@@ -31,12 +31,15 @@ func Unmarshal(obj any) (content PyRpc, err error) {
 	}
 	// get name
 	var ok bool
-	content, ok = Pool()[name]
+	py_rpc, ok = Pool()[name]
 	if !ok {
-		content = &Default{NAME: name}
+		py_rpc = &Default{NAME: name}
 	}
 	// get content of initial state
-	content.FromGo(object[1])
+	err = py_rpc.FromGo(object[1])
+	if err != nil {
+		err = fmt.Errorf("Unmarshal: %v", err)
+	}
 	return
 	// put data and return
 }
