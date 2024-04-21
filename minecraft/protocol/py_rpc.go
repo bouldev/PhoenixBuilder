@@ -143,7 +143,7 @@ func FormatMapInMsgpack(mapping map[any]any) (result any, err error) {
 }
 
 /*
-Format value to make all the map included
+Format slice to make all the map included
 are "map[string]any" or "map[uint64]any"
 or "map[int64]any".
 
