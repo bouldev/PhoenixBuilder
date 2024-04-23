@@ -1,4 +1,4 @@
-package sync_map
+package generics
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ import (
 // and CompareAndDelete is a write operation when it returns deleted set to true.
 //
 // Specially, generics are supported here for "sync.Map".
-type Map[K comparable, V any] struct {
+type SyncMap[K comparable, V any] struct {
 	mapping sync.Map
 }
 
@@ -40,26 +40,26 @@ type Map[K comparable, V any] struct {
 //
 // If there is no current value for key in the map, CompareAndDelete
 // returns false (even if the old value is the nil interface value).
-func (m *Map[K, V]) CompareAndDelete(key K, old V) (deleted bool) {
+func (m *SyncMap[K, V]) CompareAndDelete(key K, old V) (deleted bool) {
 	return m.mapping.CompareAndDelete(key, old)
 }
 
 // CompareAndSwap swaps the old and new values for key
 // if the value stored in the map is equal to old.
 // The old value must be of a comparable type.
-func (m *Map[K, V]) CompareAndSwap(key, old K, new V) bool {
+func (m *SyncMap[K, V]) CompareAndSwap(key, old K, new V) bool {
 	return m.mapping.CompareAndSwap(key, old, new)
 }
 
 // Delete deletes the value for a key.
-func (m *Map[K, V]) Delete(key K) {
+func (m *SyncMap[K, V]) Delete(key K) {
 	m.mapping.Delete(key)
 }
 
 // Load returns the value stored in the map for a key, or nil if no
 // value is present.
 // The ok result indicates whether value was found in the map.
-func (m *Map[K, V]) Load(key K) (value V, ok bool) {
+func (m *SyncMap[K, V]) Load(key K) (value V, ok bool) {
 	val, ok := m.mapping.Load(key)
 	if !ok {
 		return
@@ -73,7 +73,7 @@ func (m *Map[K, V]) Load(key K) (value V, ok bool) {
 
 // LoadAndDelete deletes the value for a key, returning the previous value if any.
 // The loaded result reports whether the key was present.
-func (m *Map[K, V]) LoadAndDelete(key K) (value V, loaded bool) {
+func (m *SyncMap[K, V]) LoadAndDelete(key K) (value V, loaded bool) {
 	val, loaded := m.mapping.LoadAndDelete(key)
 	if !loaded {
 		return
@@ -88,7 +88,7 @@ func (m *Map[K, V]) LoadAndDelete(key K) (value V, loaded bool) {
 // LoadOrStore returns the existing value for the key if present.
 // Otherwise, it stores and returns the given value.
 // The loaded result is true if the value was loaded, false if stored.
-func (m *Map[K, V]) LoadOrStore(key K, value V) (actual V, loaded bool) {
+func (m *SyncMap[K, V]) LoadOrStore(key K, value V) (actual V, loaded bool) {
 	act, loaded := m.mapping.LoadOrStore(key, value)
 	if !loaded {
 		return
@@ -111,7 +111,7 @@ func (m *Map[K, V]) LoadOrStore(key K, value V) (actual V, loaded bool) {
 //
 // Range may be O(N) with the number of elements in the map even if f returns
 // false after a constant number of calls.
-func (m *Map[K, V]) Range(f func(key K, value V) bool) {
+func (m *SyncMap[K, V]) Range(f func(key K, value V) bool) {
 	m.mapping.Range(func(key, value any) bool {
 		k, success := key.(K)
 		if key != nil && !success {
@@ -126,13 +126,13 @@ func (m *Map[K, V]) Range(f func(key K, value V) bool) {
 }
 
 // Store sets the value for a key.
-func (m *Map[K, V]) Store(key K, value V) {
+func (m *SyncMap[K, V]) Store(key K, value V) {
 	m.mapping.Store(key, value)
 }
 
 // Swap swaps the value for a key and returns the previous value if any.
 // The loaded result reports whether the key was present.
-func (m *Map[K, V]) Swap(key K, value V) (previous V, loaded bool) {
+func (m *SyncMap[K, V]) Swap(key K, value V) (previous V, loaded bool) {
 	old, loaded := m.mapping.Swap(key, value)
 	if !loaded {
 		return

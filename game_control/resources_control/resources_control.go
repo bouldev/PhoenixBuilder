@@ -2,8 +2,8 @@ package ResourcesControl
 
 import (
 	"context"
+	"phoenixbuilder/fastbuilder/generics"
 	"phoenixbuilder/fastbuilder/py_rpc/mod_event/server_to_client/minecraft/ai_command"
-	"phoenixbuilder/fastbuilder/sync_map"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
@@ -82,10 +82,10 @@ type command_request_with_response struct {
 	request_lock sync.RWMutex
 	request      *orderedmap.OrderedMap[uuid.UUID, CommandRequestOptions]
 	// 存放命令请求对应的响应体
-	response sync_map.Map[uuid.UUID, *CommandRespond]
+	response generics.SyncMap[uuid.UUID, *CommandRespond]
 	// 用于传递信号，例如通知可以加载命令响应体，
 	// 或通知 魔法指令 中的标准响应体已经到来
-	signal sync_map.Map[uuid.UUID, chan uint8]
+	signal generics.SyncMap[uuid.UUID, chan uint8]
 }
 
 // 指定单个命令请求中可以自定义的设置项
@@ -160,7 +160,7 @@ type inventory_contents struct {
 	// uint32 代表打开的库存的窗口 ID ，即 WindowID ；
 	// uint8 代表物品所在的槽位；
 	// 最内层的 protocol.ItemInstance 存放物品数据
-	data sync_map.Map[uint32, *sync_map.Map[uint8, protocol.ItemInstance]]
+	data generics.SyncMap[uint32, *generics.SyncMap[uint8, protocol.ItemInstance]]
 }
 
 // ------------------------- itemStackReuqestWithResponse -------------------------
@@ -174,7 +174,7 @@ type inventory_contents struct {
 */
 type item_stack_request_with_response struct {
 	// 存放物品操作的请求队列
-	request_with_response sync_map.Map[int32, singleitem_stack_request_with_response]
+	request_with_response generics.SyncMap[int32, singleitem_stack_request_with_response]
 	/*
 		记录已累计的 RequestID 。
 
@@ -287,7 +287,7 @@ type single_listen struct {
 // 数据包监听器
 type packet_listener struct {
 	// 键代表监听器，而值代表此监听器下已保存的数据
-	listener_with_data sync_map.Map[uuid.UUID, single_listen]
+	listener_with_data generics.SyncMap[uuid.UUID, single_listen]
 }
 
 // ------------------------- others -------------------------
@@ -296,5 +296,5 @@ type packet_listener struct {
 type others struct {
 	// 存放 TickSync 请求并保存其对应的返回值，
 	// 它用于获取当前的游戏刻。
-	current_tick_request_with_resp sync_map.Map[uuid.UUID, chan int64]
+	current_tick_request_with_resp generics.SyncMap[uuid.UUID, chan int64]
 }
