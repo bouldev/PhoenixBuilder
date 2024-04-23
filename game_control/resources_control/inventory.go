@@ -2,7 +2,7 @@ package ResourcesControl
 
 import (
 	"fmt"
-	"phoenixbuilder/fastbuilder/sync_map"
+	"phoenixbuilder/fastbuilder/generics"
 	"phoenixbuilder/minecraft/protocol"
 	"sort"
 )
@@ -14,7 +14,7 @@ func (i *inventory_contents) ListWindowID() []uint32 {
 	defer i.lock_down.RUnlock()
 	// init
 	ans := []uint32{}
-	i.data.Range(func(key uint32, value *sync_map.Map[uint8, protocol.ItemInstance]) bool {
+	i.data.Range(func(key uint32, value *generics.SyncMap[uint8, protocol.ItemInstance]) bool {
 		ans = append(ans, key)
 		return true
 	})
@@ -121,7 +121,7 @@ func (i *inventory_contents) create_new_inventory(windowID uint32) {
 	defer i.lock_down.Unlock()
 	// init
 	if _, ok := i.data.Load(windowID); !ok {
-		i.data.Store(windowID, &sync_map.Map[uint8, protocol.ItemInstance]{})
+		i.data.Store(windowID, &generics.SyncMap[uint8, protocol.ItemInstance]{})
 	}
 	// create new inventory
 }

@@ -1,7 +1,7 @@
 package ResourcesControl
 
 import (
-	"phoenixbuilder/fastbuilder/sync_map"
+	"phoenixbuilder/fastbuilder/generics"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"sync"
@@ -23,15 +23,15 @@ func (r *Resources) Init() func(pk *packet.Packet) {
 			ai_command_resp: nil,
 			request_lock:    sync.RWMutex{},
 			request:         orderedmap.NewOrderedMap[uuid.UUID, CommandRequestOptions](),
-			response:        sync_map.Map[uuid.UUID, *CommandRespond]{},
-			signal:          sync_map.Map[uuid.UUID, chan uint8]{},
+			response:        generics.SyncMap[uuid.UUID, *CommandRespond]{},
+			signal:          generics.SyncMap[uuid.UUID, chan uint8]{},
 		},
 		Inventory: inventory_contents{
 			lock_down: sync.RWMutex{},
-			data:      sync_map.Map[uint32, *sync_map.Map[uint8, protocol.ItemInstance]]{},
+			data:      generics.SyncMap[uint32, *generics.SyncMap[uint8, protocol.ItemInstance]]{},
 		},
 		ItemStackOperation: item_stack_request_with_response{
-			request_with_response: sync_map.Map[int32, singleitem_stack_request_with_response]{},
+			request_with_response: generics.SyncMap[int32, singleitem_stack_request_with_response]{},
 			current_request_id:    1,
 		},
 		Container: container{
@@ -52,10 +52,10 @@ func (r *Resources) Init() func(pk *packet.Packet) {
 			resp: make(chan packet.StructureTemplateDataResponse, 1),
 		},
 		Listener: packet_listener{
-			listener_with_data: sync_map.Map[uuid.UUID, single_listen]{},
+			listener_with_data: generics.SyncMap[uuid.UUID, single_listen]{},
 		},
 		Others: others{
-			current_tick_request_with_resp: sync_map.Map[uuid.UUID, chan int64]{},
+			current_tick_request_with_resp: generics.SyncMap[uuid.UUID, chan int64]{},
 		},
 	}
 	// init struct
