@@ -59,9 +59,9 @@ func Slice[V0 any, V1 any](slice []V0) (
 
 // Convert value to type V
 func To[V any](value any) (result V, err error) {
-	val, success := value.(V)
+	result, success := value.(V)
 	if !success {
-		err = fmt.Errorf("To: Failed to convert value to type %T; value = %#v", val, value)
+		err = fmt.Errorf("To: Failed to convert value(%T) to type %T; value = %#v", value, result, value)
 	}
 	return
 }
