@@ -182,7 +182,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				ArgumentTypes: []byte{},
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					if args.SkipMCPCheckChallenges {
-						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))
+						env.GameInterface.Output(I18n.T(I18n.SkipMCPCheckChallengesLimit))
 						return
 					}
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
@@ -223,7 +223,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					if args.SkipMCPCheckChallenges {
-						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))
+						env.GameInterface.Output(I18n.T(I18n.SkipMCPCheckChallengesLimit))
 						return
 					}
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
@@ -263,7 +263,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 				FunctionType: FunctionTypeSimple,
 				Content: func(env *environment.PBEnvironment, _ []interface{}) {
 					if args.SkipMCPCheckChallenges {
-						env.GameInterface.Output(I18n.T(I18n.InvalidPosition))
+						env.GameInterface.Output(I18n.T(I18n.SkipMCPCheckChallengesLimit))
 						return
 					}
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)

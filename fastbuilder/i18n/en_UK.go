@@ -108,6 +108,7 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	SimpleParser_InvEnum:                "Parser: Invalid enum value, allowed values are: %s.",
 	SimpleParser_Invalid_decider:        "Parser: Invalid decider",
 	SimpleParser_Too_few_args:           "Parser: Too few arguments",
+	SkipMCPCheckChallengesLimit:         "The feature being invoked has been disabled due to you enable the skip-mcpc-check-challenges option.",
 	Special_Startup:                     "Enabled language: English (UK)\n",
 	TaskCreated:                         "Task Created",
 	TaskDisplayModeSet:                  "Task status display mode has been set to: %s.",

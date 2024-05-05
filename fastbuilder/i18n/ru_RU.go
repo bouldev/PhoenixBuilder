@@ -114,6 +114,7 @@ var I18nDict_ru_RU map[uint16]string = map[uint16]string{
 	SimpleParser_InvEnum:                "Анализатор: Недопустимое значение перечисления, доступные значения：%s.",
 	SimpleParser_Invalid_decider:        "Анализатор: Недопустимый определитель",
 	SimpleParser_Too_few_args:           "Анализатор: Слишком мало параметров",
+	SkipMCPCheckChallengesLimit:         `В связи с включением опции "skip-mcpc-check-challenges", Функции, используемые в настоящее время, были отключены.`,
 	Special_Startup:                     "Включенный язык: Русский\n",
 	/* Special SysError Translations, for innocent kids */
 	SysError_EACCES:             "В разрешении отказано, пожалуйста, проверьте, разрешен ли программе доступ к соответствующему файлу.",
