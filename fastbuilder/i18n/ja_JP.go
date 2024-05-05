@@ -110,6 +110,7 @@ var I18nDict_ja_JP map[uint16]string = map[uint16]string{
 	SimpleParser_InvEnum:                "アーギュメント読み込み器: 予期せず選択肢、予期した選択肢は: %s.",
 	SimpleParser_Invalid_decider:        "アーギュメント読み込み器: 無効な選択肢でした",
 	SimpleParser_Too_few_args:           "アーギュメント読み込み器: アーギュメント少なさ過ぎます",
+	SkipMCPCheckChallengesLimit:         "「skip-mcpc-check-challenges」オプションを有効にしたため、呼び出した機能は使えません。",
 	Special_Startup:                     "日本語を使用している\n",
 	TaskCreated:                         "タスクを作成しました",
 	TaskDisplayModeSet:                  "タスク状態表示モードを %s に変更しました．",
