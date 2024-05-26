@@ -167,6 +167,14 @@ func (r *Reader) VarRGBA(x *color.RGBA) {
 	}
 }
 
+// NeteaseRGBA reads a color.RGBA x from four bytes.
+func (r *Reader) NeteaseRGBA(x *color.RGBA) {
+	r.Uint8(&x.R)
+	r.Uint8(&x.G)
+	r.Uint8(&x.B)
+	r.Uint8(&x.A)
+}
+
 // Bytes reads the leftover bytes into a byte slice.
 func (r *Reader) Bytes(p *[]byte) {
 	var err error

@@ -3,14 +3,15 @@ package protocol
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/google/uuid"
-	"phoenixbuilder/minecraft/nbt"
 	"image/color"
 	"io"
+	"phoenixbuilder/minecraft/nbt"
 	"reflect"
 	"sort"
 	"unsafe"
+
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/google/uuid"
 )
 
 // Writer implements writing methods for data types from Minecraft packets. Each Packet implementation has one
@@ -124,6 +125,14 @@ func (w *Writer) SubChunkPos(x *SubChunkPos) {
 func (w *Writer) VarRGBA(x *color.RGBA) {
 	val := uint32(x.R) | uint32(x.G)<<8 | uint32(x.B)<<16 | uint32(x.A)<<24
 	w.Varuint32(&val)
+}
+
+// NeteaseRGBA writes a color.RGBA x as four bytes to the underlying buffer.
+func (w *Writer) NeteaseRGBA(x *color.RGBA) {
+	w.Uint8(&x.R)
+	w.Uint8(&x.G)
+	w.Uint8(&x.B)
+	w.Uint8(&x.A)
 }
 
 // UUID writes a UUID to the underlying buffer.
