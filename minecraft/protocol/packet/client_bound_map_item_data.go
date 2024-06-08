@@ -168,7 +168,7 @@ func (pk *ClientBoundMapItemData) Marshal(w *protocol.Writer) {
 				panic("invalid map texture update: length of inner pixels array must be equal to width")
 			}
 			for x := int32(0); x < pk.Width; x++ {
-				w.Uint32(&pk.Pixels[y][x])
+				w.Varuint32(&pk.Pixels[y][x])
 			}
 		}
 
