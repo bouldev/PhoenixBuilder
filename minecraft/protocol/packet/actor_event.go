@@ -64,10 +64,11 @@ const (
 	ActorEventBalloonPop
 	ActorEventTreasureHunt
 	ActorEventSummonAgent
-	ActorEventFinishedChargingCrossbow
+	ActorEventFinishedChargingItem
 	ActorEventLandedOnGround
 	ActorEventActorGrowUp
 	ActorEventVibrationDetected
+	ActorEventDrinkMilk
 )
 
 // ActorEvent is sent by the server when a particular event happens that has to do with an entity. Some of
@@ -89,16 +90,8 @@ func (*ActorEvent) ID() uint32 {
 	return IDActorEvent
 }
 
-// Marshal ...
-func (pk *ActorEvent) Marshal(w *protocol.Writer) {
-	w.Varuint64(&pk.EntityRuntimeID)
-	w.Uint8(&pk.EventType)
-	w.Varint32(&pk.EventData)
-}
-
-// Unmarshal ...
-func (pk *ActorEvent) Unmarshal(r *protocol.Reader) {
-	r.Varuint64(&pk.EntityRuntimeID)
-	r.Uint8(&pk.EventType)
-	r.Varint32(&pk.EventData)
+func (pk *ActorEvent) Marshal(io protocol.IO) {
+	io.Varuint64(&pk.EntityRuntimeID)
+	io.Uint8(&pk.EventType)
+	io.Varint32(&pk.EventData)
 }

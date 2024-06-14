@@ -5,16 +5,16 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
-	"github.com/sandertv/go-raknet"
-	"phoenixbuilder/minecraft/protocol"
-	"phoenixbuilder/minecraft/protocol/packet"
-	"phoenixbuilder/minecraft/resource"
-	"go.uber.org/atomic"
-	"io"
 	"log"
 	"net"
 	"os"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/packet"
+	"phoenixbuilder/minecraft/resource"
+	"sync/atomic"
 	"time"
+
+	"github.com/sandertv/go-raknet"
 )
 
 // ListenConfig holds settings that may be edited to change behaviour of a Listener.
@@ -34,9 +34,34 @@ type ListenConfig struct {
 	// accepted into the server.
 	MaximumPlayers int
 
+	// AllowUnknownPackets specifies if connections of this Listener are allowed to send packets not present
+	// in the packet pool. If false (by default), such packets lead to the connection being closed immediately.
+	// If set to true, the packets will be returned as a packet.Unknown.
+	AllowUnknownPackets bool
+
+	// AllowInvalidPackets specifies if invalid packets (either too few bytes or too many bytes) should be
+	// allowed. If false (by default), such packets lead to the connection being closed immediately. If true,
+	// packets with too many bytes will be returned while packets with too few bytes will be skipped.
+	AllowInvalidPackets bool
+
 	// StatusProvider is the ServerStatusProvider of the Listener. When set to nil, the default provider,
 	// ListenerStatusProvider, is used as provider.
 	StatusProvider ServerStatusProvider
+
+	// AcceptedProtocols is a slice of Protocol accepted by a Listener created with this ListenConfig. The current
+	// Protocol is always added to this slice. Clients with a protocol version that is not present in this slice will
+	// be disconnected.
+	AcceptedProtocols []Protocol
+	// Compression is the packet.Compression to use for packets sent over this Conn. If set to nil, the compression
+	// will default to packet.flateCompression.
+	Compression packet.Compression // TODO: Change this to snappy once Windows crashes are resolved.
+	// FlushRate is the rate at which packets sent are flushed. Packets are buffered for a duration up to
+	// FlushRate and are compressed/encrypted together to improve compression ratios. The lower this
+	// time.Duration, the lower the latency but the less efficient both network and cpu wise.
+	// The default FlushRate (when set to 0) is time.Second/20. If FlushRate is set negative, packets
+	// will not be flushed automatically. In this case, calling `(*Conn).Flush()` is required after any
+	// calls to `(*Conn).Write()` or `(*Conn).WritePacket()` to send the packets over network.
+	FlushRate time.Duration
 
 	// ResourcePacks is a slice of resource packs that the listener may hold. Each client will be asked to
 	// download these resource packs upon joining.
@@ -62,7 +87,7 @@ type ListenConfig struct {
 // consistent API.
 type Listener struct {
 	cfg      ListenConfig
-	listener net.Listener
+	listener NetworkListener
 
 	// playerCount is the amount of players connected to the server. If MaximumPlayers is non-zero and equal
 	// to the playerCount, no more players will be accepted.
@@ -77,17 +102,13 @@ type Listener struct {
 // Listen announces on the local network address. The network is typically "raknet".
 // If the host in the address parameter is empty or a literal unspecified IP address, Listen listens on all
 // available unicast and anycast IP addresses of the local system.
-func (cfg ListenConfig) Listen(network, address string) (*Listener, error) {
-	var netListener net.Listener
-	var err error
-
-	switch network {
-	case "raknet":
-		netListener, err = raknet.ListenConfig{ErrorLog: log.New(io.Discard, "", 0)}.Listen(address)
-	default:
-		// Fall back to the standard net.Listen.
-		netListener, err = net.Listen(network, address)
+func (cfg ListenConfig) Listen(network string, address string) (*Listener, error) {
+	n, ok := networkByID(network)
+	if !ok {
+		return nil, fmt.Errorf("listen: no network under id: %v", network)
 	}
+
+	netListener, err := n.Listen(address)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +118,12 @@ func (cfg ListenConfig) Listen(network, address string) (*Listener, error) {
 	}
 	if cfg.StatusProvider == nil {
 		cfg.StatusProvider = NewStatusProvider("Minecraft Server")
+	}
+	if cfg.Compression == nil {
+		cfg.Compression = packet.DefaultCompression
+	}
+	if cfg.FlushRate == 0 {
+		cfg.FlushRate = time.Second / 20
 	}
 	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	listener := &Listener{
@@ -125,7 +152,7 @@ func Listen(network, address string) (*Listener, error) {
 
 // Accept accepts a fully connected (on Minecraft layer) connection which is ready to receive and send
 // packets. It is recommended to cast the net.Conn returned to a *minecraft.Conn so that it is possible to
-// use the conn.ReadPacket() and conn.WritePacket() methods.
+// use the Conn.ReadPacket() and Conn.WritePacket() methods.
 // Accept returns an error if the listener is closed.
 func (listener *Listener) Accept() (net.Conn, error) {
 	conn, ok := <-listener.incoming
@@ -160,12 +187,9 @@ func (listener *Listener) Close() error {
 // server name of the listener, provided the listener isn't currently hijacking the pong of another server.
 func (listener *Listener) updatePongData() {
 	s := listener.status()
-
-	rakListener := listener.listener.(*raknet.Listener)
-
-	rakListener.PongData([]byte(fmt.Sprintf("MCPE;%v;%v;%v;%v;%v;%v;Minecraft Server;%v;%v;%v;%v;",
-		s.ServerName, protocol.CurrentProtocol, protocol.CurrentVersion, s.PlayerCount, s.MaxPlayers, rakListener.ID(),
-		"Creative", 1, listener.Addr().(*net.UDPAddr).Port, listener.Addr().(*net.UDPAddr).Port,
+	listener.listener.PongData([]byte(fmt.Sprintf("MCPE;%v;%v;%v;%v;%v;%v;Gophertunnel;%v;%v;%v;%v;",
+		s.ServerName, protocol.CurrentProtocol, protocol.CurrentVersion, s.PlayerCount, s.MaxPlayers,
+		listener.listener.ID(), "Creative", 1, listener.Addr().(*net.UDPAddr).Port, listener.Addr().(*net.UDPAddr).Port,
 	)))
 }
 
@@ -204,13 +228,19 @@ func (listener *Listener) listen() {
 // createConn creates a connection for the net.Conn passed and adds it to the listener, so that it may be
 // accepted once its login sequence is complete.
 func (listener *Listener) createConn(netConn net.Conn) {
-	conn := newConn(netConn, listener.key, listener.cfg.ErrorLog)
+	conn := newConn(netConn, listener.key, listener.cfg.ErrorLog, proto{}, listener.cfg.FlushRate, true)
+	conn.acceptedProto = append(listener.cfg.AcceptedProtocols, proto{})
+	conn.compression = listener.cfg.Compression
+	conn.pool = conn.proto.Packets(true)
+
 	conn.packetFunc = listener.cfg.PacketFunc
 	conn.texturePacksRequired = listener.cfg.TexturePacksRequired
 	conn.resourcePacks = listener.cfg.ResourcePacks
 	conn.biomes = listener.cfg.Biomes
 	conn.gameData.WorldName = listener.status().ServerName
 	conn.authEnabled = !listener.cfg.AuthenticationDisabled
+	conn.disconnectOnUnknownPacket = !listener.cfg.AllowUnknownPackets
+	conn.disconnectOnInvalidPacket = !listener.cfg.AllowInvalidPackets
 
 	if listener.playerCount.Load() == int32(listener.cfg.MaximumPlayers) && listener.cfg.MaximumPlayers != 0 {
 		// The server was full. We kick the player immediately and close the connection.

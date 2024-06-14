@@ -17,12 +17,6 @@ func (*AvailableActorIdentifiers) ID() uint32 {
 	return IDAvailableActorIdentifiers
 }
 
-// Marshal ...
-func (pk *AvailableActorIdentifiers) Marshal(w *protocol.Writer) {
-	w.Bytes(&pk.SerialisedEntityIdentifiers)
-}
-
-// Unmarshal ...
-func (pk *AvailableActorIdentifiers) Unmarshal(r *protocol.Reader) {
-	r.Bytes(&pk.SerialisedEntityIdentifiers)
+func (pk *AvailableActorIdentifiers) Marshal(io protocol.IO) {
+	io.Bytes(&pk.SerialisedEntityIdentifiers)
 }

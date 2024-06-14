@@ -18,14 +18,7 @@ func (*AnvilDamage) ID() uint32 {
 	return IDAnvilDamage
 }
 
-// Marshal ...
-func (pk *AnvilDamage) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.Damage)
-	w.UBlockPos(&pk.AnvilPosition)
-}
-
-// Unmarshal ..
-func (pk *AnvilDamage) Unmarshal(r *protocol.Reader) {
-	r.Uint8(&pk.Damage)
-	r.UBlockPos(&pk.AnvilPosition)
+func (pk *AnvilDamage) Marshal(io protocol.IO) {
+	io.Uint8(&pk.Damage)
+	io.UBlockPos(&pk.AnvilPosition)
 }

@@ -35,16 +35,8 @@ func (pk *CodeBuilderSource) ID() uint32 {
 	return IDCodeBuilderSource
 }
 
-// Marshal ...
-func (pk *CodeBuilderSource) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.Operation)
-	w.Uint8(&pk.Category)
-	w.ByteSlice(&pk.Value)
-}
-
-// Unmarshal ...
-func (pk *CodeBuilderSource) Unmarshal(r *protocol.Reader) {
-	r.Uint8(&pk.Operation)
-	r.Uint8(&pk.Category)
-	r.ByteSlice(&pk.Value)
+func (pk *CodeBuilderSource) Marshal(io protocol.IO) {
+	io.Uint8(&pk.Operation)
+	io.Uint8(&pk.Category)
+	io.ByteSlice(&pk.Value)
 }

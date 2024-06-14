@@ -34,33 +34,12 @@ func (*AnimateEntity) ID() uint32 {
 	return IDAnimateEntity
 }
 
-// Marshal ...
-func (pk *AnimateEntity) Marshal(w *protocol.Writer) {
-	w.String(&pk.Animation)
-	w.String(&pk.NextState)
-	w.String(&pk.StopCondition)
-	w.Int32(&pk.StopConditionVersion)
-	w.String(&pk.Controller)
-	w.Float32(&pk.BlendOutTime)
-	l := uint32(len(pk.EntityRuntimeIDs))
-	w.Varuint32(&l)
-	for i := range pk.EntityRuntimeIDs {
-		w.Varuint64(&pk.EntityRuntimeIDs[i])
-	}
-}
-
-// Unmarshal ...
-func (pk *AnimateEntity) Unmarshal(r *protocol.Reader) {
-	r.String(&pk.Animation)
-	r.String(&pk.NextState)
-	r.String(&pk.StopCondition)
-	r.Int32(&pk.StopConditionVersion)
-	r.String(&pk.Controller)
-	r.Float32(&pk.BlendOutTime)
-	var count uint32
-	r.Varuint32(&count)
-	pk.EntityRuntimeIDs = make([]uint64, count)
-	for i := uint32(0); i < count; i++ {
-		r.Varuint64(&pk.EntityRuntimeIDs[i])
-	}
+func (pk *AnimateEntity) Marshal(io protocol.IO) {
+	io.String(&pk.Animation)
+	io.String(&pk.NextState)
+	io.String(&pk.StopCondition)
+	io.Int32(&pk.StopConditionVersion)
+	io.String(&pk.Controller)
+	io.Float32(&pk.BlendOutTime)
+	protocol.FuncSlice(io, &pk.EntityRuntimeIDs, io.Varuint64)
 }

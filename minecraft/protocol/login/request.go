@@ -8,10 +8,11 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
 	"strings"
 	"time"
+
+	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 // chain holds a chain with claims, each with their own headers, payloads and signatures. Each claim holds
@@ -29,7 +30,7 @@ type request struct {
 
 func init() {
 	//noinspection SpellCheckingInspection
-	const mojangPublicKey = `MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE8ELkixyLcwlZryUQcu1TvPOmI2B7vX83ndnWRUaXm74wFfa5f/lwQNTfrLVHa2PmenpGI6JhIMUJaWZrjmMj90NoKNFSNBuKdm8rYiXsfaz3K36x/1U26HpG0ZxK/V1V`
+	const mojangPublicKey = `MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAECRXueJeTDqNRRgJi/vlRufByu/2G0i2Ebt6YMar5QX/R0DIIyrJMcUpruK4QveTfJSTp3Shlq4Gk34cD/4GUWwkv0DVuzeuB+tXija7HBxii03NHDbPAD0AKnLr2wdAp`
 
 	data, _ := base64.StdEncoding.DecodeString(mojangPublicKey)
 	publicKey, _ := x509.ParsePKIXPublicKey(data)
@@ -112,21 +113,27 @@ func Parse(request []byte) (IdentityData, ClientData, AuthResult, error) {
 		if err := identityClaims.Validate(jwt.Expected{Time: t, Issuer: iss}); err != nil {
 			return iData, cData, res, fmt.Errorf("validate token 2: %w", err)
 		}
-		/*if authenticated != (identityClaims.ExtraData.XUID != "") {
-			return iData, cData, res, fmt.Errorf("identity data must have an XUID when logged into XBOX Live only")
-		}
-		if authenticated != (identityClaims.ExtraData.TitleID != "") {
-			return iData, cData, res, fmt.Errorf("identity data must have a title ID when logged into XBOX Live only")
-		}*/
+		/*
+			PhoenixBuilder specific changes.
+			Author: LNSSPsd
+
+			if authenticated != (identityClaims.ExtraData.XUID != "") {
+				return iData, cData, res, fmt.Errorf("identity data must have an XUID when logged into XBOX Live only")
+			}
+			if authenticated != (identityClaims.ExtraData.TitleID != "") {
+				return iData, cData, res, fmt.Errorf("identity data must have a title ID when logged into XBOX Live only")
+			}
+		*/
 	default:
 		return iData, cData, res, fmt.Errorf("unexpected login chain length %v", len(req.Chain))
 	}
 	if err := parseFullClaim(req.RawToken, key, &cData); err != nil {
 		return iData, cData, res, fmt.Errorf("parse client data: %w", err)
 	}
-	if strings.Count(cData.ServerAddress, ":") > 1 {
-		// IPv6: We can't net.ResolveUDPAddr this directly, because Mojang does not put [] around the IP. We'll have to
-		// do this manually:
+	if strings.Count(cData.ServerAddress, ":") > 1 && cData.ServerAddress[0] != '[' {
+		// IPv6: We can't net.ResolveUDPAddr this directly, because Mojang does
+		// not always put [] around the IP if it isn't added by the player in
+		// the External Server adding screen. We'll have to do this manually:
 		ind := strings.LastIndex(cData.ServerAddress, ":")
 		cData.ServerAddress = "[" + cData.ServerAddress[:ind] + "]" + cData.ServerAddress[ind:]
 	}

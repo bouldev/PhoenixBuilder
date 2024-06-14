@@ -19,21 +19,6 @@ func (*CreativeContent) ID() uint32 {
 	return IDCreativeContent
 }
 
-// Marshal ...
-func (pk *CreativeContent) Marshal(w *protocol.Writer) {
-	l := uint32(len(pk.Items))
-	w.Varuint32(&l)
-	for _, item := range pk.Items {
-		protocol.CreativeEntry(w, &item)
-	}
-}
-
-// Unmarshal ...
-func (pk *CreativeContent) Unmarshal(r *protocol.Reader) {
-	var count uint32
-	r.Varuint32(&count)
-	pk.Items = make([]protocol.CreativeItem, count)
-	for i := 0; i < int(count); i++ {
-		protocol.CreativeEntry(r, &pk.Items[i])
-	}
+func (pk *CreativeContent) Marshal(io protocol.IO) {
+	protocol.Slice(io, &pk.Items)
 }

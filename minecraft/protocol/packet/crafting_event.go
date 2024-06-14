@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/google/uuid"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/google/uuid"
 )
 
 // CraftingEvent is sent by the client when it crafts a particular item. Note that this packet may be fully
@@ -29,40 +30,10 @@ func (*CraftingEvent) ID() uint32 {
 	return IDCraftingEvent
 }
 
-// Marshal ...
-func (pk *CraftingEvent) Marshal(w *protocol.Writer) {
-	inputLen, outputLen := uint32(len(pk.Input)), uint32(len(pk.Output))
-	w.Uint8(&pk.WindowID)
-	w.Varint32(&pk.CraftingType)
-	w.UUID(&pk.RecipeUUID)
-	w.Varuint32(&inputLen)
-	for _, input := range pk.Input {
-		w.ItemInstance(&input)
-	}
-	w.Varuint32(&outputLen)
-	for _, output := range pk.Output {
-		w.ItemInstance(&output)
-	}
-}
-
-// Unmarshal ...
-func (pk *CraftingEvent) Unmarshal(r *protocol.Reader) {
-	var length uint32
-	r.Uint8(&pk.WindowID)
-	r.Varint32(&pk.CraftingType)
-	r.UUID(&pk.RecipeUUID)
-	r.Varuint32(&length)
-	r.LimitUint32(length, 64)
-
-	pk.Input = make([]protocol.ItemInstance, length)
-	for i := uint32(0); i < length; i++ {
-		r.ItemInstance(&pk.Input[i])
-	}
-	r.Varuint32(&length)
-	r.LimitUint32(length, 64)
-
-	pk.Output = make([]protocol.ItemInstance, length)
-	for i := uint32(0); i < length; i++ {
-		r.ItemInstance(&pk.Output[i])
-	}
+func (pk *CraftingEvent) Marshal(io protocol.IO) {
+	io.Uint8(&pk.WindowID)
+	io.Varint32(&pk.CraftingType)
+	io.UUID(&pk.RecipeUUID)
+	protocol.FuncSlice(io, &pk.Input, io.ItemInstance)
+	protocol.FuncSlice(io, &pk.Output, io.ItemInstance)
 }

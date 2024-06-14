@@ -1,8 +1,9 @@
 package minecraft
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // GameData is a loose wrapper around a part of the data found in the StartGame packet. It holds data sent
@@ -14,6 +15,9 @@ type GameData struct {
 	// If WorldName is left empty, the name of the Listener will be used to show above the player list
 	// in-game.
 	WorldName string
+	// WorldSeed is the seed used to generate the world. Unlike in PC edition, the seed is a 32bit integer
+	// here.
+	WorldSeed int64
 	// Difficulty is the difficulty of the world that the player spawns in. A difficulty of 0, peaceful, means
 	// the player will automatically regenerate health and hunger.
 	Difficulty int32
@@ -29,6 +33,10 @@ type GameData struct {
 	// This field may be set to 5 to make the client fall back to the game mode set in the WorldGameMode
 	// field.
 	PlayerGameMode int32
+	// PersonaDisabled is true if persona skins are disabled for the current game session.
+	PersonaDisabled bool
+	// CustomSkinsDisabled is true if custom skins are disabled for the current game session.
+	CustomSkinsDisabled bool
 	// BaseGameVersion is the version of the game from which Vanilla features will be used. The exact function
 	// of this field isn't clear.
 	BaseGameVersion string
@@ -46,6 +54,15 @@ type GameData struct {
 	// WorldSpawn is the block on which the world spawn of the world. This coordinate has no effect on the
 	// place that the client spawns, but it does have an effect on the direction that a compass points.
 	WorldSpawn protocol.BlockPos
+	// EditorWorld is a value to dictate if the world is in editor mode, a special mode recently introduced adding
+	// "powerful tools for editing worlds, intended for experienced creators."
+	EditorWorld bool
+	// CreatedInEditor is a value to dictate if the world was created as a project in the editor mode. The functionality
+	// of this field is currently unknown.
+	CreatedInEditor bool
+	// ExportedFromEditor is a value to dictate if the world was exported from editor mode. The functionality of this
+	// field is currently unknown.
+	ExportedFromEditor bool
 	// WorldGameMode is the game mode that a player gets when it first spawns in the world. It is shown in the
 	// settings and is used if the PlayerGameMode is set to 5.
 	WorldGameMode int32
@@ -73,4 +90,21 @@ type GameData struct {
 	// Experiments is a list of experiments enabled on the server side. These experiments are used to enable
 	// disable experimental features.
 	Experiments []protocol.ExperimentData
+	// PlayerPermissions is the permission level of the player. It is a value from 0-3, with 0 being visitor,
+	// 1 being member, 2 being operator and 3 being custom.
+	PlayerPermissions int32
+	// ChunkRadius is the initial chunk radius that the connection gets. This can be changed later on using a
+	// packet.ChunkRadiusUpdated.
+	ChunkRadius int32
+	// ClientSideGeneration is true if the client should use the features registered in the FeatureRegistry packet to
+	// generate terrain client-side to save on bandwidth.
+	ClientSideGeneration bool
+	// ChatRestrictionLevel specifies the level of restriction on in-game chat. It is one of the constants above.
+	ChatRestrictionLevel uint8
+	// DisablePlayerInteractions is true if the client should ignore other players when interacting with the world.
+	DisablePlayerInteractions bool
+	// UseBlockNetworkIDHashes is true if the client should use the hash of a block's name as its network ID rather than
+	// its index in the expected block palette. This is useful for servers that wish to support multiple protocol versions
+	// and custom blocks, but it will result in extra bytes being written for every block in a sub chunk palette.
+	UseBlockNetworkIDHashes bool
 }

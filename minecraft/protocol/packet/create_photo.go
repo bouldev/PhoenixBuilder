@@ -18,16 +18,8 @@ func (*CreatePhoto) ID() uint32 {
 	return IDCreatePhoto
 }
 
-// Marshal ...
-func (pk *CreatePhoto) Marshal(w *protocol.Writer) {
-	w.Int64(&pk.EntityUniqueID)
-	w.String(&pk.PhotoName)
-	w.String(&pk.ItemName)
-}
-
-// Unmarshal ...
-func (pk *CreatePhoto) Unmarshal(r *protocol.Reader) {
-	r.Int64(&pk.EntityUniqueID)
-	r.String(&pk.PhotoName)
-	r.String(&pk.ItemName)
+func (pk *CreatePhoto) Marshal(io protocol.IO) {
+	io.Int64(&pk.EntityUniqueID)
+	io.String(&pk.PhotoName)
+	io.String(&pk.ItemName)
 }

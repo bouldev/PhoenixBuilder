@@ -51,48 +51,24 @@ func (*BookEdit) ID() uint32 {
 	return IDBookEdit
 }
 
-// Marshal ...
-func (pk *BookEdit) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.ActionType)
-	w.Uint8(&pk.InventorySlot)
+func (pk *BookEdit) Marshal(io protocol.IO) {
+	io.Uint8(&pk.ActionType)
+	io.Uint8(&pk.InventorySlot)
 	switch pk.ActionType {
 	case BookActionReplacePage, BookActionAddPage:
-		w.Uint8(&pk.PageNumber)
-		w.String(&pk.Text)
-		w.String(&pk.PhotoName)
+		io.Uint8(&pk.PageNumber)
+		io.String(&pk.Text)
+		io.String(&pk.PhotoName)
 	case BookActionDeletePage:
-		w.Uint8(&pk.PageNumber)
+		io.Uint8(&pk.PageNumber)
 	case BookActionSwapPages:
-		w.Uint8(&pk.PageNumber)
-		w.Uint8(&pk.SecondaryPageNumber)
+		io.Uint8(&pk.PageNumber)
+		io.Uint8(&pk.SecondaryPageNumber)
 	case BookActionSign:
-		w.String(&pk.Title)
-		w.String(&pk.Author)
-		w.String(&pk.XUID)
+		io.String(&pk.Title)
+		io.String(&pk.Author)
+		io.String(&pk.XUID)
 	default:
-		w.UnknownEnumOption(pk.ActionType, "book edit action type")
-	}
-}
-
-// Unmarshal ...
-func (pk *BookEdit) Unmarshal(r *protocol.Reader) {
-	r.Uint8(&pk.ActionType)
-	r.Uint8(&pk.InventorySlot)
-	switch pk.ActionType {
-	case BookActionReplacePage, BookActionAddPage:
-		r.Uint8(&pk.PageNumber)
-		r.String(&pk.Text)
-		r.String(&pk.PhotoName)
-	case BookActionDeletePage:
-		r.Uint8(&pk.PageNumber)
-	case BookActionSwapPages:
-		r.Uint8(&pk.PageNumber)
-		r.Uint8(&pk.SecondaryPageNumber)
-	case BookActionSign:
-		r.String(&pk.Title)
-		r.String(&pk.Author)
-		r.String(&pk.XUID)
-	default:
-		r.UnknownEnumOption(pk.ActionType, "book edit action type")
+		io.UnknownEnumOption(pk.ActionType, "book edit action type")
 	}
 }

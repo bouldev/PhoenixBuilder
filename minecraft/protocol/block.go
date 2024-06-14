@@ -12,8 +12,8 @@ type BlockEntry struct {
 	Properties map[string]any
 }
 
-// Block reads a BlockEntry x from IO r.
-func Block(r IO, x *BlockEntry) {
+// Marshal encodes/decodes a BlockEntry.
+func (x *BlockEntry) Marshal(r IO) {
 	r.String(&x.Name)
 	r.NBT(&x.Properties, nbt.NetworkLittleEndian)
 }
@@ -33,10 +33,14 @@ type BlockChangeEntry struct {
 	SyncedUpdateType uint32
 }
 
-// BlockChange reads/writes a BlockChangeEntry from an IO.
-func BlockChange(r IO, x *BlockChangeEntry) {
-	// r.BlockPos(&x.BlockPos)
-	r.UBlockPos(&x.BlockPos) // for Netease
+// Marshal encodes/decodes a BlockChangeEntry.
+func (x *BlockChangeEntry) Marshal(r IO) {
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new
+	{
+		r.UBlockPos(&x.BlockPos)
+		// r.BlockPos(&x.BlockPos)
+	}
 
 	r.Varuint32(&x.BlockRuntimeID)
 	r.Varuint32(&x.Flags)

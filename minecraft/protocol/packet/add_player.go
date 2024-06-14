@@ -1,9 +1,10 @@
 package packet
 
 import (
+	"phoenixbuilder/minecraft/protocol"
+
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"
-	"phoenixbuilder/minecraft/protocol"
 )
 
 // AddPlayer is sent by the server to the client to make a player entity show up client-side. It is one of the
@@ -16,10 +17,6 @@ type AddPlayer struct {
 	// Username is the name of the player. This username is the username that will be set as the initial
 	// name tag of the player.
 	Username string
-	// EntityUniqueID is the unique ID of the player. The unique ID is a value that remains consistent across
-	// different sessions of the same world, but most servers simply fill the runtime ID of the player out for
-	// this field.
-	EntityUniqueID int64
 	// EntityRuntimeID is the runtime ID of the player. The runtime ID is unique for each world session, and
 	// entities are generally identified in packets using this runtime ID.
 	EntityRuntimeID uint64
@@ -51,22 +48,11 @@ type AddPlayer struct {
 	// particular the way the player looks. Flags include ones such as 'on fire' and 'sprinting'.
 	// The metadata values are indexed by their property key.
 	EntityMetadata map[uint32]any
-	// Flags is a set of flags that specify certain properties of the player, such as whether it can
-	// fly and/or move through blocks.
-	Flags uint32
-	// CommandPermissionLevel is a set of permissions that specify what commands a player is allowed to execute.
-	CommandPermissionLevel uint32
-	// ActionPermissions is, much like Flags, a set of flags that specify actions that the player is allowed
-	// to undertake, such as whether it is allowed to edit blocks, open doors etc.
-	ActionPermissions uint32
-	// PermissionLevel is the permission level of the player as it shows up in the player list built up using
-	// the PlayerList packet.
-	PermissionLevel uint32
-	// CustomStoredPermissions ...
-	CustomStoredPermissions uint32
-	// PlayerUniqueID is a unique identifier of the player. It appears it is not required to fill this field
-	// out with a correct value. Simply writing 0 seems to work.
-	PlayerUniqueID int64
+	// EntityProperties is a list of properties that the entity inhibits. These properties define and alter specific
+	// attributes of the entity.
+	EntityProperties protocol.EntityProperties
+	// AbilityData represents various data about the abilities of a player, such as ability layers or permissions.
+	AbilityData protocol.AbilityData
 	// EntityLinks is a list of entity links that are currently active on the player. These links alter the
 	// way the player shows up when first spawned in terms of it shown as riding an entity. Setting these
 	// links is important for new viewers to see the player is riding another entity.
@@ -84,54 +70,22 @@ func (*AddPlayer) ID() uint32 {
 	return IDAddPlayer
 }
 
-// Marshal ...
-func (pk *AddPlayer) Marshal(w *protocol.Writer) {
-	w.UUID(&pk.UUID)
-	w.String(&pk.Username)
-	w.Varint64(&pk.EntityUniqueID)
-	w.Varuint64(&pk.EntityRuntimeID)
-	w.String(&pk.PlatformChatID)
-	w.Vec3(&pk.Position)
-	w.Vec3(&pk.Velocity)
-	w.Float32(&pk.Pitch)
-	w.Float32(&pk.Yaw)
-	w.Float32(&pk.HeadYaw)
-	w.ItemInstance(&pk.HeldItem)
-	w.Varint32(&pk.GameType)
-	w.EntityMetadata(&pk.EntityMetadata)
-	w.Varuint32(&pk.Flags)
-	w.Varuint32(&pk.CommandPermissionLevel)
-	w.Varuint32(&pk.ActionPermissions)
-	w.Varuint32(&pk.PermissionLevel)
-	w.Varuint32(&pk.CustomStoredPermissions)
-	w.Int64(&pk.PlayerUniqueID)
-	protocol.WriteEntityLinks(w, &pk.EntityLinks)
-	w.String(&pk.DeviceID)
-	w.Int32(&pk.BuildPlatform)
-}
-
-// Unmarshal ...
-func (pk *AddPlayer) Unmarshal(r *protocol.Reader) {
-	r.UUID(&pk.UUID)
-	r.String(&pk.Username)
-	r.Varint64(&pk.EntityUniqueID)
-	r.Varuint64(&pk.EntityRuntimeID)
-	r.String(&pk.PlatformChatID)
-	r.Vec3(&pk.Position)
-	r.Vec3(&pk.Velocity)
-	r.Float32(&pk.Pitch)
-	r.Float32(&pk.Yaw)
-	r.Float32(&pk.HeadYaw)
-	r.ItemInstance(&pk.HeldItem)
-	r.Varint32(&pk.GameType)
-	r.EntityMetadata(&pk.EntityMetadata)
-	r.Varuint32(&pk.Flags)
-	r.Varuint32(&pk.CommandPermissionLevel)
-	r.Varuint32(&pk.ActionPermissions)
-	r.Varuint32(&pk.PermissionLevel)
-	r.Varuint32(&pk.CustomStoredPermissions)
-	r.Int64(&pk.PlayerUniqueID)
-	protocol.EntityLinks(r, &pk.EntityLinks)
-	r.String(&pk.DeviceID)
-	r.Int32(&pk.BuildPlatform)
+func (pk *AddPlayer) Marshal(io protocol.IO) {
+	io.UUID(&pk.UUID)
+	io.String(&pk.Username)
+	io.Varuint64(&pk.EntityRuntimeID)
+	io.String(&pk.PlatformChatID)
+	io.Vec3(&pk.Position)
+	io.Vec3(&pk.Velocity)
+	io.Float32(&pk.Pitch)
+	io.Float32(&pk.Yaw)
+	io.Float32(&pk.HeadYaw)
+	io.ItemInstance(&pk.HeldItem)
+	io.Varint32(&pk.GameType)
+	io.EntityMetadata(&pk.EntityMetadata)
+	protocol.Single(io, &pk.EntityProperties)
+	protocol.Single(io, &pk.AbilityData)
+	protocol.Slice(io, &pk.EntityLinks)
+	io.String(&pk.DeviceID)
+	io.Int32(&pk.BuildPlatform)
 }

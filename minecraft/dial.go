@@ -7,14 +7,14 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	_ "embed"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	rand2 "math/rand"
 	"net"
 	"os"
-	"phoenixbuilder/minecraft/internal/resource"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/login"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -24,6 +24,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 type Authenticator interface {
@@ -54,6 +55,36 @@ type Dialer struct {
 	// Login packet. The function is called with the header of the packet and its raw payload, the address
 	// from which the packet originated, and the destination address.
 	PacketFunc func(header packet.Header, payload []byte, src, dst net.Addr)
+
+	// DownloadResourcePack is called individually for every texture and behaviour pack sent by the connection when
+	// using Dialer.Dial(), and can be used to stop the pack from being downloaded. The function is called with the UUID
+	// and version of the resource pack, the number of the current pack being downloaded, and the total amount of packs.
+	// The boolean returned determines if the pack will be downloaded or not.
+	DownloadResourcePack func(id uuid.UUID, version string, current, total int) bool
+
+	// DisconnectOnUnknownPackets specifies if the connection should disconnect if packets received are not present
+	// in the packet pool. If true, such packets lead to the connection being closed immediately.
+	// If set to false, the packets will be returned as a packet.Unknown.
+	DisconnectOnUnknownPackets bool
+
+	// DisconnectOnInvalidPackets specifies if invalid packets (either too few bytes or too many bytes) should be
+	// allowed. If true, such packets lead to the connection being closed immediately. If false,
+	// packets with too many bytes will be returned while packets with too few bytes will be skipped.
+	DisconnectOnInvalidPackets bool
+
+	// Protocol is the Protocol version used to communicate with the target server. By default, this field is
+	// set to the current protocol as implemented in the minecraft/protocol package. Note that packets written
+	// to and read from the Conn are always any of those found in the protocol/packet package, as packets
+	// are converted from and to this Protocol.
+	Protocol Protocol
+
+	// FlushRate is the rate at which packets sent are flushed. Packets are buffered for a duration up to
+	// FlushRate and are compressed/encrypted together to improve compression ratios. The lower this
+	// time.Duration, the lower the latency but the less efficient both network and cpu wise.
+	// The default FlushRate (when set to 0) is time.Second/20. If FlushRate is set negative, packets
+	// will not be flushed automatically. In this case, calling `(*Conn).Flush()` is required after any
+	// calls to `(*Conn).Write()` or `(*Conn).WritePacket()` to send the packets over network.
+	FlushRate time.Duration
 
 	// EnableClientCache, if set to true, enables the client blob cache for the client. This means that the
 	// server will send chunks as blobs, which may be saved by the client so that chunks don't have to be
@@ -128,40 +159,48 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	if d.ErrorLog == nil {
 		d.ErrorLog = log.New(os.Stderr, "", log.LstdFlags)
 	}
-	var netConn net.Conn
-
-	switch network {
-	case "raknet":
-		// If the network is specifically 'raknet', we use the raknet library to dial a RakNet connection.
-		dialer := raknet.Dialer{ErrorLog: log.New(io.Discard, "", 0)}
-		/*
-			var pong []byte
-			pong, err = dialer.PingContext(ctx, address)
-			if err != nil {
-				break
-			}
-		*/
-		netConn, err = dialer.DialContext(ctx, address)
-	default:
-		// If not set to 'raknet', we fall back to the default net.Dial method to find a proper connection for
-		// the network passed.
-		var d net.Dialer
-		netConn, err = d.DialContext(ctx, network, address)
+	if d.Protocol == nil {
+		d.Protocol = DefaultProtocol
 	}
+	if d.FlushRate == 0 {
+		d.FlushRate = time.Second / 20
+	}
+
+	n, ok := networkByID(network)
+	if !ok {
+		return nil, fmt.Errorf("listen: no network under id: %v", network)
+	}
+
+	/*
+		PhoenixBuilder specific changes.
+		Changes Maker: Liliya233
+		Committed by Happy2018new.
+
+		var pong []byte
+		if pong, err = n.PingContext(ctx, address); err == nil {
+			netConn, err = n.DialContext(ctx, addressWithPongPort(pong, address))
+		} else {
+			netConn, err = n.DialContext(ctx, address)
+		}
+	*/
+	var netConn net.Conn
+	netConn, err = n.DialContext(ctx, address)
 	if err != nil {
 		return nil, err
 	}
-	conn = newConn(netConn, key, d.ErrorLog)
+
+	conn = newConn(netConn, key, d.ErrorLog, d.Protocol, d.FlushRate, false)
+	conn.pool = conn.proto.Packets(false)
 	conn.identityData = d.IdentityData
 	conn.clientData = d.ClientData
 	conn.packetFunc = d.PacketFunc
+	conn.downloadResourcePack = d.DownloadResourcePack
 	conn.cacheEnabled = d.EnableClientCache
+	conn.disconnectOnInvalidPacket = d.DisconnectOnInvalidPackets
+	conn.disconnectOnUnknownPacket = d.DisconnectOnUnknownPackets
 
-	// Disable the batch packet limit so that the server can send packets as often as it wants to.
-	conn.dec.DisableBatchPacketLimit()
-
-	defaultClientData(address, conn.identityData.DisplayName, &conn.clientData)
 	defaultIdentityData(&conn.identityData)
+	defaultClientData(address, conn.identityData.DisplayName, &conn.clientData)
 
 	var request []byte
 	// We login as an Android device and this will show up in the 'titleId' field in the JWT chain, which
@@ -176,28 +215,68 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	// If we got the identity data from Minecraft auth, we need to make sure we set it in the Conn too, as
 	// we are not aware of the identity data ourselves yet.
 	conn.identityData = identityData
-	c := make(chan struct{})
-	go listenConn(conn, d.ErrorLog, c)
 
-	conn.expect(packet.IDServerToClientHandshake, packet.IDPlayStatus)
-	if err := conn.WritePacket(&packet.Login{ConnectionRequest: request, ClientProtocol: protocol.CurrentProtocol}); err != nil {
+	l, c := make(chan struct{}), make(chan struct{})
+	go listenConn(conn, d.ErrorLog, l, c)
+
+	conn.expect(packet.IDNetworkSettings, packet.IDPlayStatus)
+	if err := conn.WritePacket(&packet.RequestNetworkSettings{ClientProtocol: d.Protocol.ID()}); err != nil {
 		return nil, err
 	}
 	_ = conn.Flush()
+
 	select {
 	case <-conn.close:
 		return nil, conn.closeErr("dial")
 	case <-ctx.Done():
 		return nil, conn.wrap(ctx.Err(), "dial")
-	case <-c:
-		// We've connected successfully. We return the connection and no error.
-		return conn, nil
+	case <-l:
+		// We've received our network settings, so we can now send our login request.
+		conn.expect(packet.IDServerToClientHandshake, packet.IDPlayStatus)
+		if err := conn.WritePacket(&packet.Login{ConnectionRequest: request, ClientProtocol: d.Protocol.ID()}); err != nil {
+			return nil, err
+		}
+		_ = conn.Flush()
+
+		select {
+		case <-conn.close:
+			return nil, conn.closeErr("dial")
+		case <-ctx.Done():
+			return nil, conn.wrap(ctx.Err(), "dial")
+		case <-c:
+			// We've connected successfully. We return the connection and no error.
+			return conn, nil
+		}
 	}
+}
+
+// readChainIdentityData reads a login.IdentityData from the Mojang chain
+// obtained through authentication.
+func readChainIdentityData(chainData []byte) login.IdentityData {
+	chain := struct{ Chain []string }{}
+	if err := json.Unmarshal(chainData, &chain); err != nil {
+		panic("invalid chain data from authentication: " + err.Error())
+	}
+	data := chain.Chain[1]
+	claims := struct {
+		ExtraData login.IdentityData `json:"extraData"`
+	}{}
+	tok, err := jwt.ParseSigned(data)
+	if err != nil {
+		panic("invalid chain data from authentication: " + err.Error())
+	}
+	if err := tok.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		panic("invalid chain data from authentication: " + err.Error())
+	}
+	if claims.ExtraData.Identity == "" {
+		panic("chain data contained no data")
+	}
+	return claims.ExtraData
 }
 
 // listenConn listens on the connection until it is closed on another goroutine. The channel passed will
 // receive a value once the connection is logged in.
-func listenConn(conn *Conn, logger *log.Logger, c chan struct{}) {
+func listenConn(conn *Conn, logger *log.Logger, l, c chan struct{}) {
 	defer func() {
 		_ = conn.Close()
 	}()
@@ -212,14 +291,19 @@ func listenConn(conn *Conn, logger *log.Logger, c chan struct{}) {
 			return
 		}
 		for _, data := range packets {
-			loggedInBefore := conn.loggedIn
+			loggedInBefore, readyToLoginBefore := conn.loggedIn, conn.readyToLogin
 			if err := conn.receive(data); err != nil {
 				logger.Printf("error: %v", err)
 				return
 			}
+			if !readyToLoginBefore && conn.readyToLogin {
+				// This is the signal that the connection is ready to login, so we put a value in the channel so that
+				// it may be detected.
+				l <- struct{}{}
+			}
 			if !loggedInBefore && conn.loggedIn {
-				// This is the signal that the connection was considered logged in, so we put a value in the
-				// channel so that it may be detected.
+				// This is the signal that the connection was considered logged in, so we put a value in the channel so
+				// that it may be detected.
 				c <- struct{}{}
 			}
 		}
@@ -268,10 +352,10 @@ func defaultClientData(address, username string, d *login.ClientData) {
 		d.SkinImageWidth = 64
 	}
 	if d.SkinResourcePatch == "" {
-		d.SkinResourcePatch = base64.StdEncoding.EncodeToString([]byte(resource.DefaultSkinResourcePatch))
+		d.SkinResourcePatch = base64.StdEncoding.EncodeToString(skinResourcePatch)
 	}
 	if d.SkinGeometry == "" {
-		d.SkinGeometry = base64.StdEncoding.EncodeToString([]byte(resource.DefaultSkinGeometry))
+		d.SkinGeometry = base64.StdEncoding.EncodeToString(skinGeometry)
 	}
 }
 
@@ -328,13 +412,15 @@ func addressWithPongPort(pong []byte, address string) string {
 	if len(frag) > 10 {
 		portStr := frag[10]
 		port, err := strconv.Atoi(portStr)
-		if err != nil {
+		// Vanilla (realms, in particular) will sometimes send port 19132 when you ping a port that isn't 19132 already,
+		// but we should ignore that.
+		if err != nil || port == 19132 {
 			return address
 		}
 		// Remove the port from the address.
 		addressParts := strings.Split(address, ":")
 		address = strings.Join(strings.Split(address, ":")[:len(addressParts)-1], ":")
-		return address + ":" + strconv.Itoa(port)
+		return address + ":" + portStr
 	}
 	return address
 }

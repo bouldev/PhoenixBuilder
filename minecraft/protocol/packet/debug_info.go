@@ -18,14 +18,7 @@ func (*DebugInfo) ID() uint32 {
 	return IDDebugInfo
 }
 
-// Marshal ...
-func (pk *DebugInfo) Marshal(w *protocol.Writer) {
-	w.Varint64(&pk.PlayerUniqueID)
-	w.ByteSlice(&pk.Data)
-}
-
-// Unmarshal ...
-func (pk *DebugInfo) Unmarshal(r *protocol.Reader) {
-	r.Varint64(&pk.PlayerUniqueID)
-	r.ByteSlice(&pk.Data)
+func (pk *DebugInfo) Marshal(io protocol.IO) {
+	io.Varint64(&pk.PlayerUniqueID)
+	io.ByteSlice(&pk.Data)
 }

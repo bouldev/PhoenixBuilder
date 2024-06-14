@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // CorrectPlayerMovePrediction is sent by the server if and only if StartGame.ServerAuthoritativeMovementMode
@@ -26,18 +27,9 @@ func (*CorrectPlayerMovePrediction) ID() uint32 {
 	return IDCorrectPlayerMovePrediction
 }
 
-// Marshal ...
-func (pk *CorrectPlayerMovePrediction) Marshal(w *protocol.Writer) {
-	w.Vec3(&pk.Position)
-	w.Vec3(&pk.Delta)
-	w.Bool(&pk.OnGround)
-	w.Varuint64(&pk.Tick)
-}
-
-// Unmarshal ...
-func (pk *CorrectPlayerMovePrediction) Unmarshal(r *protocol.Reader) {
-	r.Vec3(&pk.Position)
-	r.Vec3(&pk.Delta)
-	r.Bool(&pk.OnGround)
-	r.Varuint64(&pk.Tick)
+func (pk *CorrectPlayerMovePrediction) Marshal(io protocol.IO) {
+	io.Vec3(&pk.Position)
+	io.Vec3(&pk.Delta)
+	io.Bool(&pk.OnGround)
+	io.Varuint64(&pk.Tick)
 }

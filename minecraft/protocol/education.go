@@ -9,8 +9,8 @@ type EducationSharedResourceURI struct {
 	LinkURI string
 }
 
-// EducationResourceURI reads/writes an EducationSharedResourceURI to an IO.
-func EducationResourceURI(r IO, x *EducationSharedResourceURI) {
+// Marshal reads/writes an EducationSharedResourceURI to an IO.
+func (x *EducationSharedResourceURI) Marshal(r IO) {
 	r.String(&x.ButtonName)
 	r.String(&x.LinkURI)
 }
@@ -21,4 +21,10 @@ type EducationExternalLinkSettings struct {
 	URL string
 	// DisplayName is the display name in game.
 	DisplayName string
+}
+
+// Marshal encodes/decodes an EducationExternalLinkSettings.
+func (x *EducationExternalLinkSettings) Marshal(r IO) {
+	r.String(&x.URL)
+	r.String(&x.DisplayName)
 }

@@ -20,11 +20,11 @@ import (
 	"phoenixbuilder/minecraft/text"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/sandertv/go-raknet"
-	"go.uber.org/atomic"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
@@ -58,16 +58,22 @@ type Conn struct {
 	log         *log.Logger
 	authEnabled bool
 
-	pool packet.Pool
-	enc  *packet.Encoder
-	dec  *packet.Decoder
+	proto         Protocol
+	acceptedProto []Protocol
+	pool          packet.Pool
+	enc           *packet.Encoder
+	dec           *packet.Decoder
+	compression   packet.Compression
+	readerLimits  bool
+
+	disconnectOnUnknownPacket bool
+	disconnectOnInvalidPacket bool
 
 	identityData login.IdentityData
 	clientData   login.ClientData
 
 	gameData         GameData
 	gameDataReceived atomic.Bool
-	chunkRadius      int
 
 	// privateKey is the private key of this end of the connection. Each connection, regardless of which side
 	// the connection is on, server or client, has a unique private key generated.
@@ -93,6 +99,9 @@ type Conn struct {
 	bufferedSend [][]byte
 	hdr          *packet.Header
 
+	// readyToLogin is a bool indicating if the connection is ready to login. This is used to ensure that the client
+	// has received the relevant network settings before the login sequence starts.
+	readyToLogin bool
 	// loggedIn is a bool indicating if the connection was logged in. It is set to true after the entire login
 	// sequence is completed.
 	loggedIn bool
@@ -116,6 +125,12 @@ type Conn struct {
 	// be able to join the server. If they don't accept, they can only leave the server.
 	texturePacksRequired bool
 	packQueue            *resourcePackQueue
+	// downloadResourcePack is an optional function passed to a Dial() call. If set, each resource pack received
+	// from the server will call this function to see if it should be downloaded or not.
+	downloadResourcePack func(id uuid.UUID, version string, currentPack, totalPacks int) bool
+	// ignoredResourcePacks is a slice of resource packs that are not being downloaded due to the downloadResourcePack
+	// func returning false for the specific pack.
+	ignoredResourcePacks []exemptedResourcePack
 
 	cacheEnabled bool
 
@@ -123,9 +138,11 @@ type Conn struct {
 	// to this connection will call this function.
 	packetFunc func(header packet.Header, payload []byte, src, dst net.Addr)
 
-	disconnectMessage atomic.String
+	disconnectMessage atomic.Pointer[string]
 
 	shieldID atomic.Int32
+
+	additional chan packet.Packet
 
 	DebugMode bool
 }
@@ -134,26 +151,38 @@ type Conn struct {
 // Minecraft packets to that net.Conn.
 // newConn accepts a private key which will be used to identify the connection. If a nil key is passed, the
 // key is generated.
-func newConn(netConn net.Conn, key *ecdsa.PrivateKey, log *log.Logger) *Conn {
+func newConn(netConn net.Conn, key *ecdsa.PrivateKey, log *log.Logger, proto Protocol, flushRate time.Duration, limits bool) *Conn {
 	conn := &Conn{
-		enc:         packet.NewEncoder(netConn),
-		dec:         packet.NewDecoder(netConn),
-		pool:        packet.NewPool(),
-		salt:        make([]byte, 16),
-		packets:     make(chan *packetData, 8),
-		close:       make(chan struct{}),
-		spawn:       make(chan struct{}),
-		conn:        netConn,
-		privateKey:  key,
-		log:         log,
-		chunkRadius: 16,
-		hdr:         &packet.Header{},
+		enc:          packet.NewEncoder(netConn),
+		dec:          packet.NewDecoder(netConn),
+		salt:         make([]byte, 16),
+		packets:      make(chan *packetData, 8),
+		additional:   make(chan packet.Packet, 16),
+		close:        make(chan struct{}),
+		spawn:        make(chan struct{}),
+		conn:         netConn,
+		privateKey:   key,
+		log:          log,
+		hdr:          &packet.Header{},
+		proto:        proto,
+		readerLimits: limits,
 	}
-	conn.expectedIDs.Store([]uint32{packet.IDLogin})
+	var s string
+	conn.disconnectMessage.Store(&s)
+
+	if !limits {
+		// Disable the batch packet limit so that the server can send packets as often as it wants to.
+		conn.dec.DisableBatchPacketLimit()
+	}
 	_, _ = rand.Read(conn.salt)
 
+	conn.expectedIDs.Store([]uint32{packet.IDRequestNetworkSettings})
+
+	if flushRate <= 0 {
+		return conn
+	}
 	go func() {
-		ticker := time.NewTicker(time.Second / 20)
+		ticker := time.NewTicker(flushRate)
 		defer ticker.Stop()
 		for range ticker.C {
 			if err := conn.Flush(); err != nil {
@@ -163,10 +192,6 @@ func newConn(netConn net.Conn, key *ecdsa.PrivateKey, log *log.Logger) *Conn {
 		}
 	}()
 	return conn
-}
-
-func (conn *Conn) GetShieldID() int32 {
-	return conn.shieldID.Load()
 }
 
 // IdentityData returns the identity data of the connection. It holds the UUID, XUID and username of the
@@ -276,10 +301,6 @@ func (conn *Conn) DoSpawnTimeout(timeout time.Duration) error {
 // DoSpawnContext will start the spawning sequence using the game data found in conn.GameData(), which was
 // sent earlier by the server.
 func (conn *Conn) DoSpawnContext(ctx context.Context) error {
-	if !conn.gameDataReceived.Load() {
-		panic("(*Conn).DoSpawn must only be called on Dialer connections")
-	}
-
 	select {
 	case <-conn.close:
 		return conn.closeErr("do spawn")
@@ -307,7 +328,7 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 
 	buf := internal.BufferPool.Get().(*bytes.Buffer)
 	defer func() {
-		// Reset the buffer so we can return it to the buffer pool safely.
+		// Reset the buffer, so we can return it to the buffer pool safely.
 		buf.Reset()
 		internal.BufferPool.Put(buf)
 	}()
@@ -316,15 +337,19 @@ func (conn *Conn) WritePacket(pk packet.Packet) error {
 	_ = conn.hdr.Write(buf)
 	l := buf.Len()
 
-	pk.Marshal(protocol.NewWriter(buf, conn.shieldID.Load()))
-	if conn.packetFunc != nil {
-		conn.packetFunc(*conn.hdr, buf.Bytes()[l:], conn.LocalAddr(), conn.RemoteAddr())
-	}
+	for _, converted := range conn.proto.ConvertFromLatest(pk, conn) {
+		converted.Marshal(conn.proto.NewWriter(buf, conn.shieldID.Load()))
 
-	conn.bufferedSend = append(conn.bufferedSend, append([]byte(nil), buf.Bytes()...))
+		if conn.packetFunc != nil {
+			conn.packetFunc(*conn.hdr, buf.Bytes()[l:], conn.LocalAddr(), conn.RemoteAddr())
+		}
+		conn.bufferedSend = append(conn.bufferedSend, append([]byte(nil), buf.Bytes()...))
+	}
 	return nil
 }
 
+// PhoenixBuilder specific func.
+// Author: CMA2401PT
 func (conn *Conn) WriteRawPacket(pkID uint32, data []byte) error {
 	if conn.DebugMode {
 		return nil
@@ -363,13 +388,22 @@ func (conn *Conn) WriteRawPacket(pkID uint32, data []byte) error {
 // If the packet read was not implemented, a *packet.Unknown is returned, containing the raw payload of the
 // packet read.
 func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
+	if len(conn.additional) > 0 {
+		return <-conn.additional, nil
+	}
 	if data, ok := conn.takeDeferredPacket(); ok {
 		pk, err := data.decode(conn)
 		if err != nil {
 			conn.log.Println(err)
 			return conn.ReadPacket()
 		}
-		return pk, nil
+		if len(pk) == 0 {
+			return conn.ReadPacket()
+		}
+		for _, additional := range pk[1:] {
+			conn.additional <- additional
+		}
+		return pk[0], nil
 	}
 
 	select {
@@ -383,10 +417,18 @@ func (conn *Conn) ReadPacket() (pk packet.Packet, err error) {
 			conn.log.Println(err)
 			return conn.ReadPacket()
 		}
-		return pk, nil
+		if len(pk) == 0 {
+			return conn.ReadPacket()
+		}
+		for _, additional := range pk[1:] {
+			conn.additional <- additional
+		}
+		return pk[0], nil
 	}
 }
 
+// PhoenixBuilder specific func.
+// Author: CMA2401PT
 func (conn *Conn) ReadPacketAndBytes() (pk packet.Packet, data []byte, err error) {
 	if data, ok := conn.takeDeferredPacket(); ok {
 		pk, err := data.decode(conn)
@@ -553,7 +595,7 @@ func (conn *Conn) ClientCacheEnabled() bool {
 // Listener, this is the radius that the client requested. For connections obtained through a Dialer, this
 // is the radius that the server approved upon.
 func (conn *Conn) ChunkRadius() int {
-	return conn.chunkRadius
+	return int(conn.gameData.ChunkRadius)
 }
 
 // takeDeferredPacket locks the deferred packets lock and takes the next packet from the list of deferred
@@ -590,9 +632,11 @@ func (conn *Conn) receive(data []byte) error {
 	}
 	if pkData.h.PacketID == packet.IDDisconnect {
 		// We always handle disconnect packets and close the connection if one comes in.
-		pk, _ := pkData.decode(conn)
-
-		conn.disconnectMessage.Store(pk.(*packet.Disconnect).Message)
+		pks, err := pkData.decode(conn)
+		if err != nil {
+			return err
+		}
+		conn.disconnectMessage.Store(&pks[0].(*packet.Disconnect).Message)
 		_ = conn.Close()
 		return nil
 	}
@@ -619,17 +663,29 @@ func (conn *Conn) handle(pkData *packetData) error {
 	for _, id := range conn.expectedIDs.Load().([]uint32) {
 		if id == pkData.h.PacketID {
 			// If the packet was expected, so we handle it right now.
-			pk, err := pkData.decode(conn)
+			pks, err := pkData.decode(conn)
 			if err != nil {
 				return err
 			}
-			return conn.handlePacket(pk)
+			return conn.handleMultiple(pks)
 		}
 	}
 	// This is not the packet we expected next in the login sequence. We push it back so that it may
 	// be handled by the user.
 	conn.deferPacket(pkData)
 	return nil
+}
+
+// handleMultiple handles multiple packets and returns an error if at least one of those packets could not be handled
+// successfully.
+func (conn *Conn) handleMultiple(pks []packet.Packet) error {
+	var err error
+	for _, pk := range pks {
+		if e := conn.handlePacket(pk); e != nil {
+			err = e
+		}
+	}
+	return err
 }
 
 // handlePacket handles an incoming packet. It returns an error if any of the data found in the packet was not
@@ -640,6 +696,8 @@ func (conn *Conn) handlePacket(pk packet.Packet) error {
 	}()
 	switch pk := pk.(type) {
 	// Internal packets destined for the server.
+	case *packet.RequestNetworkSettings:
+		return conn.handleRequestNetworkSettings(pk)
 	case *packet.Login:
 		return conn.handleLogin(pk)
 	case *packet.ClientToServerHandshake:
@@ -656,6 +714,8 @@ func (conn *Conn) handlePacket(pk packet.Packet) error {
 		return conn.handleSetLocalPlayerAsInitialised(pk)
 
 	// Internal packets destined for the client.
+	case *packet.NetworkSettings:
+		return conn.handleNetworkSettings(pk)
 	case *packet.ServerToClientHandshake:
 		return conn.handleServerToClientHandshake(pk)
 	case *packet.PlayStatus:
@@ -676,7 +736,54 @@ func (conn *Conn) handlePacket(pk packet.Packet) error {
 	return nil
 }
 
-// handleLogin handles an incoming login packet. It verifies an decodes the login request found in the packet
+// handleRequestNetworkSettings handles an incoming RequestNetworkSettings packet. It returns an error if the protocol
+// version is not supported, otherwise sending back a NetworkSettings packet.
+func (conn *Conn) handleRequestNetworkSettings(pk *packet.RequestNetworkSettings) error {
+	found := false
+	for _, pro := range conn.acceptedProto {
+		if pro.ID() == pk.ClientProtocol {
+			conn.proto = pro
+			conn.pool = pro.Packets(true)
+			found = true
+			break
+		}
+	}
+	if !found {
+		status := packet.PlayStatusLoginFailedClient
+		if pk.ClientProtocol > protocol.CurrentProtocol {
+			// The server is outdated in this case, so we have to change the status we send.
+			status = packet.PlayStatusLoginFailedServer
+		}
+		_ = conn.WritePacket(&packet.PlayStatus{Status: status})
+		return fmt.Errorf("%v connected with an incompatible protocol: expected protocol = %v, client protocol = %v", conn.identityData.DisplayName, protocol.CurrentProtocol, pk.ClientProtocol)
+	}
+
+	conn.expect(packet.IDLogin)
+	if err := conn.WritePacket(&packet.NetworkSettings{
+		CompressionThreshold: 512,
+		CompressionAlgorithm: conn.compression.EncodeCompression(),
+	}); err != nil {
+		return fmt.Errorf("error sending network settings: %v", err)
+	}
+	_ = conn.Flush()
+	conn.enc.EnableCompression(conn.compression)
+	conn.dec.EnableCompression(conn.compression)
+	return nil
+}
+
+// handleNetworkSettings handles an incoming NetworkSettings packet, enabling compression for future packets.
+func (conn *Conn) handleNetworkSettings(pk *packet.NetworkSettings) error {
+	alg, ok := packet.CompressionByID(pk.CompressionAlgorithm)
+	if !ok {
+		return fmt.Errorf("unknown compression algorithm: %v", pk.CompressionAlgorithm)
+	}
+	conn.enc.EnableCompression(alg)
+	conn.dec.EnableCompression(alg)
+	conn.readyToLogin = true
+	return nil
+}
+
+// handleLogin handles an incoming login packet. It verifies and decodes the login request found in the packet
 // and returns an error if it couldn't be done successfully.
 func (conn *Conn) handleLogin(pk *packet.Login) error {
 	// The next expected packet is a response from the client to the handshake.
@@ -695,17 +802,6 @@ func (conn *Conn) handleLogin(pk *packet.Login) error {
 		_ = conn.WritePacket(&packet.Disconnect{Message: text.Colourf("<red>You must be logged in with XBOX Live to join.</red>")})
 		return fmt.Errorf("connection %v was not authenticated to XBOX Live", conn.RemoteAddr())
 	}
-	// Make sure protocol numbers match.
-	if pk.ClientProtocol != protocol.CurrentProtocol {
-		// By default we assume the client is outdated.
-		status := packet.PlayStatusLoginFailedClient
-		if pk.ClientProtocol > protocol.CurrentProtocol {
-			// The server is outdated in this case, so we have to change the status we send.
-			status = packet.PlayStatusLoginFailedServer
-		}
-		_ = conn.WritePacket(&packet.PlayStatus{Status: status})
-		return fmt.Errorf("%v connected with an incompatible protocol: expected protocol = %v, client protocol = %v", conn.identityData.DisplayName, protocol.CurrentProtocol, pk.ClientProtocol)
-	}
 	if err := conn.enableEncryption(authResult.PublicKey); err != nil {
 		return fmt.Errorf("error enabling encryption: %v", err)
 	}
@@ -716,9 +812,6 @@ func (conn *Conn) handleLogin(pk *packet.Login) error {
 func (conn *Conn) handleClientToServerHandshake() error {
 	// The next expected packet is a resource pack client response.
 	conn.expect(packet.IDResourcePackClientResponse, packet.IDClientCacheStatus)
-	if err := conn.WritePacket(&packet.NetworkSettings{CompressionThreshold: 512}); err != nil {
-		return fmt.Errorf("error sending network settings: %v", err)
-	}
 	if err := conn.WritePacket(&packet.PlayStatus{Status: packet.PlayStatusLoginSuccess}); err != nil {
 		return fmt.Errorf("error sending play status login success: %v", err)
 	}
@@ -809,16 +902,25 @@ func (conn *Conn) handleClientCacheStatus(pk *packet.ClientCacheStatus) error {
 func (conn *Conn) handleResourcePacksInfo(pk *packet.ResourcePacksInfo) error {
 	// First create a new resource pack queue with the information in the packet so we can download them
 	// properly later.
+	totalPacks := len(pk.TexturePacks) + len(pk.BehaviourPacks)
 	conn.packQueue = &resourcePackQueue{
-		packAmount:       len(pk.TexturePacks) + len(pk.BehaviourPacks),
+		packAmount:       totalPacks,
 		downloadingPacks: make(map[string]downloadingPack),
 		awaitingPacks:    make(map[string]*downloadingPack),
 	}
-	packsToDownload := make([]string, 0, len(pk.TexturePacks)+len(pk.BehaviourPacks))
+	packsToDownload := make([]string, 0, totalPacks)
 
-	for _, pack := range pk.TexturePacks {
+	for index, pack := range pk.TexturePacks {
 		if _, ok := conn.packQueue.downloadingPacks[pack.UUID]; ok {
 			conn.log.Printf("duplicate texture pack entry %v in resource pack info\n", pack.UUID)
+			conn.packQueue.packAmount--
+			continue
+		}
+		if conn.downloadResourcePack != nil && !conn.downloadResourcePack(uuid.MustParse(pack.UUID), pack.Version, index, totalPacks) {
+			conn.ignoredResourcePacks = append(conn.ignoredResourcePacks, exemptedResourcePack{
+				uuid:    pack.UUID,
+				version: pack.Version,
+			})
 			conn.packQueue.packAmount--
 			continue
 		}
@@ -831,9 +933,17 @@ func (conn *Conn) handleResourcePacksInfo(pk *packet.ResourcePacksInfo) error {
 			contentKey: pack.ContentKey,
 		}
 	}
-	for _, pack := range pk.BehaviourPacks {
+	for index, pack := range pk.BehaviourPacks {
 		if _, ok := conn.packQueue.downloadingPacks[pack.UUID]; ok {
 			conn.log.Printf("duplicate behaviour pack entry %v in resource pack info\n", pack.UUID)
+			conn.packQueue.packAmount--
+			continue
+		}
+		if conn.downloadResourcePack != nil && !conn.downloadResourcePack(uuid.MustParse(pack.UUID), pack.Version, index, totalPacks) {
+			conn.ignoredResourcePacks = append(conn.ignoredResourcePacks, exemptedResourcePack{
+				uuid:    pack.UUID,
+				version: pack.Version,
+			})
 			conn.packQueue.packAmount--
 			continue
 		}
@@ -902,6 +1012,11 @@ func (conn *Conn) hasPack(uuid string, version string, hasBehaviours bool) bool 
 	conn.packMu.Lock()
 	defer conn.packMu.Unlock()
 
+	for _, ignored := range conn.ignoredResourcePacks {
+		if ignored.uuid == uuid && ignored.version == version {
+			return true
+		}
+	}
 	for _, pack := range conn.resourcePacks {
 		if pack.UUID() == uuid && pack.Version() == version && pack.HasBehaviours() == hasBehaviours {
 			return true
@@ -933,7 +1048,7 @@ func (conn *Conn) handleResourcePackClientResponse(pk *packet.ResourcePackClient
 			return err
 		}
 	case packet.PackResponseAllPacksDownloaded:
-		pk := &packet.ResourcePackStack{BaseGameVersion: protocol.CurrentVersion}
+		pk := &packet.ResourcePackStack{BaseGameVersion: protocol.CurrentVersion, Experiments: []protocol.ExperimentData{{Name: "cameras", Enabled: true}}}
 		for _, pack := range conn.resourcePacks {
 			resourcePack := protocol.StackResourcePack{UUID: pack.UUID(), Version: pack.Version()}
 			// If it has behaviours, add it to the behaviour pack list. If not, we add it to the texture packs
@@ -972,8 +1087,14 @@ func (conn *Conn) startGame() {
 		PlayerPosition:               data.PlayerPosition,
 		Pitch:                        data.Pitch,
 		Yaw:                          data.Yaw,
+		WorldSeed:                    data.WorldSeed,
 		Dimension:                    data.Dimension,
 		WorldSpawn:                   data.WorldSpawn,
+		EditorWorld:                  data.EditorWorld,
+		CreatedInEditor:              data.CreatedInEditor,
+		ExportedFromEditor:           data.ExportedFromEditor,
+		PersonaDisabled:              data.PersonaDisabled,
+		CustomSkinsDisabled:          data.CustomSkinsDisabled,
 		GameRules:                    data.GameRules,
 		Time:                         data.Time,
 		Blocks:                       data.CustomBlocks,
@@ -989,10 +1110,16 @@ func (conn *Conn) startGame() {
 		PlayerMovementSettings:       data.PlayerMovementSettings,
 		WorldGameMode:                data.WorldGameMode,
 		ServerAuthoritativeInventory: data.ServerAuthoritativeInventory,
+		PlayerPermissions:            data.PlayerPermissions,
 		Experiments:                  data.Experiments,
+		ClientSideGeneration:         data.ClientSideGeneration,
+		ChatRestrictionLevel:         data.ChatRestrictionLevel,
+		DisablePlayerInteractions:    data.DisablePlayerInteractions,
 		BaseGameVersion:              data.BaseGameVersion,
 		GameVersion:                  protocol.CurrentVersion,
+		UseBlockNetworkIDHashes:      data.UseBlockNetworkIDHashes,
 	})
+	_ = conn.Flush()
 	conn.expect(packet.IDRequestChunkRadius, packet.IDSetLocalPlayerAsInitialised)
 }
 
@@ -1149,10 +1276,10 @@ func (conn *Conn) handleResourcePackChunkRequest(pk *packet.ResourcePackChunkReq
 // handleStartGame handles an incoming StartGame packet. It is the signal that the player has been added to a
 // world, and it obtains most of its dedicated properties.
 func (conn *Conn) handleStartGame(pk *packet.StartGame) error {
-	conn.gameDataReceived.Store(true)
 	conn.gameData = GameData{
 		Difficulty:                   pk.Difficulty,
 		WorldName:                    pk.WorldName,
+		WorldSeed:                    pk.WorldSeed,
 		EntityUniqueID:               pk.EntityUniqueID,
 		EntityRuntimeID:              pk.EntityRuntimeID,
 		PlayerGameMode:               pk.PlayerGameMode,
@@ -1162,6 +1289,11 @@ func (conn *Conn) handleStartGame(pk *packet.StartGame) error {
 		Yaw:                          pk.Yaw,
 		Dimension:                    pk.Dimension,
 		WorldSpawn:                   pk.WorldSpawn,
+		EditorWorld:                  pk.EditorWorld,
+		CreatedInEditor:              pk.CreatedInEditor,
+		ExportedFromEditor:           pk.ExportedFromEditor,
+		PersonaDisabled:              pk.PersonaDisabled,
+		CustomSkinsDisabled:          pk.CustomSkinsDisabled,
 		GameRules:                    pk.GameRules,
 		Time:                         pk.Time,
 		ServerBlockStateChecksum:     pk.ServerBlockStateChecksum,
@@ -1170,7 +1302,12 @@ func (conn *Conn) handleStartGame(pk *packet.StartGame) error {
 		PlayerMovementSettings:       pk.PlayerMovementSettings,
 		WorldGameMode:                pk.WorldGameMode,
 		ServerAuthoritativeInventory: pk.ServerAuthoritativeInventory,
+		PlayerPermissions:            pk.PlayerPermissions,
+		ChatRestrictionLevel:         pk.ChatRestrictionLevel,
+		DisablePlayerInteractions:    pk.DisablePlayerInteractions,
+		ClientSideGeneration:         pk.ClientSideGeneration,
 		Experiments:                  pk.Experiments,
+		UseBlockNetworkIDHashes:      pk.UseBlockNetworkIDHashes,
 	}
 	for _, item := range pk.Items {
 		if item.Name == "minecraft:shield" {
@@ -1178,10 +1315,8 @@ func (conn *Conn) handleStartGame(pk *packet.StartGame) error {
 		}
 	}
 
-	conn.loggedIn = true
-	conn.waitingForSpawn.Store(true)
+	_ = conn.WritePacket(&packet.RequestChunkRadius{ChunkRadius: 16})
 	conn.expect(packet.IDChunkRadiusUpdated, packet.IDPlayStatus)
-	_ = conn.WritePacket(&packet.RequestChunkRadius{ChunkRadius: int32(conn.chunkRadius)})
 	return nil
 }
 
@@ -1192,8 +1327,12 @@ func (conn *Conn) handleRequestChunkRadius(pk *packet.RequestChunkRadius) error 
 		return fmt.Errorf("requested chunk radius must be at least 1, got %v", pk.ChunkRadius)
 	}
 	conn.expect(packet.IDSetLocalPlayerAsInitialised)
-	_ = conn.WritePacket(&packet.ChunkRadiusUpdated{ChunkRadius: pk.ChunkRadius})
-	conn.chunkRadius = int(pk.ChunkRadius)
+	radius := pk.ChunkRadius
+	if r := conn.gameData.ChunkRadius; r != 0 {
+		radius = r
+	}
+	_ = conn.WritePacket(&packet.ChunkRadiusUpdated{ChunkRadius: radius})
+	conn.gameData.ChunkRadius = pk.ChunkRadius
 
 	// The client crashes when not sending all biomes, due to achievements assuming all biomes are present.
 	//noinspection SpellCheckingInspection
@@ -1220,7 +1359,11 @@ func (conn *Conn) handleChunkRadiusUpdated(pk *packet.ChunkRadiusUpdated) error 
 		return fmt.Errorf("new chunk radius must be at least 1, got %v", pk.ChunkRadius)
 	}
 	conn.expect(packet.IDPlayStatus)
-	conn.chunkRadius = int(pk.ChunkRadius)
+
+	conn.gameData.ChunkRadius = pk.ChunkRadius
+	conn.gameDataReceived.Store(true)
+
+	conn.tryFinaliseClientConn()
 	return nil
 }
 
@@ -1231,7 +1374,7 @@ func (conn *Conn) handleSetLocalPlayerAsInitialised(pk *packet.SetLocalPlayerAsI
 	if pk.EntityRuntimeID != conn.gameData.EntityRuntimeID {
 		return fmt.Errorf("entity runtime ID mismatch: entity runtime ID in StartGame and SetLocalPlayerAsInitialised packets should be equal")
 	}
-	if conn.waitingForSpawn.CAS(true, false) {
+	if conn.waitingForSpawn.CompareAndSwap(true, false) {
 		close(conn.spawn)
 	}
 	return nil
@@ -1256,10 +1399,8 @@ func (conn *Conn) handlePlayStatus(pk *packet.PlayStatus) error {
 		return fmt.Errorf("server outdated")
 	case packet.PlayStatusPlayerSpawn:
 		// We've spawned and can send the last packet in the spawn sequence.
-		if conn.waitingForSpawn.CAS(true, false) {
-			close(conn.spawn)
-			_ = conn.WritePacket(&packet.SetLocalPlayerAsInitialised{EntityRuntimeID: conn.gameData.EntityRuntimeID})
-		}
+		conn.waitingForSpawn.Store(true)
+		conn.tryFinaliseClientConn()
 		return nil
 	case packet.PlayStatusLoginFailedInvalidTenant:
 		_ = conn.Close()
@@ -1273,8 +1414,28 @@ func (conn *Conn) handlePlayStatus(pk *packet.PlayStatus) error {
 	case packet.PlayStatusLoginFailedServerFull:
 		_ = conn.Close()
 		return fmt.Errorf("server full")
+	case packet.PlayStatusLoginFailedEditorVanilla:
+		_ = conn.Close()
+		return fmt.Errorf("cannot join a vanilla game on editor")
+	case packet.PlayStatusLoginFailedVanillaEditor:
+		_ = conn.Close()
+		return fmt.Errorf("cannot join an editor game on vanilla")
 	default:
 		return fmt.Errorf("unknown play status in PlayStatus packet %v", pk.Status)
+	}
+}
+
+// tryFinaliseClientConn attempts to finalise the client connection by sending
+// the SetLocalPlayerAsInitialised packet when if the ChunkRadiusUpdated and
+// PlayStatus packets have been sent.
+func (conn *Conn) tryFinaliseClientConn() {
+	if conn.waitingForSpawn.Load() && conn.gameDataReceived.Load() {
+		conn.waitingForSpawn.Store(false)
+		conn.gameDataReceived.Store(false)
+
+		close(conn.spawn)
+		conn.loggedIn = true
+		_ = conn.WritePacket(&packet.SetLocalPlayerAsInitialised{EntityRuntimeID: conn.gameData.EntityRuntimeID})
 	}
 }
 
@@ -1318,7 +1479,7 @@ func (conn *Conn) expect(packetIDs ...uint32) {
 // closeErr returns an adequate connection closed error for the op passed. If the connection was closed
 // through a Disconnect packet, the message is contained.
 func (conn *Conn) closeErr(op string) error {
-	if msg := conn.disconnectMessage.Load(); msg != "" {
+	if msg := *conn.disconnectMessage.Load(); msg != "" {
 		return conn.wrap(DisconnectError(msg), op)
 	}
 	return conn.wrap(errClosed, op)

@@ -26,16 +26,8 @@ func (*BlockEvent) ID() uint32 {
 	return IDBlockEvent
 }
 
-// Marshal ...
-func (pk *BlockEvent) Marshal(w *protocol.Writer) {
-	w.UBlockPos(&pk.Position)
-	w.Varint32(&pk.EventType)
-	w.Varint32(&pk.EventData)
-}
-
-// Unmarshal ...
-func (pk *BlockEvent) Unmarshal(r *protocol.Reader) {
-	r.UBlockPos(&pk.Position)
-	r.Varint32(&pk.EventType)
-	r.Varint32(&pk.EventData)
+func (pk *BlockEvent) Marshal(io protocol.IO) {
+	io.UBlockPos(&pk.Position)
+	io.Varint32(&pk.EventType)
+	io.Varint32(&pk.EventData)
 }

@@ -22,15 +22,7 @@ func (*BlockActorData) ID() uint32 {
 	return IDBlockActorData
 }
 
-// Marshal ...
-func (pk *BlockActorData) Marshal(w *protocol.Writer) {
-	w.UBlockPos(&pk.Position)
-	w.NBT(&pk.NBTData, nbt.NetworkLittleEndian)
-}
-
-// Unmarshal ...
-func (pk *BlockActorData) Unmarshal(r *protocol.Reader) {
-	pk.NBTData = make(map[string]any)
-	r.UBlockPos(&pk.Position)
-	r.NBT(&pk.NBTData, nbt.NetworkLittleEndian)
+func (pk *BlockActorData) Marshal(io protocol.IO) {
+	io.UBlockPos(&pk.Position)
+	io.NBT(&pk.NBTData, nbt.NetworkLittleEndian)
 }

@@ -1,35 +1,175 @@
 package protocol
 
-import "strings"
+// TODO: Support the last seven new events.
+const (
+	EventTypeAchievementAwarded = iota
+	EventTypeEntityInteract
+	EventTypePortalBuilt
+	EventTypePortalUsed
+	EventTypeMobKilled
+	EventTypeCauldronUsed
+	EventTypePlayerDied
+	EventTypeBossKilled
+	EventTypeAgentCommand
+	EventTypeAgentCreated // Unused for whatever reason?
+	EventTypePatternRemoved
+	EventTypeSlashCommandExecuted
+	EventTypeFishBucketed
+	EventTypeMobBorn
+	EventTypePetDied
+	EventTypeCauldronInteract
+	EventTypeComposterInteract
+	EventTypeBellUsed
+	EventTypeEntityDefinitionTrigger
+	EventTypeRaidUpdate
+	EventTypeMovementAnomaly
+	EventTypeMovementCorrected
+	EventTypeExtractHoney
+	EventTypeTargetBlockHit
+	EventTypePiglinBarter
+	EventTypePlayerWaxedOrUnwaxedCopper
+	EventTypeCodeBuilderRuntimeAction
+	EventTypeCodeBuilderScoreboard
+	EventTypeStriderRiddenInLavaInOverworld
+	EventTypeSneakCloseToSculkSensor
+	EventTypeCarefulRestoration
+)
 
-// EventData represents an object that holds data specific to an event.
-// The data it holds depends on the type.
-type EventData interface {
-	// Marshal encodes the event data to its binary representation into buf.
-	Marshal(w *Writer)
-	// Unmarshal decodes a serialised event data object from Reader r into the
-	// EventData instance.
-	Unmarshal(r *Reader)
+// lookupEvent looks up an Event matching the event type passed. False is
+// returned if no such event data exists.
+func lookupEvent(eventType int32, x *Event) bool {
+	switch eventType {
+	case EventTypeAchievementAwarded:
+		*x = &AchievementAwardedEvent{}
+	case EventTypeEntityInteract:
+		*x = &EntityInteractEvent{}
+	case EventTypePortalBuilt:
+		*x = &PortalBuiltEvent{}
+	case EventTypePortalUsed:
+		*x = &PortalUsedEvent{}
+	case EventTypeMobKilled:
+		*x = &MobKilledEvent{}
+	case EventTypeCauldronUsed:
+		*x = &CauldronUsedEvent{}
+	case EventTypePlayerDied:
+		*x = &PlayerDiedEvent{}
+	case EventTypeBossKilled:
+		*x = &BossKilledEvent{}
+	case EventTypeAgentCommand:
+		*x = &AgentCommandEvent{}
+	case EventTypePatternRemoved:
+		*x = &PatternRemovedEvent{}
+	case EventTypeSlashCommandExecuted:
+		*x = &SlashCommandExecutedEvent{}
+	case EventTypeFishBucketed:
+		*x = &FishBucketedEvent{}
+	case EventTypeMobBorn:
+		*x = &MobBornEvent{}
+	case EventTypePetDied:
+		*x = &PetDiedEvent{}
+	case EventTypeCauldronInteract:
+		*x = &CauldronInteractEvent{}
+	case EventTypeComposterInteract:
+		*x = &ComposterInteractEvent{}
+	case EventTypeBellUsed:
+		*x = &BellUsedEvent{}
+	case EventTypeEntityDefinitionTrigger:
+		*x = &EntityDefinitionTriggerEvent{}
+	case EventTypeRaidUpdate:
+		*x = &RaidUpdateEvent{}
+	case EventTypeMovementAnomaly:
+		*x = &MovementAnomalyEvent{}
+	case EventTypeMovementCorrected:
+		*x = &MovementCorrectedEvent{}
+	case EventTypeExtractHoney:
+		*x = &ExtractHoneyEvent{}
+	case EventTypePlayerWaxedOrUnwaxedCopper:
+		*x = &WaxedOrUnwaxedCopperEvent{}
+	case EventTypeSneakCloseToSculkSensor:
+		*x = &SneakCloseToSculkSensorEvent{}
+	default:
+		return false
+	}
+	return true
 }
 
-// AchievementAwardedEventData is the event data sent for achievements.
-type AchievementAwardedEventData struct {
+// lookupEventType looks up an event type that matches the Event passed.
+func lookupEventType(x Event, eventType *int32) bool {
+	switch x.(type) {
+	case *AchievementAwardedEvent:
+		*eventType = EventTypeAchievementAwarded
+	case *EntityInteractEvent:
+		*eventType = EventTypeEntityInteract
+	case *PortalBuiltEvent:
+		*eventType = EventTypePortalBuilt
+	case *PortalUsedEvent:
+		*eventType = EventTypePortalUsed
+	case *MobKilledEvent:
+		*eventType = EventTypeMobKilled
+	case *CauldronUsedEvent:
+		*eventType = EventTypeCauldronUsed
+	case *PlayerDiedEvent:
+		*eventType = EventTypePlayerDied
+	case *BossKilledEvent:
+		*eventType = EventTypeBossKilled
+	case *AgentCommandEvent:
+		*eventType = EventTypeAgentCommand
+	case *PatternRemovedEvent:
+		*eventType = EventTypePatternRemoved
+	case *SlashCommandExecutedEvent:
+		*eventType = EventTypeSlashCommandExecuted
+	case *FishBucketedEvent:
+		*eventType = EventTypeFishBucketed
+	case *MobBornEvent:
+		*eventType = EventTypeMobBorn
+	case *PetDiedEvent:
+		*eventType = EventTypePetDied
+	case *CauldronInteractEvent:
+		*eventType = EventTypeCauldronInteract
+	case *ComposterInteractEvent:
+		*eventType = EventTypeComposterInteract
+	case *BellUsedEvent:
+		*eventType = EventTypeBellUsed
+	case *EntityDefinitionTriggerEvent:
+		*eventType = EventTypeEntityDefinitionTrigger
+	case *RaidUpdateEvent:
+		*eventType = EventTypeRaidUpdate
+	case *MovementAnomalyEvent:
+		*eventType = EventTypeMovementAnomaly
+	case *MovementCorrectedEvent:
+		*eventType = EventTypeMovementCorrected
+	case *ExtractHoneyEvent:
+		*eventType = EventTypeExtractHoney
+	case *WaxedOrUnwaxedCopperEvent:
+		*eventType = EventTypePlayerWaxedOrUnwaxedCopper
+	case *SneakCloseToSculkSensorEvent:
+		*eventType = EventTypeSneakCloseToSculkSensor
+	default:
+		return false
+	}
+	return true
+}
+
+// Event represents an object that holds data specific to an event.
+// The data it holds depends on the type.
+type Event interface {
+	// Marshal encodes/decodes a serialised event data object.
+	Marshal(r IO)
+}
+
+// AchievementAwardedEvent is the event data sent for achievements.
+type AchievementAwardedEvent struct {
 	// AchievementID is the ID for the achievement.
 	AchievementID int32
 }
 
 // Marshal ...
-func (a *AchievementAwardedEventData) Marshal(w *Writer) {
-	w.Varint32(&a.AchievementID)
-}
-
-// Unmarshal ...
-func (a *AchievementAwardedEventData) Unmarshal(r *Reader) {
+func (a *AchievementAwardedEvent) Marshal(r IO) {
 	r.Varint32(&a.AchievementID)
 }
 
-// EntityInteractEventData is the event data sent for entity interactions.
-type EntityInteractEventData struct {
+// EntityInteractEvent is the event data sent for entity interactions.
+type EntityInteractEvent struct {
 	// InteractionType ...
 	InteractionType int32
 	// InteractionEntityType ...
@@ -41,39 +181,26 @@ type EntityInteractEventData struct {
 }
 
 // Marshal ...
-func (e *EntityInteractEventData) Marshal(w *Writer) {
-	w.Varint32(&e.InteractionType)
-	w.Varint32(&e.InteractionEntityType)
-	w.Varint32(&e.EntityVariant)
-	w.Uint8(&e.EntityColour)
-}
-
-// Unmarshal ...
-func (e *EntityInteractEventData) Unmarshal(r *Reader) {
+func (e *EntityInteractEvent) Marshal(r IO) {
 	r.Varint32(&e.InteractionType)
 	r.Varint32(&e.InteractionEntityType)
 	r.Varint32(&e.EntityVariant)
 	r.Uint8(&e.EntityColour)
 }
 
-// PortalBuiltEventData is the event data sent when a portal is built.
-type PortalBuiltEventData struct {
+// PortalBuiltEvent is the event data sent when a portal is built.
+type PortalBuiltEvent struct {
 	// DimensionID ...
 	DimensionID int32
 }
 
 // Marshal ...
-func (p *PortalBuiltEventData) Marshal(w *Writer) {
-	w.Varint32(&p.DimensionID)
-}
-
-// Unmarshal ...
-func (p *PortalBuiltEventData) Unmarshal(r *Reader) {
+func (p *PortalBuiltEvent) Marshal(r IO) {
 	r.Varint32(&p.DimensionID)
 }
 
-// PortalUsedEventData is the event data sent when a portal is used.
-type PortalUsedEventData struct {
+// PortalUsedEvent is the event data sent when a portal is used.
+type PortalUsedEvent struct {
 	// FromDimensionID ...
 	FromDimensionID int32
 	// ToDimensionID ...
@@ -81,19 +208,13 @@ type PortalUsedEventData struct {
 }
 
 // Marshal ...
-func (p *PortalUsedEventData) Marshal(w *Writer) {
-	w.Varint32(&p.FromDimensionID)
-	w.Varint32(&p.ToDimensionID)
-}
-
-// Unmarshal ...
-func (p *PortalUsedEventData) Unmarshal(r *Reader) {
+func (p *PortalUsedEvent) Marshal(r IO) {
 	r.Varint32(&p.FromDimensionID)
 	r.Varint32(&p.ToDimensionID)
 }
 
-// MobKilledEventData is the event data sent when a mob is killed.
-type MobKilledEventData struct {
+// MobKilledEvent is the event data sent when a mob is killed.
+type MobKilledEvent struct {
 	// KillerEntityUniqueID ...
 	KillerEntityUniqueID int64
 	// VictimEntityUniqueID ...
@@ -109,17 +230,7 @@ type MobKilledEventData struct {
 }
 
 // Marshal ...
-func (m *MobKilledEventData) Marshal(w *Writer) {
-	w.Varint64(&m.KillerEntityUniqueID)
-	w.Varint64(&m.VictimEntityUniqueID)
-	w.Varint32(&m.KillerEntityType)
-	w.Varint32(&m.EntityDamageCause)
-	w.Varint32(&m.VillagerTradeTier)
-	w.String(&m.VillagerDisplayName)
-}
-
-// Unmarshal ...
-func (m *MobKilledEventData) Unmarshal(r *Reader) {
+func (m *MobKilledEvent) Marshal(r IO) {
 	r.Varint64(&m.KillerEntityUniqueID)
 	r.Varint64(&m.VictimEntityUniqueID)
 	r.Varint32(&m.KillerEntityType)
@@ -128,8 +239,8 @@ func (m *MobKilledEventData) Unmarshal(r *Reader) {
 	r.String(&m.VillagerDisplayName)
 }
 
-// CauldronUsedEventData is the event data sent when a cauldron is used.
-type CauldronUsedEventData struct {
+// CauldronUsedEvent is the event data sent when a cauldron is used.
+type CauldronUsedEvent struct {
 	// PotionID ...
 	PotionID int32
 	// Colour ...
@@ -139,41 +250,34 @@ type CauldronUsedEventData struct {
 }
 
 // Marshal ...
-func (c *CauldronUsedEventData) Marshal(w *Writer) {
-	w.Varint32(&c.PotionID)
-	w.Varint32(&c.Colour)
-	w.Varint32(&c.FillLevel)
-}
-
-// Unmarshal ...
-func (c *CauldronUsedEventData) Unmarshal(r *Reader) {
+func (c *CauldronUsedEvent) Marshal(r IO) {
 	r.Varint32(&c.PotionID)
 	r.Varint32(&c.Colour)
 	r.Varint32(&c.FillLevel)
 }
 
-// PlayerDiedEventData is the event data sent when a player dies.
-type PlayerDiedEventData struct {
+// PlayerDiedEvent is the event data sent when a player dies.
+type PlayerDiedEvent struct {
 	// AttackerEntityID ...
 	AttackerEntityID int32
+	// AttackerVariant ...
+	AttackerVariant int32
 	// EntityDamageCause ...
 	EntityDamageCause int32
+	// InRaid ...
+	InRaid bool
 }
 
 // Marshal ...
-func (p *PlayerDiedEventData) Marshal(w *Writer) {
-	w.Varint32(&p.AttackerEntityID)
-	w.Varint32(&p.EntityDamageCause)
-}
-
-// Unmarshal ...
-func (p *PlayerDiedEventData) Unmarshal(r *Reader) {
+func (p *PlayerDiedEvent) Marshal(r IO) {
 	r.Varint32(&p.AttackerEntityID)
+	r.Varint32(&p.AttackerVariant)
 	r.Varint32(&p.EntityDamageCause)
+	r.Bool(&p.InRaid)
 }
 
-// BossKilledEventData is the event data sent when a boss dies.
-type BossKilledEventData struct {
+// BossKilledEvent is the event data sent when a boss dies.
+type BossKilledEvent struct {
 	// BossEntityUniqueID ...
 	BossEntityUniqueID int64
 	// PlayerPartySize ...
@@ -183,21 +287,14 @@ type BossKilledEventData struct {
 }
 
 // Marshal ...
-func (b *BossKilledEventData) Marshal(w *Writer) {
-	w.Varint64(&b.BossEntityUniqueID)
-	w.Varint32(&b.PlayerPartySize)
-	w.Varint32(&b.InteractionEntityType)
-}
-
-// Unmarshal ...
-func (b *BossKilledEventData) Unmarshal(r *Reader) {
+func (b *BossKilledEvent) Marshal(r IO) {
 	r.Varint64(&b.BossEntityUniqueID)
 	r.Varint32(&b.PlayerPartySize)
 	r.Varint32(&b.InteractionEntityType)
 }
 
-// AgentCommandEventData is an event used in Education Edition.
-type AgentCommandEventData struct {
+// AgentCommandEvent is an event used in Education Edition.
+type AgentCommandEvent struct {
 	// AgentResult ...
 	AgentResult int32
 	// DataValue ...
@@ -211,16 +308,7 @@ type AgentCommandEventData struct {
 }
 
 // Marshal ...
-func (a *AgentCommandEventData) Marshal(w *Writer) {
-	w.Varint32(&a.AgentResult)
-	w.Varint32(&a.DataValue)
-	w.String(&a.Command)
-	w.String(&a.DataKey)
-	w.String(&a.Output)
-}
-
-// Unmarshal ...
-func (a *AgentCommandEventData) Unmarshal(r *Reader) {
+func (a *AgentCommandEvent) Marshal(r IO) {
 	r.Varint32(&a.AgentResult)
 	r.Varint32(&a.DataValue)
 	r.String(&a.Command)
@@ -228,8 +316,8 @@ func (a *AgentCommandEventData) Unmarshal(r *Reader) {
 	r.String(&a.Output)
 }
 
-// PatternRemovedEventData is the event data sent when a pattern is removed.
-type PatternRemovedEventData struct {
+// PatternRemovedEvent is the event data sent when a pattern is removed. This is now deprecated.
+type PatternRemovedEvent struct {
 	// ItemID ...
 	ItemID int32
 	// AuxValue ...
@@ -243,16 +331,7 @@ type PatternRemovedEventData struct {
 }
 
 // Marshal ...
-func (p *PatternRemovedEventData) Marshal(w *Writer) {
-	w.Varint32(&p.ItemID)
-	w.Varint32(&p.AuxValue)
-	w.Varint32(&p.PatternsSize)
-	w.Varint32(&p.PatternIndex)
-	w.Varint32(&p.PatternColour)
-}
-
-// Unmarshal ...
-func (p *PatternRemovedEventData) Unmarshal(r *Reader) {
+func (p *PatternRemovedEvent) Marshal(r IO) {
 	r.Varint32(&p.ItemID)
 	r.Varint32(&p.AuxValue)
 	r.Varint32(&p.PatternsSize)
@@ -260,42 +339,28 @@ func (p *PatternRemovedEventData) Unmarshal(r *Reader) {
 	r.Varint32(&p.PatternColour)
 }
 
-// SlashCommandExecutedEventData is the event data sent when a slash command is executed.
-type SlashCommandExecutedEventData struct {
+// SlashCommandExecutedEvent is the event data sent when a slash command is executed.
+type SlashCommandExecutedEvent struct {
 	// CommandName ...
 	CommandName string
 	// SuccessCount ...
 	SuccessCount int32
-	// OutputMessages ...
-	OutputMessages []string
+	// MessageCount indicates the amount of OutputMessages present.
+	MessageCount int32
+	// OutputMessages is a list of messages joint with ;.
+	OutputMessages string
 }
 
 // Marshal ...
-func (s *SlashCommandExecutedEventData) Marshal(w *Writer) {
-	outputMessagesSize := int32(len(s.OutputMessages))
-	outputMessagesJoined := strings.Join(s.OutputMessages, ";")
-
-	w.Varint32(&s.SuccessCount)
-	w.Varint32(&outputMessagesSize)
-	w.String(&s.CommandName)
-	w.String(&outputMessagesJoined)
-}
-
-// Unmarshal ...
-func (s *SlashCommandExecutedEventData) Unmarshal(r *Reader) {
-	var outputMessagesSize int32
-	var outputMessagesJoined string
-
+func (s *SlashCommandExecutedEvent) Marshal(r IO) {
 	r.Varint32(&s.SuccessCount)
-	r.Varint32(&outputMessagesSize)
+	r.Varint32(&s.MessageCount)
 	r.String(&s.CommandName)
-	r.String(&outputMessagesJoined)
-
-	s.OutputMessages = strings.Split(outputMessagesJoined, ";")
+	r.String(&s.OutputMessages)
 }
 
-// FishBucketedEventData is the event data sent when a fish is bucketed.
-type FishBucketedEventData struct {
+// FishBucketedEvent is the event data sent when a fish is bucketed.
+type FishBucketedEvent struct {
 	// Pattern ...
 	Pattern int32
 	// Preset ...
@@ -307,23 +372,15 @@ type FishBucketedEventData struct {
 }
 
 // Marshal ...
-func (f *FishBucketedEventData) Marshal(w *Writer) {
-	w.Varint32(&f.Pattern)
-	w.Varint32(&f.Preset)
-	w.Varint32(&f.BucketedEntityType)
-	w.Bool(&f.Release)
-}
-
-// Unmarshal ...
-func (f *FishBucketedEventData) Unmarshal(r *Reader) {
+func (f *FishBucketedEvent) Marshal(r IO) {
 	r.Varint32(&f.Pattern)
 	r.Varint32(&f.Preset)
 	r.Varint32(&f.BucketedEntityType)
 	r.Bool(&f.Release)
 }
 
-// MobBornEventData is the event data sent when a mob is born.
-type MobBornEventData struct {
+// MobBornEvent is the event data sent when a mob is born.
+type MobBornEvent struct {
 	// EntityType ...
 	EntityType int32
 	// Variant ...
@@ -333,21 +390,14 @@ type MobBornEventData struct {
 }
 
 // Marshal ...
-func (m *MobBornEventData) Marshal(w *Writer) {
-	w.Varint32(&m.EntityType)
-	w.Varint32(&m.Variant)
-	w.Uint8(&m.Colour)
-}
-
-// Unmarshal ...
-func (m *MobBornEventData) Unmarshal(r *Reader) {
+func (m *MobBornEvent) Marshal(r IO) {
 	r.Varint32(&m.EntityType)
 	r.Varint32(&m.Variant)
 	r.Uint8(&m.Colour)
 }
 
-// PetDiedEventData is the event data sent when a pet dies.
-type PetDiedEventData struct {
+// PetDiedEvent is the event data sent when a pet dies. This is now deprecated.
+type PetDiedEvent struct {
 	// KilledByOwner ...
 	KilledByOwner bool
 	// KillerEntityUniqueID ...
@@ -361,16 +411,7 @@ type PetDiedEventData struct {
 }
 
 // Marshal ...
-func (p *PetDiedEventData) Marshal(w *Writer) {
-	w.Bool(&p.KilledByOwner)
-	w.Varint64(&p.KillerEntityUniqueID)
-	w.Varint64(&p.PetEntityUniqueID)
-	w.Varint32(&p.EntityDamageCause)
-	w.Varint32(&p.PetEntityType)
-}
-
-// Unmarshal ...
-func (p *PetDiedEventData) Unmarshal(r *Reader) {
+func (p *PetDiedEvent) Marshal(r IO) {
 	r.Bool(&p.KilledByOwner)
 	r.Varint64(&p.KillerEntityUniqueID)
 	r.Varint64(&p.PetEntityUniqueID)
@@ -378,8 +419,8 @@ func (p *PetDiedEventData) Unmarshal(r *Reader) {
 	r.Varint32(&p.PetEntityType)
 }
 
-// CauldronInteractEventData is the event data sent when a cauldron is interacted with.
-type CauldronInteractEventData struct {
+// CauldronInteractEvent is the event data sent when a cauldron is interacted with.
+type CauldronInteractEvent struct {
 	// BlockInteractionType ...
 	BlockInteractionType int32
 	// ItemID ...
@@ -387,19 +428,13 @@ type CauldronInteractEventData struct {
 }
 
 // Marshal ...
-func (c *CauldronInteractEventData) Marshal(w *Writer) {
-	w.Varint32(&c.BlockInteractionType)
-	w.Varint32(&c.ItemID)
-}
-
-// Unmarshal ...
-func (c *CauldronInteractEventData) Unmarshal(r *Reader) {
+func (c *CauldronInteractEvent) Marshal(r IO) {
 	r.Varint32(&c.BlockInteractionType)
 	r.Varint32(&c.ItemID)
 }
 
-// ComposterInteractEventData is the event data sent when a composter is interacted with.
-type ComposterInteractEventData struct {
+// ComposterInteractEvent is the event data sent when a composter is interacted with.
+type ComposterInteractEvent struct {
 	// BlockInteractionType ...
 	BlockInteractionType int32
 	// ItemID ...
@@ -407,51 +442,35 @@ type ComposterInteractEventData struct {
 }
 
 // Marshal ...
-func (c *ComposterInteractEventData) Marshal(w *Writer) {
-	w.Varint32(&c.BlockInteractionType)
-	w.Varint32(&c.ItemID)
-}
-
-// Unmarshal ...
-func (c *ComposterInteractEventData) Unmarshal(r *Reader) {
+func (c *ComposterInteractEvent) Marshal(r IO) {
 	r.Varint32(&c.BlockInteractionType)
 	r.Varint32(&c.ItemID)
 }
 
-// BellUsedEventData is the event data sent when a bell is used.
-type BellUsedEventData struct {
+// BellUsedEvent is the event data sent when a bell is used.
+type BellUsedEvent struct {
 	// ItemID ...
 	ItemID int32
 }
 
 // Marshal ...
-func (b *BellUsedEventData) Marshal(w *Writer) {
-	w.Varint32(&b.ItemID)
-}
-
-// Unmarshal ...
-func (b *BellUsedEventData) Unmarshal(r *Reader) {
+func (b *BellUsedEvent) Marshal(r IO) {
 	r.Varint32(&b.ItemID)
 }
 
-// EntityDefinitionTriggerEventData is an event used for an unknown purpose.
-type EntityDefinitionTriggerEventData struct {
+// EntityDefinitionTriggerEvent is an event used for an unknown purpose.
+type EntityDefinitionTriggerEvent struct {
 	// EventName ...
 	EventName string
 }
 
 // Marshal ...
-func (e *EntityDefinitionTriggerEventData) Marshal(w *Writer) {
-	w.String(&e.EventName)
-}
-
-// Unmarshal ...
-func (e *EntityDefinitionTriggerEventData) Unmarshal(r *Reader) {
+func (e *EntityDefinitionTriggerEvent) Marshal(r IO) {
 	r.String(&e.EventName)
 }
 
-// RaidUpdateEventData is an event used to update a raids progress client side.
-type RaidUpdateEventData struct {
+// RaidUpdateEvent is an event used to update a raids progress client side.
+type RaidUpdateEvent struct {
 	// CurrentRaidWave ...
 	CurrentRaidWave int32
 	// TotalRaidWaves ...
@@ -461,21 +480,14 @@ type RaidUpdateEventData struct {
 }
 
 // Marshal ...
-func (ra *RaidUpdateEventData) Marshal(w *Writer) {
-	w.Varint32(&ra.CurrentRaidWave)
-	w.Varint32(&ra.TotalRaidWaves)
-	w.Bool(&ra.WonRaid)
-}
-
-// Unmarshal ...
-func (ra *RaidUpdateEventData) Unmarshal(r *Reader) {
+func (ra *RaidUpdateEvent) Marshal(r IO) {
 	r.Varint32(&ra.CurrentRaidWave)
 	r.Varint32(&ra.TotalRaidWaves)
 	r.Bool(&ra.WonRaid)
 }
 
-// MovementAnomalyEventData is an event used for updating the other party on movement data.
-type MovementAnomalyEventData struct {
+// MovementAnomalyEvent is an event used for updating the other party on movement data.
+type MovementAnomalyEvent struct {
 	// EventType ...
 	EventType uint8
 	// CheatingScore ...
@@ -491,17 +503,7 @@ type MovementAnomalyEventData struct {
 }
 
 // Marshal ...
-func (m *MovementAnomalyEventData) Marshal(w *Writer) {
-	w.Uint8(&m.EventType)
-	w.Float32(&m.CheatingScore)
-	w.Float32(&m.AveragePositionDelta)
-	w.Float32(&m.TotalPositionDelta)
-	w.Float32(&m.MinPositionDelta)
-	w.Float32(&m.MaxPositionDelta)
-}
-
-// Unmarshal ...
-func (m *MovementAnomalyEventData) Unmarshal(r *Reader) {
+func (m *MovementAnomalyEvent) Marshal(r IO) {
 	r.Uint8(&m.EventType)
 	r.Float32(&m.CheatingScore)
 	r.Float32(&m.AveragePositionDelta)
@@ -510,8 +512,8 @@ func (m *MovementAnomalyEventData) Unmarshal(r *Reader) {
 	r.Float32(&m.MaxPositionDelta)
 }
 
-// MovementCorrectedEventData is an event sent by the server to correct movement client side.
-type MovementCorrectedEventData struct {
+// MovementCorrectedEvent is an event sent by the server to correct movement client side.
+type MovementCorrectedEvent struct {
 	// PositionDelta ...
 	PositionDelta float32
 	// CheatingScore ...
@@ -525,16 +527,7 @@ type MovementCorrectedEventData struct {
 }
 
 // Marshal ...
-func (m *MovementCorrectedEventData) Marshal(w *Writer) {
-	w.Float32(&m.PositionDelta)
-	w.Float32(&m.CheatingScore)
-	w.Float32(&m.ScoreThreshold)
-	w.Float32(&m.DistanceThreshold)
-	w.Varint32(&m.DurationThreshold)
-}
-
-// Unmarshal ...
-func (m *MovementCorrectedEventData) Unmarshal(r *Reader) {
+func (m *MovementCorrectedEvent) Marshal(r IO) {
 	r.Float32(&m.PositionDelta)
 	r.Float32(&m.CheatingScore)
 	r.Float32(&m.ScoreThreshold)
@@ -542,11 +535,35 @@ func (m *MovementCorrectedEventData) Unmarshal(r *Reader) {
 	r.Varint32(&m.DurationThreshold)
 }
 
-// ExtractHoneyEventData is an event with no purpose.
-type ExtractHoneyEventData struct{}
+// ExtractHoneyEvent is an event with no purpose.
+type ExtractHoneyEvent struct{}
 
 // Marshal ...
-func (*ExtractHoneyEventData) Marshal(*Writer) {}
+func (*ExtractHoneyEvent) Marshal(IO) {}
 
-// Unmarshal ...
-func (*ExtractHoneyEventData) Unmarshal(*Reader) {}
+const (
+	WaxNotOxidised   = uint16(0xa609)
+	WaxExposed       = uint16(0xa809)
+	WaxWeathered     = uint16(0xaa09)
+	WaxOxidised      = uint16(0xac09)
+	UnWaxNotOxidised = uint16(0xae09)
+	UnWaxExposed     = uint16(0xb009)
+	UnWaxWeathered   = uint16(0xb209)
+	UnWaxOxidised    = uint16(0xfa0a)
+)
+
+// WaxedOrUnwaxedCopperEvent is an event sent by the server when a copper block is waxed or unwaxed.
+type WaxedOrUnwaxedCopperEvent struct {
+	Type uint16
+}
+
+// Marshal ...
+func (w *WaxedOrUnwaxedCopperEvent) Marshal(r IO) {
+	r.Uint16(&w.Type)
+}
+
+// SneakCloseToSculkSensorEvent is an event sent by the server when a player sneaks close to an sculk block.
+type SneakCloseToSculkSensorEvent struct{}
+
+// Marshal ...
+func (u *SneakCloseToSculkSensorEvent) Marshal(r IO) {}

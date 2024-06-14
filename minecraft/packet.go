@@ -3,7 +3,6 @@ package minecraft
 import (
 	"bytes"
 	"fmt"
-	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
@@ -30,28 +29,64 @@ func parseData(data []byte, conn *Conn) (*packetData, error) {
 	return &packetData{h: header, full: data, payload: buf}, nil
 }
 
+type unknownPacketError struct {
+	id uint32
+}
+
+func (err unknownPacketError) Error() string {
+	return fmt.Sprintf("unexpected packet with ID %v", err.id)
+}
+
 // decode decodes the packet payload held in the packetData and returns the packet.Packet decoded.
-func (p *packetData) decode(conn *Conn) (pk packet.Packet, err error) {
+func (p *packetData) decode(conn *Conn) (pks []packet.Packet, err error) {
+	defer func() {
+		if recoveredErr := recover(); recoveredErr != nil {
+			err = fmt.Errorf("packet %v: %w", p.h.PacketID, recoveredErr.(error))
+		}
+		if err == nil {
+			return
+		}
+		if _, ok := err.(unknownPacketError); ok && conn.disconnectOnInvalidPacket {
+			_ = conn.Close()
+		}
+	}()
+
 	// Attempt to fetch the packet with the right packet ID from the pool.
 	pkFunc, ok := conn.pool[p.h.PacketID]
+	var pk packet.Packet
 	if !ok {
 		// No packet with the ID. This may be a custom packet of some sorts.
 		pk = &packet.Unknown{PacketID: p.h.PacketID}
+		if conn.disconnectOnUnknownPacket {
+			return nil, unknownPacketError{id: p.h.PacketID}
+		}
 	} else {
 		pk = pkFunc()
 	}
 
-	r := protocol.NewReader(p.payload, conn.shieldID.Load())
+	r := conn.proto.NewReader(p.payload, conn.shieldID.Load(), conn.readerLimits)
+
+	// PhoenixBuilder specific defer func.
+	// Author: LNSSPsd
 	defer func() {
 		if recoveredErr := recover(); recoveredErr != nil {
-			// 
+			//
 			//err = fmt.Errorf("%T: %w", pk, recoveredErr.(error))
 		}
 	}()
-	pk.Unmarshal(r)
+
+	pk.Marshal(r)
 	if p.payload.Len() != 0 {
-		return pk, nil
-		//return pk, fmt.Errorf("%T: %v unread bytes left: 0x%x", pk, p.payload.Len(), p.payload.Bytes())
+		err = fmt.Errorf("%T: %v unread bytes left: 0x%x", pk, p.payload.Len(), p.payload.Bytes())
 	}
-	return pk, nil
+	if conn.disconnectOnInvalidPacket && err != nil {
+		return nil, err
+	}
+
+	// PhoenixBuilder specific.
+	// Author: LNSSPsd, Happy2018new
+	{
+		return conn.proto.ConvertToLatest(pk, conn), nil
+		// return conn.proto.ConvertToLatest(pk, conn), err
+	}
 }

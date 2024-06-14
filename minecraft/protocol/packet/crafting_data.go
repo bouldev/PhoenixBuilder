@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"fmt"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -30,99 +29,10 @@ func (*CraftingData) ID() uint32 {
 	return IDCraftingData
 }
 
-// Marshal ...
-func (pk *CraftingData) Marshal(w *protocol.Writer) {
-	l, potRecipesLen, containerRecipesLen, materialReducersLen := uint32(len(pk.Recipes)), uint32(len(pk.PotionRecipes)), uint32(len(pk.PotionContainerChangeRecipes)), uint32(len(pk.MaterialReducers))
-	w.Varuint32(&l)
-	for _, recipe := range pk.Recipes {
-		var c int32
-		switch recipe.(type) {
-		case *protocol.ShapelessRecipe:
-			c = protocol.RecipeShapeless
-		case *protocol.ShapedRecipe:
-			c = protocol.RecipeShaped
-		case *protocol.FurnaceRecipe:
-			c = protocol.RecipeFurnace
-		case *protocol.FurnaceDataRecipe:
-			c = protocol.RecipeFurnaceData
-		case *protocol.MultiRecipe:
-			c = protocol.RecipeMulti
-		case *protocol.ShulkerBoxRecipe:
-			c = protocol.RecipeShulkerBox
-		case *protocol.ShapelessChemistryRecipe:
-			c = protocol.RecipeShapelessChemistry
-		case *protocol.ShapedChemistryRecipe:
-			c = protocol.RecipeShapedChemistry
-		default:
-			w.UnknownEnumOption(fmt.Sprintf("%T", recipe), "crafting recipe type")
-		}
-		w.Varint32(&c)
-		recipe.Marshal(w)
-	}
-	w.Varuint32(&potRecipesLen)
-	for _, mix := range pk.PotionRecipes {
-		protocol.PotRecipe(w, &mix)
-	}
-	w.Varuint32(&containerRecipesLen)
-	for _, mix := range pk.PotionContainerChangeRecipes {
-		protocol.PotContainerChangeRecipe(w, &mix)
-	}
-	w.Varuint32(&materialReducersLen)
-	for _, mat := range pk.MaterialReducers {
-		w.MaterialReducer(&mat)
-	}
-
-	w.Bool(&pk.ClearRecipes)
-}
-
-// Unmarshal ...
-func (pk *CraftingData) Unmarshal(r *protocol.Reader) {
-	var length uint32
-	r.Varuint32(&length)
-	pk.Recipes = make([]protocol.Recipe, length)
-	for i := uint32(0); i < length; i++ {
-		var recipeType int32
-		r.Varint32(&recipeType)
-
-		var recipe protocol.Recipe
-		switch recipeType {
-		case protocol.RecipeShapeless:
-			recipe = &protocol.ShapelessRecipe{}
-		case protocol.RecipeShaped:
-			recipe = &protocol.ShapedRecipe{}
-		case protocol.RecipeFurnace:
-			recipe = &protocol.FurnaceRecipe{}
-		case protocol.RecipeFurnaceData:
-			recipe = &protocol.FurnaceDataRecipe{}
-		case protocol.RecipeMulti:
-			recipe = &protocol.MultiRecipe{}
-		case protocol.RecipeShulkerBox:
-			recipe = &protocol.ShulkerBoxRecipe{}
-		case protocol.RecipeShapelessChemistry:
-			recipe = &protocol.ShapelessChemistryRecipe{}
-		case protocol.RecipeShapedChemistry:
-			recipe = &protocol.ShapedChemistryRecipe{}
-		default:
-			r.UnknownEnumOption(recipeType, "crafting data recipe type")
-		}
-		//goland:noinspection GoNilness
-		recipe.Unmarshal(r)
-		pk.Recipes[i] = recipe
-	}
-	r.Varuint32(&length)
-	pk.PotionRecipes = make([]protocol.PotionRecipe, length)
-	for i := uint32(0); i < length; i++ {
-		protocol.PotRecipe(r, &pk.PotionRecipes[i])
-	}
-	r.Varuint32(&length)
-	pk.PotionContainerChangeRecipes = make([]protocol.PotionContainerChangeRecipe, length)
-	for i := uint32(0); i < length; i++ {
-		protocol.PotContainerChangeRecipe(r, &pk.PotionContainerChangeRecipes[i])
-	}
-	r.Varuint32(&length)
-	for i := uint32(0); i < length; i++ {
-		r.MaterialReducer(&pk.MaterialReducers[i])
-	}
-
-	r.Bool(&pk.ClearRecipes)
+func (pk *CraftingData) Marshal(io protocol.IO) {
+	protocol.FuncSlice(io, &pk.Recipes, io.Recipe)
+	protocol.Slice(io, &pk.PotionRecipes)
+	protocol.Slice(io, &pk.PotionContainerChangeRecipes)
+	protocol.FuncSlice(io, &pk.MaterialReducers, io.MaterialReducer)
+	io.Bool(&pk.ClearRecipes)
 }

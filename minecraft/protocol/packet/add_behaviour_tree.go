@@ -16,12 +16,6 @@ func (*AddBehaviourTree) ID() uint32 {
 	return IDAddBehaviourTree
 }
 
-// Marshal ...
-func (pk *AddBehaviourTree) Marshal(w *protocol.Writer) {
-	w.String(&pk.BehaviourTree)
-}
-
-// Unmarshal ...
-func (pk *AddBehaviourTree) Unmarshal(r *protocol.Reader) {
-	r.String(&pk.BehaviourTree)
+func (pk *AddBehaviourTree) Marshal(io protocol.IO) {
+	io.String(&pk.BehaviourTree)
 }

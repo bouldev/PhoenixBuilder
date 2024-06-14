@@ -33,18 +33,9 @@ func (*CameraShake) ID() uint32 {
 	return IDCameraShake
 }
 
-// Marshal ...
-func (pk *CameraShake) Marshal(w *protocol.Writer) {
-	w.Float32(&pk.Intensity)
-	w.Float32(&pk.Duration)
-	w.Uint8(&pk.Type)
-	w.Uint8(&pk.Action)
-}
-
-// Unmarshal ...
-func (pk *CameraShake) Unmarshal(r *protocol.Reader) {
-	r.Float32(&pk.Intensity)
-	r.Float32(&pk.Duration)
-	r.Uint8(&pk.Type)
-	r.Uint8(&pk.Action)
+func (pk *CameraShake) Marshal(io protocol.IO) {
+	io.Float32(&pk.Intensity)
+	io.Float32(&pk.Duration)
+	io.Uint8(&pk.Type)
+	io.Uint8(&pk.Action)
 }

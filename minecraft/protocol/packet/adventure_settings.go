@@ -34,9 +34,9 @@ const (
 	ActionPermissionAttackPlayers
 	ActionPermissionAttackMobs
 	ActionPermissionOperator
-	ActionPermissionUnknown
 	ActionPermissionTeleport
 	ActionPermissionBuild
+	ActionPermissionDefault
 )
 
 const (
@@ -78,22 +78,11 @@ func (*AdventureSettings) ID() uint32 {
 	return IDAdventureSettings
 }
 
-// Marshal ...
-func (pk *AdventureSettings) Marshal(w *protocol.Writer) {
-	w.Varuint32(&pk.Flags)
-	w.Varuint32(&pk.CommandPermissionLevel)
-	w.Varuint32(&pk.ActionPermissions)
-	w.Varuint32(&pk.PermissionLevel)
-	w.Varuint32(&pk.CustomStoredPermissions)
-	w.Int64(&pk.PlayerUniqueID)
-}
-
-// Unmarshal ...
-func (pk *AdventureSettings) Unmarshal(r *protocol.Reader) {
-	r.Varuint32(&pk.Flags)
-	r.Varuint32(&pk.CommandPermissionLevel)
-	r.Varuint32(&pk.ActionPermissions)
-	r.Varuint32(&pk.PermissionLevel)
-	r.Varuint32(&pk.CustomStoredPermissions)
-	r.Int64(&pk.PlayerUniqueID)
+func (pk *AdventureSettings) Marshal(io protocol.IO) {
+	io.Varuint32(&pk.Flags)
+	io.Varuint32(&pk.CommandPermissionLevel)
+	io.Varuint32(&pk.ActionPermissions)
+	io.Varuint32(&pk.PermissionLevel)
+	io.Varuint32(&pk.CustomStoredPermissions)
+	io.Int64(&pk.PlayerUniqueID)
 }

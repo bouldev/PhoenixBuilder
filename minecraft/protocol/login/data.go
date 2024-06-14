@@ -4,13 +4,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"phoenixbuilder/minecraft/protocol"
-	"golang.org/x/text/language"
 	"net"
+	"phoenixbuilder/minecraft/protocol"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
+	"golang.org/x/text/language"
 )
 
 // IdentityData contains identity data of the player logged in. It is found in one of the JWT claims signed
@@ -25,6 +26,11 @@ type IdentityData struct {
 	// DisplayName is the username of the player, which may be changed by the user. It should for that reason
 	// not be used as a key to store information.
 	DisplayName string `json:"displayName"`
+
+	/*
+		PhoenixBuilder specific fields.
+		Author: LNSSPsd
+	*/
 	// Netease server id
 	NeteaseSid string `json:"netease_sid"`
 	// Netease User ID
@@ -39,6 +45,7 @@ type IdentityData struct {
 	EngineVersion string `json:"engineVersion"`
 	// Netease Fake Client Patch Version
 	PatchVersion string `json:"patchVersion"`
+
 	// TitleID is a numerical ID present only if the user is logged into XBL. It holds the title ID (XBL
 	// related) of the version that the player is on. Some of these IDs may be found below.
 	// Win10: 896928775
@@ -62,11 +69,17 @@ func (data IdentityData) Validate() error {
 	if id, err := uuid.Parse(data.Identity); err != nil || id == uuid.Nil {
 		return fmt.Errorf("UUID must be parseable as a valid UUID, but got %v", data.Identity)
 	}
-	// NetEase's rule for DisplayName is different, where unicode characters
-	// were enabled to use. We are not going to open a server as it's not
-	// possible for NetEase's Minecraft, so these checks below could be
-	// ignored.
-	return nil
+
+	// PhoenixBuilder specific changes.
+	// Author: LNSSPsd
+	{
+		// NetEase's rule for DisplayName is different, where unicode characters
+		// were enabled to use. We are not going to open a server as it's not
+		// possible for NetEase's Minecraft, so these checks below could be
+		// ignored.
+		return nil
+	}
+
 	if len(data.DisplayName) == 0 || len(data.DisplayName) > 15 {
 		return fmt.Errorf("DisplayName must not be empty or longer than 15 characters, but got %v characters", len(data.DisplayName))
 	}
@@ -117,13 +130,16 @@ type ClientData struct {
 	DeviceModel string
 	// DeviceOS is a numerical ID indicating the OS of the device.
 	DeviceOS protocol.DeviceOS
-	// DeviceID is a UUID specific to the device. A different user will have the same UUID for this.
+	// DeviceID is usually a UUID specific to the device. A different user will have the same UUID for this.
+	// DeviceID is not guaranteed to always be a UUID. It is a base64 encoded string under some circumstances.
 	DeviceID string `json:"DeviceId"`
 	// GameVersion is the game version of the player that attempted to join, for example '1.11.0'.
 	GameVersion string
 	// GUIScale is the GUI scale of the player. It is by default 0, and is otherwise -1 or -2 for a smaller
 	// GUI scale than usual.
 	GUIScale int `json:"GuiScale"`
+	// IsEditorMode is a value to dictate if the player is in editor mode.
+	IsEditorMode bool
 	// LanguageCode is the language code of the player. It looks like 'en_UK'. It follows the ISO language
 	// codes, but hyphens ('-') are replaced with underscores. ('_')
 	LanguageCode string
@@ -199,6 +215,13 @@ type ClientData struct {
 	ThirdPartyNameOnly bool
 	// UIProfile is the UI profile used. For the 'Pocket' UI, this is 1. For the 'Classic' UI, this is 0.
 	UIProfile int
+	// TrustedSkin is a boolean indicating if the skin the client is using is trusted.
+	TrustedSkin bool
+	// OverrideSkin is a boolean that does not make sense to be here. The current usage of this field is unknown.
+	OverrideSkin bool
+	// CompatibleWithClientSideChunkGen is a boolean indicating if the client's hardware is capable of using the client
+	// side chunk generation system.
+	CompatibleWithClientSideChunkGen bool
 }
 
 // PersonaPiece represents a piece of a persona skin. All pieces are sent separately.
@@ -281,11 +304,8 @@ var checkVersion = regexp.MustCompile("[0-9.]").MatchString
 // Validate validates the client data. It returns an error if any of the fields checked did not carry a valid
 // value.
 func (data ClientData) Validate() error {
-	if data.DeviceOS <= 0 || data.DeviceOS > 13 {
-		return fmt.Errorf("DeviceOS must carry a value between 1 and 13, but got %v", data.DeviceOS)
-	}
-	if _, err := uuid.Parse(data.DeviceID); err != nil {
-		return fmt.Errorf("DeviceID must be parseable as a valid UUID, but got %v", data.DeviceID)
+	if data.DeviceOS <= 0 || data.DeviceOS > 15 {
+		return fmt.Errorf("DeviceOS must carry a value between 1 and 15, but got %v", data.DeviceOS)
 	}
 	if !checkVersion(data.GameVersion) {
 		return fmt.Errorf("GameVersion must only contain dots and numbers, but got %v", data.GameVersion)
@@ -338,10 +358,9 @@ func (data ClientData) Validate() error {
 	if data.SkinID == "" {
 		return fmt.Errorf("SkinID must not be an empty string")
 	}
-	if data.UIProfile != 0 && data.UIProfile != 1 {
-		return fmt.Errorf("UIProfile must be either 0 or 1, but got %v", data.UIProfile)
+	if data.UIProfile < 0 || data.UIProfile > 2 {
+		return fmt.Errorf("UIProfile must be between 0-2, but got %v", data.UIProfile)
 	}
-
 	return nil
 }
 

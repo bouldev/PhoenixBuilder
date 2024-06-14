@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	UseItemEquipArmor = iota
+	UseItemEquipArmour = iota
 	UseItemEat
 	UseItemAttack
 	UseItemConsume
@@ -38,14 +38,7 @@ func (*CompletedUsingItem) ID() uint32 {
 	return IDCompletedUsingItem
 }
 
-// Marshal ...
-func (pk *CompletedUsingItem) Marshal(w *protocol.Writer) {
-	w.Int16(&pk.UsedItemID)
-	w.Int32(&pk.UseMethod)
-}
-
-// Unmarshal ...
-func (pk *CompletedUsingItem) Unmarshal(r *protocol.Reader) {
-	r.Int16(&pk.UsedItemID)
-	r.Int32(&pk.UseMethod)
+func (pk *CompletedUsingItem) Marshal(io protocol.IO) {
+	io.Int16(&pk.UsedItemID)
+	io.Int32(&pk.UseMethod)
 }

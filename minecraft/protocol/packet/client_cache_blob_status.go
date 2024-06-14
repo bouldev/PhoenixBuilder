@@ -20,33 +20,10 @@ func (pk *ClientCacheBlobStatus) ID() uint32 {
 	return IDClientCacheBlobStatus
 }
 
-// Marshal ...
-func (pk *ClientCacheBlobStatus) Marshal(w *protocol.Writer) {
+func (pk *ClientCacheBlobStatus) Marshal(io protocol.IO) {
 	missLen, hitLen := uint32(len(pk.MissHashes)), uint32(len(pk.HitHashes))
-	w.Varuint32(&missLen)
-	w.Varuint32(&hitLen)
-	for _, hash := range pk.MissHashes {
-		w.Uint64(&hash)
-	}
-	for _, hash := range pk.HitHashes {
-		w.Uint64(&hash)
-	}
-}
-
-// Unmarshal ...
-func (pk *ClientCacheBlobStatus) Unmarshal(r *protocol.Reader) {
-	var hitCount, missCount uint32
-	r.Varuint32(&missCount)
-	r.Varuint32(&hitCount)
-
-	r.LimitUint32(missCount+hitCount, 4096)
-
-	pk.MissHashes = make([]uint64, missCount)
-	pk.HitHashes = make([]uint64, hitCount)
-	for i := uint32(0); i < missCount; i++ {
-		r.Uint64(&pk.MissHashes[i])
-	}
-	for i := uint32(0); i < hitCount; i++ {
-		r.Uint64(&pk.HitHashes[i])
-	}
+	io.Varuint32(&missLen)
+	io.Varuint32(&hitLen)
+	protocol.FuncSliceOfLen(io, missLen, &pk.MissHashes, io.Uint64)
+	protocol.FuncSliceOfLen(io, hitLen, &pk.HitHashes, io.Uint64)
 }

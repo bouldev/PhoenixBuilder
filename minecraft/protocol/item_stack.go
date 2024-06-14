@@ -1,7 +1,20 @@
 package protocol
 
-import (
-	"fmt"
+const (
+	FilterCauseServerChatPublic = iota
+	FilterCauseServerChatWhisper
+	FilterCauseSignText
+	FilterCauseAnvilText
+	FilterCauseBookAndQuillText
+	FilterCauseCommandBlockText
+	FilterCauseBlockActorDataText
+	FilterCauseJoinEventText
+	FilterCauseLeaveEventText
+	FilterCauseSlashCommandChat
+	FilterCauseCartographyText
+	FilterCauseKickCommand
+	FilterCauseTitleCommand
+	FilterCauseSummonCommand
 )
 
 // ItemStackRequest represents a single request present in an ItemStackRequest packet sent by the client to
@@ -17,134 +30,110 @@ type ItemStackRequest struct {
 	// FilterStrings is a list of filter strings involved in the request. This is typically filled with one string
 	// when an anvil or cartography is used.
 	FilterStrings []string
+	// FilterCause represents the cause of any potential filtering. This is one of the constants above.
+	FilterCause int32
 }
 
-// WriteStackRequest writes an ItemStackRequest x to Writer w.
-func WriteStackRequest(w *Writer, x *ItemStackRequest) {
-	l := uint32(len(x.Actions))
-	w.Varint32(&x.RequestID)
-	w.Varuint32(&l)
-	for _, action := range x.Actions {
-		var id byte
-		switch action.(type) {
-		case *TakeStackRequestAction:
-			id = StackRequestActionTake
-		case *PlaceStackRequestAction:
-			id = StackRequestActionPlace
-		case *SwapStackRequestAction:
-			id = StackRequestActionSwap
-		case *DropStackRequestAction:
-			id = StackRequestActionDrop
-		case *DestroyStackRequestAction:
-			id = StackRequestActionDestroy
-		case *ConsumeStackRequestAction:
-			id = StackRequestActionConsume
-		case *CreateStackRequestAction:
-			id = StackRequestActionCreate
-		case *LabTableCombineStackRequestAction:
-			id = StackRequestActionLabTableCombine
-		case *BeaconPaymentStackRequestAction:
-			id = StackRequestActionBeaconPayment
-		case *MineBlockStackRequestAction:
-			id = StackRequestActionMineBlock
-		case *CraftRecipeStackRequestAction:
-			id = StackRequestActionCraftRecipe
-		case *AutoCraftRecipeStackRequestAction:
-			id = StackRequestActionCraftRecipeAuto
-		case *CraftCreativeStackRequestAction:
-			id = StackRequestActionCraftCreative
-		case *CraftRecipeOptionalStackRequestAction:
-			id = StackRequestActionCraftRecipeOptional
-		case *CraftGrindstoneRecipeStackRequestAction:
-			id = StackRequestActionCraftGrindstone
-		case *CraftLoomRecipeStackRequestAction:
-			id = StackRequestActionCraftLoom
-		case *CraftNonImplementedStackRequestAction:
-			id = StackRequestActionCraftNonImplementedDeprecated
-		case *CraftResultsDeprecatedStackRequestAction:
-			id = StackRequestActionCraftResultsDeprecated
-		default:
-			w.UnknownEnumOption(fmt.Sprintf("%T", action), "stack request action type")
-		}
-		w.Uint8(&id)
-		action.Marshal(w)
-	}
-	l = uint32(len(x.FilterStrings))
-	w.Varuint32(&l)
-	for _, n := range x.FilterStrings {
-		w.String(&n)
-	}
-}
-
-// StackRequest reads an ItemStackRequest x from Reader r.
-func StackRequest(r *Reader, x *ItemStackRequest) {
-	var count uint32
+// Marshal encodes/decodes an ItemStackRequest.
+func (x *ItemStackRequest) Marshal(r IO) {
 	r.Varint32(&x.RequestID)
-	r.Varuint32(&count)
-	r.LimitUint32(count, mediumLimit)
+	FuncSlice(r, &x.Actions, r.StackRequestAction)
+	FuncSlice(r, &x.FilterStrings, r.String)
+	r.Int32(&x.FilterCause)
+}
 
-	x.Actions = make([]StackRequestAction, count)
-	for i := uint32(0); i < count; i++ {
-		var id uint8
-		r.Uint8(&id)
-
-		var action StackRequestAction
-		switch id {
-		case StackRequestActionTake:
-			action = &TakeStackRequestAction{}
-		case StackRequestActionPlace:
-			action = &PlaceStackRequestAction{}
-		case StackRequestActionSwap:
-			action = &SwapStackRequestAction{}
-		case StackRequestActionDrop:
-			action = &DropStackRequestAction{}
-		case StackRequestActionDestroy:
-			action = &DestroyStackRequestAction{}
-		case StackRequestActionConsume:
-			action = &ConsumeStackRequestAction{}
-		case StackRequestActionCreate:
-			action = &CreateStackRequestAction{}
-		case StackRequestActionPlaceInContainer:
-			action = &PlaceInContainerStackRequestAction{}
-		case StackRequestActionTakeOutContainer:
-			action = &TakeOutContainerStackRequestAction{}
-		case StackRequestActionLabTableCombine:
-			action = &LabTableCombineStackRequestAction{}
-		case StackRequestActionBeaconPayment:
-			action = &BeaconPaymentStackRequestAction{}
-		case StackRequestActionMineBlock:
-			action = &MineBlockStackRequestAction{}
-		case StackRequestActionCraftRecipe:
-			action = &CraftRecipeStackRequestAction{}
-		case StackRequestActionCraftRecipeAuto:
-			action = &AutoCraftRecipeStackRequestAction{}
-		case StackRequestActionCraftCreative:
-			action = &CraftCreativeStackRequestAction{}
-		case StackRequestActionCraftRecipeOptional:
-			action = &CraftRecipeOptionalStackRequestAction{}
-		case StackRequestActionCraftGrindstone:
-			action = &CraftGrindstoneRecipeStackRequestAction{}
-		case StackRequestActionCraftLoom:
-			action = &CraftLoomRecipeStackRequestAction{}
-		case StackRequestActionCraftNonImplementedDeprecated:
-			action = &CraftNonImplementedStackRequestAction{}
-		case StackRequestActionCraftResultsDeprecated:
-			action = &CraftResultsDeprecatedStackRequestAction{}
-		default:
-			r.UnknownEnumOption(id, "stack request action type")
-			return
-		}
-		action.Unmarshal(r)
-		x.Actions[i] = action
+// lookupStackRequestActionType looks up the ID of a StackRequestAction.
+func lookupStackRequestActionType(x StackRequestAction, id *uint8) bool {
+	switch x.(type) {
+	case *TakeStackRequestAction:
+		*id = StackRequestActionTake
+	case *PlaceStackRequestAction:
+		*id = StackRequestActionPlace
+	case *SwapStackRequestAction:
+		*id = StackRequestActionSwap
+	case *DropStackRequestAction:
+		*id = StackRequestActionDrop
+	case *DestroyStackRequestAction:
+		*id = StackRequestActionDestroy
+	case *ConsumeStackRequestAction:
+		*id = StackRequestActionConsume
+	case *CreateStackRequestAction:
+		*id = StackRequestActionCreate
+	case *LabTableCombineStackRequestAction:
+		*id = StackRequestActionLabTableCombine
+	case *BeaconPaymentStackRequestAction:
+		*id = StackRequestActionBeaconPayment
+	case *MineBlockStackRequestAction:
+		*id = StackRequestActionMineBlock
+	case *CraftRecipeStackRequestAction:
+		*id = StackRequestActionCraftRecipe
+	case *AutoCraftRecipeStackRequestAction:
+		*id = StackRequestActionCraftRecipeAuto
+	case *CraftCreativeStackRequestAction:
+		*id = StackRequestActionCraftCreative
+	case *CraftRecipeOptionalStackRequestAction:
+		*id = StackRequestActionCraftRecipeOptional
+	case *CraftGrindstoneRecipeStackRequestAction:
+		*id = StackRequestActionCraftGrindstone
+	case *CraftLoomRecipeStackRequestAction:
+		*id = StackRequestActionCraftLoom
+	case *CraftNonImplementedStackRequestAction:
+		*id = StackRequestActionCraftNonImplementedDeprecated
+	case *CraftResultsDeprecatedStackRequestAction:
+		*id = StackRequestActionCraftResultsDeprecated
+	default:
+		return false
 	}
+	return true
+}
 
-	r.Varuint32(&count)
-	r.LimitUint32(count, 64)
-
-	x.FilterStrings = make([]string, count)
-	for i := uint32(0); i < count; i++ {
-		r.String(&x.FilterStrings[i])
+// lookupStackRequestAction looks up the StackRequestAction matching an ID.
+func lookupStackRequestAction(id uint8, x *StackRequestAction) bool {
+	switch id {
+	case StackRequestActionTake:
+		*x = &TakeStackRequestAction{}
+	case StackRequestActionPlace:
+		*x = &PlaceStackRequestAction{}
+	case StackRequestActionSwap:
+		*x = &SwapStackRequestAction{}
+	case StackRequestActionDrop:
+		*x = &DropStackRequestAction{}
+	case StackRequestActionDestroy:
+		*x = &DestroyStackRequestAction{}
+	case StackRequestActionConsume:
+		*x = &ConsumeStackRequestAction{}
+	case StackRequestActionCreate:
+		*x = &CreateStackRequestAction{}
+	case StackRequestActionPlaceInContainer:
+		*x = &PlaceInContainerStackRequestAction{}
+	case StackRequestActionTakeOutContainer:
+		*x = &TakeOutContainerStackRequestAction{}
+	case StackRequestActionLabTableCombine:
+		*x = &LabTableCombineStackRequestAction{}
+	case StackRequestActionBeaconPayment:
+		*x = &BeaconPaymentStackRequestAction{}
+	case StackRequestActionMineBlock:
+		*x = &MineBlockStackRequestAction{}
+	case StackRequestActionCraftRecipe:
+		*x = &CraftRecipeStackRequestAction{}
+	case StackRequestActionCraftRecipeAuto:
+		*x = &AutoCraftRecipeStackRequestAction{}
+	case StackRequestActionCraftCreative:
+		*x = &CraftCreativeStackRequestAction{}
+	case StackRequestActionCraftRecipeOptional:
+		*x = &CraftRecipeOptionalStackRequestAction{}
+	case StackRequestActionCraftGrindstone:
+		*x = &CraftGrindstoneRecipeStackRequestAction{}
+	case StackRequestActionCraftLoom:
+		*x = &CraftLoomRecipeStackRequestAction{}
+	case StackRequestActionCraftNonImplementedDeprecated:
+		*x = &CraftNonImplementedStackRequestAction{}
+	case StackRequestActionCraftResultsDeprecated:
+		*x = &CraftResultsDeprecatedStackRequestAction{}
+	default:
+		return false
 	}
+	return true
 }
 
 const (
@@ -168,6 +157,15 @@ type ItemStackResponse struct {
 	ContainerInfo []StackResponseContainerInfo
 }
 
+// Marshal encodes/decodes an ItemStackResponse.
+func (x *ItemStackResponse) Marshal(r IO) {
+	r.Uint8(&x.Status)
+	r.Varint32(&x.RequestID)
+	if x.Status == ItemStackResponseStatusOK {
+		Slice(r, &x.ContainerInfo)
+	}
+}
+
 // StackResponseContainerInfo holds information on what slots in a container have what item stack in them.
 type StackResponseContainerInfo struct {
 	// ContainerID is the container ID of the container that the slots that follow are in. For the main
@@ -176,6 +174,12 @@ type StackResponseContainerInfo struct {
 	ContainerID byte
 	// SlotInfo holds information on what item stack should be present in specific slots in the container.
 	SlotInfo []StackResponseSlotInfo
+}
+
+// Marshal encodes/decodes a StackResponseContainerInfo.
+func (x *StackResponseContainerInfo) Marshal(r IO) {
+	r.Uint8(&x.ContainerID)
+	Slice(r, &x.SlotInfo)
 }
 
 // StackResponseSlotInfo holds information on what item stack should be present in a specific slot.
@@ -195,60 +199,8 @@ type StackResponseSlotInfo struct {
 	DurabilityCorrection int32
 }
 
-// WriteStackResponse writes an ItemStackResponse x to Writer w.
-func WriteStackResponse(w *Writer, x *ItemStackResponse) {
-	w.Uint8(&x.Status)
-	w.Varint32(&x.RequestID)
-	if x.Status != ItemStackResponseStatusOK {
-		return
-	}
-	l := uint32(len(x.ContainerInfo))
-	w.Varuint32(&l)
-	for _, info := range x.ContainerInfo {
-		WriteStackContainerInfo(w, &info)
-	}
-}
-
-// StackResponse reads an ItemStackResponse x from Reader r.
-func StackResponse(r *Reader, x *ItemStackResponse) {
-	var l uint32
-	r.Uint8(&x.Status)
-	r.Varint32(&x.RequestID)
-	if x.Status != ItemStackResponseStatusOK {
-		return
-	}
-	r.Varuint32(&l)
-
-	x.ContainerInfo = make([]StackResponseContainerInfo, l)
-	for i := uint32(0); i < l; i++ {
-		StackContainerInfo(r, &x.ContainerInfo[i])
-	}
-}
-
-// WriteStackContainerInfo writes a StackResponseContainerInfo x to Writer w.
-func WriteStackContainerInfo(w *Writer, x *StackResponseContainerInfo) {
-	w.Uint8(&x.ContainerID)
-	l := uint32(len(x.SlotInfo))
-	w.Varuint32(&l)
-	for _, info := range x.SlotInfo {
-		StackSlotInfo(w, &info)
-	}
-}
-
-// StackContainerInfo reads a StackResponseContainerInfo x from Reader r.
-func StackContainerInfo(r *Reader, x *StackResponseContainerInfo) {
-	var l uint32
-	r.Uint8(&x.ContainerID)
-	r.Varuint32(&l)
-
-	x.SlotInfo = make([]StackResponseSlotInfo, l)
-	for i := uint32(0); i < l; i++ {
-		StackSlotInfo(r, &x.SlotInfo[i])
-	}
-}
-
-// StackSlotInfo reads/writes a StackResponseSlotInfo x using IO r.
-func StackSlotInfo(r IO, x *StackResponseSlotInfo) {
+// Marshal encodes/decodes a StackResponseSlotInfo.
+func (x *StackResponseSlotInfo) Marshal(r IO) {
 	r.Uint8(&x.Slot)
 	r.Uint8(&x.HotbarSlot)
 	r.Uint8(&x.Count)
@@ -262,13 +214,9 @@ func StackSlotInfo(r IO, x *StackResponseSlotInfo) {
 
 // StackRequestAction represents a single action related to the inventory present in an ItemStackRequest.
 // The action is one of the concrete types below, each of which are indicative of a different action by the
-// client, such as moving an item around the inventory or placing a block.
+// client, such as moving an item around the inventory or placing a block. It is an alias of Marshaler.
 type StackRequestAction interface {
-	// Marshal encodes the stack request action its binary representation into buf.
-	Marshal(w *Writer)
-	// Unmarshal decodes a serialised stack request action object from Reader r into the
-	// InventoryTransactionData instance.
-	Unmarshal(r *Reader)
+	Marshaler
 }
 
 const (
@@ -305,14 +253,7 @@ type transferStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *transferStackRequestAction) Marshal(w *Writer) {
-	w.Uint8(&a.Count)
-	StackReqSlotInfo(w, &a.Source)
-	StackReqSlotInfo(w, &a.Destination)
-}
-
-// Unmarshal ...
-func (a *transferStackRequestAction) Unmarshal(r *Reader) {
+func (a *transferStackRequestAction) Marshal(r IO) {
 	r.Uint8(&a.Count)
 	StackReqSlotInfo(r, &a.Source)
 	StackReqSlotInfo(r, &a.Destination)
@@ -340,13 +281,7 @@ type SwapStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *SwapStackRequestAction) Marshal(w *Writer) {
-	StackReqSlotInfo(w, &a.Source)
-	StackReqSlotInfo(w, &a.Destination)
-}
-
-// Unmarshal ...
-func (a *SwapStackRequestAction) Unmarshal(r *Reader) {
+func (a *SwapStackRequestAction) Marshal(r IO) {
 	StackReqSlotInfo(r, &a.Source)
 	StackReqSlotInfo(r, &a.Destination)
 }
@@ -366,14 +301,7 @@ type DropStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *DropStackRequestAction) Marshal(w *Writer) {
-	w.Uint8(&a.Count)
-	StackReqSlotInfo(w, &a.Source)
-	w.Bool(&a.Randomly)
-}
-
-// Unmarshal ...
-func (a *DropStackRequestAction) Unmarshal(r *Reader) {
+func (a *DropStackRequestAction) Marshal(r IO) {
 	r.Uint8(&a.Count)
 	StackReqSlotInfo(r, &a.Source)
 	r.Bool(&a.Randomly)
@@ -390,13 +318,7 @@ type DestroyStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *DestroyStackRequestAction) Marshal(w *Writer) {
-	w.Uint8(&a.Count)
-	StackReqSlotInfo(w, &a.Source)
-}
-
-// Unmarshal ...
-func (a *DestroyStackRequestAction) Unmarshal(r *Reader) {
+func (a *DestroyStackRequestAction) Marshal(r IO) {
 	r.Uint8(&a.Count)
 	StackReqSlotInfo(r, &a.Source)
 }
@@ -420,12 +342,7 @@ type CreateStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *CreateStackRequestAction) Marshal(w *Writer) {
-	w.Uint8(&a.ResultsSlot)
-}
-
-// Unmarshal ...
-func (a *CreateStackRequestAction) Unmarshal(r *Reader) {
+func (a *CreateStackRequestAction) Marshal(r IO) {
 	r.Uint8(&a.ResultsSlot)
 }
 
@@ -443,10 +360,7 @@ type TakeOutContainerStackRequestAction struct {
 type LabTableCombineStackRequestAction struct{}
 
 // Marshal ...
-func (a *LabTableCombineStackRequestAction) Marshal(*Writer) {}
-
-// Unmarshal ...
-func (a *LabTableCombineStackRequestAction) Unmarshal(*Reader) {}
+func (a *LabTableCombineStackRequestAction) Marshal(IO) {}
 
 // BeaconPaymentStackRequestAction is sent by the client when it submits an item to enable effects from a
 // beacon. These items will have been moved into the beacon item slot in advance.
@@ -456,13 +370,7 @@ type BeaconPaymentStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *BeaconPaymentStackRequestAction) Marshal(w *Writer) {
-	w.Varint32(&a.PrimaryEffect)
-	w.Varint32(&a.SecondaryEffect)
-}
-
-// Unmarshal ...
-func (a *BeaconPaymentStackRequestAction) Unmarshal(r *Reader) {
+func (a *BeaconPaymentStackRequestAction) Marshal(r IO) {
 	r.Varint32(&a.PrimaryEffect)
 	r.Varint32(&a.SecondaryEffect)
 }
@@ -480,14 +388,7 @@ type MineBlockStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *MineBlockStackRequestAction) Marshal(w *Writer) {
-	w.Varint32(&a.HotbarSlot)
-	w.Varint32(&a.PredictedDurability)
-	w.Varint32(&a.StackNetworkID)
-}
-
-// Unmarshal ...
-func (a *MineBlockStackRequestAction) Unmarshal(r *Reader) {
+func (a *MineBlockStackRequestAction) Marshal(r IO) {
 	r.Varint32(&a.HotbarSlot)
 	r.Varint32(&a.PredictedDurability)
 	r.Varint32(&a.StackNetworkID)
@@ -505,12 +406,7 @@ type CraftRecipeStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *CraftRecipeStackRequestAction) Marshal(w *Writer) {
-	w.Varuint32(&a.RecipeNetworkID)
-}
-
-// Unmarshal ...
-func (a *CraftRecipeStackRequestAction) Unmarshal(r *Reader) {
+func (a *CraftRecipeStackRequestAction) Marshal(r IO) {
 	r.Varuint32(&a.RecipeNetworkID)
 }
 
@@ -523,18 +419,16 @@ type AutoCraftRecipeStackRequestAction struct {
 	RecipeNetworkID uint32
 	// TimesCrafted is how many times the recipe was crafted.
 	TimesCrafted byte
+	// Ingredients is a slice of ItemDescriptorCount that contains the ingredients that were used to craft the recipe.
+	// It is not exactly clear what this is used for, but it is sent by the vanilla client.
+	Ingredients []ItemDescriptorCount
 }
 
 // Marshal ...
-func (a *AutoCraftRecipeStackRequestAction) Marshal(w *Writer) {
-	w.Varuint32(&a.RecipeNetworkID)
-	w.Uint8(&a.TimesCrafted)
-}
-
-// Unmarshal ...
-func (a *AutoCraftRecipeStackRequestAction) Unmarshal(r *Reader) {
+func (a *AutoCraftRecipeStackRequestAction) Marshal(r IO) {
 	r.Varuint32(&a.RecipeNetworkID)
 	r.Uint8(&a.TimesCrafted)
+	FuncSlice(r, &a.Ingredients, r.ItemDescriptorCount)
 }
 
 // CraftCreativeStackRequestAction is sent by the client when it takes an item out fo the creative inventory.
@@ -546,12 +440,7 @@ type CraftCreativeStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *CraftCreativeStackRequestAction) Marshal(w *Writer) {
-	w.Varuint32(&a.CreativeItemNetworkID)
-}
-
-// Unmarshal ...
-func (a *CraftCreativeStackRequestAction) Unmarshal(r *Reader) {
+func (a *CraftCreativeStackRequestAction) Marshal(r IO) {
 	r.Varuint32(&a.CreativeItemNetworkID)
 }
 
@@ -568,13 +457,7 @@ type CraftRecipeOptionalStackRequestAction struct {
 }
 
 // Marshal ...
-func (c *CraftRecipeOptionalStackRequestAction) Marshal(w *Writer) {
-	w.Varuint32(&c.RecipeNetworkID)
-	w.Int32(&c.FilterStringIndex)
-}
-
-// Unmarshal ...
-func (c *CraftRecipeOptionalStackRequestAction) Unmarshal(r *Reader) {
+func (c *CraftRecipeOptionalStackRequestAction) Marshal(r IO) {
 	r.Varuint32(&c.RecipeNetworkID)
 	r.Int32(&c.FilterStringIndex)
 }
@@ -591,13 +474,7 @@ type CraftGrindstoneRecipeStackRequestAction struct {
 }
 
 // Marshal ...
-func (c *CraftGrindstoneRecipeStackRequestAction) Marshal(w *Writer) {
-	w.Varuint32(&c.RecipeNetworkID)
-	w.Varint32(&c.Cost)
-}
-
-// Unmarshal ...
-func (c *CraftGrindstoneRecipeStackRequestAction) Unmarshal(r *Reader) {
+func (c *CraftGrindstoneRecipeStackRequestAction) Marshal(r IO) {
 	r.Varuint32(&c.RecipeNetworkID)
 	r.Varint32(&c.Cost)
 }
@@ -610,12 +487,7 @@ type CraftLoomRecipeStackRequestAction struct {
 }
 
 // Marshal ...
-func (c *CraftLoomRecipeStackRequestAction) Marshal(w *Writer) {
-	w.String(&c.Pattern)
-}
-
-// Unmarshal ...
-func (c *CraftLoomRecipeStackRequestAction) Unmarshal(r *Reader) {
+func (c *CraftLoomRecipeStackRequestAction) Marshal(r IO) {
 	r.String(&c.Pattern)
 }
 
@@ -624,10 +496,7 @@ func (c *CraftLoomRecipeStackRequestAction) Unmarshal(r *Reader) {
 type CraftNonImplementedStackRequestAction struct{}
 
 // Marshal ...
-func (*CraftNonImplementedStackRequestAction) Marshal(*Writer) {}
-
-// Unmarshal ...
-func (*CraftNonImplementedStackRequestAction) Unmarshal(*Reader) {}
+func (*CraftNonImplementedStackRequestAction) Marshal(IO) {}
 
 // CraftResultsDeprecatedStackRequestAction is an additional, deprecated packet sent by the client after
 // crafting. It holds the final results and the amount of times the recipe was crafted. It shouldn't be used.
@@ -639,25 +508,8 @@ type CraftResultsDeprecatedStackRequestAction struct {
 }
 
 // Marshal ...
-func (a *CraftResultsDeprecatedStackRequestAction) Marshal(w *Writer) {
-	l := uint32(len(a.ResultItems))
-	w.Varuint32(&l)
-	for _, i := range a.ResultItems {
-		w.Item(&i)
-	}
-	w.Uint8(&a.TimesCrafted)
-}
-
-// Unmarshal ...
-func (a *CraftResultsDeprecatedStackRequestAction) Unmarshal(r *Reader) {
-	var l uint32
-	r.Varuint32(&l)
-	r.LimitUint32(l, mediumLimit*2)
-
-	a.ResultItems = make([]ItemStack, l)
-	for i := uint32(0); i < l; i++ {
-		r.Item(&a.ResultItems[i])
-	}
+func (a *CraftResultsDeprecatedStackRequestAction) Marshal(r IO) {
+	FuncSlice(r, &a.ResultItems, r.Item)
 	r.Uint8(&a.TimesCrafted)
 }
 

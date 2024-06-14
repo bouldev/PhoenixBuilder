@@ -55,20 +55,21 @@ func (e *Encoder) Encode(v any) error {
 // are found in the list below.
 //
 // The following Go types are converted to tags as such:
-//   byte/uint8: TAG_Byte
-//   bool: TAG_Byte
-//   int16: TAG_Short
-//   int32: TAG_Int
-//   int64: TAG_Long
-//   float32: TAG_Float
-//   float64: TAG_Double
-//   [...]byte: TAG_ByteArray
-//   [...]int32: TAG_IntArray
-//   [...]int64: TAG_LongArray
-//   string: TAG_String
-//   []<type>: TAG_List
-//   struct{...}: TAG_Compound
-//   map[string]<type/any>: TAG_Compound
+//
+//	byte/uint8: TAG_Byte
+//	bool: TAG_Byte
+//	int16: TAG_Short
+//	int32: TAG_Int
+//	int64: TAG_Long
+//	float32: TAG_Float
+//	float64: TAG_Double
+//	[...]byte: TAG_ByteArray
+//	[...]int32: TAG_IntArray
+//	[...]int64: TAG_LongArray
+//	string: TAG_String
+//	[]<type>: TAG_List
+//	struct{...}: TAG_Compound
+//	map[string]<type/any>: TAG_Compound
 //
 // Marshal accepts struct fields with the 'nbt' struct tag. The 'nbt' struct tag allows setting the name of
 // a field that some tag should be decoded in. Setting the struct tag to '-' means that field will never be
@@ -202,7 +203,7 @@ func (e *Encoder) encode(val reflect.Value, tagName string) error {
 			if val.Len() == 0 {
 				// If the slice is empty, we cannot find out the type of the interface slice. Luckily the NBT
 				// format allows a byte type for empty lists.
-				elemType = byteType
+				elemType = nil
 			} else {
 				// The slice is not empty, so we'll simply get the tag type from the first element.
 				elemType = val.Index(0).Elem().Type()
@@ -213,7 +214,7 @@ func (e *Encoder) encode(val reflect.Value, tagName string) error {
 		if listType == math.MaxUint8 {
 			return IncompatibleTypeError{Type: val.Type(), ValueName: tagName}
 		}
-		if err := e.w.WriteByte(listType); err != nil {
+		if err := e.w.WriteByte(byte(listType)); err != nil {
 			return FailedWriteError{Off: e.w.off, Op: "WriteSlice", Err: err}
 		}
 		if err := e.Encoding.WriteInt32(e.w, int32(val.Len())); err != nil {
@@ -233,7 +234,7 @@ func (e *Encoder) encode(val reflect.Value, tagName string) error {
 			return err
 		}
 		e.depth--
-		return e.w.WriteByte(tagEnd)
+		return e.w.WriteByte(byte(tagEnd))
 
 	case reflect.Map:
 		e.depth++
@@ -247,7 +248,7 @@ func (e *Encoder) encode(val reflect.Value, tagName string) error {
 			}
 		}
 		e.depth--
-		return e.w.WriteByte(tagEnd)
+		return e.w.WriteByte(byte(tagEnd))
 	}
 	return nil
 }
@@ -291,11 +292,11 @@ func (e *Encoder) writeStructValues(val reflect.Value) error {
 }
 
 // writeTag writes a single tag to the io.Writer held by the Encoder. The tag type and the name are written.
-func (e *Encoder) writeTag(tagType byte, tagName string) error {
+func (e *Encoder) writeTag(t tagType, tagName string) error {
 	if e.depth >= maximumNestingDepth {
 		return MaximumDepthReachedError{}
 	}
-	if err := e.w.WriteByte(tagType); err != nil {
+	if err := e.w.WriteByte(byte(t)); err != nil {
 		return err
 	}
 	return e.Encoding.WriteString(e.w, tagName)

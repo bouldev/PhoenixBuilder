@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // AddPainting is sent by the server to the client to make a painting entity show up. It is one of the few
@@ -30,20 +31,10 @@ func (*AddPainting) ID() uint32 {
 	return IDAddPainting
 }
 
-// Marshal ...
-func (pk *AddPainting) Marshal(w *protocol.Writer) {
-	w.Varint64(&pk.EntityUniqueID)
-	w.Varuint64(&pk.EntityRuntimeID)
-	w.Vec3(&pk.Position)
-	w.Varint32(&pk.Direction)
-	w.String(&pk.Title)
-}
-
-// Unmarshal ...
-func (pk *AddPainting) Unmarshal(r *protocol.Reader) {
-	r.Varint64(&pk.EntityUniqueID)
-	r.Varuint64(&pk.EntityRuntimeID)
-	r.Vec3(&pk.Position)
-	r.Varint32(&pk.Direction)
-	r.String(&pk.Title)
+func (pk *AddPainting) Marshal(io protocol.IO) {
+	io.Varint64(&pk.EntityUniqueID)
+	io.Varuint64(&pk.EntityRuntimeID)
+	io.Vec3(&pk.Position)
+	io.Varint32(&pk.Direction)
+	io.String(&pk.Title)
 }
