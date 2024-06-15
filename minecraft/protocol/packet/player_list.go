@@ -28,48 +28,19 @@ func (*PlayerList) ID() uint32 {
 	return IDPlayerList
 }
 
-// Marshal ...
-func (pk *PlayerList) Marshal(w *protocol.Writer) {
-	l := uint32(len(pk.Entries))
-	w.Uint8(&pk.ActionType)
-	w.Varuint32(&l)
-	for _, entry := range pk.Entries {
-		switch pk.ActionType {
-		case PlayerListActionAdd:
-			protocol.WritePlayerAddEntry(w, &entry)
-		case PlayerListActionRemove:
-			w.UUID(&entry.UUID)
-		default:
-			w.UnknownEnumOption(pk.ActionType, "player list action type")
-		}
+func (pk *PlayerList) Marshal(io protocol.IO) {
+	io.Uint8(&pk.ActionType)
+	switch pk.ActionType {
+	case PlayerListActionAdd:
+		protocol.Slice(io, &pk.Entries)
+	case PlayerListActionRemove:
+		protocol.FuncIOSlice(io, &pk.Entries, protocol.PlayerListRemoveEntry)
+	default:
+		io.UnknownEnumOption(pk.ActionType, "player list action type")
 	}
 	if pk.ActionType == PlayerListActionAdd {
-		for _, entry := range pk.Entries {
-			w.Bool(&entry.Skin.Trusted)
-		}
-	}
-}
-
-// Unmarshal ...
-func (pk *PlayerList) Unmarshal(r *protocol.Reader) {
-	var count uint32
-	r.Uint8(&pk.ActionType)
-	r.Varuint32(&count)
-
-	pk.Entries = make([]protocol.PlayerListEntry, count)
-	for i := uint32(0); i < count; i++ {
-		switch pk.ActionType {
-		case PlayerListActionAdd:
-			protocol.PlayerAddEntry(r, &pk.Entries[i])
-		case PlayerListActionRemove:
-			r.UUID(&pk.Entries[i].UUID)
-		default:
-			r.UnknownEnumOption(pk.ActionType, "player list action type")
-		}
-	}
-	if pk.ActionType == PlayerListActionAdd {
-		for i := uint32(0); i < count; i++ {
-			r.Bool(&pk.Entries[i].Skin.Trusted)
+		for i := 0; i < len(pk.Entries); i++ {
+			io.Bool(&pk.Entries[i].Skin.Trusted)
 		}
 	}
 }

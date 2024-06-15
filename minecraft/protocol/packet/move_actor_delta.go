@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 const (
@@ -38,52 +39,37 @@ func (*MoveActorDelta) ID() uint32 {
 	return IDMoveActorDelta
 }
 
-// Marshal ...
-func (pk *MoveActorDelta) Marshal(w *protocol.Writer) {
-	w.Varuint64(&pk.EntityRuntimeID)
-	w.Uint16(&pk.Flags)
+func (pk *MoveActorDelta) Marshal(io protocol.IO) {
+	io.Varuint64(&pk.EntityRuntimeID)
+	io.Uint16(&pk.Flags)
 	if pk.Flags&MoveActorDeltaFlagHasX != 0 {
-		w.Float32(&pk.Position[0])
+		io.Float32(&pk.Position[0])
+	} else {
+		pk.Position[0] = 0
 	}
 	if pk.Flags&MoveActorDeltaFlagHasY != 0 {
-		w.Float32(&pk.Position[1])
+		io.Float32(&pk.Position[1])
+	} else {
+		pk.Position[1] = 0
 	}
 	if pk.Flags&MoveActorDeltaFlagHasZ != 0 {
-		w.Float32(&pk.Position[2])
+		io.Float32(&pk.Position[2])
+	} else {
+		pk.Position[2] = 0
 	}
 	if pk.Flags&MoveActorDeltaFlagHasRotX != 0 {
-		w.ByteFloat(&pk.Rotation[0])
+		io.ByteFloat(&pk.Rotation[0])
+	} else {
+		pk.Rotation[0] = 0
 	}
 	if pk.Flags&MoveActorDeltaFlagHasRotY != 0 {
-		w.ByteFloat(&pk.Rotation[1])
+		io.ByteFloat(&pk.Rotation[1])
+	} else {
+		pk.Rotation[1] = 0
 	}
 	if pk.Flags&MoveActorDeltaFlagHasRotZ != 0 {
-		w.ByteFloat(&pk.Rotation[2])
-	}
-}
-
-// Unmarshal ...
-func (pk *MoveActorDelta) Unmarshal(r *protocol.Reader) {
-	pk.Position = mgl32.Vec3{}
-	pk.Rotation = mgl32.Vec3{}
-	r.Varuint64(&pk.EntityRuntimeID)
-	r.Uint16(&pk.Flags)
-	if pk.Flags&MoveActorDeltaFlagHasX != 0 {
-		r.Float32(&pk.Position[0])
-	}
-	if pk.Flags&MoveActorDeltaFlagHasY != 0 {
-		r.Float32(&pk.Position[1])
-	}
-	if pk.Flags&MoveActorDeltaFlagHasZ != 0 {
-		r.Float32(&pk.Position[2])
-	}
-	if pk.Flags&MoveActorDeltaFlagHasRotX != 0 {
-		r.ByteFloat(&pk.Rotation[0])
-	}
-	if pk.Flags&MoveActorDeltaFlagHasRotY != 0 {
-		r.ByteFloat(&pk.Rotation[1])
-	}
-	if pk.Flags&MoveActorDeltaFlagHasRotZ != 0 {
-		r.ByteFloat(&pk.Rotation[2])
+		io.ByteFloat(&pk.Rotation[2])
+	} else {
+		pk.Rotation[2] = 0
 	}
 }

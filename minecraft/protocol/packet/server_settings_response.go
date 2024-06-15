@@ -23,14 +23,7 @@ func (*ServerSettingsResponse) ID() uint32 {
 	return IDServerSettingsResponse
 }
 
-// Marshal ...
-func (pk *ServerSettingsResponse) Marshal(w *protocol.Writer) {
-	w.Varuint32(&pk.FormID)
-	w.ByteSlice(&pk.FormData)
-}
-
-// Unmarshal ...
-func (pk *ServerSettingsResponse) Unmarshal(r *protocol.Reader) {
-	r.Varuint32(&pk.FormID)
-	r.ByteSlice(&pk.FormData)
+func (pk *ServerSettingsResponse) Marshal(io protocol.IO) {
+	io.Varuint32(&pk.FormID)
+	io.ByteSlice(&pk.FormData)
 }

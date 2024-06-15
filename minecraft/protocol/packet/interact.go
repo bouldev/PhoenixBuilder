@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 const (
@@ -34,22 +35,10 @@ func (*Interact) ID() uint32 {
 	return IDInteract
 }
 
-// Marshal ...
-func (pk *Interact) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.ActionType)
-	w.Varuint64(&pk.TargetEntityRuntimeID)
-	switch pk.ActionType {
-	case InteractActionMouseOverEntity, InteractActionLeaveVehicle:
-		w.Vec3(&pk.Position)
-	}
-}
-
-// Unmarshal ...
-func (pk *Interact) Unmarshal(r *protocol.Reader) {
-	r.Uint8(&pk.ActionType)
-	r.Varuint64(&pk.TargetEntityRuntimeID)
-	switch pk.ActionType {
-	case InteractActionMouseOverEntity, InteractActionLeaveVehicle:
-		r.Vec3(&pk.Position)
+func (pk *Interact) Marshal(io protocol.IO) {
+	io.Uint8(&pk.ActionType)
+	io.Varuint64(&pk.TargetEntityRuntimeID)
+	if pk.ActionType == InteractActionMouseOverEntity || pk.ActionType == InteractActionLeaveVehicle {
+		io.Vec3(&pk.Position)
 	}
 }

@@ -1,30 +1,51 @@
 package packet
 
-// Register registers a function that returns a packet for a specific ID. Packets with this ID coming in from
-// connections will resolve to the packet returned by the function passed.
-//noinspection GoUnusedExportedFunction
-func Register(id uint32, pk func() Packet) {
-	registeredPackets[id] = pk
+// RegisterPacketFromClient registers a function that returns a packet for a
+// specific ID. Packets with this ID coming in from connections will resolve to
+// the packet returned by the function passed. noinspection
+func RegisterPacketFromClient(id uint32, pk func() Packet) {
+	packetsFromClient[id] = pk
 }
 
-// registeredPackets holds packets registered by the user.
-var registeredPackets = map[uint32]func() Packet{}
+// RegisterPacketFromServer registers a function that returns a packet for a
+// specific ID. Packets with this ID coming in from connections will resolve to
+// the packet returned by the function passed. noinspection
+func RegisterPacketFromServer(id uint32, pk func() Packet) {
+	packetsFromServer[id] = pk
+}
+
+// packetsFromClient holds packets that could be sent by the client.
+var packetsFromClient = map[uint32]func() Packet{}
+
+// packetsFromServer holds packets that could be sent by the server.
+var packetsFromServer = map[uint32]func() Packet{}
 
 // Pool is a map holding packets indexed by a packet ID.
 type Pool map[uint32]func() Packet
 
-// NewPool returns a new pool with all supported packets sent. Packets may be retrieved from it simply by
-// indexing it with the packet ID.
-func NewPool() Pool {
+// NewClientPool returns a new pool containing packets sent by a client.
+// Packets may be retrieved from it simply by indexing it with the packet ID.
+func NewClientPool() Pool {
 	p := Pool{}
-	for id, pk := range registeredPackets {
+	for id, pk := range packetsFromClient {
+		p[id] = pk
+	}
+	return p
+}
+
+// NewServerPool returns a new pool containing packets sent by a server.
+// Packets may be retrieved from it simply by indexing it with the packet ID.
+func NewServerPool() Pool {
+	p := Pool{}
+	for id, pk := range packetsFromServer {
 		p[id] = pk
 	}
 	return p
 }
 
 func init() {
-	packets := map[uint32]func() Packet{
+	// TODO: Remove packets from this list that are not sent by the server.
+	serverOriginating := map[uint32]func() Packet{
 		IDLogin:                      func() Packet { return &Login{} },
 		IDPlayStatus:                 func() Packet { return &PlayStatus{} },
 		IDServerToClientHandshake:    func() Packet { return &ServerToClientHandshake{} },
@@ -206,9 +227,116 @@ func init() {
 		IDDimensionData:                     func() Packet { return &DimensionData{} },
 		IDAgentAction:                       func() Packet { return &AgentAction{} },
 		IDChangeMobProperty:                 func() Packet { return &ChangeMobProperty{} },
-		IDPyRpc:                             func() Packet { return &PyRpc{} },
+		IDLessonProgress:                    func() Packet { return &LessonProgress{} },
+		IDRequestAbility:                    func() Packet { return &RequestAbility{} },
+		IDRequestPermissions:                func() Packet { return &RequestPermissions{} },
+		IDToastRequest:                      func() Packet { return &ToastRequest{} },
+		IDUpdateAbilities:                   func() Packet { return &UpdateAbilities{} },
+		IDUpdateAdventureSettings:           func() Packet { return &UpdateAdventureSettings{} },
+		IDDeathInfo:                         func() Packet { return &DeathInfo{} },
+		IDEditorNetwork:                     func() Packet { return &EditorNetwork{} },
+		IDFeatureRegistry:                   func() Packet { return &FeatureRegistry{} },
+		IDServerStats:                       func() Packet { return &ServerStats{} },
+		IDRequestNetworkSettings:            func() Packet { return &RequestNetworkSettings{} },
+		IDGameTestRequest:                   func() Packet { return &GameTestRequest{} },
+		IDGameTestResults:                   func() Packet { return &GameTestResults{} },
+		IDUpdateClientInputLocks:            func() Packet { return &UpdateClientInputLocks{} },
+		IDClientCheatAbility:                func() Packet { return &ClientCheatAbility{} },
+		IDCameraPresets:                     func() Packet { return &CameraPresets{} },
+		IDUnlockedRecipes:                   func() Packet { return &UnlockedRecipes{} },
+		// ---
+		IDCameraInstruction:             func() Packet { return &CameraInstruction{} },
+		IDCompressedBiomeDefinitionList: func() Packet { return &CompressedBiomeDefinitionList{} },
+		IDTrimData:                      func() Packet { return &TrimData{} },
+		IDOpenSign:                      func() Packet { return &OpenSign{} },
+		IDAgentAnimation:                func() Packet { return &AgentAnimation{} },
+		// PhoenixBuilder specific changes.
+		// Author: LNSSPsd, Happy2018new
+		IDPyRpc: func() Packet { return &PyRpc{} },
 	}
-	for id, pk := range packets {
-		Register(id, pk)
+	for id, pk := range serverOriginating {
+		RegisterPacketFromServer(id, pk)
+	}
+}
+
+// Packets sent by the client:
+func init() {
+	clientOriginating := map[uint32]func() Packet{
+		IDLogin:                           func() Packet { return &Login{} },
+		IDClientToServerHandshake:         func() Packet { return &ClientToServerHandshake{} },
+		IDResourcePackClientResponse:      func() Packet { return &ResourcePackClientResponse{} },
+		IDText:                            func() Packet { return &Text{} },
+		IDMovePlayer:                      func() Packet { return &MovePlayer{} },
+		IDPassengerJump:                   func() Packet { return &PassengerJump{} },
+		IDTickSync:                        func() Packet { return &TickSync{} },
+		IDInventoryTransaction:            func() Packet { return &InventoryTransaction{} },
+		IDMobEquipment:                    func() Packet { return &MobEquipment{} },
+		IDInteract:                        func() Packet { return &Interact{} },
+		IDBlockPickRequest:                func() Packet { return &BlockPickRequest{} },
+		IDActorPickRequest:                func() Packet { return &ActorPickRequest{} },
+		IDPlayerAction:                    func() Packet { return &PlayerAction{} },
+		IDSetActorLink:                    func() Packet { return &SetActorLink{} },
+		IDAnimate:                         func() Packet { return &Animate{} },
+		IDRespawn:                         func() Packet { return &Respawn{} },
+		IDContainerOpen:                   func() Packet { return &ContainerOpen{} },
+		IDContainerClose:                  func() Packet { return &ContainerClose{} },
+		IDCraftingEvent:                   func() Packet { return &CraftingEvent{} },
+		IDAdventureSettings:               func() Packet { return &AdventureSettings{} },
+		IDPlayerInput:                     func() Packet { return &PlayerInput{} },
+		IDSetPlayerGameType:               func() Packet { return &SetPlayerGameType{} },
+		IDMapInfoRequest:                  func() Packet { return &MapInfoRequest{} },
+		IDRequestChunkRadius:              func() Packet { return &RequestChunkRadius{} },
+		IDCommandRequest:                  func() Packet { return &CommandRequest{} },
+		IDCommandBlockUpdate:              func() Packet { return &CommandBlockUpdate{} },
+		IDResourcePackChunkRequest:        func() Packet { return &ResourcePackChunkRequest{} },
+		IDStructureBlockUpdate:            func() Packet { return &StructureBlockUpdate{} },
+		IDPurchaseReceipt:                 func() Packet { return &PurchaseReceipt{} },
+		IDPlayerSkin:                      func() Packet { return &PlayerSkin{} },
+		IDSubClientLogin:                  func() Packet { return &SubClientLogin{} },
+		IDAutomationClientConnect:         func() Packet { return &AutomationClientConnect{} },
+		IDBookEdit:                        func() Packet { return &BookEdit{} },
+		IDNPCRequest:                      func() Packet { return &NPCRequest{} },
+		IDModalFormResponse:               func() Packet { return &ModalFormResponse{} },
+		IDServerSettingsRequest:           func() Packet { return &ServerSettingsRequest{} },
+		IDSetDefaultGameType:              func() Packet { return &SetDefaultGameType{} },
+		IDLabTable:                        func() Packet { return &LabTable{} },
+		IDSetLocalPlayerAsInitialised:     func() Packet { return &SetLocalPlayerAsInitialised{} },
+		IDNetworkStackLatency:             func() Packet { return &NetworkStackLatency{} },
+		IDScriptCustomEvent:               func() Packet { return &ScriptCustomEvent{} },
+		IDLevelSoundEvent:                 func() Packet { return &LevelSoundEvent{} },
+		IDLecternUpdate:                   func() Packet { return &LecternUpdate{} },
+		IDClientCacheStatus:               func() Packet { return &ClientCacheStatus{} },
+		IDMapCreateLockedCopy:             func() Packet { return &MapCreateLockedCopy{} },
+		IDStructureTemplateDataResponse:   func() Packet { return &StructureTemplateDataResponse{} },
+		IDClientCacheBlobStatus:           func() Packet { return &ClientCacheBlobStatus{} },
+		IDEmote:                           func() Packet { return &Emote{} },
+		IDMultiPlayerSettings:             func() Packet { return &MultiPlayerSettings{} },
+		IDSettingsCommand:                 func() Packet { return &SettingsCommand{} },
+		IDAnvilDamage:                     func() Packet { return &AnvilDamage{} },
+		IDPlayerAuthInput:                 func() Packet { return &PlayerAuthInput{} },
+		IDItemStackRequest:                func() Packet { return &ItemStackRequest{} },
+		IDUpdatePlayerGameType:            func() Packet { return &UpdatePlayerGameType{} },
+		IDEmoteList:                       func() Packet { return &EmoteList{} },
+		IDPositionTrackingDBClientRequest: func() Packet { return &PositionTrackingDBClientRequest{} },
+		IDDebugInfo:                       func() Packet { return &DebugInfo{} },
+		IDPacketViolationWarning:          func() Packet { return &PacketViolationWarning{} },
+		IDFilterText:                      func() Packet { return &FilterText{} },
+		IDCreatePhoto:                     func() Packet { return &CreatePhoto{} },
+		IDPhotoInfoRequest:                func() Packet { return &PhotoInfoRequest{} },
+		IDSubChunkRequest:                 func() Packet { return &SubChunkRequest{} },
+		IDScriptMessage:                   func() Packet { return &ScriptMessage{} },
+		IDCodeBuilderSource:               func() Packet { return &CodeBuilderSource{} },
+		IDRequestAbility:                  func() Packet { return &RequestAbility{} },
+		IDRequestPermissions:              func() Packet { return &RequestPermissions{} },
+		IDEditorNetwork:                   func() Packet { return &EditorNetwork{} },
+		IDRequestNetworkSettings:          func() Packet { return &RequestNetworkSettings{} },
+		IDGameTestResults:                 func() Packet { return &GameTestResults{} },
+		IDOpenSign:                        func() Packet { return &OpenSign{} },
+		// PhoenixBuilder specific changes.
+		// Author: LNSSPsd, Happy2018new
+		IDPyRpc: func() Packet { return &PyRpc{} },
+	}
+	for id, pk := range clientOriginating {
+		RegisterPacketFromClient(id, pk)
 	}
 }

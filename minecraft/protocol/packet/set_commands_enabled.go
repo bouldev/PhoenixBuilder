@@ -16,12 +16,6 @@ func (*SetCommandsEnabled) ID() uint32 {
 	return IDSetCommandsEnabled
 }
 
-// Marshal ...
-func (pk *SetCommandsEnabled) Marshal(w *protocol.Writer) {
-	w.Bool(&pk.Enabled)
-}
-
-// Unmarshal ...
-func (pk *SetCommandsEnabled) Unmarshal(r *protocol.Reader) {
-	r.Bool(&pk.Enabled)
+func (pk *SetCommandsEnabled) Marshal(io protocol.IO) {
+	io.Bool(&pk.Enabled)
 }

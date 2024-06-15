@@ -26,38 +26,26 @@ func (pk *PlayerArmourDamage) ID() uint32 {
 	return IDPlayerArmourDamage
 }
 
-// Marshal ...
-func (pk *PlayerArmourDamage) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.Bitset)
+func (pk *PlayerArmourDamage) Marshal(io protocol.IO) {
+	io.Uint8(&pk.Bitset)
 	if pk.Bitset&0b0001 != 0 {
-		w.Varint32(&pk.HelmetDamage)
+		io.Varint32(&pk.HelmetDamage)
+	} else {
+		pk.HelmetDamage = 0
 	}
 	if pk.Bitset&0b0010 != 0 {
-		w.Varint32(&pk.ChestplateDamage)
+		io.Varint32(&pk.ChestplateDamage)
+	} else {
+		pk.ChestplateDamage = 0
 	}
 	if pk.Bitset&0b0100 != 0 {
-		w.Varint32(&pk.LeggingsDamage)
+		io.Varint32(&pk.LeggingsDamage)
+	} else {
+		pk.LeggingsDamage = 0
 	}
 	if pk.Bitset&0b1000 != 0 {
-		w.Varint32(&pk.BootsDamage)
-	}
-}
-
-// Unmarshal ...
-func (pk *PlayerArmourDamage) Unmarshal(r *protocol.Reader) {
-	pk.HelmetDamage, pk.ChestplateDamage, pk.LeggingsDamage, pk.BootsDamage = 0, 0, 0, 0
-
-	r.Uint8(&pk.Bitset)
-	if pk.Bitset&0b0001 != 0 {
-		r.Varint32(&pk.HelmetDamage)
-	}
-	if pk.Bitset&0b0010 != 0 {
-		r.Varint32(&pk.ChestplateDamage)
-	}
-	if pk.Bitset&0b0100 != 0 {
-		r.Varint32(&pk.LeggingsDamage)
-	}
-	if pk.Bitset&0b1000 != 0 {
-		r.Varint32(&pk.BootsDamage)
+		io.Varint32(&pk.BootsDamage)
+	} else {
+		pk.BootsDamage = 0
 	}
 }

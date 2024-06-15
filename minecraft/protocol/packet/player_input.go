@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // PlayerInput is sent by the client to the server when the player is moving but the server does not allow it
@@ -27,16 +28,8 @@ func (*PlayerInput) ID() uint32 {
 	return IDPlayerInput
 }
 
-// Marshal ...
-func (pk *PlayerInput) Marshal(w *protocol.Writer) {
-	w.Vec2(&pk.Movement)
-	w.Bool(&pk.Jumping)
-	w.Bool(&pk.Sneaking)
-}
-
-// Unmarshal ...
-func (pk *PlayerInput) Unmarshal(r *protocol.Reader) {
-	r.Vec2(&pk.Movement)
-	r.Bool(&pk.Jumping)
-	r.Bool(&pk.Sneaking)
+func (pk *PlayerInput) Marshal(io protocol.IO) {
+	io.Vec2(&pk.Movement)
+	io.Bool(&pk.Jumping)
+	io.Bool(&pk.Sneaking)
 }

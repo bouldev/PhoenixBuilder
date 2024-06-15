@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 const (
@@ -43,6 +44,11 @@ const (
 	InputFlagPerformItemInteraction
 	InputFlagPerformBlockActions
 	InputFlagPerformItemStackRequest
+	InputFlagHandledTeleport
+	InputFlagEmoting
+	InputFlagMissedSwing
+	InputFlagStartCrawling
+	InputFlagStopCrawling
 )
 
 const (
@@ -63,6 +69,12 @@ const (
 	PlayModeExitLevel
 	PlayModeExitLevelLivingRoom
 	PlayModeNumModes
+)
+
+const (
+	InteractionModelTouch = iota
+	InteractionModelCrosshair
+	InteractionModelClassic
 )
 
 // PlayerAuthInput is sent by the client to allow for server authoritative movement. It is used to synchronise
@@ -88,6 +100,9 @@ type PlayerAuthInput struct {
 	// PlayMode specifies the way that the player is playing. The values it holds, which are rather random,
 	// may be found above.
 	PlayMode uint32
+	// InteractionModel is a constant representing the interaction model the player is using. It is one of the
+	// constants that may be found above.
+	InteractionModel int32
 	// GazeDirection is the direction in which the player is gazing, when the PlayMode is PlayModeReality: In
 	// other words, when the player is playing in virtual reality.
 	GazeDirection mgl32.Vec3
@@ -103,6 +118,9 @@ type PlayerAuthInput struct {
 	ItemStackRequest protocol.ItemStackRequest
 	// BlockActions is a slice of block actions that the client has interacted with.
 	BlockActions []protocol.PlayerBlockAction
+	// AnalogueMoveVector is a Vec2 that specifies the direction in which the player moved, as a combination of X/Z
+	// values which are created using an analogue input.
+	AnalogueMoveVector mgl32.Vec2
 }
 
 // ID ...
@@ -110,69 +128,33 @@ func (pk *PlayerAuthInput) ID() uint32 {
 	return IDPlayerAuthInput
 }
 
-// Marshal ...
-func (pk *PlayerAuthInput) Marshal(w *protocol.Writer) {
-	w.Float32(&pk.Pitch)
-	w.Float32(&pk.Yaw)
-	w.Vec3(&pk.Position)
-	w.Vec2(&pk.MoveVector)
-	w.Float32(&pk.HeadYaw)
-	w.Varuint64(&pk.InputData)
-	w.Varuint32(&pk.InputMode)
-	w.Varuint32(&pk.PlayMode)
+func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
+	io.Float32(&pk.Pitch)
+	io.Float32(&pk.Yaw)
+	io.Vec3(&pk.Position)
+	io.Vec2(&pk.MoveVector)
+	io.Float32(&pk.HeadYaw)
+	io.Varuint64(&pk.InputData)
+	io.Varuint32(&pk.InputMode)
+	io.Varuint32(&pk.PlayMode)
+	io.Varint32(&pk.InteractionModel)
 	if pk.PlayMode == PlayModeReality {
-		w.Vec3(&pk.GazeDirection)
+		io.Vec3(&pk.GazeDirection)
 	}
-	w.Varuint64(&pk.Tick)
-	w.Vec3(&pk.Delta)
+	io.Varuint64(&pk.Tick)
+	io.Vec3(&pk.Delta)
 
 	if pk.InputData&InputFlagPerformItemInteraction != 0 {
-		w.PlayerInventoryAction(&pk.ItemInteractionData)
+		io.PlayerInventoryAction(&pk.ItemInteractionData)
 	}
 
 	if pk.InputData&InputFlagPerformItemStackRequest != 0 {
-		protocol.WriteStackRequest(w, &pk.ItemStackRequest)
+		protocol.Single(io, &pk.ItemStackRequest)
 	}
 
 	if pk.InputData&InputFlagPerformBlockActions != 0 {
-		l := int32(len(pk.BlockActions))
-		w.Varint32(&l)
-		for _, action := range pk.BlockActions {
-			protocol.BlockAction(w, &action)
-		}
-	}
-}
-
-// Unmarshal ...
-func (pk *PlayerAuthInput) Unmarshal(r *protocol.Reader) {
-	r.Float32(&pk.Pitch)
-	r.Float32(&pk.Yaw)
-	r.Vec3(&pk.Position)
-	r.Vec2(&pk.MoveVector)
-	r.Float32(&pk.HeadYaw)
-	r.Varuint64(&pk.InputData)
-	r.Varuint32(&pk.InputMode)
-	r.Varuint32(&pk.PlayMode)
-	if pk.PlayMode == PlayModeReality {
-		r.Vec3(&pk.GazeDirection)
-	}
-	r.Varuint64(&pk.Tick)
-	r.Vec3(&pk.Delta)
-
-	if pk.InputData&InputFlagPerformItemInteraction != 0 {
-		r.PlayerInventoryAction(&pk.ItemInteractionData)
+		protocol.SliceVarint32Length(io, &pk.BlockActions)
 	}
 
-	if pk.InputData&InputFlagPerformItemStackRequest != 0 {
-		protocol.StackRequest(r, &pk.ItemStackRequest)
-	}
-
-	if pk.InputData&InputFlagPerformBlockActions != 0 {
-		var l int32
-		r.Varint32(&l)
-		pk.BlockActions = make([]protocol.PlayerBlockAction, l)
-		for i := int32(0); i < l; i++ {
-			protocol.BlockAction(r, &pk.BlockActions[i])
-		}
-	}
+	io.Vec2(&pk.AnalogueMoveVector)
 }

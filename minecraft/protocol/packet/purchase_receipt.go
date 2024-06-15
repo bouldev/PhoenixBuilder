@@ -17,23 +17,6 @@ func (*PurchaseReceipt) ID() uint32 {
 	return IDPurchaseReceipt
 }
 
-// Marshal ...
-func (pk *PurchaseReceipt) Marshal(w *protocol.Writer) {
-	l := uint32(len(pk.Receipts))
-	w.Varuint32(&l)
-	for _, receipt := range pk.Receipts {
-		w.String(&receipt)
-	}
-}
-
-// Unmarshal ...
-func (pk *PurchaseReceipt) Unmarshal(r *protocol.Reader) {
-	var count uint32
-	r.Varuint32(&count)
-	r.LimitUint32(count, 64)
-
-	pk.Receipts = make([]string, count)
-	for i := uint32(0); i < count; i++ {
-		r.String(&pk.Receipts[i])
-	}
+func (pk *PurchaseReceipt) Marshal(io protocol.IO) {
+	protocol.FuncSlice(io, &pk.Receipts, io.String)
 }

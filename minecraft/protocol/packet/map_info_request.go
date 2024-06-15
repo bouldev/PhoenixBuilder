@@ -10,6 +10,9 @@ type MapInfoRequest struct {
 	// MapID is the unique identifier that represents the map that is requested over network. It remains
 	// consistent across sessions.
 	MapID int64
+	// ClientPixels is a slice of pixels sent from the client to notify the server about the pixels that it isn't aware
+	// of.
+	ClientPixels []protocol.PixelRequest
 }
 
 // ID ...
@@ -17,12 +20,7 @@ func (*MapInfoRequest) ID() uint32 {
 	return IDMapInfoRequest
 }
 
-// Marshal ...
-func (pk *MapInfoRequest) Marshal(w *protocol.Writer) {
-	w.Varint64(&pk.MapID)
-}
-
-// Unmarshal ...
-func (pk *MapInfoRequest) Unmarshal(r *protocol.Reader) {
-	r.Varint64(&pk.MapID)
+func (pk *MapInfoRequest) Marshal(io protocol.IO) {
+	io.Varint64(&pk.MapID)
+	protocol.SliceUint32Length(io, &pk.ClientPixels)
 }

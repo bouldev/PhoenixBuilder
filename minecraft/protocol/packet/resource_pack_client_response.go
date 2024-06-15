@@ -27,24 +27,7 @@ func (*ResourcePackClientResponse) ID() uint32 {
 	return IDResourcePackClientResponse
 }
 
-// Marshal ...
-func (pk *ResourcePackClientResponse) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.Response)
-	l := uint16(len(pk.PacksToDownload))
-	w.Uint16(&l)
-	for _, pack := range pk.PacksToDownload {
-		w.String(&pack)
-	}
-}
-
-// Unmarshal ...
-func (pk *ResourcePackClientResponse) Unmarshal(r *protocol.Reader) {
-	var length uint16
-	r.Uint8(&pk.Response)
-	r.Uint16(&length)
-
-	pk.PacksToDownload = make([]string, length)
-	for i := uint16(0); i < length; i++ {
-		r.String(&pk.PacksToDownload[i])
-	}
+func (pk *ResourcePackClientResponse) Marshal(io protocol.IO) {
+	io.Uint8(&pk.Response)
+	protocol.FuncSliceUint16Length(io, &pk.PacksToDownload, io.String)
 }

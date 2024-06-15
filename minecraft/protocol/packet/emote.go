@@ -6,6 +6,7 @@ import (
 
 const (
 	EmoteFlagServerSide = 1 << iota
+	EmoteFlagMuteChat
 )
 
 // Emote is sent by both the server and the client. When the client sends an emote, it sends this packet to
@@ -16,6 +17,12 @@ type Emote struct {
 	EntityRuntimeID uint64
 	// EmoteID is the ID of the emote to send.
 	EmoteID string
+	// XUID is the Xbox User ID of the player that sent the emote. It is only set when the emote is used by a player that
+	// is authenticated with Xbox Live.
+	XUID string
+	// PlatformID is an identifier only set for particular platforms when using an emote (presumably only for Nintendo
+	// Switch). It is otherwise an empty string, and is used to decide which players are able to emote with each other.
+	PlatformID string
 	// Flags is a combination of flags that change the way the Emote packet operates. When the server sends
 	// this packet to other players, EmoteFlagServerSide must be present.
 	Flags byte
@@ -26,16 +33,10 @@ func (*Emote) ID() uint32 {
 	return IDEmote
 }
 
-// Marshal ...
-func (pk *Emote) Marshal(w *protocol.Writer) {
-	w.Varuint64(&pk.EntityRuntimeID)
-	w.String(&pk.EmoteID)
-	w.Uint8(&pk.Flags)
-}
-
-// Unmarshal ...
-func (pk *Emote) Unmarshal(r *protocol.Reader) {
-	r.Varuint64(&pk.EntityRuntimeID)
-	r.String(&pk.EmoteID)
-	r.Uint8(&pk.Flags)
+func (pk *Emote) Marshal(io protocol.IO) {
+	io.Varuint64(&pk.EntityRuntimeID)
+	io.String(&pk.EmoteID)
+	io.String(&pk.XUID)
+	io.String(&pk.PlatformID)
+	io.Uint8(&pk.Flags)
 }

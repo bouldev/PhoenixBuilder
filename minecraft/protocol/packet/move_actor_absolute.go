@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 const (
@@ -32,22 +33,11 @@ func (*MoveActorAbsolute) ID() uint32 {
 	return IDMoveActorAbsolute
 }
 
-// Marshal ...
-func (pk *MoveActorAbsolute) Marshal(w *protocol.Writer) {
-	w.Varuint64(&pk.EntityRuntimeID)
-	w.Uint8(&pk.Flags)
-	w.Vec3(&pk.Position)
-	w.ByteFloat(&pk.Rotation[0])
-	w.ByteFloat(&pk.Rotation[1])
-	w.ByteFloat(&pk.Rotation[2])
-}
-
-// Unmarshal ...
-func (pk *MoveActorAbsolute) Unmarshal(r *protocol.Reader) {
-	r.Varuint64(&pk.EntityRuntimeID)
-	r.Uint8(&pk.Flags)
-	r.Vec3(&pk.Position)
-	r.ByteFloat(&pk.Rotation[0])
-	r.ByteFloat(&pk.Rotation[1])
-	r.ByteFloat(&pk.Rotation[2])
+func (pk *MoveActorAbsolute) Marshal(io protocol.IO) {
+	io.Varuint64(&pk.EntityRuntimeID)
+	io.Uint8(&pk.Flags)
+	io.Vec3(&pk.Position)
+	io.ByteFloat(&pk.Rotation[0])
+	io.ByteFloat(&pk.Rotation[1])
+	io.ByteFloat(&pk.Rotation[2])
 }

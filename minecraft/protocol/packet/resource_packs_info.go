@@ -30,39 +30,10 @@ func (*ResourcePacksInfo) ID() uint32 {
 	return IDResourcePacksInfo
 }
 
-// Marshal ...
-func (pk *ResourcePacksInfo) Marshal(w *protocol.Writer) {
-	w.Bool(&pk.TexturePackRequired)
-	w.Bool(&pk.HasScripts)
-	w.Bool(&pk.ForcingServerPacks)
-	l := uint16(len(pk.BehaviourPacks))
-	w.Uint16(&l)
-	for _, pack := range pk.BehaviourPacks {
-		protocol.BehaviourPackInformation(w, &pack)
-	}
-	l = uint16(len(pk.TexturePacks))
-	w.Uint16(&l)
-	for _, pack := range pk.TexturePacks {
-		protocol.TexturePackInformation(w, &pack)
-	}
-}
-
-// Unmarshal ...
-func (pk *ResourcePacksInfo) Unmarshal(r *protocol.Reader) {
-	var length uint16
-	r.Bool(&pk.TexturePackRequired)
-	r.Bool(&pk.HasScripts)
-	r.Bool(&pk.ForcingServerPacks)
-
-	r.Uint16(&length)
-	pk.BehaviourPacks = make([]protocol.BehaviourPackInfo, length)
-	for i := uint16(0); i < length; i++ {
-		protocol.BehaviourPackInformation(r, &pk.BehaviourPacks[i])
-	}
-
-	r.Uint16(&length)
-	pk.TexturePacks = make([]protocol.TexturePackInfo, length)
-	for i := uint16(0); i < length; i++ {
-		protocol.TexturePackInformation(r, &pk.TexturePacks[i])
-	}
+func (pk *ResourcePacksInfo) Marshal(io protocol.IO) {
+	io.Bool(&pk.TexturePackRequired)
+	io.Bool(&pk.HasScripts)
+	io.Bool(&pk.ForcingServerPacks)
+	protocol.SliceUint16Length(io, &pk.BehaviourPacks)
+	protocol.SliceUint16Length(io, &pk.TexturePacks)
 }

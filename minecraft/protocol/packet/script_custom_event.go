@@ -6,7 +6,7 @@ import (
 
 // ScriptCustomEvent is sent by both the client and the server. It is a way to let scripts communicate with
 // the server, so that the client can let the server know it triggered an event, or the other way around.
-// It is essentially an RPC kind of system.
+// ScriptCustomEvent is deprecated as of 1.20.10.
 type ScriptCustomEvent struct {
 	// EventName is the name of the event. The script and the server will use this event name to identify the
 	// data that is sent.
@@ -21,14 +21,7 @@ func (*ScriptCustomEvent) ID() uint32 {
 	return IDScriptCustomEvent
 }
 
-// Marshal ...
-func (pk *ScriptCustomEvent) Marshal(w *protocol.Writer) {
-	w.String(&pk.EventName)
-	w.ByteSlice(&pk.EventData)
-}
-
-// Unmarshal ...
-func (pk *ScriptCustomEvent) Unmarshal(r *protocol.Reader) {
-	r.String(&pk.EventName)
-	r.ByteSlice(&pk.EventData)
+func (pk *ScriptCustomEvent) Marshal(io protocol.IO) {
+	io.String(&pk.EventName)
+	io.ByteSlice(&pk.EventData)
 }

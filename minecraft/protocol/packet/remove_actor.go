@@ -18,12 +18,6 @@ func (*RemoveActor) ID() uint32 {
 	return IDRemoveActor
 }
 
-// Marshal ...
-func (pk *RemoveActor) Marshal(w *protocol.Writer) {
-	w.Varint64(&pk.EntityUniqueID)
-}
-
-// Unmarshal ...
-func (pk *RemoveActor) Unmarshal(r *protocol.Reader) {
-	r.Varint64(&pk.EntityUniqueID)
+func (pk *RemoveActor) Marshal(io protocol.IO) {
+	io.Varint64(&pk.EntityUniqueID)
 }

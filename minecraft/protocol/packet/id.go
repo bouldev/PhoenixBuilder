@@ -183,5 +183,37 @@ const (
 	IDDimensionData
 	IDAgentAction
 	IDChangeMobProperty
-	IDPyRpc = 0xC8
+	IDLessonProgress
+	IDRequestAbility
+	IDRequestPermissions
+	IDToastRequest
+	IDUpdateAbilities
+	IDUpdateAdventureSettings
+	IDDeathInfo
+	IDEditorNetwork
+	IDFeatureRegistry
+	IDServerStats
+	IDRequestNetworkSettings
+	IDGameTestRequest
+	IDGameTestResults
+	IDUpdateClientInputLocks
+	IDClientCheatAbility
+	IDCameraPresets
+	IDUnlockedRecipes
+
+	// PhoenixBuilder specific changes.
+	// Author: LNSSPsd, Liliya233
+	IDPyRpc
+
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	//
+	// Netease: 301 -> 300
+	IDCameraInstruction = iota + 100
+
+	IDCompressedBiomeDefinitionList
+	IDTrimData
+	IDOpenSign
+	IDAgentAnimation
 )

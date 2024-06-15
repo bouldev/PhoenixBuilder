@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 const (
@@ -32,16 +33,8 @@ func (*Respawn) ID() uint32 {
 	return IDRespawn
 }
 
-// Marshal ...
-func (pk *Respawn) Marshal(w *protocol.Writer) {
-	w.Vec3(&pk.Position)
-	w.Uint8(&pk.State)
-	w.Varuint64(&pk.EntityRuntimeID)
-}
-
-// Unmarshal ...
-func (pk *Respawn) Unmarshal(r *protocol.Reader) {
-	r.Vec3(&pk.Position)
-	r.Uint8(&pk.State)
-	r.Varuint64(&pk.EntityRuntimeID)
+func (pk *Respawn) Marshal(io protocol.IO) {
+	io.Vec3(&pk.Position)
+	io.Uint8(&pk.State)
+	io.Varuint64(&pk.EntityRuntimeID)
 }

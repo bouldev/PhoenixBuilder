@@ -21,22 +21,6 @@ func (*PlayerEnchantOptions) ID() uint32 {
 	return IDPlayerEnchantOptions
 }
 
-// Marshal ...
-func (pk *PlayerEnchantOptions) Marshal(w *protocol.Writer) {
-	l := uint32(len(pk.Options))
-	w.Varuint32(&l)
-	for _, option := range pk.Options {
-		protocol.WriteEnchantOption(w, &option)
-	}
-}
-
-// Unmarshal ...
-func (pk *PlayerEnchantOptions) Unmarshal(r *protocol.Reader) {
-	var l uint32
-
-	r.Varuint32(&l)
-	pk.Options = make([]protocol.EnchantmentOption, l)
-	for i := uint32(0); i < l; i++ {
-		protocol.EnchantOption(r, &pk.Options[i])
-	}
+func (pk *PlayerEnchantOptions) Marshal(io protocol.IO) {
+	protocol.Slice(io, &pk.Options)
 }

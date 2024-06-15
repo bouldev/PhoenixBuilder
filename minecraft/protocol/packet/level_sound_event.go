@@ -1,11 +1,12 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
-//noinspection SpellCheckingInspection
+// noinspection SpellCheckingInspection
 const (
 	SoundEventItemUseOn = iota
 	SoundEventHit
@@ -385,7 +386,7 @@ const (
 	SoundEventListening
 	SoundEventHeartbeat
 	SoundEventHornBreak
-	SoundEventSculkPlace
+	_
 	SoundEventSculkSpread
 	SoundEventSculkCharge
 	SoundEventSculkSensorPlace
@@ -398,39 +399,85 @@ const (
 	SoundEventGoatCall5
 	SoundEventGoatCall6
 	SoundEventGoatCall7
-	SoundEventGoatCall8
-	SoundEventGoatCall9
-	SoundEventGoatHarmony0
-	SoundEventGoatHarmony1
-	SoundEventGoatHarmony2
-	SoundEventGoatHarmony3
-	SoundEventGoatHarmony4
-	SoundEventGoatHarmony5
-	SoundEventGoatHarmony6
-	SoundEventGoatHarmony7
-	SoundEventGoatHarmony8
-	SoundEventGoatHarmony9
-	SoundEventGoatMelody0
-	SoundEventGoatMelody1
-	SoundEventGoatMelody2
-	SoundEventGoatMelody3
-	SoundEventGoatMelody4
-	SoundEventGoatMelody5
-	SoundEventGoatMelody6
-	SoundEventGoatMelody7
-	SoundEventGoatMelody8
-	SoundEventGoatMelody9
-	SoundEventGoatBass0
-	SoundEventGoatBass1
-	SoundEventGoatBass2
-	SoundEventGoatBass3
-	SoundEventGoatBass4
-	SoundEventGoatBass5
-	SoundEventGoatBass6
-	SoundEventGoatBass7
-	SoundEventGoatBass8
-	SoundEventGoatBass9
-	SoundEventUndefined
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	_
+	SoundEventImitateWarden
+	SoundEventListeningAngry
+	SoundEventItemGiven
+	SoundEventItemTaken
+	SoundEventDisappeared
+	SoundEventReappeared
+	SoundEventDrinkMilk
+	SoundEventFrogspawnHatched
+	SoundEventLaySpawn
+	SoundEventFrogspawnBreak
+	SoundEventSonicBoom
+	SoundEventSonicCharge
+	SoundeventItemThrown
+	SoundEventRecord5
+	SoundEventConvertToFrog
+	SoundEventRecordPlaying
+	SoundEventEnchantingTableUse
+	SoundEventStepSand
+	SoundEventDashReady
+	SoundEventBundleDropContents
+	SoundEventBundleInsert
+	SoundEventBundleRemoveOne
+	SoundEventPressurePlateClickOff
+	SoundEventPressurePlateClickOn
+	SoundEventButtonClickOff
+	SoundEventButtonClickOn
+	SoundEventDoorOpen
+	SoundEventDoorClose
+	SoundEventTrapdoorOpen
+	SoundEventTrapdoorClose
+	SoundEventFenceGateOpen
+	SoundEventFenceGateClose
+	SoundEventInsert
+	SoundEventPickup
+	SoundEventInsertEnchanted
+	SoundEventPickupEnchanted
+	SoundEventBrush
+	SoundEventBrushCompleted
+	SoundEventShatterDecoratedPot
+	SoundEventBreakDecoratedPot
+	SoundEventSnifferEggCrack
+	SoundEventSnifferEggHatched
+	SoundEventWaxedSignInteractFail
+	SoundEventRecordRelic
 )
 
 // LevelSoundEvent is sent by the server to make any kind of built-in sound heard to a player. It is sent to,
@@ -464,22 +511,11 @@ func (*LevelSoundEvent) ID() uint32 {
 	return IDLevelSoundEvent
 }
 
-// Marshal ...
-func (pk *LevelSoundEvent) Marshal(w *protocol.Writer) {
-	w.Varuint32(&pk.SoundType)
-	w.Vec3(&pk.Position)
-	w.Varint32(&pk.ExtraData)
-	w.String(&pk.EntityType)
-	w.Bool(&pk.BabyMob)
-	w.Bool(&pk.DisableRelativeVolume)
-}
-
-// Unmarshal ...
-func (pk *LevelSoundEvent) Unmarshal(r *protocol.Reader) {
-	r.Varuint32(&pk.SoundType)
-	r.Vec3(&pk.Position)
-	r.Varint32(&pk.ExtraData)
-	r.String(&pk.EntityType)
-	r.Bool(&pk.BabyMob)
-	r.Bool(&pk.DisableRelativeVolume)
+func (pk *LevelSoundEvent) Marshal(io protocol.IO) {
+	io.Varuint32(&pk.SoundType)
+	io.Vec3(&pk.Position)
+	io.Varint32(&pk.ExtraData)
+	io.String(&pk.EntityType)
+	io.Bool(&pk.BabyMob)
+	io.Bool(&pk.DisableRelativeVolume)
 }

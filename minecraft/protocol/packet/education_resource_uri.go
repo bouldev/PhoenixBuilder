@@ -13,12 +13,6 @@ func (*EducationResourceURI) ID() uint32 {
 	return IDEducationResourceURI
 }
 
-// Marshal ...
-func (pk *EducationResourceURI) Marshal(w *protocol.Writer) {
-	protocol.EducationResourceURI(w, &pk.Resource)
-}
-
-// Unmarshal ...
-func (pk *EducationResourceURI) Unmarshal(r *protocol.Reader) {
-	protocol.EducationResourceURI(r, &pk.Resource)
+func (pk *EducationResourceURI) Marshal(io protocol.IO) {
+	protocol.Single(io, &pk.Resource)
 }

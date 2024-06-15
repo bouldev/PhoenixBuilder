@@ -21,24 +21,7 @@ func (*InventoryContent) ID() uint32 {
 	return IDInventoryContent
 }
 
-// Marshal ...
-func (pk *InventoryContent) Marshal(w *protocol.Writer) {
-	l := uint32(len(pk.Content))
-	w.Varuint32(&pk.WindowID)
-	w.Varuint32(&l)
-	for _, item := range pk.Content {
-		w.ItemInstance(&item)
-	}
-}
-
-// Unmarshal ...
-func (pk *InventoryContent) Unmarshal(r *protocol.Reader) {
-	var length uint32
-	r.Varuint32(&pk.WindowID)
-	r.Varuint32(&length)
-
-	pk.Content = make([]protocol.ItemInstance, length)
-	for i := uint32(0); i < length; i++ {
-		r.ItemInstance(&pk.Content[i])
-	}
+func (pk *InventoryContent) Marshal(io protocol.IO) {
+	io.Varuint32(&pk.WindowID)
+	protocol.FuncSlice(io, &pk.Content, io.ItemInstance)
 }

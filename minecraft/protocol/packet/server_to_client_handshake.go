@@ -18,12 +18,6 @@ func (*ServerToClientHandshake) ID() uint32 {
 	return IDServerToClientHandshake
 }
 
-// Marshal ...
-func (pk *ServerToClientHandshake) Marshal(w *protocol.Writer) {
-	w.ByteSlice(&pk.JWT)
-}
-
-// Unmarshal ...
-func (pk *ServerToClientHandshake) Unmarshal(r *protocol.Reader) {
-	r.ByteSlice(&pk.JWT)
+func (pk *ServerToClientHandshake) Marshal(io protocol.IO) {
+	io.ByteSlice(&pk.JWT)
 }

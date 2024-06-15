@@ -19,6 +19,9 @@ type NetworkChunkPublisherUpdate struct {
 	// Unlike the RequestChunkRadius and ChunkRadiusUpdated packets, this radius is in blocks rather than
 	// chunks, so the chunk radius needs to be multiplied by 16. (Or shifted to the left by 4.)
 	Radius uint32
+	// SavedChunks ...
+	// TODO: Figure out what this field is used for.
+	SavedChunks []protocol.ChunkPos
 }
 
 // ID ...
@@ -26,14 +29,8 @@ func (*NetworkChunkPublisherUpdate) ID() uint32 {
 	return IDNetworkChunkPublisherUpdate
 }
 
-// Marshal ...
-func (pk *NetworkChunkPublisherUpdate) Marshal(w *protocol.Writer) {
-	w.BlockPos(&pk.Position)
-	w.Varuint32(&pk.Radius)
-}
-
-// Unmarshal ...
-func (pk *NetworkChunkPublisherUpdate) Unmarshal(r *protocol.Reader) {
-	r.BlockPos(&pk.Position)
-	r.Varuint32(&pk.Radius)
+func (pk *NetworkChunkPublisherUpdate) Marshal(io protocol.IO) {
+	io.BlockPos(&pk.Position)
+	io.Varuint32(&pk.Radius)
+	protocol.FuncSliceUint32Length(io, &pk.SavedChunks, io.ChunkPos)
 }

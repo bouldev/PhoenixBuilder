@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/google/uuid"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/google/uuid"
 )
 
 // PlayerSkin is sent by the client to the server when it updates its own skin using the in-game skin picker.
@@ -26,20 +27,10 @@ func (*PlayerSkin) ID() uint32 {
 	return IDPlayerSkin
 }
 
-// Marshal ...
-func (pk *PlayerSkin) Marshal(w *protocol.Writer) {
-	w.UUID(&pk.UUID)
-	protocol.WriteSerialisedSkin(w, &pk.Skin)
-	w.String(&pk.NewSkinName)
-	w.String(&pk.OldSkinName)
-	w.Bool(&pk.Skin.Trusted)
-}
-
-// Unmarshal ...
-func (pk *PlayerSkin) Unmarshal(r *protocol.Reader) {
-	r.UUID(&pk.UUID)
-	protocol.SerialisedSkin(r, &pk.Skin)
-	r.String(&pk.NewSkinName)
-	r.String(&pk.OldSkinName)
-	r.Bool(&pk.Skin.Trusted)
+func (pk *PlayerSkin) Marshal(io protocol.IO) {
+	io.UUID(&pk.UUID)
+	protocol.Single(io, &pk.Skin)
+	io.String(&pk.NewSkinName)
+	io.String(&pk.OldSkinName)
+	io.Bool(&pk.Skin.Trusted)
 }

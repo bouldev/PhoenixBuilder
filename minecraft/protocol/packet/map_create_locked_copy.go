@@ -4,7 +4,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 )
 
-// MapCreateLockedCopy is sent by the server to create a locked copy of one map into another map. In vanilla,
+// MapCreateLockedCopy is sent by the client to create a locked copy of one map into another map. In vanilla,
 // it is used in the cartography table to create a map that is locked and cannot be modified.
 type MapCreateLockedCopy struct {
 	// OriginalMapID is the ID of the map that is being copied. The locked copy will obtain all content that
@@ -20,14 +20,7 @@ func (*MapCreateLockedCopy) ID() uint32 {
 	return IDMapCreateLockedCopy
 }
 
-// Marshal ...
-func (pk *MapCreateLockedCopy) Marshal(w *protocol.Writer) {
-	w.Varint64(&pk.OriginalMapID)
-	w.Varint64(&pk.NewMapID)
-}
-
-// Unmarshal ...
-func (pk *MapCreateLockedCopy) Unmarshal(r *protocol.Reader) {
-	r.Varint64(&pk.OriginalMapID)
-	r.Varint64(&pk.NewMapID)
+func (pk *MapCreateLockedCopy) Marshal(io protocol.IO) {
+	io.Varint64(&pk.OriginalMapID)
+	io.Varint64(&pk.NewMapID)
 }

@@ -13,6 +13,8 @@ const (
 	PlayStatusLoginFailedVanillaEdu
 	PlayStatusLoginFailedEduVanilla
 	PlayStatusLoginFailedServerFull
+	PlayStatusLoginFailedEditorVanilla
+	PlayStatusLoginFailedVanillaEditor
 )
 
 // PlayStatus is sent by the server to update a player on the play status. This includes failed statuses due
@@ -27,12 +29,6 @@ func (*PlayStatus) ID() uint32 {
 	return IDPlayStatus
 }
 
-// Marshal ...
-func (pk *PlayStatus) Marshal(w *protocol.Writer) {
-	w.BEInt32(&pk.Status)
-}
-
-// Unmarshal ...
-func (pk *PlayStatus) Unmarshal(r *protocol.Reader) {
-	r.BEInt32(&pk.Status)
+func (pk *PlayStatus) Marshal(io protocol.IO) {
+	io.BEInt32(&pk.Status)
 }

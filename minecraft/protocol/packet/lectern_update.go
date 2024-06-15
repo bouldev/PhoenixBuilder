@@ -23,18 +23,9 @@ func (*LecternUpdate) ID() uint32 {
 	return IDLecternUpdate
 }
 
-// Marshal ...
-func (pk *LecternUpdate) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.Page)
-	w.Uint8(&pk.PageCount)
-	w.BlockPos(&pk.Position)
-	w.Bool(&pk.DropBook)
-}
-
-// Unmarshal ...
-func (pk *LecternUpdate) Unmarshal(r *protocol.Reader) {
-	r.Uint8(&pk.Page)
-	r.Uint8(&pk.PageCount)
-	r.BlockPos(&pk.Position)
-	r.Bool(&pk.DropBook)
+func (pk *LecternUpdate) Marshal(io protocol.IO) {
+	io.Uint8(&pk.Page)
+	io.Uint8(&pk.PageCount)
+	io.UBlockPos(&pk.Position)
+	io.Bool(&pk.DropBook)
 }

@@ -30,20 +30,10 @@ func (*MobEquipment) ID() uint32 {
 	return IDMobEquipment
 }
 
-// Marshal ...
-func (pk *MobEquipment) Marshal(w *protocol.Writer) {
-	w.Varuint64(&pk.EntityRuntimeID)
-	w.ItemInstance(&pk.NewItem)
-	w.Uint8(&pk.InventorySlot)
-	w.Uint8(&pk.HotBarSlot)
-	w.Uint8(&pk.WindowID)
-}
-
-// Unmarshal ...
-func (pk *MobEquipment) Unmarshal(r *protocol.Reader) {
-	r.Varuint64(&pk.EntityRuntimeID)
-	r.ItemInstance(&pk.NewItem)
-	r.Uint8(&pk.InventorySlot)
-	r.Uint8(&pk.HotBarSlot)
-	r.Uint8(&pk.WindowID)
+func (pk *MobEquipment) Marshal(io protocol.IO) {
+	io.Varuint64(&pk.EntityRuntimeID)
+	io.ItemInstance(&pk.NewItem)
+	io.Uint8(&pk.InventorySlot)
+	io.Uint8(&pk.HotBarSlot)
+	io.Uint8(&pk.WindowID)
 }

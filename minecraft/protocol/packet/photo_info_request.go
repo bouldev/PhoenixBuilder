@@ -4,7 +4,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 )
 
-// PhotoInfoRequest is sent by the client to request photo information from the server.
+// PhotoInfoRequest is sent by the client to request photo information from the server. This packet was deprecated in 1.19.80.
 type PhotoInfoRequest struct {
 	// PhotoID is the ID of the photo.
 	PhotoID int64
@@ -15,12 +15,6 @@ func (*PhotoInfoRequest) ID() uint32 {
 	return IDPhotoInfoRequest
 }
 
-// Marshal ...
-func (pk *PhotoInfoRequest) Marshal(w *protocol.Writer) {
-	w.Varint64(&pk.PhotoID)
-}
-
-// Unmarshal ...
-func (pk *PhotoInfoRequest) Unmarshal(r *protocol.Reader) {
-	r.Varint64(&pk.PhotoID)
+func (pk *PhotoInfoRequest) Marshal(io protocol.IO) {
+	io.Varint64(&pk.PhotoID)
 }

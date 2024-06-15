@@ -1,6 +1,7 @@
 package packet
 
 import (
+	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -27,8 +28,7 @@ type PositionTrackingDBServerBroadcast struct {
 	// TrackingID is the ID of the PositionTrackingDBClientRequest packet that this packet was in response to.
 	// The tracking ID is also present as the 'id' field in the SerialisedData field.
 	TrackingID int32
-	// SerialisedData is a network little endian encoded NBT compound tag holding the data retrieved from the
-	// position tracking DB.
+	// Payload is a network little endian compound tag holding the data retrieved from the position tracking DB.
 	// An example data structure sent if BroadcastAction is of the type Update:
 	// TAG_Compound({
 	//        'version': TAG_Byte(0x01),
@@ -41,7 +41,7 @@ type PositionTrackingDBServerBroadcast struct {
 	//        }),
 	//        'status': TAG_Byte(0x00), // 0x00 for updating, 0x02 for not found/block destroyed.
 	// })
-	SerialisedData []byte
+	Payload map[string]any
 }
 
 // ID ...
@@ -49,16 +49,8 @@ func (*PositionTrackingDBServerBroadcast) ID() uint32 {
 	return IDPositionTrackingDBServerBroadcast
 }
 
-// Marshal ...
-func (pk *PositionTrackingDBServerBroadcast) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.BroadcastAction)
-	w.Varint32(&pk.TrackingID)
-	w.Bytes(&pk.SerialisedData)
-}
-
-// Unmarshal ...
-func (pk *PositionTrackingDBServerBroadcast) Unmarshal(r *protocol.Reader) {
-	r.Uint8(&pk.BroadcastAction)
-	r.Varint32(&pk.TrackingID)
-	r.Bytes(&pk.SerialisedData)
+func (pk *PositionTrackingDBServerBroadcast) Marshal(io protocol.IO) {
+	io.Uint8(&pk.BroadcastAction)
+	io.Varint32(&pk.TrackingID)
+	io.NBT(&pk.Payload, nbt.NetworkLittleEndian)
 }
