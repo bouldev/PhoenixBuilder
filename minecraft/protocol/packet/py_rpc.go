@@ -1,5 +1,5 @@
 /*
-PhoenixBuilder specific func.
+PhoenixBuilder specific NEMC packet.
 Author: LNSSPsd, Liliya233, CMA2401PT, Happy2018new
 */
 package packet
