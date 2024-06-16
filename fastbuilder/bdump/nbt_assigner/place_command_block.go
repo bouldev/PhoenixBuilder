@@ -201,7 +201,7 @@ func (c *CommandBlock) WriteData() error {
 		LastOutput:         c.CommandBlockData.LastOutput,
 		Name:               c.CommandBlockData.CustomName,
 		ShouldTrackOutput:  c.CommandBlockData.TrackOutput,
-		TickDelay:          c.CommandBlockData.TickDelay,
+		TickDelay:          uint32(c.CommandBlockData.TickDelay),
 		ExecuteOnFirstTick: c.CommandBlockData.ExecuteOnFirstTick,
 	})
 	if err != nil {
