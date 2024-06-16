@@ -27,9 +27,6 @@ func (r *Resources) handlePacket(pk *packet.Packet) {
 		if p.Value == nil {
 			return
 		}
-		if p.Error != nil {
-			panic(fmt.Sprintf("handlePacket: %v", p.Error))
-		}
 		// prepare
 		content, err := py_rpc.Unmarshal(p.Value)
 		if err != nil {

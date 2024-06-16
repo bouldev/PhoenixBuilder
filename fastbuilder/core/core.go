@@ -436,9 +436,6 @@ func WaitMCPCheckChallengesDown(
 
 func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 	conn := env.Connection.(*minecraft.Conn)
-	if p.Error != nil {
-		panic(fmt.Sprintf("onPyRpc: %v", p.Error))
-	}
 	if p.Value == nil {
 		return
 	}

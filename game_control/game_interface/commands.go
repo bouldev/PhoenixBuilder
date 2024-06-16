@@ -386,7 +386,7 @@ func (i *GameInterface) SendChat(content string) error {
 		SourceName:       i.ClientInfo.DisplayName,
 		Message:          content,
 		XUID:             i.ClientInfo.XUID,
-		PlayerRuntimeID:  fmt.Sprintf("%d", i.ClientInfo.EntityUniqueID),
+		PlatformChatID:   "",
 	})
 }
 

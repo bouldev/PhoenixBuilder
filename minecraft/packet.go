@@ -67,11 +67,14 @@ func (p *packetData) decode(conn *Conn) (pks []packet.Packet, err error) {
 	r := conn.proto.NewReader(p.payload, conn.shieldID.Load(), conn.readerLimits)
 
 	// PhoenixBuilder specific defer func.
-	// Author: LNSSPsd
+	// Author: LNSSPsd, Happy2018new
 	defer func() {
 		if recoveredErr := recover(); recoveredErr != nil {
-			//
-			//err = fmt.Errorf("%T: %w", pk, recoveredErr.(error))
+			err = fmt.Errorf("%T: %w", pk, recoveredErr.(error))
+			if pk.ID() == packet.IDPyRpc {
+				panic(fmt.Sprintf("decode: %v", err))
+			}
+			fmt.Printf("%v", err)
 		}
 	}()
 
