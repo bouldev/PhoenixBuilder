@@ -74,8 +74,13 @@ func (g *GameInterface) send_command(
 			Origin: origin,
 			UUID:   uniqueId,
 		},
-		Internal:  false,
+		Internal: false,
+		// PhoenixBuilder specific changes.
+		// Author: LNSSPsd
 		UnLimited: false,
+		// PhoenixBuilder specific changes.
+		// Author: Liliya233
+		Version: 0x23,
 	}
 	if origin == protocol.CommandOriginAutomationPlayer {
 		pkt.CommandOrigin.RequestID = DefaultCommandRequestID

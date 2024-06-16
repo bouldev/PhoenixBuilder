@@ -414,8 +414,13 @@ func WaitMCPCheckChallengesDown(
 				UUID:      ResourcesControl.GenerateUUID(),
 				RequestID: GameInterface.DefaultCommandRequestID,
 			},
-			Internal:  false,
+			Internal: false,
+			// PhoenixBuilder specific changes.
+			// Author: LNSSPsd
 			UnLimited: false,
+			// PhoenixBuilder specific changes.
+			// Author: Liliya233
+			Version: 0x23,
 		})
 		if err != nil {
 			panic(fmt.Sprintf("WaitMCPCheckChallengesDown: %v", err))
