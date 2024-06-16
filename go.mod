@@ -5,6 +5,7 @@ go 1.21.6
 require (
 	github.com/Tnze/go-mc v1.19.4
 	github.com/df-mc/goleveldb v1.1.9
+	github.com/golang/snappy v0.0.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/ugorji/go/codec v1.2.12
 )
@@ -12,7 +13,6 @@ require (
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
 	github.com/df-mc/atomic v1.10.0 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gookit/color v1.4.2 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
