@@ -63,6 +63,10 @@ type IO interface {
 	InvalidValue(value any, forField, reason string)
 
 	// PhoenixBuilder specific func.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	USubChunkPos(x *SubChunkPos)
+	// PhoenixBuilder specific func.
 	// Author: Happy2018new
 	NeteaseRGBA(x *color.RGBA)
 	// PhoenixBuilder specific func.

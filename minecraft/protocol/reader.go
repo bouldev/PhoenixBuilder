@@ -156,6 +156,22 @@ func (r *Reader) SubChunkPos(x *SubChunkPos) {
 	r.Varint32(&x[2])
 }
 
+// PhoenixBuilder specific func.
+// Changes Maker: Liliya233
+// Committed by Happy2018new.
+//
+// Netease
+func (r *Reader) USubChunkPos(x *SubChunkPos) {
+	var y uint32
+	// prepare
+	r.Varint32(&x[0])
+	r.Varuint32(&y)
+	r.Varint32(&x[2])
+	// get data
+	x[1] = int32(y)
+	// covert data
+}
+
 // SoundPos reads an mgl32.Vec3 that serves as a position for a sound.
 func (r *Reader) SoundPos(x *mgl32.Vec3) {
 	var b BlockPos

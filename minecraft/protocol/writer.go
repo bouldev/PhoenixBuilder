@@ -128,6 +128,20 @@ func (w *Writer) SubChunkPos(x *SubChunkPos) {
 	w.Varint32(&x[2])
 }
 
+// PhoenixBuilder specific func.
+// Changes Maker: Liliya233
+// Committed by Happy2018new.
+//
+// Netease
+func (w *Writer) USubChunkPos(x *SubChunkPos) {
+	y := uint32(x[1])
+	// convert data
+	w.Varint32(&x[0])
+	w.Varuint32(&y)
+	w.Varint32(&x[2])
+	// write data
+}
+
 // SoundPos writes an mgl32.Vec3 that serves as a position for a sound.
 func (w *Writer) SoundPos(x *mgl32.Vec3) {
 	b := BlockPos{int32((*x)[0] * 8), int32((*x)[1] * 8), int32((*x)[2] * 8)}
