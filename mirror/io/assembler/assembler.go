@@ -65,13 +65,12 @@ func (o *Assembler) AdjustSendPeriod(d time.Duration) {
 }
 
 func (o *Assembler) GenRequestFromLevelChunk(pk *packet.LevelChunk) (requests []*packet.SubChunkRequest) {
-	requests = make([]*packet.SubChunkRequest, 0, 1)
-	offsets := make([][3]int8, 24)
+	offsets := make([]protocol.SubChunkOffset, 24)
 	for i := -4; i <= 19; i++ {
 		offsets[i+4] = [3]int8{0, int8(i), 0}
 	}
 	return []*packet.SubChunkRequest{
-		&packet.SubChunkRequest{
+		{
 			Dimension: 0,
 			Position:  protocol.SubChunkPos{pk.Position[0], 0, pk.Position[1]},
 			Offsets:   offsets,
