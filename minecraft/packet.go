@@ -74,7 +74,7 @@ func (p *packetData) decode(conn *Conn) (pks []packet.Packet, err error) {
 			if pk.ID() == packet.IDPyRpc {
 				panic(fmt.Sprintf("decode: %v", err))
 			}
-			fmt.Printf("%v", err)
+			fmt.Printf("%v\n", err)
 		}
 	}()
 
