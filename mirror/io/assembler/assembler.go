@@ -66,15 +66,15 @@ func (o *Assembler) AdjustSendPeriod(d time.Duration) {
 
 func (o *Assembler) GenRequestFromLevelChunk(pk *packet.LevelChunk) (requests []*packet.SubChunkRequest) {
 	requests = make([]*packet.SubChunkRequest, 0, 1)
-	offsets:=make([][3]int8, 24)
-	for i:=-4;i<=19;i++ {
-		offsets[i+4]=[3]int8{0,int8(i),0}
+	offsets := make([][3]int8, 24)
+	for i := -4; i <= 19; i++ {
+		offsets[i+4] = [3]int8{0, int8(i), 0}
 	}
 	return []*packet.SubChunkRequest{
 		&packet.SubChunkRequest{
 			Dimension: 0,
-			Position: protocol.SubChunkPos{pk.Position[0], 0, pk.Position[1]},
-			Offsets: offsets,
+			Position:  protocol.SubChunkPos{pk.Position[0], 0, pk.Position[1]},
+			Offsets:   offsets,
 		},
 	}
 }
@@ -134,10 +134,10 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 		return nil
 	} else {
 		o.taskMu.RUnlock()
-		for _, entry:=range pk.SubChunkEntries {
+		for _, entry := range pk.SubChunkEntries {
 			if entry.Result != protocol.SubChunkResultSuccess {
 				if entry.Result == protocol.SubChunkResultSuccessAllAir {
-					allAirSubChunk:=chunk.NewSubChunk(o.airRID)
+					allAirSubChunk := chunk.NewSubChunk(o.airRID)
 					allAirSubChunk.Validate()
 					chunkData.Chunk.AssignSub(int(int8(pk.Position[1])+entry.Offset[1]+4), allAirSubChunk)
 					continue
@@ -149,11 +149,11 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 				return nil
 			}
 			subIndex, subChunk, nbts, err := chunk.NEMCSubChunkDecode(entry.RawPayload)
-			if err!=nil {
+			if err != nil {
 				fmt.Printf("%#v", entry)
 				panic(err)
 			}
-			if subIndex != int8(pk.Position[1])+entry.Offset[1] || subIndex>20 {
+			if subIndex != int8(pk.Position[1])+entry.Offset[1] || subIndex > 20 {
 				panic(fmt.Sprintf("sub Index conflict %v %v", pk.Position[1], subIndex))
 			}
 			//subs := chunkData.Chunk.Sub()
@@ -167,20 +167,20 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 		}
 		// fmt.Printf("pending %v\n", len(o.pendingTasks))
 		chunkData.SyncTime = time.Now().Unix()
-		emptySubChunkCounter:=0
-		subs:=chunkData.Chunk.Sub()
+		emptySubChunkCounter := 0
+		subs := chunkData.Chunk.Sub()
 		for _, subChunk := range subs {
 			if subChunk.Invalid() {
 				emptySubChunkCounter++
 				//return nil
 			}
 		}
-		if emptySubChunkCounter!=0 {
+		if emptySubChunkCounter != 0 {
 			fmt.Printf("Error combining chunk: eta %d for %v\n", emptySubChunkCounter, cp)
 			return nil
 		}
 		//fmt.Printf("Finished %v\n", cp)
-		
+
 		o.taskMu.Lock()
 		delete(o.pendingTasks, cp)
 		o.visitTime[cp] = time.Now()
