@@ -48,12 +48,23 @@ type CommandBlockUpdate struct {
 	// ShouldTrackOutput specifies if the command block tracks output. If set to false, the output box won't
 	// be shown within the command block.
 	ShouldTrackOutput bool
-	// TickDelay is the delay in ticks between executions of a command block, if it is a repeating command
-	// block.
-	TickDelay int32
 	// ExecuteOnFirstTick specifies if the command block should execute on the first tick, AKA as soon as the
 	// command block is enabled.
 	ExecuteOnFirstTick bool
+
+	/*
+		PhoenixBuilder specific changes.
+		Changes Maker: Liliya233
+		Committed by Happy2018new.
+
+		TickDelay is the delay in ticks between executions of a command block, if it is a repeating command
+		block.
+
+		For netease, the data type of this field is uint32,
+		but on standard minecraft, this is int32.
+	*/
+	TickDelay uint32
+	// TickDelay int32
 }
 
 // ID ...
@@ -75,6 +86,14 @@ func (pk *CommandBlockUpdate) Marshal(io protocol.IO) {
 	io.String(&pk.LastOutput)
 	io.String(&pk.Name)
 	io.Bool(&pk.ShouldTrackOutput)
-	io.Int32(&pk.TickDelay)
+
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	{
+		io.Uint32(&pk.TickDelay)
+		// io.Int32(&pk.TickDelay)
+	}
+
 	io.Bool(&pk.ExecuteOnFirstTick)
 }
