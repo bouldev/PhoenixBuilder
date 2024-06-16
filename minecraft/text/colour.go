@@ -2,9 +2,19 @@ package text
 
 import (
 	"fmt"
-	"golang.org/x/net/html"
+	"regexp"
 	"strings"
+
+	"golang.org/x/net/html"
 )
+
+// cleaner represents the regex used to clean Minecraft formatting codes from a string.
+var cleaner = regexp.MustCompile("§[0-9a-u]")
+
+// Clean removes all Minecraft formatting codes from the string passed.
+func Clean(s string) string {
+	return cleaner.ReplaceAllString(s, "")
+}
 
 // ANSI converts all Minecraft text formatting codes in the values passed to ANSI formatting codes, so that
 // it may be displayed properly in the terminal.
@@ -18,8 +28,11 @@ func ANSI(a ...any) string {
 
 // Colourf colours the format string using HTML tags after first escaping all parameters passed and
 // substituting them in the format string. The following colours and formatting may be used:
-// 	black, dark-blue, dark-green, dark-aqua, dark-red, dark-purple, gold, grey, dark-grey, blue, green, aqua,
-// 	red, purple, yellow, white, dark-yellow, obfuscated, bold (b), and italic (i).
+//
+//	black, dark-blue, dark-green, dark-aqua, dark-red, dark-purple, gold, grey, dark-grey, blue, green, aqua,
+//	red, purple, yellow, white, dark-yellow, quartz, iron, netherite, redstone, copper, gold, emerald, diamond,
+//	lapis, amethyst, obfuscated, bold (b), and italic (i).
+//
 // These HTML tags may also be nested, like so:
 // `<red>Hello <bold>World</bold>!</red>`
 func Colourf(format string, a ...any) string {

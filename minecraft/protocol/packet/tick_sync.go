@@ -24,14 +24,7 @@ func (*TickSync) ID() uint32 {
 	return IDTickSync
 }
 
-// Marshal ...
-func (pk *TickSync) Marshal(w *protocol.Writer) {
-	w.Int64(&pk.ClientRequestTimestamp)
-	w.Int64(&pk.ServerReceptionTimestamp)
-}
-
-// Unmarshal ...
-func (pk *TickSync) Unmarshal(r *protocol.Reader) {
-	r.Int64(&pk.ClientRequestTimestamp)
-	r.Int64(&pk.ServerReceptionTimestamp)
+func (pk *TickSync) Marshal(io protocol.IO) {
+	io.Int64(&pk.ClientRequestTimestamp)
+	io.Int64(&pk.ServerReceptionTimestamp)
 }

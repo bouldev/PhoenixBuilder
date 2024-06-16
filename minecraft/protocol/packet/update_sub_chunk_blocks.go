@@ -17,40 +17,8 @@ func (*UpdateSubChunkBlocks) ID() uint32 {
 	return IDUpdateSubChunkBlocks
 }
 
-// Marshal ...
-func (pk *UpdateSubChunkBlocks) Marshal(w *protocol.Writer) {
-	w.SubChunkPos(&pk.Position)
-
-	blocksLen, extraLen := uint32(len(pk.Blocks)), uint32(len(pk.Extra))
-
-	w.Varuint32(&blocksLen)
-	for _, entry := range pk.Blocks {
-		protocol.BlockChange(w, &entry)
-	}
-
-	w.Varuint32(&extraLen)
-	for _, entry := range pk.Extra {
-		protocol.BlockChange(w, &entry)
-	}
-}
-
-// Unmarshal ...
-func (pk *UpdateSubChunkBlocks) Unmarshal(r *protocol.Reader) {
-	r.SubChunkPos(&pk.Position)
-
-	var blocksLen uint32
-	r.Varuint32(&blocksLen)
-
-	pk.Blocks = make([]protocol.BlockChangeEntry, blocksLen)
-	for i := uint32(0); i < blocksLen; i++ {
-		protocol.BlockChange(r, &pk.Blocks[i])
-	}
-
-	var extraLen uint32
-	r.Varuint32(&extraLen)
-
-	pk.Extra = make([]protocol.BlockChangeEntry, extraLen)
-	for i := uint32(0); i < extraLen; i++ {
-		protocol.BlockChange(r, &pk.Extra[i])
-	}
+func (pk *UpdateSubChunkBlocks) Marshal(io protocol.IO) {
+	io.SubChunkPos(&pk.Position)
+	protocol.Slice(io, &pk.Blocks)
+	protocol.Slice(io, &pk.Extra)
 }

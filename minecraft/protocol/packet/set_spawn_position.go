@@ -33,18 +33,9 @@ func (*SetSpawnPosition) ID() uint32 {
 	return IDSetSpawnPosition
 }
 
-// Marshal ...
-func (pk *SetSpawnPosition) Marshal(w *protocol.Writer) {
-	w.Varint32(&pk.SpawnType)
-	w.UBlockPos(&pk.Position)
-	w.Varint32(&pk.Dimension)
-	w.UBlockPos(&pk.SpawnPosition)
-}
-
-// Unmarshal ...
-func (pk *SetSpawnPosition) Unmarshal(r *protocol.Reader) {
-	r.Varint32(&pk.SpawnType)
-	r.UBlockPos(&pk.Position)
-	r.Varint32(&pk.Dimension)
-	r.UBlockPos(&pk.SpawnPosition)
+func (pk *SetSpawnPosition) Marshal(io protocol.IO) {
+	io.Varint32(&pk.SpawnType)
+	io.UBlockPos(&pk.Position)
+	io.Varint32(&pk.Dimension)
+	io.UBlockPos(&pk.SpawnPosition)
 }

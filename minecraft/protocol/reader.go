@@ -12,6 +12,13 @@ import (
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"
+
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	//
+	// A Python library which named "msgpack"
+	"github.com/ugorji/go/codec"
 )
 
 // Reader implements reading operations for reading types from Minecraft packets. Each Packet implementation
@@ -22,15 +29,16 @@ type Reader struct {
 		io.Reader
 		io.ByteReader
 	}
-	shieldID int32
+	shieldID      int32
+	limitsEnabled bool
 }
 
 // NewReader creates a new Reader using the io.ByteReader passed as underlying source to read bytes from.
 func NewReader(r interface {
 	io.Reader
 	io.ByteReader
-}, shieldID int32) *Reader {
-	return &Reader{r: r, shieldID: shieldID}
+}, shieldID int32, enableLimits bool) *Reader {
+	return &Reader{r: r, shieldID: shieldID, limitsEnabled: enableLimits}
 }
 
 // Uint8 reads a uint8 from the underlying buffer.
@@ -148,11 +156,30 @@ func (r *Reader) SubChunkPos(x *SubChunkPos) {
 	r.Varint32(&x[2])
 }
 
+// SoundPos reads an mgl32.Vec3 that serves as a position for a sound.
+func (r *Reader) SoundPos(x *mgl32.Vec3) {
+	var b BlockPos
+	r.BlockPos(&b)
+	*x = mgl32.Vec3{float32(b[0]) / 8, float32(b[1]) / 8, float32(b[2]) / 8}
+}
+
 // ByteFloat reads a rotational float32 from a single byte.
 func (r *Reader) ByteFloat(x *float32) {
 	var v uint8
 	r.Uint8(&v)
 	*x = float32(v) * (360.0 / 256.0)
+}
+
+// RGBA reads a color.RGBA x from a uint32.
+func (r *Reader) RGBA(x *color.RGBA) {
+	var v uint32
+	r.Uint32(&v)
+	*x = color.RGBA{
+		R: byte(v),
+		G: byte(v >> 8),
+		B: byte(v >> 16),
+		A: byte(v >> 24),
+	}
 }
 
 // VarRGBA reads a color.RGBA x from a varuint32.
@@ -167,6 +194,9 @@ func (r *Reader) VarRGBA(x *color.RGBA) {
 	}
 }
 
+// PhoenixBuilder specific func.
+// Author: Happy2018new
+//
 // NeteaseRGBA reads a color.RGBA x from four bytes.
 func (r *Reader) NeteaseRGBA(x *color.RGBA) {
 	r.Uint8(&x.R)
@@ -186,7 +216,11 @@ func (r *Reader) Bytes(p *[]byte) {
 
 // NBT reads a compound tag into a map from the underlying buffer.
 func (r *Reader) NBT(m *map[string]any, encoding nbt.Encoding) {
-	if err := nbt.NewDecoderWithEncoding(r.r, encoding).Decode(m); err != nil {
+	dec := nbt.NewDecoderWithEncoding(r.r, encoding)
+	dec.AllowZero = true
+
+	*m = make(map[string]any)
+	if err := dec.Decode(m); err != nil {
 		r.panic(err)
 	}
 }
@@ -219,25 +253,9 @@ func (r *Reader) UUID(x *uuid.UUID) {
 func (r *Reader) PlayerInventoryAction(x *UseItemTransactionData) {
 	r.Varint32(&x.LegacyRequestID)
 	if x.LegacyRequestID < -1 && (x.LegacyRequestID&1) == 0 {
-		var l uint32
-		r.Varuint32(&l)
-
-		x.LegacySetItemSlots = make([]LegacySetItemSlot, l)
-
-		for _, slot := range x.LegacySetItemSlots {
-			SetItemSlot(r, &slot)
-		}
+		Slice(r, &x.LegacySetItemSlots)
 	}
-
-	var l uint32
-	r.Varuint32(&l)
-
-	x.Actions = make([]InventoryAction, l)
-
-	for _, a := range x.Actions {
-		InvAction(r, &a)
-	}
-
+	Slice(r, &x.Actions)
 	r.Varuint32(&x.ActionType)
 	r.BlockPos(&x.BlockPosition)
 	r.Varint32(&x.BlockFace)
@@ -248,51 +266,75 @@ func (r *Reader) PlayerInventoryAction(x *UseItemTransactionData) {
 	r.Varuint32(&x.BlockRuntimeID)
 }
 
+// GameRule reads a GameRule x from the Reader.
+func (r *Reader) GameRule(x *GameRule) {
+	r.String(&x.Name)
+	r.Bool(&x.CanBeModifiedByPlayer)
+	var t uint32
+	r.Varuint32(&t)
+
+	switch t {
+	case 1:
+		var v bool
+		r.Bool(&v)
+		x.Value = v
+	case 2:
+		var v uint32
+		r.Varuint32(&v)
+		x.Value = v
+	case 3:
+		var v float32
+		r.Float32(&v)
+		x.Value = v
+	default:
+		r.UnknownEnumOption(t, "game rule type")
+	}
+}
+
 // EntityMetadata reads an entity metadata map from the underlying buffer into map x.
 func (r *Reader) EntityMetadata(x *map[uint32]any) {
 	*x = map[uint32]any{}
 
 	var count uint32
 	r.Varuint32(&count)
-	r.LimitUint32(count, mediumLimit)
 	for i := uint32(0); i < count; i++ {
 		var key, dataType uint32
 		r.Varuint32(&key)
 		r.Varuint32(&dataType)
 		switch dataType {
-		case EntityDataByte:
+		case EntityDataTypeByte:
 			var v byte
 			r.Uint8(&v)
 			(*x)[key] = v
-		case EntityDataInt16:
+		case EntityDataTypeInt16:
 			var v int16
 			r.Int16(&v)
 			(*x)[key] = v
-		case EntityDataInt32:
+		case EntityDataTypeInt32:
 			var v int32
 			r.Varint32(&v)
 			(*x)[key] = v
-		case EntityDataFloat32:
+		case EntityDataTypeFloat32:
 			var v float32
 			r.Float32(&v)
 			(*x)[key] = v
-		case EntityDataString:
+		case EntityDataTypeString:
 			var v string
 			r.String(&v)
 			(*x)[key] = v
-		case EntityDataCompoundTag:
+		case EntityDataTypeCompoundTag:
 			var v map[string]any
 			r.NBT(&v, nbt.NetworkLittleEndian)
 			(*x)[key] = v
-		case EntityDataBlockPos:
+		case EntityDataTypeBlockPos:
 			var v BlockPos
 			r.BlockPos(&v)
 			(*x)[key] = v
-		case EntityDataInt64:
+		case EntityDataTypeInt64:
 			var v int64
 			r.Varint64(&v)
 			(*x)[key] = v
-		case EntityDataVec3:
+		case EntityDataTypeVec3:
 			var v mgl32.Vec3
 			r.Vec3(&v)
 			(*x)[key] = v
@@ -302,17 +344,58 @@ func (r *Reader) EntityMetadata(x *map[uint32]any) {
 	}
 }
 
-// ItemInstance reads an ItemInstance x to the underlying buffer.
+// ItemDescriptorCount reads an ItemDescriptorCount i from the underlying buffer.
+func (r *Reader) ItemDescriptorCount(i *ItemDescriptorCount) {
+	var id uint8
+	r.Uint8(&id)
+
+	switch id {
+	case ItemDescriptorInvalid:
+		i.Descriptor = &InvalidItemDescriptor{}
+	case ItemDescriptorDefault:
+		i.Descriptor = &DefaultItemDescriptor{}
+	case ItemDescriptorMoLang:
+		i.Descriptor = &MoLangItemDescriptor{}
+	case ItemDescriptorItemTag:
+		i.Descriptor = &ItemTagItemDescriptor{}
+	case ItemDescriptorDeferred:
+		i.Descriptor = &DeferredItemDescriptor{}
+	case ItemDescriptorComplexAlias:
+		i.Descriptor = &ComplexAliasItemDescriptor{}
+	default:
+		r.UnknownEnumOption(id, "item descriptor type")
+		return
+	}
+
+	i.Descriptor.Marshal(r)
+	r.Varint32(&i.Count)
+}
+
+// ItemInstance reads an ItemInstance i from the underlying buffer.
 func (r *Reader) ItemInstance(i *ItemInstance) {
 	x := &i.Stack
 	x.NBTData = make(map[string]any)
 	r.Varint32(&x.NetworkID)
-	if x.NetworkID == 0 || x.NetworkID == -1 {
-		// The item was air, so there is no more data we should read for the item instance. After all, air
-		// items aren't really anything.
-		// 当 x.NetworkID 为 -1 时代表当前槽位的物品未更改，因此无需解析后续数据，直接跳过即可。
-		x.MetadataValue, x.Count, x.CanBePlacedOn, x.CanBreak = 0, 0, nil, nil
-		return
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new
+	{
+		switch x.NetworkID {
+		case 0, -1:
+			// The item was air, so there is no more data we should read for the item instance. After all, air
+			// items aren't really anything.
+			// 当 x.NetworkID 为 -1 时代表当前槽位的物品未更改，因此无需解析后续数据，直接跳过即可。
+			x.MetadataValue, x.Count, x.CanBePlacedOn, x.CanBreak = 0, 0, nil, nil
+			return
+		}
+		/*
+			if x.NetworkID == 0 {
+				// The item was air, so there is no more data we should read for the item instance. After all, air
+				// items aren't really anything.
+				x.MetadataValue, x.Count, x.CanBePlacedOn, x.CanBreak = 0, 0, nil, nil
+				return
+			}
+		*/
 	}
 
 	r.Uint16(&x.Count)
@@ -331,7 +414,7 @@ func (r *Reader) ItemInstance(i *ItemInstance) {
 	r.ByteSlice(&extraData)
 
 	buf := bytes.NewBuffer(extraData)
-	bufReader := NewReader(buf, r.shieldID)
+	bufReader := NewReader(buf, r.shieldID, r.limitsEnabled)
 
 	var length int16
 	bufReader.Int16(&length)
@@ -351,22 +434,8 @@ func (r *Reader) ItemInstance(i *ItemInstance) {
 		bufReader.NBT(&x.NBTData, nbt.LittleEndian)
 	}
 
-	var count int32
-	bufReader.Int32(&count)
-	bufReader.LimitInt32(count, 0, higherLimit)
-
-	x.CanBePlacedOn = make([]string, count)
-	for i := int32(0); i < count; i++ {
-		bufReader.StringUTF(&x.CanBePlacedOn[i])
-	}
-
-	bufReader.Int32(&count)
-	bufReader.LimitInt32(count, 0, higherLimit)
-
-	x.CanBreak = make([]string, count)
-	for i := int32(0); i < count; i++ {
-		bufReader.StringUTF(&x.CanBreak[i])
-	}
+	FuncSliceUint32Length(bufReader, &x.CanBePlacedOn, bufReader.StringUTF)
+	FuncSliceUint32Length(bufReader, &x.CanBreak, bufReader.StringUTF)
 
 	if x.NetworkID == bufReader.shieldID {
 		var blockingTick int64
@@ -393,7 +462,7 @@ func (r *Reader) Item(x *ItemStack) {
 	r.ByteSlice(&extraData)
 
 	buf := bytes.NewBuffer(extraData)
-	bufReader := NewReader(buf, r.shieldID)
+	bufReader := NewReader(buf, r.shieldID, r.limitsEnabled)
 
 	var length int16
 	bufReader.Int16(&length)
@@ -413,22 +482,8 @@ func (r *Reader) Item(x *ItemStack) {
 		bufReader.NBT(&x.NBTData, nbt.LittleEndian)
 	}
 
-	var count int32
-	bufReader.Int32(&count)
-	bufReader.LimitInt32(count, 0, higherLimit)
-
-	x.CanBePlacedOn = make([]string, count)
-	for i := int32(0); i < count; i++ {
-		bufReader.StringUTF(&x.CanBePlacedOn[i])
-	}
-
-	bufReader.Int32(&count)
-	bufReader.LimitInt32(count, 0, higherLimit)
-
-	x.CanBreak = make([]string, count)
-	for i := int32(0); i < count; i++ {
-		bufReader.StringUTF(&x.CanBreak[i])
-	}
+	FuncSliceUint32Length(bufReader, &x.CanBePlacedOn, bufReader.StringUTF)
+	FuncSliceUint32Length(bufReader, &x.CanBreak, bufReader.StringUTF)
 
 	if x.NetworkID == bufReader.shieldID {
 		var blockingTick int64
@@ -436,24 +491,147 @@ func (r *Reader) Item(x *ItemStack) {
 	}
 }
 
-// MaterialReducer writes a material reducer to the writer.
+// StackRequestAction reads a StackRequestAction from the reader.
+func (r *Reader) StackRequestAction(x *StackRequestAction) {
+	var id uint8
+	r.Uint8(&id)
+	if !lookupStackRequestAction(id, x) {
+		r.UnknownEnumOption(id, "stack request action type")
+		return
+	}
+	(*x).Marshal(r)
+}
+
+// MaterialReducer reads a material reducer from the reader.
 func (r *Reader) MaterialReducer(m *MaterialReducer) {
 	var mix int32
-	var itemCountsLen uint32
-
 	r.Varint32(&mix)
-	r.Varuint32(&itemCountsLen)
-
 	m.InputItem = ItemType{NetworkID: mix << 16, MetadataValue: uint32(mix & 0x7fff)}
+	Slice(r, &m.Outputs)
+}
 
-	for i := uint32(0); i < itemCountsLen; i++ {
-		var out MaterialReducerOutput
-
-		r.Varint32(&out.NetworkID)
-		r.Varint32(&out.Count)
-
-		m.Outputs = append(m.Outputs, out)
+// Recipe reads a Recipe from the reader.
+func (r *Reader) Recipe(x *Recipe) {
+	var recipeType int32
+	r.Varint32(&recipeType)
+	if !lookupRecipe(recipeType, x) {
+		r.UnknownEnumOption(recipeType, "crafting data recipe type")
+		return
 	}
+	(*x).Unmarshal(r)
+}
+
+// EventType reads an Event's type from the reader.
+func (r *Reader) EventType(x *Event) {
+	var t int32
+	r.Varint32(&t)
+	if !lookupEvent(t, x) {
+		r.UnknownEnumOption(t, "event packet event type")
+	}
+}
+
+// TransactionDataType reads an InventoryTransactionData type from the reader.
+func (r *Reader) TransactionDataType(x *InventoryTransactionData) {
+	var transactionType uint32
+	r.Varuint32(&transactionType)
+	if !lookupTransactionData(transactionType, x) {
+		r.UnknownEnumOption(transactionType, "inventory transaction data type")
+	}
+}
+
+// AbilityValue reads an ability value from the reader.
+func (r *Reader) AbilityValue(x *any) {
+	valType, boolVal, floatVal := uint8(0), false, float32(0)
+	r.Uint8(&valType)
+	r.Bool(&boolVal)
+	r.Float32(&floatVal)
+	switch valType {
+	case 1:
+		*x = boolVal
+	case 2:
+		*x = floatVal
+	default:
+		r.InvalidValue(valType, "ability value type", "must be bool or float32")
+	}
+}
+
+// CompressedBiomeDefinitions reads a list of compressed biome definitions from the reader. Minecraft decided to make their
+// own type of compression for this, so we have to implement it ourselves. It uses a dictionary of repeated byte sequences
+// to reduce the size of the data. The compressed data is read byte-by-byte, and if the byte is 0xff then it is assumed
+// that the next two bytes are an int16 for the dictionary index. Otherwise, the byte is copied to the output. The dictionary
+// index is then used to look up the byte sequence to be appended to the output.
+func (r *Reader) CompressedBiomeDefinitions(x *map[string]any) {
+	var length uint32
+	header := make([]byte, 10)
+	r.Varuint32(&length)
+	if _, err := r.r.Read(header); err != nil {
+		r.panic(err)
+	}
+	if !bytes.Equal(header, []byte("COMPRESSED")) {
+		r.InvalidValue(header, "compression header", fmt.Sprintf("must be COMPRESSED (%v)", []byte("COMPRESSED")))
+		return
+	}
+
+	var dictLength uint16
+	var entryLength uint8
+	r.Uint16(&dictLength)
+	dictionary := make([][]byte, dictLength)
+	for i := 0; i < int(dictLength); i++ {
+		r.Uint8(&entryLength)
+		dictionary[i] = make([]byte, int(entryLength))
+		if _, err := r.r.Read(dictionary[i]); err != nil {
+			r.panic(err)
+		}
+	}
+
+	var decompressed []byte
+	var dictIndex int16
+	for {
+		key, err := r.r.ReadByte()
+		if err != nil {
+			break
+		}
+		if key != 0xff {
+			decompressed = append(decompressed, key)
+			continue
+		}
+
+		r.Int16(&dictIndex)
+		if dictIndex >= 0 && int(dictIndex) < len(dictionary) {
+			decompressed = append(decompressed, dictionary[dictIndex]...)
+			continue
+		}
+		decompressed = append(decompressed, key)
+	}
+	if err := nbt.Unmarshal(decompressed, x); err != nil {
+		r.panic(err)
+	}
+}
+
+// PhoenixBuilder specific func.
+// Author: Liliya233, CMA2041PT, Happy2018new
+//
+// Netease's Python MsgPack
+func (r *Reader) MsgPack(x *any) {
+	var (
+		payload        []byte              // string (this struct is seems like json but not completely is)
+		number         uint32              // consume unknown uint32
+		msgPackHandler codec.MsgpackHandle // processer
+		err            error
+	)
+	// prepare
+	r.ByteSlice(&payload)
+	r.Uint32(&number)
+	// pre read
+	msgPackHandler.RawToString = true
+	codec.NewDecoderBytes(payload, &msgPackHandler).Decode(x)
+	// get payload
+	value := (*x).([]any)
+	*x, err = FormatSliceInMsgpack(value)
+	if err != nil {
+		panic(fmt.Sprintf("(r *Reader) MsgPack: %v", err))
+	}
+	// convert and format payload
 }
 
 // LimitUint32 checks if the value passed is lower than the limit passed. If not, the Reader panics.
@@ -475,6 +653,11 @@ func (r *Reader) LimitInt32(value int32, min, max int32) {
 	} else if value > max {
 		r.panicf("int32 %v exceeds maximum of %v", value, max)
 	}
+}
+
+// ShieldID returns the shield ID provided to the reader.
+func (r *Reader) ShieldID() int32 {
+	return r.shieldID
 }
 
 // UnknownEnumOption panics with an unknown enum option error.

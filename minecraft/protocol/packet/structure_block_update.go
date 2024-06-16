@@ -50,6 +50,8 @@ type StructureBlockUpdate struct {
 	// ShouldTrigger specifies if the structure block should be triggered immediately after this packet
 	// reaches the server.
 	ShouldTrigger bool
+	// Waterlogged specifies if non-air blocks replace water or combine with water.
+	Waterlogged bool
 }
 
 // ID ...
@@ -57,28 +59,15 @@ func (*StructureBlockUpdate) ID() uint32 {
 	return IDStructureBlockUpdate
 }
 
-// Marshal ...
-func (pk *StructureBlockUpdate) Marshal(w *protocol.Writer) {
-	w.UBlockPos(&pk.Position)
-	w.String(&pk.StructureName)
-	w.String(&pk.DataField)
-	w.Bool(&pk.IncludePlayers)
-	w.Bool(&pk.ShowBoundingBox)
-	w.Varint32(&pk.StructureBlockType)
-	protocol.StructSettings(w, &pk.Settings)
-	w.Varint32(&pk.RedstoneSaveMode)
-	w.Bool(&pk.ShouldTrigger)
-}
-
-// Unmarshal ...
-func (pk *StructureBlockUpdate) Unmarshal(r *protocol.Reader) {
-	r.UBlockPos(&pk.Position)
-	r.String(&pk.StructureName)
-	r.String(&pk.DataField)
-	r.Bool(&pk.IncludePlayers)
-	r.Bool(&pk.ShowBoundingBox)
-	r.Varint32(&pk.StructureBlockType)
-	protocol.StructSettings(r, &pk.Settings)
-	r.Varint32(&pk.RedstoneSaveMode)
-	r.Bool(&pk.ShouldTrigger)
+func (pk *StructureBlockUpdate) Marshal(io protocol.IO) {
+	io.UBlockPos(&pk.Position)
+	io.String(&pk.StructureName)
+	io.String(&pk.DataField)
+	io.Bool(&pk.IncludePlayers)
+	io.Bool(&pk.ShowBoundingBox)
+	io.Varint32(&pk.StructureBlockType)
+	protocol.Single(io, &pk.Settings)
+	io.Varint32(&pk.RedstoneSaveMode)
+	io.Bool(&pk.ShouldTrigger)
+	io.Bool(&pk.Waterlogged)
 }

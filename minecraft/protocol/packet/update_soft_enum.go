@@ -33,26 +33,8 @@ func (*UpdateSoftEnum) ID() uint32 {
 	return IDUpdateSoftEnum
 }
 
-// Marshal ...
-func (pk *UpdateSoftEnum) Marshal(w *protocol.Writer) {
-	w.String(&pk.EnumType)
-	l := uint32(len(pk.Options))
-	w.Varuint32(&l)
-	for _, option := range pk.Options {
-		w.String(&option)
-	}
-	w.Uint8(&pk.ActionType)
-}
-
-// Unmarshal ...
-func (pk *UpdateSoftEnum) Unmarshal(r *protocol.Reader) {
-	var count uint32
-	r.String(&pk.EnumType)
-	r.Varuint32(&count)
-
-	pk.Options = make([]string, count)
-	for i := uint32(0); i < count; i++ {
-		r.String(&pk.Options[i])
-	}
-	r.Uint8(&pk.ActionType)
+func (pk *UpdateSoftEnum) Marshal(io protocol.IO) {
+	io.String(&pk.EnumType)
+	protocol.FuncSlice(io, &pk.Options, io.String)
+	io.Uint8(&pk.ActionType)
 }

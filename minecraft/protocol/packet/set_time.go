@@ -18,12 +18,6 @@ func (*SetTime) ID() uint32 {
 	return IDSetTime
 }
 
-// Marshal ...
-func (pk *SetTime) Marshal(w *protocol.Writer) {
-	w.Varint32(&pk.Time)
-}
-
-// Unmarshal ...
-func (pk *SetTime) Unmarshal(r *protocol.Reader) {
-	r.Varint32(&pk.Time)
+func (pk *SetTime) Marshal(io protocol.IO) {
+	io.Varint32(&pk.Time)
 }

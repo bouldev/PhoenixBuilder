@@ -36,7 +36,8 @@ type StructureSettings struct {
 	// IgnoreBlocks specifies if the structure should ignore blocks or include them. If set to false, blocks
 	// will show up in the exported structure.
 	IgnoreBlocks bool
-	// See gophertunnel
+	// AllowNonTickingChunks specifies if the structure should allow non-ticking chunks. If set to false, the structure
+	// will export non-ticking chunks.
 	AllowNonTickingChunks bool
 	// Size is the size of the area that is about to be exported. The area exported will start at the
 	// Position + Offset, and will extend as far as Size specifies.
@@ -67,8 +68,8 @@ type StructureSettings struct {
 	Pivot mgl32.Vec3
 }
 
-// StructSettings reads/writes StructureSettings x using IO r.
-func StructSettings(r IO, x *StructureSettings) {
+// Marshal reads/writes StructureSettings x using IO r.
+func (x *StructureSettings) Marshal(r IO) {
 	r.String(&x.PaletteName)
 	r.Bool(&x.IgnoreEntities)
 	r.Bool(&x.IgnoreBlocks)

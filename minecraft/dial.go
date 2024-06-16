@@ -310,6 +310,12 @@ func listenConn(conn *Conn, logger *log.Logger, l, c chan struct{}) {
 	}
 }
 
+//go:embed skin_resource_patch.json
+var skinResourcePatch []byte
+
+//go:embed skin_geometry.json
+var skinGeometry []byte
+
 // defaultClientData edits the ClientData passed to have defaults set to all fields that were left unchanged.
 func defaultClientData(address, username string, d *login.ClientData) {
 	rand2.Seed(time.Now().Unix())

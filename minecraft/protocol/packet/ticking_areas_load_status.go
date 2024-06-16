@@ -13,12 +13,6 @@ func (*TickingAreasLoadStatus) ID() uint32 {
 	return IDTickingAreasLoadStatus
 }
 
-// Marshal ...
-func (pk *TickingAreasLoadStatus) Marshal(w *protocol.Writer) {
-	w.Bool(&pk.Preload)
-}
-
-// Unmarshal ...
-func (pk *TickingAreasLoadStatus) Unmarshal(r *protocol.Reader) {
-	r.Bool(&pk.Preload)
+func (pk *TickingAreasLoadStatus) Marshal(io protocol.IO) {
+	io.Bool(&pk.Preload)
 }

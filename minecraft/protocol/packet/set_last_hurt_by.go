@@ -17,12 +17,6 @@ func (*SetLastHurtBy) ID() uint32 {
 	return IDSetLastHurtBy
 }
 
-// Marshal ...
-func (pk *SetLastHurtBy) Marshal(w *protocol.Writer) {
-	w.Varint32(&pk.EntityType)
-}
-
-// Unmarshal ...
-func (pk *SetLastHurtBy) Unmarshal(r *protocol.Reader) {
-	r.Varint32(&pk.EntityType)
+func (pk *SetLastHurtBy) Marshal(io protocol.IO) {
+	io.Varint32(&pk.EntityType)
 }

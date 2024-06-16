@@ -16,6 +16,7 @@ const (
 	TextTypeAnnouncement
 	TextTypeObjectWhisper
 	TextTypeObject
+	TextTypeObjectAnnouncement
 )
 
 // Text is sent by the client to the server to send chat messages, and by the server to the client to forward
@@ -26,7 +27,7 @@ type Text struct {
 	TextType byte
 	// NeedsTranslation specifies if any of the messages need to be translated. It seems that where % is found
 	// in translatable text types, these are translated regardless of this bool. Translatable text types
-	// include TextTypeTip, TextTypePopup and TextTypeJukeboxPopup.
+	// include TextTypeTranslation, TextTypeTip, TextTypePopup and TextTypeJukeboxPopup.
 	NeedsTranslation bool
 	// SourceName is the name of the source of the messages. This source is displayed in text types such as
 	// the TextTypeChat and TextTypeWhisper, where typically the username is shown.
@@ -35,7 +36,7 @@ type Text struct {
 	// the packet.
 	Message string
 	// Parameters is a list of parameters that should be filled into the message. These parameters are only
-	// written if the type of the packet is TextTypeTip, TextTypePopup or TextTypeJukeboxPopup.
+	// written if the type of the packet is TextTypeTranslation, TextTypeTip, TextTypePopup or TextTypeJukeboxPopup.
 	Parameters []string
 	// XUID is the XBOX Live user ID of the player that sent the message. It is only set for packets of
 	// TextTypeChat. When sent to a player, the player will only be shown the chat message if a player with
@@ -45,8 +46,6 @@ type Text struct {
 	// Nintendo Switch). It is otherwise an empty string, and is used to decide which players are able to
 	// chat with each other.
 	PlatformChatID string
-	// Netease PlayerRuntimeID
-	PlayerRuntimeID string
 }
 
 // ID ...
@@ -54,56 +53,19 @@ func (*Text) ID() uint32 {
 	return IDText
 }
 
-// Marshal ...
-func (pk *Text) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.TextType)
-	w.Bool(&pk.NeedsTranslation)
+func (pk *Text) Marshal(io protocol.IO) {
+	io.Uint8(&pk.TextType)
+	io.Bool(&pk.NeedsTranslation)
 	switch pk.TextType {
 	case TextTypeChat, TextTypeWhisper, TextTypeAnnouncement:
-		w.String(&pk.SourceName)
-		w.String(&pk.Message)
-	case TextTypeRaw, TextTypeTip, TextTypeSystem, TextTypeObject, TextTypeObjectWhisper:
-		w.String(&pk.Message)
+		io.String(&pk.SourceName)
+		io.String(&pk.Message)
+	case TextTypeRaw, TextTypeTip, TextTypeSystem, TextTypeObject, TextTypeObjectWhisper, TextTypeObjectAnnouncement:
+		io.String(&pk.Message)
 	case TextTypeTranslation, TextTypePopup, TextTypeJukeboxPopup:
-		w.String(&pk.Message)
-		l := uint32(len(pk.Parameters))
-		w.Varuint32(&l)
-		for _, x := range pk.Parameters {
-			w.String(&x)
-		}
+		io.String(&pk.Message)
+		protocol.FuncSlice(io, &pk.Parameters, io.String)
 	}
-	w.String(&pk.XUID)
-	w.String(&pk.PlatformChatID)
-	if pk.TextType == TextTypeChat {
-		b1:=byte(2)
-		s1:="PlayerId"
-		//s2:="-12345678"
-		w.Uint8(&b1)
-		w.String(&s1)
-		w.String(&pk.PlayerRuntimeID)
-	}
-}
-
-// Unmarshal ...
-func (pk *Text) Unmarshal(r *protocol.Reader) {
-	r.Uint8(&pk.TextType)
-	r.Bool(&pk.NeedsTranslation)
-	switch pk.TextType {
-	case TextTypeChat, TextTypeWhisper, TextTypeAnnouncement:
-		r.String(&pk.SourceName)
-		r.String(&pk.Message)
-	case TextTypeRaw, TextTypeTip, TextTypeSystem, TextTypeObject, TextTypeObjectWhisper:
-		r.String(&pk.Message)
-	case TextTypeTranslation, TextTypePopup, TextTypeJukeboxPopup:
-		var length uint32
-
-		r.String(&pk.Message)
-		r.Varuint32(&length)
-		pk.Parameters = make([]string, length)
-		for i := uint32(0); i < length; i++ {
-			r.String(&pk.Parameters[i])
-		}
-	}
-	r.String(&pk.XUID)
-	r.String(&pk.PlatformChatID)
+	io.String(&pk.XUID)
+	io.String(&pk.PlatformChatID)
 }

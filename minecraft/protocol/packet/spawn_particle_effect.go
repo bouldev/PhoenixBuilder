@@ -1,8 +1,9 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 // SpawnParticleEffect is sent by the server to spawn a particle effect client-side. Unlike other packets that
@@ -25,7 +26,7 @@ type SpawnParticleEffect struct {
 	ParticleName string
 	// MoLangVariables is an encoded JSON map of MoLang variables that may be applicable to the particle spawn. This can
 	// just be left empty in most cases.
-	MoLangVariables []byte
+	MoLangVariables protocol.Optional[[]byte]
 }
 
 // ID ...
@@ -33,31 +34,10 @@ func (*SpawnParticleEffect) ID() uint32 {
 	return IDSpawnParticleEffect
 }
 
-// Marshal ...
-func (pk *SpawnParticleEffect) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.Dimension)
-	w.Varint64(&pk.EntityUniqueID)
-	w.Vec3(&pk.Position)
-	w.String(&pk.ParticleName)
-
-	exists := len(pk.MoLangVariables) > 0
-	w.Bool(&exists)
-	if exists {
-		w.ByteSlice(&pk.MoLangVariables)
-	}
-}
-
-// Unmarshal ...
-func (pk *SpawnParticleEffect) Unmarshal(r *protocol.Reader) {
-	r.Uint8(&pk.Dimension)
-	r.Varint64(&pk.EntityUniqueID)
-	r.Vec3(&pk.Position)
-	r.String(&pk.ParticleName)
-	r.ByteSlice(&pk.MoLangVariables)
-
-	var exists bool
-	r.Bool(&exists)
-	if exists {
-		r.ByteSlice(&pk.MoLangVariables)
-	}
+func (pk *SpawnParticleEffect) Marshal(io protocol.IO) {
+	io.Uint8(&pk.Dimension)
+	io.Varint64(&pk.EntityUniqueID)
+	io.Vec3(&pk.Position)
+	io.String(&pk.ParticleName)
+	protocol.OptionalFunc(io, &pk.MoLangVariables, io.ByteSlice)
 }

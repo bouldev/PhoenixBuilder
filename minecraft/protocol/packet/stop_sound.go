@@ -20,14 +20,7 @@ func (*StopSound) ID() uint32 {
 	return IDStopSound
 }
 
-// Marshal ...
-func (pk *StopSound) Marshal(w *protocol.Writer) {
-	w.String(&pk.SoundName)
-	w.Bool(&pk.StopAll)
-}
-
-// Unmarshal ...
-func (pk *StopSound) Unmarshal(r *protocol.Reader) {
-	r.String(&pk.SoundName)
-	r.Bool(&pk.StopAll)
+func (pk *StopSound) Marshal(io protocol.IO) {
+	io.String(&pk.SoundName)
+	io.Bool(&pk.StopAll)
 }

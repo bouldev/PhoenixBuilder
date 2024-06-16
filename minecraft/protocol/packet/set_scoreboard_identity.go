@@ -28,30 +28,12 @@ func (*SetScoreboardIdentity) ID() uint32 {
 	return IDSetScoreboardIdentity
 }
 
-// Marshal ...
-func (pk *SetScoreboardIdentity) Marshal(w *protocol.Writer) {
-	l := uint32(len(pk.Entries))
-	w.Uint8(&pk.ActionType)
-	w.Varuint32(&l)
-	for _, entry := range pk.Entries {
-		w.Varint64(&entry.EntryID)
-		if pk.ActionType == ScoreboardIdentityActionRegister {
-			w.Varint64(&entry.EntityUniqueID)
-		}
-	}
-}
-
-// Unmarshal ...
-func (pk *SetScoreboardIdentity) Unmarshal(r *protocol.Reader) {
-	var count uint32
-	r.Uint8(&pk.ActionType)
-	r.Varuint32(&count)
-
-	pk.Entries = make([]protocol.ScoreboardIdentityEntry, count)
-	for i := uint32(0); i < count; i++ {
-		r.Varint64(&pk.Entries[i].EntryID)
-		if pk.ActionType == ScoreboardIdentityActionRegister {
-			r.Varint64(&pk.Entries[i].EntityUniqueID)
-		}
+func (pk *SetScoreboardIdentity) Marshal(io protocol.IO) {
+	io.Uint8(&pk.ActionType)
+	switch pk.ActionType {
+	case ScoreboardIdentityActionRegister:
+		protocol.Slice(io, &pk.Entries)
+	case ScoreboardIdentityActionClear:
+		protocol.FuncIOSlice(io, &pk.Entries, protocol.ScoreboardIdentityClearEntry)
 	}
 }

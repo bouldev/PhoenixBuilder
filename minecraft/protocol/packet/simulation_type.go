@@ -20,12 +20,6 @@ func (*SimulationType) ID() uint32 {
 	return IDSimulationType
 }
 
-// Marshal ...
-func (pk *SimulationType) Marshal(w *protocol.Writer) {
-	w.Uint8(&pk.SimulationType)
-}
-
-// Unmarshal ...
-func (pk *SimulationType) Unmarshal(r *protocol.Reader) {
-	r.Uint8(&pk.SimulationType)
+func (pk *SimulationType) Marshal(io protocol.IO) {
+	io.Uint8(&pk.SimulationType)
 }

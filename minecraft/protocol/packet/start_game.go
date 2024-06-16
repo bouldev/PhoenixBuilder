@@ -1,13 +1,22 @@
 package packet
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
+	"phoenixbuilder/minecraft/nbt"
 	"phoenixbuilder/minecraft/protocol"
+
+	"github.com/go-gl/mathgl/mgl32"
+	"github.com/google/uuid"
 )
 
 const (
 	SpawnBiomeTypeDefault = iota
 	SpawnBiomeTypeUserDefined
+)
+
+const (
+	ChatRestrictionLevelNone     = 0
+	ChatRestrictionLevelDropped  = 1
+	ChatRestrictionLevelDisabled = 2
 )
 
 // StartGame is sent by the server to send information about the world the player will be spawned in. It
@@ -37,7 +46,7 @@ type StartGame struct {
 	Yaw float32
 	// WorldSeed is the seed used to generate the world. Unlike in PC edition, the seed is a 32bit integer
 	// here.
-	WorldSeed uint64
+	WorldSeed int64
 	// SpawnBiomeType specifies if the biome that the player spawns in is user defined (through behaviour
 	// packs) or builtin. See the constants above.
 	SpawnBiomeType int16
@@ -64,6 +73,15 @@ type StartGame struct {
 	// value is set to true while the player's or the world's game mode is creative, and it's recommended to
 	// simply always set this to false as a server.
 	AchievementsDisabled bool
+	// EditorWorld is a value to dictate if the world is in editor mode, a special mode recently introduced adding
+	// "powerful tools for editing worlds, intended for experienced creators."
+	EditorWorld bool
+	// CreatedInEditor is a value to dictate if the world was created as a project in the editor mode. The functionality
+	// of this field is currently unknown.
+	CreatedInEditor bool
+	// ExportedFromEditor is a value to dictate if the world was exported from editor mode. The functionality of this
+	// field is currently unknown.
+	ExportedFromEditor bool
 	// DayCycleLockTime is the time at which the day cycle was locked if the day cycle is disabled using the
 	// respective game rule. The client will maintain this time as long as the day cycle is disabled.
 	DayCycleLockTime int32
@@ -147,6 +165,12 @@ type StartGame struct {
 	// OnlySpawnV1Villagers is a hack that Mojang put in place to preserve backwards compatibility with old
 	// villagers. The bool is never actually read though, so it has no functionality.
 	OnlySpawnV1Villagers bool
+	// PersonaDisabled is true if persona skins are disabled for the current game session.
+	PersonaDisabled bool
+	// CustomSkinsDisabled is true if custom skins are disabled for the current game session.
+	CustomSkinsDisabled bool
+	// EmoteChatMuted specifies if players will be sent a chat message when using certain emotes.
+	EmoteChatMuted bool
 	// BaseGameVersion is the version of the game from which Vanilla features will be used. The exact function
 	// of this field isn't clear.
 	BaseGameVersion string
@@ -159,7 +183,7 @@ type StartGame struct {
 	EducationSharedResourceURI protocol.EducationSharedResourceURI
 	// ForceExperimentalGameplay specifies if experimental gameplay should be force enabled. For servers this
 	// should always be set to false.
-	ForceExperimentalGameplay bool
+	ForceExperimentalGameplay protocol.Optional[bool]
 	// LevelID is a base64 encoded world ID that is used to identify the world.
 	LevelID string
 	// WorldName is the name of the world that the player is joining. Note that this field shows up above the
@@ -194,9 +218,28 @@ type StartGame struct {
 	ServerAuthoritativeInventory bool
 	// GameVersion is the version of the game the server is running. The exact function of this field isn't clear.
 	GameVersion string
+	// PropertyData contains properties that should be applied on the player. These properties are the same as the
+	// ones that are sent in the SyncActorProperty packet.
+	PropertyData map[string]any
 	// ServerBlockStateChecksum is a checksum to ensure block states between the server and client match.
 	// This can simply be left empty, and the client will avoid trying to verify it.
 	ServerBlockStateChecksum uint64
+	// ClientSideGeneration is true if the client should use the features registered in the FeatureRegistry packet to
+	// generate terrain client-side to save on bandwidth.
+	ClientSideGeneration bool
+	// WorldTemplateID is a UUID that identifies the template that was used to generate the world. Servers that do not
+	// use a world based off of a template can set this to an empty UUID.
+	WorldTemplateID uuid.UUID
+	// ChatRestrictionLevel specifies the level of restriction on in-game chat. It is one of the constants above.
+	ChatRestrictionLevel uint8
+	// DisablePlayerInteractions is true if the client should ignore other players when interacting with the world.
+	DisablePlayerInteractions bool
+	// UseBlockNetworkIDHashes is true if the client should use the hash of a block's name as its network ID rather than
+	// its index in the expected block palette. This is useful for servers that wish to support multiple protocol versions
+	// and custom blocks, but it will result in extra bytes being written for every block in a sub chunk palette.
+	UseBlockNetworkIDHashes bool
+	// ServerAuthoritativeSound is currently unknown as to what it does.
+	ServerAuthoritativeSound bool
 }
 
 // ID ...
@@ -204,172 +247,79 @@ func (*StartGame) ID() uint32 {
 	return IDStartGame
 }
 
-// Marshal ...
-func (pk *StartGame) Marshal(w *protocol.Writer) {
-	w.Varint64(&pk.EntityUniqueID)
-	w.Varuint64(&pk.EntityRuntimeID)
-	w.Varint32(&pk.PlayerGameMode)
-	w.Vec3(&pk.PlayerPosition)
-	w.Float32(&pk.Pitch)
-	w.Float32(&pk.Yaw)
-	w.Uint64(&pk.WorldSeed)
-	w.Int16(&pk.SpawnBiomeType)
-	w.String(&pk.UserDefinedBiomeName)
-	w.Varint32(&pk.Dimension)
-	w.Varint32(&pk.Generator)
-	w.Varint32(&pk.WorldGameMode)
-	w.Varint32(&pk.Difficulty)
-	w.UBlockPos(&pk.WorldSpawn)
-	w.Bool(&pk.AchievementsDisabled)
-	w.Varint32(&pk.DayCycleLockTime)
-	w.Varint32(&pk.EducationEditionOffer)
-	w.Bool(&pk.EducationFeaturesEnabled)
-	w.String(&pk.EducationProductID)
-	w.Float32(&pk.RainLevel)
-	w.Float32(&pk.LightningLevel)
-	w.Bool(&pk.ConfirmedPlatformLockedContent)
-	w.Bool(&pk.MultiPlayerGame)
-	w.Bool(&pk.LANBroadcastEnabled)
-	w.Varint32(&pk.XBLBroadcastMode)
-	w.Varint32(&pk.PlatformBroadcastMode)
-	w.Bool(&pk.CommandsEnabled)
-	w.Bool(&pk.TexturePackRequired)
-	protocol.WriteGameRules(w, &pk.GameRules)
-	l := uint32(len(pk.Experiments))
-	w.Uint32(&l)
-	for _, experiment := range pk.Experiments {
-		protocol.Experiment(w, &experiment)
-	}
-	w.Bool(&pk.ExperimentsPreviouslyToggled)
-	w.Bool(&pk.BonusChestEnabled)
-	w.Bool(&pk.StartWithMapEnabled)
-	w.Varint32(&pk.PlayerPermissions)
-	w.Int32(&pk.ServerChunkTickRadius)
-	w.Bool(&pk.HasLockedBehaviourPack)
-	w.Bool(&pk.HasLockedTexturePack)
-	w.Bool(&pk.FromLockedWorldTemplate)
-	w.Bool(&pk.MSAGamerTagsOnly)
-	w.Bool(&pk.FromWorldTemplate)
-	w.Bool(&pk.WorldTemplateSettingsLocked)
-	w.Bool(&pk.OnlySpawnV1Villagers)
-	w.String(&pk.BaseGameVersion)
-	w.Int32(&pk.LimitedWorldWidth)
-	w.Int32(&pk.LimitedWorldDepth)
-	w.Bool(&pk.NewNether)
-	protocol.EducationResourceURI(w, &pk.EducationSharedResourceURI)
-	w.Bool(&pk.ForceExperimentalGameplay)
-	if pk.ForceExperimentalGameplay {
-		// This might look wrong, but is in fact correct: Mojang is writing this bool if the same bool above
-		// is set to true.
-		w.Bool(&pk.ForceExperimentalGameplay)
-	}
-	w.String(&pk.LevelID)
-	w.String(&pk.WorldName)
-	w.String(&pk.TemplateContentIdentity)
-	w.Bool(&pk.Trial)
-	protocol.PlayerMoveSettings(w, &pk.PlayerMovementSettings)
-	w.Int64(&pk.Time)
-	w.Varint32(&pk.EnchantmentSeed)
-
-	l = uint32(len(pk.Blocks))
-	w.Varuint32(&l)
-	for i := range pk.Blocks {
-		protocol.Block(w, &pk.Blocks[i])
-	}
-
-	l = uint32(len(pk.Items))
-	w.Varuint32(&l)
-	for i := range pk.Items {
-		protocol.Item(w, &pk.Items[i])
-	}
-	w.String(&pk.MultiPlayerCorrelationID)
-	w.Bool(&pk.ServerAuthoritativeInventory)
-	w.String(&pk.GameVersion)
-	w.Uint64(&pk.ServerBlockStateChecksum)
-}
-
-// Unmarshal ...
-func (pk *StartGame) Unmarshal(r *protocol.Reader) {
-	var blockCount, itemCount uint32
-	r.Varint64(&pk.EntityUniqueID)
-	r.Varuint64(&pk.EntityRuntimeID)
-	r.Varint32(&pk.PlayerGameMode)
-	r.Vec3(&pk.PlayerPosition)
-	r.Float32(&pk.Pitch)
-	r.Float32(&pk.Yaw)
-	r.Uint64(&pk.WorldSeed)
-	r.Int16(&pk.SpawnBiomeType)
-	r.String(&pk.UserDefinedBiomeName)
-	r.Varint32(&pk.Dimension)
-	r.Varint32(&pk.Generator)
-	r.Varint32(&pk.WorldGameMode)
-	r.Varint32(&pk.Difficulty)
-	r.UBlockPos(&pk.WorldSpawn)
-	r.Bool(&pk.AchievementsDisabled)
-	r.Varint32(&pk.DayCycleLockTime)
-	r.Varint32(&pk.EducationEditionOffer)
-	r.Bool(&pk.EducationFeaturesEnabled)
-	r.String(&pk.EducationProductID)
-	r.Float32(&pk.RainLevel)
-	r.Float32(&pk.LightningLevel)
-	r.Bool(&pk.ConfirmedPlatformLockedContent)
-	r.Bool(&pk.MultiPlayerGame)
-	r.Bool(&pk.LANBroadcastEnabled)
-	r.Varint32(&pk.XBLBroadcastMode)
-	r.Varint32(&pk.PlatformBroadcastMode)
-	r.Bool(&pk.CommandsEnabled)
-	r.Bool(&pk.TexturePackRequired)
-	protocol.GameRules(r, &pk.GameRules)
-	var l uint32
-	r.Uint32(&l)
-	pk.Experiments = make([]protocol.ExperimentData, l)
-	for i := uint32(0); i < l; i++ {
-		protocol.Experiment(r, &pk.Experiments[i])
-	}
-	r.Bool(&pk.ExperimentsPreviouslyToggled)
-	r.Bool(&pk.BonusChestEnabled)
-	r.Bool(&pk.StartWithMapEnabled)
-	r.Varint32(&pk.PlayerPermissions)
-	r.Int32(&pk.ServerChunkTickRadius)
-	r.Bool(&pk.HasLockedBehaviourPack)
-	r.Bool(&pk.HasLockedTexturePack)
-	r.Bool(&pk.FromLockedWorldTemplate)
-	r.Bool(&pk.MSAGamerTagsOnly)
-	r.Bool(&pk.FromWorldTemplate)
-	r.Bool(&pk.WorldTemplateSettingsLocked)
-	r.Bool(&pk.OnlySpawnV1Villagers)
-	r.String(&pk.BaseGameVersion)
-	r.Int32(&pk.LimitedWorldWidth)
-	r.Int32(&pk.LimitedWorldDepth)
-	r.Bool(&pk.NewNether)
-	protocol.EducationResourceURI(r, &pk.EducationSharedResourceURI)
-	r.Bool(&pk.ForceExperimentalGameplay)
-	if pk.ForceExperimentalGameplay {
-		// This might look wrong, but is in fact correct: Mojang is writing this bool if the same bool above
-		// is set to true.
-		r.Bool(&pk.ForceExperimentalGameplay)
-	}
-	r.String(&pk.LevelID)
-	r.String(&pk.WorldName)
-	r.String(&pk.TemplateContentIdentity)
-	r.Bool(&pk.Trial)
-	protocol.PlayerMoveSettings(r, &pk.PlayerMovementSettings)
-	r.Int64(&pk.Time)
-	r.Varint32(&pk.EnchantmentSeed)
-
-	r.Varuint32(&blockCount)
-	pk.Blocks = make([]protocol.BlockEntry, blockCount)
-	for i := uint32(0); i < blockCount; i++ {
-		protocol.Block(r, &pk.Blocks[i])
-	}
-
-	r.Varuint32(&itemCount)
-	pk.Items = make([]protocol.ItemEntry, itemCount)
-	for i := uint32(0); i < itemCount; i++ {
-		protocol.Item(r, &pk.Items[i])
-	}
-	r.String(&pk.MultiPlayerCorrelationID)
-	r.Bool(&pk.ServerAuthoritativeInventory)
-	r.String(&pk.GameVersion)
-	r.Uint64(&pk.ServerBlockStateChecksum)
+func (pk *StartGame) Marshal(io protocol.IO) {
+	io.Varint64(&pk.EntityUniqueID)
+	io.Varuint64(&pk.EntityRuntimeID)
+	io.Varint32(&pk.PlayerGameMode)
+	io.Vec3(&pk.PlayerPosition)
+	io.Float32(&pk.Pitch)
+	io.Float32(&pk.Yaw)
+	io.Int64(&pk.WorldSeed)
+	io.Int16(&pk.SpawnBiomeType)
+	io.String(&pk.UserDefinedBiomeName)
+	io.Varint32(&pk.Dimension)
+	io.Varint32(&pk.Generator)
+	io.Varint32(&pk.WorldGameMode)
+	io.Varint32(&pk.Difficulty)
+	io.UBlockPos(&pk.WorldSpawn)
+	io.Bool(&pk.AchievementsDisabled)
+	io.Bool(&pk.EditorWorld)
+	io.Bool(&pk.CreatedInEditor)
+	io.Bool(&pk.ExportedFromEditor)
+	io.Varint32(&pk.DayCycleLockTime)
+	io.Varint32(&pk.EducationEditionOffer)
+	io.Bool(&pk.EducationFeaturesEnabled)
+	io.String(&pk.EducationProductID)
+	io.Float32(&pk.RainLevel)
+	io.Float32(&pk.LightningLevel)
+	io.Bool(&pk.ConfirmedPlatformLockedContent)
+	io.Bool(&pk.MultiPlayerGame)
+	io.Bool(&pk.LANBroadcastEnabled)
+	io.Varint32(&pk.XBLBroadcastMode)
+	io.Varint32(&pk.PlatformBroadcastMode)
+	io.Bool(&pk.CommandsEnabled)
+	io.Bool(&pk.TexturePackRequired)
+	protocol.FuncSlice(io, &pk.GameRules, io.GameRule)
+	protocol.SliceUint32Length(io, &pk.Experiments)
+	io.Bool(&pk.ExperimentsPreviouslyToggled)
+	io.Bool(&pk.BonusChestEnabled)
+	io.Bool(&pk.StartWithMapEnabled)
+	io.Varint32(&pk.PlayerPermissions)
+	io.Int32(&pk.ServerChunkTickRadius)
+	io.Bool(&pk.HasLockedBehaviourPack)
+	io.Bool(&pk.HasLockedTexturePack)
+	io.Bool(&pk.FromLockedWorldTemplate)
+	io.Bool(&pk.MSAGamerTagsOnly)
+	io.Bool(&pk.FromWorldTemplate)
+	io.Bool(&pk.WorldTemplateSettingsLocked)
+	io.Bool(&pk.OnlySpawnV1Villagers)
+	io.Bool(&pk.PersonaDisabled)
+	io.Bool(&pk.CustomSkinsDisabled)
+	io.Bool(&pk.EmoteChatMuted)
+	io.String(&pk.BaseGameVersion)
+	io.Int32(&pk.LimitedWorldWidth)
+	io.Int32(&pk.LimitedWorldDepth)
+	io.Bool(&pk.NewNether)
+	protocol.Single(io, &pk.EducationSharedResourceURI)
+	protocol.OptionalFunc(io, &pk.ForceExperimentalGameplay, io.Bool)
+	io.Uint8(&pk.ChatRestrictionLevel)
+	io.Bool(&pk.DisablePlayerInteractions)
+	io.String(&pk.LevelID)
+	io.String(&pk.WorldName)
+	io.String(&pk.TemplateContentIdentity)
+	io.Bool(&pk.Trial)
+	protocol.PlayerMoveSettings(io, &pk.PlayerMovementSettings)
+	io.Int64(&pk.Time)
+	io.Varint32(&pk.EnchantmentSeed)
+	protocol.Slice(io, &pk.Blocks)
+	protocol.Slice(io, &pk.Items)
+	io.String(&pk.MultiPlayerCorrelationID)
+	io.Bool(&pk.ServerAuthoritativeInventory)
+	io.String(&pk.GameVersion)
+	io.NBT(&pk.PropertyData, nbt.NetworkLittleEndian)
+	io.Uint64(&pk.ServerBlockStateChecksum)
+	io.UUID(&pk.WorldTemplateID)
+	io.Bool(&pk.ClientSideGeneration)
+	io.Bool(&pk.UseBlockNetworkIDHashes)
+	io.Bool(&pk.ServerAuthoritativeSound)
 }

@@ -8,6 +8,7 @@ import (
 const (
 	StructureTemplateResponseExport = iota + 1
 	StructureTemplateResponseQuery
+	StructureTemplateResponseImport
 )
 
 // StructureTemplateDataResponse is sent by the server to send data of a structure to the client in response
@@ -31,22 +32,11 @@ func (pk *StructureTemplateDataResponse) ID() uint32 {
 	return IDStructureTemplateDataResponse
 }
 
-// Marshal ...
-func (pk *StructureTemplateDataResponse) Marshal(w *protocol.Writer) {
-	w.String(&pk.StructureName)
-	w.Bool(&pk.Success)
+func (pk *StructureTemplateDataResponse) Marshal(io protocol.IO) {
+	io.String(&pk.StructureName)
+	io.Bool(&pk.Success)
 	if pk.Success {
-		w.NBT(&pk.StructureTemplate, nbt.NetworkLittleEndian)
+		io.NBT(&pk.StructureTemplate, nbt.NetworkLittleEndian)
 	}
-	w.Uint8(&pk.ResponseType)
-}
-
-// Unmarshal ...
-func (pk *StructureTemplateDataResponse) Unmarshal(r *protocol.Reader) {
-	r.String(&pk.StructureName)
-	r.Bool(&pk.Success)
-	if pk.Success {
-		r.NBT(&pk.StructureTemplate, nbt.NetworkLittleEndian)
-	}
-	r.Uint8(&pk.ResponseType)
+	io.Uint8(&pk.ResponseType)
 }

@@ -61,6 +61,15 @@ type IO interface {
 	ShieldID() int32
 	UnknownEnumOption(value any, enum string)
 	InvalidValue(value any, forField, reason string)
+
+	// PhoenixBuilder specific func.
+	// Author: Happy2018new
+	NeteaseRGBA(x *color.RGBA)
+	// PhoenixBuilder specific func.
+	// Author: Liliya233, CMA2041PT, Happy2018new
+	//
+	// Netease's Python MsgPack
+	MsgPack(x *any)
 }
 
 // Marshaler is a type that can be written to or read from an IO.

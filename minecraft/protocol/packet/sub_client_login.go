@@ -21,12 +21,6 @@ func (*SubClientLogin) ID() uint32 {
 	return IDSubClientLogin
 }
 
-// Marshal ...
-func (pk *SubClientLogin) Marshal(w *protocol.Writer) {
-	w.ByteSlice(&pk.ConnectionRequest)
-}
-
-// Unmarshal ...
-func (pk *SubClientLogin) Unmarshal(r *protocol.Reader) {
-	r.ByteSlice(&pk.ConnectionRequest)
+func (pk *SubClientLogin) Marshal(io protocol.IO) {
+	io.ByteSlice(&pk.ConnectionRequest)
 }

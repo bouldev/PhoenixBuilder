@@ -21,14 +21,7 @@ func (*SettingsCommand) ID() uint32 {
 	return IDSettingsCommand
 }
 
-// Marshal ...
-func (pk *SettingsCommand) Marshal(w *protocol.Writer) {
-	w.String(&pk.CommandLine)
-	w.Bool(&pk.SuppressOutput)
-}
-
-// Unmarshal ...
-func (pk *SettingsCommand) Unmarshal(r *protocol.Reader) {
-	r.String(&pk.CommandLine)
-	r.Bool(&pk.SuppressOutput)
+func (pk *SettingsCommand) Marshal(io protocol.IO) {
+	io.String(&pk.CommandLine)
+	io.Bool(&pk.SuppressOutput)
 }

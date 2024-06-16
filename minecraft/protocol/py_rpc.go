@@ -3,9 +3,6 @@ package protocol
 import (
 	"fmt"
 	"reflect"
-
-	// A Python library which named "msgpack"
-	"github.com/ugorji/go/codec"
 )
 
 // The following fields describe the
@@ -17,28 +14,6 @@ const (
 	MapKeyTypeInt64                   // map[int64]any
 	MapKeyTypeInterface               // map[any]any (NOT SUPPORTED/BLOCKED)
 )
-
-// Marshal obj to binary msg pack
-func MarshalMsgpack(obj any) (msg_pack []byte, err error) {
-	var msg_pack_handler codec.MsgpackHandle
-	err = codec.NewEncoderBytes(&msg_pack, &msg_pack_handler).Encode(obj)
-	if err != nil {
-		err = fmt.Errorf("MarshalMsgpack: %v", err)
-	}
-	return
-}
-
-// Unmarshal msg_pack to go values which
-// only contains go-built-in types
-func UnmarshalMsgpack(msg_pack []byte) (result any, err error) {
-	var msg_pack_handler codec.MsgpackHandle
-	msg_pack_handler.RawToString = true
-	err = codec.NewDecoderBytes(msg_pack, &msg_pack_handler).Decode(&result)
-	if err != nil {
-		err = fmt.Errorf("UnmarshalMsgpack: %v", err)
-	}
-	return
-}
 
 /*
 Format mapping to make all the map included

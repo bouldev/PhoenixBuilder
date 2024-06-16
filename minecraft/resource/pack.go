@@ -5,12 +5,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"github.com/muhammadmuzzammil1998/jsonc"
 	"io"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/muhammadmuzzammil1998/jsonc"
 )
 
 // Pack is a container of a resource pack parsed from a directory or a .zip archive (or .mcpack). It holds
@@ -59,16 +60,16 @@ func MustCompile(path string) *Pack {
 // zip archive and contain a pack manifest in order for the function to succeed.
 // FromBytes saves the data to a temporary archive.
 func FromBytes(data []byte) (*Pack, error) {
-	tempFile, err := os.CreateTemp("", "resource_pack_archive-*.mcpack")
+	temp, err := createTempFile()
 	if err != nil {
 		return nil, fmt.Errorf("error creating temp zip archive: %v", err)
 	}
-	_, _ = tempFile.Write(data)
-	if err := tempFile.Close(); err != nil {
+	_, _ = temp.Write(data)
+	if err := temp.Close(); err != nil {
 		return nil, fmt.Errorf("error closing temp zip archive: %v", err)
 	}
-	pack, parseErr := Compile(tempFile.Name())
-	if err := os.Remove(tempFile.Name()); err != nil {
+	pack, parseErr := Compile(temp.Name())
+	if err := os.Remove(temp.Name()); err != nil {
 		return nil, fmt.Errorf("error removing temp zip archive: %v", err)
 	}
 	return pack, parseErr
@@ -248,11 +249,9 @@ func compile(path string) (*Pack, error) {
 // createTempArchive creates a zip archive from the files in the path passed and writes it to a temporary
 // file, which is returned when successful.
 func createTempArchive(path string) (*os.File, error) {
-	// We've got a directory which we need to load. Provided we need to send compressed zip data to the
-	// client, we compile it to a zip archive in a temporary file.
-	temp, err := os.CreateTemp("", "resource_pack-*.mcpack")
+	temp, err := createTempFile()
 	if err != nil {
-		return nil, fmt.Errorf("error creating temp zip file: %v", err)
+		return nil, err
 	}
 	writer := zip.NewWriter(temp)
 	if err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
@@ -297,6 +296,25 @@ func createTempArchive(path string) (*os.File, error) {
 		return nil, fmt.Errorf("error building zip archive: %v", err)
 	}
 	_ = writer.Close()
+	return temp, nil
+}
+
+// createTempFile attempts to create a temporary file and returns it.
+func createTempFile() (*os.File, error) {
+	// We've got a directory which we need to load. Provided we need to send compressed zip data to the
+	// client, we compile it to a zip archive in a temporary file.
+
+	// Note that we explicitly do not handle the error here. If the user config
+	// dir cannot be found, 'dir' will be an empty string. os.CreateTemp will
+	// then use the default temporary file directory, which might succeed in
+	// this case.
+	dir, _ := os.UserConfigDir()
+	_ = os.MkdirAll(dir, os.ModePerm)
+
+	temp, err := os.CreateTemp(dir, "temp_resource_pack-*.mcpack")
+	if err != nil {
+		return nil, fmt.Errorf("error creating temp resource pack file: %v", err)
+	}
 	return temp, nil
 }
 

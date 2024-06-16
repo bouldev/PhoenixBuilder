@@ -16,12 +16,6 @@ func (*SyncActorProperty) ID() uint32 {
 	return IDSyncActorProperty
 }
 
-// Marshal ...
-func (pk *SyncActorProperty) Marshal(w *protocol.Writer) {
-	w.NBT(&pk.PropertyData, nbt.NetworkLittleEndian)
-}
-
-// Unmarshal ...
-func (pk *SyncActorProperty) Unmarshal(r *protocol.Reader) {
-	r.NBT(&pk.PropertyData, nbt.NetworkLittleEndian)
+func (pk *SyncActorProperty) Marshal(io protocol.IO) {
+	io.NBT(&pk.PropertyData, nbt.NetworkLittleEndian)
 }
