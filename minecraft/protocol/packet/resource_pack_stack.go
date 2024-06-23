@@ -27,6 +27,13 @@ type ResourcePackStack struct {
 	// ExperimentsPreviouslyToggled specifies if any experiments were previously toggled in this world. It is
 	// probably used for some kind of metrics.
 	ExperimentsPreviouslyToggled bool
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// The following fields are NetEase specific.
+	Unknown1 bool
+	Unknown2 bool
 }
 
 // ID ...
@@ -41,4 +48,13 @@ func (pk *ResourcePackStack) Marshal(io protocol.IO) {
 	io.String(&pk.BaseGameVersion)
 	protocol.SliceUint32Length(io, &pk.Experiments)
 	io.Bool(&pk.ExperimentsPreviouslyToggled)
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase
+	{
+		io.Bool(&pk.Unknown1)
+		io.Bool(&pk.Unknown2)
+	}
 }

@@ -240,6 +240,47 @@ type StartGame struct {
 	UseBlockNetworkIDHashes bool
 	// ServerAuthoritativeSound is currently unknown as to what it does.
 	ServerAuthoritativeSound bool
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// The following fields are NetEase specific.
+	Unknown1  int64
+	Unknown2  int64
+	Unknown3  int64
+	Unknown4  bool
+	Unknown5  bool
+	Unknown6  bool
+	Unknown7  bool
+	Unknown8  string
+	Unknown9  string
+	Unknown10 bool
+	Unknown11 bool
+	Unknown12 int32
+	Unknown13 int32
+	Unknown14 int32
+	Unknown15 int32
+	Unknown16 int32
+	Unknown17 bool
+	Unknown18 bool
+	Unknown19 bool
+	Unknown20 int32
+	Unknown21 bool
+	Unknown22 bool
+	Unknown23 bool
+	Unknown24 bool
+	Unknown25 bool
+	Unknown26 bool
+	Unknown27 bool
+	Unknown28 bool
+	Unknown29 bool
+	Unknown30 []byte // Netease: uncertain
+	Unknown31 bool
+	Unknown32 bool
+	Unknown33 bool
+	Unknown34 string
+	Unknown35 bool
+	Unknown36 bool
 }
 
 // ID ...
@@ -322,4 +363,47 @@ func (pk *StartGame) Marshal(io protocol.IO) {
 	io.Bool(&pk.ClientSideGeneration)
 	io.Bool(&pk.UseBlockNetworkIDHashes)
 	io.Bool(&pk.ServerAuthoritativeSound)
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase
+	{
+		io.Int64(&pk.Unknown1)
+		io.Int64(&pk.Unknown2)
+		io.Int64(&pk.Unknown3)
+		io.Bool(&pk.Unknown4)
+		io.Bool(&pk.Unknown5)
+		io.Bool(&pk.Unknown6)
+		io.Bool(&pk.Unknown7)
+		io.String(&pk.Unknown8)
+		io.String(&pk.Unknown9)
+		io.Bool(&pk.Unknown10)
+		io.Bool(&pk.Unknown11)
+		io.Int32(&pk.Unknown12)
+		io.Int32(&pk.Unknown13)
+		io.Int32(&pk.Unknown14)
+		io.Int32(&pk.Unknown15)
+		io.Int32(&pk.Unknown16)
+		io.Bool(&pk.Unknown17)
+		io.Bool(&pk.Unknown18)
+		io.Bool(&pk.Unknown19)
+		io.Int32(&pk.Unknown20)
+		io.Bool(&pk.Unknown21)
+		io.Bool(&pk.Unknown22)
+		io.Bool(&pk.Unknown23)
+		io.Bool(&pk.Unknown24)
+		io.Bool(&pk.Unknown25)
+		io.Bool(&pk.Unknown26)
+		io.Bool(&pk.Unknown27)
+		io.Bool(&pk.Unknown28)
+		io.Bool(&pk.Unknown29)
+		io.ByteSlice(&pk.Unknown30)
+		io.Bool(&pk.Unknown31)
+		io.Bool(&pk.Unknown32)
+		io.Bool(&pk.Unknown33)
+		io.String(&pk.Unknown34)
+		io.Bool(&pk.Unknown35)
+		io.Bool(&pk.Unknown36)
+	}
 }

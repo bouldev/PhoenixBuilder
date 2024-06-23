@@ -22,6 +22,14 @@ type CraftingData struct {
 	// means that the client will have no recipes active by itself: Any CraftingData packets previously sent
 	// will also be discarded, and only the recipes in this CraftingData packet will be used.
 	ClearRecipes bool
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// The following fields are NetEase specific.
+	Unknown1 []byte
+	Unknown2 []byte
+	Unknown3 []byte
 }
 
 // ID ...
@@ -35,4 +43,14 @@ func (pk *CraftingData) Marshal(io protocol.IO) {
 	protocol.Slice(io, &pk.PotionContainerChangeRecipes)
 	protocol.FuncSlice(io, &pk.MaterialReducers, io.MaterialReducer)
 	io.Bool(&pk.ClearRecipes)
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase
+	{
+		io.ByteSlice(&pk.Unknown1)
+		io.ByteSlice(&pk.Unknown2)
+		io.ByteSlice(&pk.Unknown3)
+	}
 }

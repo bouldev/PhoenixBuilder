@@ -51,6 +51,17 @@ type AddActor struct {
 	// way the entity shows up when first spawned in terms of it shown as riding an entity. Setting these
 	// links is important for new viewers to see the entity is riding another entity.
 	EntityLinks []protocol.EntityLink
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// The following fields are NetEase specific.
+	Unknown1 string
+	Unknown2 string
+	Unknown3 string
+	Unknown4 bool
+	Unknown5 bool
+	Unknown6 bool
 }
 
 // ID ...
@@ -72,4 +83,17 @@ func (pk *AddActor) Marshal(io protocol.IO) {
 	io.EntityMetadata(&pk.EntityMetadata)
 	protocol.Single(io, &pk.EntityProperties)
 	protocol.Slice(io, &pk.EntityLinks)
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase
+	{
+		io.String(&pk.Unknown1)
+		io.String(&pk.Unknown2)
+		io.String(&pk.Unknown3)
+		io.Bool(&pk.Unknown4)
+		io.Bool(&pk.Unknown5)
+		io.Bool(&pk.Unknown6)
+	}
 }
