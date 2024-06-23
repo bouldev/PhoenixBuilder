@@ -57,13 +57,21 @@ func PlanHopSwapPath(sx, sz, ex, ez, reachableChunks int) (hopPath []*ExportHopP
 		}
 	}
 	chunkPosMap := ExportedChunksMap{}
-	for xi := alignSX / chunkSize; xi < alignCEX/chunkSize; xi++ {
-		for zi := alignSZ / chunkSize; zi < alignCEZ/chunkSize; zi++ {
+	for xi := alignSX / chunkSize; xi <= alignCEX/chunkSize; xi++ {
+		for zi := alignSZ / chunkSize; zi <= alignCEZ/chunkSize; zi++ {
 			x, z := xi*chunkSize, zi*chunkSize
 			xHalfHops := ((x - alignSX) / preferredHalfHopXSpace)
 			hopXPoint := hopXOrigin + (xHalfHops/2)*2*preferredHalfHopXSpace
 			zHalfHops := ((z - alignSZ) / preferredHalfHopZSpace)
 			hopZPoint := hopZOrigin + (zHalfHops/2)*2*preferredHalfHopZSpace
+
+			if hopPointsMap[ChunkPosDefine{hopXPoint, hopZPoint}] == nil {
+				hopPointsMap[ChunkPosDefine{hopXPoint, hopZPoint}] = &ExportHopPos{
+					Pos:         ChunkPosDefine{hopXPoint, hopZPoint},
+					LinkedChunk: make([]*ExportedChunkPos, 0),
+				}
+			}
+
 			chunkPos := &ExportedChunkPos{
 				Pos:        ChunkPosDefine{x, z},
 				MasterHop:  hopPointsMap[ChunkPosDefine{hopXPoint, hopZPoint}],
