@@ -641,17 +641,14 @@ func (r *Reader) CompressedBiomeDefinitions(x *map[string]any) {
 func (r *Reader) MsgPack(x *any) {
 	var (
 		payload        []byte              // string (this struct is seems like json but not completely is)
-		number         uint32              // consume unknown uint32
 		msgPackHandler codec.MsgpackHandle // processer
 		err            error
 	)
 	// prepare
 	r.ByteSlice(&payload)
-	r.Uint32(&number)
-	// pre read
 	msgPackHandler.RawToString = true
 	codec.NewDecoderBytes(payload, &msgPackHandler).Decode(x)
-	// get payload
+	// read and decode payload
 	value := (*x).([]any)
 	*x, err = FormatSliceInMsgpack(value)
 	if err != nil {

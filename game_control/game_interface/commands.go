@@ -114,6 +114,7 @@ func (g *GameInterface) send_netease_ai_command(
 			Package: &park,
 			Type:    py_rpc.ModEventClientToServer,
 		}),
+		OperationType: packet.PyRpcOperationTypeSend,
 	})
 	if err != nil {
 		return fmt.Errorf("send_netease_ai_command: %v", err)

@@ -512,7 +512,6 @@ func (w *Writer) MsgPack(x *any) {
 		panic(fmt.Sprintf("(w *Writer) MsgPack: %v", err))
 	}
 	w.ByteSlice(&msgPackBytes)
-	w.Bytes(&[]byte{0xae, 0x23, 0xdb, 0x05})
 }
 
 // Varint64 writes an int64 as 1-10 bytes to the underlying buffer.
