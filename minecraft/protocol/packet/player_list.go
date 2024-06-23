@@ -58,24 +58,15 @@ func (pk *PlayerList) Marshal(io protocol.IO) {
 				io.Bool(&pk.Entries[i].Skin.Trusted)
 			}
 			// Netease
-			pk.Unknown1 = make([]bool, len)
-			for i := 0; i < len; i++ {
-				io.Bool(&pk.Unknown1[i])
-			}
+			protocol.FuncSliceOfLen(io, uint32(len), &pk.Unknown1, io.Bool)
 			protocol.SliceOfLen(io, uint32(len), &pk.Unknown2)
 			protocol.SliceOfLen(io, uint32(len), &pk.Unknown3)
 			/*
 				if something {
-					pk.Unknown4 = make([]string, len)
-					for i := 0; i < len; i++ {
-						io.String(&pk.Unknown4[i])
-					}
+					protocol.FuncSliceOfLen(io, uint32(len), &pk.Unknown4, io.String)
 				}
 			*/
-			pk.GrowthLevels = make([]uint32, len)
-			for i := 0; i < len; i++ {
-				io.Uint32(&pk.GrowthLevels[i])
-			}
+			protocol.FuncSliceOfLen(io, uint32(len), &pk.GrowthLevels, io.Uint32)
 		}
 		/*
 			if pk.ActionType == PlayerListActionAdd {

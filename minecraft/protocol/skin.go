@@ -228,3 +228,25 @@ func (x *PersonaPieceTintColour) Marshal(r IO) {
 	r.String(&x.PieceType)
 	FuncSliceUint32Length(r, &x.Colours, r.String)
 }
+
+// PhoenixBuilder specific struct.
+// Author: Liliya233
+//
+// Netease
+type ConfirmSkinUnknownEntry struct {
+	Unknown1 bool
+	Unknown2 uint64
+	Unknown3 uint64
+	Unknown4 string
+}
+
+// PhoenixBuilder specific func.
+// Author: Liliya233
+//
+// Netease
+func (x *ConfirmSkinUnknownEntry) Marshal(r IO) {
+	r.Bool(&x.Unknown1)
+	r.Uint64(&x.Unknown2)
+	r.Uint64(&x.Unknown3)
+	r.String(&x.Unknown4)
+}
