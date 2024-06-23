@@ -123,6 +123,16 @@ func SliceVarint32Length[T any, S ~*[]T, A PtrMarshaler[T]](r IO, x S) {
 	SliceOfLen[T, S, A](r, uint32(count), x)
 }
 
+// PhoenixBuilder specific func.
+// Author: Liliya233
+//
+// Netease: SliceVaruint32Length reads/writes a slice of T with a varuint32 prefix.
+func SliceVaruint32Length[T any, S ~*[]T, A PtrMarshaler[T]](r IO, x S) {
+	count := uint32(len(*x))
+	r.Varuint32(&count)
+	SliceOfLen[T, S, A](r, count, x)
+}
+
 // FuncSliceUint16Length reads/writes a slice of T using function f with a uint16 length prefix.
 func FuncSliceUint16Length[T any, S ~*[]T](r IO, x S, f func(*T)) {
 	count := uint16(len(*x))
