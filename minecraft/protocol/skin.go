@@ -161,6 +161,11 @@ func (x *SkinAnimation) Marshal(r IO) {
 	r.ByteSlice(&x.ImageData)
 	r.Uint32(&x.AnimationType)
 	r.Float32(&x.FrameCount)
+
+	// PhoenixBuilder specific comments.
+	// Author: Liliya233
+	//
+	// Sometimes will be removed?
 	r.Uint32(&x.ExpressionType)
 }
 

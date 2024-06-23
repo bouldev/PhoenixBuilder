@@ -47,6 +47,32 @@ const (
 	PlayerMovementModeServerWithRewind
 )
 
+// PhoenixBuilder specific struct.
+// Author: Liliya233
+//
+// The following fields are NetEase specific.
+type NeteaseUnknownPlayerListEntry struct {
+	Unknown1 bool
+	Unknown2 string
+	Unknown3 string
+	Unknown4 string
+	Unknown5 string
+	Unknown6 string
+}
+
+// PhoenixBuilder specific struct.
+// Author: Liliya233
+//
+// Marshal encodes/decodes a NeteaseUnknownPlayerListEntry.
+func (x *NeteaseUnknownPlayerListEntry) Marshal(r IO) {
+	r.Bool(&x.Unknown1)
+	r.String(&x.Unknown2)
+	r.String(&x.Unknown3)
+	r.String(&x.Unknown4)
+	r.String(&x.Unknown5)
+	r.String(&x.Unknown6)
+}
+
 // PlayerListEntry is an entry found in the PlayerList packet. It represents a single player using the UUID
 // found in the entry, and contains several properties such as the skin.
 type PlayerListEntry struct {
@@ -76,6 +102,16 @@ type PlayerListEntry struct {
 	Teacher bool
 	// Host specifies if the player that is added to the player list is the host of the game.
 	Host bool
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233, Happy2018new
+	//
+	// The following fields are NetEase specific.
+	Unknown1 bool
+	Unknown2 Optional[NeteaseUnknownPlayerListEntry]
+	Unknown3 Optional[NeteaseUnknownPlayerListEntry]
+	Unknown4 string
+	Unknown5 uint32
 }
 
 // Marshal encodes/decodes a PlayerListEntry.
@@ -89,6 +125,19 @@ func (x *PlayerListEntry) Marshal(r IO) {
 	Single(r, &x.Skin)
 	r.Bool(&x.Teacher)
 	r.Bool(&x.Host)
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase
+	{
+		r.Bool(&x.Unknown1)
+		OptionalMarshaler(r, &x.Unknown2)
+		OptionalMarshaler(r, &x.Unknown3)
+		// if something, then
+		// r.String(&x.Unknown4)
+		r.Uint32(&x.Unknown5)
+	}
 }
 
 // PlayerListRemoveEntry encodes/decodes a PlayerListEntry for removal from the list.

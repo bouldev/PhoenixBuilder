@@ -246,7 +246,7 @@ type StartGame struct {
 	//
 	// The following fields are NetEase specific.
 	Unknown1  int64
-	Unknown2  int64
+	Unknown2  int64 // Netease: they may be a UUID
 	Unknown3  int64
 	Unknown4  bool
 	Unknown5  bool
@@ -278,7 +278,7 @@ type StartGame struct {
 	Unknown31 bool
 	Unknown32 bool
 	Unknown33 bool
-	Unknown34 string
+	Unknown34 string // Netease: UUID string
 	Unknown35 bool
 	Unknown36 bool
 }
