@@ -27,10 +27,10 @@ type Mcstructure struct {
 	blockPalette             []string
 	blockPalette_blockStates []string
 	// ^ NOTE: All TAG_BYTE values are treated as booleans
-	blockPalette_blockData   []int16
-	foreground               []int16
-	background               []int16
-	blockNBT                 map[int]map[string]interface{}
+	blockPalette_blockData []int16
+	foreground             []int16
+	background             []int16
+	blockNBT               map[int]map[string]interface{}
 }
 
 /*
@@ -110,12 +110,12 @@ func SplitArea(beginPos BlockPos, endPos BlockPos, splitSizeX int32, splitSizeZ 
 }
 
 func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructure, error) {
-	blockPalette:=[]string{}
-	blockPalette_blockStates:=[]string{}
-	blockPalette_blockData:=[]int16{}
-	blockNBT:=map[int]map[string]interface{}{}
-	foreground:=[]int16{}
-	background:=[]int16{}
+	blockPalette := []string{}
+	blockPalette_blockStates := []string{}
+	blockPalette_blockData := []int16{}
+	blockNBT := map[int]map[string]interface{}{}
+	foreground := []int16{}
+	background := []int16{}
 	_, ok := structure["structure"]
 	if !ok {
 		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Failed on structure[\"structure\"]; structure = %#v", structure)
@@ -233,28 +233,20 @@ func GetMCStructureData(area Area, structure map[string]interface{}) (Mcstructur
 	}
 	// 这里要求 structure["structure"]["block_indices"] 的长度必须为 2
 	// 毕竟是由 前景层 和 背景层 的索引所制成的两张表
-	value_block_indices_0, normal := value_block_indices[0].([]interface{})
+	value_block_indices_0, normal := value_block_indices[0].([]int32)
 	if !normal {
 		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Failed on structure[\"structure\"][\"block_indices\"][0]; block_indices = %#v", value_block_indices)
 	}
-	for blockLocation_key, blockLocation := range value_block_indices_0 {
-		got, normal := blockLocation.(int32)
-		if !normal {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Failed on structure[\"structure\"][\"block_indices\"][0][%v]; block_indices[0] = %#v", blockLocation_key, value_block_indices[0])
-		}
-		foreground = append(foreground, int16(got))
+	for _, blockLocation := range value_block_indices_0 {
+		foreground = append(foreground, int16(blockLocation))
 	}
 	// 这里先拿前景层方块的索引表
-	value_block_indices_1, normal := value_block_indices[1].([]interface{})
+	value_block_indices_1, normal := value_block_indices[1].([]int32)
 	if !normal {
 		return Mcstructure{}, fmt.Errorf("GetMCStructureData: Failed on structure[\"structure\"][\"block_indices\"][1]; block_indices = %#v", value_block_indices)
 	}
-	for blockLocation_key, blockLocation := range value_block_indices_1 {
-		got, normal := blockLocation.(int32)
-		if !normal {
-			return Mcstructure{}, fmt.Errorf("GetMCStructureData: Failed on structure[\"structure\"][\"block_indices\"][1][%v]; block_indices[1] = %#v", blockLocation_key, value_block_indices[1])
-		}
-		background = append(background, int16(got))
+	for _, blockLocation := range value_block_indices_1 {
+		background = append(background, int16(blockLocation))
 	}
 	// 然后再去拿背景层方块的索引表
 	return Mcstructure{
