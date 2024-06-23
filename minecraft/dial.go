@@ -27,8 +27,10 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
+// PhoenixBuilder specific interface.
+// Author: LNSSPsd, Liliya233
 type Authenticator interface {
-	GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error)
+	GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, growthLevel int, err error)
 }
 
 // Dialer allows specifying specific settings for connection to a Minecraft server.
@@ -151,7 +153,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 
 	armoured_key, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 
-	address, chainData, err := d.Authenticator.GetAccess(ctx, armoured_key)
+	address, chainData, growthLevel, err := d.Authenticator.GetAccess(ctx, armoured_key)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +202,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	conn.disconnectOnUnknownPacket = d.DisconnectOnUnknownPackets
 
 	defaultIdentityData(&conn.identityData)
-	defaultClientData(address, conn.identityData.DisplayName, &conn.clientData)
+	defaultClientData(address, conn.identityData.DisplayName, &conn.clientData, growthLevel)
 
 	var request []byte
 	// We login as an Android device and this will show up in the 'titleId' field in the JWT chain, which
@@ -317,7 +319,13 @@ var skinResourcePatch []byte
 var skinGeometry []byte
 
 // defaultClientData edits the ClientData passed to have defaults set to all fields that were left unchanged.
-func defaultClientData(address, username string, d *login.ClientData) {
+func defaultClientData(
+	address, username string, d *login.ClientData,
+
+	// PhoenixBuilder specific fields.
+	// Author: Liliya233
+	growthLevel int,
+) {
 	rand2.Seed(time.Now().Unix())
 
 	d.ServerAddress = address
@@ -328,6 +336,13 @@ func defaultClientData(address, username string, d *login.ClientData) {
 	if d.GameVersion == "" {
 		d.GameVersion = protocol.CurrentVersion
 	}
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233, Happy2018new
+	if d.GrowthLevel != growthLevel {
+		d.GrowthLevel = growthLevel
+	}
+
 	if d.ClientRandomID == 0 {
 		d.ClientRandomID = rand2.Int63()
 	}
@@ -335,7 +350,10 @@ func defaultClientData(address, username string, d *login.ClientData) {
 		d.DeviceID = uuid.New().String()
 	}
 	if d.LanguageCode == "" {
-		d.LanguageCode = "en_GB"
+		// PhoenixBuilder specific changes.
+		// Author: Liliya233
+		d.LanguageCode = "zh_CN"
+		// d.LanguageCode = "en_GB"
 	}
 	if d.AnimatedImageData == nil {
 		d.AnimatedImageData = make([]login.SkinAnimation, 0)

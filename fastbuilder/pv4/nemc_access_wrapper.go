@@ -29,11 +29,11 @@ func NewAccessWrapper(Client *Client, ServerCode, ServerPassword, Token, usernam
 	}
 }
 
-func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, err error) {
+func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, growthLevel int, err error) {
 	pubKeyData := base64.StdEncoding.EncodeToString(publicKey)
 	chainAddr, ip, token, err := aw.Client.Auth(ctx, aw.ServerCode, aw.ServerPassword, pubKeyData, aw.Token, aw.Username, aw.Password)
 	if err != nil {
-		return "", "", err
+		return "", "", 0, err
 	}
 	if len(token) != 0 {
 		homedir, err := os.UserHomeDir()
@@ -47,13 +47,13 @@ func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (addre
 		// 0600: -rw-------
 		token_file, err := os.OpenFile(ptoken, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
-			return "", "", err
+			return "", "", 0, err
 		}
 		_, err = token_file.WriteString(token)
 		if err != nil {
-			return "", "", err
+			return "", "", 0, err
 		}
 		token_file.Close()
 	}
-	return ip, chainAddr, nil
+	return ip, chainAddr, aw.Client.GrowthLevel, nil
 }

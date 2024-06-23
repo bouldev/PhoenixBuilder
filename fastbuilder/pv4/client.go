@@ -34,6 +34,7 @@ func MakeDefaultClientOptions() *ClientOptions {
 
 type ClientInfo struct {
 	FBUCUsername string
+	GrowthLevel  int
 	RespondTo    string
 	Uid          string
 	CertSigning  bool
@@ -136,8 +137,10 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 	}
 	uc_username, _ := resp["username"].(string)
 	u_uid, _ := resp["uid"].(string)
+	bot_level, _ := resp["growth_level"].(float64)
 	client.FBUCUsername = uc_username
 	client.Uid = u_uid
+	client.GrowthLevel = int(bot_level)
 	str, _ := resp["chainInfo"].(string)
 	client.CertSigning = true
 	if signingKey, success := resp["privateSigningKey"].(string); success {

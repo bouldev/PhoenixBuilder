@@ -135,6 +135,13 @@ type ClientData struct {
 	DeviceID string `json:"DeviceId"`
 	// GameVersion is the game version of the player that attempted to join, for example '1.11.0'.
 	GameVersion string
+
+	// PhoenixBuilder specific fields.
+	// Author: Liliya233
+	//
+	// Netease: launcher level
+	GrowthLevel int
+
 	// GUIScale is the GUI scale of the player. It is by default 0, and is otherwise -1 or -2 for a smaller
 	// GUI scale than usual.
 	GUIScale int `json:"GuiScale"`
