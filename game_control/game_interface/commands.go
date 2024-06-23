@@ -35,7 +35,7 @@ func (g *GameInterface) SendSettingsCommand(
 	// for restrictive situation
 	if dimensional {
 		command = fmt.Sprintf(
-			`execute @a[name="%s"] ~ ~ ~ %s`,
+			`execute as @a[name="%s"] at @s run %s`,
 			g.ClientInfo.DisplayName,
 			command,
 		)

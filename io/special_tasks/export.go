@@ -66,7 +66,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 	teleportFn := func(x, z int) {
 		cmd := fmt.Sprintf("tp @s %v 128 %v", x, z)
 		env.GameInterface.SendCommand(cmd)
-		cmd = fmt.Sprintf("execute @s ~~~ spreadplayers ~ ~ 3 4 @s")
+		cmd = fmt.Sprintf("execute as @s at @s run spreadplayers ~ ~ 3 4 @s")
 		env.GameInterface.SendCommand(cmd)
 	}
 	feedChan := make(chan *fetcher.ChunkDefineWithPos, 1024)

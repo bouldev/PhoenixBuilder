@@ -188,7 +188,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
-							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
+							"execute as @a[name=\"%s\"] at @s run testforblock ~ ~ ~ air",
 							env.RespondTo,
 						),
 						ResourcesControl.CommandRequestOptions{
@@ -216,7 +216,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					}
 					env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
 					//env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
-					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondTo), configuration.ZeroId)
+					//env.GameInterface.SendCommand(fmt.Sprintf("execute as @a[name=\"%s\"] at @s run testforblock ~ ~ ~ air", env.RespondTo), configuration.ZeroId)
 				},
 			},
 			"begin": &FunctionChainItem{
@@ -229,7 +229,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
-							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
+							"execute as @a[name=\"%s\"] at @s run testforblock ~ ~ ~ air",
 							env.RespondTo,
 						),
 						ResourcesControl.CommandRequestOptions{
@@ -256,7 +256,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 						Z: pos[2],
 					}
 					env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
-					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondTo), configuration.ZeroId)
+					//env.GameInterface.SendCommand(fmt.Sprintf("execute as @a[name=\"%s\"] at @s run testforblock ~ ~ ~ air", env.RespondTo), configuration.ZeroId)
 				},
 			},
 			"end": &FunctionChainItem{
@@ -269,7 +269,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 					env.GameInterface.SendSettingsCommand("gamerule sendcommandfeedback true", false)
 					resp := env.GameInterface.SendCommandWithResponse(
 						fmt.Sprintf(
-							"execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air",
+							"execute as @a[name=\"%s\"] at @s run testforblock ~ ~ ~ air",
 							env.RespondTo,
 						),
 						ResourcesControl.CommandRequestOptions{
@@ -293,7 +293,7 @@ func InitPresetFunctions(fh *FunctionHolder) {
 						Z: pos[2],
 					}
 					env.GameInterface.Output(fmt.Sprintf("%s: %v", I18n.T(I18n.PositionGot), pos))
-					//env.GameInterface.SendCommand(fmt.Sprintf("execute @a[name=\"%s\"] ~ ~ ~ testforblock ~ ~ ~ air", env.RespondTo), configuration.ZeroId)
+					//env.GameInterface.SendCommand(fmt.Sprintf("execute as @a[name=\"%s\"] at @s run testforblock ~ ~ ~ air", env.RespondTo), configuration.ZeroId)
 				},
 			},
 		},
