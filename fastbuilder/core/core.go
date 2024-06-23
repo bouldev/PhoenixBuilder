@@ -224,12 +224,14 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 }
 
 func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.Authenticator) (conn *minecraft.Conn, err error) {
+	var dialer minecraft.Dialer
+	// prepare
 	if args.DebugMode {
 		conn = &minecraft.Conn{
 			DebugMode: true,
 		}
 	} else {
-		dialer := minecraft.Dialer{
+		dialer = minecraft.Dialer{
 			Authenticator: authenticator,
 		}
 		conn, err = dialer.DialContext(ctx, "raknet")
@@ -237,10 +239,23 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 	if err != nil {
 		return
 	}
+	// create connection
+	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
 	conn.WritePacket(&packet.ClientCacheStatus{
 		Enabled: false,
 	})
-	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
+	// get constant and send pre-login packet
+	if !args.DebugMode {
+		conn.WritePacket(&packet.NeteaseJson{
+			Data: []byte(
+				fmt.Sprintf(
+					`{"eventName":"LOGIN_UID","resid":"","uid":"%s"}`,
+					dialer.Authenticator.(*fbauth.AccessWrapper).Client.Uid,
+				),
+			),
+		})
+		fmt.Println(dialer.Authenticator.(*fbauth.AccessWrapper).Client.Uid)
+	}
 	conn.WritePacket(&packet.PyRpc{
 		Value:         py_rpc.Marshal(&py_rpc.SyncUsingMod{}),
 		OperationType: packet.PyRpcOperationTypeSend,
@@ -283,7 +298,9 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 			OperationType: packet.PyRpcOperationTypeSend,
 		})
 	}
+	// send netease related packet
 	return
+	// return
 }
 
 func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {

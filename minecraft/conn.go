@@ -144,6 +144,8 @@ type Conn struct {
 
 	additional chan packet.Packet
 
+	// PhoenixBuilder specific changes.
+	// Author: LNSSPsd
 	DebugMode bool
 }
 

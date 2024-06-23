@@ -49,6 +49,9 @@ type Dialer struct {
 	// object provided here is used, or a default one if left empty.
 	IdentityData login.IdentityData
 
+	// PhoenixBuilder specific changes.
+	// Author: LNSSPsd
+	//
 	// Authenticator towards netease's server
 	Authenticator
 
