@@ -64,11 +64,14 @@ func (pk *PlayerList) Marshal(io protocol.IO) {
 			}
 			protocol.SliceOfLen(io, uint32(len), &pk.Unknown2)
 			protocol.SliceOfLen(io, uint32(len), &pk.Unknown3)
-			// if something, then
-			// pk.Unknown4 = make([]string, len)
-			// for i := 0; i < len; i++ {
-			// 	io.String(&pk.Unknown4[i])
-			// }
+			/*
+				if something {
+					pk.Unknown4 = make([]string, len)
+					for i := 0; i < len; i++ {
+						io.String(&pk.Unknown4[i])
+					}
+				}
+			*/
 			pk.Unknown5 = make([]uint32, len)
 			for i := 0; i < len; i++ {
 				io.Uint32(&pk.Unknown5[i])

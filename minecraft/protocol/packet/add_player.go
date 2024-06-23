@@ -63,6 +63,15 @@ type AddPlayer struct {
 	// BuildPlatform is the build platform/device OS of the player that is about to be added, as it sent in
 	// the Login packet when joining.
 	BuildPlatform int32
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// The following fields are NetEase specific.
+	Unknown1 string
+	Unknown2 string
+	Unknown3 bool
+	Unknown4 bool
 }
 
 // ID ...
@@ -88,4 +97,18 @@ func (pk *AddPlayer) Marshal(io protocol.IO) {
 	protocol.Slice(io, &pk.EntityLinks)
 	io.String(&pk.DeviceID)
 	io.Int32(&pk.BuildPlatform)
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase
+	{
+		// Netease
+		// if something {
+		// 	io.String(&pk.Unknown1)
+		// 	io.String(&pk.Unknown2)
+		// 	io.Bool(&pk.Unknown3)
+		// 	io.Bool(&pk.Unknown4)
+		// }
+	}
 }

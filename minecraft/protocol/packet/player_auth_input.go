@@ -132,6 +132,17 @@ type PlayerAuthInput struct {
 	*/
 	InteractionModel uint32
 	// InteractionModel int32
+
+	/*
+		PhoenixBuilder specific changes.
+		Author: Liliya233
+
+		The following fields are NetEase specific.
+	*/
+	Unknown1 bool
+	Unknown2 bool
+	Unknown3 mgl32.Vec2
+	Unknown4 bool
 }
 
 // ID ...
@@ -153,8 +164,9 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	// Changes Maker: Liliya233
 	// Committed by Happy2018new.
 	{
-		io.Varuint32(&pk.InteractionModel)
 		// io.Varint32(&pk.InteractionModel)
+		io.Varuint32(&pk.InteractionModel)
+		io.Bool(&pk.Unknown1) // For Netease
 	}
 
 	if pk.PlayMode == PlayModeReality {
@@ -176,4 +188,14 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	}
 
 	io.Vec2(&pk.AnalogueMoveVector)
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase
+	{
+		io.Bool(&pk.Unknown2)
+		io.Vec2(&pk.Unknown3)
+		io.Bool(&pk.Unknown4)
+	}
 }
