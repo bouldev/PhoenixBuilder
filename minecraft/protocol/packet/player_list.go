@@ -26,11 +26,11 @@ type PlayerList struct {
 	// Author: Liliya233
 	//
 	// The following fields are NetEase specific.
-	Unknown1 []bool
-	Unknown2 []protocol.NeteaseUnknownPlayerListEntry
-	Unknown3 []protocol.NeteaseUnknownPlayerListEntry
-	Unknown4 []string
-	Unknown5 []uint32
+	Unknown1       []bool
+	Unknown2       []protocol.NeteaseUnknownPlayerListEntry
+	Unknown3       []protocol.NeteaseUnknownPlayerListEntry
+	Unknown4       []string
+	LauncherLevels []uint32 // launcher levels (1 - 50), such as "Diamond V", "Bedrock III", etc.
 }
 
 // ID ...
@@ -72,9 +72,9 @@ func (pk *PlayerList) Marshal(io protocol.IO) {
 					}
 				}
 			*/
-			pk.Unknown5 = make([]uint32, len)
+			pk.LauncherLevels = make([]uint32, len)
 			for i := 0; i < len; i++ {
-				io.Uint32(&pk.Unknown5[i])
+				io.Uint32(&pk.LauncherLevels[i])
 			}
 		}
 		/*
