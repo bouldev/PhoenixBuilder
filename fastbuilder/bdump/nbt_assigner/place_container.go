@@ -107,6 +107,8 @@ func (c *Container) FastWrite() error {
 
 // 放置一个容器并填充物品
 func (c *Container) WriteData() error {
+	api := c.BlockEntity.Interface.(*GameInterface.GameInterface)
+	// 初始化
 	if c.BlockEntity.AdditionalData.FastMode {
 		err := c.FastWrite()
 		if err != nil {
@@ -114,7 +116,12 @@ func (c *Container) WriteData() error {
 		}
 	}
 	// 针对 FastMode 模式的专门化处理
-	err := c.PlaceContainer()
+	err := api.AwaitChangesGeneral()
+	if err != nil {
+		return fmt.Errorf("WriteData: %v", err)
+	}
+	// 等待更改
+	err = c.PlaceContainer()
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}

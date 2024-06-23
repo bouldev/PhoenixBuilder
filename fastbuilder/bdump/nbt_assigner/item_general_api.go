@@ -75,7 +75,7 @@ func (i *ItemPackage) AddDisplayName() error {
 	// 初始化
 	resp, err := api.RenameItemByAnvil(
 		i.AdditionalData.Position,
-		`["direction": 0, "damage": "undamaged"]`,
+		`["direction"=0,"damage"="undamaged"]`,
 		5,
 		[]GameInterface.ItemRenamingRequest{
 			{

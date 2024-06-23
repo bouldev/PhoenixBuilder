@@ -296,7 +296,7 @@ func (c *Container) GetSubBlock(
 	if item.Enhancement != nil && len(item.Enhancement.DisplayName) != 0 {
 		resp, err := api.RenameItemByAnvil(
 			c.BlockEntity.AdditionalData.Position,
-			`["direction": 0, "damage": "undamaged"]`,
+			`["direction"=0,"damage"="undamaged"]`,
 			5,
 			[]GameInterface.ItemRenamingRequest{
 				{
@@ -670,7 +670,7 @@ func (c *Container) ItemPlanner(contents []GeneralItem) ([]GeneralItem, error) {
 		if len(request) > 0 {
 			result, err := api.RenameItemByAnvil(
 				c.BlockEntity.AdditionalData.Position,
-				`["direction": 0, "damage": "undamaged"]`,
+				`["direction"=0,"damage"="undamaged"]`,
 				5,
 				request,
 			)
