@@ -2,7 +2,7 @@ package describe
 
 import (
 	"fmt"
-	"phoenixbuilder/mirror/alter/snbt"
+	"phoenixbuilder/fastbuilder/alter/snbt"
 	"sort"
 	"strings"
 )

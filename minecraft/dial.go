@@ -145,6 +145,9 @@ func (d Dialer) DialTimeout(network string, timeout time.Duration) (*Conn, error
 	return d.DialContext(ctx, network)
 }
 
+// PhoenixBuilder specific func, which modified from orgin version.
+// Author: LNSSPsd, CMA2401PT, Liliya233, Happy2018new
+//
 // DialContext dials a Minecraft connection to the address passed over the network passed. The network is
 // typically "raknet". A Conn is returned which may be used to receive packets from and send packets to.
 // If a connection is not established before the context passed is cancelled, DialContext returns an error.
@@ -174,9 +177,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	}
 
 	/*
-		PhoenixBuilder specific changes.
-		Changes Maker: Liliya233
-		Committed by Happy2018new.
+		Delete by Liliya233.
 
 		var pong []byte
 		if pong, err = n.PingContext(ctx, address); err == nil {
