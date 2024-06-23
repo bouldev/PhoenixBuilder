@@ -43,6 +43,22 @@ func NewServerPool() Pool {
 	return p
 }
 
+// PhoenixBuilder specific changes.
+// Author: CMA2041PT, Happy2018new
+//
+// List all packets which include packets from server
+// and packets from client.
+func ListAllPackets() Pool {
+	p := Pool{}
+	for id, pk := range packetsFromClient {
+		p[id] = pk
+	}
+	for id, pk := range packetsFromServer {
+		p[id] = pk
+	}
+	return p
+}
+
 func init() {
 	// TODO: Remove packets from this list that are not sent by the server.
 	serverOriginating := map[uint32]func() Packet{
