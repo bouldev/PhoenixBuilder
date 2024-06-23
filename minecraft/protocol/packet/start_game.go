@@ -358,11 +358,6 @@ func (pk *StartGame) Marshal(io protocol.IO) {
 	io.Bool(&pk.ServerAuthoritativeInventory)
 	io.String(&pk.GameVersion)
 	io.NBT(&pk.PropertyData, nbt.NetworkLittleEndian)
-	io.Uint64(&pk.ServerBlockStateChecksum)
-	io.UUID(&pk.WorldTemplateID)
-	io.Bool(&pk.ClientSideGeneration)
-	io.Bool(&pk.UseBlockNetworkIDHashes)
-	io.Bool(&pk.ServerAuthoritativeSound)
 
 	// PhoenixBuilder specific changes.
 	// Author: Liliya233
@@ -405,5 +400,12 @@ func (pk *StartGame) Marshal(io protocol.IO) {
 		io.String(&pk.Unknown34)
 		io.Bool(&pk.Unknown35)
 		io.Bool(&pk.Unknown36)
+		/*
+			io.Uint64(&pk.ServerBlockStateChecksum)
+			io.UUID(&pk.WorldTemplateID)
+			io.Bool(&pk.ClientSideGeneration)
+			io.Bool(&pk.UseBlockNetworkIDHashes)
+			io.Bool(&pk.ServerAuthoritativeSound)
+		*/
 	}
 }
