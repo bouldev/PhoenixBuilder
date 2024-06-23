@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"phoenixbuilder/minecraft/nbt"
+	"phoenixbuilder/mirror/blocks"
 
 	"phoenixbuilder/minecraft/protocol"
 )
@@ -49,7 +50,7 @@ type blockPaletteEncoding struct{}
 func (blockPaletteEncoding) encode(buf *bytes.Buffer, v uint32) {
 	// Get the block state registered with the runtime IDs we have in the palette of the block storage
 	// as we need the name and data value to store.
-	name, props, _ := RuntimeIDToState(v)
+	name, props, _ := blocks.RuntimeIDToState(v)
 	_ = nbt.NewEncoderWithEncoding(buf, nbt.LittleEndian).Encode(blockEntry{Name: name, State: props, Version: CurrentBlockVersion})
 }
 func (blockPaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
@@ -57,13 +58,18 @@ func (blockPaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
 	if err := nbt.NewDecoderWithEncoding(buf, nbt.LittleEndian).Decode(&e); err != nil {
 		return 0, fmt.Errorf("error decoding block palette entry: %w", err)
 	}
-	// As of 1.18.30, many common block state names have been renamed for consistency and the old names are now aliases.
-	// This function checks if the entry has an alias and if so, returns the updated entry.
-	if updatedEntry, ok := upgradeAliasEntry(e); ok {
-		e = updatedEntry
-	}
 
-	v, ok := StateToRuntimeID(e.Name, e.State)
+	/*
+		Deprecated by Happy2018new.
+
+		// As of 1.18.30, many common block state names have been renamed for consistency and the old names are now aliases.
+		// This function checks if the entry has an alias and if so, returns the updated entry.
+		if updatedEntry, ok := upgradeAliasEntry(e); ok {
+			e = updatedEntry
+		}
+	*/
+
+	v, ok := blocks.BlockNameAndStateToRuntimeID(e.Name, e.State)
 	if !ok {
 		return 0, fmt.Errorf("cannot get runtime ID of block state %v{%+v}", e.Name, e.State)
 	}
@@ -118,12 +124,7 @@ type nemcNetworkEncoding struct {
 
 func (*nemcNetworkEncoding) network() byte { return 1 }
 func (*nemcNetworkEncoding) translate(nemcRID uint32) (mcRid uint32) {
-	// if nemcRID >= 6880 && nemcRID < 6882 {
-	// 	pterm.Error.Println(nemcRID, " -> ", NEMCRuntimeIDToStandardRuntimeID(nemcRID))
-
-	// }
-	// fmt.Print(RuntimeIDToLegacyBlock(NEMCRuntimeIDToStandardRuntimeID(nemcRID)))
-	return NEMCRuntimeIDToStandardRuntimeID(nemcRID)
+	return nemcRID
 }
 func (*nemcNetworkEncoding) encodePalette(buf *bytes.Buffer, p *Palette, _ paletteEncoding) {
 	panic("nemcNetworkEncoding.encodePalette not implement")

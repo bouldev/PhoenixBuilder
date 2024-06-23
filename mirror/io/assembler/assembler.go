@@ -5,6 +5,7 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
+	"phoenixbuilder/mirror/blocks"
 	"phoenixbuilder/mirror/chunk"
 	"phoenixbuilder/mirror/define"
 	"sync"
@@ -29,7 +30,7 @@ type Assembler struct {
 }
 
 func NewAssembler(sendPeriod time.Duration, validCacheTime time.Duration) *Assembler {
-	airRID, ok := chunk.StateToRuntimeID("minecraft:air", nil)
+	airRID, ok := blocks.BlockNameAndStateToRuntimeID("minecraft:air", nil)
 	if !ok {
 		panic("cannot find air runtime ID")
 	}

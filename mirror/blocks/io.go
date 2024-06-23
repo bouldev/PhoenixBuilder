@@ -24,6 +24,15 @@ func RuntimeIDToState(runtimeID uint32) (baseName string, properties map[string]
 	return block.ShortName(), block.States().ToNBT(), true
 }
 
+// Added by Happy2018new.
+func RuntimeIDToLegacyBlock(runtimeID uint32) (name string, data uint16, found bool) {
+	block := MC_CURRENT.BlockByRtid(runtimeID)
+	if block == nil {
+		return "", 0, false
+	}
+	return block.ShortName(), block.LegacyValue(), true
+}
+
 // coral_block ["coral_color":"yellow", "dead_bit":false] true
 func RuntimeIDToBlockNameWithStateStr(runtimeID uint32) (blockNameWithState string, found bool) {
 	block, found := RuntimeIDToBlock(runtimeID)

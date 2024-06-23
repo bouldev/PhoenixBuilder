@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/fastbuilder/types"
-	"phoenixbuilder/mirror/chunk"
+	"phoenixbuilder/mirror/blocks"
 	"strings"
 )
 
@@ -77,15 +77,15 @@ func get_block_states_from_legacy_block(
 	blockName string,
 	metaData uint16,
 ) (map[string]interface{}, error) {
-	standardRuntimeID, found := chunk.LegacyBlockToRuntimeID(blockName, metaData)
+	standardRuntimeID, found := blocks.LegacyBlockToRuntimeID(blockName, metaData)
 	if !found {
 		return nil, fmt.Errorf("get_block_states_from_legacy_block: Failed to get the runtimeID of block %s; metaData = %d", blockName, metaData)
 	}
-	generalBlock, found := chunk.RuntimeIDToBlock(standardRuntimeID)
+	generalBlock, found := blocks.RuntimeIDToBlock(standardRuntimeID)
 	if !found {
 		return nil, fmt.Errorf("get_block_states_from_legacy_block: Failed to converse StandardRuntimeID to NEMCRuntimeID; standardRuntimeID = %d, blockName = %s, metaData = %d", standardRuntimeID, blockName, metaData)
 	}
-	return generalBlock.Properties, nil
+	return generalBlock.States().ToNBT(), nil
 }
 
 // 取得名称为 blockName 且方块状态为 blockStates 的数据值(附加值) 。
@@ -94,15 +94,15 @@ func get_block_data_from_states(
 	blockName string,
 	blockStates map[string]interface{},
 ) (uint16, error) {
-	standardRuntimeID, found := chunk.StateToRuntimeID(blockName, blockStates)
+	standardRuntimeID, found := blocks.BlockNameAndStateToRuntimeID(blockName, blockStates)
 	if !found {
 		return 0, fmt.Errorf("get_block_data_from_states: Failed to get the runtimeID of block %s; blockStates = %#v", blockName, blockStates)
 	}
-	legacyBlock, found := chunk.RuntimeIDToLegacyBlock(standardRuntimeID)
+	_, blockData, found := blocks.RuntimeIDToLegacyBlock(standardRuntimeID)
 	if !found {
 		return 0, fmt.Errorf("get_block_data_from_states: Failed to converse StandardRuntimeID to NEMCRuntimeID; standardRuntimeID = %d, blockName = %s, blockStates = %#v", standardRuntimeID, blockName, blockStates)
 	}
-	return legacyBlock.Val, nil
+	return blockData, nil
 }
 
 // 将 types.Module 解析为 GeneralBlock

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"phoenixbuilder/minecraft/nbt"
+	"phoenixbuilder/mirror/blocks"
 	"phoenixbuilder/mirror/define"
 
 	"github.com/pterm/pterm"
@@ -83,7 +84,7 @@ func NEMCSubChunkDecode(data []byte) (int8, *SubChunk, []map[string]interface{},
 // DiskDecode decodes the data from a SerialisedData object into a chunk and returns it. If the data was
 // invalid, an error is returned.
 func DiskDecode(data SerialisedData, r define.Range) (*Chunk, error) {
-	air, ok := StateToRuntimeID("minecraft:air", nil)
+	air, ok := blocks.BlockNameAndStateToRuntimeID("minecraft:air", nil)
 	if !ok {
 		panic("cannot find air runtime ID")
 	}

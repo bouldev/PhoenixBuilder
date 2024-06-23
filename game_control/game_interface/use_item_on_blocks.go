@@ -25,7 +25,7 @@ type UseItemOnBlocks struct {
 此函数不会自动切换物品栏，也不会等待租赁服响应更改
 */
 func (g *GameInterface) ClickBlock(request UseItemOnBlocks) error {
-	blockRuntimeID, err := blockStatesToNEMCRuntimeID(
+	blockRuntimeID, err := blockStatesToRuntimeID(
 		request.BlockName,
 		request.BlockStates,
 	)
@@ -82,7 +82,7 @@ func (g *GameInterface) PlaceBlock(
 	request UseItemOnBlocks,
 	blockFace int32,
 ) error {
-	blockRuntimeID, err := blockStatesToNEMCRuntimeID(
+	blockRuntimeID, err := blockStatesToRuntimeID(
 		request.BlockName,
 		request.BlockStates,
 	)

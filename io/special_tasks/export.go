@@ -13,7 +13,7 @@ import (
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/minecraft/protocol/packet"
 	"phoenixbuilder/mirror"
-	"phoenixbuilder/mirror/chunk"
+	Blocks "phoenixbuilder/mirror/blocks"
 	"phoenixbuilder/mirror/define"
 	"phoenixbuilder/mirror/io/global"
 	"phoenixbuilder/mirror/io/lru"
@@ -137,7 +137,7 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 						fmt.Printf("WARNING %d %d %d not found\n", x, y, z)
 					}
 					//block, item:=blk.EncodeBlock()
-					block, static_item, _ := chunk.RuntimeIDToState(runtimeId)
+					block, static_item, _ := Blocks.RuntimeIDToState(runtimeId)
 					if block == "minecraft:air" {
 						continue
 					}
@@ -335,11 +335,11 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 						}
 					}
 					// it's ok to ignore "found", because it will set lb to air if not found
-					lb, _ := chunk.RuntimeIDToLegacyBlock(runtimeId)
+					name, blockData, _ := Blocks.RuntimeIDToLegacyBlock(runtimeId)
 					blocks[counter] = &types.Module{
 						Block: &types.Block{
-							Name: &lb.Name,
-							Data: uint16(lb.Val),
+							Name: &name,
+							Data: blockData,
 						},
 						CommandBlockData: cbdata,
 						ChestData:        chestData,

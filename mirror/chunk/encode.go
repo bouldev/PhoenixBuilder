@@ -29,7 +29,7 @@ func Encode(c *Chunk, e Encoding) SerialisedData {
 func encodeSubChunks(buf *bytes.Buffer, c *Chunk, e Encoding) (d SerialisedData) {
 	d.SubChunks = make([][]byte, len(c.sub))
 	for i, sub := range c.sub {
-		_, _ = buf.Write([]byte{SubChunkVersion, byte(len(sub.storages)), uint8(i + (c.r[0] >> 4))})
+		_, _ = buf.Write([]byte{byte(SubChunkVersion), byte(len(sub.storages)), uint8(i + (c.r[0] >> 4))})
 		for _, storage := range sub.storages {
 			encodePalettedStorage(buf, storage, e, BlockPaletteEncoding)
 		}

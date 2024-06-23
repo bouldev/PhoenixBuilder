@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"phoenixbuilder/fastbuilder/mcstructure"
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
-	"phoenixbuilder/mirror/chunk"
+	"phoenixbuilder/mirror/blocks"
 	"strings"
 )
 
@@ -108,15 +108,14 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 				if !normal {
 					return fmt.Errorf(`DecodeItemBasicData: Can not convert states_origin into map[string]interface{}; singleItem = %#v`, singleItem)
 				}
-				runtimeId, found := chunk.StateToRuntimeID(block_name_got, states_got)
+				runtimeId, found := blocks.BlockNameAndStateToRuntimeID(block_name_got, states_got)
 				if !found {
 					return fmt.Errorf(`DecodeItemBasicData: Could not convert legacy block to standard runtime id; singleItem = %#v`, singleItem)
 				}
-				legacyBlock, found := chunk.RuntimeIDToLegacyBlock(runtimeId)
+				_, g.Basic.MetaData, found = blocks.RuntimeIDToLegacyBlock(runtimeId)
 				if !found {
 					return fmt.Errorf(`DecodeItemBasicData: Could not convert standard runtime id to block states; singleItem = %#v`, singleItem)
 				}
-				g.Basic.MetaData = legacyBlock.Val
 			}
 		}
 		// Block["val"] or Block["states"]
