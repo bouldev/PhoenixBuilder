@@ -18,5 +18,9 @@ func (*AvailableActorIdentifiers) ID() uint32 {
 }
 
 func (pk *AvailableActorIdentifiers) Marshal(io protocol.IO) {
+	// PhoenixBuilder specific comments.
+	// Author: Liliya233
+	//
+	// Netease: io.NBT() can be used here
 	io.Bytes(&pk.SerialisedEntityIdentifiers)
 }

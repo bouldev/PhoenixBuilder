@@ -85,6 +85,11 @@ func init() {
 		IDUpdateBlock:       func() Packet { return &UpdateBlock{} },
 		IDAddPainting:       func() Packet { return &AddPainting{} },
 		IDTickSync:          func() Packet { return &TickSync{} },
+
+		// PhoenixBuilder specific changes.
+		// Author: Liliya233
+		IDLevelSoundEventV1: func() Packet { return &LevelSoundEventV1{} },
+
 		// ---
 		IDLevelEvent:           func() Packet { return &LevelEvent{} },
 		IDBlockEvent:           func() Packet { return &BlockEvent{} },
@@ -178,9 +183,14 @@ func init() {
 		IDUpdateSoftEnum:              func() Packet { return &UpdateSoftEnum{} },
 		IDNetworkStackLatency:         func() Packet { return &NetworkStackLatency{} },
 		// ---
-		IDScriptCustomEvent:           func() Packet { return &ScriptCustomEvent{} },
-		IDSpawnParticleEffect:         func() Packet { return &SpawnParticleEffect{} },
-		IDAvailableActorIdentifiers:   func() Packet { return &AvailableActorIdentifiers{} },
+		IDScriptCustomEvent:         func() Packet { return &ScriptCustomEvent{} },
+		IDSpawnParticleEffect:       func() Packet { return &SpawnParticleEffect{} },
+		IDAvailableActorIdentifiers: func() Packet { return &AvailableActorIdentifiers{} },
+
+		// PhoenixBuilder specific changes.
+		// Author: Liliya233
+		IDLevelSoundEventV2: func() Packet { return &LevelSoundEventV2{} },
+
 		IDNetworkChunkPublisherUpdate: func() Packet { return &NetworkChunkPublisherUpdate{} },
 		IDBiomeDefinitionList:         func() Packet { return &BiomeDefinitionList{} },
 		IDLevelSoundEvent:             func() Packet { return &LevelSoundEvent{} },
@@ -266,9 +276,41 @@ func init() {
 		IDTrimData:                      func() Packet { return &TrimData{} },
 		IDOpenSign:                      func() Packet { return &OpenSign{} },
 		IDAgentAnimation:                func() Packet { return &AgentAnimation{} },
+
 		// PhoenixBuilder specific changes.
-		// Author: LNSSPsd, Happy2018new
+		// Author: LNSSPsd, Liliya233, Happy2018new
 		IDPyRpc: func() Packet { return &PyRpc{} },
+
+		// PhoenixBuilder specific changes.
+		// Author: Liliya233
+		//
+		// The following packets are all the NetEase specific.
+		IDChangeModel:              func() Packet { return &ChangeModel{} },
+		IDStoreBuySucc:             func() Packet { return &StoreBuySucc{} },
+		IDNeteaseJson:              func() Packet { return &NeteaseJson{} },
+		IDChangeModelTexture:       func() Packet { return &ChangeModelTexture{} },
+		IDChangeModelOffset:        func() Packet { return &ChangeModelOffset{} },
+		IDChangeModelBind:          func() Packet { return &ChangeModelBind{} },
+		IDHungerAttr:               func() Packet { return &HungerAttr{} },
+		IDSetDimensionLocalTime:    func() Packet { return &SetDimensionLocalTime{} },
+		IDWithdrawFurnaceXp:        func() Packet { return &WithdrawFurnaceXp{} },
+		IDSetDimensionLocalWeather: func() Packet { return &SetDimensionLocalWeather{} },
+
+		// PhoenixBuilder specific changes.
+		// Author: Liliya233
+		//
+		// The following packets are all the NetEase specific.
+		IDCustomV1:             func() Packet { return &CustomV1{} },
+		IDCombine:              func() Packet { return &Combine{} },
+		IDVConnection:          func() Packet { return &VConnection{} },
+		IDTransport:            func() Packet { return &Transport{} },
+		IDCustomV2:             func() Packet { return &CustomV2{} },
+		IDConfirmSkin:          func() Packet { return &ConfirmSkin{} },
+		IDTransportNoCompress:  func() Packet { return &TransportNoCompress{} },
+		IDMobEffectV2:          func() Packet { return &MobEffectV2{} },
+		IDMobBlockActorChanged: func() Packet { return &MobBlockActorChanged{} },
+		IDChangeActorMotion:    func() Packet { return &ChangeActorMotion{} },
+		IDAnimateEmoteEntity:   func() Packet { return &AnimateEmoteEntity{} },
 	}
 	for id, pk := range serverOriginating {
 		RegisterPacketFromServer(id, pk)
@@ -348,8 +390,9 @@ func init() {
 		IDRequestNetworkSettings:          func() Packet { return &RequestNetworkSettings{} },
 		IDGameTestResults:                 func() Packet { return &GameTestResults{} },
 		IDOpenSign:                        func() Packet { return &OpenSign{} },
+
 		// PhoenixBuilder specific changes.
-		// Author: LNSSPsd, Happy2018new
+		// Author: LNSSPsd, Liliya233, Happy2018new
 		IDPyRpc: func() Packet { return &PyRpc{} },
 	}
 	for id, pk := range clientOriginating {

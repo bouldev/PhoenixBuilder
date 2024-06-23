@@ -62,17 +62,24 @@ type IO interface {
 	UnknownEnumOption(value any, enum string)
 	InvalidValue(value any, forField, reason string)
 
-	// PhoenixBuilder specific func.
-	// Changes Maker: Liliya233
-	// Committed by Happy2018new.
+	/*
+		PhoenixBuilder specific func.
+		Changes Maker: Liliya233
+		Committed by Happy2018new.
+	*/
 	USubChunkPos(x *SubChunkPos)
+	USoundPos(x *mgl32.Vec3)
+
 	// PhoenixBuilder specific func.
 	// Author: Happy2018new
 	NeteaseRGBA(x *color.RGBA)
-	// PhoenixBuilder specific func.
-	// Author: Liliya233, CMA2041PT, Happy2018new
-	//
-	// Netease's Python MsgPack
+
+	/*
+		PhoenixBuilder specific func.
+		Author: Liliya233, CMA2041PT, Happy2018new
+
+		Netease's Python MsgPack
+	*/
 	MsgPack(x *any)
 }
 

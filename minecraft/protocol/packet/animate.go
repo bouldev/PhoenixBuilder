@@ -29,6 +29,12 @@ type Animate struct {
 	EntityRuntimeID uint64
 	// BoatRowingTime ...
 	BoatRowingTime float32
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase specific field.
+	Unknown1 int64
 }
 
 // ID ...
@@ -41,5 +47,14 @@ func (pk *Animate) Marshal(io protocol.IO) {
 	io.Varuint64(&pk.EntityRuntimeID)
 	if pk.ActionType&0x80 != 0 {
 		io.Float32(&pk.BoatRowingTime)
+	}
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase specific.
+	// Note: AnimateActionCriticalHit == 4
+	if pk.ActionType == AnimateActionCriticalHit {
+		io.Varint64(&pk.Unknown1)
 	}
 }

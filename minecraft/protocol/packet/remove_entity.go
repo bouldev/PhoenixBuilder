@@ -7,8 +7,18 @@ import (
 // RemoveEntity is sent by the server to the client. Its function is not entirely clear: It does not remove an
 // entity in the sense of an in-game entity, but has to do with the ECS that Minecraft uses.
 type RemoveEntity struct {
-	// EntityNetworkID is the network ID of the entity that should be removed.
-	EntityNetworkID uint64
+	/*
+		PhoenixBuilder specific changes.
+		Changes Maker: Liliya233
+		Committed by Happy2018new.
+
+		EntityNetworkID is the network ID of the entity that should be removed.
+
+		For netease, the data type of this field is uint32,
+		but on standard minecraft, this is uint64.
+	*/
+	EntityNetworkID uint32
+	// EntityNetworkID uint64
 }
 
 // ID ...
@@ -17,5 +27,11 @@ func (pk *RemoveEntity) ID() uint32 {
 }
 
 func (pk *RemoveEntity) Marshal(io protocol.IO) {
-	io.Varuint64(&pk.EntityNetworkID)
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	{
+		io.Varuint32(&pk.EntityNetworkID)
+		// io.Varuint64(&pk.EntityNetworkID)
+	}
 }

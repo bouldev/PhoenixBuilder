@@ -31,6 +31,12 @@ type CompletedUsingItem struct {
 	// UseMethod is the method of the using of the item that was completed. It is one of the constants that
 	// may be found above.
 	UseMethod int32
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase specific field.
+	UnknownItem protocol.ItemInstance
 }
 
 // ID ...
@@ -41,4 +47,16 @@ func (*CompletedUsingItem) ID() uint32 {
 func (pk *CompletedUsingItem) Marshal(io protocol.IO) {
 	io.Int16(&pk.UsedItemID)
 	io.Int32(&pk.UseMethod)
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase
+	{
+		/*
+			if something {
+				io.ItemInstance(&pk.UnknownItem)
+			}
+		*/
+	}
 }

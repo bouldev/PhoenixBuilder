@@ -30,7 +30,15 @@ func (*PlaySound) ID() uint32 {
 
 func (pk *PlaySound) Marshal(io protocol.IO) {
 	io.String(&pk.SoundName)
-	io.SoundPos(&pk.Position)
+
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	{
+		io.USoundPos(&pk.Position)
+		// io.SoundPos(&pk.Position)
+	}
+
 	io.Float32(&pk.Volume)
 	io.Float32(&pk.Pitch)
 }

@@ -245,9 +245,9 @@ type StartGame struct {
 	// Author: Liliya233
 	//
 	// The following fields are NetEase specific.
-	Unknown1  int64
-	Unknown2  int64 // Netease: they may be a UUID
-	Unknown3  int64
+	Unknown1  uint64
+	Unknown2  uint64 // Netease: they may be a UUID
+	Unknown3  uint64
 	Unknown4  bool
 	Unknown5  bool
 	Unknown6  bool
@@ -369,9 +369,9 @@ func (pk *StartGame) Marshal(io protocol.IO) {
 	//
 	// NetEase
 	{
-		io.Int64(&pk.Unknown1)
-		io.Int64(&pk.Unknown2)
-		io.Int64(&pk.Unknown3)
+		io.Uint64(&pk.Unknown1)
+		io.Uint64(&pk.Unknown2)
+		io.Uint64(&pk.Unknown3)
 		io.Bool(&pk.Unknown4)
 		io.Bool(&pk.Unknown5)
 		io.Bool(&pk.Unknown6)

@@ -7,9 +7,20 @@ import (
 
 // AddVolumeEntity sends a volume entity's definition and metadata from server to client.
 type AddVolumeEntity struct {
-	// EntityRuntimeID is the runtime ID of the volume. The runtime ID is unique for each world session, and
-	// entities are generally identified in packets using this runtime ID.
-	EntityRuntimeID uint64
+	/*
+		PhoenixBuilder specific changes.
+		Changes Maker: Liliya233
+		Committed by Happy2018new.
+
+		EntityRuntimeID is the runtime ID of the volume. The runtime ID is unique for each world session, and
+		entities are generally identified in packets using this runtime ID.
+
+		For netease, the data type of this field is uint32,
+		but on standard minecraft, this is uint64.
+	*/
+	EntityRuntimeID uint32
+	// EntityRuntimeID uint64
+
 	// EntityMetadata is a map of entity metadata, which includes flags and data properties that alter in
 	// particular the way the volume functions or looks.
 	EntityMetadata map[string]any
@@ -33,7 +44,13 @@ func (*AddVolumeEntity) ID() uint32 {
 }
 
 func (pk *AddVolumeEntity) Marshal(io protocol.IO) {
-	io.Uint64(&pk.EntityRuntimeID)
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	{
+		io.Varuint32(&pk.EntityRuntimeID)
+		// io.Uint64(&pk.EntityRuntimeID)
+	}
 	io.NBT(&pk.EntityMetadata, nbt.NetworkLittleEndian)
 	io.String(&pk.EncodingIdentifier)
 	io.String(&pk.InstanceIdentifier)

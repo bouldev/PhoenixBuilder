@@ -58,7 +58,9 @@ func (pk *BookEdit) Marshal(io protocol.IO) {
 	case BookActionReplacePage, BookActionAddPage:
 		io.Uint8(&pk.PageNumber)
 		io.String(&pk.Text)
-		io.String(&pk.PhotoName)
+		// PhoenixBuilder specific changes.
+		// Author: Liliya233
+		// io.String(&pk.PhotoName)
 	case BookActionDeletePage:
 		io.Uint8(&pk.PageNumber)
 	case BookActionSwapPages:

@@ -43,6 +43,14 @@ func (*AgentAction) ID() uint32 {
 
 func (pk *AgentAction) Marshal(io protocol.IO) {
 	io.String(&pk.Identifier)
-	io.Varint32(&pk.Action)
+
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	{
+		io.Int32(&pk.Action)
+		// io.Varint32(&pk.Action)
+	}
+
 	io.ByteSlice(&pk.Response)
 }

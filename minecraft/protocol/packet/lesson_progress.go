@@ -15,8 +15,20 @@ const (
 type LessonProgress struct {
 	// Identifier is the identifier of the lesson that is being progressed.
 	Identifier string
-	// Action is the action the client should perform to show progress. This is one of the constants defined above.
-	Action uint8
+
+	/*
+		PhoenixBuilder specific changes.
+		Changes Maker: Liliya233
+		Committed by Happy2018new.
+
+		Action is the action the client should perform to show progress. This is one of the constants defined above.
+
+		For netease, the data type of this field is int32,
+		but on standard minecraft, this is uint8.
+	*/
+	Action int32
+	// Action uint8
+
 	// Score is the score the client should use when displaying the progress.
 	Score int32
 }
@@ -27,7 +39,13 @@ func (*LessonProgress) ID() uint32 {
 }
 
 func (pk *LessonProgress) Marshal(io protocol.IO) {
-	io.Uint8(&pk.Action)
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	{
+		io.Varint32(&pk.Action)
+		// io.Uint8(&pk.Action)
+	}
 	io.Varint32(&pk.Score)
 	io.String(&pk.Identifier)
 }

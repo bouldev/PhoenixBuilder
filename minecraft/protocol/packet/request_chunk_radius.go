@@ -11,9 +11,20 @@ type RequestChunkRadius struct {
 	// ChunkRadius is the requested chunk radius. This value is always the value set in the settings of the
 	// player.
 	ChunkRadius int32
-	// MaxChunkRadius is the maximum chunk radius that the player wants to receive. The reason for the client sending this
-	// is currently unknown.
-	MaxChunkRadius int32
+
+	/*
+		PhoenixBuilder specific changes.
+		Changes Maker: Liliya233
+		Committed by Happy2018new.
+
+		MaxChunkRadius is the maximum chunk radius that the player wants to receive. The reason for the client sending this
+		is currently unknown.
+
+		For netease, the data type of this field is uint8,
+		but on standard minecraft, this is int32.
+	*/
+	MaxChunkRadius uint8
+	// MaxChunkRadius int32
 }
 
 // ID ...
@@ -23,5 +34,12 @@ func (*RequestChunkRadius) ID() uint32 {
 
 func (pk *RequestChunkRadius) Marshal(io protocol.IO) {
 	io.Varint32(&pk.ChunkRadius)
-	io.Varint32(&pk.MaxChunkRadius)
+
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	{
+		io.Uint8(&pk.MaxChunkRadius)
+		// io.Varint32(&pk.MaxChunkRadius)
+	}
 }

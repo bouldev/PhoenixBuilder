@@ -34,8 +34,20 @@ type SubChunkEntry struct {
 	RawPayload []byte
 	// HeightMapType is always one of the constants defined in the HeightMapData constants.
 	HeightMapType byte
-	// HeightMapData is the data for the height map.
-	HeightMapData []int8
+
+	/*
+		PhoenixBuilder specific changes.
+		Changes Maker: Liliya233
+		Committed by Happy2018new.
+
+		HeightMapData is the data for the height map.
+
+		For netease, the data type of this field is []uint8,
+		but on standard minecraft, this is []int8.
+	*/
+	HeightMapData []uint8
+	// HeightMapData []int8
+
 	// BlobHash is the hash of the blob.
 	BlobHash uint64
 }
@@ -49,7 +61,13 @@ func (x *SubChunkEntry) Marshal(r IO) {
 	}
 	r.Uint8(&x.HeightMapType)
 	if x.HeightMapType == HeightMapDataHasData {
-		FuncSliceOfLen(r, 256, &x.HeightMapData, r.Int8)
+		// PhoenixBuilder specific changes.
+		// Changes Maker: Liliya233
+		// Committed by Happy2018new.
+		{
+			FuncSliceOfLen(r, 256, &x.HeightMapData, r.Uint8)
+			// FuncSliceOfLen(r, 256, &x.HeightMapData, r.Int8)
+		}
 	}
 	r.Uint64(&x.BlobHash)
 }
@@ -61,16 +79,41 @@ func SubChunkEntryNoCache(r IO, x *SubChunkEntry) {
 	r.ByteSlice(&x.RawPayload)
 	r.Uint8(&x.HeightMapType)
 	if x.HeightMapType == HeightMapDataHasData {
-		FuncSliceOfLen(r, 256, &x.HeightMapData, r.Int8)
+		// PhoenixBuilder specific changes.
+		// Changes Maker: Liliya233
+		// Committed by Happy2018new.
+		{
+			FuncSliceOfLen(r, 256, &x.HeightMapData, r.Uint8)
+			// FuncSliceOfLen(r, 256, &x.HeightMapData, r.Int8)
+		}
 	}
 }
 
-// SubChunkOffset represents an offset from the base position of another sub chunk.
-type SubChunkOffset [3]int8
+/*
+PhoenixBuilder specific changes.
+Changes Maker: Liliya233
+Committed by Happy2018new.
+
+SubChunkOffset represents an offset from the base position of another sub chunk.
+
+For netease, the data type of this field is [3]uint8,
+but on standard minecraft, this is [3]int8.
+*/
+type SubChunkOffset [3]uint8 // [3]int8
 
 // Marshal encodes/decodes a SubChunkOffset.
 func (x *SubChunkOffset) Marshal(r IO) {
-	r.Int8(&x[0])
-	r.Int8(&x[1])
-	r.Int8(&x[2])
+	// PhoenixBuilder specific changes.
+	// Changes Maker: Liliya233
+	// Committed by Happy2018new.
+	{
+		r.Uint8(&x[0])
+		r.Uint8(&x[1])
+		r.Uint8(&x[2])
+		/*
+			r.Int8(&x[0])
+			r.Int8(&x[1])
+			r.Int8(&x[2])
+		*/
+	}
 }

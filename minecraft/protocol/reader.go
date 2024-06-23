@@ -179,6 +179,16 @@ func (r *Reader) SoundPos(x *mgl32.Vec3) {
 	*x = mgl32.Vec3{float32(b[0]) / 8, float32(b[1]) / 8, float32(b[2]) / 8}
 }
 
+// PhoenixBuilder specific func.
+// Author: Liliya233
+//
+// Netease
+func (r *Reader) USoundPos(x *mgl32.Vec3) {
+	var b BlockPos
+	r.UBlockPos(&b)
+	*x = mgl32.Vec3{float32(b[0]) / 8, float32(b[1]) / 8, float32(b[2]) / 8}
+}
+
 // ByteFloat reads a rotational float32 from a single byte.
 func (r *Reader) ByteFloat(x *float32) {
 	var v uint8

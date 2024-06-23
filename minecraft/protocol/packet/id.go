@@ -24,7 +24,13 @@ const (
 	IDUpdateBlock
 	IDAddPainting
 	IDTickSync
-	_
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// Netease: new packet
+	IDLevelSoundEventV1
+
 	IDLevelEvent
 	IDBlockEvent
 	IDActorEvent
@@ -55,7 +61,13 @@ const (
 	IDCraftingData
 	IDCraftingEvent
 	IDGUIDataPickItem
+
+	// PhoenixBuilder specific comments.
+	// Author: Liliya233
+	//
+	// Netease: missing
 	IDAdventureSettings
+
 	IDBlockActorData
 	IDPlayerInput
 	IDLevelChunk
@@ -117,10 +129,22 @@ const (
 	IDUpdateSoftEnum
 	IDNetworkStackLatency
 	_
+
+	// PhoenixBuilder specific comments.
+	// Author: Liliya233
+	//
+	// Netease: missing
 	IDScriptCustomEvent
+
 	IDSpawnParticleEffect
 	IDAvailableActorIdentifiers
-	_
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// Netease: new packet
+	IDLevelSoundEventV2
+
 	IDNetworkChunkPublisherUpdate
 	IDBiomeDefinitionList
 	IDLevelSoundEvent
@@ -130,8 +154,18 @@ const (
 	IDAddEntity
 	IDRemoveEntity
 	IDClientCacheStatus
-	IDMapCreateLockedCopy
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// Netease: 131 -> 130
 	IDOnScreenTextureAnimation
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// Netease: 130 -> 131
+	IDMapCreateLockedCopy
+
 	IDStructureTemplateDataRequest
 	IDStructureTemplateDataResponse
 	_
@@ -173,7 +207,13 @@ const (
 	IDEducationResourceURI
 	IDCreatePhoto
 	IDUpdateSubChunkBlocks
+
+	// PhoenixBuilder specific comments.
+	// Author: Liliya233
+	//
+	// Netease: missing
 	IDPhotoInfoRequest
+
 	IDSubChunk
 	IDSubChunkRequest
 	IDClientStartItemCooldown
@@ -197,23 +237,52 @@ const (
 	IDGameTestRequest
 	IDGameTestResults
 	IDUpdateClientInputLocks
+
+	// PhoenixBuilder specific comments.
+	// Author: Liliya233
+	//
+	// Netease: missing
 	IDClientCheatAbility
+
 	IDCameraPresets
 	IDUnlockedRecipes
 
 	// PhoenixBuilder specific changes.
-	// Author: LNSSPsd, Liliya233
+	// Author: LNSSPsd, Liliya233, Happy2018new
 	IDPyRpc
 
 	// PhoenixBuilder specific changes.
-	// Changes Maker: Liliya233
-	// Committed by Happy2018new.
-	//
-	// Netease: 301 -> 300
-	IDCameraInstruction = iota + 100
+	// Author: Liliya233
+	IDChangeModel              // Netease: new packet
+	IDStoreBuySucc             // Netease: new packet
+	IDNeteaseJson              // Netease: new packet
+	IDChangeModelTexture       // Netease: new packet
+	IDChangeModelOffset        // Netease: new packet
+	IDChangeModelBind          // Netease: new packet
+	IDHungerAttr               // Netease: new packet
+	IDSetDimensionLocalTime    // Netease: new packet
+	IDWithdrawFurnaceXp        // Netease: new packet
+	IDSetDimensionLocalWeather // Netease: new packet
 
-	IDCompressedBiomeDefinitionList
-	IDTrimData
-	IDOpenSign
-	IDAgentAnimation
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	IDCustomV1             = iota + 13 // Netease: new packet
+	IDCombine                          // Netease: new packet
+	IDVConnection                      // Netease: new packet
+	IDTransport                        // Netease: new packet
+	IDCustomV2                         // Netease: new packet
+	IDConfirmSkin                      // Netease: new packet
+	IDTransportNoCompress              // Netease: new packet
+	IDMobEffectV2                      // Netease: new packet
+	IDMobBlockActorChanged             // Netease: new packet
+	IDChangeActorMotion                // Netease: new packet
+	IDAnimateEmoteEntity               // Netease: new packet
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	IDCameraInstruction             = iota + 79 // Netease: 301 -> 300
+	IDCompressedBiomeDefinitionList             // Netease: 302 -> 301
+	IDTrimData                                  // Netease: 303 -> 302
+	IDOpenSign                                  // Netease: 304 -> 303
+	IDAgentAnimation                            // Netease: 305 -> 304
 )

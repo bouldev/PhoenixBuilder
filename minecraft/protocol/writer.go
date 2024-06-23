@@ -148,6 +148,15 @@ func (w *Writer) SoundPos(x *mgl32.Vec3) {
 	w.BlockPos(&b)
 }
 
+// PhoenixBuilder specific func.
+// Author: Liliya233
+//
+// Netease
+func (w *Writer) USoundPos(x *mgl32.Vec3) {
+	b := BlockPos{int32((*x)[0] * 8), int32((*x)[1] * 8), int32((*x)[2] * 8)}
+	w.UBlockPos(&b)
+}
+
 // RGBA writes a color.RGBA x as a uint32 to the underlying buffer.
 func (w *Writer) RGBA(x *color.RGBA) {
 	val := uint32(x.R) | uint32(x.G)<<8 | uint32(x.B)<<16 | uint32(x.A)<<24
