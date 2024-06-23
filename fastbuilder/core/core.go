@@ -254,7 +254,6 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 				),
 			),
 		})
-		fmt.Println(dialer.Authenticator.(*fbauth.AccessWrapper).Client.Uid)
 	}
 	conn.WritePacket(&packet.PyRpc{
 		Value:         py_rpc.Marshal(&py_rpc.SyncUsingMod{}),
