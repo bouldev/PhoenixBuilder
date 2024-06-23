@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
-	"neo-omega-kernel/neomega/blocks/block_set"
-	"neo-omega-kernel/neomega/blocks/convertor"
-	"neo-omega-kernel/neomega/blocks/gen_map_neo/step0_nemc_blocks_liliya"
-	"neo-omega-kernel/neomega/blocks/gen_map_neo/step2_add_standard_mc_converts"
-	"neo-omega-kernel/neomega/blocks/gen_map_neo/step3_add_schem_mapping"
 	"os"
+	"phoenixbuilder/mirror/blocks/block_set"
+	"phoenixbuilder/mirror/blocks/convertor"
+	"phoenixbuilder/mirror/blocks/gen_map_neo/step0_nemc_blocks_liliya"
+	"phoenixbuilder/mirror/blocks/gen_map_neo/step2_add_standard_mc_converts"
+	"phoenixbuilder/mirror/blocks/gen_map_neo/step3_add_schem_mapping"
 
 	"github.com/andybalholm/brotli"
 )

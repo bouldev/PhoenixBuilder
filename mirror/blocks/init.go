@@ -5,9 +5,9 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
-	"neo-omega-kernel/neomega/blocks/block_set"
-	"neo-omega-kernel/neomega/blocks/convertor"
-	"neo-omega-kernel/neomega/blocks/describe"
+	"phoenixbuilder/mirror/blocks/block_set"
+	"phoenixbuilder/mirror/blocks/convertor"
+	"phoenixbuilder/mirror/blocks/describe"
 
 	"github.com/andybalholm/brotli"
 )

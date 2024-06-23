@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/describe"
+	"phoenixbuilder/mirror/blocks/describe"
 	"strconv"
 	"strings"
 )

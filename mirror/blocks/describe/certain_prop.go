@@ -2,7 +2,7 @@ package describe
 
 import (
 	"fmt"
-	"neo-omega-kernel/neomega/alter/snbt"
+	"phoenixbuilder/mirror/alter/snbt"
 	"sort"
 	"strings"
 )

@@ -4,9 +4,9 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/block_set"
-	"neo-omega-kernel/neomega/blocks/describe"
 	"os"
+	"phoenixbuilder/mirror/blocks/block_set"
+	"phoenixbuilder/mirror/blocks/describe"
 	"sort"
 	"strings"
 )

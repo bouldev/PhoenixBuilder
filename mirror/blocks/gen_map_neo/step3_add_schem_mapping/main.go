@@ -3,8 +3,8 @@ package step3_add_schem_mapping
 import (
 	"encoding/json"
 	"fmt"
-	"neo-omega-kernel/neomega/blocks/convertor"
-	"neo-omega-kernel/neomega/blocks/describe"
+	"phoenixbuilder/mirror/blocks/convertor"
+	"phoenixbuilder/mirror/blocks/describe"
 	"strings"
 )
 

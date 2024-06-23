@@ -1,6 +1,6 @@
 package block_set
 
-import "neo-omega-kernel/neomega/blocks/convertor"
+import "phoenixbuilder/mirror/blocks/convertor"
 
 func (bs *BlockSet) CreateEmptyConvertor() *convertor.ToNEMCConvertor {
 	c := convertor.NewToNEMCConverter(bs.unknownRuntimeID, bs.airRuntimeID)

@@ -1,7 +1,7 @@
 package convertor
 
 import (
-	"neo-omega-kernel/neomega/blocks/describe"
+	"phoenixbuilder/mirror/blocks/describe"
 	"sync"
 )
 
