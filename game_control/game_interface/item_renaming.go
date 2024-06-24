@@ -162,7 +162,7 @@ func (g *GameInterface) RenameItem(
 		placeStackRequestAction := protocol.PlaceStackRequestAction{}
 		placeStackRequestAction.Count = byte(itemDatas.Stack.Count)
 		placeStackRequestAction.Source = protocol.StackRequestSlotInfo{
-			ContainerID:    0x3c,
+			ContainerID:    0x3d,
 			Slot:           0x32,
 			StackNetworkID: newRequestID,
 		}
@@ -194,6 +194,7 @@ func (g *GameInterface) RenameItem(
 						&placeStackRequestAction,
 					},
 					FilterStrings: []string{name},
+					FilterCause:   protocol.FilterCauseAnvilText,
 				},
 			},
 		}
