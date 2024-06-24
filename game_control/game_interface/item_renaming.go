@@ -227,18 +227,6 @@ func (g *GameInterface) RenameItem(
 						1: AirItem,
 					},
 				},
-				0x1: {
-					WindowID: uint32(container_opening_data.WindowID),
-					ChangeResult: map[uint8]protocol.ItemInstance{
-						2: AirItem,
-					},
-				},
-				0x3c: {
-					WindowID: uint32(container_opening_data.WindowID),
-					ChangeResult: map[uint8]protocol.ItemInstance{
-						0x32: AirItem,
-					},
-				},
 			},
 		)
 		if err != nil {
