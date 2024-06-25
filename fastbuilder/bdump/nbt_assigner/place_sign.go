@@ -168,8 +168,8 @@ func (s *Sign) WriteData() error {
 	if resp.Error != nil {
 		return fmt.Errorf("WriteData: %v", resp.Error)
 	}
-	// 清空快捷栏 0 以防止当前手持蜜脾，
-	// 然后之后告示牌后导致告示牌被提前封装
+	// 清空快捷栏 0 以防止稍后在手持蜜脾的情况下点击告示牌，
+	// 因为用 蜜脾 点击告示牌会导致告示牌被封装
 	err = api.ClickBlock(GameInterface.UseItemOnBlocks{
 		HotbarSlotID: 0,
 		BlockPos:     s.BlockEntity.AdditionalData.Position,
