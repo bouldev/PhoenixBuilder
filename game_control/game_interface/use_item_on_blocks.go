@@ -24,7 +24,7 @@ position 不一定需要是真实的，
 客户端可以上传欺骗性的数据，
 服务器不会对它们进行验证。
 
-该函数这在通常情况下被用于十分精细的操作，
+该函数在通常情况下被用于十分精细的操作，
 例如为告示牌的特定面附加发光效果。
 
 此函数不会自动切换物品栏，也不会等待租赁服响应更改
@@ -35,7 +35,7 @@ func (g *GameInterface) ClickBlockWitchPlayerPosition(
 ) error {
 	err := g.clickBlockWitchPlayerPosition(request, position)
 	if err != nil {
-		return fmt.Errorf("ClickBlockWitchClickedPosition: %v", err)
+		return fmt.Errorf("ClickBlockWitchPlayerPosition: %v", err)
 	}
 	return nil
 }
