@@ -21,6 +21,13 @@ const (
 	ContainerRecipeItems
 	ContainerRecipeSearch
 	ContainerRecipeSearchBar
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// Netease: Unknown extra container type between 14 and 22
+	_
+
 	ContainerRecipeEquipment
 	ContainerRecipeBook
 	ContainerEnchantingInput

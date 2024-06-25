@@ -162,7 +162,7 @@ func (g *GameInterface) RenameItem(
 		placeStackRequestAction := protocol.PlaceStackRequestAction{}
 		placeStackRequestAction.Count = byte(itemDatas.Stack.Count)
 		placeStackRequestAction.Source = protocol.StackRequestSlotInfo{
-			ContainerID:    0x3d,
+			ContainerID:    protocol.ContainerCreatedOutput, // [NEMC 1.20.10] 60 -> 61 (Added by Happy2018new)
 			Slot:           0x32,
 			StackNetworkID: newRequestID,
 		}
