@@ -206,7 +206,7 @@ func (s *Sign) WriteData() error {
 			backText, _ := DecodeVarRGBA(s.SignData.BackText.SignTextColor)
 			bestFrontColor = SearchForBestColor(frontRGBA, DefaultDyeColor)
 			bestBackColorTemp := SearchForBestColor(backText, DefaultDyeColor)
-			bestBackColor = &(bestBackColorTemp)
+			bestBackColor = &bestBackColorTemp
 		} else {
 			rgba, _ := DecodeVarRGBA(s.LegacySignData.SignTextColor)
 			bestFrontColor = SearchForBestColor(rgba, DefaultDyeColor)

@@ -52,6 +52,7 @@ const (
 //
 // The following fields are NetEase specific.
 type NeteaseUnknownPlayerListEntry struct {
+	HasValue bool // Netease: whether the entry has a value or not.
 	Unknown1 bool
 	Unknown2 string
 	Unknown3 string
@@ -65,8 +66,7 @@ type NeteaseUnknownPlayerListEntry struct {
 //
 // Marshal encodes/decodes a NeteaseUnknownPlayerListEntry.
 func (x *NeteaseUnknownPlayerListEntry) Marshal(r IO) {
-	var b bool
-	if r.Bool(&b); b {
+	if r.Bool(&x.HasValue); x.HasValue {
 		r.Bool(&x.Unknown1)
 		r.String(&x.Unknown2)
 		r.String(&x.Unknown3)

@@ -26,9 +26,9 @@ type PlayerList struct {
 	// Author: Liliya233
 	//
 	// The following fields are NetEase specific.
-	Unknown1     []bool
+	Unknown1     []protocol.NeteaseUnknownPlayerListEntry
 	Unknown2     []protocol.NeteaseUnknownPlayerListEntry
-	Unknown3     []protocol.NeteaseUnknownPlayerListEntry
+	Unknown3     []string
 	Unknown4     []string
 	GrowthLevels []uint32 // launcher levels (1 - 50), such as "Diamond V", "Bedrock III", etc.
 }
@@ -58,14 +58,9 @@ func (pk *PlayerList) Marshal(io protocol.IO) {
 				io.Bool(&pk.Entries[i].Skin.Trusted)
 			}
 			// Netease
-			protocol.FuncSliceOfLen(io, uint32(len), &pk.Unknown1, io.Bool)
+			protocol.SliceOfLen(io, uint32(len), &pk.Unknown1)
 			protocol.SliceOfLen(io, uint32(len), &pk.Unknown2)
-			protocol.SliceOfLen(io, uint32(len), &pk.Unknown3)
-			/*
-				if something {
-					protocol.FuncSliceOfLen(io, uint32(len), &pk.Unknown4, io.String)
-				}
-			*/
+			protocol.FuncSliceOfLen(io, uint32(len), &pk.Unknown3, io.String)
 			protocol.FuncSliceOfLen(io, uint32(len), &pk.GrowthLevels, io.Uint32)
 		}
 		/*
