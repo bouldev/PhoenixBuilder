@@ -202,14 +202,14 @@ func (s *Sign) WriteData() error {
 		}
 		// 初始化
 		if s.IsNotLegacySignBlock {
-			frontRGBA, _ := DecodeVarRGBA(s.SignData.FrontText.SignTextColor)
-			backText, _ := DecodeVarRGBA(s.SignData.BackText.SignTextColor)
-			bestFrontColor = SearchForBestColor(frontRGBA, DefaultDyeColor)
-			bestBackColorTemp := SearchForBestColor(backText, DefaultDyeColor)
+			frontRGB, _ := DecodeVarRGBA(s.SignData.FrontText.SignTextColor)
+			backRGB, _ := DecodeVarRGBA(s.SignData.BackText.SignTextColor)
+			bestFrontColor = SearchForBestColor(frontRGB, DefaultDyeColor)
+			bestBackColorTemp := SearchForBestColor(backRGB, DefaultDyeColor)
 			bestBackColor = &bestBackColorTemp
 		} else {
-			rgba, _ := DecodeVarRGBA(s.LegacySignData.SignTextColor)
-			bestFrontColor = SearchForBestColor(rgba, DefaultDyeColor)
+			rgb, _ := DecodeVarRGBA(s.LegacySignData.SignTextColor)
+			bestFrontColor = SearchForBestColor(rgb, DefaultDyeColor)
 		}
 		// 确定告示牌各面的颜色
 		if bestFrontColor != [3]uint8{0, 0, 0} {
