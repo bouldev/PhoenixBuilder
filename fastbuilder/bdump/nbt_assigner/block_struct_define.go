@@ -115,8 +115,36 @@ var ErrNotASupportedContainer error = fmt.Errorf("getContainerContents: Not a su
 
 // ------------------------- sign -------------------------
 
+// 描述单个告示牌(旧版)中已解码的部分
+type LegacySignData SignText
+
+// 描述单个告示牌中已解码的部分
+type SignData struct {
+	FrontText SignText // FrontText(TAG_Compound)
+	BackText  SignText // FrontText(TAG_Compound)
+	IsWaxed   bool     // IsWaxed(TAG_Byte) = 0
+}
+
+// 描述单个告示牌 FrontText 或 BackText 字段中已解码的部分
+type SignText struct {
+	IgnoreLighting bool  // IgnoreLighting(TAG_Byte) = 0
+	SignTextColor  int32 // SignTextColor(TAG_Int) = -16777216
+}
+
 // 描述一个告示牌
 type Sign struct {
 	// 该方块实体的详细数据
 	BlockEntity *BlockEntity
+	// 存放已解码的告示牌(旧版)数据。
+	// 如果当前告示牌不是旧版，
+	// 则该字段不存在
+	LegacySignData *LegacySignData
+	// 存放已解码的告示牌数据。
+	// 如果当前告示牌是旧版，
+	// 则该字段不存在
+	SignData *SignData
+	// 指定当前告示牌是否是悬挂式
+	IsHangingSignBlock bool
+	// 指定当前告示牌是否是非旧版
+	IsNotLegacySignBlock bool
 }

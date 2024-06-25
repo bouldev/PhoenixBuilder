@@ -69,7 +69,6 @@ func Slice[V0 any, V1 any](slice []V0, var_name string, path string) (
 	// return
 }
 
-// Convert value to type V
 /*
 将 value 转换为类型为 V 的变量。
 

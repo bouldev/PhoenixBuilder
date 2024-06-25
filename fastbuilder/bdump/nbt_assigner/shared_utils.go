@@ -3,6 +3,7 @@ package NBTAssigner
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/fastbuilder/types"
 	"phoenixbuilder/mirror/blocks"
@@ -171,4 +172,32 @@ func (i *ItemPackage) ParseItemFromNBT(singleItem ItemOrigin) error {
 	// 则物品组件数据将被丢弃
 	return nil
 	// return
+}
+
+// 计算两个 RGB 颜色 colorA 和 colorB 的加权欧式距离
+func CalculateColorDistance(colorA [3]uint8, colorB [3]uint8) float64 {
+	rmean := float64(colorA[0]+colorB[0]) / 2
+	deltaR := float64(colorA[0] - colorB[0])
+	deltaG := float64(colorA[1] - colorB[1])
+	deltaB := float64(colorA[2] - colorB[2])
+	return math.Sqrt((2+rmean/256)*deltaR*deltaR + 4*deltaG*deltaG + (2+(255-rmean)/256)*deltaB*deltaB)
+}
+
+// 从 mapping 中选出距离 color 最近的 RGB 颜色
+func SearchForBestColor(color [3]uint8, mapping [][3]uint8) (result [3]uint8) {
+	distance := math.Inf(1)
+	for _, value := range mapping {
+		if deltaC := CalculateColorDistance(color, value); deltaC < distance {
+			distance = deltaC
+			result = value
+		}
+	}
+	return
+}
+
+// 从 x 解码一个 RGBA 颜色
+func DecodeVarRGBA(x int32) (RGB [3]uint8, RGBA [4]uint8) {
+	R, G, B := uint8(x>>16), uint8(x>>8), uint8(x)
+	A := uint8(x >> 24)
+	return [3]uint8{R, G, B}, [4]uint8{R, G, B, A}
 }
