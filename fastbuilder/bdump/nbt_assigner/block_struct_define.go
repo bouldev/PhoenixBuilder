@@ -103,7 +103,8 @@ type ContainerConstantData struct {
 		当然，如果该容器不同槽位对应的容器 ID 不同，
 		则该字段为 255 且下方 ContainerIDMapping 字段为非空。
 
-		另，当前字段为 255 时代表该容器未被支持
+		另，如果该字段为 255 且下方 ContainerIDMapping 为空，
+		则代表该容器未被支持
 	*/
 	UniversalContainerID uint8
 	/*
@@ -115,7 +116,7 @@ type ContainerConstantData struct {
 		键代表槽位编号，
 		值代表该槽位对应的容器 ID 。
 
-		特别地，如果此表为空，
+		另，如果该字段为空且上方 UniversalContainerID 为 255，
 		则代表该容器未被支持
 	*/
 	ContainerIDMapping map[uint8]uint8
