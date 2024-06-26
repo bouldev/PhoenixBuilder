@@ -159,16 +159,19 @@ func (pk *ClientBoundMapItemData) Marshal(io protocol.IO) {
 			// protocol.FuncSlice(io, &pk.Pixels, io.VarRGBA)
 
 			io.Uint8(&magic_mark_0)
+			if magic_mark_0 != MapDataContinue {
+				return
+			}
+
 			io.Uint8(&magic_mark_1)
-			if !(magic_mark_0 == MapDataContinue && magic_mark_1 == 1) {
+			if magic_mark_1 != 1 {
 				panic(fmt.Sprintf(
 					"(pk *ClientBoundMapItemData) Marshal: Magic mark not matched, expect %#v but case %#v.",
-					[]byte{MapDataContinue, 1},
-					[]byte{magic_mark_0, magic_mark_1},
+					[]byte{1}, []byte{magic_mark_0},
 				))
 			}
 
-			protocol.FuncSlice(io, &pk.Pixels, io.Uint32)
+			protocol.FuncSlice(io, &pk.Pixels, io.Varuint32)
 
 			io.Varuint32(&length)
 			if pk.ColorMap == nil {
