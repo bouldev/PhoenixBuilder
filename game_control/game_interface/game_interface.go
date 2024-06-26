@@ -106,19 +106,32 @@ const (
 	// chest, trapped_chest,
 	// hopper, dispenser,
 	// dropper
-	ContainerIDDefault = byte(7)
+	ContainerIDDefault = byte(protocol.ContainerLevelEntity) // 7
 
-	ContainerIDInventory = byte(12)
-	ContainerIDHotBar    = byte(28)
+	ContainerIDInventory = byte(protocol.ContainerCombinedHotBarAndInventory) // 12
+	ContainerIDHotBar    = byte(protocol.ContainerHotBar)                     // 29
 
-	ContainerIDFurnace      = byte(25)
-	ContainerIDSmoker       = byte(28)
-	ContainerIDShulkerBox   = byte(30)
-	ContainerIDBlastFurnace = byte(45)
-	ContainerIDBarrel       = byte(58)
-	ContainerIDBrewingStand = byte(59)
+	ContainerIDShulkerBox = byte(protocol.ContainerShulkerBox) // 31
+	ContainerIDBarrel     = byte(protocol.ContainerBarrel)     // 59
+
+	ContainerIDFurnaceIngredient = byte(protocol.ContainerFurnaceIngredient) // 26
+	ContainerIDFurnaceFuel       = byte(protocol.ContainerFurnaceFuel)       // 25
+	ContainerIDFurnaceResult     = byte(protocol.ContainerFurnaceResult)     // 27
+
+	ContainerIDSmokerIngredient = byte(protocol.ContainerSmokerIngredient) // 47
+	ContainerIDSmokerFuel       = ContainerIDFurnaceFuel                   // 25
+	ContainerIDSmokerResult     = ContainerIDFurnaceResult                 // 27
+
+	ContainerIDBlastFurnaceIngredient = byte(protocol.ContainerBlastFurnaceIngredient) // 46
+	ContainerIDBlastFurnaceFuel       = ContainerIDFurnaceFuel                         // 25
+	ContainerIDBlastFurnaceResult     = ContainerIDFurnaceResult                       // 27
+
+	ContainerIDBrewingStandInput  = byte(protocol.ContainerBrewingStandInput)  // 9
+	ContainerIDBrewingStandFuel   = byte(protocol.ContainerBrewingStandFuel)   // 11
+	ContainerIDBrewingStandResult = byte(protocol.ContainerBrewingStandResult) // 10
 
 	ContainerIDUnknown = byte(255)
+	ContainerIDInvalid = ContainerIDUnknown
 )
 
 // 描述各个维度的 ID

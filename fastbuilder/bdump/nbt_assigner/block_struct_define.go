@@ -96,9 +96,28 @@ type ContainerConstantData struct {
 	StorageItemValue string
 	// 描述此容器是否可以打开
 	CouldOpen bool
-	// 描述此容器的容器 ID 。
-	// 为 255 时代表未被支持
-	ContainerID uint8
+	/*
+		描述此容器的通用容器 ID ，
+		因为大多数容器只存在唯一的容器 ID。
+
+		当然，如果该容器不同槽位对应的容器 ID 不同，
+		则该字段为 255 且下方 ContainerIDMapping 字段为非空。
+
+		另，当前字段为 255 时代表该容器未被支持
+	*/
+	UniversalContainerID uint8
+	/*
+		描述此容器对应槽位的容器 ID 。
+
+		目前应只被熔炉所使用。
+
+		键代表槽位编号，
+		值代表该槽位对应的容器 ID 。
+
+		特别地，如果此表为空，
+		则代表该容器未被支持
+	*/
+	ContainerIDMapping map[uint8]uint8
 }
 
 // 描述一个容器
