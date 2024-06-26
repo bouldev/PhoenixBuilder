@@ -158,6 +158,9 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 		if cache := env.CachedPacket.(<-chan packet.Packet); len(cache) > 0 {
 			pk = <-cache
 		} else if pk, err = conn.ReadPacket(); err != nil {
+			if len(breaker) > 0 {
+				return
+			}
 			panic(err)
 		}
 
