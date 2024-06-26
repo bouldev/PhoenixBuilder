@@ -120,20 +120,6 @@ func (b *Book) WriteData() error {
 	}
 	// 等待更改
 	if b.ItemPackage.Item.Basic.Name == "written_book" && b.ItemPackage.Item.Basic.Count > 1 {
-		uniqueId, err := api.BackupStructure(
-			GameInterface.MCStructure{
-				BeginX: b.ItemPackage.AdditionalData.Position[0],
-				BeginY: b.ItemPackage.AdditionalData.Position[1],
-				BeginZ: b.ItemPackage.AdditionalData.Position[2],
-				SizeX:  1,
-				SizeY:  1,
-				SizeZ:  1,
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("OpenBook: %v", err)
-		}
-		defer api.RevertStructure(uniqueId, b.ItemPackage.AdditionalData.Position)
 		err = api.CopyItem(
 			b.ItemPackage.AdditionalData.HotBarSlot,
 			b.ItemPackage.AdditionalData.Position,

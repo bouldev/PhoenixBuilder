@@ -9,7 +9,9 @@ import (
 )
 
 // 将快捷栏 hotBarSlot 处的可堆叠物品复制为 requestCount 个。
-// 此操作需要占用一个方块，因此 blockPos 用于描述此方块的坐标。
+// 此操作要求您提前将当前手持的物品栏更换为 hotBarSlot 。
+// 由于完成该工作还需要占用一个方块，
+// 因此 blockPos 用于描述此方块的坐标。
 func (g *GameInterface) CopyItem(
 	hotBarSlot uint8,
 	blockPos [3]int32,
@@ -21,9 +23,9 @@ func (g *GameInterface) CopyItem(
 			"minecraft:barrel",
 			map[string]interface{}{
 				"facing_direction": int32(0),
-				"open_bit":         byte(0),
+				"open_bit":         byte(1),
 			},
-			5,
+			hotBarSlot,
 		)
 		if err != nil {
 			return fmt.Errorf("openConatiner: %v", err)
@@ -194,11 +196,22 @@ func (g *GameInterface) CopyItem(
 			return fmt.Errorf("CopyItem: %v", err)
 		}
 		// 传送机器人到 blockPos
-		err = g.SetBlockAsync(blockPos, "air", "[]")
+		uniqueId, err := g.BackupStructure(
+			MCStructure{
+				BeginX: blockPos[0], BeginY: blockPos[1], BeginZ: blockPos[2],
+				SizeX: 1, SizeY: 1, SizeZ: 1,
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("OpenBook: %v", err)
+		}
+		defer g.RevertStructure(uniqueId, blockPos)
+		// 备份当前方块
+		err = g.SetBlock(blockPos, "air", "[]")
 		if err != nil {
 			return fmt.Errorf("CopyItem: %v", err)
 		}
-		err = g.SetBlock(blockPos, "barrel", `["facing_direction": 0]`)
+		err = g.SetBlock(blockPos, "barrel", `["facing_direction"=0,"open_bit"=true]`)
 		if err != nil {
 			return fmt.Errorf("CopyItem: %v", err)
 		}
