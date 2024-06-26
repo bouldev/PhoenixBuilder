@@ -131,7 +131,7 @@ const (
 	ContainerIDBrewingStandResult = byte(protocol.ContainerBrewingStandResult) // 10
 
 	ContainerIDUnknown = byte(255)
-	ContainerIDInvalid = ContainerIDUnknown
+	ContainerIDInvalid = ContainerIDUnknown // 255
 )
 
 // 描述各个维度的 ID
