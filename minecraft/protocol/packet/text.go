@@ -48,10 +48,10 @@ type Text struct {
 	PlatformChatID string
 
 	// PhoenixBuilder specific fields.
-	// Author: LNSSPsd
+	// Author: Liliya233
 	//
-	// TODO: Netease PlayerRuntimeID?
-	PlayerRuntimeID string
+	// Netease extra data
+	NeteaseExtraData []string
 }
 
 // ID ...
@@ -76,17 +76,12 @@ func (pk *Text) Marshal(io protocol.IO) {
 	io.String(&pk.PlatformChatID)
 
 	// PhoenixBuilder specific changes.
-	// Author: LNSSPsd
+	// Author: Liliya233
 	//
-	// TODO: Netease PlayerRuntimeID?
+	// Netease
 	{
 		if pk.TextType == TextTypeChat {
-			b1 := byte(2)
-			s1 := "PlayerId"
-			// s2:="-12345678"
-			io.Uint8(&b1)
-			io.String(&s1)
-			io.String(&pk.PlayerRuntimeID)
+			protocol.FuncSlice(io, &pk.NeteaseExtraData, io.String)
 		}
 	}
 }
