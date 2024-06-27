@@ -572,7 +572,7 @@ func (r *Reader) TransactionDataType(x *InventoryTransactionData) {
 func (r *Reader) MapPixelsDataType(x *MapPixelsData) {
 	var pixelsType uint8
 	r.Uint8(&pixelsType)
-	if !lookupPixels(pixelsType, x) {
+	if !lookupMapPixels(pixelsType, x) {
 		r.UnknownEnumOption(pixelsType, "map pixels data type")
 	}
 }

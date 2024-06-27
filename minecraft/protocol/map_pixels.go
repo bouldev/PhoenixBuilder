@@ -7,9 +7,9 @@ package protocol
 import "image/color"
 
 const (
-	PixelsTypeNeteaseUint8 = iota + 1
-	PixelsTypeNeteaseUint16
-	PixelsTypeStandard
+	MapPixelsTypeNeteaseUint8 = iota + 1
+	MapPixelsTypeNeteaseUint16
+	MapPixelsTypeStandard
 )
 
 // PixelsData represents an object that holds data specific to a map pixels type.
@@ -19,14 +19,14 @@ type MapPixelsData interface {
 	Marshal(r IO)
 }
 
-// lookupColorMap looks up map pixels data for the ID passed.
-func lookupPixels(id uint8, x *MapPixelsData) bool {
+// lookupMapPixels looks up map pixels data for the ID passed.
+func lookupMapPixels(id uint8, x *MapPixelsData) bool {
 	switch id {
-	case PixelsTypeNeteaseUint8:
+	case MapPixelsTypeNeteaseUint8:
 		*x = &Uint8Pixels{}
-	case PixelsTypeNeteaseUint16:
+	case MapPixelsTypeNeteaseUint16:
 		*x = &Uint16Pixels{}
-	case PixelsTypeStandard:
+	case MapPixelsTypeStandard:
 		*x = &StandardPixels{}
 	default:
 		return false
@@ -34,15 +34,15 @@ func lookupPixels(id uint8, x *MapPixelsData) bool {
 	return true
 }
 
-// lookupColorMapType looks up an ID for a specific map pixels data.
-func lookupPixelsType(x MapPixelsData, id *uint8) bool {
+// lookupMapPixelsType looks up an ID for a specific map pixels data.
+func lookupMapPixelsType(x MapPixelsData, id *uint8) bool {
 	switch x.(type) {
 	case *Uint8Pixels:
-		*id = PixelsTypeNeteaseUint8
+		*id = MapPixelsTypeNeteaseUint8
 	case *Uint16Pixels:
-		*id = PixelsTypeNeteaseUint16
+		*id = MapPixelsTypeNeteaseUint16
 	case *StandardPixels:
-		*id = PixelsTypeStandard
+		*id = MapPixelsTypeStandard
 	default:
 		return false
 	}
