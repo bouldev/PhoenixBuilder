@@ -565,6 +565,18 @@ func (r *Reader) TransactionDataType(x *InventoryTransactionData) {
 	}
 }
 
+// PhoenixBuilder specific func.
+// Author: Happy2018new
+//
+// MapPixelsDataType reads an MapPixelsData type from the reader.
+func (r *Reader) MapPixelsDataType(x *MapPixelsData) {
+	var pixelsType uint8
+	r.Uint8(&pixelsType)
+	if !lookupPixels(pixelsType, x) {
+		r.UnknownEnumOption(pixelsType, "map pixels data type")
+	}
+}
+
 // AbilityValue reads an ability value from the reader.
 func (r *Reader) AbilityValue(x *any) {
 	valType, boolVal, floatVal := uint8(0), false, float32(0)

@@ -53,6 +53,11 @@ type IO interface {
 	Recipe(x *Recipe)
 	EventType(x *Event)
 	TransactionDataType(x *InventoryTransactionData)
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new
+	MapPixelsDataType(x *MapPixelsData)
+
 	PlayerInventoryAction(x *UseItemTransactionData)
 	GameRule(x *GameRule)
 	AbilityValue(x *any)

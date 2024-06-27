@@ -449,6 +449,18 @@ func (w *Writer) TransactionDataType(x *InventoryTransactionData) {
 	w.Varuint32(&id)
 }
 
+// PhoenixBuilder specific func.
+// Author: Happy2018new
+//
+// MapPixelsDataType writes an MapPixelsData type to the writer.
+func (w *Writer) MapPixelsDataType(x *MapPixelsData) {
+	var id uint8
+	if !lookupPixelsType(*x, &id) {
+		w.UnknownEnumOption(fmt.Sprintf("%T", x), "map pixels data type")
+	}
+	w.Uint8(&id)
+}
+
 // AbilityValue writes an ability value to the writer.
 func (w *Writer) AbilityValue(x *any) {
 	switch val := (*x).(type) {

@@ -76,3 +76,29 @@ func (x *PixelRequest) Marshal(r IO) {
 	r.RGBA(&x.Colour)
 	r.Uint16(&x.Index)
 }
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
+/*
+MapPixels 携带了地图画中的像素集。
+
+该字段是数据包传输协议中的可选类型，
+当 IsEmpty 为真时，则仅写入 true。
+否则，写入 false 和 Data 字段
+*/
+type MapPixels struct {
+	IsEmpty bool          // 描述 MapPixels 是否为空
+	Data    MapPixelsData // 地图画上的像素集
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
+//
+// ...
+func (x *MapPixels) Marshal(r IO) {
+	r.Bool(&x.IsEmpty)
+	if !x.IsEmpty {
+		r.MapPixelsDataType(&x.Data)
+		x.Data.Marshal(r)
+	}
+}

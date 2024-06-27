@@ -1,8 +1,6 @@
 package packet
 
 import (
-	"fmt"
-	"image/color"
 	"phoenixbuilder/minecraft/protocol"
 )
 
@@ -81,39 +79,11 @@ type ClientBoundMapItemData struct {
 	// YOffset is the Y offset in pixels at which the updated texture area starts. From this Y, the updated
 	// texture will extend exactly Height pixels up.
 	YOffset int32
-	/*
-		PhoenixBuilder specific fields.
-		Author: Happy2018new
-
-
-
-		一个切片，但实际作用是映射，
-		用于表示数字和颜色的对应关系，它并非是恒定不变的。
-
-		例如，用切片的第 0 项和第 1 项分别代表 黄色 和 黑色，
-		或在下次使用切片的 0 项和第 1 项分别代表 绿色 和 橙色。
-
-		这个映射表被用于下方的 Pixels 二维数字矩阵，
-		这个矩阵中的每个数字就代表一个颜色。因此，
-		我们通过使用 ColorMap 来描述 Pixels 中数字和颜色的对应关系。
-	*/
-	ColorMap []color.RGBA
-	/*
-		PhoenixBuilder specific fields, which modified from orgin version.
-		Author: Happy2018new
-
-
-
-		Pixels is a list of pixel colours for the new texture of the map. It is indexed as Pixels[y*height + x].
-
-		Pixels 中的数字被表示为相应的颜色，
-		这个颜色可以通过上方的 ColorMap 来查找对应，
-		即“目标颜色 = ColorMap[数字]”。
-
-		需要说明的是，被用于表示颜色的 uint32 是不确定的，
-		这个数据类型仅仅是一个未经验证的推断 [需要更多信息]
-	*/
-	Pixels []uint32
+	// PhoenixBuilder specific fields, which modified from orgin version.
+	// Author: Happy2018new
+	//
+	// Pixels is a list of pixel colours for the new texture of the map. It is indexed as Pixels[y*height + x].
+	Pixels protocol.MapPixels
 }
 
 // ID ...
@@ -122,12 +92,6 @@ func (*ClientBoundMapItemData) ID() uint32 {
 }
 
 func (pk *ClientBoundMapItemData) Marshal(io protocol.IO) {
-	// PhoenixBuilder specific changes.
-	// Author: Happy2018new
-	var magic_mark_0 uint8 = MapDataContinue
-	var magic_mark_1 uint8 = 1
-	var length uint32 = uint32(len(pk.ColorMap))
-
 	io.Varint64(&pk.MapID)
 	io.Varuint32(&pk.UpdateFlags)
 	io.Uint8(&pk.Dimension)
@@ -156,34 +120,8 @@ func (pk *ClientBoundMapItemData) Marshal(io protocol.IO) {
 		// PhoenixBuilder specific changes.
 		// Author: Happy2018new
 		{
+			pk.Pixels.Marshal(io)
 			// protocol.FuncSlice(io, &pk.Pixels, io.VarRGBA)
-
-			io.Uint8(&magic_mark_0)
-			if magic_mark_0 != MapDataContinue {
-				return
-			}
-
-			io.Uint8(&magic_mark_1)
-			if magic_mark_1 != 1 {
-				panic(fmt.Sprintf(
-					"(pk *ClientBoundMapItemData) Marshal: Magic mark not matched, expect %#v but case %#v.",
-					[]byte{1}, []byte{magic_mark_0},
-				))
-			}
-
-			protocol.FuncSlice(io, &pk.Pixels, io.Varuint32)
-
-			io.Varuint32(&length)
-			if pk.ColorMap == nil {
-				pk.ColorMap = make([]color.RGBA, length)
-			}
-			for i := uint32(0); i < length; i++ {
-				var rgba color.RGBA = pk.ColorMap[i]
-				var key uint32 = i
-				io.NeteaseRGBA(&rgba)
-				io.Varuint32(&key)
-				pk.ColorMap[key] = rgba
-			}
 		}
 	}
 }
