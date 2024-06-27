@@ -4,20 +4,6 @@ import (
 	"phoenixbuilder/minecraft/protocol"
 )
 
-/*
-PhoenixBuilder specific constants.
-Author: Happy2018new
-
-一些魔法字段，
-看起来像是用于描述是否需要继续 编码/解码 地图数据。
-它们的作用仍是未知的，这也包括它们的数据类型，
-因为这一切都仅仅是通过实验观察得到的结论
-*/
-const (
-	MapDataContinue = uint8(iota)
-	MapDataTerminate
-)
-
 const (
 	MapUpdateFlagTexture = 1 << (iota + 1)
 	MapUpdateFlagDecoration
