@@ -85,17 +85,7 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 			if !normal {
 				return fmt.Errorf(`DecodeItemBasicData: Can not convert block_got into map[string]interface{}; singleItem = %#v`, singleItem)
 			}
-			if val_origin, ok := block_got["val"]; ok {
-				val_got, normal := val_origin.(int16)
-				if !normal {
-					return fmt.Errorf(`DecodeItemBasicData: Can not convert val_origin into int16; singleItem = %#v`, singleItem)
-				}
-				g.Basic.MetaData = uint16(val_got)
-			} else {
-				block_name_origin, ok := block_got["name"]
-				if !ok {
-					break
-				}
+			if block_name_origin, ok := block_got["name"]; ok {
 				block_name_got, normal := block_name_origin.(string)
 				if !normal {
 					return fmt.Errorf(`DecodeItemBasicData: Can not convert block_name_origin into string; singleItem = %#v`, singleItem)
@@ -112,9 +102,16 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 				if !found {
 					return fmt.Errorf(`DecodeItemBasicData: Could not convert legacy block to standard runtime id; singleItem = %#v`, singleItem)
 				}
-				_, g.Basic.MetaData, found = blocks.RuntimeIDToLegacyBlock(runtimeId)
-				if !found {
-					return fmt.Errorf(`DecodeItemBasicData: Could not convert standard runtime id to block states; singleItem = %#v`, singleItem)
+				blockName, blockData, found := blocks.RuntimeIDToLegacyBlock(runtimeId)
+				if found {
+					g.Basic.Name = strings.Replace(strings.ToLower(blockName), "minecraft:", "", 1)
+					g.Basic.MetaData = blockData
+				} else if val_origin, ok := block_got["val"]; ok {
+					val_got, normal := val_origin.(int16)
+					if !normal {
+						return fmt.Errorf(`DecodeItemBasicData: Can not convert val_origin into int16; singleItem = %#v`, singleItem)
+					}
+					g.Basic.MetaData = uint16(val_got)
 				}
 			}
 		}
