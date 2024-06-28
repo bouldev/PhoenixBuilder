@@ -461,9 +461,16 @@ func (d *Decoder) tag() (t tagType, tagName string, err error) {
 	if d.depth >= maximumNestingDepth {
 		return 0, "", MaximumDepthReachedError{}
 	}
-	if d.r.off >= maximumNetworkOffset && d.Encoding == NetworkLittleEndian {
-		return 0, "", MaximumBytesReadError{}
-	}
+
+	/*
+		PhoenixBuilder specific changes.
+		Author: Happy2018new
+
+		if d.r.off >= maximumNetworkOffset && d.Encoding == NetworkLittleEndian {
+			return 0, "", MaximumBytesReadError{}
+		}
+	*/
+
 	tagTypeByte, err := d.r.ReadByte()
 	if err != nil {
 		return 0, "", BufferOverrunError{Op: "ReadTag"}
