@@ -22,6 +22,7 @@ func (c *CommandBlock) Decode() error {
 	var trackOutput bool = true
 	var conditionalMode bool = false
 	var auto bool = true
+	var version int32 = 35
 	// 初始化
 	_, ok := c.BlockEntity.Block.NBT["Command"]
 	if ok {
@@ -107,6 +108,14 @@ func (c *CommandBlock) Decode() error {
 		}
 	}
 	// auto
+	_, ok = c.BlockEntity.Block.NBT["Version"]
+	if ok {
+		version, normal = c.BlockEntity.Block.NBT["Version"].(int32)
+		if !normal {
+			return fmt.Errorf("Decode: Crashed in c.Package.Block.NBT[\"Version\"]; c.BlockEntity.Block.NBT = %#v", c.BlockEntity.Block.NBT)
+		}
+	}
+	// Version
 	c.CommandBlockData = CommandBlockData{
 		Command:            command,
 		CustomName:         customName,
@@ -116,6 +125,7 @@ func (c *CommandBlock) Decode() error {
 		TrackOutput:        trackOutput,
 		ConditionalMode:    conditionalMode,
 		Auto:               auto,
+		Version:            version,
 	}
 	return nil
 	// return
@@ -157,11 +167,11 @@ func (c *CommandBlock) WriteData() error {
 		mode = packet.CommandBlockRepeating
 	}
 	// 根据命令方块的名称确定命令方块的类型
-	if c.BlockEntity.AdditionalData.Settings.UpgradeExecuteCommands {
+	if c.BlockEntity.AdditionalData.Settings.UpgradeExecuteCommands || c.CommandBlockData.Version < 25 {
 		new, warn, err := UpgradeExecuteCommand(c.CommandBlockData.Command)
 		if err != nil {
 			gameInterface.Output(pterm.Error.Sprintf(
-				"WriteData: Conversion failure. Occurred in the command block at (%d,%d,%d); err = %v",
+				"WriteData: Conversion failure. Occurred in the command block on (%d,%d,%d); err = %v",
 				c.BlockEntity.AdditionalData.Position[0],
 				c.BlockEntity.AdditionalData.Position[1],
 				c.BlockEntity.AdditionalData.Position[2],
@@ -169,7 +179,7 @@ func (c *CommandBlock) WriteData() error {
 			))
 		} else if len(warn) > 0 {
 			gameInterface.Output(pterm.Warning.Sprintf(
-				"WriteData: The mapping of the block data value to the block state was not found in some detect fields. Occurred in the command block at (%d,%d,%d); failure_blocks = %#v, err = %v",
+				"WriteData: The mapping of the block data value to the block state was not found in some detect fields. Occurred in the command block on (%d,%d,%d); failure_blocks = %#v, err = %v",
 				c.BlockEntity.AdditionalData.Position[0],
 				c.BlockEntity.AdditionalData.Position[1],
 				c.BlockEntity.AdditionalData.Position[2],
@@ -178,7 +188,7 @@ func (c *CommandBlock) WriteData() error {
 			))
 		} else if new != c.CommandBlockData.Command {
 			gameInterface.Output(pterm.Success.Sprintf(
-				"WriteData: [DEBUG] Command at (%d,%d,%d) was successful to upgrade.",
+				"WriteData: Execute command on (%d,%d,%d) was successful to upgrade.",
 				c.BlockEntity.AdditionalData.Position[0],
 				c.BlockEntity.AdditionalData.Position[1],
 				c.BlockEntity.AdditionalData.Position[2],

@@ -75,6 +75,7 @@ type CommandBlockData struct {
 	TrackOutput        bool   // TrackOutput(TAG_Byte) = 1
 	ConditionalMode    bool   // conditionalMode(TAG_Byte) = 0
 	Auto               bool   // auto(TAG_Byte) = 1
+	Version            int32  // Version(TAG_Int) = 35
 }
 
 // CommandBlock 结构体用于描述一个完整的命令方块数据
