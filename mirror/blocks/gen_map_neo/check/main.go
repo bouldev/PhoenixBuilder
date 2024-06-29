@@ -78,4 +78,14 @@ func main() {
 		panic("not ok")
 	}
 	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
+	rtid, ok = blocks.SchemBlockStrToRuntimeID(`wool 4`)
+	if !ok {
+		panic("not ok")
+	}
+	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
+	rtid, ok = blocks.SchemBlockStrToRuntimeID(`shulker_box 3`)
+	if !ok {
+		panic("not ok")
+	}
+	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
 }

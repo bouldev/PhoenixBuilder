@@ -41,7 +41,7 @@ func GenSchemConvertRecord(rawData []byte, c *convertor.ToNEMCConvertor) (record
 			panic("not found!")
 		}
 
-		fmt.Println(outBlockNameForSearch, outBlockStateForSearch.InPreciseSNBT(), rtid)
+		// fmt.Println(outBlockNameForSearch, outBlockStateForSearch.InPreciseSNBT(), rtid)
 		inSS := strings.Split(blockIn, "[")
 		inBlockName, inBlockState := inSS[0], ""
 		if len(inSS) > 1 {

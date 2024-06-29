@@ -11,24 +11,26 @@ import (
 // 获取一个潜影盒到快捷栏 5 。
 // 此函数仅应当在放置潜影盒时被使用
 func (c *Container) getShulkerBox() error {
-	var blockMetaData uint16
+	var err error
 	api := c.BlockEntity.Interface.(*GameInterface.GameInterface)
 	// 初始化
-	blockMetaData, _ = get_block_data_from_states(
+	c.BlockEntity.Block.Name, _, err = get_new_block_states_from_older(
 		fmt.Sprintf("minecraft:%s", c.BlockEntity.Block.Name),
 		c.BlockEntity.Block.States,
 	)
+	if err != nil {
+		return fmt.Errorf("getShulkerBox: %v", err)
+	}
 	// 取得潜影盒的方块数据值(附加值)
-	err := api.ReplaceItemInInventory(
+	err = api.ReplaceItemInInventory(
 		GameInterface.TargetMySelf,
 		GameInterface.ItemGenerateLocation{
 			Path: "slot.hotbar",
 			Slot: 5,
 		},
 		types.ChestSlot{
-			Name:   c.BlockEntity.Block.Name,
-			Count:  1,
-			Damage: blockMetaData,
+			Name:  c.BlockEntity.Block.Name,
+			Count: 1,
 		},
 		"",
 		true,

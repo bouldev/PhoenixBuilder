@@ -19,12 +19,12 @@ type ToNEMCBaseNames struct {
 	mu                       sync.RWMutex
 }
 
-func (baseNameGroup *ToNEMCBaseNames) addAnchorByLegacyValue(legacyValue uint16, rtid uint32) (exist bool, conflictErr error) {
+func (baseNameGroup *ToNEMCBaseNames) addAnchorByLegacyValue(legacyValue uint16, rtid uint32, overwrite bool) (exist bool, conflictErr error) {
 	if int(legacyValue+1) <= len(baseNameGroup.legacyValuesMapping) {
-		if baseNameGroup.legacyValuesMapping[legacyValue] == baseNameGroup.RtidUnknown {
+		if baseNameGroup.legacyValuesMapping[legacyValue] == baseNameGroup.RtidUnknown || overwrite {
 			baseNameGroup.legacyValuesMapping[legacyValue] = rtid
 			return false, nil
-		} else if baseNameGroup.legacyValuesMapping[legacyValue] != rtid {
+		} else if baseNameGroup.legacyValuesMapping[legacyValue] != rtid && !overwrite {
 			return true, fmt.Errorf("conflict runtime id ")
 		} else {
 			return true, nil

@@ -63,7 +63,7 @@ func TryAddConvert(inBlockName, inBlockState, outBlockName, outBlockState string
 	if strings.HasPrefix(inBlockState, "block_data=") {
 		inBlockState = strings.TrimPrefix(inBlockState, "block_data=")
 		blockVal, _ := strconv.Atoi(inBlockState)
-		if existed, err := c.AddAnchorByLegacyValue(inBlockNameForSearch, uint16(blockVal), rtid); err != nil {
+		if existed, err := c.AddAnchorByLegacyValue(inBlockNameForSearch, uint16(blockVal), rtid, false); err != nil {
 			// fmt.Printf("ignore %v %v -> %v orig:(%v)\n", inBlockNameForSearch, blockVal, rtid, outBlockStateForSearch.InPreciseSNBT())
 			return nil, false, false
 		} else if !existed {

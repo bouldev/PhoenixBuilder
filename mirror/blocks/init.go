@@ -18,6 +18,9 @@ var nemcBlockInfoBytes []byte
 //go:embed "bedrock_java_to_translate.br"
 var toNemcDataLoadBedrockJavaTranslateInfo []byte
 
+//go:embed "specific_legacy_value_to_translate.br"
+var toNemcDataLoadSpecificLegacyValuesTranslateInfo []byte
+
 //go:embed "schem_to_translate.br"
 var toNemcDataLoadSchemTranslateInfo []byte
 
@@ -83,10 +86,19 @@ func initConvertor() {
 	if err != nil {
 		panic(err)
 	}
+	specificLegacyValuesConvertRecords, err := convertor.ReadRecordsFromString(readAndUnpack(toNemcDataLoadSpecificLegacyValuesTranslateInfo))
+	if err != nil {
+		panic(err)
+	}
 	for _, r := range mcConvertRecords {
 		DefaultAnyToNemcConvertor.LoadConvertRecord(r, false, true)
 		SchemToNemcConvertor.LoadConvertRecord(r, false, true)
 		schematicToNemcConvertor.LoadConvertRecord(r, false, true)
+	}
+	for _, r := range specificLegacyValuesConvertRecords {
+		DefaultAnyToNemcConvertor.LoadConvertRecord(r, true, true)
+		SchemToNemcConvertor.LoadConvertRecord(r, true, true)
+		schematicToNemcConvertor.LoadConvertRecord(r, true, true)
 	}
 	schemConvertRecords, err := convertor.ReadRecordsFromString(readAndUnpack(toNemcDataLoadSchemTranslateInfo))
 	if err != nil {

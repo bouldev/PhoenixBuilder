@@ -7,7 +7,7 @@ import (
 
 func (c *ToNEMCConvertor) LoadConvertRecord(r *ConvertRecord, overwrite bool, strict bool) {
 	if val, ok := r.GetLegacyValue(); ok {
-		if exist, err := c.AddAnchorByLegacyValue(describe.BlockNameForSearch(r.Name), val, r.RTID); err != nil || exist {
+		if exist, err := c.AddAnchorByLegacyValue(describe.BlockNameForSearch(r.Name), val, r.RTID, overwrite); err != nil || exist {
 			if strict {
 				panic(fmt.Errorf("fail to add translation: %v %v %v", r.Name, val, r.RTID))
 			}
@@ -27,7 +27,7 @@ func (c *ToNEMCConvertor) LoadConvertRecord(r *ConvertRecord, overwrite bool, st
 }
 
 func (c *ToNEMCConvertor) LoadTargetBlock(block *describe.Block) {
-	if exist, err := c.AddAnchorByLegacyValue(block.NameForSearch(), block.LegacyValue(), block.Rtid()); err != nil {
+	if exist, err := c.AddAnchorByLegacyValue(block.NameForSearch(), block.LegacyValue(), block.Rtid(), false); err != nil {
 		panic(err)
 	} else if exist {
 		panic("should not happen")

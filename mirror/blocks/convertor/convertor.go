@@ -43,9 +43,9 @@ func (c *ToNEMCConvertor) getBaseNameGroup(name string) (baseGroup *ToNEMCBaseNa
 	return group, found
 }
 
-func (c *ToNEMCConvertor) AddAnchorByLegacyValue(name describe.BaseWithNameSpace, legacyValue uint16, nemcRTID uint32) (exist bool, conflictErr error) {
+func (c *ToNEMCConvertor) AddAnchorByLegacyValue(name describe.BaseWithNameSpace, legacyValue uint16, nemcRTID uint32, overwrite bool) (exist bool, conflictErr error) {
 	baseNameGroup := c.ensureBaseNameGroup(name.BaseName())
-	return baseNameGroup.addAnchorByLegacyValue(legacyValue, nemcRTID)
+	return baseNameGroup.addAnchorByLegacyValue(legacyValue, nemcRTID, overwrite)
 }
 
 func (c *ToNEMCConvertor) PreciseMatchByLegacyValue(name describe.BaseWithNameSpace, legacyValue uint16) (rtid uint32, found bool) {

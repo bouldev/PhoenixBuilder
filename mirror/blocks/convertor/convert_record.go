@@ -86,6 +86,7 @@ func ReadRecordsFromString(dataBytes string) (records []*ConvertRecord, err erro
 			}
 			return records, nil
 		}
+		r.GetLegacyValue()
 		records = append(records, r)
 	}
 }

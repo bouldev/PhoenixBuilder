@@ -89,21 +89,22 @@ func get_block_states_from_legacy_block(
 	return generalBlock.States().ToNBT(), nil
 }
 
-// 取得名称为 blockName 且方块状态为 blockStates 的数据值(附加值) 。
+// 取得名称为 blockName 且方块状态为 blockStates 的旧方块的
+// 新名称及它的新方块状态。
 // 特别地，name 需要加上命名空间 minecraft
-func get_block_data_from_states(
+func get_new_block_states_from_older(
 	blockName string,
-	blockStates map[string]interface{},
-) (uint16, error) {
-	standardRuntimeID, found := blocks.BlockNameAndStateToRuntimeID(blockName, blockStates)
+	blockStates map[string]any,
+) (string, map[string]any, error) {
+	runtimeID, found := blocks.BlockNameAndStateToRuntimeID(blockName, blockStates)
 	if !found {
-		return 0, fmt.Errorf("get_block_data_from_states: Failed to get the runtimeID of block %s; blockStates = %#v", blockName, blockStates)
+		return "", nil, fmt.Errorf("get_new_block_states_from_older: Failed to get the runtimeID of block %s; blockStates = %#v", blockName, blockStates)
 	}
-	_, blockData, found := blocks.RuntimeIDToLegacyBlock(standardRuntimeID)
+	blockName, states, found := blocks.RuntimeIDToState(runtimeID)
 	if !found {
-		return 0, fmt.Errorf("get_block_data_from_states: Failed to converse StandardRuntimeID to NEMCRuntimeID; standardRuntimeID = %d, blockName = %s, blockStates = %#v", standardRuntimeID, blockName, blockStates)
+		return "", nil, fmt.Errorf("get_new_block_states_from_older: Failed to converse runtimeID to block with states; runtimeID = %d, blockName = %s, blockStates = %#v", runtimeID, blockName, blockStates)
 	}
-	return blockData, nil
+	return blockName, states, nil
 }
 
 // 将 types.Module 解析为 GeneralBlock
