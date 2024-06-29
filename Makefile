@@ -80,7 +80,7 @@ android-executable-arm64: build/phoenixbuilder-android-static-executable-arm64 b
 android-executable-x86_64: build/phoenixbuilder-android-static-executable-x86_64 build/phoenixbuilder-android-termux-shared-executable-x86_64 build/phoenixbuilder-android-shared-executable-x86_64
 android-executable-x86: build/phoenixbuilder-android-shared-executable-x86 build/phoenixbuilder-android-termux-shared-executable-x86 build/phoenixbuilder-android-static-executable-x86
 windows-executable: windows-executable-x86 windows-executable-x86_64
-windows-executable-x86: build/phoenixbuilder-windows-executable-x86.exe
+#windows-executable-x86: build/phoenixbuilder-windows-executable-x86.exe
 windows-executable-x86_64: build/phoenixbuilder-windows-executable-x86_64.exe
 freebsd-executable: freebsd-executable-x86 freebsd-executable-x86_64 freebsd-executable-arm64
 freebsd-executable-x86: build/phoenixbuilder-freebsd-executable-x86
