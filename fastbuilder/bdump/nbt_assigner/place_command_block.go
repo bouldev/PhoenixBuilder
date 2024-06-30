@@ -167,7 +167,9 @@ func (c *CommandBlock) WriteData() error {
 		mode = packet.CommandBlockRepeating
 	}
 	// 根据命令方块的名称确定命令方块的类型
-	if c.BlockEntity.AdditionalData.Settings.UpgradeExecuteCommands || c.CommandBlockData.Version < 25 {
+	matchA := c.BlockEntity.AdditionalData.Settings.UpgradeExecuteCommands
+	matchB := c.CommandBlockData.Version != 0 && c.CommandBlockData.Version < 25
+	if matchA || matchB {
 		new, warn, err := UpgradeExecuteCommand(c.CommandBlockData.Command)
 		if err != nil {
 			gameInterface.Output(pterm.Error.Sprintf(
