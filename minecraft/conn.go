@@ -1152,9 +1152,6 @@ func (conn *Conn) handleResourcePackDataInfo(pk *packet.ResourcePackDataInfo) er
 		return fmt.Errorf("unknown pack to download with UUID %v", id)
 	}
 	if pack.size != pk.Size {
-		// Size mismatch: The ResourcePacksInfo packet had a size for the pack that did not match with the
-		// size sent here.
-
 		// PhoenixBuilder specific changes.
 		// Author: Liliya233
 		//
