@@ -53,6 +53,7 @@ func (blockPaletteEncoding) encode(buf *bytes.Buffer, v uint32) {
 	name, props, _ := blocks.RuntimeIDToState(v)
 	_ = nbt.NewEncoderWithEncoding(buf, nbt.LittleEndian).Encode(blockEntry{Name: name, State: props, Version: CurrentBlockVersion})
 }
+
 func (blockPaletteEncoding) decode(buf *bytes.Buffer) (uint32, error) {
 	var e blockEntry
 	if err := nbt.NewDecoderWithEncoding(buf, nbt.LittleEndian).Decode(&e); err != nil {
