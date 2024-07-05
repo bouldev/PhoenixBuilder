@@ -2,9 +2,9 @@ package I18n
 
 // 此表标记了已弃用的语言
 var DeprecatedLanguages []string = []string{
-	LanguageSimplifiedChinese,
-	LanguageTraditionalChinese,
-	LanguageTaiwanChinese,
+//	LanguageSimplifiedChinese,
+//	LanguageTraditionalChinese,
+//	LanguageTaiwanChinese,
 }
 
 // 确定代号为 langeuage_name 的语言是否被弃用。
