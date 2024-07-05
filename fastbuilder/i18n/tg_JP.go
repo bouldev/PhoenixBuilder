@@ -38,7 +38,7 @@ var I18nDict_tg_JP map[uint16]string = map[uint16]string{
 	BDump_Warn_Reserved:                 "警告: BDump/Import: 保留されたコマンドがいま使用された\n",
 	CommandNotFound:                     "未知なコマンド。",
 	ConnectionEstablished:               "サーバーへ接続した。",
-	Copyright_Notice_Bouldev:            "Copyright (c) FastBuilder DevGroup, Bouldev 2022",
+	Copyright_Notice_Bouldev:            "Copyright (c) FastBuilder DevGroup, Bouldev 2024",
 	Copyright_Notice_Contrib:            "コントリビュータ: Ruphane, CAIMEO, CMA2401PT",
 	Crashed_No_Connection:               "長い時間をかけても接続できなかった。",
 	Crashed_OS_Windows:                  "ENTER を押して終了。",
