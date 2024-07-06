@@ -38,6 +38,7 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	BDump_Warn_Reserved:                 "WARNING: BDump/Import: Use of reserved command\n",
 	CommandNotFound:                     "Command not found.",
 	ConnectionEstablished:               "Successfully created minecraft dialler.",
+	Original_Important_Contributor:      "Original important contributor: LNSSPsd(Ruphane), CAIMEO, CMA2401PT",
 	Crashed_No_Connection:               "connection haven't got established after significant amount of time",
 	Crashed_OS_Windows:                  "Press ENTER to exit.",
 	Crashed_StackDump_And_Error:         "Stack dump has been shown above, error:",

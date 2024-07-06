@@ -42,6 +42,7 @@ var I18nDict_ru_RU map[uint16]string = map[uint16]string{
 	BDump_Warn_Reserved:                 "предупреждать：BDump/Import：Используются зарезервированные поля\n",
 	CommandNotFound:                     "Эта команда не может быть найдена",
 	ConnectionEstablished:               "Успешно подключено к серверу.",
+	Original_Important_Contributor:      "Важный вклад в первые дни：LNSSPsd(Ruphane), CAIMEO, CMA2401PT",
 	Crashed_No_Connection:               "Не удавалось установить соединение в течение длительного времени",
 	Crashed_OS_Windows:                  "Нажмите ENTER, чтобы выйти из программы.",
 	Crashed_StackDump_And_Error:         "Дамп стека показан выше.Ошибка заключается в：",

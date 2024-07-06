@@ -38,6 +38,7 @@ var I18nDict_zh_CN map[uint16]string = map[uint16]string{
 	BDump_Warn_Reserved:                 "警告：BDump/Import：使用了保留字段\n",
 	CommandNotFound:                     "未能找到此命令",
 	ConnectionEstablished:               "成功连接到服务器。",
+	Original_Important_Contributor:      "原始的重要贡献者: LNSSPsd(Ruphane), CAIMEO, CMA2401PT",
 	Crashed_No_Connection:               "较长时间内未能建立连接",
 	Crashed_OS_Windows:                  "按ENTER（回车）键来退出程序。",
 	Crashed_StackDump_And_Error:         "Stack dump 于上方显示。错误为：",
