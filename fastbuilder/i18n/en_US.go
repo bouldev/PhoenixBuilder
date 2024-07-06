@@ -38,8 +38,6 @@ var I18nDict_en_US map[uint16]string = map[uint16]string{
 	BDump_Warn_Reserved:                 "WARNING: BDump/Import: Use of reserved command\n",
 	CommandNotFound:                     "Command not found.",
 	ConnectionEstablished:               "Successfully created minecraft dialer.",
-	Copyright_Notice_Bouldev:            "Copyright (c) FastBuilder DevGroup, Bouldev 2024",
-	Copyright_Notice_Contrib:            "Contributors: Ruphane, CAIMEO, CMA2401PT",
 	Crashed_No_Connection:               "connection not established after very long time",
 	Crashed_OS_Windows:                  "Press ENTER to exit.",
 	Crashed_StackDump_And_Error:         "Stack dump was shown above, error:",

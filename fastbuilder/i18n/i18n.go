@@ -64,8 +64,6 @@ const (
 	BDump_Warn_Reserved
 	CommandNotFound
 	ConnectionEstablished
-	Copyright_Notice_Bouldev
-	Copyright_Notice_Contrib
 	Crashed_No_Connection
 	Crashed_OS_Windows
 	Crashed_StackDump_And_Error

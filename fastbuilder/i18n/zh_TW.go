@@ -38,8 +38,6 @@ var I18nDict_zh_TW map[uint16]string = map[uint16]string{
 	BDump_Warn_Reserved:                 "警告：BDump/Import：使用了保留字\n",
 	CommandNotFound:                     "找不到此指令",
 	ConnectionEstablished:               "成功連線到伺服器。",
-	Copyright_Notice_Bouldev:            "版權所有 (c) FastBuilder DevGroup, Bouldev 2024",
-	Copyright_Notice_Contrib:            "Contributors: Ruphane, CAIMEO, CMA2401PT",
 	Crashed_No_Connection:               "較長時間未能建立連線",
 	Crashed_OS_Windows:                  "按ENTER來退出應用程式。",
 	Crashed_StackDump_And_Error:         "Stack dump 於上方顯示。錯誤为：",
