@@ -89,31 +89,12 @@ func SubChunkEntryNoCache(r IO, x *SubChunkEntry) {
 	}
 }
 
-/*
-PhoenixBuilder specific changes.
-Changes Maker: Liliya233
-Committed by Happy2018new.
-
-SubChunkOffset represents an offset from the base position of another sub chunk.
-
-For netease, the data type of this field is [3]uint8,
-but on standard minecraft, this is [3]int8.
-*/
-type SubChunkOffset [3]uint8 // [3]int8
+// SubChunkOffset represents an offset from the base position of another sub chunk.
+type SubChunkOffset [3]int8
 
 // Marshal encodes/decodes a SubChunkOffset.
 func (x *SubChunkOffset) Marshal(r IO) {
-	// PhoenixBuilder specific changes.
-	// Changes Maker: Liliya233
-	// Committed by Happy2018new.
-	{
-		r.Uint8(&x[0])
-		r.Uint8(&x[1])
-		r.Uint8(&x[2])
-		/*
-			r.Int8(&x[0])
-			r.Int8(&x[1])
-			r.Int8(&x[2])
-		*/
-	}
+	r.Int8(&x[0])
+	r.Int8(&x[1])
+	r.Int8(&x[2])
 }
