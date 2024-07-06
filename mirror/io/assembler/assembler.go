@@ -68,7 +68,7 @@ func (o *Assembler) AdjustSendPeriod(d time.Duration) {
 func (o *Assembler) GenRequestFromLevelChunk(pk *packet.LevelChunk) (requests []*packet.SubChunkRequest) {
 	offsets := make([]protocol.SubChunkOffset, 24)
 	for i := -4; i <= 19; i++ {
-		offsets[i+4] = [3]uint8{0, uint8(i), 0}
+		offsets[i+4] = [3]int8{0, int8(i), 0}
 	}
 	return []*packet.SubChunkRequest{
 		{
@@ -139,7 +139,7 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 				if entry.Result == protocol.SubChunkResultSuccessAllAir {
 					allAirSubChunk := chunk.NewSubChunk(o.airRID)
 					allAirSubChunk.Validate()
-					chunkData.Chunk.AssignSub(int(uint8(pk.Position[1])+entry.Offset[1]+4), allAirSubChunk)
+					chunkData.Chunk.AssignSub(int(int8(pk.Position[1])+entry.Offset[1]+4), allAirSubChunk)
 					continue
 				}
 				fmt.Printf("SUBCHUNK REQ ERR: %#v\n", entry)
@@ -153,7 +153,7 @@ func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
 				fmt.Printf("%#v", entry)
 				panic(err)
 			}
-			if uint8(subIndex) != uint8(pk.Position[1])+entry.Offset[1] || subIndex > 20 {
+			if subIndex != int8(pk.Position[1])+entry.Offset[1] || subIndex > 20 {
 				panic(fmt.Sprintf("sub Index conflict %v %v", pk.Position[1], subIndex))
 			}
 			//subs := chunkData.Chunk.Sub()
