@@ -3,7 +3,10 @@ package chunk
 import (
 	"bytes"
 	"fmt"
+	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/minecraft/nbt"
+	"phoenixbuilder/minecraft/protocol"
+	"phoenixbuilder/minecraft/protocol/block_actors"
 	"phoenixbuilder/mirror/blocks"
 	"phoenixbuilder/mirror/define"
 
@@ -67,18 +70,52 @@ func NEMCSubChunkDecode(data []byte) (int8, *SubChunk, []map[string]interface{},
 
 	nbts := make([]map[string]interface{}, 0)
 	if buf.Len() > 0 {
-		nbtDocoder := nbt.NewDecoder(buf)
 		blockData := make(map[string]interface{})
 		for buf.Len() != 0 {
-			if err := nbtDocoder.Decode(&blockData); err != nil {
-				pterm.Printfln("decode chunk nbt error %v", err)
+			err := nbt.NewDecoderWithEncoding(buf, nbt.NetworkLittleEndian).Decode(&blockData)
+			if err != nil {
+				pterm.Printfln("decode chunk NBT error %v", err)
 				break
 			}
-			//fmt.Println(blockData)
+			// decode block NBT
+			id, has1 := blockData["id"].(string)
+			tagNBT, has2 := blockData["__tag"].(string)
+			if has1 && has2 {
+				result, err := NEMCTagNBTDecode(id, tagNBT)
+				if err != nil {
+					// pterm.Printfln("decode chunk __tag NBT error %v", err)
+					// continue
+					panic(fmt.Sprintf("decode chunk __tag NBT error %v", err))
+				}
+				delete(blockData, "__tag")
+				blockData = utils.MergeMaps(blockData, result)
+			}
+			// decode __tag NBT
 			nbts = append(nbts, blockData)
+			// submit sub result
 		}
 	}
 	return subChunkIndex, subChunk, nbts, err
+}
+
+// 将方块类型为 ID 且 方块实体数据 为 tag 的 方块实体 解析为正常格式
+func NEMCTagNBTDecode(ID string, tag string) (result map[string]any, err error) {
+	/*
+		defer func() {
+			r := recover()
+			if r != nil {
+				err = fmt.Errorf("NEMCTagNBTDecode: %v", err)
+			}
+		}()
+	*/
+	buffer := bytes.NewBuffer([]byte(tag))
+	reader := protocol.NewReader(buffer, 0, false)
+	block, has := block_actors.NewPool()[ID]
+	if !has {
+		return nil, fmt.Errorf("NEMCTagNBTDecode: Target block not found in pool; ID = %#v", ID)
+	}
+	block.Marshal(reader)
+	return block.ToNBT(), nil
 }
 
 // DiskDecode decodes the data from a SerialisedData object into a chunk and returns it. If the data was
