@@ -1,7 +1,7 @@
 const fs=require("fs");
 
 function doit(dir,isRoot) {
-	let readme="# PhoenixBuilder-storage\nThis repository is used to store auto-built binaries for [PhoenixBuilder](https://github.com/LNSSPsd/PhoenixBuilder).\n## Index\n";
+	let readme="# PhoenixBuilder-storage\nThis repository is used to store auto-built binaries for [PhoenixBuilder](https://github.com/bouldev/PhoenixBuilder).\n## Index\n";
 	let files=fs.readdirSync(dir);
 	if(!isRoot) {
 		readme+="[(Parent directory)/](../)  \n";
