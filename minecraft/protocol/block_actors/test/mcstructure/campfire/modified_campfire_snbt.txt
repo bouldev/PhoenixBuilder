@@ -1,0 +1,77 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0
+      ],
+      [
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:campfire",
+            states: {
+              extinguished: 0b,
+              minecraft:cardinal_direction: "south"
+            },
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              Item1: {
+                Count: 1b,
+                Damage: 0s,
+                Name: "minecraft:porkchop",
+                WasPickedUp: 0b
+              },
+              Item2: {
+                Count: 1b,
+                Damage: 0s,
+                Name: "minecraft:porkchop",
+                WasPickedUp: 0b
+              },
+              Item3: {
+                Count: 1b,
+                Damage: 0s,
+                Name: "minecraft:porkchop",
+                WasPickedUp: 0b
+              },
+              Item4: {
+                Count: 1b,
+                Damage: 0s,
+                Name: "minecraft:porkchop",
+                WasPickedUp: 0b
+              },
+              ItemTime1: 277,
+              ItemTime2: 267,
+              ItemTime3: 252,
+              ItemTime4: 245,
+              id: "Campfire",
+              isMovable: 1b,
+              x: 86,
+              y: 77,
+              z: -114
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    86,
+    77,
+    -114
+  ]
+}

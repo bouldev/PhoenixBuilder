@@ -1,0 +1,69 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0
+      ],
+      [
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:structure_block",
+            states: {
+              structure_block_type: "save"
+            },
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              animationMode: 0b,
+              animationSeconds: 0f,
+              data: 1,
+              dataField: "",
+              id: "StructureBlock",
+              ignoreEntities: 0b,
+              includePlayers: 0b,
+              integrity: 100f,
+              isMovable: 1b,
+              isPowered: 0b,
+              mirror: 0b,
+              redstoneSaveMode: 0,
+              removeBlocks: 0b,
+              rotation: 0b,
+              seed: 0L,
+              showBoundingBox: 1b,
+              structureName: "",
+              x: 80,
+              xStructureOffset: 0,
+              xStructureSize: 5,
+              y: 77,
+              yStructureOffset: -1,
+              yStructureSize: 5,
+              z: -116,
+              zStructureOffset: 0,
+              zStructureSize: 5
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    80,
+    77,
+    -116
+  ]
+}

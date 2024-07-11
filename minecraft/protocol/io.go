@@ -27,6 +27,10 @@ type IO interface {
 	Varuint64(x *uint64)
 	Varint32(x *int32)
 	Varuint32(x *uint32)
+
+	Varint16(x *int16)
+	Varuint16(x *uint16)
+
 	String(x *string)
 	StringUTF(x *string)
 	ByteSlice(x *[]byte)
@@ -40,7 +44,18 @@ type IO interface {
 	ByteFloat(x *float32)
 	Bytes(p *[]byte)
 	NBT(m *map[string]any, encoding nbt.Encoding)
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
+	NBTWithLength(m *map[string]any)
+
 	NBTList(m *[]any, encoding nbt.Encoding)
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
+	EnchantList(x *[]Enchant)
+	ItemList(x *[]ItemWithSlot)
+
 	UUID(x *uuid.UUID)
 	RGBA(x *color.RGBA)
 	VarRGBA(x *color.RGBA)
@@ -75,10 +90,6 @@ type IO interface {
 	USubChunkPos(x *SubChunkPos)
 	USoundPos(x *mgl32.Vec3)
 
-	// PhoenixBuilder specific func.
-	// Author: Happy2018new
-	NeteaseRGBA(x *color.RGBA)
-
 	/*
 		PhoenixBuilder specific func.
 		Author: Liliya233, CMA2041PT, Happy2018new
@@ -98,6 +109,16 @@ func Slice[T any, S ~*[]T, A PtrMarshaler[T]](r IO, x S) {
 	count := uint32(len(*x))
 	r.Varuint32(&count)
 	SliceOfLen[T, S, A](r, count, x)
+}
+
+// PhoenixBuilder specific changes.
+// Author: Happy2018new, Liliya233
+//
+// SliceVarint16Length reads/writes a slice of T with a varint16 prefix.
+func SliceVarint16Length[T any, S ~*[]T, A PtrMarshaler[T]](r IO, x S) {
+	count := int16(len(*x))
+	r.Varint16(&count)
+	SliceOfLen[T, S, A](r, uint32(count), x)
 }
 
 // SliceUint8Length reads/writes a slice of T with a uint8 prefix.
@@ -152,11 +173,31 @@ func FuncSliceUint32Length[T any, S ~*[]T](r IO, x S, f func(*T)) {
 	FuncSliceOfLen(r, count, x, f)
 }
 
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
+//
+// FuncSliceVarint16Length reads/writes a slice of T using function f with a varint16 length prefix.
+func FuncSliceVarint16Length[T any, S ~*[]T](r IO, x S, f func(*T)) {
+	count := int16(len(*x))
+	r.Varint16(&count)
+	FuncSliceOfLen(r, uint32(count), x, f)
+}
+
 // FuncSlice reads/writes a slice of T using function f with a varuint32 length prefix.
 func FuncSlice[T any, S ~*[]T](r IO, x S, f func(*T)) {
 	count := uint32(len(*x))
 	r.Varuint32(&count)
 	FuncSliceOfLen(r, count, x, f)
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
+//
+// FuncSliceVarint32Length reads/writes a slice of T using function f with a varint32 length prefix.
+func FuncSliceVarint32Length[T any, S ~*[]T](r IO, x S, f func(*T)) {
+	count := int32(len(*x))
+	r.Varint32(&count)
+	FuncSliceOfLen(r, uint32(count), x, f)
 }
 
 // FuncIOSlice reads/writes a slice of T using a function f with a varuint32 length prefix.
@@ -226,33 +267,67 @@ func Single[T any, S PtrMarshaler[T]](r IO, x S) {
 // Optional is an optional type in the protocol. If not set, only a false bool is written. If set, a true bool is
 // written and the Marshaler.
 type Optional[T any] struct {
-	set bool
-	val T
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
+	Set bool
+	// set bool
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
+	Val T
+	// val T
 }
 
 // Option creates an Optional[T] with the value passed.
 func Option[T any](val T) Optional[T] {
-	return Optional[T]{set: true, val: val}
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
+	return Optional[T]{Set: true, Val: val}
+	// return Optional[T]{set: true, val: val}
 }
 
 // Value returns the value set in the Optional. If no value was set, false is returned.
 func (o Optional[T]) Value() (T, bool) {
-	return o.val, o.set
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
+	return o.Val, o.Set
+	// return o.val, o.set
 }
 
 // OptionalFunc reads/writes an Optional[T].
 func OptionalFunc[T any](r IO, x *Optional[T], f func(*T)) any {
-	r.Bool(&x.set)
-	if x.set {
-		f(&x.val)
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
+	{
+		r.Bool(&x.Set)
+		if x.Set {
+			f(&x.Val)
+		}
+		/*
+			r.Bool(&x.set)
+			if x.set {
+				f(&x.val)
+			}
+		*/
 	}
+
 	return x
 }
 
 // OptionalMarshaler reads/writes an Optional assuming *T implements Marshaler.
 func OptionalMarshaler[T any, A PtrMarshaler[T]](r IO, x *Optional[T]) {
-	r.Bool(&x.set)
-	if x.set {
-		A(&x.val).Marshal(r)
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
+	{
+		r.Bool(&x.Set)
+		if x.Set {
+			A(&x.Val).Marshal(r)
+		}
+		/*
+			r.Bool(&x.set)
+			if x.set {
+				A(&x.val).Marshal(r)
+			}
+		*/
 	}
 }

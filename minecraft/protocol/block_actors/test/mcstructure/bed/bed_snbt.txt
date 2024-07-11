@@ -1,0 +1,72 @@
+{
+  format_version: 1,
+  size: [
+    2,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0,
+        1
+      ],
+      [
+        -1,
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:bed",
+            states: {
+              direction: 3,
+              head_piece_bit: 0b,
+              occupied_bit: 0b
+            },
+            version: 18153475
+          },
+          {
+            name: "minecraft:bed",
+            states: {
+              direction: 3,
+              head_piece_bit: 1b,
+              occupied_bit: 0b
+            },
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              color: 0b,
+              id: "Bed",
+              isMovable: 1b,
+              x: 80,
+              y: 77,
+              z: -116
+            }
+          },
+          1: {
+            block_entity_data: {
+              color: 0b,
+              id: "Bed",
+              isMovable: 1b,
+              x: 81,
+              y: 77,
+              z: -116
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    80,
+    77,
+    -116
+  ]
+}

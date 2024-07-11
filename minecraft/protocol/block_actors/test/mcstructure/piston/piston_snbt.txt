@@ -1,0 +1,55 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0
+      ],
+      [
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:piston",
+            states: {
+              facing_direction: 0
+            },
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              AttachedBlocks: [],
+              BreakBlocks: [],
+              LastProgress: 0f,
+              NewState: 0b,
+              Progress: 0f,
+              State: 0b,
+              Sticky: 0b,
+              id: "PistonArm",
+              isMovable: 1b,
+              x: 81,
+              y: 77,
+              z: -116
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    81,
+    77,
+    -116
+  ]
+}

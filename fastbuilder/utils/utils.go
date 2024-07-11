@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,6 +31,33 @@ func SliceAtoi(sa []string) ([]int, error) {
 		si = append(si, i)
 	}
 	return si, nil
+}
+
+// 将 []T 转换为 []any
+func ToAnyList[T any](list []T) []any {
+	result := make([]any, len(list))
+	for key, value := range list {
+		result[key] = value
+	}
+	return result
+}
+
+// 将 []any 转换为 []T
+func FromAnyList[T any](list []any) []T {
+	result := make([]T, len(list))
+	for key, value := range list {
+		result[key] = value.(T)
+	}
+	return result
+}
+
+// 将一个或多个 map[string]any 合并到一起
+func MergeMaps(mapping ...map[string]any) map[string]any {
+	result := make(map[string]any)
+	for _, value := range mapping {
+		maps.Copy(result, value)
+	}
+	return result
 }
 
 func GetHash(path string) (string, error) {

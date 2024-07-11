@@ -1,0 +1,52 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0
+      ],
+      [
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:cauldron",
+            states: {
+              cauldron_liquid: "water",
+              fill_level: 0
+            },
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              Items: [],
+              PotionId: -1s,
+              PotionType: -1s,
+              id: "Cauldron",
+              isMovable: 1b,
+              x: 84,
+              y: 77,
+              z: -115
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    84,
+    77,
+    -115
+  ]
+}

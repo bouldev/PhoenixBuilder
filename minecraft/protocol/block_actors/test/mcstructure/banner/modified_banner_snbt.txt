@@ -1,0 +1,75 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    2,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0,
+        1
+      ],
+      [
+        -1,
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:standing_banner",
+            states: {
+              ground_sign_direction: 0
+            },
+            version: 18153475
+          },
+          {
+            name: "minecraft:air",
+            states: {},
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              Base: 12,
+              Patterns: [
+                {
+                  Color: 10,
+                  Pattern: "cre"
+                },
+                {
+                  Color: 15,
+                  Pattern: "cre"
+                },
+                {
+                  Color: 15,
+                  Pattern: "bo"
+                },
+                {
+                  Color: 15,
+                  Pattern: "glb"
+                }
+              ],
+              Type: 0,
+              id: "Banner",
+              isMovable: 1b,
+              x: 80,
+              y: 77,
+              z: -116
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    80,
+    77,
+    -116
+  ]
+}

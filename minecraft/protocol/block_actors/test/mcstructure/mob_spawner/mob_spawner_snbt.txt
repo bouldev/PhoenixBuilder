@@ -1,0 +1,57 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0
+      ],
+      [
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:mob_spawner",
+            states: {},
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              Delay: 20s,
+              DisplayEntityHeight: 1.7999999523162842f,
+              DisplayEntityScale: 1f,
+              DisplayEntityWidth: 0.800000011920929f,
+              EntityIdentifier: "",
+              MaxNearbyEntities: 6s,
+              MaxSpawnDelay: 800s,
+              MinSpawnDelay: 200s,
+              RequiredPlayerRange: 16s,
+              SpawnCount: 4s,
+              SpawnRange: 4s,
+              id: "MobSpawner",
+              isMovable: 1b,
+              x: 81,
+              y: 77,
+              z: -116
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    81,
+    77,
+    -116
+  ]
+}

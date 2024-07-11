@@ -220,17 +220,6 @@ func (r *Reader) VarRGBA(x *color.RGBA) {
 	}
 }
 
-// PhoenixBuilder specific func.
-// Author: Happy2018new
-//
-// NeteaseRGBA reads a color.RGBA x from four bytes.
-func (r *Reader) NeteaseRGBA(x *color.RGBA) {
-	r.Uint8(&x.R)
-	r.Uint8(&x.G)
-	r.Uint8(&x.B)
-	r.Uint8(&x.A)
-}
-
 // Bytes reads the leftover bytes into a byte slice.
 func (r *Reader) Bytes(p *[]byte) {
 	var err error
@@ -251,10 +240,68 @@ func (r *Reader) NBT(m *map[string]any, encoding nbt.Encoding) {
 	}
 }
 
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
+//
+// NBT reads a compound tag with its length into a map from the underlying buffer.
+// We used NetworkLittleEndian as the unmarshal protocol.
+func (r *Reader) NBTWithLength(m *map[string]any) {
+	var length uint32
+	r.Varuint32(&length)
+
+	if length == 0 {
+		return
+	}
+
+	dec := nbt.NewDecoderWithEncoding(r.r, nbt.NetworkLittleEndian)
+	dec.AllowZero = true
+
+	*m = make(map[string]any)
+	if err := dec.Decode(m); err != nil {
+		r.panic(err)
+	}
+}
+
 // NBTList reads a list of NBT tags from the underlying buffer.
 func (r *Reader) NBTList(m *[]any, encoding nbt.Encoding) {
 	if err := nbt.NewDecoderWithEncoding(r.r, encoding).Decode(m); err != nil {
 		r.panic(err)
+	}
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
+//
+// EnchantList reads a list of Enchant from the underlying buffer.
+func (r *Reader) EnchantList(m *[]Enchant) {
+	var bufferLength uint16
+	r.Uint16(&bufferLength)
+	if bufferLength == 0 {
+		return
+	}
+	SliceVarint16Length(r, m)
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
+//
+// ItemList reads a list of ItemWithSlot from the underlying buffer.
+func (r *Reader) ItemList(m *[]ItemWithSlot) {
+	var newBytes []byte
+	r.ByteSlice(&newBytes)
+
+	buffer := bytes.NewBuffer(newBytes)
+	reader := NewReader(buffer, 0, false)
+
+	if len(buffer.Bytes()) == 0 {
+		return
+	}
+	*m = make([]ItemWithSlot, 0)
+
+	for len(buffer.Bytes()) > 0 {
+		new := ItemWithSlot{}
+		new.Marshal(reader)
+		*m = append(*m, new)
 	}
 }
 
@@ -779,6 +826,51 @@ func (r *Reader) Varuint32(x *uint32) {
 		}
 
 		v |= uint32(b&0x7f) << i
+		if b&0x80 == 0 {
+			*x = v
+			return
+		}
+	}
+	r.panic(errVarIntOverflow)
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
+//
+// Varint16 reads up to 2 bytes from the underlying buffer into an int16.
+func (r *Reader) Varint16(x *int16) {
+	var ux uint16
+	for i := 0; i < 16; i += 7 {
+		b, err := r.r.ReadByte()
+		if err != nil {
+			r.panic(err)
+		}
+
+		ux |= uint16(b&0x7f) << i
+		if b&0x80 == 0 {
+			*x = int16(ux >> 1)
+			if ux&1 != 0 {
+				*x = ^*x
+			}
+			return
+		}
+	}
+	r.panic(errVarIntOverflow)
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
+//
+// Varuint16 reads up to 2 bytes from the underlying buffer into a uint16.
+func (r *Reader) Varuint16(x *uint16) {
+	var v uint16
+	for i := 0; i < 35; i += 7 {
+		b, err := r.r.ReadByte()
+		if err != nil {
+			r.panic(err)
+		}
+
+		v |= uint16(b&0x7f) << i
 		if b&0x80 == 0 {
 			*x = v
 			return

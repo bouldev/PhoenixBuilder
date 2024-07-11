@@ -1,0 +1,66 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0
+      ],
+      [
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:chain_command_block",
+            states: {
+              conditional_bit: 0b,
+              facing_direction: 0
+            },
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              Command: "",
+              CustomName: "",
+              ExecuteOnFirstTick: 0b,
+              LPCommandMode: 0,
+              LPCondionalMode: 0b,
+              LPRedstoneMode: 0b,
+              LastExecution: 0L,
+              LastOutput: "",
+              LastOutputParams: [],
+              SuccessCount: 0,
+              TickDelay: 0,
+              TrackOutput: 1b,
+              Version: 39,
+              auto: 1b,
+              conditionMet: 0b,
+              conditionalMode: 0b,
+              id: "CommandBlock",
+              isMovable: 1b,
+              powered: 0b,
+              x: 84,
+              y: 77,
+              z: -115
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    84,
+    77,
+    -115
+  ]
+}

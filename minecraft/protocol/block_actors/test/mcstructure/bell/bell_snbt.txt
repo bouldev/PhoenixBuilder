@@ -1,0 +1,53 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0
+      ],
+      [
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:bell",
+            states: {
+              attachment: "standing",
+              direction: 0,
+              toggle_bit: 0b
+            },
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              Direction: 255,
+              Ringing: 0b,
+              Ticks: 18,
+              id: "Bell",
+              isMovable: 1b,
+              x: 80,
+              y: 77,
+              z: -115
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    80,
+    77,
+    -115
+  ]
+}

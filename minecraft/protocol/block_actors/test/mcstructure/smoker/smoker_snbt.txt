@@ -1,0 +1,53 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0
+      ],
+      [
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:smoker",
+            states: {
+              minecraft:cardinal_direction: "south"
+            },
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              BurnDuration: 0s,
+              BurnTime: 0s,
+              CookTime: 0s,
+              Items: [],
+              StoredXPInt: 0,
+              id: "Smoker",
+              isMovable: 1b,
+              x: 86,
+              y: 77,
+              z: -114
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    86,
+    77,
+    -114
+  ]
+}
