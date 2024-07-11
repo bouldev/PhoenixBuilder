@@ -87,7 +87,7 @@ func CheckUpdate(currentVersion string) (bool, string) {
 	current_major_version, _ := strconv.Atoi(current_version_m[0][2])
 	current_minor_version, _ := strconv.Atoi(current_version_m[0][3])
 	current_patch_version, _ := strconv.Atoi(current_version_m[0][4])
-	resp, err := http.Get("https://api.github.com/repos/LNSSPsd/PhoenixBuilder/releases/latest")
+	resp, err := http.Get("https://api.github.com/repos/bouldev/PhoenixBuilder/releases/latest")
 	if err != nil {
 		fmt.Printf("Failed to check update!\nPlease check your network status.\n")
 		return false, ""

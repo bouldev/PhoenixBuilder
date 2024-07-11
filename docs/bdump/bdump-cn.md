@@ -91,7 +91,7 @@ BDump v3 文件的后缀名为`.bdx`，且文件头为`BD@`, 代表本bdump文�
 | 28, `0x1C`        | `AddInt8XValue`                            | 将画笔的 `X` 坐标增加 `value`<br/>此指令与命令 `AddInt16XValue(20) `的不同点是此指令使用 `char` 作为其参数 | `char value //int8_t value` |
 | 29, `0x1D`        | `AddInt8YValue`                            | 将画笔的 `Y` 坐标增加 `value` （同上理） | `char value //int8_t value` |
 | 30, `0x1E`        | `AddInt8ZValue`                            | 将画笔的 `Z` 坐标增加 `value` （同上理） | `char value //int8_t value` |
-| 31, `0x1F`        | `UseRuntimeIDPool`                         | 使用预设的 `运行时ID方块池`<br/>`poolId`(预设ID) 是 PhoenixBuilder 内的值。网易MC( 1.17.0 @ 2.0.5 )下的 `poolId` 被我们定为 `117`。 每一个 `运行时ID` 都对应着一个方块，而且包含其 `方块数据值(附加值)`<br/>相关内容详见 [PhoenixBuilder/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources)<br/>**已不再在新版本中被使用** | `unsigned char poolId` |
+| 31, `0x1F`        | `UseRuntimeIDPool`                         | 使用预设的 `运行时ID方块池`<br/>`poolId`(预设ID) 是 PhoenixBuilder 内的值。网易MC( 1.17.0 @ 2.0.5 )下的 `poolId` 被我们定为 `117`。 每一个 `运行时ID` 都对应着一个方块，而且包含其 `方块数据值(附加值)`<br/>相关内容详见 [PhoenixBuilder/resources](https://github.com/bouldev/PhoenixBuilder/tree/main/resources)<br/>**已不再在新版本中被使用** | `unsigned char poolId` |
 | 32, `0x20`        | `PlaceRuntimeBlock`                        | 使用特定的 `运行时ID` 在当前画笔的位置放置方块 | `unsigned short runtimeId`                                   |
 | 33, `0x21`        | `placeBlockWithRuntimeId`                  | 使用特定的 `运行时ID` 在当前画笔的位置放置方块 | `unsigned int runtimeId`                                     |
 | 34, `0x22`        | `PlaceRuntimeBlockWithCommandBlockData`    | 使用特定的 `运行时ID` 在当前画笔的位置放置命令方块，并设置其数据 | `unsigned short runtimeId`<br/>`unsigned int mode {脉冲=0, 重复=1, 连锁=2}`<br/>`char *command`<br/>`char *customName`<br/>`char *lastOutput (此项无效，可被设为 '\0')`<br/>`int tickdelay`<br/>`bool executeOnFirstTick`<br/>`bool trackOutput`<br/>`bool conditional`<br/>`bool needRedstone` |
@@ -190,8 +190,8 @@ db 'E'
 |`(unsigned short)0`|`钻石` 的 `物品数据值` 为 `0`|`\x00\x00`|`0` 在 `16` 进制下，其 `大端字节序` 表达为 `\x00\x00`<br/>`unsigned short` 是 `无符号短整型` ，因此有 `2` 个字节|
 |`(unsigned char)2`|将 `钻石` 放在第 `3` 个槽位|`\x02`|`2` 在 `16` 进制下，其 `大端字节序` 表达为 `\x02`<br/>`unsigned char` 是 `无符号字节型` ，因此有 `1` 个字节<br/>第一个槽位一般使用 `0` ，第二个槽位则为 `1` ，第三个槽位则为 `2` ，以此类推。|
 
-您可以在 [PhoenixBuilder/resources](https://github.com/LNSSPsd/PhoenixBuilder/tree/main/resources) 查看 `运行时ID方块池` 。<br>
-本样例采用的是 [PhoenixBuilder/resources/blockRuntimeIDs/netease/runtimeIds_117.json](https://github.com/LNSSPsd/PhoenixBuilder/blob/main/resources/blockRuntimeIDs/netease/runtimeIds_117.json) 所述之版本。
+您可以在 [PhoenixBuilder/resources](https://github.com/bouldev/PhoenixBuilder/tree/main/resources) 查看 `运行时ID方块池` 。<br>
+本样例采用的是 [PhoenixBuilder/resources/blockRuntimeIDs/netease/runtimeIds_117.json](https://github.com/bouldev/PhoenixBuilder/blob/main/resources/blockRuntimeIDs/netease/runtimeIds_117.json) 所述之版本。
 
 
 

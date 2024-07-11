@@ -135,7 +135,7 @@ var I18nDict_tg_JP map[uint16]string = map[uint16]string{
 	Task_Summary_2:                      "[タスク %d] %v 秒をかけた",
 	Task_Summary_3:                      "[タスク %d] 平均速度: %v ブロック/秒",
 	UnsupportedACMEVersion:              "このバーションの ACME ストラクチャーファイルは支援されていない。バーション 1.2 だけが支援されてる。",
-	Warning_ACME_Deprecated:             "警告 - `acme' は非推奨となり、削除されましたので、代わりにBDX形式に移行していただくようお願いいたします。詳細については、https://github.com/LNSSPsd/PhoenixBuilder/issues/313 をご参照くださいませ。",
-	Warning_Schem_Deprecated:            "警告 - `schem' は非推奨となり、削除されましたので、代わりにBDX形式に移行していただくようお願いいたします。詳細については、https://github.com/LNSSPsd/PhoenixBuilder/issues/313 をご参照くださいませ。",
+	Warning_ACME_Deprecated:             "警告 - `acme' は非推奨となり、削除されましたので、代わりにBDX形式に移行していただくようお願いいたします。",
+	Warning_Schem_Deprecated:            "警告 - `schem' は非推奨となり、削除されましたので、代わりにBDX形式に移行していただくようお願いいたします。",
 	Warning_UserHomeDir:                 "警告 - ユーザーのホームフォルダーが見つかれん。homedir=\".\";にした。\n",
 }

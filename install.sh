@@ -156,7 +156,7 @@ if [ ${SYSTEM_NAME} == "Darwin" ]; then
     else
       printf "\033[31mUnknown Darwin Product %s!\033[0m\n" "$(sw_vers -productName)"
       printf "\033[31mPlease report this issue under \033[0m"
-      printf "\033[33mhttps://github.com/LNSSPsd/PhoenixBuilder/issues\033[0m\n"
+      printf "\033[33mhttps://github.com/bouldev/PhoenixBuilder/issues\033[0m\n"
       exit 1
     fi
   else
@@ -228,7 +228,7 @@ FB_VER=""
 # Do not use mirror as default, let users choose their own
 # The environment variables here are the default and can be overridden by the environment variables set by the export command
 GH_DOMAIN=${GH_DOMAIN:="https://github.com"}
-GH_USER=${GH_USER:="LNSSPsd"}
+GH_USER=${GH_USER:="bouldev"}
 GH_REPO=${GH_REPO:="PhoenixBuilder"}
 GH_RELEASE_URL=${GH_RELEASE_URL:="releases/download/"}
 GH_LINK=${GH_LINK:="${GH_DOMAIN}/${GH_USER}/${GH_REPO}/${GH_RELEASE_URL}"}
@@ -302,7 +302,7 @@ elif [ ${MACHINE} == "macos" ]; then
   fi
 elif [[ ${SYSTEM_NAME} == "NetBSD" ]] || [[ ${SYSTEM_NAME} == "FreeBSD" ]] || [[ ${SYSTEM_NAME} == "OpenBSD" ]]; then
   echo           "If you met 404 error in further downloading, report it at"
-  printf "\033[32m  https://github.com/LNSSPsd/PhoenixBuilder/issues\033[0m\n"
+  printf "\033[32m  https://github.com/bouldev/PhoenixBuilder/issues\033[0m\n"
   FB_PREFIX="phoenixbuilder-$(echo ${SYSTEM_NAME} | tr '[:upper:]' '[:lower:]')-executable-"
   FILE_TYPE=""
   FILE_ARCH="${ARCH}"
@@ -311,7 +311,7 @@ elif [[ ${SYSTEM_NAME} == "Linux" ]] && [[ $(${UNAME_GET_OSNAME}) != "Android" ]
   # Finally, Linux
   echo     "NOTE: We only provide x86_64 and arm64 executables currently, if"
   echo     "      you need prebuilts for other architectures, issue at"
-  printf "\033[32mhttps://github.com/LNSSPsd/PhoenixBuilder/issues\033[0m\n"
+  printf "\033[32mhttps://github.com/bouldev/PhoenixBuilder/issues\033[0m\n"
   if [[ ${ARCH} != "x86_64" ]] && [[ ${ARCH} == "arm64" ]]; then
     FB_PREFIX="phoenixbuilder-"
     FILE_ARCH="aarch64"
