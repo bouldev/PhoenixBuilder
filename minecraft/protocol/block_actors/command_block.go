@@ -23,7 +23,7 @@ type CommandBlock struct {
 	TrackOutput        byte     `nbt:"TrackOutput"`        // TAG_Byte(1) = 1
 	Version            int32    `nbt:"Version"`            // TAG_Int(4) = 35
 	Auto               byte     `nbt:"auto"`               // TAG_Byte(1) = 1
-	ConditionalMode    byte     `nbt:"conditionalMode"`    // Not used; TAG_Byte(1) = 0
+	ConditionMet       byte     `nbt:"conditionMet"`       // TAG_Byte(1) = 0
 	Powered            byte     `nbt:"powered"`            // TAG_Byte(1) = 0
 
 	/*
@@ -33,7 +33,7 @@ type CommandBlock struct {
 
 		(Wrote by LNSSPsd/Ruphane, added by Happy2018new)
 	*/
-	ConditionMet byte `nbt:"conditionMet"` // ! TAG_Byte(1) = 0
+	ConditionalMode byte `nbt:"conditionalMode"` // Not used; TAG_Byte(1) = 0
 }
 
 // ID ...
