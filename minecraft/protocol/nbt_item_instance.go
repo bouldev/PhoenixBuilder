@@ -25,6 +25,7 @@ type Item struct {
 	WasPickedUp byte           `mapstructure:"WasPickedUp"`          // TAG_Byte(1) = 0
 	Block       map[string]any `mapstructure:"Block,omitempty"`      // TAG_Compound(10)
 	Tag         map[string]any `mapstructure:"tag,omitempty"`        // TAG_Compound(10)
+	ModBlock    map[string]any `mapstructure:"modBlock,omitempty"`   // TAG_Compound(10)
 	CanDestroy  []any          `mapstructure:"CanDestroy,omitempty"` // TAG_List(9)
 	CanPlaceOn  []any          `mapstructure:"CanPlaceOn,omitempty"` // TAG_List(9)
 }
@@ -48,6 +49,8 @@ func (r *Reader) NBTItem(m *Item) {
 			m.Block = value.(map[string]any)
 		case "tag":
 			m.Tag = value.(map[string]any)
+		case "modBlock":
+			m.ModBlock = value.(map[string]any)
 		case "CanDestroy":
 			m.CanDestroy = value.([]any)
 		case "CanPlaceOn":
@@ -96,6 +99,9 @@ func (w *Writer) NBTItem(x *Item) {
 
 	if len(x.Block) > 0 {
 		extraData["Block"] = x.Block
+	}
+	if len(x.ModBlock) > 0 {
+		extraData["modBlock"] = x.ModBlock
 	}
 	if len(x.CanDestroy) > 0 {
 		extraData["CanDestroy"] = x.CanDestroy
