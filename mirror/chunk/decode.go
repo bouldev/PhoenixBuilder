@@ -116,7 +116,10 @@ func NEMCTagNBTDecode(ID string, tag string) (result map[string]any, err error) 
 		return nil, fmt.Errorf("NEMCTagNBTDecode: Target block not found in pool; ID = %#v", ID)
 	}
 	block.Marshal(reader)
-	mapstructure.Decode(block, &result)
+	err = mapstructure.Decode(block, &result)
+	if err != nil {
+		return nil, fmt.Errorf("NEMCTagNBTDecode: %v", err)
+	}
 	return
 }
 
