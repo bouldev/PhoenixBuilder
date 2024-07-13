@@ -10,6 +10,15 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 
+struct user_args {
+  int argc;
+  char **argv;
+}
+#ifdef __x86_64__
+__attribute__((packed))
+#endif
+;
+
 extern void teardown_self();
 extern char **GetFunctionList();
 char **fb_readline_completion(const char *text, int start, int end);
@@ -28,9 +37,9 @@ static char *fb_get_args_generator(const char *text, int state);
 static char **tmpFunctionList;
 
 char **strengthenStringArray(const char **source, int entries) {
-  char **target = malloc(sizeof(void *) * (entries + 1));
+  char **target = malloc(sizeof(char *) * (entries + 1));
   target[entries] = NULL;
-  memcpy(target, source, sizeof(void *) * entries);
+  memcpy(target, source, sizeof(char *) * entries);
   return target;
 }
 
@@ -39,7 +48,7 @@ static int should_show_fbexit_notice = 0;
 char *doReadline() {
   char *line = readline("> ");
   if (line == NULL) {
-    line = malloc(5);
+    line = malloc(5 * sizeof(char));
     line[0] = 'e';
     line[1] = 'x';
     line[2] = 'i';
@@ -90,10 +99,10 @@ void init_readline() {
   rl_catch_sigwinch = 0;
 }
 
-void **readline_to_args() {
+struct user_args *readline_to_args() {
   // TODO: Escape (\ ) (" ")
   int argc = 0;
-  char *copied_rl_buffer = malloc(rl_point);
+  char *copied_rl_buffer = malloc((size_t)rl_point);
   memcpy(copied_rl_buffer, rl_line_buffer, rl_point);
   for (int i = 0; i < rl_point; i++) {
     if (copied_rl_buffer[i] == ' ') {
@@ -113,14 +122,15 @@ void **readline_to_args() {
       argi++;
     }
   }
-  void **ret = malloc(sizeof(void *) * 2);
-  ret[0] = (void *)(int64_t)(argc);
-  ret[1] = argv;
+
+  struct user_args *ret = malloc(sizeof(struct user_args));
+  ret->argc = argc;
+  ret->argv = argv;
   return ret;
 }
 
-void free_converted_args(void **c) {
-  char **argv = (char **)c[1];
+void free_converted_args(struct user_args *c) {
+  char **argv = c->argv;
   free(argv[0]);
   free(argv);
   free(c);
@@ -160,9 +170,9 @@ char **fb_readline_completion(const char *text, int start, int end) {
           }
   }*/
   rl_attempted_completion_over = 1;
-  void **args = readline_to_args();
-  int argc = (int)(int64_t)args[0];
-  char **argv = (char **)args[1];
+  struct user_args *args = readline_to_args();
+  int argc = args->argc;
+  char **argv = args->argv;
   char *command_pr = argv[0];
   if (strcmp("exit", command_pr) == 0 || strcmp("fbexit", command_pr) == 0 ||
       strcmp("logout", command_pr) == 0 || strcmp("lang", command_pr) == 0 ||
@@ -283,7 +293,7 @@ char *fb_command_generator(const char *text, int state) {
     while ((name = pool[index]) != NULL) {                                     \
       index++;                                                                 \
       if (strncmp(name, text, len) == 0) {                                     \
-        char *newbuf = malloc(strlen(name) + 1);                               \
+        char *newbuf = malloc((strlen(name) + 1) * sizeof(char));                               \
         memcpy(newbuf, name, strlen(name) + 1);                                \
         return newbuf;                                                         \
       }                                                                        \
