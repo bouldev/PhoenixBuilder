@@ -245,42 +245,36 @@ type StartGame struct {
 	// Author: Liliya233
 	//
 	// The following fields are NetEase specific.
-	Unknown1  uint64
-	Unknown2  uint64 // Netease: they may be a UUID
-	Unknown3  uint64
+	Unknown1  bool
+	Unknown2  string
+	Unknown3  string
 	Unknown4  bool
 	Unknown5  bool
-	Unknown6  bool
-	Unknown7  bool
-	Unknown8  string
-	Unknown9  string
-	Unknown10 bool
+	Unknown6  int32
+	Unknown7  int32
+	Unknown8  int32
+	Unknown9  int32
+	Unknown10 int32
 	Unknown11 bool
-	Unknown12 int32
-	Unknown13 int32
+	Unknown12 bool
+	Unknown13 bool
 	Unknown14 int32
-	Unknown15 int32
-	Unknown16 int32
+	Unknown15 bool
+	Unknown16 bool
 	Unknown17 bool
 	Unknown18 bool
 	Unknown19 bool
-	Unknown20 int32
+	Unknown20 bool
 	Unknown21 bool
 	Unknown22 bool
 	Unknown23 bool
-	Unknown24 bool
+	Unknown24 []byte // uncertain
 	Unknown25 bool
 	Unknown26 bool
 	Unknown27 bool
-	Unknown28 bool
+	Unknown28 string // UUID string
 	Unknown29 bool
-	Unknown30 []byte // Netease: uncertain
-	Unknown31 bool
-	Unknown32 bool
-	Unknown33 bool
-	Unknown34 string // Netease: UUID string
-	Unknown35 bool
-	Unknown36 bool
+	Unknown30 bool
 }
 
 // ID ...
@@ -358,54 +352,46 @@ func (pk *StartGame) Marshal(io protocol.IO) {
 	io.Bool(&pk.ServerAuthoritativeInventory)
 	io.String(&pk.GameVersion)
 	io.NBT(&pk.PropertyData, nbt.NetworkLittleEndian)
+	io.Uint64(&pk.ServerBlockStateChecksum)
+	io.UUID(&pk.WorldTemplateID)
+	io.Bool(&pk.ClientSideGeneration)
+	io.Bool(&pk.UseBlockNetworkIDHashes)
+	io.Bool(&pk.ServerAuthoritativeSound)
 
 	// PhoenixBuilder specific changes.
 	// Author: Liliya233
 	//
 	// NetEase
 	{
-		io.Uint64(&pk.Unknown1)
-		io.Uint64(&pk.Unknown2)
-		io.Uint64(&pk.Unknown3)
+		io.Bool(&pk.Unknown1)
+		io.String(&pk.Unknown2)
+		io.String(&pk.Unknown3)
 		io.Bool(&pk.Unknown4)
 		io.Bool(&pk.Unknown5)
-		io.Bool(&pk.Unknown6)
-		io.Bool(&pk.Unknown7)
-		io.String(&pk.Unknown8)
-		io.String(&pk.Unknown9)
-		io.Bool(&pk.Unknown10)
+		io.Int32(&pk.Unknown6)
+		io.Int32(&pk.Unknown7)
+		io.Int32(&pk.Unknown8)
+		io.Int32(&pk.Unknown9)
+		io.Int32(&pk.Unknown10)
 		io.Bool(&pk.Unknown11)
-		io.Int32(&pk.Unknown12)
-		io.Int32(&pk.Unknown13)
+		io.Bool(&pk.Unknown12)
+		io.Bool(&pk.Unknown13)
 		io.Int32(&pk.Unknown14)
-		io.Int32(&pk.Unknown15)
-		io.Int32(&pk.Unknown16)
+		io.Bool(&pk.Unknown15)
+		io.Bool(&pk.Unknown16)
 		io.Bool(&pk.Unknown17)
 		io.Bool(&pk.Unknown18)
 		io.Bool(&pk.Unknown19)
-		io.Int32(&pk.Unknown20)
+		io.Bool(&pk.Unknown20)
 		io.Bool(&pk.Unknown21)
 		io.Bool(&pk.Unknown22)
 		io.Bool(&pk.Unknown23)
-		io.Bool(&pk.Unknown24)
+		io.ByteSlice(&pk.Unknown24)
 		io.Bool(&pk.Unknown25)
 		io.Bool(&pk.Unknown26)
 		io.Bool(&pk.Unknown27)
-		io.Bool(&pk.Unknown28)
+		io.String(&pk.Unknown28)
 		io.Bool(&pk.Unknown29)
-		io.ByteSlice(&pk.Unknown30)
-		io.Bool(&pk.Unknown31)
-		io.Bool(&pk.Unknown32)
-		io.Bool(&pk.Unknown33)
-		io.String(&pk.Unknown34)
-		io.Bool(&pk.Unknown35)
-		io.Bool(&pk.Unknown36)
-		/*
-			io.Uint64(&pk.ServerBlockStateChecksum)
-			io.UUID(&pk.WorldTemplateID)
-			io.Bool(&pk.ClientSideGeneration)
-			io.Bool(&pk.UseBlockNetworkIDHashes)
-			io.Bool(&pk.ServerAuthoritativeSound)
-		*/
+		io.Bool(&pk.Unknown30)
 	}
 }

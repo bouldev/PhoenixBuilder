@@ -140,9 +140,8 @@ type PlayerAuthInput struct {
 		The following fields are NetEase specific.
 	*/
 	Unknown1 bool
-	Unknown2 bool
-	Unknown3 mgl32.Vec2
-	Unknown4 bool
+	Unknown2 mgl32.Vec2
+	Unknown3 bool
 }
 
 // ID ...
@@ -194,8 +193,8 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	//
 	// NetEase
 	{
-		io.Bool(&pk.Unknown2)
-		io.Vec2(&pk.Unknown3)
-		io.Bool(&pk.Unknown4)
+		io.Bool(&pk.Unknown1)
+		io.Vec2(&pk.Unknown2)
+		io.Bool(&pk.Unknown3)
 	}
 }
