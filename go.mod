@@ -25,11 +25,12 @@ require (
 	github.com/andybalholm/brotli v1.0.3
 	github.com/disintegration/imaging v1.6.2
 	github.com/elliotchance/orderedmap/v2 v2.2.0
-	github.com/go-gl/mathgl v1.0.0
+	github.com/go-gl/mathgl v1.1.0
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/klauspost/compress v1.13.6
 	github.com/lucasb-eyer/go-colorful v1.2.0
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20211230184646-baf1f7156737
 	github.com/pterm/pterm v0.12.29
 	github.com/sandertv/go-raknet v1.12.0

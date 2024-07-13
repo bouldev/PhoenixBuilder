@@ -4,7 +4,7 @@ import general "phoenixbuilder/minecraft/protocol/block_actors/general_actors"
 
 // 告示牌
 type Sign struct {
-	general.SignBlockActor
+	general.SignBlockActor `mapstructure:",squash"`
 }
 
 // ID ...

@@ -10,7 +10,7 @@ import (
 	"phoenixbuilder/mirror/blocks"
 	"phoenixbuilder/mirror/define"
 
-	"github.com/pterm/pterm"
+	"github.com/mitchellh/mapstructure"
 )
 
 // func NEMCNetworkDecode(data []byte, count int) (c *Chunk, nbtBlocks []map[string]interface{}, err error) {
@@ -74,7 +74,8 @@ func NEMCSubChunkDecode(data []byte) (int8, *SubChunk, []map[string]interface{},
 		for buf.Len() != 0 {
 			err := nbt.NewDecoderWithEncoding(buf, nbt.NetworkLittleEndian).Decode(&blockData)
 			if err != nil {
-				pterm.Printfln("decode chunk NBT error %v", err)
+				// pterm.Printfln("decode chunk NBT error %v", err)
+				panic(fmt.Sprintf("decode chunk NBT error %v", err))
 				break
 			}
 			// decode block NBT
@@ -115,7 +116,8 @@ func NEMCTagNBTDecode(ID string, tag string) (result map[string]any, err error) 
 		return nil, fmt.Errorf("NEMCTagNBTDecode: Target block not found in pool; ID = %#v", ID)
 	}
 	block.Marshal(reader)
-	return block.ToNBT(), nil
+	mapstructure.Decode(block, &result)
+	return
 }
 
 // DiskDecode decodes the data from a SerialisedData object into a chunk and returns it. If the data was

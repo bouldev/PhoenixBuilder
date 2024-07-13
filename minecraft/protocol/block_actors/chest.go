@@ -4,7 +4,7 @@ import general "phoenixbuilder/minecraft/protocol/block_actors/general_actors"
 
 // 箱子
 type Chest struct {
-	general.ChestBlockActor
+	general.ChestBlockActor `mapstructure:",squash"`
 }
 
 // ID ...

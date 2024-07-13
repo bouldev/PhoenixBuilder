@@ -118,13 +118,15 @@ func (o *Assembler) AddPendingTask(pk *packet.LevelChunk) (exist bool) {
 }
 
 func (o *Assembler) OnNewSubChunk(pk *packet.SubChunk) *mirror.ChunkData {
-	defer func() {
-		r := recover()
-		if r != nil {
-			fmt.Println("on handle sub chunk ", r)
-			return
-		}
-	}()
+	/*
+		defer func() {
+			r := recover()
+			if r != nil {
+				fmt.Println("on handle sub chunk ", r)
+				return
+			}
+		}()
+	*/
 	cp := define.ChunkPos{pk.Position[0], pk.Position[2]}
 	// subChunkIndex := pk.Position[1]
 	o.taskMu.RLock()

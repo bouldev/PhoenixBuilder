@@ -4,7 +4,7 @@ import general "phoenixbuilder/minecraft/protocol/block_actors/general_actors"
 
 // 物品展示框
 type ItemFrame struct {
-	general.ItemFrameBlockActor
+	general.ItemFrameBlockActor `mapstructure:",squash"`
 }
 
 // ID ...

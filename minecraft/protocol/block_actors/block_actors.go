@@ -4,10 +4,8 @@ import "phoenixbuilder/minecraft/protocol"
 
 // 描述 方块实体 的通用接口
 type BlockActors interface {
-	ID() string               // 返回该 方块实体 的 ID
-	Marshal(io protocol.IO)   // 解码或编码为二进制的平铺型 __tag NBT
-	ToNBT() map[string]any    // 将该 方块实体 所记的数据转换为 NBT
-	FromNBT(x map[string]any) // 将 x 指代的 NBT 加载到该 方块实体
+	ID() string             // 返回该 方块实体 的 ID
+	Marshal(io protocol.IO) // 解码或编码为二进制的平铺型 __tag NBT
 }
 
 // 以下列出了各个 方块实体 的 ID

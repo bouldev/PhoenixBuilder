@@ -1,80 +1,115 @@
-// Netease
+/*
+PhoenixBuilder specific fields.
+Author: Happy2018new
+*/
 package protocol
 
 import (
-	"phoenixbuilder/fastbuilder/utils"
+	"fmt"
 	"phoenixbuilder/minecraft/nbt"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 // ------------------------- Item -------------------------
 
+// 描述 物品堆栈 的额外字段，
+// 如该物品的 tag 标签
+type ExtraData map[string]any
+
 // 描述一个 物品堆栈 实例
 type Item struct {
-	Count       byte   `nbt:"Count"`       // TAG_Byte(1) = 64
-	Damage      uint16 `nbt:"Damage"`      // * TAG_Short(3) = 0
-	Name        string `nbt:"Name"`        // TAG_String(8) = "minecraft:grass"
-	WasPickedUp byte   `nbt:"WasPickedUp"` // TAG_Byte(1) = 0
-
-	ExtraData map[string]any // Modified from origin version, by NetEase; TAG_Compound(10)
-	EnchList  EnchantList    // Modified from origin version, by NetEase
+	Count       byte           `mapstructure:"Count"`                // TAG_Byte(1) = 64
+	Damage      int16          `mapstructure:"Damage"`               // TAG_Short(3) = 0
+	Name        string         `mapstructure:"Name"`                 // TAG_String(8) = "minecraft:grass"
+	WasPickedUp byte           `mapstructure:"WasPickedUp"`          // TAG_Byte(1) = 0
+	Block       map[string]any `mapstructure:"Block,omitempty"`      // TAG_Compound(10)
+	Tag         map[string]any `mapstructure:"tag,omitempty"`        // TAG_Compound(10)
+	CanDestroy  []any          `mapstructure:"CanDestroy,omitempty"` // TAG_List(9)
+	CanPlaceOn  []any          `mapstructure:"CanPlaceOn,omitempty"` // TAG_List(9)
 }
 
-func (i *Item) Marshal(r IO) {
-	r.String(&i.Name)
-	r.Uint8(&i.Count)
-	r.Varuint16(&i.Damage)
-	r.Uint8(&i.WasPickedUp)
-	i.EnchList.Marshal(r)
-	r.NBT(&i.ExtraData, nbt.NetworkLittleEndian)
-}
+// NBTItem reads a item data from the underlying buffer.
+func (r *Reader) NBTItem(m *Item) {
+	var extraData map[string]any
+	var enchList []Enchant
+	var nbtEnchList []map[string]any
 
-func (i *Item) ToNBT() map[string]any {
-	temp := make(map[string]any)
-	for key, value := range i.ExtraData {
-		temp[key] = value
-	}
-	if len(i.EnchList.Data) > 0 {
-		if _, has := temp["tag"]; !has {
-			temp["tag"] = make(map[string]any)
-		}
-		temp["tag"].(map[string]any)["ench"] = i.EnchList.ToNBT()
-	}
-	return utils.MergeMaps(
-		map[string]any{
-			"Count":       i.Count,
-			"Damage":      int16(i.Damage),
-			"Name":        i.Name,
-			"WasPickedUp": i.WasPickedUp,
-		},
-		temp,
-	)
-}
+	r.String(&m.Name)
+	r.Uint8(&m.Count)
+	NBTInt(&m.Damage, r.Varuint16)
+	r.Uint8(&m.WasPickedUp)
+	r.EnchantList(&enchList)
+	r.NBT(&extraData, nbt.NetworkLittleEndian)
 
-func (i *Item) FromNBT(x map[string]any) {
-	i.Count = x["Count"].(byte)
-	i.Damage = uint16(x["Damage"].(int16))
-	i.Name = x["Name"].(string)
-	i.WasPickedUp = x["WasPickedUp"].(byte)
-
-	if tag, hasTag := x["tag"].(map[string]any); hasTag {
-		if ench, hasEnch := tag["ench"].([]any); hasEnch {
-			i.EnchList.FromNBT(ench)
-		}
-	}
-
-	for key, value := range x {
+	for key, value := range extraData {
 		switch key {
-		case "Count", "Damage", "Name", "WasPickedUp":
+		case "Block":
+			m.Block = value.(map[string]any)
+		case "tag":
+			m.Tag = value.(map[string]any)
+		case "CanDestroy":
+			m.CanDestroy = value.([]any)
+		case "CanPlaceOn":
+			m.CanPlaceOn = value.([]any)
 		default:
-			if i.ExtraData == nil {
-				i.ExtraData = make(map[string]any)
-			}
-			i.ExtraData[key] = value
-			if key == "ench" {
-				delete(i.ExtraData["tag"].(map[string]any), "ench")
-			}
+			r.UnknownEnumOption(key, "NBT item extra data")
 		}
 	}
+
+	if len(enchList) > 0 {
+		if m.Tag == nil {
+			m.Tag = make(map[string]any)
+		}
+		if err := mapstructure.Decode(enchList, &nbtEnchList); err != nil {
+			panic(fmt.Sprintf("(r *Reader) NBTItem: %v", err))
+		}
+		new := make([]any, len(nbtEnchList))
+		for key, value := range nbtEnchList {
+			new[key] = value
+		}
+		m.Tag["ench"] = new
+	}
+}
+
+// NBTItem writes a item data to the underlying buffer.
+func (w *Writer) NBTItem(x *Item) {
+	var enchList []Enchant
+	extraData := make(map[string]any)
+
+	if ench, hasEnch := x.Tag["ench"].([]any); hasEnch {
+		err := mapstructure.Decode(ench, &enchList)
+		if err != nil {
+			panic(fmt.Sprintf("(w *Writer) NBTItem: %v", err))
+		}
+	}
+
+	if len(x.Tag) > 0 {
+		extraData["tag"] = make(map[string]any)
+	}
+	for key, value := range x.Tag {
+		if key == "ench" {
+			continue
+		}
+		extraData["tag"].(map[string]any)[key] = value
+	}
+
+	if len(x.Block) > 0 {
+		extraData["Block"] = x.Block
+	}
+	if len(x.CanDestroy) > 0 {
+		extraData["CanDestroy"] = x.CanDestroy
+	}
+	if len(x.CanPlaceOn) > 0 {
+		extraData["CanPlaceOn"] = x.CanPlaceOn
+	}
+
+	w.String(&x.Name)
+	w.Uint8(&x.Count)
+	NBTInt(&x.Damage, w.Varuint16)
+	w.Uint8(&x.WasPickedUp)
+	w.EnchantList(&enchList)
+	w.NBT(&extraData, nbt.NetworkLittleEndian)
 }
 
 // ------------------------- ItemWithSlot -------------------------
@@ -82,53 +117,11 @@ func (i *Item) FromNBT(x map[string]any) {
 // 描述一个 物品堆栈 实例，
 // 但是同时负载该物品存放在容器中的槽位
 type ItemWithSlot struct {
-	Slot byte `nbt:"Slot"` // TAG_Byte(1) = 0
-	Item
+	Slot byte `mapstructure:"Slot"` // TAG_Byte(1) = 0
+	Item `mapstructure:",squash"`
 }
 
 func (i *ItemWithSlot) Marshal(r IO) {
 	r.Uint8(&i.Slot)
-	i.Item.Marshal(r)
-}
-
-func (i *ItemWithSlot) ToNBT() map[string]any {
-	return utils.MergeMaps(
-		map[string]any{
-			"Slot": i.Slot,
-		},
-		i.Item.ToNBT(),
-	)
-}
-
-func (i *ItemWithSlot) FromNBT(x map[string]any) {
-	i.Slot = x["Slot"].(byte)
-	i.Item.FromNBT(x)
-}
-
-// ------------------------- ItemWithSlotList -------------------------
-
-// 描述容器中存放的多个 物品堆栈 实例
-type ItemList struct {
-	Data []ItemWithSlot // TAG_List[TAG_Compound] (9[10])
-}
-
-func (i *ItemList) Marshal(r IO) {
-	r.ItemList(&i.Data)
-}
-
-func (i *ItemList) ToNBT() []any {
-	itemList := make([]any, len(i.Data))
-	for key, value := range i.Data {
-		itemList[key] = value.ToNBT()
-	}
-	return itemList
-}
-
-func (i *ItemList) FromNBT(x []any) {
-	i.Data = make([]ItemWithSlot, len(x))
-	for key, value := range x {
-		new := ItemWithSlot{}
-		new.FromNBT(value.(map[string]any))
-		i.Data[key] = new
-	}
+	r.NBTItem(&i.Item)
 }

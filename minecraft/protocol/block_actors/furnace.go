@@ -4,7 +4,7 @@ import general "phoenixbuilder/minecraft/protocol/block_actors/general_actors"
 
 // 熔炉
 type Furnace struct {
-	general.FurnaceBlockActor
+	general.FurnaceBlockActor `mapstructure:",squash"`
 }
 
 // ID ...

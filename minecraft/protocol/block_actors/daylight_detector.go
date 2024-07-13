@@ -4,7 +4,7 @@ import general "phoenixbuilder/minecraft/protocol/block_actors/general_actors"
 
 // 阳光探测器
 type DayLightDetector struct {
-	general.BlockActor
+	general.BlockActor `mapstructure:",squash"`
 }
 
 // ID ...

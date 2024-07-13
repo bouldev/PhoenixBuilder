@@ -1,11 +1,14 @@
 package protocol
 
 import (
+	"fmt"
 	"image/color"
 	"phoenixbuilder/minecraft/nbt"
+	"reflect"
 
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/google/uuid"
+	"github.com/mitchellh/mapstructure"
 )
 
 // IO represents a packet IO direction. Implementations of this interface are Reader and Writer. Reader reads
@@ -28,6 +31,8 @@ type IO interface {
 	Varint32(x *int32)
 	Varuint32(x *uint32)
 
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
 	Varint16(x *int16)
 	Varuint16(x *uint16)
 
@@ -43,6 +48,11 @@ type IO interface {
 	SoundPos(x *mgl32.Vec3)
 	ByteFloat(x *float32)
 	Bytes(p *[]byte)
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new, Liliya233
+	PistonAttachedBlocks(m *[]int32)
+
 	NBT(m *map[string]any, encoding nbt.Encoding)
 
 	// PhoenixBuilder specific changes.
@@ -54,6 +64,7 @@ type IO interface {
 	// PhoenixBuilder specific changes.
 	// Author: Happy2018new, Liliya233
 	EnchantList(x *[]Enchant)
+	NBTItem(m *Item)
 	ItemList(x *[]ItemWithSlot)
 
 	UUID(x *uuid.UUID)
@@ -104,6 +115,28 @@ type Marshaler interface {
 	Marshal(r IO)
 }
 
+// PhoenixBuilder specific interface.
+// Author: Happy2018new
+//
+// Varint 描述了 __tag NBT 在网络传输时整数的数据类型
+type Int interface {
+	uint16 | uint32 | uint64 | int16 | int32 | int64
+}
+
+/*
+PhoenixBuilder specific interface.
+Author: Happy2018new
+
+TAGNumber 描述了标准 NBT 中允许的整数类型。
+uint8 被指代 TAG_Byte(1)，
+uint16 被指代 TAG_Short(3)，
+int32 被指代 TAG_Int(4)，
+int64 被指代 TAG_Long(5)
+*/
+type TAGNumber interface {
+	uint8 | int16 | int32 | int64
+}
+
 // Slice reads/writes a slice of T with a varuint32 prefix.
 func Slice[T any, S ~*[]T, A PtrMarshaler[T]](r IO, x S) {
 	count := uint32(len(*x))
@@ -152,7 +185,7 @@ func SliceVarint32Length[T any, S ~*[]T, A PtrMarshaler[T]](r IO, x S) {
 // PhoenixBuilder specific func.
 // Author: Liliya233
 //
-// Netease: SliceVaruint32Length reads/writes a slice of T with a varuint32 prefix.
+// SliceVaruint32Length reads/writes a slice of T with a varuint32 prefix.
 func SliceVaruint32Length[T any, S ~*[]T, A PtrMarshaler[T]](r IO, x S) {
 	count := uint32(len(*x))
 	r.Varuint32(&count)
@@ -267,67 +300,181 @@ func Single[T any, S PtrMarshaler[T]](r IO, x S) {
 // Optional is an optional type in the protocol. If not set, only a false bool is written. If set, a true bool is
 // written and the Marshaler.
 type Optional[T any] struct {
-	// PhoenixBuilder specific changes.
-	// Author: Happy2018new, Liliya233
-	Set bool
-	// set bool
-
-	// PhoenixBuilder specific changes.
-	// Author: Happy2018new, Liliya233
-	Val T
-	// val T
+	set bool
+	val T
 }
 
 // Option creates an Optional[T] with the value passed.
 func Option[T any](val T) Optional[T] {
-	// PhoenixBuilder specific changes.
-	// Author: Happy2018new, Liliya233
-	return Optional[T]{Set: true, Val: val}
-	// return Optional[T]{set: true, val: val}
+	return Optional[T]{set: true, val: val}
 }
 
 // Value returns the value set in the Optional. If no value was set, false is returned.
 func (o Optional[T]) Value() (T, bool) {
-	// PhoenixBuilder specific changes.
-	// Author: Happy2018new, Liliya233
-	return o.Val, o.Set
-	// return o.val, o.set
+	return o.val, o.set
 }
 
 // OptionalFunc reads/writes an Optional[T].
 func OptionalFunc[T any](r IO, x *Optional[T], f func(*T)) any {
-	// PhoenixBuilder specific changes.
-	// Author: Happy2018new, Liliya233
-	{
-		r.Bool(&x.Set)
-		if x.Set {
-			f(&x.Val)
-		}
-		/*
-			r.Bool(&x.set)
-			if x.set {
-				f(&x.val)
-			}
-		*/
+	r.Bool(&x.set)
+	if x.set {
+		f(&x.val)
 	}
-
 	return x
 }
 
 // OptionalMarshaler reads/writes an Optional assuming *T implements Marshaler.
 func OptionalMarshaler[T any, A PtrMarshaler[T]](r IO, x *Optional[T]) {
-	// PhoenixBuilder specific changes.
-	// Author: Happy2018new, Liliya233
-	{
-		r.Bool(&x.Set)
-		if x.Set {
-			A(&x.Val).Marshal(r)
+	r.Bool(&x.set)
+	if x.set {
+		A(&x.val).Marshal(r)
+	}
+}
+
+/*
+PhoenixBuilder specific func.
+Author: Happy2018new
+
+NBTOptionalFunc 读写网易一个可选的字段 x 。
+
+readPrefix 指代该字段是否在网易 __tag NBT 传输协议中可选，
+此时若 x 为空，则仅写入 false 布尔值，
+否则写入 true 布尔值和该字段的二进制表达形式。
+
+f1 用于返回非空的 x 字段，
+f2 则是用于 读取/写入 该字段的函数
+*/
+func NBTOptionalFunc[T any](r IO, x *T, f1 func() *T, readPrefix bool, f2 func(*T)) {
+	var has bool
+	if readPrefix {
+		if x != nil {
+			has = true
 		}
-		/*
-			r.Bool(&x.set)
-			if x.set {
-				A(&x.val).Marshal(r)
+		r.Bool(&has)
+		if !has {
+			return
+		}
+	}
+	f2(f1())
+}
+
+/*
+PhoenixBuilder specific func.
+Author: Happy2018new
+
+NBTOptionalMarshaler 读写网易一个可选的且已实现 Marshal 的字段 x 。
+
+readPrefix 指代该字段是否在网易 __tag NBT 传输协议中可选，
+此时若 x 为空，则仅写入 false 布尔值，
+否则写入 true 布尔值和该字段的二进制表达形式。
+
+x 用于返回非空的 x 字段
+*/
+func NBTOptionalMarshaler[T any, A PtrMarshaler[T]](r IO, x *T, f func() *T, readPrefix bool) {
+	var has bool
+	if readPrefix {
+		if x != nil {
+			has = true
+		}
+		r.Bool(&has)
+		if !has {
+			return
+		}
+	}
+	A(f()).Marshal(r)
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new
+//
+// 从 __tag NBT 的传输流以 T1 的数据类型 读取/写入 数据到 x 上。
+// f 指代用于被用于传输流 解码/编码 网端 __tag NBT 的函数
+func NBTInt[T1 Int, T2 TAGNumber](x *T2, f func(*T1)) {
+	t2 := T1(*x)
+	f(&t2)
+	*x = T2(t2)
+}
+
+/*
+PhoenixBuilder specific func.
+Author: Happy2018new
+
+在读取时，NBTSlice 使用 f 将底层输出流解码，
+然后并转换为 []any 并输出到 x 上。
+在写入时，NBTSlice 将 x 转换为 []T，
+然后使用 f 向底层输出流编码
+*/
+func NBTSlice[T any](r IO, x *[]any, f func(*[]T)) {
+	if _, isReader := r.(*Reader); isReader {
+		new := make([]T, 0)
+		f(&new)
+		*x = make([]any, len(new))
+		// read
+		for key, value := range new {
+			var mapping map[string]any
+			// prepare
+			val := reflect.ValueOf(value)
+			valType := val.Kind()
+			matchA := valType == reflect.Struct
+			matchB := valType == reflect.Ptr && val.Elem().Kind() == reflect.Struct
+			if !matchA && !matchB {
+				(*x)[key] = value
+				continue
 			}
-		*/
+			// for normal data
+			err := mapstructure.Decode(value, &mapping)
+			if err != nil {
+				panic(fmt.Sprintf("NBTSlice: %v", err))
+			}
+			(*x)[key] = mapping
+			// for struct
+		}
+	} else {
+		new := make([]T, len(*x))
+		err := mapstructure.Decode(*x, &new)
+		if err != nil {
+			panic(fmt.Sprintf("NBTSlice: %v", err))
+		}
+		f(&new)
+	}
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new
+//
+// NBTSliceVarint16Length reads/writes a []any by using func SliceVarint16Length.
+// s refer to the true data type of this slice.
+func NBTSliceVarint16Length[T any, S ~*[]T, A PtrMarshaler[T]](r IO, x *[]any, s S) {
+	NBTSlice(r, x, func(t *[]T) {
+		SliceVarint16Length[T, S, A](r, t)
+	})
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new
+//
+// NBTFuncSliceVarint32Length reads/writes a []any by using func FuncSliceVarint32Length.
+// f refer to the function which FuncSliceVarint32Length request to.
+func NBTFuncSliceVarint32Length[T any, S ~*[]T](r IO, x *[]any, f func(*T)) {
+	NBTSlice(r, x, func(t *[]T) {
+		FuncSliceVarint32Length[T, S](r, t, f)
+	})
+}
+
+// PhoenixBuilder specific func.
+// Author: Happy2018new
+//
+// NBTOptionalSliceVarint16Length reads/writes an optional []any with a varint16 prefix.
+// s refer to the true data type of this slice.
+func NBTOptionalSliceVarint16Length[T any, S ~*[]T, A PtrMarshaler[T]](r IO, x *[]any, s S) {
+	var has bool
+	if x != nil {
+		has = true
+	}
+	r.Bool(&has)
+	if has {
+		NBTSlice(r, x, func(t *[]T) {
+			SliceVarint16Length[T, S, A](r, t)
+		})
 	}
 }

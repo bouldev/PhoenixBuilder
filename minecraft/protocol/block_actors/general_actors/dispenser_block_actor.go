@@ -1,40 +1,23 @@
 package general
 
 import (
-	"phoenixbuilder/fastbuilder/utils"
 	"phoenixbuilder/minecraft/protocol"
 )
 
 // 描述 发射器 和 投掷器 的通用字段
 type DispenserBlockActor struct {
-	RandomizableBlockActor
-	Items protocol.ItemList `nbt:"Items"`      // TAG_List[TAG_Compound] (9[10])
-	Name  string            `nbt:"CustomName"` // TAG_String(8) = ""
+	RandomizableBlockActor `mapstructure:",squash"`
+	Items                  []any `mapstructure:"Items"` // TAG_List[TAG_Compound] (9[10])
 }
 
 func (d *DispenserBlockActor) Marshal(r protocol.IO) {
+	var name string = d.CustomName
+
 	protocol.Single(r, &d.RandomizableBlockActor)
-	protocol.Single(r, &d.Items)
-	r.String(&d.Name)
-}
+	protocol.NBTSlice(r, &d.Items, func(t *[]protocol.ItemWithSlot) { r.ItemList(t) })
+	r.String(&name)
 
-func (d *DispenserBlockActor) ToNBT() map[string]any {
-	if len(d.Name) > 0 {
-		temp := d.CustomName
-		defer func() {
-			d.CustomName = temp
-		}()
-		d.CustomName = d.Name
+	if len(name) > 0 {
+		d.CustomName = name
 	}
-	return utils.MergeMaps(
-		d.RandomizableBlockActor.ToNBT(),
-		map[string]any{
-			"Items": d.Items.ToNBT(),
-		},
-	)
-}
-
-func (d *DispenserBlockActor) FromNBT(x map[string]any) {
-	d.RandomizableBlockActor.FromNBT(x)
-	d.Items.FromNBT(x["Items"].([]any))
 }

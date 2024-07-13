@@ -87,9 +87,14 @@ func (networkLittleEndian) WriteInt64(w *offsetWriter, x int64) error {
 
 // WriteString ...
 func (networkLittleEndian) WriteString(w *offsetWriter, x string) error {
-	if len(x) > maxStringSize {
-		return InvalidStringError{Off: w.off, N: uint(len(x)), Err: errStringTooLong}
-	}
+	/*
+		PhoenixBuilder specific changes.
+		Author: Happy2018new
+
+		if len(x) > maxStringSize {
+			return InvalidStringError{Off: w.off, N: uint(len(x)), Err: errStringTooLong}
+		}
+	*/
 	ux := uint32(len(x))
 	for ux >= 0x80 {
 		if err := w.WriteByte(byte(ux) | 0x80); err != nil {
@@ -153,9 +158,14 @@ func (e networkLittleEndian) String(r *offsetReader) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if length > maxStringSize {
-		return "", InvalidStringError{N: uint(length), Off: r.off, Err: errStringTooLong}
-	}
+	/*
+		PhoenixBuilder specific changes.
+		Author: Happy2018new
+
+		if length > maxStringSize {
+			return "", InvalidStringError{N: uint(length), Off: r.off, Err: errStringTooLong}
+		}
+	*/
 	data := make([]byte, length)
 	if _, err := r.Read(data); err != nil {
 		return "", BufferOverrunError{Op: "String"}

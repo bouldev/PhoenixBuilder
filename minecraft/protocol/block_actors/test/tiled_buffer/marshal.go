@@ -6,6 +6,8 @@ import (
 
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/block_actors"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 // 将类型为 ID 的方块实体的 __tag NBT 数据从 buffer 底层输出流解码
@@ -33,6 +35,8 @@ func Encode(block block_actors.BlockActors) (ID string, bytesGet []byte) {
 // 并返回该方块实体对应的 NBT 表达形式。
 // ID 是该方块实体的 ID 名
 func WriteAndRead(ID string, block block_actors.BlockActors) (map[string]any, error) {
+	var mapping map[string]any
+	// prepare
 	id, blockBytes := Encode(block)
 	if id != ID {
 		return nil, fmt.Errorf("WriteAndRead: ID of block NBT is not matched; id = %#v, ID = %#v", id, ID)
@@ -48,6 +52,10 @@ func WriteAndRead(ID string, block block_actors.BlockActors) (map[string]any, er
 		return nil, fmt.Errorf("WriteAndRead: %T: %v unread bytes left: 0x%x", block, length, buffer.Bytes())
 	}
 	// check unread parts
-	return new.ToNBT(), nil
+	if err = mapstructure.Decode(new, &mapping); err != nil {
+		return nil, fmt.Errorf("WriteAndRead: %v", err)
+	}
+	// get nbt mapping
+	return mapping, nil
 	// return
 }

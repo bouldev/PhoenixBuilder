@@ -4,7 +4,7 @@ import general "phoenixbuilder/minecraft/protocol/block_actors/general_actors"
 
 // 末影箱
 type EnderChest struct {
-	general.ChestBlockActor
+	general.ChestBlockActor `mapstructure:",squash"`
 }
 
 // ID ...
