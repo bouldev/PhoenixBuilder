@@ -275,7 +275,7 @@ func (r *Reader) NBTList(m *[]any, encoding nbt.Encoding) {
 // EnchantList reads a list of Enchant from the underlying buffer.
 func (r *Reader) EnchantList(m *[]Enchant) {
 	var bufferLength uint16
-	r.Uint16(&bufferLength)
+	r.Varuint16(&bufferLength)
 	if bufferLength == 0 {
 		return
 	}

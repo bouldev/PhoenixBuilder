@@ -636,24 +636,17 @@ func (w *Writer) NBTList(x *[]any, encoding nbt.Encoding) {
 // EnchantList writes a slice of Enchant to the underlying buffer.
 func (w *Writer) EnchantList(x *[]Enchant) {
 	var bufferLength uint16
-	var ListLength int16
 
 	if x == nil || len(*x) == 0 {
-		w.Uint16(&bufferLength)
+		w.Varuint16(&bufferLength)
 		return
 	}
 
 	buffer := bytes.NewBuffer([]byte{})
-	writer := NewWriter(buffer, 0)
-	for _, value := range *x {
-		value.Marshal(writer)
-	}
+	SliceVarint16Length(NewWriter(buffer, 0), x)
 
-	ListLength = int16(len(*x))
 	bufferLength = uint16(buffer.Len())
-
-	w.Uint16(&bufferLength)
-	w.Varint16(&ListLength)
+	w.Varuint16(&bufferLength)
 	w.w.Write(buffer.Bytes())
 }
 
@@ -668,10 +661,7 @@ func (w *Writer) ItemList(x *[]ItemWithSlot) {
 	}
 
 	buffer := bytes.NewBuffer([]byte{})
-	writer := NewWriter(buffer, 0)
-	for _, value := range *x {
-		value.Marshal(writer)
-	}
+	SliceOfLen(NewWriter(buffer, 0), uint32(len(*x)), x)
 
 	length = uint32(buffer.Len())
 	w.Varuint32(&length)

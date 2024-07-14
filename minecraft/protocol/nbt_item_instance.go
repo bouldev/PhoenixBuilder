@@ -38,7 +38,7 @@ func (r *Reader) NBTItem(m *Item) {
 
 	r.String(&m.Name)
 	r.Uint8(&m.Count)
-	NBTInt(&m.Damage, r.Varuint16)
+	r.Int16(&m.Damage)
 	r.Uint8(&m.WasPickedUp)
 	r.EnchantList(&enchList)
 	r.NBT(&extraData, nbt.NetworkLittleEndian)
@@ -112,7 +112,7 @@ func (w *Writer) NBTItem(x *Item) {
 
 	w.String(&x.Name)
 	w.Uint8(&x.Count)
-	NBTInt(&x.Damage, w.Varuint16)
+	w.Int16(&x.Damage)
 	w.Uint8(&x.WasPickedUp)
 	w.EnchantList(&enchList)
 	w.NBT(&extraData, nbt.NetworkLittleEndian)
