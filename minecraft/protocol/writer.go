@@ -650,7 +650,8 @@ func (w *Writer) EnchantList(x *[]Enchant) {
 	w.w.Write(buffer.Bytes())
 }
 
-// Netease specific.
+// PhoenixBuilder specific func.
+// Author: Happy2018new, Liliya233
 //
 // ItemList writes a slice of ItemWithSlot to the underlying buffer.
 func (w *Writer) ItemList(x *[]ItemWithSlot) {
