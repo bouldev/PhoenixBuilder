@@ -192,6 +192,14 @@ func NewPool() []BlockNBTWithBuffer {
 			ID:     block_actors.IDBrushableBlock,
 			Buffer: []byte{0, 1, 0, 0},
 		},
+		{
+			ID:     block_actors.IDBrushableBlock,
+			Buffer: []byte{0, 1, 12, 229, 143, 175, 231, 150, 145, 231, 154, 132, 230, 178, 153, 0},
+		},
+		{
+			ID:     block_actors.IDBrushableBlock,
+			Buffer: []byte{47, 108, 111, 111, 116, 95, 116, 97, 98, 108, 101, 115, 47, 101, 110, 116, 105, 116, 105, 101, 115, 47, 101, 109, 112, 116, 121, 95, 98, 114, 117, 115, 104, 97, 98, 108, 101, 95, 98, 108, 111, 99, 107, 46, 106, 115, 111, 110, 0, 1, 12, 229, 143, 175, 231, 150, 145, 231, 154, 132, 230, 178, 153, 0},
+		},
 		// 可疑的方块
 		{
 			ID:     block_actors.IDDecoratedPot,
