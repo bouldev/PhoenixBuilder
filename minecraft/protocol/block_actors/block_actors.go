@@ -31,6 +31,7 @@ const (
 	IDConduit        = "Conduit"
 	IDCauldron       = "Cauldron"
 	IDEnchantTable   = "EnchantTable"
+	IDEndGateway     = "EndGateway"
 	IDFlowerPot      = "FlowerPot"
 	IDHopper         = "Hopper"
 	IDJigsawBlock    = "JigsawBlock"
@@ -100,6 +101,7 @@ func NewPool() map[string]BlockActors {
 		IDEnchantTable:          &EnchantTable{},
 		IDEndPortal:             &EndPortal{},
 		IDEnderChest:            &EnderChest{},
+		IDEndGateway:            &EndGateway{},
 		IDFlowerPot:             &FlowerPot{},
 		IDFurnace:               &Furnace{},
 		IDGlowItemFrame:         &GlowItemFrame{},

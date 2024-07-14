@@ -331,5 +331,10 @@ func NewPool() []BlockNBTWithBuffer {
 			},
 			// mod_block
 		*/
+		{
+			ID:     block_actors.IDEndGateway,
+			Buffer: []byte{1, 0, 0, 194, 15, 140, 5, 128, 1, 236, 15},
+		},
+		// 末地折跃门方块
 	}
 }

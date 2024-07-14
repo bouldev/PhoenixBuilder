@@ -1,0 +1,52 @@
+{
+  format_version: 1,
+  size: [
+    1,
+    1,
+    1
+  ],
+  structure: {
+    block_indices: [
+      [
+        0
+      ],
+      [
+        -1
+      ]
+    ],
+    entities: [],
+    palette: {
+      default: {
+        block_palette: [
+          {
+            name: "minecraft:end_gateway",
+            states: {},
+            version: 18153475
+          }
+        ],
+        block_position_data: {
+          0: {
+            block_entity_data: {
+              Age: 369,
+              ExitPortal: [
+                -1021,
+                59,
+                323
+              ],
+              id: "EndGateway",
+              isMovable: 1b,
+              x: -91,
+              y: 75,
+              z: 29
+            }
+          }
+        }
+      }
+    }
+  },
+  structure_world_origin: [
+    -91,
+    75,
+    29
+  ]
+}
