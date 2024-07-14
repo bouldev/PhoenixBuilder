@@ -20,8 +20,12 @@ func (rba *RandomizableBlockActor) Marshal(r protocol.IO) {
 	}
 
 	protocol.NBTOptionalFunc(r, rba.LootTable, f, false, r.String)
+
 	if rba.LootTable != nil && len(*rba.LootTable) > 0 {
 		protocol.NBTInt(&rba.LootTableSeed, r.Varint64)
+	} else {
+		rba.LootTable = nil
 	}
+
 	protocol.Single(r, &rba.BlockActor)
 }
