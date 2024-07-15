@@ -52,5 +52,7 @@ func (l *Lectern) Marshal(io protocol.IO) {
 		protocol.NBTOptionalFunc(io, l.Page, func3, false, io.Varint32)
 		protocol.NBTOptionalFunc(io, l.TotalPages, func4, false, io.Varint32)
 		protocol.NBTOptionalFunc(io, l.Book, func1, false, io.NBTItem)
+	} else {
+		l.HasBook = nil
 	}
 }
