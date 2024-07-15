@@ -3,7 +3,6 @@ package bdump
 import (
 	"bytes"
 	"crypto"
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -16,56 +15,11 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"phoenixbuilder/fastbuilder/configuration"
 	"strings"
 )
 
-const signBDXURL = `https://uc.fastbuilder.pro/signbdx.web`
 const verifyBDXURL = `https://uc.fastbuilder.pro/verifybdx.web`
 const userAgent = "PhoenixBuilder/General"
-
-// SignBDX(fileContent)
-// []byte - sign
-// error  - err
-func SignBDX(fileHash []byte, privateKeyString string, cert string) ([]byte, error) {
-	if len(privateKeyString) != 0 && len(cert) != 0 {
-		return SignBDXNew(fileHash, privateKeyString, cert)
-	}
-	hexOfHash := hex.EncodeToString(fileHash)
-	body := fmt.Sprintf(`{"hash": "%s", "token": "%s"}`, hexOfHash, configuration.UserToken)
-	request, err := http.NewRequest("POST", signBDXURL, strings.NewReader(body))
-	if err != nil {
-		return nil, err
-	}
-	request.Header.Add("User-Agent", userAgent)
-	c := &http.Client{}
-	response, err := c.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	if response.StatusCode != 200 {
-		return nil, fmt.Errorf("Invalid status code: %d", response.StatusCode)
-	}
-	data, err := ioutil.ReadAll(response.Body)
-	_ = response.Body.Close()
-	c.CloseIdleConnections()
-	if err != nil {
-		return nil, err
-	}
-	var rb map[string]interface{}
-	err = json.Unmarshal(data, &rb)
-	isSucc, _ := rb["success"].(bool)
-	if !isSucc {
-		errmsg := rb["message"].(string)
-		return nil, fmt.Errorf("%s", errmsg)
-	}
-	sign, _ := rb["sign"].(string)
-	theBytes, err := base64.StdEncoding.DecodeString(sign)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to decode hex: %v", err)
-	}
-	return theBytes, nil
-}
 
 // bool corrupted
 // string username
@@ -112,31 +66,6 @@ func VerifyBDX(hashsum []byte, sign []byte) (bool, string, error) {
 	return false, un, nil
 }
 
-// SignBDXNew(fileContent)
-// []byte - sign
-// error  - err
-func SignBDXNew(fileHash []byte, privateKeyString string, cert string) ([]byte, error) {
-	buf := bytes.NewBuffer([]byte{})
-	derKey, _ := pem.Decode([]byte(privateKeyString))
-	privateKey, err := x509.ParsePKCS1PrivateKey(derKey.Bytes)
-	if err != nil {
-		return nil, err
-	}
-	signContent, err := privateKey.Sign(rand.Reader, fileHash, crypto.SHA256)
-	if err != nil {
-		return nil, err
-	}
-	buf.Write([]byte{0x00, 0x8B})
-	{
-		certLenIndicator := make([]byte, 2)
-		binary.LittleEndian.PutUint16(certLenIndicator, uint16(len(cert)))
-		buf.Write(certLenIndicator)
-	}
-	buf.Write([]byte(cert))
-	buf.Write(signContent)
-	return buf.Bytes(), nil
-}
-
 const constantServerKey = "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEAzOoZfky1sYQXkTXWuYqf7HZ+tDSLyyuYOvyqt/dO4xahyNqvXcL5\n1A+eNFhsk6S5u84RuwsUk7oeNDpg/I0hbiRuJwCxFPJKNxDdj5Q5P5O0NTLR0TAT\nNBP7AjX6+XtNB/J6cV3fPcduqBbN4NjkNZxP4I1lgbupIR2lMKU9lXEn58nFSqSZ\nvG4BZfYLKUiu89IHaZOG5wgyDwwQrejxqkLUftmXibUO4s4gf8qAiLp3ukeIPYRj\nwGhGNlUfdU0foCxf2QwAoBV2xREL8/Sx1AIvmoVUg1SqCiIVMvbBkDoFfkzPZCgC\nLtmbkmqZJnpoBVHcBhBdUYsfyM6QwtWBNQIDAQAB\n-----END RSA PUBLIC KEY-----"
 
 // bool corrupted
@@ -181,22 +110,6 @@ func VerifyBDXNew(hashsum []byte, sign []byte) (bool, string, error) {
 		return true, "", nil
 	}
 	return false, fpContent[1], nil
-}
-
-func readZeroTerminatedString(reader io.Reader) (string, error) {
-	str := ""
-	c := make([]byte, 1)
-	for {
-		_, err := reader.Read(c)
-		if err != nil {
-			return "", err
-		}
-		if c[0] == 0 {
-			break
-		}
-		str += string(c)
-	}
-	return str, nil
 }
 
 // bool signed

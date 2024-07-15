@@ -52,8 +52,6 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 	if !signed {
 		if config.Strict {
 			return fmt.Errorf("%s.", I18n.T(I18n.BDump_FileNotSigned))
-		} else {
-			types.ForwardedBrokSender <- fmt.Sprintf("%s!", I18n.T(I18n.BDump_FileNotSigned))
 		}
 	}
 	if corrupted {
@@ -69,7 +67,7 @@ func BDump(config *types.MainConfig, blc chan *types.Module) error {
 		} else {
 			types.ForwardedBrokSender <- fmt.Sprintf("%s(%s): %v", I18n.T(I18n.ERRORStr), I18n.T(I18n.IgnoredStr), e)
 		}
-	} else {
+	} else if signed {
 		types.ForwardedBrokSender <- fmt.Sprintf(I18n.T(I18n.BDump_FileSigned), signer_username)
 	}
 	{

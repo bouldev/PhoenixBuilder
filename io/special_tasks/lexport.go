@@ -7,7 +7,6 @@ import (
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/fastbuilder/parsing"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/task"
 	GameInterface "phoenixbuilder/game_control/game_interface"
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
@@ -160,14 +159,10 @@ func CreateLegacyExportTask(commandLine string, env *environment.PBEnvironment) 
 		}
 
 		env.GameInterface.Output(pterm.Info.Sprint("Writing output file......"))
-		err, signerr := outputResult.WriteToFile(cfg.Path, env.FBAuthClient.(*fbauth.Client).LocalCert, env.FBAuthClient.(*fbauth.Client).LocalKey)
+		err = outputResult.WriteToFile(cfg.Path)
 		if err != nil {
 			env.GameInterface.Output(pterm.Error.Sprintf("Failed to export: %v", err))
 			return
-		} else if signerr != nil {
-			env.GameInterface.Output(pterm.Info.Sprintf("Note: The file is unsigned since the following error was trapped: %v", signerr))
-		} else {
-			env.GameInterface.Output(pterm.Success.Sprint("File signed successfully"))
 		}
 		env.GameInterface.Output(pterm.Success.Sprintf("Successfully exported your structure to %v", cfg.Path))
 	}()

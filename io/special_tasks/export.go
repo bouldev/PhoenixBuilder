@@ -7,7 +7,6 @@ import (
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/mcstructure"
 	"phoenixbuilder/fastbuilder/parsing"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/fastbuilder/task/fetcher"
 	"phoenixbuilder/fastbuilder/types"
@@ -185,14 +184,10 @@ func CreateExportTask(commandLine string, env *environment.PBEnvironment) *task.
 			cfg.Path += ".bdx"
 		}
 		env.GameInterface.Output("EXPORT >> Writing output file")
-		err, signerr := out.WriteToFile(cfg.Path, env.FBAuthClient.(*fbauth.Client).LocalCert, env.FBAuthClient.(*fbauth.Client).LocalKey)
+		err = out.WriteToFile(cfg.Path)
 		if err != nil {
 			env.GameInterface.Output(fmt.Sprintf("EXPORT >> ERROR: Failed to export: %v", err))
 			return
-		} else if signerr != nil {
-			env.GameInterface.Output(fmt.Sprintf("EXPORT >> Note: The file is unsigned since the following error was trapped: %v", signerr))
-		} else {
-			env.GameInterface.Output(fmt.Sprintf("EXPORT >> File signed successfully"))
 		}
 		env.GameInterface.Output(fmt.Sprintf("EXPORT >> Successfully exported your structure to %v", cfg.Path))
 		runtime.GC()

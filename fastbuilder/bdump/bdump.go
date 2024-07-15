@@ -2,7 +2,6 @@ package bdump
 
 import (
 	"crypto/sha256"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -256,15 +255,15 @@ func (bdump *BDump) writeBlocks(w io.Writer) error {
 	return nil
 }
 
-func (bdump *BDump) WriteToFile(path string, localCert string, localKey string) (error, error) {
+func (bdump *BDump) WriteToFile(path string) error {
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0666)
 	if err != nil {
-		return fmt.Errorf("Failed to open file: %v", err), nil
+		return fmt.Errorf("WriteToFile: Failed to open file: %v", err)
 	}
 	defer file.Close()
 	_, err = file.Write([]byte("BD@"))
 	if err != nil {
-		return fmt.Errorf("Failed to write BRBDP file header"), nil
+		return fmt.Errorf("WriteToFile: Failed to write BRBDP file header")
 	}
 	brw := brotli.NewWriter(file)
 	brhw := &HashedWriter{
@@ -273,28 +272,13 @@ func (bdump *BDump) WriteToFile(path string, localCert string, localKey string) 
 	}
 	err = bdump.writeHeader(brhw)
 	if err != nil {
-		return err, nil
+		return err
 	}
 	err = bdump.writeBlocks(brhw)
 	if err != nil {
-		return err, nil
+		return err
 	}
-	fileHash := brhw.hash.Sum(nil)
-	sign, signerr := SignBDX(fileHash, localKey, localCert)
-	if signerr != nil {
-		brw.Write([]byte("XE"))
-	} else {
-		brw.Write(append([]byte{88}, sign...))
-		if len(sign) >= 255 {
-			realLength := make([]byte, 2)
-			binary.BigEndian.PutUint16(realLength, uint16(len(sign)))
-			brw.Write(realLength)
-			brw.Write([]byte{uint8(255)})
-		} else {
-			brw.Write([]byte{uint8(len(sign))})
-		}
-		brw.Write([]byte{90})
-	}
+	brw.Write([]byte("XE"))
 	err = brw.Close()
-	return err, signerr
+	return err
 }

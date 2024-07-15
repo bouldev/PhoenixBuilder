@@ -10,8 +10,6 @@ import (
 	"regexp"
 
 	I18n "phoenixbuilder/fastbuilder/i18n"
-
-	"github.com/pterm/pterm"
 )
 
 type secretLoadingTransport struct {
@@ -37,9 +35,6 @@ type ClientInfo struct {
 	GrowthLevel  int
 	RespondTo    string
 	Uid          string
-	CertSigning  bool
-	LocalKey     string
-	LocalCert    string
 }
 
 type Client struct {
@@ -142,24 +137,6 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 	client.Uid = u_uid
 	client.GrowthLevel = int(bot_level)
 	str, _ := resp["chainInfo"].(string)
-	client.CertSigning = true
-	if signingKey, success := resp["privateSigningKey"].(string); success {
-		client.LocalKey = signingKey
-	} else {
-		pterm.Error.Println("Failed to fetch privateSigningKey from server")
-		client.CertSigning = false
-		client.LocalKey = ""
-	}
-	if keyProve, success := resp["prove"].(string); success {
-		client.LocalCert = keyProve
-	} else {
-		pterm.Error.Println("Failed to fetch keyProve from server")
-		client.CertSigning = false
-		client.LocalCert = ""
-	}
-	if !client.CertSigning {
-		pterm.Error.Println("CertSigning is disabled for errors above.")
-	}
 	// If logged in by token, this field'd be empty
 	token, _ := resp["token"].(string)
 	respond_to, _ := resp["respond_to"].(string)
