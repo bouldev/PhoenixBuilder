@@ -12,6 +12,11 @@ PhoenixBuilder is a multifunctional structure generating tool for Minecraft Chin
 
 
 
+## Note
+**This branch has been deprecated, so it will no no longer considered for further maintenance.**
+
+
+
 ## Branche de Liberté
 This branch does honor the freedom of use of users, and any modifications in purpose of restricting users' behavior is not honored nor allowed. This branch is synchronized with the `main` branch, or `la Branche de Captivité` through cherry-picking, and is **not** necessarily just a modified copy of the `main` branch.
 
