@@ -433,7 +433,7 @@ func WaitMCPCheckChallengesDown(
 	defer ticker.Stop()
 	for {
 		err := env.Connection.(*minecraft.Conn).WritePacket(&packet.CommandRequest{
-			CommandLine: "WaitMCPCheckChallengesDown",
+			CommandLine: "list",
 			CommandOrigin: protocol.CommandOrigin{
 				Origin:    protocol.CommandOriginAutomationPlayer,
 				UUID:      ResourcesControl.GenerateUUID(),
