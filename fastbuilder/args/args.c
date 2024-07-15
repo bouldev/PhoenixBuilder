@@ -35,7 +35,7 @@ char args_disableVersionChecking=0;
 char args_skipMCPCheckChallenges=0;
 struct go_string newAuthServer={
 	"https://user.fastbuilder.pro",
-	27
+	28 // refer to the length of the URL address of auth server
 };
 struct go_string startup_script=EMPTY_GOSTRING;
 struct go_string server_code=EMPTY_GOSTRING;
