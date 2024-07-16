@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/pterm/pterm"
 	"io"
 	"net/http"
 	"regexp"
@@ -129,6 +130,9 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 			err = I18n.T(uint16(trans))
 		}
 		return "", "", "", fmt.Errorf("%s", err)
+	}
+	if authServerMsg, success := resp["server_msg"].(string); success {
+		pterm.Println(pterm.LightGreen(fmt.Sprintf(I18n.T(I18n.Auth_MessageFromAuthServer), authServerMsg)))
 	}
 	uc_username, _ := resp["username"].(string)
 	u_uid, _ := resp["uid"].(string)

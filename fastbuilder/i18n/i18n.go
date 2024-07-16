@@ -172,6 +172,7 @@ const (
 	Warning_ACME_Deprecated
 	Warning_Schem_Deprecated
 	Warning_UserHomeDir
+	Auth_MessageFromAuthServer
 )
 
 var LangDict map[string]map[uint16]string = map[string]map[uint16]string{

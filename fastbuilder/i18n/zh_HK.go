@@ -143,4 +143,5 @@ var I18nDict_zh_HK map[uint16]string = map[uint16]string{
 	Warning_ACME_Deprecated:             "警告 - `acme' 功能已廢棄且已移除，請遷移到BDX格式。",
 	Warning_Schem_Deprecated:            "警告 - `schem' 功能已廢棄且已移除，請遷移到BDX格式。",
 	Warning_UserHomeDir:                 "警告 - 無法獲取當前user主目錄，將設定homedir=\".\";\n",
+	Auth_MessageFromAuthServer:          "來自驗證伺服器的消息: %s",
 }

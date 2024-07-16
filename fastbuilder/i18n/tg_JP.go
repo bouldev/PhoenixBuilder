@@ -138,4 +138,5 @@ var I18nDict_tg_JP map[uint16]string = map[uint16]string{
 	Warning_ACME_Deprecated:             "警告 - `acme' は非推奨となり、削除されましたので、代わりにBDX形式に移行していただくようお願いいたします。",
 	Warning_Schem_Deprecated:            "警告 - `schem' は非推奨となり、削除されましたので、代わりにBDX形式に移行していただくようお願いいたします。",
 	Warning_UserHomeDir:                 "警告 - ユーザーのホームフォルダーが見つかれん。homedir=\".\";にした。\n",
+	Auth_MessageFromAuthServer:          "認証サーバーからのメッセージ: %s",
 }

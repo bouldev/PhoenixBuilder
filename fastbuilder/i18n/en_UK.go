@@ -137,4 +137,5 @@ var I18nDict_en_UK map[uint16]string = map[uint16]string{
 	Warning_ACME_Deprecated:             "WARNING - `acme' is deprecated and has been removed, please migrate to BDX format instead.",
 	Warning_Schem_Deprecated:            "WARNING - `schem' is deprecated and has been removed, please migrate to BDX format instead.",
 	Warning_UserHomeDir:                 "WARNING - Failed to obtain the user's home directory. made homedir=\".\";\n",
+	Auth_MessageFromAuthServer:          "Message from auth server: %s",
 }
