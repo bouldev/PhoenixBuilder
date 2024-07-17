@@ -15,6 +15,7 @@ import (
 	rand2 "math/rand"
 	"net"
 	"os"
+	fbauth "phoenixbuilder/fastbuilder/pv4"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/login"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -28,9 +29,9 @@ import (
 )
 
 // PhoenixBuilder specific interface.
-// Author: LNSSPsd, Liliya233
+// Author: LNSSPsd, Liliya233, Happy2018new
 type Authenticator interface {
-	GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, growthLevel int, err error)
+	GetAccess(ctx context.Context, publicKey []byte) (fbauth.AuthResponse, error)
 }
 
 // Dialer allows specifying specific settings for connection to a Minecraft server.
@@ -159,7 +160,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 
 	armoured_key, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 
-	address, chainData, growthLevel, err := d.Authenticator.GetAccess(ctx, armoured_key)
+	authResponse, err := d.Authenticator.GetAccess(ctx, armoured_key)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +191,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 		}
 	*/
 	var netConn net.Conn
-	netConn, err = n.DialContext(ctx, address)
+	netConn, err = n.DialContext(ctx, authResponse.RentalServerIP)
 	if err != nil {
 		return nil, err
 	}
@@ -206,14 +207,14 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	conn.disconnectOnUnknownPacket = d.DisconnectOnUnknownPackets
 
 	defaultIdentityData(&conn.identityData)
-	defaultClientData(address, conn.identityData.DisplayName, &conn.clientData, growthLevel)
+	defaultClientData(authResponse.RentalServerIP, conn.identityData.DisplayName, &conn.clientData, authResponse)
 
 	var request []byte
 	// We login as an Android device and this will show up in the 'titleId' field in the JWT chain, which
 	// we can't edit. We just enforce Android data for logging in.
 	setAndroidData(&conn.clientData)
 
-	request = login.Encode(chainData, conn.clientData, key)
+	request = login.Encode(authResponse.ChainInfo, conn.clientData, key)
 	identityData, _, _, err := login.Parse(request)
 	if err != nil {
 		fmt.Printf("WARNING: Identity data parsing error: %w\n", err.(error))
@@ -328,7 +329,7 @@ func defaultClientData(
 
 	// PhoenixBuilder specific fields.
 	// Author: Liliya233
-	growthLevel int,
+	authResponse fbauth.AuthResponse,
 ) {
 	rand2.Seed(time.Now().Unix())
 
@@ -343,8 +344,8 @@ func defaultClientData(
 
 	// PhoenixBuilder specific changes.
 	// Author: Liliya233, Happy2018new
-	if d.GrowthLevel != growthLevel {
-		d.GrowthLevel = growthLevel
+	if d.GrowthLevel != authResponse.BotLevel {
+		d.GrowthLevel = authResponse.BotLevel
 	}
 
 	if d.ClientRandomID == 0 {

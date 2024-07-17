@@ -229,6 +229,12 @@ type ClientData struct {
 	// CompatibleWithClientSideChunkGen is a boolean indicating if the client's hardware is capable of using the client
 	// side chunk generation system.
 	CompatibleWithClientSideChunkGen bool
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	BloomData   string
+	IsReconnect bool
+	SkinItemID  string `json:"SkinIID"` // Netease: skin item id
 }
 
 // PersonaPiece represents a piece of a persona skin. All pieces are sent separately.

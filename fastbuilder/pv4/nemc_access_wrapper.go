@@ -29,13 +29,13 @@ func NewAccessWrapper(Client *Client, ServerCode, ServerPassword, Token, usernam
 	}
 }
 
-func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (address string, chainInfo string, growthLevel int, err error) {
+func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (authResponse AuthResponse, err error) {
 	pubKeyData := base64.StdEncoding.EncodeToString(publicKey)
-	chainAddr, ip, token, err := aw.Client.Auth(ctx, aw.ServerCode, aw.ServerPassword, pubKeyData, aw.Token, aw.Username, aw.Password)
+	authResponse, err = aw.Client.Auth(ctx, aw.ServerCode, aw.ServerPassword, pubKeyData, aw.Token, aw.Username, aw.Password)
 	if err != nil {
-		return "", "", 0, err
+		return AuthResponse{}, err
 	}
-	if len(token) != 0 {
+	if len(authResponse.FBToken) != 0 {
 		homedir, err := os.UserHomeDir()
 		if err != nil {
 			fmt.Println(I18n.T(I18n.Warning_UserHomeDir))
@@ -47,13 +47,13 @@ func (aw *AccessWrapper) GetAccess(ctx context.Context, publicKey []byte) (addre
 		// 0600: -rw-------
 		token_file, err := os.OpenFile(ptoken, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
-			return "", "", 0, err
+			return AuthResponse{}, err
 		}
-		_, err = token_file.WriteString(token)
+		_, err = token_file.WriteString(authResponse.FBToken)
 		if err != nil {
-			return "", "", 0, err
+			return AuthResponse{}, err
 		}
 		token_file.Close()
 	}
-	return ip, chainAddr, aw.Client.GrowthLevel, nil
+	return
 }
