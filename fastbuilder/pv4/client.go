@@ -213,7 +213,9 @@ func (client *Client) Auth(
 	client.FBUCUsername = authResponse.BotName
 	client.Uid = authResponse.BotUID
 	client.GrowthLevel = authResponse.BotLevel
-	client.RespondTo = authResponse.MasterName
+	if len(authResponse.MasterName) > 0 && client.RespondTo == "" {
+		client.RespondTo = authResponse.MasterName
+	}
 	// set value
 	return authResponse, nil
 	// return
