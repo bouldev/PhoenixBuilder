@@ -355,7 +355,17 @@ func readManifest(path string) (*Manifest, error) {
 	// Try to find the manifest file in the zip.
 	manifestFile, err := reader.find("manifest.json")
 	if err != nil {
-		return nil, fmt.Errorf("error loading manifest: %v", err)
+		// PhoenixBuilder specific changes.
+		// Author: Liliya233
+		//
+		// Netease
+		{
+			manifestFile, err = reader.find("pack_manifest.json")
+			if err != nil {
+				return nil, fmt.Errorf("error loading manifest: %v", err)
+			}
+			// return nil, fmt.Errorf("error loading manifest: %v", err)
+		}
 	}
 	defer func() {
 		_ = manifestFile.Close()

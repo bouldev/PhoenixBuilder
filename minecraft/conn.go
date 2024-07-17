@@ -978,24 +978,30 @@ func (conn *Conn) handleResourcePacksInfo(pk *packet.ResourcePacksInfo) error {
 func (conn *Conn) handleResourcePackStack(pk *packet.ResourcePackStack) error {
 	// We currently don't apply resource packs in any way, so instead we just check if all resource packs in
 	// the stacks are also downloaded.
-	for _, pack := range pk.TexturePacks {
-		for i, behaviourPack := range pk.BehaviourPacks {
-			if pack.UUID == behaviourPack.UUID {
-				// We had a behaviour pack with the same UUID as the texture pack, so we drop the texture
-				// pack and log it.
-				conn.log.Printf("dropping behaviour pack with UUID %v due to a texture pack with the same UUID\n", pack.UUID)
-				pk.BehaviourPacks = append(pk.BehaviourPacks[:i], pk.BehaviourPacks[i+1:]...)
+	/*
+		PhoenixBuilder specific changes.
+		Author: Happy2018new
+		Comment: Needs more test.
+
+		for _, pack := range pk.TexturePacks {
+			for i, behaviourPack := range pk.BehaviourPacks {
+				if pack.UUID == behaviourPack.UUID {
+					// We had a behaviour pack with the same UUID as the texture pack, so we drop the texture
+					// pack and log it.
+					conn.log.Printf("dropping behaviour pack with UUID %v due to a texture pack with the same UUID\n", pack.UUID)
+					pk.BehaviourPacks = append(pk.BehaviourPacks[:i], pk.BehaviourPacks[i+1:]...)
+				}
+			}
+			if !conn.hasPack(pack.UUID, pack.Version, false) {
+				return fmt.Errorf("texture pack {uuid=%v, version=%v} not downloaded", pack.UUID, pack.Version)
 			}
 		}
-		if !conn.hasPack(pack.UUID, pack.Version, false) {
-			return fmt.Errorf("texture pack {uuid=%v, version=%v} not downloaded", pack.UUID, pack.Version)
+		for _, pack := range pk.BehaviourPacks {
+			if !conn.hasPack(pack.UUID, pack.Version, true) {
+				return fmt.Errorf("behaviour pack {uuid=%v, version=%v} not downloaded", pack.UUID, pack.Version)
+			}
 		}
-	}
-	for _, pack := range pk.BehaviourPacks {
-		if !conn.hasPack(pack.UUID, pack.Version, true) {
-			return fmt.Errorf("behaviour pack {uuid=%v, version=%v} not downloaded", pack.UUID, pack.Version)
-		}
-	}
+	*/
 	conn.expect(packet.IDStartGame)
 	_ = conn.WritePacket(&packet.ResourcePackClientResponse{Response: packet.PackResponseCompleted})
 	return nil
