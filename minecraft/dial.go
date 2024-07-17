@@ -207,7 +207,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	conn.disconnectOnUnknownPacket = d.DisconnectOnUnknownPackets
 
 	defaultIdentityData(&conn.identityData)
-	defaultClientData(authResponse.RentalServerIP, conn.identityData.DisplayName, &conn.clientData, authResponse)
+	defaultClientData(&conn.clientData, authResponse)
 
 	var request []byte
 	// We login as an Android device and this will show up in the 'titleId' field in the JWT chain, which
@@ -325,16 +325,15 @@ var skinGeometry []byte
 
 // defaultClientData edits the ClientData passed to have defaults set to all fields that were left unchanged.
 func defaultClientData(
-	address, username string, d *login.ClientData,
-
-	// PhoenixBuilder specific fields.
-	// Author: Liliya233
-	authResponse fbauth.AuthResponse,
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233, Happy2018new
+	d *login.ClientData, authResponse fbauth.AuthResponse,
+	// address, username string, d *login.ClientData,
 ) {
 	rand2.Seed(time.Now().Unix())
 
-	d.ServerAddress = address
-	d.ThirdPartyName = username
+	d.ServerAddress = authResponse.RentalServerIP
+	d.ThirdPartyName = authResponse.BotName
 	if d.DeviceOS == 0 {
 		d.DeviceOS = protocol.DeviceAndroid
 	}
