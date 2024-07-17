@@ -146,5 +146,5 @@ var I18nDict_zh_CN map[uint16]string = map[uint16]string{
 	Warning_ACME_Deprecated:     "警告 - `acme' 功能已弃用且已移除，请迁移到BDX格式。",
 	Warning_Schem_Deprecated:    "警告 - `schem' 功能已弃用且已移除，请迁移到BDX格式。",
 	Warning_UserHomeDir:         "警告 - 无法获取当前用户主目录，将设定homedir=\".\";\n",
-	Auth_MessageFromAuthServer:  "来自验证服务器的消息: %s",
+	Auth_MessageFromAuthServer:  "来自验证服务器的消息:",
 }

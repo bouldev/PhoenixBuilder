@@ -151,5 +151,5 @@ var I18nDict_ru_RU map[uint16]string = map[uint16]string{
 	Warning_ACME_Deprecated:     "Предупреждение - `acme' является устаревшим и был удален, пожалуйста, перейдите на формат BDX вместо него.",
 	Warning_Schem_Deprecated:    "Предупреждение - `schem' является устаревшим и был удален, пожалуйста, перейдите на формат BDX вместо него.",
 	Warning_UserHomeDir:         "Предупреждение - Домашний каталог текущего пользователя не может быть получен, он будет установленhomedir=\".\";\n",
-	Auth_MessageFromAuthServer:  "Сообщения от сервера аутентификации: %s",
+	Auth_MessageFromAuthServer:  "Сообщения от сервера аутентификации:",
 }

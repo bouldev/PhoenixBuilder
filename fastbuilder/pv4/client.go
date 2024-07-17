@@ -132,7 +132,8 @@ func (client *Client) Auth(ctx context.Context, serverCode string, serverPasswor
 		return "", "", "", fmt.Errorf("%s", err)
 	}
 	if authServerMsg, success := resp["server_msg"].(string); success {
-		pterm.Println(pterm.LightGreen(fmt.Sprintf(I18n.T(I18n.Auth_MessageFromAuthServer), authServerMsg)))
+		pterm.Println(pterm.LightGreen(I18n.T(I18n.Auth_MessageFromAuthServer)))
+		pterm.Println(pterm.LightGreen(authServerMsg))
 	}
 	uc_username, _ := resp["username"].(string)
 	u_uid, _ := resp["uid"].(string)
