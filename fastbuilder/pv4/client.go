@@ -98,7 +98,7 @@ func CreateClient(options *ClientOptions) *Client {
 // 客户端向验证服务器发送的请求体，
 // 用于获得 FBToken，
 // 或使客户端登录到网易租赁服。
-// AuthResponse 是该请求体对应的相应体
+// AuthResponse 是该请求体对应的响应体
 type AuthRequest struct {
 	/*
 		此字段非空时，则下方 UserName 和 Password 为空，
