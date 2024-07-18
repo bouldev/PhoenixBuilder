@@ -130,22 +130,20 @@ type AuthResponse struct {
 		其余所有字段都为默认的零值，或空字符串，
 		同时 Message 会展示对应的失败原因
 	*/
-	SuccessStates bool `json:"success"`
+	SuccessStates bool   `json:"success"`
+	ServerMessage string `json:"server_msg,omitempty"` // 来自验证服务器的消息 (可能不存在；为可选功能)
 	Message
 
-	// 来自验证服务器的消息 (可能不存在；为可选功能)
-	ServerMessage string `json:"server_msg,omitempty"`
+	BotName  string   `json:"username"`            // 机器人的 游戏名称
+	BotUID   string   `json:"uid"`                 // 机器人的 UID
+	BotLevel int      `json:"growth_level"`        // 机器人的等级
+	SkinInfo SkinInfo `json:"skin_info,omitempty"` // 机器人的皮肤信息 (可能不存在；需要验证服务器支持)
 
-	BotName   string `json:"username"`  // 机器人的 游戏名称
-	BotUID    string `json:"uid"`       // 机器人的 UID
-	ChainInfo string `json:"chainInfo"` // ..
+	FBToken    string `json:"token"`      // ...
+	MasterName string `json:"respond_to"` // 机器人主人的游戏名称
 
-	// 机器人的等级 (可能不存在；需要验证服务器支持)
-	BotLevel int `json:"growth_level,omitempty"`
-
-	FBToken        string `json:"token"`      // ...
-	MasterName     string `json:"respond_to"` // 机器人主人的游戏名称
 	RentalServerIP string `json:"ip_address"` // 目标租赁服的 IP 地址
+	ChainInfo      string `json:"chainInfo"`  // ...
 }
 
 // 描述 AuthResponse 所附带的额外信息
@@ -162,9 +160,16 @@ type Message struct {
 		否则，由下方的 Translation 揭示具体的原因
 	*/
 	Information string `json:"message,omitempty"`
-	// 错误码，且可以与 i18n 中表所记的翻译映射一一对应。
-	// 如果不存在，则其默认值为 -1 [需要验证]
+	// 表示错误码，且可以与 i18n 中所记的映射对应。
+	// 如果不存在，则其默认值为 0，
+	// 如果未使用，则其默认值为 -1
 	Translation int `json:"translation,omitempty"`
+}
+
+// 描述 AuthResponse 中附带的 机器人 的皮肤信息
+type SkinInfo struct {
+	EntityRuntimeID string `nbt:"entity_id"` // 机器人的运行时 ID [需要验证]
+	SkinDownloadURL string `nbt:"res_url"`   // 皮肤的下载地址 [需要验证]
 }
 
 // Ret: chain, ip, token, error
