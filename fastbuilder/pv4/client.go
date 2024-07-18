@@ -168,8 +168,8 @@ type Message struct {
 
 // 描述 AuthResponse 中附带的 机器人 的皮肤信息
 type SkinInfo struct {
-	EntityRuntimeID string `nbt:"entity_id"` // 机器人的运行时 ID [需要验证]
-	SkinDownloadURL string `nbt:"res_url"`   // 皮肤的下载地址 [需要验证]
+	EntityRuntimeID string `json:"entity_id"` // 机器人的运行时 ID [需要验证]
+	SkinDownloadURL string `json:"res_url"`   // 皮肤的下载地址 [需要验证]
 }
 
 // Ret: chain, ip, token, error
