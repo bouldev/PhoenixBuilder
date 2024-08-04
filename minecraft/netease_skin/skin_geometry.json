@@ -302,7 +302,7 @@
               "uv" : [ 16, 48 ]
             }
           ],
-          "mirror" : true,
+          "mirror" : false,
           "name" : "leftLeg",
           "parent" : "root",
           "pivot" : [ 1.90, 12.0, 0.0 ]

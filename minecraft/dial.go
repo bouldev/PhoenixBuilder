@@ -16,6 +16,7 @@ import (
 	"net"
 	"os"
 	fbauth "phoenixbuilder/fastbuilder/mv4"
+	NetEaseSkin "phoenixbuilder/minecraft/netease_skin"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/login"
 	"phoenixbuilder/minecraft/protocol/packet"
@@ -156,13 +157,21 @@ func (d Dialer) DialTimeout(network string, timeout time.Duration) (*Conn, error
 // typically "raknet". A Conn is returned which may be used to receive packets from and send packets to.
 // If a connection is not established before the context passed is cancelled, DialContext returns an error.
 func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, err error) {
-	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	var skin *NetEaseSkin.Skin
 
+	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	armoured_key, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 
 	authResponse, err := d.Authenticator.GetAccess(ctx, armoured_key)
 	if err != nil {
 		return nil, err
+	}
+
+	if url := authResponse.SkinInfo.SkinDownloadURL; len(url) > 0 {
+		skin, err = NetEaseSkin.ProcessURLToSkin(url)
+		if err != nil {
+			return nil, fmt.Errorf("DialContext: %v", err)
+		}
 	}
 
 	if d.ErrorLog == nil {
@@ -207,7 +216,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	conn.disconnectOnUnknownPacket = d.DisconnectOnUnknownPackets
 
 	defaultIdentityData(&conn.identityData)
-	defaultClientData(&conn.clientData, authResponse)
+	defaultClientData(&conn.clientData, authResponse, skin)
 
 	var request []byte
 	// We login as an Android device and this will show up in the 'titleId' field in the JWT chain, which
@@ -317,17 +326,22 @@ func listenConn(conn *Conn, logger *log.Logger, l, c chan struct{}) {
 	}
 }
 
+// PhoenixBuilder specific changes.
+// Author: Happy2018new
+/*
 //go:embed skin_resource_patch.json
 var skinResourcePatch []byte
 
 //go:embed skin_geometry.json
 var skinGeometry []byte
+*/
 
 // defaultClientData edits the ClientData passed to have defaults set to all fields that were left unchanged.
 func defaultClientData(
 	// PhoenixBuilder specific changes.
 	// Author: Liliya233, Happy2018new
-	d *login.ClientData, authResponse fbauth.AuthResponse,
+	d *login.ClientData,
+	authResponse fbauth.AuthResponse, skin *NetEaseSkin.Skin,
 	// address, username string, d *login.ClientData,
 ) {
 	rand2.Seed(time.Now().Unix())
@@ -375,15 +389,39 @@ func defaultClientData(
 		d.SkinID = uuid.New().String()
 	}
 	if d.SkinData == "" {
-		d.SkinData = base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0, 0, 0, 255}, 32*64))
-		d.SkinImageHeight = 32
-		d.SkinImageWidth = 64
+		// PhoenixBuilder specific changes.
+		// Author: Happy2018new
+		{
+			if skin != nil {
+				d.SkinData = base64.StdEncoding.EncodeToString(skin.SkinPixels)
+				d.SkinImageHeight, d.SkinImageWidth = skin.SkinHight, skin.SkinWidth
+				d.SkinGeometry = base64.StdEncoding.EncodeToString(skin.SkinGeometry)
+				d.SkinGeometryVersion = base64.StdEncoding.EncodeToString([]byte("0.0.0"))
+				d.SkinResourcePatch = base64.StdEncoding.EncodeToString(skin.SkinResourcePatch)
+				d.PremiumSkin = true
+			} else {
+				d.SkinData = base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0, 0, 0, 255}, 32*64))
+				d.SkinImageHeight = 32
+				d.SkinImageWidth = 64
+			}
+			/*
+				d.SkinData = base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0, 0, 0, 255}, 32*64))
+				d.SkinImageHeight = 32
+				d.SkinImageWidth = 64
+			*/
+		}
 	}
 	if d.SkinResourcePatch == "" {
-		d.SkinResourcePatch = base64.StdEncoding.EncodeToString(skinResourcePatch)
+		// PhoenixBuilder specific changes.
+		// Author: Happy2018new
+		d.SkinResourcePatch = base64.StdEncoding.EncodeToString(NetEaseSkin.DefaultSkinResourcePatch)
+		// d.SkinResourcePatch = base64.StdEncoding.EncodeToString(skinResourcePatch)
 	}
 	if d.SkinGeometry == "" {
-		d.SkinGeometry = base64.StdEncoding.EncodeToString(skinGeometry)
+		// PhoenixBuilder specific changes.
+		// Author: Happy2018new
+		d.SkinGeometry = base64.StdEncoding.EncodeToString(NetEaseSkin.DefaultSkinGeometry)
+		// d.SkinGeometry = base64.StdEncoding.EncodeToString(skinGeometry)
 	}
 }
 
