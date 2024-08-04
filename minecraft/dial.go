@@ -15,7 +15,7 @@ import (
 	rand2 "math/rand"
 	"net"
 	"os"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
+	fbauth "phoenixbuilder/fastbuilder/mv4"
 	"phoenixbuilder/minecraft/protocol"
 	"phoenixbuilder/minecraft/protocol/login"
 	"phoenixbuilder/minecraft/protocol/packet"

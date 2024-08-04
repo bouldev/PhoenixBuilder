@@ -3,7 +3,7 @@ package environment
 // This package imports only external packages to avoid import cycle.
 import (
 	"phoenixbuilder/fastbuilder/environment/interfaces"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
+	fbauth "phoenixbuilder/fastbuilder/mv4"
 )
 
 type LoginInfo struct {

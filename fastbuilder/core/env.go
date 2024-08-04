@@ -4,7 +4,7 @@ import (
 	"phoenixbuilder/fastbuilder/args"
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
+	fbauth "phoenixbuilder/fastbuilder/mv4"
 	fbtask "phoenixbuilder/fastbuilder/task"
 	"phoenixbuilder/minecraft"
 	"phoenixbuilder/mirror/io/global"
@@ -34,8 +34,8 @@ func ConfigRealEnvironment(token string, server_code string, server_password str
 		Token:          token,
 		ServerCode:     server_code,
 		ServerPasscode: server_password,
-		Username: username,
-		Password: password,
+		Username:       username,
+		Password:       password,
 	}
 	env.FBAuthClient = fbauth.CreateClient(env.ClientOptions)
 	return env

@@ -10,7 +10,7 @@ import (
 	"phoenixbuilder/fastbuilder/environment"
 	"phoenixbuilder/fastbuilder/function"
 	I18n "phoenixbuilder/fastbuilder/i18n"
-	fbauth "phoenixbuilder/fastbuilder/pv4"
+	fbauth "phoenixbuilder/fastbuilder/mv4"
 	"phoenixbuilder/fastbuilder/py_rpc"
 	cts "phoenixbuilder/fastbuilder/py_rpc/mod_event/client_to_server"
 	cts_mc "phoenixbuilder/fastbuilder/py_rpc/mod_event/client_to_server/minecraft"
