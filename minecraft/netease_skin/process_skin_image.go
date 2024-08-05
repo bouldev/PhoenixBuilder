@@ -7,11 +7,13 @@ package NetEaseSkin
 import (
 	"archive/zip"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/png"
 	"io"
 	"net/http"
+	fbauth "phoenixbuilder/fastbuilder/mv4"
 	"strings"
 
 	_ "embed"
@@ -46,23 +48,23 @@ func DownloadFile(url string) (result []byte, err error) {
 	return
 }
 
-// 从 url 指定的网址下载文件，
+// 从 authResponse 指定的网址下载文件，
 // 并处理为有效的皮肤数据，
 // 然后保存在 skin 中
-func ProcessURLToSkin(url string) (skin *Skin, err error) {
+func GetSkinFromAuthResponse(authResponse fbauth.AuthResponse, skin *Skin) error {
 	// 初始化
 	var skinImageData []byte
-	skin = &Skin{}
 	// 从远程服务器下载皮肤文件
-	res, err := DownloadFile(url)
+	res, err := DownloadFile(authResponse.SkinInfo.SkinDownloadURL)
 	if err != nil {
-		return nil, fmt.Errorf("ProcessURLToSkin: %v", err)
+		return fmt.Errorf("GetSkinFromAuthResponse: %v", err)
 	}
-	// 获取皮肤数据
+	// 获取并设置皮肤数据
 	{
 		// 如果这是一个普通的皮肤，
 		// 那么 res 就是该皮肤的 PNG 二进制形式，
 		// 并且该皮肤使用的骨架格式为默认格式
+		skin.SkinItemID = authResponse.SkinInfo.ItemID
 		skin.FullSkinData, skin.SkinGeometry = res, DefaultSkinGeometry
 		skinImageData = res
 		// 如果这是一个高级的皮肤(比如 4D 皮肤)，
@@ -71,20 +73,20 @@ func ProcessURLToSkin(url string) (skin *Skin, err error) {
 		if IsZIPFile(res) {
 			skinImageData, err = ConvertZIPToSkin(skin)
 			if err != nil {
-				return nil, fmt.Errorf("ProcessURLToSkin: %v", err)
+				return fmt.Errorf("GetSkinFromAuthResponse: %v", err)
 			}
 		}
 	}
 	// 将皮肤 PNG 二进制形式解码为图片
 	img, err := ConvertToPNG(skinImageData)
 	if err != nil {
-		return nil, fmt.Errorf("ProcessURLToSkin: %v", err)
+		return fmt.Errorf("GetSkinFromAuthResponse: %v", err)
 	}
 	// 设置皮肤像素、高度、宽度等数据
 	skin.SkinPixels = img.(*image.NRGBA).Pix
 	skin.SkinWidth, skin.SkinHight = img.Bounds().Dx(), img.Bounds().Dy()
 	// 返回值
-	return
+	return nil
 }
 
 // 从 zipData 指代的 ZIP 二进制数据负载提取皮肤数据，
@@ -127,6 +129,23 @@ func ConvertZIPToSkin(skin *Skin) (skinImageData []byte, err error) {
 				return nil, fmt.Errorf("ConvertZIPToSkin: %v", err)
 			}
 			ProcessGeometry(skin, geometryData)
+		}
+		// 处理 `manifest.json` or `pack_manifest.json`
+		if strings.HasSuffix(file.Name, "manifest.json") {
+			var manifest SkinManifest
+			r, err := file.Open()
+			if err != nil {
+				return nil, fmt.Errorf("convertZIPToSkin: %v", err)
+			}
+			defer r.Close()
+			manifestData, err := io.ReadAll(r)
+			if err != nil {
+				return nil, fmt.Errorf("convertZIPToSkin: %v", err)
+			}
+			if err = json.Unmarshal(manifestData, &manifest); err != nil {
+				return nil, fmt.Errorf("convertZIPToSkin: %v", err)
+			}
+			skin.SkinUUID = manifest.Header.UUID
 		}
 	}
 	// 返回值

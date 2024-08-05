@@ -168,7 +168,8 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, er
 	}
 
 	if url := authResponse.SkinInfo.SkinDownloadURL; len(url) > 0 {
-		skin, err = NetEaseSkin.ProcessURLToSkin(url)
+		skin = &NetEaseSkin.Skin{}
+		err = NetEaseSkin.GetSkinFromAuthResponse(authResponse, skin)
 		if err != nil {
 			return nil, fmt.Errorf("DialContext: %v", err)
 		}
@@ -385,14 +386,12 @@ func defaultClientData(
 	if d.SelfSignedID == "" {
 		d.SelfSignedID = uuid.New().String()
 	}
-	if d.SkinID == "" {
-		d.SkinID = uuid.New().String()
-	}
 	if d.SkinData == "" {
 		// PhoenixBuilder specific changes.
 		// Author: Happy2018new
 		{
 			if skin != nil {
+				d.SkinID = skin.SkinUUID
 				d.SkinData = base64.StdEncoding.EncodeToString(skin.SkinPixels)
 				d.SkinImageHeight, d.SkinImageWidth = skin.SkinHight, skin.SkinWidth
 				d.SkinGeometry = base64.StdEncoding.EncodeToString(skin.SkinGeometry)
@@ -404,12 +403,32 @@ func defaultClientData(
 				d.SkinImageHeight = 32
 				d.SkinImageWidth = 64
 			}
-			/*
-				d.SkinData = base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0, 0, 0, 255}, 32*64))
-				d.SkinImageHeight = 32
-				d.SkinImageWidth = 64
-			*/
 		}
+		/*
+			d.SkinData = base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0, 0, 0, 255}, 32*64))
+			d.SkinImageHeight = 32
+			d.SkinImageWidth = 64
+		*/
+	}
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new
+	{
+		if d.SkinID == "" {
+			d.SkinID = uuid.New().String()
+			if skin != nil {
+				skin.SkinUUID = d.SkinID
+			}
+		}
+		/*
+			if d.SkinID == "" {
+				d.SkinID = uuid.New().String()
+			}
+		*/
+	}
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233, Happy2018new
+	if d.SkinItemID == "" && skin != nil {
+		d.SkinItemID = skin.SkinItemID
 	}
 	if d.SkinResourcePatch == "" {
 		// PhoenixBuilder specific changes.

@@ -226,7 +226,9 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 	}
 }
 
-func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.Authenticator) (conn *minecraft.Conn, err error) {
+func InitializeMinecraftConnection(
+	ctx context.Context, authenticator minecraft.Authenticator,
+) (conn *minecraft.Conn, err error) {
 	var dialer minecraft.Dialer
 	// prepare
 	if args.DebugMode {
@@ -259,7 +261,13 @@ func InitializeMinecraftConnection(ctx context.Context, authenticator minecraft.
 		})
 	}
 	conn.WritePacket(&packet.PyRpc{
-		Value:         py_rpc.Marshal(&py_rpc.SyncUsingMod{}),
+		Value: py_rpc.Marshal(&py_rpc.SyncUsingMod{
+			[]any{},
+			conn.ClientData().SkinID,
+			conn.ClientData().SkinItemID,
+			true,
+			map[string]any{},
+		}),
 		OperationType: packet.PyRpcOperationTypeSend,
 	})
 	conn.WritePacket(&packet.PyRpc{

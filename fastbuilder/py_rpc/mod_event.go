@@ -55,10 +55,7 @@ func (m *ModEvent) FromGo(obj any) error {
 	if !success {
 		return fmt.Errorf(`FromGo: Failed to convert object[2] to string; object[2] = %#v`, object[2])
 	}
-	event_data, success := object[3].(map[string]any)
-	if !success {
-		return fmt.Errorf(`FromGo: Failed to convert object[3] to map[string]interface{}; object[3] = %#v`, object[3])
-	}
+	event_data := object[3]
 	// get data
 	var park mei.Package
 	var ok bool
