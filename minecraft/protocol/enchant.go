@@ -47,6 +47,12 @@ type ItemEnchantments struct {
 	// The first slice holds armour enchantments, the differences between the slice 2 and slice 3 are more
 	// vaguely defined.
 	Enchantments [3][]EnchantmentInstance
+
+	// PhoenixBuilder specific fields.
+	// Author: Happy2018new
+	//
+	// Netease
+	Unknown byte
 }
 
 // Marshal encodes/decodes an ItemEnchantments.
@@ -55,6 +61,10 @@ func (x *ItemEnchantments) Marshal(r IO) {
 	for i := 0; i < 3; i++ {
 		Slice(r, &x.Enchantments[i])
 	}
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new
+	r.Uint8(&x.Unknown)
 }
 
 // EnchantmentInstance represents a single enchantment instance with the type of the enchantment and its
@@ -62,10 +72,20 @@ func (x *ItemEnchantments) Marshal(r IO) {
 type EnchantmentInstance struct {
 	Type  byte
 	Level byte
+
+	// PhoenixBuilder specific fields.
+	// Author: Happy2018new
+	//
+	// Netease
+	ModEnchant string
 }
 
 // Marshal encodes/decodes an EnchantmentInstance.
 func (x *EnchantmentInstance) Marshal(r IO) {
 	r.Uint8(&x.Type)
 	r.Uint8(&x.Level)
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new
+	r.String(&x.ModEnchant)
 }
