@@ -34,7 +34,7 @@ type Animate struct {
 	// Author: Liliya233
 	//
 	// NetEase specific field.
-	Unknown1 int64
+	AttackerEntityUniqueID int64
 }
 
 // ID ...
@@ -55,6 +55,6 @@ func (pk *Animate) Marshal(io protocol.IO) {
 	// NetEase specific.
 	// Note: AnimateActionCriticalHit == 4
 	if pk.ActionType == AnimateActionCriticalHit {
-		io.Varint64(&pk.Unknown1)
+		io.Varint64(&pk.AttackerEntityUniqueID)
 	}
 }
