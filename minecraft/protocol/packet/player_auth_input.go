@@ -134,13 +134,33 @@ type PlayerAuthInput struct {
 	// InteractionModel int32
 
 	/*
-		PhoenixBuilder specific changes.
+		PhoenixBuilder specific fields.
+		Author: Liliya233, Happy2018new
+
+		指代玩家的俯仰角 (xBot)。
+		该字段看起来与 Pitch 字段是完全相同的，
+		目前尚不清楚网易重复这些字段的用途
+	*/
+	PitchRepeat float32
+
+	/*
+		PhoenixBuilder specific fields.
+		Author: Liliya233, Happy2018new
+
+		指代玩家的偏航角 (yBot)。
+		该字段看起来与 Yaw 字段是完全相同的，
+		目前尚不清楚网易重复这些字段的用途
+	*/
+	YawRepeat float32
+
+	/*
+		PhoenixBuilder specific fields.
 		Author: Liliya233
 
 		The following fields are NetEase specific.
 	*/
 	Unknown1 bool
-	Unknown2 mgl32.Vec2
+	Unknown2 bool
 	Unknown3 bool
 }
 
@@ -170,6 +190,12 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	io.Varuint64(&pk.Tick)
 	io.Vec3(&pk.Delta)
 
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	//
+	// NetEase
+	io.Bool(&pk.Unknown1)
+
 	if pk.InputData&InputFlagPerformItemInteraction != 0 {
 		io.PlayerInventoryAction(&pk.ItemInteractionData)
 	}
@@ -189,8 +215,9 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	//
 	// NetEase
 	{
-		io.Bool(&pk.Unknown1)
-		io.Vec2(&pk.Unknown2)
+		io.Bool(&pk.Unknown2)
+		io.Float32(&pk.PitchRepeat)
+		io.Float32(&pk.YawRepeat)
 		io.Bool(&pk.Unknown3)
 	}
 }

@@ -186,7 +186,12 @@ func (w *Writer) PlayerInventoryAction(x *UseItemTransactionData) {
 	}
 	Slice(w, &x.Actions)
 	w.Varuint32(&x.ActionType)
-	w.BlockPos(&x.BlockPosition)
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new
+	w.UBlockPos(&x.BlockPosition)
+	// w.BlockPos(&x.BlockPosition)
+
 	w.Varint32(&x.BlockFace)
 	w.Varint32(&x.HotBarSlot)
 	w.ItemInstance(&x.HeldItem)
