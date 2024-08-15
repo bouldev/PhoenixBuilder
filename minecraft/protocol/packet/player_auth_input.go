@@ -160,13 +160,9 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	io.Varuint32(&pk.PlayMode)
 
 	// PhoenixBuilder specific changes.
-	// Changes Maker: Liliya233
-	// Committed by Happy2018new.
-	{
-		// io.Varint32(&pk.InteractionModel)
-		io.Varuint32(&pk.InteractionModel)
-		io.Bool(&pk.Unknown1) // For Netease
-	}
+	// Author: Liliya233
+	io.Varuint32(&pk.InteractionModel)
+	// io.Varint32(&pk.InteractionModel)
 
 	if pk.PlayMode == PlayModeReality {
 		io.Vec3(&pk.GazeDirection)
