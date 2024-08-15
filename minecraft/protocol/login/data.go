@@ -29,22 +29,28 @@ type IdentityData struct {
 
 	/*
 		PhoenixBuilder specific fields.
-		Author: LNSSPsd
+		Author: LNSSPsd, Liliya233
 	*/
-	// Netease server id
-	NeteaseSid string `json:"netease_sid"`
-	// Netease User ID
+	// Netease: user id
 	Uid int64 `json:"uid"`
-	// Netease Fake Client Version
+	// Netease: fake client version
 	Version int64 `json:"version"`
-	// Netease Environment
+	// Netease: environment
 	Env string `json:"env"`
-	// Netease Platform
+	// Netease: platform
 	Platform string `json:"platform"`
-	// Netease Fake Client Engine Version
+	// Netease: server id
+	NeteaseSid string `json:"netease_sid"`
+	// Netease: game type, such as "RentalGame"
+	GameType string `json:"gameType"`
+	// Netease: launcher engine version
 	EngineVersion string `json:"engineVersion"`
-	// Netease Fake Client Patch Version
+	// Netease: launcher patch version
 	PatchVersion string `json:"patchVersion"`
+	// Netease: os name
+	OSName string `json:"os_name"`
+	// Netease: bit
+	Bit string `json:"bit"`
 
 	// TitleID is a numerical ID present only if the user is logged into XBL. It holds the title ID (XBL
 	// related) of the version that the player is on. Some of these IDs may be found below.

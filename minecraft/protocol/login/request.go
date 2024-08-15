@@ -31,11 +31,11 @@ type request struct {
 func init() {
 	/*
 		PhoenixBuilder specific changes.
-		Author: Happy2018new
+		Author: Liliya233, Happy2018new
 	*/
-	//noinspection SpellCheckingInspection
-	// const mojangPublicKey = `MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAECRXueJeTDqNRRgJi/vlRufByu/2G0i2Ebt6YMar5QX/R0DIIyrJMcUpruK4QveTfJSTp3Shlq4Gk34cD/4GUWwkv0DVuzeuB+tXija7HBxii03NHDbPAD0AKnLr2wdAp`
-	const mojangPublicKey = `MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE8ELkixyLcwlZryUQcu1TvPOmI2B7vX83ndnWRUaXm74wFfa5f/lwQNTfrLVHa2PmenpGI6JhIMUJaWZrjmMj90NoKNFSNBuKdm8rYiXsfaz3K36x/1U26HpG0ZxK/V1V`
+	// noinspection SpellCheckingInspection
+	// const mojangPublicKey = `MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE8ELkixyLcwlZryUQcu1TvPOmI2B7vX83ndnWRUaXm74wFfa5f/lwQNTfrLVHa2PmenpGI6JhIMUJaWZrjmMj90NoKNFSNBuKdm8rYiXsfaz3K36x/1U26HpG0ZxK/V1V`
+	const mojangPublicKey = `MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEEsmU+IF/XeAF3yiqJ7Ko36btx6JtdB26wV9Eyw4AYR/nmesznkfXxwQ4B0NkSnGIZccbb2f3nFUYughKSoAcNHx+lQm8F9h9RwhrNgeN907z06LUA2AqWcwqasxyaU0E`
 
 	data, _ := base64.StdEncoding.DecodeString(mojangPublicKey)
 	publicKey, _ := x509.ParsePKIXPublicKey(data)
@@ -124,17 +124,20 @@ func Parse(request []byte) (IdentityData, ClientData, AuthResult, error) {
 		if err := identityClaims.Validate(jwt.Expected{Time: t, Issuer: iss}); err != nil {
 			return iData, cData, res, fmt.Errorf("validate token 2: %w", err)
 		}
-		/*
-			PhoenixBuilder specific changes.
-			Author: LNSSPsd
-
-			if authenticated != (identityClaims.ExtraData.XUID != "") {
-				return iData, cData, res, fmt.Errorf("identity data must have an XUID when logged into XBOX Live only")
-			}
-			if authenticated != (identityClaims.ExtraData.TitleID != "") {
-				return iData, cData, res, fmt.Errorf("identity data must have a title ID when logged into XBOX Live only")
-			}
-		*/
+		if authenticated != (identityClaims.ExtraData.XUID != "") {
+			return iData, cData, res, fmt.Errorf("identity data must have an XUID when logged into XBOX Live only")
+		}
+		// PhoenixBuilder specific changes.
+		// Author: LNSSPsd, Liliya233
+		//
+		// Netease: title ID is missing
+		{
+			/*
+				if authenticated != (identityClaims.ExtraData.TitleID != "") {
+					return iData, cData, res, fmt.Errorf("identity data must have a title ID when logged into XBOX Live only")
+				}
+			*/
+		}
 	default:
 		return iData, cData, res, fmt.Errorf("unexpected login chain length %v", len(req.Chain))
 	}
