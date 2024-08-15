@@ -52,12 +52,19 @@ type IdentityData struct {
 	// Netease: bit
 	Bit string `json:"bit"`
 
-	// TitleID is a numerical ID present only if the user is logged into XBL. It holds the title ID (XBL
-	// related) of the version that the player is on. Some of these IDs may be found below.
-	// Win10: 896928775
-	// Mobile: 1739947436
-	// Nintendo: 2047319603
-	// Note that these IDs are protected using XBOX Live, making the spoofing of this data very difficult.
+	/*
+		PhoenixBuilder specific comments.
+		Author: Liliya233、
+
+		TitleID is a numerical ID present only if the user is logged into XBL. It holds the title ID (XBL
+		related) of the version that the player is on. Some of these IDs may be found below.
+		Win10: 896928775
+		Mobile: 1739947436
+		Nintendo: 2047319603
+		Note that these IDs are protected using XBOX Live, making the spoofing of this data very difficult.
+
+		Netease: this field is missing
+	*/
 	TitleID string `json:"titleId,omitempty"`
 }
 
