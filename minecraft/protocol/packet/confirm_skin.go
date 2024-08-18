@@ -8,8 +8,11 @@ import "phoenixbuilder/minecraft/protocol"
 
 // Netease packet
 type ConfirmSkin struct {
-	Unknown1 []protocol.ConfirmSkinUnknownEntry
-	Unknown2 []string
+	// Skin info
+	SkinInfo []protocol.ConfirmSkinUnknownEntry
+	// Launcher uids
+	Uids []string
+	// Netease
 	Unknown3 []string
 }
 
@@ -19,7 +22,7 @@ func (*ConfirmSkin) ID() uint32 {
 }
 
 func (pk *ConfirmSkin) Marshal(io protocol.IO) {
-	protocol.SliceVaruint32Length(io, &pk.Unknown1)
-	protocol.FuncSliceOfLen(io, uint32(len(pk.Unknown1)), &pk.Unknown2, io.String)
-	protocol.FuncSliceOfLen(io, uint32(len(pk.Unknown1)), &pk.Unknown3, io.String)
+	protocol.SliceVaruint32Length(io, &pk.SkinInfo)
+	protocol.FuncSliceOfLen(io, uint32(len(pk.SkinInfo)), &pk.Uids, io.String)
+	protocol.FuncSliceOfLen(io, uint32(len(pk.SkinInfo)), &pk.Unknown3, io.String)
 }

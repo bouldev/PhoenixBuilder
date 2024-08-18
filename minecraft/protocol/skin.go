@@ -235,8 +235,8 @@ func (x *PersonaPieceTintColour) Marshal(r IO) {
 // Netease
 type ConfirmSkinUnknownEntry struct {
 	Unknown1 bool
-	Unknown2 uint64
-	Unknown3 uint64
+	Unknown2 uint64 // Such as 16384
+	Unknown3 uint64 // Such as 9223372038116336821
 	Unknown4 string
 }
 
