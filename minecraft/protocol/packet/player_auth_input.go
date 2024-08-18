@@ -137,31 +137,53 @@ type PlayerAuthInput struct {
 		PhoenixBuilder specific fields.
 		Author: Liliya233, Happy2018new
 
+		网易专有字段，
 		指代玩家的俯仰角 (xBot)。
+
 		该字段看起来与 Pitch 字段是完全相同的，
 		目前尚不清楚网易重复这些字段的用途
 	*/
 	PitchRepeat float32
-
 	/*
 		PhoenixBuilder specific fields.
 		Author: Liliya233, Happy2018new
 
+		网易专有字段，
 		指代玩家的偏航角 (yBot)。
+
 		该字段看起来与 Yaw 字段是完全相同的，
 		目前尚不清楚网易重复这些字段的用途
 	*/
 	YawRepeat float32
-
 	/*
 		PhoenixBuilder specific fields.
-		Author: Liliya233
+		Author: Liliya233, Happy2018new
 
-		The following fields are NetEase specific.
+		网易专有字段，
+		可能用于描述玩家是否可以飞行(或正在飞行)。
+
+		正常客户端似乎总是为此提交 false，
+		但对于外挂来说，此字段和 CheatOnGround
+		同时提交 true 可以在飞行时避免拉回
 	*/
+	CheatCouldFly bool
+	/*
+		PhoenixBuilder specific fields.
+		Author: Liliya233, Happy2018new
+
+		网易专有字段，
+		可能用于描述玩家是否正在地面上。
+
+		正常客户端似乎总是为此提交 false，
+		但对于外挂来说，提交 true 可以在飞行时避免拉回，
+		同时，也将成功避免落地伤害
+	*/
+	CheatOnGround bool
+
+	// PhoenixBuilder specific fields.
+	// Author: Liliya233
+	// NetEase specific
 	Unknown1 bool
-	Unknown2 bool
-	Unknown3 bool
 }
 
 // ID ...
@@ -194,7 +216,7 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	// Author: Liliya233
 	//
 	// NetEase
-	io.Bool(&pk.Unknown1)
+	io.Bool(&pk.CheatCouldFly)
 
 	if pk.InputData&InputFlagPerformItemInteraction != 0 {
 		io.PlayerInventoryAction(&pk.ItemInteractionData)
@@ -215,9 +237,9 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	//
 	// NetEase
 	{
-		io.Bool(&pk.Unknown2)
+		io.Bool(&pk.Unknown1)
 		io.Float32(&pk.PitchRepeat)
 		io.Float32(&pk.YawRepeat)
-		io.Bool(&pk.Unknown3)
+		io.Bool(&pk.CheatOnGround)
 	}
 }
