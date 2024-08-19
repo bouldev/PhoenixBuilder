@@ -230,6 +230,7 @@ func InitializeMinecraftConnection(
 	ctx context.Context, authenticator minecraft.Authenticator,
 ) (conn *minecraft.Conn, err error) {
 	var dialer minecraft.Dialer
+	var authResponse fbauth.AuthResponse
 	// prepare
 	if args.DebugMode {
 		conn = &minecraft.Conn{
@@ -239,7 +240,7 @@ func InitializeMinecraftConnection(
 		dialer = minecraft.Dialer{
 			Authenticator: authenticator,
 		}
-		conn, err = dialer.DialContext(ctx, "raknet")
+		conn, authResponse, err = dialer.DialContext(ctx, "raknet")
 	}
 	if err != nil {
 		return
@@ -260,16 +261,26 @@ func InitializeMinecraftConnection(
 			),
 		})
 	}
-	conn.WritePacket(&packet.PyRpc{
-		Value: py_rpc.Marshal(&py_rpc.SyncUsingMod{
-			[]any{},
-			conn.ClientData().SkinID,
-			conn.ClientData().SkinItemID,
-			true,
-			map[string]any{},
-		}),
-		OperationType: packet.PyRpcOperationTypeSend,
-	})
+	{
+		modUUIDs := make([]any, 0)
+		outfitInfo := make(map[string]int64, 0)
+		for modUUID, outfitType := range authResponse.OutfitInfo {
+			modUUIDs = append(modUUIDs, modUUID)
+			if outfitType != nil {
+				outfitInfo[modUUID] = int64(*outfitType)
+			}
+		}
+		conn.WritePacket(&packet.PyRpc{
+			Value: py_rpc.Marshal(&py_rpc.SyncUsingMod{
+				modUUIDs,
+				conn.ClientData().SkinID,
+				conn.ClientData().SkinItemID,
+				true,
+				outfitInfo,
+			}),
+			OperationType: packet.PyRpcOperationTypeSend,
+		})
+	}
 	conn.WritePacket(&packet.PyRpc{
 		Value:         py_rpc.Marshal(&py_rpc.SyncVipSkinUUID{nil}),
 		OperationType: packet.PyRpcOperationTypeSend,

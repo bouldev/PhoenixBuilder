@@ -134,10 +134,12 @@ type AuthResponse struct {
 	ServerMessage string `json:"server_msg,omitempty"` // 来自验证服务器的消息 (可能不存在；为可选功能)
 	Message
 
-	BotName  string   `json:"username"`            // 机器人的 游戏名称
-	BotUID   string   `json:"uid"`                 // 机器人的 UID
-	BotLevel int      `json:"growth_level"`        // 机器人的等级
-	SkinInfo SkinInfo `json:"skin_info,omitempty"` // 机器人的皮肤信息 (可能不存在；需要验证服务器支持)
+	BotName  string `json:"username"`     // 机器人的 游戏名称
+	BotUID   string `json:"uid"`          // 机器人的 UID
+	BotLevel int    `json:"growth_level"` // 机器人的等级
+
+	SkinInfo   SkinInfo        `json:"skin_info,omitempty"`   // 玩家的皮肤信息 (可能不存在；需要验证服务器支持)
+	OutfitInfo map[string]*int `json:"outfit_info,omitempty"` // 玩家当前加载的组件及其附加值
 
 	FBToken    string `json:"token"`      // ...
 	MasterName string `json:"respond_to"` // 机器人主人的游戏名称
