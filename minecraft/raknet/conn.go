@@ -136,11 +136,26 @@ func (conn *Conn) startTicking() {
 		case t := <-ticker.C:
 			i++
 			conn.flushACKs()
-			if i%2 == 0 {
-				// We send a connected ping to calculate the rtt and let the other side know we haven't
-				// timed out.
-				conn.sendPing()
+
+			// PhoenixBuilder specific changes.
+			// Author: Liliya233
+			//
+			// Change to 5 seconds per ping
+			{
+				if i%50 == 0 {
+					// We send a connected ping to calculate the rtt and let the other side know we haven't
+					// timed out.
+					conn.sendPing()
+				}
+				/*
+					if i%2 == 0 {
+						// We send a connected ping to calculate the rtt and let the other side know we haven't
+						// timed out.
+						conn.sendPing()
+					}
+				*/
 			}
+
 			if i%3 == 0 {
 				conn.checkResend(t)
 			}
