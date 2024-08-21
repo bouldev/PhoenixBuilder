@@ -170,12 +170,12 @@ jobs:
     - name: Set build time
       id: build_time
       run: echo "build_time=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-    - name: Pre-Build & configure go-raknet
+    - name: Pre-Build # & configure go-raknet
       run: |
         make current
         make clean
-        chmod 0777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.12.0/
-        sed -i "s/urrentProtocol byte = 11/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.12.0/conn.go
+       # chmod 0777 ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.12.0/
+       # sed -i "s/urrentProtocol byte = 11/urrentProtocol byte = 8/g" ~/go/pkg/mod/github.com/sandertv/go-raknet@v1.12.0/conn.go
     - name: Build
       run: |
         export THEOS=~/theos

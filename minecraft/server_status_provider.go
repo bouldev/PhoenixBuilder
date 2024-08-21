@@ -1,8 +1,8 @@
 package minecraft
 
 import (
-	"github.com/sandertv/go-raknet"
 	"net"
+	"phoenixbuilder/minecraft/raknet"
 	"strconv"
 	"sync"
 	"time"

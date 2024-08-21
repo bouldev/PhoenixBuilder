@@ -4,6 +4,7 @@ go 1.21.6
 
 require (
 	github.com/Tnze/go-mc v1.19.4
+	github.com/df-mc/atomic v1.10.0
 	github.com/df-mc/goleveldb v1.1.9
 	github.com/golang/snappy v0.0.1
 	github.com/hashicorp/go-version v1.6.0
@@ -12,7 +13,6 @@ require (
 
 require (
 	github.com/atomicgo/cursor v0.0.1 // indirect
-	github.com/df-mc/atomic v1.10.0 // indirect
 	github.com/gookit/color v1.4.2 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
@@ -33,7 +33,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20211230184646-baf1f7156737
 	github.com/pterm/pterm v0.12.29
-	github.com/sandertv/go-raknet v1.12.0
 	go.uber.org/atomic v1.9.0
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.7.0

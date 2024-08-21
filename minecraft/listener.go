@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sandertv/go-raknet"
+	"phoenixbuilder/minecraft/raknet"
 )
 
 // ListenConfig holds settings that may be edited to change behaviour of a Listener.

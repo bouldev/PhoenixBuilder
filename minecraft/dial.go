@@ -24,8 +24,9 @@ import (
 	"strings"
 	"time"
 
+	"phoenixbuilder/minecraft/raknet"
+
 	"github.com/google/uuid"
-	"github.com/sandertv/go-raknet"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 

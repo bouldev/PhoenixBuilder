@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/sandertv/go-raknet"
+	"phoenixbuilder/minecraft/raknet"
 )
 
 // RakNet is an implementation of a RakNet v10 Network.
