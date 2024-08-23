@@ -48,10 +48,11 @@ type Text struct {
 	PlatformChatID string
 
 	// PhoenixBuilder specific fields.
-	// Author: Liliya233
+	// Author: Liliya233, Happy2018new
 	//
-	// Netease extra data
+	// The following fields are NetEase specific.
 	NeteaseExtraData []string
+	Unknown          string
 }
 
 // ID ...
@@ -76,12 +77,15 @@ func (pk *Text) Marshal(io protocol.IO) {
 	io.String(&pk.PlatformChatID)
 
 	// PhoenixBuilder specific changes.
-	// Author: Liliya233
+	// Author: Liliya233, Happy2018new
 	//
 	// Netease
 	{
-		if pk.TextType == TextTypeChat {
+		switch pk.TextType {
+		case TextTypeChat:
 			protocol.FuncSlice(io, &pk.NeteaseExtraData, io.String)
+		case TextTypePopup:
+			io.String(&pk.Unknown)
 		}
 	}
 }
