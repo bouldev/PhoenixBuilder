@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/pterm/pterm"
 
@@ -67,18 +66,18 @@ func assertAndParse[T any](resp *http.Response) T {
 	var ret T
 	err := json.Unmarshal([]byte(body), &ret)
 	if err != nil {
-		panic(fmt.Errorf("Error parsing API response: %v", err))
+		panic(fmt.Sprintf("Error parsing API response: %v", err))
 	}
 	return ret
 }
 
 func CreateClient(options *ClientOptions) *Client {
-	if find := strings.Contains(options.AuthServer, "nethard.pro"); find {
-		panic(fmt.Errorf("Failed to contact with API"))
+	if options.AuthServer != "https://user.fastbuilder.pro" && options.AuthServer != "https://liliya233.uk" {
+		panic("Failed to contact with API")
 	}
 	secret_res, err := http.Get(fmt.Sprintf("%s/api/new", options.AuthServer))
 	if err != nil {
-		panic(fmt.Errorf("Failed to contact with API"))
+		panic("Failed to contact with API")
 	}
 	_secret_body, _ := io.ReadAll(secret_res.Body)
 	secret_body := string(_secret_body)
