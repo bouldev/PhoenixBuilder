@@ -326,6 +326,9 @@ func InitializeMinecraftConnection(
 
 func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	if env.FBAuthClient == nil {
+		if find := strings.Contains(args.AuthServer, "nethard.pro"); find {
+			panic(fmt.Errorf("Failed to contact with API"))
+		}
 		env.ClientOptions.AuthServer = args.AuthServer
 		env.ClientOptions.RespondUserOverride = args.CustomGameName
 		env.FBAuthClient = fbauth.CreateClient(env.ClientOptions)
