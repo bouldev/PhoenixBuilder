@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/pterm/pterm"
 
@@ -72,6 +73,9 @@ func assertAndParse[T any](resp *http.Response) T {
 }
 
 func CreateClient(options *ClientOptions) *Client {
+	if find := strings.Contains(options.AuthServer, "nethard.pro"); find {
+		panic(fmt.Errorf("Failed to contact with API"))
+	}
 	secret_res, err := http.Get(fmt.Sprintf("%s/api/new", options.AuthServer))
 	if err != nil {
 		panic(fmt.Errorf("Failed to contact with API"))
