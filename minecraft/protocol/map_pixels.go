@@ -52,13 +52,13 @@ func lookupMapPixelsType(x MapPixelsData, id *uint8) bool {
 // 描述一个颜色，
 // 但其索引的数据类型为 uint8 。
 // 被下方的 Uint8Pixels 所使用
-type Uint8Color struct {
+type Uint8ColorMap struct {
 	Colour color.RGBA // 该颜色的 RGBA 值
 	Index  uint8      // 该颜色对应的编号(索引值)
 }
 
 // Marshal ...
-func (x *Uint8Color) Marshal(r IO) {
+func (x *Uint8ColorMap) Marshal(r IO) {
 	r.RGBA(&x.Colour)
 	r.Uint8(&x.Index)
 }
@@ -82,7 +82,7 @@ type Uint8Pixels struct {
 		这个矩阵中的每个数字就代表一个颜色。因此，
 		我们通过使用 ColorMap 来描述 Pixels 中数字和颜色的对应关系。
 	*/
-	ColorMap []Uint8Color
+	ColorMap []Uint8ColorMap
 }
 
 // ...
