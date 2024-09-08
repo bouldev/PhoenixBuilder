@@ -178,11 +178,16 @@ func EnterWorkerThread(env *environment.PBEnvironment, breaker chan struct{}) {
 				}
 				break
 			}
-		case *packet.ActorEvent:
-			if p.EventType == packet.ActorEventDeath && p.EntityRuntimeID == conn.GameData().EntityRuntimeID {
+		case *packet.Respawn:
+			if p.State == packet.RespawnStateSearchingForSpawn {
+				conn.WritePacket(&packet.Respawn{
+					State:           packet.RespawnStateClientReadyToSpawn,
+					EntityRuntimeID: conn.GameData().EntityRuntimeID,
+				})
 				conn.WritePacket(&packet.PlayerAction{
 					EntityRuntimeID: conn.GameData().EntityRuntimeID,
 					ActionType:      protocol.PlayerActionRespawn,
+					BlockFace:       -1,
 				})
 			}
 		case *packet.SubChunk:
