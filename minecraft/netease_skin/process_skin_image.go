@@ -19,8 +19,11 @@ import (
 	_ "embed"
 )
 
-//go:embed skin_resource_patch.json
-var DefaultSkinResourcePatch []byte
+//go:embed default_wide_skin_resource_patch.json
+var DefaultWideSkinResourcePatch []byte
+
+//go:embed default_slim_skin_resource_patch.json
+var DefaultSlimSkinResourcePatch []byte
 
 //go:embed skin_geometry.json
 var DefaultSkinGeometry []byte
@@ -66,7 +69,14 @@ func GetSkinFromAuthResponse(authResponse fbauth.AuthResponse, skin *Skin) error
 		// 并且该皮肤使用的骨架格式为默认格式
 		skin.SkinItemID = authResponse.SkinInfo.ItemID
 		skin.FullSkinData, skin.SkinGeometry = res, DefaultSkinGeometry
+		skin.SkinIsSlim = authResponse.SkinInfo.SkinIsSlim
 		skinImageData = res
+		// 设置皮肤默认资源路径
+		if skin.SkinIsSlim {
+			skin.SkinResourcePatch = DefaultSlimSkinResourcePatch
+		} else {
+			skin.SkinResourcePatch = DefaultWideSkinResourcePatch
+		}
 		// 如果这是一个高级的皮肤(比如 4D 皮肤)，
 		// 那么 res 是一个压缩包，
 		// 我们需要处理这个压缩包以得到皮肤文件
@@ -89,8 +99,9 @@ func GetSkinFromAuthResponse(authResponse fbauth.AuthResponse, skin *Skin) error
 	return nil
 }
 
-// 从 zipData 指代的 ZIP 二进制数据负载提取皮肤数据，
-// 并把处理好的皮肤数据保存在 skin 中，
+// 从 skin.FullSkinData 指代的 ZIP
+// 二进制负载提取皮肤数据，
+// 并把处理好的皮肤数据保存到 skin 自身，
 // 同时返回皮肤图片(PNG)的二进制表示
 func ConvertZIPToSkin(skin *Skin) (skinImageData []byte, err error) {
 	// 创建 ZIP 读取器
@@ -101,8 +112,6 @@ func ConvertZIPToSkin(skin *Skin) (skinImageData []byte, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("ConvertZIPToSkin: %v", err)
 	}
-	// 设置皮肤默认资源路径
-	skin.SkinResourcePatch = DefaultSkinResourcePatch
 	// 查找皮肤内容
 	for _, file := range reader.File {
 		// 皮肤数据

@@ -456,7 +456,7 @@ func defaultClientData(
 	if d.SkinResourcePatch == "" {
 		// PhoenixBuilder specific changes.
 		// Author: Happy2018new
-		d.SkinResourcePatch = base64.StdEncoding.EncodeToString(NetEaseSkin.DefaultSkinResourcePatch)
+		d.SkinResourcePatch = base64.StdEncoding.EncodeToString(NetEaseSkin.DefaultWideSkinResourcePatch)
 		// d.SkinResourcePatch = base64.StdEncoding.EncodeToString(skinResourcePatch)
 	}
 	if d.SkinGeometry == "" {

@@ -22,6 +22,8 @@ type Skin struct {
 	SkinUUID string
 	// 皮肤项目的 UUID
 	SkinItemID string
+	// 皮肤的手臂是否纤细
+	SkinIsSlim bool
 	// 皮肤的一维密集像素矩阵
 	SkinPixels []byte
 	// 皮肤的骨架信息

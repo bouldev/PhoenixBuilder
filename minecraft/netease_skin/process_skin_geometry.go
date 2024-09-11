@@ -49,6 +49,7 @@ func ProcessGeometry(skin *Skin, rawData []byte) (err error) {
 	// setup resource patch and get geometry data
 	var skinGeometry json.RawMessage
 	var geometryName string
+	var skinResourcePatchReplaceString string
 	for k, v := range geometryMap {
 		if strings.HasPrefix(k, "geometry.") {
 			geometryName = k
@@ -59,9 +60,14 @@ func ProcessGeometry(skin *Skin, rawData []byte) (err error) {
 	if geometryName == "" {
 		return fmt.Errorf("ProcessGeometry: lack of geometry data")
 	}
+	if skin.SkinIsSlim {
+		skinResourcePatchReplaceString = "geometry.humanoid.customSlim"
+	} else {
+		skinResourcePatchReplaceString = "geometry.humanoid.custom"
+	}
 	skin.SkinResourcePatch = bytes.ReplaceAll(
 		skin.SkinResourcePatch,
-		[]byte("geometry.humanoid.custom"),
+		[]byte(skinResourcePatchReplaceString),
 		[]byte(geometryName),
 	)
 	/* Layer 2 */

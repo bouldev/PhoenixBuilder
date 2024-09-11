@@ -175,6 +175,7 @@ type Message struct {
 type SkinInfo struct {
 	ItemID          string `json:"entity_id"` // 皮肤的资源 ID
 	SkinDownloadURL string `json:"res_url"`   // 皮肤的下载地址 [需要验证]
+	SkinIsSlim      bool   `json:"is_slim"`   // 皮肤的手臂是否纤细
 }
 
 // Ret: chain, ip, token, error
