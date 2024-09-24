@@ -18,7 +18,7 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778 // indirect
 	golang.org/x/image v0.18.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
 )
 
 require (
@@ -34,9 +34,9 @@ require (
 	github.com/muhammadmuzzammil1998/jsonc v0.0.0-20211230184646-baf1f7156737
 	github.com/pterm/pterm v0.12.29
 	go.uber.org/atomic v1.9.0
-	golang.org/x/crypto v0.1.0 // indirect
-	golang.org/x/net v0.7.0
-	golang.org/x/term v0.5.0
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/net v0.23.0
+	golang.org/x/term v0.18.0
 	golang.org/x/text v0.16.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 )
