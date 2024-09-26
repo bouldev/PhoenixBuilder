@@ -248,8 +248,7 @@ func (c *CommandBlock) PlaceCommandBlockLegacy(
 		blockName = "repeating_command_block"
 	}
 	if block.Block == nil {
-		block.Block = &types.Block{}
-		block.Block.Name = &blockName
+		c.BlockEntity.Block.Name = blockName
 
 		// TODO: 优化下方的这一段代码
 		{
