@@ -13,7 +13,7 @@ type ChestBlockActor struct {
 
 	Pairlead    *byte  `mapstructure:"pairlead,omitempty"`    // TAG_Byte(1) = 0
 	Pairx       *int32 `mapstructure:"pairx,omitempty"`       // TAG_Int(4) = 0
-	Pairz       *int32 `mapstructure:"Pairz,omitempty"`       // TAG_Int(4) = 0
+	Pairz       *int32 `mapstructure:"pairz,omitempty"`       // TAG_Int(4) = 0
 	ForceUnpair *byte  `mapstructure:"forceunpair,omitempty"` // TAG_Byte(1) = 1
 
 	CustomSize *int16 `mapstructure:"CustomSize,omitempty"` // TAG_Short(3) = 0
