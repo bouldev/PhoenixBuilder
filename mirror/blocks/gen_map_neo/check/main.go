@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"phoenixbuilder/mirror/blocks"
 )
 
@@ -56,8 +57,8 @@ func main() {
 	fmt.Println(blocks.RuntimeIDToBlockNameWithStateStr(rtid))
 	rtid, _ = blocks.BlockStrToRuntimeID(`minecraft:mangrove_propagule[age=0,hanging=true,stage=0,waterlogged=true]`)
 	fmt.Println(blocks.RuntimeIDToBlockNameWithStateStr(rtid))
-	rtid = blocks.SchematicToRuntimeID(35, 3)
-	fmt.Println(blocks.RuntimeIDToBlockNameWithStateStr(rtid))
+	// rtid = blocks.SchematicToRuntimeID(35, 3)
+	// fmt.Println(blocks.RuntimeIDToBlockNameWithStateStr(rtid))
 	rtid, ok := blocks.BlockStrToRuntimeID(`wool ["color":"orange"]`)
 	if !ok {
 		panic("not ok")
@@ -84,6 +85,12 @@ func main() {
 	}
 	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
 	rtid, ok = blocks.SchemBlockStrToRuntimeID(`shulker_box 3`)
+	if !ok {
+		panic("not ok")
+	}
+	fmt.Println(blocks.RuntimeIDToBlockNameAndStateStr(rtid))
+
+	rtid, ok = blocks.SchemBlockStrToRuntimeID("carved_pumpkin[facing=east]")
 	if !ok {
 		panic("not ok")
 	}

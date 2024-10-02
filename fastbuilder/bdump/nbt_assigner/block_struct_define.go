@@ -170,3 +170,19 @@ type Sign struct {
 	// 指定当前告示牌是否是非旧版
 	IsNotLegacySignBlock bool
 }
+
+// ------------------------- frame -------------------------
+
+// 描述单个物品展示框中已解码的部分
+type FrameData struct {
+	ItemRotation float32      // ItemRotation(TAG_Float) = 0
+	Item         *ItemPackage // Item(TAG_Compound) = ...
+}
+
+// 描述一个物品展示框
+type Frame struct {
+	// 该方块实体的详细数据
+	BlockEntity *BlockEntity
+	// 存放已解码的物品展示框数据
+	FrameData FrameData
+}

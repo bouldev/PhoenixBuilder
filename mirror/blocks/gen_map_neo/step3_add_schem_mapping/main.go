@@ -3,9 +3,10 @@ package step3_add_schem_mapping
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"phoenixbuilder/mirror/blocks/convertor"
 	"phoenixbuilder/mirror/blocks/describe"
-	"strings"
 )
 
 type JavaToBedrockMappingIn struct {

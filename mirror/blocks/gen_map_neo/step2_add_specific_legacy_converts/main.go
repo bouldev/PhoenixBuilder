@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
+	"strings"
+
 	"phoenixbuilder/mirror/blocks/block_set"
 	"phoenixbuilder/mirror/blocks/convertor"
 	"phoenixbuilder/mirror/blocks/describe"
-	"sort"
-	"strings"
 )
 
 type RawState struct {

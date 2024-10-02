@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"phoenixbuilder/mirror/blocks/block_set"
-	"phoenixbuilder/mirror/blocks/describe"
 	"sort"
 	"strings"
+
+	"phoenixbuilder/mirror/blocks/block_set"
+	"phoenixbuilder/mirror/blocks/describe"
 )
 
 type RawState struct {
@@ -112,6 +113,9 @@ func GetParsedBlock(filePath string) block_set.BlockSet {
 	version := int32(0)
 	airRtid := int32(0)
 	for rtid, block := range parsedBlocks {
+		// if block.NameWithoutMC == "carved_pumpkin" {
+		// 	fmt.Println("???")
+		// }
 		if version == 0 {
 			version = (block.Version)
 		} else if version != (block.Version) {
@@ -129,6 +133,16 @@ func GetParsedBlock(filePath string) block_set.BlockSet {
 	}
 	blocks := block_set.NewBlockSet(0xFFFFFFFF, uint32(airRtid), uint32(version))
 	for rtid, block := range parsedBlocks {
+		// if rtid == 12195 {
+		// 	b := describe.NewBlockFromSnbt(
+		// 		block.NameWithoutMC,
+		// 		block.States.SNBTString(),
+		// 		block.LegacyData,
+		// 		uint32(rtid),
+		// 	)
+
+		// 	fmt.Println(b.BedrockString())
+		// }
 		blocks.AddBlock(describe.NewBlockFromSnbt(
 			block.NameWithoutMC,
 			block.States.SNBTString(),

@@ -63,9 +63,29 @@ func NewBlockFromSnbt(blockName, statesSnbt string, value uint16, rtid uint32) *
 	blockName = strings.TrimPrefix(blockName, "minecraft:")
 	blockName = strings.TrimSpace(blockName)
 	statesSnbt = strings.TrimSpace(statesSnbt)
-	statesSnbt = strings.ReplaceAll(statesSnbt, "minecraft:", "")
+	// statesSnbt = strings.ReplaceAll(statesSnbt, "minecraft:", "")
 	statesSnbt = strings.TrimSpace(statesSnbt)
-	propsForSearch, err := PropsForSearchFromStr(statesSnbt)
+	propsForSearch, err := PropsForSearchFromStr(strings.ReplaceAll(statesSnbt, "minecraft:", ""))
+	states := PropsFromSNBT(strings.ReplaceAll(statesSnbt, "minecraft:", "minecraft__"))
+	rec := false
+	for _, s := range states {
+		if strings.HasPrefix(s.Name, "minecraft__") {
+			rec = true
+		}
+	}
+	if rec {
+		_states := Props{}
+		for _, s := range states {
+			_states = append(_states, struct {
+				Name  string
+				Value PropVal
+			}{
+				strings.ReplaceAll(s.Name, "minecraft__", "minecraft:"),
+				s.Value,
+			})
+		}
+		states = _states
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +95,7 @@ func NewBlockFromSnbt(blockName, statesSnbt string, value uint16, rtid uint32) *
 		nameForSearch:   BlockNameForSearch(blockName),
 		statsSnbt:       statesSnbt,
 		legacyValue:     value,
-		states:          PropsFromSNBT(statesSnbt),
+		states:          states,
 		statesForSearch: propsForSearch,
 	}
 }

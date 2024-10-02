@@ -102,10 +102,10 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 				if !found {
 					return fmt.Errorf(`DecodeItemBasicData: Could not convert legacy block to standard runtime id; singleItem = %#v`, singleItem)
 				}
-				blockName, blockData, found := blocks.RuntimeIDToLegacyBlock(runtimeId)
+				block, found := blocks.RuntimeIDToBlock(runtimeId)
 				if found {
-					g.Basic.Name = strings.Replace(strings.ToLower(blockName), "minecraft:", "", 1)
-					g.Basic.MetaData = blockData
+					g.Basic.Name = strings.Replace(strings.ToLower(block.LongName()), "minecraft:", "", 1)
+					g.Basic.MetaData = block.LegacyValue()
 				} else if val_origin, ok := block_got["val"]; ok {
 					val_got, normal := val_origin.(int16)
 					if !normal {

@@ -78,6 +78,11 @@ func get_block_states_from_legacy_block(
 	blockName string,
 	metaData uint16,
 ) (map[string]interface{}, error) {
+	// What the fuck?
+	if (blockName == "chest" || blockName == "minecraft:chest") && metaData == 0 {
+		return map[string]any{"facing_direction": int32(2)}, nil
+	}
+	// ...
 	standardRuntimeID, found := blocks.LegacyBlockToRuntimeID(blockName, metaData)
 	if !found {
 		return nil, fmt.Errorf("get_block_states_from_legacy_block: Failed to get the runtimeID of block %s; metaData = %d", blockName, metaData)

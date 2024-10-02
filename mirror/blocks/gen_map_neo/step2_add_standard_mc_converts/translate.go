@@ -2,11 +2,12 @@ package step2_add_standard_mc_converts
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"phoenixbuilder/mirror/blocks/block_set"
 	"phoenixbuilder/mirror/blocks/convertor"
 	"phoenixbuilder/mirror/blocks/describe"
-	"strconv"
-	"strings"
 )
 
 func TryAddConvert(inBlockName, inBlockState, outBlockName, outBlockState string,

@@ -1,26 +1,27 @@
 package convertor
 
 import (
-	"phoenixbuilder/mirror/blocks/describe"
 	"sync"
+
+	"phoenixbuilder/mirror/blocks/describe"
 )
 
 type ToNEMCConvertor struct {
 	rtidUnknown uint32
 	rtidAir     uint32
 	baseNames   map[string]*ToNEMCBaseNames
-	mu          sync.RWMutex
+	// mu          sync.RWMutex
 }
 
 func (c *ToNEMCConvertor) ensureBaseNameGroup(name string) *ToNEMCBaseNames {
-	c.mu.RLock()
+	// c.mu.RLock()
 	if to, found := c.baseNames[name]; found {
-		c.mu.RUnlock()
+		// c.mu.RUnlock()
 		return to
 	}
-	c.mu.RUnlock()
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	// c.mu.RUnlock()
+	// c.mu.Lock()
+	// defer c.mu.Unlock()
 	to := &ToNEMCBaseNames{
 		RtidUnknown:         c.rtidUnknown,
 		RtidAir:             c.rtidAir,
@@ -37,8 +38,8 @@ func (c *ToNEMCConvertor) ensureBaseNameGroup(name string) *ToNEMCBaseNames {
 }
 
 func (c *ToNEMCConvertor) getBaseNameGroup(name string) (baseGroup *ToNEMCBaseNames, found bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	// c.mu.RLock()
+	// defer c.mu.RUnlock()
 	group, found := c.baseNames[name]
 	return group, found
 }
@@ -90,6 +91,6 @@ func NewToNEMCConverter(rtidUnknown, ritdAir uint32) *ToNEMCConvertor {
 		rtidUnknown: rtidUnknown,
 		rtidAir:     ritdAir,
 		baseNames:   map[string]*ToNEMCBaseNames{},
-		mu:          sync.RWMutex{},
+		// mu:          sync.RWMutex{},
 	}
 }

@@ -4,9 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"phoenixbuilder/mirror/blocks/describe"
 	"strconv"
 	"strings"
+
+	"phoenixbuilder/mirror/blocks/describe"
 )
 
 func BlockSetFromStringRecords(dataBytes string, unknownRtid uint32) *BlockSet {

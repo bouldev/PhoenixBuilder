@@ -15,6 +15,10 @@ func (bs *BlockSet) Version() uint32 {
 	return bs.version
 }
 
+func (bs *BlockSet) Blocks() []*describe.Block {
+	return bs.blocks
+}
+
 func (bs *BlockSet) UnknownRitd() uint32 {
 	return bs.unknownRuntimeID
 }

@@ -2,9 +2,11 @@ package describe
 
 import (
 	"fmt"
-	"phoenixbuilder/fastbuilder/alter/snbt"
 	"sort"
+	"strconv"
 	"strings"
+
+	"phoenixbuilder/fastbuilder/alter/snbt"
 )
 
 type PropValType uint8
@@ -40,12 +42,10 @@ type PropVal interface {
 	Equal(other PropVal) bool
 }
 
-type PropValUint8 struct {
-	val bool
-}
+type PropValUint8 bool
 
 func (v PropValUint8) Raw() any {
-	if v.val {
+	if v {
 		return uint8(1)
 	}
 	return uint8(0)
@@ -60,7 +60,7 @@ func (v PropValUint8) HasType(val PropValType) bool {
 }
 
 func (v PropValUint8) Uint8Val() uint8 {
-	if v.val {
+	if v {
 		return uint8(1)
 	}
 	return uint8(0)
@@ -75,7 +75,7 @@ func (v PropValUint8) StringVal() string {
 }
 
 func (v PropValUint8) BedrockString() string {
-	if v.val {
+	if v {
 		return "true"
 	} else {
 		return "false"
@@ -83,7 +83,7 @@ func (v PropValUint8) BedrockString() string {
 }
 
 func (v PropValUint8) SNBTString() string {
-	if v.val {
+	if v {
 		return "1b"
 	} else {
 		return "0b"
@@ -97,8 +97,8 @@ func (v PropValUint8) Equal(val2 PropVal) bool {
 	return false
 }
 
-var PropVal0 = PropValUint8{val: false}
-var PropVal1 = PropValUint8{val: true}
+var PropVal0 = PropValUint8(false)
+var PropVal1 = PropValUint8(true)
 
 func propValFromBool(b bool) PropVal {
 	if b {
@@ -107,13 +107,10 @@ func propValFromBool(b bool) PropVal {
 	return PropVal0
 }
 
-type PropValInt32 struct {
-	val int32
-	str string
-}
+type PropValInt32 int32
 
 func (v PropValInt32) Raw() any {
-	return v.val
+	return int32(v)
 }
 
 func (v PropValInt32) Type() PropValType {
@@ -129,7 +126,7 @@ func (v PropValInt32) Uint8Val() uint8 {
 }
 
 func (v PropValInt32) Int32Val() int32 {
-	return v.val
+	return int32(v)
 }
 
 func (v PropValInt32) StringVal() string {
@@ -137,11 +134,11 @@ func (v PropValInt32) StringVal() string {
 }
 
 func (v PropValInt32) BedrockString() string {
-	return v.str
+	return strconv.Itoa(int(v))
 }
 
 func (v PropValInt32) SNBTString() string {
-	return v.str
+	return strconv.Itoa(int(v))
 }
 
 func (v PropValInt32) Equal(val2 PropVal) bool {
@@ -151,29 +148,14 @@ func (v PropValInt32) Equal(val2 PropVal) bool {
 	return false
 }
 
-var preGeneratePropValInt32 []PropValInt32
-
-func init() {
-	preGeneratePropValInt32 = make([]PropValInt32, 128)
-	for i := int32(0); i < 128; i++ {
-		preGeneratePropValInt32[i] = PropValInt32{i, fmt.Sprintf("%v", i)}
-	}
-}
-
 func PropValFromInt32(val int32) PropVal {
-	if val < 128 {
-		return preGeneratePropValInt32[val]
-	}
-	return PropValInt32{val, fmt.Sprintf("%v", val)}
+	return PropValInt32(val)
 }
 
-type PropValString struct {
-	str           string
-	wrappedString string
-}
+type PropValString string
 
 func (v PropValString) Raw() any {
-	return v.str
+	return string(v)
 }
 
 func (v PropValString) Type() PropValType {
@@ -193,15 +175,15 @@ func (v PropValString) Int32Val() int32 {
 }
 
 func (v PropValString) StringVal() string {
-	return v.str
+	return string(v)
 }
 
 func (v PropValString) BedrockString() string {
-	return v.wrappedString
+	return "\"" + string(v) + "\""
 }
 
 func (v PropValString) SNBTString() string {
-	return v.wrappedString
+	return "\"" + string(v) + "\""
 }
 
 func (v PropValString) Equal(val2 PropVal) bool {
@@ -213,7 +195,7 @@ func (v PropValString) Equal(val2 PropVal) bool {
 
 func PropValFromString(val string) PropVal {
 	val = strings.TrimPrefix(strings.TrimPrefix(val, "\""), "\"")
-	return PropValString{val, fmt.Sprintf("\"%v\"", val)}
+	return PropValString(val)
 }
 
 type Props []struct {
@@ -263,7 +245,7 @@ func PropsFromMap(mapProps map[string]PropVal) Props {
 	// clean
 	cleanMapProps := map[string]PropVal{}
 	for k, v := range mapProps {
-		cleanMapProps[strings.ReplaceAll(strings.ReplaceAll(k, "\"", ""), "minecraft:", "")] = v
+		cleanMapProps[strings.ReplaceAll(k, "\"", "")] = v
 	}
 	mapProps = cleanMapProps
 	// sort

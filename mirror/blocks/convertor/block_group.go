@@ -2,8 +2,9 @@ package convertor
 
 import (
 	"fmt"
-	"phoenixbuilder/mirror/blocks/describe"
 	"sync"
+
+	"phoenixbuilder/mirror/blocks/describe"
 )
 
 type ToNEMCBaseNames struct {

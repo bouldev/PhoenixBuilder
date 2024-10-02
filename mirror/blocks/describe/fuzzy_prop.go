@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"phoenixbuilder/fastbuilder/utils/sync_wrapper"
 )
 
 // Fuzzy Prop Val 的目的是解决以下情况:
@@ -46,9 +48,7 @@ type PropValForSearch interface {
 	InPreciseSNBT() string
 }
 
-type fuzzyUint8 struct {
-	val bool
-}
+type fuzzyUint8 bool
 
 func (v fuzzyUint8) Type() PropValType {
 	return PropValTypeUint8 | PropValTypeInt32 | PropValTypeString
@@ -59,21 +59,21 @@ func (v fuzzyUint8) HasType(val PropValType) bool {
 }
 
 func (v fuzzyUint8) Uint8Val() uint8 {
-	if v.val {
+	if v {
 		return uint8(1)
 	}
 	return uint8(0)
 }
 
 func (v fuzzyUint8) Int32Val() int32 {
-	if v.val {
+	if v {
 		return int32(1)
 	}
 	return int32(0)
 }
 
 func (v fuzzyUint8) StringVal() string {
-	if v.val {
+	if v {
 		return "true"
 	}
 	return "false"
@@ -87,16 +87,16 @@ func (v fuzzyUint8) FuzzyEqual(val2 PropValForSearch) bool {
 	// uint8 <-> int32: true/false==(1,2,3...)/0 ? -> true
 	if val2.HasType(PropValTypeInt32) {
 		if val2.Int32Val() == 0 {
-			return !v.val
+			return !bool(v)
 		}
-		return v.val
+		return bool(v)
 	}
 	//  3. uint8 <-> string:
 	//     true/false == "true"/"false" ? -> true
 	//     true/false == "0b"/"1b" ? -> true
 	//     true/false == "0"/"1" ? true
 	v2 := val2.StringVal()
-	if v.val {
+	if bool(v) {
 		if v2 == "true" || v2 == "1b" || v2 == "1" {
 			return true
 		}
@@ -109,15 +109,15 @@ func (v fuzzyUint8) FuzzyEqual(val2 PropValForSearch) bool {
 }
 
 func (v fuzzyUint8) InPreciseSNBT() string {
-	if v.val {
+	if bool(v) {
 		return "1b"
 	} else {
 		return "0b"
 	}
 }
 
-var FuzzyPropVal0 = fuzzyUint8{val: false}
-var FuzzyPropVal1 = fuzzyUint8{val: true}
+var FuzzyPropVal0 = fuzzyUint8(false)
+var FuzzyPropVal1 = fuzzyUint8(true)
 
 func FuzzyPropValForSearchFromBool(b bool) PropValForSearch {
 	if b {
@@ -126,14 +126,11 @@ func FuzzyPropValForSearchFromBool(b bool) PropValForSearch {
 	return FuzzyPropVal0
 }
 
-type fuzzyInt32 struct {
-	val    int32
-	strVal string
-}
+type fuzzyInt32 int32
 
 func (v fuzzyInt32) Type() PropValType {
 	t := PropValTypeInt32 | PropValTypeString
-	if v.val == 0 || v.val == 1 {
+	if int32(v) == 0 || int32(v) == 1 {
 		t = t | PropValTypeUint8
 	}
 	return t
@@ -144,20 +141,20 @@ func (v fuzzyInt32) HasType(val PropValType) bool {
 }
 
 func (v fuzzyInt32) Uint8Val() uint8 {
-	if v.val == 0 {
+	if int32(v) == 0 {
 		return uint8(0)
-	} else if v.val == 1 {
+	} else if int32(v) == 1 {
 		return uint8(1)
 	}
 	panic("not uint8")
 }
 
 func (v fuzzyInt32) Int32Val() int32 {
-	return v.val
+	return int32(v)
 }
 
 func (v fuzzyInt32) StringVal() string {
-	return v.strVal
+	return strconv.Itoa(int(v))
 }
 
 func (v fuzzyInt32) FuzzyEqual(val2 PropValForSearch) bool {
@@ -169,46 +166,34 @@ func (v fuzzyInt32) FuzzyEqual(val2 PropValForSearch) bool {
 	}
 	//  4. int32 <-> int32: 0,1,2,3==0,1,2,3 ? -> true
 	if val2.HasType(PropValTypeInt32) {
-		return v.val == val2.Int32Val()
+		return int32(v) == val2.Int32Val()
 	}
 	//  5. int32 <-> string:
 	//     0,1,2,3...=="0"/"1"/"2","3"... ? -> true
 	//     0,1=="0b"/"1b" ? -> true
 	//     0,1=="true"/"false" ? -> true
 	v2 := val2.StringVal()
-	if v.val == 1 {
+	if int32(v) == 1 {
 		if v2 == "true" || v2 == "1b" || v2 == "1" {
 			return true
 		}
 		return false
-	} else if v.val == 0 {
+	} else if int32(v) == 0 {
 		if v2 == "false" || v2 == "0b" || v2 == "0" {
 			return true
 		}
 		return false
 	} else {
-		return v.strVal == v2
+		return strconv.Itoa(int(v)) == v2
 	}
 }
 
 func (v fuzzyInt32) InPreciseSNBT() string {
-	return v.strVal
-}
-
-var pregenererateFuzzyPropValInt32 []fuzzyInt32
-
-func init() {
-	pregenererateFuzzyPropValInt32 = make([]fuzzyInt32, 128)
-	for i := int32(0); i < 128; i++ {
-		pregenererateFuzzyPropValInt32[i] = fuzzyInt32{i, fmt.Sprintf("%v", i)}
-	}
+	return strconv.Itoa(int(v))
 }
 
 func FuzzyPropValForSearchFromInt32(val int32) PropValForSearch {
-	if val < 128 {
-		return pregenererateFuzzyPropValInt32[val]
-	}
-	return fuzzyInt32{val, fmt.Sprintf("%v", val)}
+	return fuzzyInt32(val)
 }
 
 type fuzzyString struct {
@@ -275,7 +260,16 @@ func (v fuzzyString) InPreciseSNBT() string {
 	return v.strVal
 }
 
+var sharedString *sync_wrapper.SyncKVMap[string, fuzzyString]
+
 func FuzzyPropValForSearchFromString(val string) fuzzyString {
+	if sharedString == nil {
+		sharedString = sync_wrapper.NewSyncKVMap[string, fuzzyString]()
+	}
+	if cachedString, found := sharedString.Get(val); found {
+		// fmt.Println("found")
+		return cachedString
+	}
 	val = strings.TrimSuffix(strings.TrimPrefix(val, "\""), "\"")
 	fs := fuzzyString{strVal: val, val: -1}
 	if val == "true" || val == "1b" || val == "1" {
@@ -289,6 +283,7 @@ func FuzzyPropValForSearchFromString(val string) fuzzyString {
 	if err == nil {
 		fs.val = int32(intVal)
 	}
+	sharedString.Set(val, fs)
 	return fs
 }
 
@@ -301,66 +296,60 @@ func FuzzyPropValForSearchFromString(val string) fuzzyString {
 // 	}
 // }
 
-// func init() {
-// 	uint80 := FuzzyPropValForSearchFromBool(false)
-// 	uint81 := FuzzyPropValForSearchFromBool(true)
-// 	int320 := FuzzyPropValForSearchFromInt32(0)
-// 	int321 := FuzzyPropValForSearchFromInt32(1)
-// 	int32240 := FuzzyPropValForSearchFromInt32(240)
-// 	string0b := FuzzyPropValForSearchFromString("0b")
-// 	string1b := FuzzyPropValForSearchFromString("1b")
-// 	stringfalse := FuzzyPropValForSearchFromString("false")
-// 	stringtrue := FuzzyPropValForSearchFromString("true")
-// 	string0 := FuzzyPropValForSearchFromString("0")
-// 	string1 := FuzzyPropValForSearchFromString("1")
-// 	string240 := FuzzyPropValForSearchFromString("240")
-// 	assertPropSame(uint80, int320)
-// 	assertPropSame(uint81, int321)
-// 	assertPropSame(string0b, uint80)
-// 	assertPropSame(string0b, int320)
-// 	assertPropSame(string1b, uint81)
-// 	assertPropSame(string1b, int321)
-// 	assertPropSame(stringfalse, uint80)
-// 	assertPropSame(stringfalse, int320)
-// 	assertPropSame(stringtrue, uint81)
-// 	assertPropSame(stringtrue, int321)
-// 	assertPropSame(stringfalse, string0b)
-// 	assertPropSame(stringtrue, string1b)
-// 	assertPropSame(string0, uint80)
-// 	assertPropSame(string0, int320)
-// 	assertPropSame(string1, uint81)
-// 	assertPropSame(string1, int321)
-// 	assertPropSame(string0, string0b)
-// 	assertPropSame(string1, string1b)
-// 	assertPropSame(stringfalse, string0)
-// 	assertPropSame(stringtrue, string1)
-// 	assertPropSame(int32240, string240)
-// }
-
-type PropsForSearch struct {
-	props []struct {
-		Name  string
-		Value PropValForSearch
-	}
-	propsByName map[string]PropValForSearch
+//	func init() {
+//		uint80 := FuzzyPropValForSearchFromBool(false)
+//		uint81 := FuzzyPropValForSearchFromBool(true)
+//		int320 := FuzzyPropValForSearchFromInt32(0)
+//		int321 := FuzzyPropValForSearchFromInt32(1)
+//		int32240 := FuzzyPropValForSearchFromInt32(240)
+//		string0b := FuzzyPropValForSearchFromString("0b")
+//		string1b := FuzzyPropValForSearchFromString("1b")
+//		stringfalse := FuzzyPropValForSearchFromString("false")
+//		stringtrue := FuzzyPropValForSearchFromString("true")
+//		string0 := FuzzyPropValForSearchFromString("0")
+//		string1 := FuzzyPropValForSearchFromString("1")
+//		string240 := FuzzyPropValForSearchFromString("240")
+//		assertPropSame(uint80, int320)
+//		assertPropSame(uint81, int321)
+//		assertPropSame(string0b, uint80)
+//		assertPropSame(string0b, int320)
+//		assertPropSame(string1b, uint81)
+//		assertPropSame(string1b, int321)
+//		assertPropSame(stringfalse, uint80)
+//		assertPropSame(stringfalse, int320)
+//		assertPropSame(stringtrue, uint81)
+//		assertPropSame(stringtrue, int321)
+//		assertPropSame(stringfalse, string0b)
+//		assertPropSame(stringtrue, string1b)
+//		assertPropSame(string0, uint80)
+//		assertPropSame(string0, int320)
+//		assertPropSame(string1, uint81)
+//		assertPropSame(string1, int321)
+//		assertPropSame(string0, string0b)
+//		assertPropSame(string1, string1b)
+//		assertPropSame(stringfalse, string0)
+//		assertPropSame(stringtrue, string1)
+//		assertPropSame(int32240, string240)
+//	}
+type PropForSearch struct {
+	Name  string
+	Value PropValForSearch
 }
+type PropsForSearch []PropForSearch
 
 func (ps *PropsForSearch) NumProps() int {
-	return len(ps.props)
+	return len((*ps))
 }
 
 func (ps *PropsForSearch) InPreciseSNBT() string {
 	if ps == nil {
 		return "{}"
 	}
-	if ps.props == nil {
+	if len(*ps) == 0 {
 		return "{}"
 	}
-	if len(ps.props) == 0 {
-		return "{}"
-	}
-	props := make([]string, 0, len(ps.props))
-	for _, p := range ps.props {
+	props := make([]string, 0, len(*ps))
+	for _, p := range *ps {
 		props = append(props, p.Name+":"+p.Value.InPreciseSNBT())
 	}
 	stateStr := strings.Join(props, ",")
@@ -375,12 +364,22 @@ type ComparedOutput struct {
 }
 
 func (ps *PropsForSearch) Compare(compare *PropsForSearch) (o ComparedOutput) {
-	if ps == nil || compare == nil || compare.propsByName == nil {
+	if ps == nil || compare == nil || len(*compare) == 0 {
 		return
 	}
-	for n, p := range compare.propsByName {
-		if actualP, found := ps.propsByName[n]; found {
-			if actualP.FuzzyEqual(p) {
+	this := map[string]int{}
+	that := map[string]int{}
+	for i, n := range *ps {
+		this[strings.TrimLeft(n.Name, "minecraft:")] = i
+	}
+	for i, n := range *compare {
+		that[strings.TrimLeft(n.Name, "minecraft:")] = i
+	}
+
+	for _, prop := range *compare {
+		if actualPi, found := this[strings.TrimLeft(prop.Name, "minecraft:")]; found {
+			actualP := (*ps)[actualPi]
+			if actualP.Value.FuzzyEqual(prop.Value) {
 				o.Same++
 			} else {
 				o.Different++
@@ -389,15 +388,20 @@ func (ps *PropsForSearch) Compare(compare *PropsForSearch) (o ComparedOutput) {
 			o.Redundant++
 		}
 	}
-	for an := range ps.propsByName {
-		if _, found := compare.propsByName[an]; !found {
+	for _, an := range *ps {
+		if _, found := that[strings.TrimLeft(an.Name, "minecraft:")]; !found {
 			o.Missing++
 		}
 	}
 	return o
 }
 
+var sharedProps *sync_wrapper.SyncKVMap[string, *PropsForSearch]
+
 func PropsForSearchFromMap(mapProps map[string]PropValForSearch) *PropsForSearch {
+	if sharedProps == nil {
+		sharedProps = sync_wrapper.NewSyncKVMap[string, *PropsForSearch]()
+	}
 	// clean
 	cleanMapProps := map[string]PropValForSearch{}
 	for k, v := range mapProps {
@@ -414,18 +418,20 @@ func PropsForSearchFromMap(mapProps map[string]PropValForSearch) *PropsForSearch
 		return keys[i] < keys[j]
 	})
 	// make
-	props := make([]struct {
-		Name  string
-		Value PropValForSearch
-	}, len(mapProps))
-	for i, k := range keys {
-		props[i].Name = k
-		props[i].Value = mapProps[k]
+	props := PropsForSearch{}
+	for _, k := range keys {
+		props = append(props, PropForSearch{
+			k, mapProps[k],
+		})
 	}
-	return &PropsForSearch{
-		props:       props,
-		propsByName: cleanMapProps,
+	out := &props
+	snbt := out.InPreciseSNBT()
+	if cachedProps, found := sharedProps.Get(snbt); found {
+		// fmt.Println("found")
+		return cachedProps
 	}
+	sharedProps.Set(snbt, out)
+	return out
 }
 
 func PropsForSearchFromNbt(nbt map[string]any) (*PropsForSearch, error) {
