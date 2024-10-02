@@ -186,3 +186,37 @@ type Frame struct {
 	// 存放已解码的物品展示框数据
 	FrameData FrameData
 }
+
+// ------------------------- structure_block -------------------------
+
+// 描述单个结构方块中已解码的部分
+type StructureBlockData struct {
+	AnimationMode    byte    // animationMode(TAG_Byte) = 0
+	AnimationSeconds float32 // animationSeconds(TAG_Float) = 0
+	Data             int32   // data(TAG_Int) = 1
+	DataField        string  // dataField(TAG_String) = ""
+	IgnoreEntities   bool    // ignoreEntities(TAG_Byte) = 0
+	IncludePlayers   bool    // includePlayers(TAG_Byte) = 0
+	Integrity        float32 // integrity(TAG_Float32) = 100
+	Mirror           byte    // mirror(TAG_Byte) = 0
+	RedstoneSaveMode int32   // redstoneSaveMode(TAG_Int) = 0
+	RemoveBlocks     bool    // removeBlocks(TAG_Byte) = 0
+	Rotation         byte    // rotation(TAG_Byte) = 0
+	Seed             int64   // seed(TAG_Long) = 0
+	ShowBoundingBox  bool    // showBoundingBox(TAG_Byte) = 0
+	StructureName    string  // structureName(TAG_String) = ""
+	XStructureOffset int32   // xStructureOffset(TAG_int) = 0
+	XStructureSize   int32   // xStructureSize(TAG_int) = 5
+	YStructureOffset int32   // yStructureOffset(TAG_int) = -1
+	YStructureSize   int32   // xStructureSize(TAG_int) = 5
+	ZStructureOffset int32   // zStructureOffset(TAG_int) = 0
+	ZStructureSize   int32   // xStructureSize(TAG_int) = 5
+}
+
+// 描述一个结构方块
+type StructureBlock struct {
+	// 该方块实体的详细数据
+	BlockEntity *BlockEntity
+	// 存放已解码的结构方块数据
+	StructureBlockData StructureBlockData
+}

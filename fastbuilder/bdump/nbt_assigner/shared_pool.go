@@ -76,9 +76,12 @@ var SupportBlocksPool map[string]string = map[string]string{
 	"bamboo_hanging_sign":    "Sign",
 	"crimson_hanging_sign":   "Sign",
 	"warped_hanging_sign":    "Sign",
-	// 物品展示框
+	// 告示牌
 	"frame":      "Frame",
 	"glow_frame": "Frame",
+	// 物品展示框
+	"structure_block": "StructureBlock",
+	// 结构方块
 }
 
 // 此表描述了现阶段已经支持了的特殊物品，如烟花等物品。
@@ -147,6 +150,8 @@ var ItemNameToBlockNamePool map[string]string = map[string]string{
 	"frame":      "frame",
 	"glow_frame": "glow_frame",
 	// 物品展示框
+	"structure_block": "structure_block",
+	// 结构方块
 }
 
 // 此表描述了可被 replaceitem 生效的容器

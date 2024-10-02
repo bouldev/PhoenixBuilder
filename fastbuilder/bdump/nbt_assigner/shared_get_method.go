@@ -11,6 +11,8 @@ func GetPlaceBlockMethod(block *BlockEntity) GeneralBlockNBT {
 		return &Sign{BlockEntity: block}
 	case "Frame":
 		return &Frame{BlockEntity: block}
+	case "StructureBlock":
+		return &StructureBlock{BlockEntity: block}
 	default:
 		return &DefaultBlock{BlockEntity: block}
 		// 其他尚且未被支持的方块实体
