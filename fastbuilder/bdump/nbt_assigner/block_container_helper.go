@@ -364,13 +364,11 @@ func (c *Container) GetNBTItem(
 	}
 	defer api.RevertStructure(uniqueId, c.BlockEntity.AdditionalData.Position)
 	// 备份容器
-	method := GetGenerateItemMethod(&itemPackage)
-	// 得到获取该 NBT 物品的方法
-	err = method.Decode()
+	err = itemPackage.Item.Custom.NBTItemData.Decode()
 	if err != nil {
 		return false, fmt.Errorf("GetNBTItem: %v", err)
 	}
-	err = method.WriteData()
+	err = itemPackage.Item.Custom.NBTItemData.WriteData()
 	if err != nil {
 		return false, fmt.Errorf("GetNBTItem: %v", err)
 	}

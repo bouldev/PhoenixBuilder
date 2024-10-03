@@ -98,13 +98,13 @@ func (f *Frame) WriteData() error {
 			itemSpawnSlot = spawnLocation
 		}
 		// NBT 物品
-		if f.FrameData.Item.Item.Custom.ItemTag != nil {
+		if f.FrameData.Item.Item.Custom.NBTItemData != nil {
 			success, err := container.GetNBTItem(*f.FrameData.Item)
 			if err != nil {
-				return fmt.Errorf("WriteData: Failed to process the nbt item in frame block; f.FrameData.Item.Item.Custom.ItemTag = %#v; err = %v", f.FrameData.Item.Item.Custom.ItemTag, err)
+				return fmt.Errorf("WriteData: Failed to process the nbt item in frame block; f.FrameData.Item.Item.Custom.NBTItemData = %#v; err = %v", f.FrameData.Item.Item.Custom.NBTItemData, err)
 			}
 			if !success {
-				return fmt.Errorf("WriteData: Failed to get the nbt item in frame block due to unknown reason; f.FrameData.Item.Item.Custom.ItemTag = %#v", f.FrameData.Item.Item.Custom.ItemTag)
+				return fmt.Errorf("WriteData: Failed to get the nbt item in frame block due to unknown reason; f.FrameData.Item.Item.Custom.NBTItemData = %#v", f.FrameData.Item.Item.Custom.NBTItemData)
 			}
 		}
 	}

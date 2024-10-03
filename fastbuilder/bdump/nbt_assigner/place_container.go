@@ -144,17 +144,17 @@ func (c *Container) WriteData() error {
 			continue
 		}
 		// 子方块
-		if value.Item.Custom != nil && value.Item.Custom.ItemTag != nil {
+		if value.Item.Custom != nil && value.Item.Custom.NBTItemData != nil {
 			success, err := c.GetNBTItem(value)
 			if err != nil {
-				return fmt.Errorf("WriteData: Failed to process the nbt item from c.Contents[%d]; c.Contents[%d].Item.Custom.ItemTag = %#v; err = %v", key, key, value.Item.Custom.ItemTag, err)
+				return fmt.Errorf("WriteData: Failed to process the nbt item from c.Contents[%d]; c.Contents[%d].Item.Custom.NBTItemData = %#v; err = %v", key, key, value.Item.Custom.NBTItemData, err)
 			}
 			if !success {
 				continue
 			}
 			err = c.MoveItemIntoContainer(5, value.Item.Basic.Slot)
 			if err != nil {
-				return fmt.Errorf("WriteData: Failed to process the nbt item from c.Contents[%d]; c.Contents[%d].Item.Custom.ItemTag = %#v; err = %v", key, key, value.Item.Custom.ItemTag, err)
+				return fmt.Errorf("WriteData: Failed to process the nbt item from c.Contents[%d]; c.Contents[%d].Item.Custom.NBTItemData = %#v; err = %v", key, key, value.Item.Custom.NBTItemData, err)
 			}
 		}
 		// NBT 物品

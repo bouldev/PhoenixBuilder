@@ -43,6 +43,15 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 		g.Basic.Slot = slot_got
 	}
 	// 物品所在的槽位(对于唱片机等单槽位方块来说，此数据不存在)
+	item_tag, ok := singleItem["tag"]
+	if ok {
+		nbt_tag_got, normal := item_tag.(map[string]interface{})
+		if !normal {
+			return fmt.Errorf(`DecodeItemBasicData: Can not convert item_tag into map[string]interface{}; singleItem = %#v`, singleItem)
+		}
+		g.Basic.ItemTag = nbt_tag_got
+	}
+	// 物品的 Tag 数据 (可能不存在)
 	{
 		{
 			damage_origin, ok := singleItem["Damage"]
@@ -57,15 +66,10 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 		}
 		// Damage
 		for i := 0; i < 1; i++ {
-			tag_origin, ok := singleItem["tag"]
-			if !ok {
+			if len(g.Basic.ItemTag) == 0 {
 				break
 			}
-			tag_got, normal := tag_origin.(map[string]interface{})
-			if !normal {
-				return fmt.Errorf(`DecodeItemBasicData: Can not convert tag_origin into map[string]interface{}; singleItem = %#v`, singleItem)
-			}
-			damage_origin, ok := tag_got["Damage"]
+			damage_origin, ok := g.Basic.ItemTag["Damage"]
 			if !ok {
 				break
 			}
@@ -75,7 +79,7 @@ func (g *GeneralItem) DecodeItemBasicData(singleItem ItemOrigin) error {
 			}
 			g.Basic.MetaData = uint16(damage_got)
 		}
-		// tag["Damage"]
+		// g.Basic.ItemTag["Damage"]
 		for i := 0; i < 1; i++ {
 			block_origin, ok := singleItem["Block"]
 			if !ok {
@@ -327,6 +331,38 @@ func (i *ItemPackage) DecodeItemCustomData(
 	}
 	// 获取当前物品的 tag 数据
 	{
+		itemType := IsNBTItemSupported(i.Item.Basic.Name)
+		if len(itemType) != 0 {
+			i.Item.Custom = &ItemCustomData{
+				SubBlockData: nil,
+				NBTItemData: GetGenerateItemMethod(
+					&ItemPackage{
+						Interface: i.Interface,
+						Item:      i.Item,
+						AdditionalData: ItemAdditionalData{
+							Decoded:    false,
+							HotBarSlot: 5,
+							Position:   i.AdditionalData.Position,
+							Type:       itemType,
+							Settings:   i.AdditionalData.Settings,
+							FastMode:   false,
+							Others:     i.AdditionalData.Others,
+						},
+					},
+				),
+			}
+			needSpecialTreatment, err := i.Item.Custom.NBTItemData.SpecialCheck()
+			if err != nil {
+				return fmt.Errorf("DecodeItemCustomData: %v", err)
+			}
+			if !needSpecialTreatment {
+				i.Item.Custom = nil
+			}
+			return nil
+		}
+	}
+	// 如果该物品是一个 NBT 物品，例如通过工作台合成的烟花
+	{
 		blockName := ItemNameToBlockNamePool[i.Item.Basic.Name]
 		blockType := IsNBTBlockSupported(blockName)
 		// 取得该方块实体的类型
@@ -380,29 +416,13 @@ func (i *ItemPackage) DecodeItemCustomData(
 						},
 					},
 				),
-				ItemTag: nil,
+				NBTItemData: nil,
 			}
 			return nil
 		}
 		// 赋值并返回
 	}
 	// 如果该物品是一个 NBT 方块
-	{
-		i.Item.Custom = &ItemCustomData{
-			SubBlockData: nil,
-			ItemTag:      nbt_tag_got,
-		}
-		i.AdditionalData.Type = IsNBTItemSupported(i.Item.Basic.Name)
-		needSpecialTreatment, err := GetGenerateItemMethod(i).SpecialCheck()
-		if err != nil {
-			return fmt.Errorf("DecodeItemCustomData: %v", err)
-		}
-		if !needSpecialTreatment {
-			i.Item.Custom = nil
-			return nil
-		}
-	}
-	// 如果该物品是一个 NBT 物品，例如通过工作台合成的烟花
 	return nil
 	// 返回值
 }

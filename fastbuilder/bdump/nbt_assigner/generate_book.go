@@ -27,7 +27,7 @@ func (b *Book) Decode() error {
 	var pages []string = []string{}
 	var author string = ""
 	var title string = ""
-	tag := b.ItemPackage.Item.Custom.ItemTag
+	tag := b.ItemPackage.Item.Basic.ItemTag
 	// 初始化
 	if pages_origin, ok := tag["pages"]; ok {
 		pages_got, success := pages_origin.([]interface{})

@@ -171,7 +171,7 @@ func (i *ItemPackage) ParseItemFromNBT(singleItem ItemOrigin) error {
 	}
 	// 如果此物品是一个 NBT 方块，
 	// 则附魔属性和物品组件将被丢弃
-	if i.Item.Custom != nil && i.Item.Custom.ItemTag != nil && i.Item.Enhancement != nil {
+	if i.Item.Custom != nil && i.Item.Custom.NBTItemData != nil && i.Item.Enhancement != nil {
 		i.Item.Enhancement.ItemComponents = nil
 	}
 	// 如果该物品是一个 NBT 物品，

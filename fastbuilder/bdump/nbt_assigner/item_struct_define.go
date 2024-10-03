@@ -62,8 +62,6 @@ type ItemCustomData struct {
 	*/
 	SubBlockData GeneralBlockNBT
 	/*
-		指代该物品的 Tag 标签。
-
 		这个物品可能是一本写了字或者签过名的书，
 		也可能是一个由工作台合成的烟花。
 
@@ -75,11 +73,9 @@ type ItemCustomData struct {
 		因此，如果该物品带有 NBT ，那么此字段不为空指针。
 
 		检测这个物品是否需要使用特殊方法获取可能是必要的，
-		因为用指令获得的烟花可能也是带有 NBT 的。 [需要验证]
-
-		TODO: 兼容此特性
+		因为用指令获得的烟花可能也是带有 NBT 的
 	*/
-	ItemTag ItemOrigin
+	NBTItemData GeneralItemNBT
 }
 
 // 描述单个物品的基本数据
@@ -99,6 +95,8 @@ type ItemBasicData struct {
 		您需要自行移动它们到正确的位置上
 	*/
 	Slot uint8
+	// 该物品的 Tag 标签
+	ItemTag ItemOrigin
 }
 
 // 描述单个物品的附加数据
