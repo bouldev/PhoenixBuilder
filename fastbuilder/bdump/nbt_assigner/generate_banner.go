@@ -359,6 +359,7 @@ func (b *Banner) MakeNormalBanner() error {
 		if err != nil {
 			return fmt.Errorf("MakeNormalBanner: %v", err)
 		}
+		newerBanner.Stack.NBTData = b.ItemPackage.Item.Basic.ItemTag
 		// 注册物品堆栈请求至资源管理中心
 		requestID := api.Resources.ItemStackOperation.GetNewRequestID()
 		err = api.Resources.ItemStackOperation.WriteRequest(
