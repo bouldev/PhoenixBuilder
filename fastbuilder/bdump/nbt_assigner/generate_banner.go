@@ -62,26 +62,40 @@ func (b *Banner) Decode() error {
 }
 
 // ...
-func (b *Banner) WriteData() error {
+func (b *Banner) MakeItem() error {
 	// 初始化
 	api := b.ItemPackage.Interface.(*GameInterface.GameInterface)
 	// 获取旗帜
 	newPackage := *b.ItemPackage
 	newRequest := DefaultItem{ItemPackage: &newPackage}
+	newRequest.ItemPackage.Item.Basic.Count = 1
 	newRequest.ItemPackage.AdditionalData.HotBarSlot = 5
 	err := newRequest.WriteData()
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	// 切换物品栏
 	err = api.ChangeSelectedHotbarSlot(5)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
+	// 备份织布机处的方块
+	uniqueId, err := api.BackupStructure(GameInterface.MCStructure{
+		BeginX: b.ItemPackage.AdditionalData.Position[0],
+		BeginY: b.ItemPackage.AdditionalData.Position[1],
+		BeginZ: b.ItemPackage.AdditionalData.Position[2],
+		SizeX:  1,
+		SizeY:  1,
+		SizeZ:  1,
+	})
+	if err != nil {
+		return fmt.Errorf("MakeItem: %v", err)
+	}
+	defer api.RevertStructure(uniqueId, b.ItemPackage.AdditionalData.Position)
 	// 放置织布机
 	err = api.SetBlock(b.ItemPackage.AdditionalData.Position, "minecraft:loom", `["direction"=0]`)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	// 占用容器资源
 	holder := api.Resources.Container.Occupy()
@@ -94,10 +108,10 @@ func (b *Banner) WriteData() error {
 		5,
 	)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	if !success {
-		return fmt.Errorf("WriteData: Failed to open the loom block when write NBT data to a banner item")
+		return fmt.Errorf("MakeItem: Failed to open the loom block when write NBT data to a banner item")
 	}
 	defer api.CloseContainer()
 	containerOpeningData := api.Resources.Container.GetContainerOpeningData()
@@ -130,7 +144,7 @@ func (b *Banner) WriteData() error {
 			"", true,
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		// 获取旗帜图案到快捷栏 3
 		if len(patternName) != 0 {
@@ -148,13 +162,13 @@ func (b *Banner) WriteData() error {
 				"", true,
 			)
 			if err != nil {
-				return fmt.Errorf("WriteData: %v", err)
+				return fmt.Errorf("MakeItem: %v", err)
 			}
 		}
 		// 移动旗帜到织布机
 		bannerItem, err := api.Resources.Inventory.GetItemStackInfo(0, 5)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		bannerMoveResp, err = api.MoveItem(
 			GameInterface.ItemLocation{
@@ -167,20 +181,20 @@ func (b *Banner) WriteData() error {
 				ContainerID: GameInterface.ContainerIDLoomInput,
 				Slot:        0x9,
 			},
-			b.ItemPackage.Item.Basic.Count,
+			1,
 			GameInterface.AirItem,
 			bannerItem,
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		if bannerMoveResp[0].Status != protocol.ItemStackResponseStatusOK {
-			return fmt.Errorf("WriteData: The request was rejected by the remote server when try to move banner item to the loom block; bannerMoveResp[0] = %#v", bannerMoveResp[0])
+			return fmt.Errorf("MakeItem: The request was rejected by the remote server when try to move banner item to the loom block; bannerMoveResp[0] = %#v", bannerMoveResp[0])
 		}
 		// 移动染料到织布机
 		dyeItem, err := api.Resources.Inventory.GetItemStackInfo(0, 4)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		dyeMoveResp, err = api.MoveItem(
 			GameInterface.ItemLocation{
@@ -198,16 +212,16 @@ func (b *Banner) WriteData() error {
 			dyeItem,
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		if dyeMoveResp[0].Status != protocol.ItemStackResponseStatusOK {
-			return fmt.Errorf("WriteData: The request was rejected by the remote server when try to move dye item to the loom block; dyeMoveResp[0] = %#v", dyeMoveResp[0])
+			return fmt.Errorf("MakeItem: The request was rejected by the remote server when try to move dye item to the loom block; dyeMoveResp[0] = %#v", dyeMoveResp[0])
 		}
 		// 移动旗帜图案到织布机
 		if len(patternName) != 0 {
 			patternItem, err = api.Resources.Inventory.GetItemStackInfo(0, 3)
 			if err != nil {
-				return fmt.Errorf("WriteData: %v", err)
+				return fmt.Errorf("MakeItem: %v", err)
 			}
 			patternMoveResp, err = api.MoveItem(
 				GameInterface.ItemLocation{
@@ -225,10 +239,10 @@ func (b *Banner) WriteData() error {
 				patternItem,
 			)
 			if err != nil {
-				return fmt.Errorf("WriteData: %v", err)
+				return fmt.Errorf("MakeItem: %v", err)
 			}
 			if patternMoveResp[0].Status != protocol.ItemStackResponseStatusOK {
-				return fmt.Errorf("WriteData: The request was rejected by the remote server when try to move banner pattern to the loom block; patternMoveResp[0] = %#v", patternMoveResp[0])
+				return fmt.Errorf("MakeItem: The request was rejected by the remote server when try to move banner pattern to the loom block; patternMoveResp[0] = %#v", patternMoveResp[0])
 			}
 		}
 		// 设置旗帜的新 NBT 数据
@@ -237,7 +251,7 @@ func (b *Banner) WriteData() error {
 			gob.Register([]interface{}{})
 		})
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		// 注册物品堆栈请求至资源管理中心
 		requestID := api.Resources.ItemStackOperation.GetNewRequestID()
@@ -271,11 +285,11 @@ func (b *Banner) WriteData() error {
 			},
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		// 构造 takeStackRequestAction
 		takeStackRequestAction := protocol.TakeStackRequestAction{}
-		takeStackRequestAction.Count = b.ItemPackage.Item.Basic.Count
+		takeStackRequestAction.Count = 1
 		takeStackRequestAction.Source = protocol.StackRequestSlotInfo{
 			ContainerID:    protocol.ContainerCreatedOutput, // [NEMC 1.20.10] 60 -> 61 (Added by Happy2018new)
 			Slot:           0x32,
@@ -321,15 +335,15 @@ func (b *Banner) WriteData() error {
 			},
 		})
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		// 获取物品堆栈请求结果
 		resp, err := api.Resources.ItemStackOperation.LoadResponseAndDelete(requestID)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		if resp.Status != protocol.ItemStackResponseStatusOK {
-			return fmt.Errorf("WriteData: The request was rejected by the remote server when get new banner from the loom block; resp = %#v", resp)
+			return fmt.Errorf("MakeItem: The request was rejected by the remote server when get new banner from the loom block; resp = %#v", resp)
 		}
 		// 将旗帜图案从织布机中拿回
 		if len(patternName) != 0 {
@@ -349,10 +363,10 @@ func (b *Banner) WriteData() error {
 				patternItem,
 			)
 			if err != nil {
-				return fmt.Errorf("WriteData: %v", err)
+				return fmt.Errorf("MakeItem: %v", err)
 			}
 			if patternMoveResp[0].Status != protocol.ItemStackResponseStatusOK {
-				return fmt.Errorf("WriteData: The request was rejected by the remote server when try to move banner pattern back; patternMoveResp[0] = %#v", patternMoveResp[0])
+				return fmt.Errorf("MakeItem: The request was rejected by the remote server when try to move banner pattern back; patternMoveResp[0] = %#v", patternMoveResp[0])
 			}
 		}
 	}
@@ -373,12 +387,12 @@ func (b *Banner) WriteData() error {
 			"", true,
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		// 获取新旗帜的物品信息
 		bannerItem, err := api.Resources.Inventory.GetItemStackInfo(0, 5)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		// 修正位置
 		bannerMoveResp, err := api.MoveItem(
@@ -392,15 +406,39 @@ func (b *Banner) WriteData() error {
 				ContainerID: GameInterface.ContainerIDInventory,
 				Slot:        b.ItemPackage.AdditionalData.HotBarSlot,
 			},
-			b.ItemPackage.Item.Basic.Count,
+			1,
 			GameInterface.AirItem,
 			bannerItem,
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		if bannerMoveResp[0].Status != protocol.ItemStackResponseStatusOK {
-			return fmt.Errorf("WriteData: The request was rejected by the remote server when try to correct the item place; bannerMoveResp[0] = %#v", bannerMoveResp[0])
+			return fmt.Errorf("MakeItem: The request was rejected by the remote server when try to correct the item place; bannerMoveResp[0] = %#v", bannerMoveResp[0])
+		}
+	}
+	// 返回值
+	return nil
+}
+
+// ...
+func (b *Banner) WriteData() error {
+	// 初始化
+	api := b.ItemPackage.Interface.(*GameInterface.GameInterface)
+	// 制作单个旗帜
+	err := b.MakeItem()
+	if err != nil {
+		return fmt.Errorf("WriteData: %v", err)
+	}
+	// 堆叠旗帜的处理
+	if b.ItemPackage.Item.Basic.Count > 1 {
+		err = api.CopyItem(
+			b.ItemPackage.AdditionalData.HotBarSlot,
+			b.ItemPackage.AdditionalData.Position,
+			b.ItemPackage.Item.Basic.Count,
+		)
+		if err != nil {
+			return fmt.Errorf("WriteData: %v", err)
 		}
 	}
 	// 返回值
