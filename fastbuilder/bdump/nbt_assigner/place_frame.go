@@ -95,6 +95,10 @@ func (f *Frame) WriteData() error {
 			if !success {
 				return fmt.Errorf("WriteData: Failed to get the sub block in frame block due to unknown reason; f.FrameData.Item.Item.Custom.SubBlockData = %#v", f.FrameData.Item.Item.Custom.SubBlockData)
 			}
+			err = api.AwaitChangesGeneral()
+			if err != nil {
+				return fmt.Errorf("WriteData: %v", err)
+			}
 			itemSpawnSlot = spawnLocation
 		}
 		// NBT 物品
@@ -105,6 +109,10 @@ func (f *Frame) WriteData() error {
 			}
 			if !success {
 				return fmt.Errorf("WriteData: Failed to get the nbt item in frame block due to unknown reason; f.FrameData.Item.Item.Custom.NBTItemData = %#v", f.FrameData.Item.Item.Custom.NBTItemData)
+			}
+			err = api.AwaitChangesGeneral()
+			if err != nil {
+				return fmt.Errorf("WriteData: %v", err)
 			}
 		}
 	}

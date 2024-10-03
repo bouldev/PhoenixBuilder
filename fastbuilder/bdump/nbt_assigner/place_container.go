@@ -136,6 +136,11 @@ func (c *Container) WriteData() error {
 				continue
 			}
 			// 获取子方块的物品形式
+			err = api.AwaitChangesGeneral()
+			if err != nil {
+				return fmt.Errorf("WriteData: %v", err)
+			}
+			// 等待更改
 			err = c.MoveItemIntoContainer(spawnLocation, value.Item.Basic.Slot)
 			if err != nil {
 				return fmt.Errorf("WriteData: Failed to process the sub block from c.Contents[%d]; c.Contents[%d].Item.Custom.SubBlockData = %#v; err = %v", key, key, value.Item.Custom.SubBlockData, err)
@@ -152,10 +157,17 @@ func (c *Container) WriteData() error {
 			if !success {
 				continue
 			}
+			// 获取 NBT 物品
+			err = api.AwaitChangesGeneral()
+			if err != nil {
+				return fmt.Errorf("WriteData: %v", err)
+			}
+			// 等待更改
 			err = c.MoveItemIntoContainer(5, value.Item.Basic.Slot)
 			if err != nil {
 				return fmt.Errorf("WriteData: Failed to process the nbt item from c.Contents[%d]; c.Contents[%d].Item.Custom.NBTItemData = %#v; err = %v", key, key, value.Item.Custom.NBTItemData, err)
 			}
+			// 将 NBT 物品移动到容器中
 		}
 		// NBT 物品
 	}
