@@ -184,6 +184,6 @@ type BannerData struct {
 type Banner struct {
 	// 该 NBT 物品的详细数据
 	ItemPackage *ItemPackage
-	// 存放已解码的成书数据
+	// 存放已解码的旗帜数据
 	BannerData BannerData
 }
