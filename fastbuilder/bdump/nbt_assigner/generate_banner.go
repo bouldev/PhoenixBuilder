@@ -79,19 +79,6 @@ func (b *Banner) MakeItem() error {
 	if err != nil {
 		return fmt.Errorf("MakeItem: %v", err)
 	}
-	// 备份织布机处的方块
-	uniqueId, err := api.BackupStructure(GameInterface.MCStructure{
-		BeginX: b.ItemPackage.AdditionalData.Position[0],
-		BeginY: b.ItemPackage.AdditionalData.Position[1],
-		BeginZ: b.ItemPackage.AdditionalData.Position[2],
-		SizeX:  1,
-		SizeY:  1,
-		SizeZ:  1,
-	})
-	if err != nil {
-		return fmt.Errorf("MakeItem: %v", err)
-	}
-	defer api.RevertStructure(uniqueId, b.ItemPackage.AdditionalData.Position)
 	// 放置织布机
 	err = api.SetBlock(b.ItemPackage.AdditionalData.Position, "minecraft:loom", `["direction"=0]`)
 	if err != nil {
