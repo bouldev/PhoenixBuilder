@@ -111,6 +111,8 @@ const (
 	ContainerIDInventory = byte(protocol.ContainerCombinedHotBarAndInventory) // 12
 	ContainerIDHotBar    = byte(protocol.ContainerHotBar)                     // 29
 
+	ContainerIDCraftingInput = byte(protocol.ContainerCraftingInput) // 13
+
 	ContainerIDShulkerBox = byte(protocol.ContainerShulkerBox) // 31
 	ContainerIDBarrel     = byte(protocol.ContainerBarrel)     // 59
 
@@ -129,6 +131,10 @@ const (
 	ContainerIDBrewingStandInput  = byte(protocol.ContainerBrewingStandInput)  // 9
 	ContainerIDBrewingStandFuel   = byte(protocol.ContainerBrewingStandFuel)   // 11
 	ContainerIDBrewingStandResult = byte(protocol.ContainerBrewingStandResult) // 10
+
+	ContainerIDLoomInput    = byte(protocol.ContainerLoomInput)    // 42
+	ContainerIDLoomDye      = byte(protocol.ContainerLoomDye)      // 43
+	ContainerIDLoomMaterial = byte(protocol.ContainerLoomMaterial) // 44
 
 	ContainerIDUnknown = byte(255)
 	ContainerIDInvalid = ContainerIDUnknown // 255

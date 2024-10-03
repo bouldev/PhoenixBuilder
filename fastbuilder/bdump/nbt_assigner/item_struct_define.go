@@ -165,3 +165,24 @@ type Book struct {
 	// 存放已解码的成书数据
 	BookData BookData
 }
+
+// ------------------------- banner -------------------------
+
+// 描述旗帜的单个图案
+type BannerPattern struct {
+	Color   int32  // Color(TAG_Int) = 0
+	Pattern string // Pattern(TAG_String) = "bo"
+}
+
+// 描述单个旗帜中已解码的部分
+type BannerData struct {
+	Patterns []BannerPattern // Patterns(TAG_List) = []BannerPattern{}
+}
+
+// Banner 结构体用于描述必要的旗帜的数据
+type Banner struct {
+	// 该 NBT 物品的详细数据
+	ItemPackage *ItemPackage
+	// 存放已解码的成书数据
+	BannerData BannerData
+}

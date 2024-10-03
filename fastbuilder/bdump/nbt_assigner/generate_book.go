@@ -6,7 +6,7 @@ import (
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-// 检查 b.ItemPackage.Item.Custom.ItemTag 是否可以仅使用命令生成
+// 检查当前物品是否可以仅使用命令生成
 func (b *Book) SpecialCheck() (bool, error) {
 	err := b.Decode()
 	if err != nil {
@@ -21,7 +21,7 @@ func (b *Book) SpecialCheck() (bool, error) {
 	// 判断并返回值
 }
 
-// 从 b.ItemPackage.Item.Custom.ItemTag 提取成书数据，
+// 从 b.ItemPackage.Item.Basic.ItemTag 提取成书数据，
 // 然后保存在 b.BookData 中
 func (b *Book) Decode() error {
 	var pages []string = []string{}
@@ -84,16 +84,16 @@ func (b *Book) WriteData() error {
 	newRequest := DefaultItem{ItemPackage: &newPackage}
 	err := newRequest.WriteData()
 	if err != nil {
-		return fmt.Errorf("OpenBook: %v", err)
+		return fmt.Errorf("WriteData: %v", err)
 	}
 	// 获取成书
 	err = api.ChangeSelectedHotbarSlot(b.ItemPackage.AdditionalData.HotBarSlot)
 	if err != nil {
-		return fmt.Errorf("OpenBook: %v", err)
+		return fmt.Errorf("WriteData: %v", err)
 	}
 	err = api.ClickAir(b.ItemPackage.AdditionalData.HotBarSlot)
 	if err != nil {
-		return fmt.Errorf("OpenBook: %v", err)
+		return fmt.Errorf("WriteData: %v", err)
 	}
 	// 打开成书
 	for key, value := range b.BookData.Pages {
@@ -116,7 +116,7 @@ func (b *Book) WriteData() error {
 	// 签名处理
 	err = api.AwaitChangesGeneral()
 	if err != nil {
-		return fmt.Errorf("OpenBook: %v", err)
+		return fmt.Errorf("WriteData: %v", err)
 	}
 	// 等待更改
 	if b.ItemPackage.Item.Basic.Name == "written_book" && b.ItemPackage.Item.Basic.Count > 1 {
@@ -126,7 +126,7 @@ func (b *Book) WriteData() error {
 			b.ItemPackage.Item.Basic.Count,
 		)
 		if err != nil {
-			return fmt.Errorf("OpenBook: %v", err)
+			return fmt.Errorf("WriteData: %v", err)
 		}
 	}
 	// 对于堆叠型物品的处理

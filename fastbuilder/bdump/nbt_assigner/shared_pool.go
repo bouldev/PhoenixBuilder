@@ -90,6 +90,8 @@ var SupportItemsPool map[string]string = map[string]string{
 	"writable_book": "Book",
 	"written_book":  "Book",
 	// 成书
+	"banner": "Banner",
+	// 旗帜
 }
 
 // 此表描述了现阶段已支持的方块实体中，
@@ -152,6 +154,8 @@ var ItemNameToBlockNamePool map[string]string = map[string]string{
 	// 物品展示框
 	"structure_block": "structure_block",
 	// 结构方块
+	"banner": "banner",
+	// 旗帜
 }
 
 // 此表描述了可被 replaceitem 生效的容器
@@ -248,6 +252,20 @@ var SupportContainerPool map[string]ContainerConstantData = map[string]Container
 	// 各种颜色或未被染色的潜影盒
 }
 
+// 此表描述了旗帜中 Pattern 字段到 旗帜图案 的映射
+var BannerPatternToItemName map[string]string = map[string]string{
+	"cre": "creeper_banner_pattern",          // 苦力怕盾徽
+	"sku": "skull_banner_pattern",            // 头颅盾徽
+	"flo": "flower_banner_pattern",           // 花朵盾徽
+	"moj": "mojang_banner_pattern",           // Mojang 徽标
+	"bri": "field_masoned_banner_pattern",    // 砖纹
+	"cbo": "bordure_indented_banner_pattern", // 波纹边
+	"pig": "piglin_banner_pattern",           // 猪鼻
+	"glb": "globe_banner_pattern",            // 地球
+	"flw": "flow_banner_pattern",             // 涡流
+	"gus": "guster_banner_pattern",           // 旋风
+}
+
 // 此表描述了染料 RGB 颜色值到 染料物品名 的映射
 var RGBToDyeItemName map[[3]uint8]string = map[[3]uint8]string{
 	{240, 240, 240}: "white_dye",      // 白色染料
@@ -286,4 +304,24 @@ var DefaultDyeColor [][3]uint8 = [][3]uint8{
 	{137, 50, 184},  // 紫色
 	{199, 78, 189},  // 品红色
 	{243, 139, 170}, // 粉红色
+}
+
+// 此表描述了旗帜中 Color 字段到 染料物品名 的映射
+var BannerColorToDyeName map[uint8]string = map[uint8]string{
+	15: "white_dye",      // 白色染料
+	7:  "light_gray_dye", // 淡灰色染料
+	8:  "gray_dye",       // 灰色染料
+	0:  "black_dye",      // 黑色染料
+	3:  "brown_dye",      // 棕色染料
+	1:  "red_dye",        // 红色染料
+	14: "orange_dye",     // 橙色染料
+	11: "yellow_dye",     // 黄色染料
+	10: "lime_dye",       // 黄绿色染料
+	2:  "green_dye",      // 绿色染料
+	6:  "cyan_dye",       // 青色染料
+	12: "light_blue_dye", // 淡蓝色染料
+	4:  "blue_dye",       // 蓝色染料
+	5:  "purple_dye",     // 紫色染料
+	13: "magenta_dye",    // 品红色染料
+	9:  "pink_dye",       // 粉红色染料
 }
