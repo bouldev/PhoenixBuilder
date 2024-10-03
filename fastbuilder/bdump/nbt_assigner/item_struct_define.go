@@ -177,6 +177,7 @@ type BannerPattern struct {
 // 描述单个旗帜中已解码的部分
 type BannerData struct {
 	Patterns []BannerPattern // Patterns(TAG_List) = []BannerPattern{}
+	Type     int32           // Type(TAG_Int) = 0
 }
 
 // Banner 结构体用于描述必要的旗帜的数据
