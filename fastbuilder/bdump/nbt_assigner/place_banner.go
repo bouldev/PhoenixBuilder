@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// 从 b.BlockEntity.Block.NBT 提取告示牌的
+// 从 b.BlockEntity.Block.NBT 提取旗帜的
 // 一部分数据并保存在 b.BannerBlockData 中
 func (b *BannerBlock) Decode() error {
 	// 初始化
