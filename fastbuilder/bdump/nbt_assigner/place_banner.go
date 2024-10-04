@@ -167,13 +167,15 @@ func (b *BannerBlock) WriteData() error {
 		return fmt.Errorf("WriteData: %v", err)
 	}
 	// 修正旗帜的朝向
-	err = b.BlockEntity.Interface.SetBlockAsync(
-		b.BlockEntity.AdditionalData.Position,
-		b.BlockEntity.Block.Name,
-		b.BlockEntity.AdditionalData.BlockStates,
-	)
-	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+	if strings.Contains(b.BlockEntity.Block.Name, "standing_banner") {
+		err = b.BlockEntity.Interface.SetBlockAsync(
+			b.BlockEntity.AdditionalData.Position,
+			b.BlockEntity.Block.Name,
+			b.BlockEntity.AdditionalData.BlockStates,
+		)
+		if err != nil {
+			return fmt.Errorf("WriteData: %v", err)
+		}
 	}
 	// 返回值
 	return nil
