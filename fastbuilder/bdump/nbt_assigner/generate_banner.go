@@ -17,7 +17,7 @@ const (
 )
 
 // 检查当前物品是否应该通过复杂的步骤制作
-func (b *Banner) SpecialCheck() (bool, error) {
+func (b *BannerItem) SpecialCheck() (bool, error) {
 	// 解码
 	err := b.Decode()
 	if err != nil {
@@ -25,7 +25,7 @@ func (b *Banner) SpecialCheck() (bool, error) {
 	}
 	b.ItemPackage.AdditionalData.Decoded = true
 	// 判断并返回值
-	if len(b.BannerData.Patterns) == 0 && b.BannerData.Type == BannerTypeNormal {
+	if len(b.BannerItemData.Patterns) == 0 && b.BannerItemData.Type == BannerTypeNormal {
 		return false, nil
 	}
 	return true, nil
@@ -33,7 +33,7 @@ func (b *Banner) SpecialCheck() (bool, error) {
 
 // 从 b.ItemPackage.Item.Basic.ItemTag 提取成书数据，
 // 然后保存在 b.BannerData 中
-func (b *Banner) Decode() error {
+func (b *BannerItem) Decode() error {
 	// 初始化
 	var bannerType int32
 	var success bool
@@ -72,7 +72,7 @@ func (b *Banner) Decode() error {
 		}
 	}
 	// return
-	b.BannerData = BannerData{
+	b.BannerItemData = BannerItemData{
 		Patterns: patterns,
 		Type:     bannerType,
 	}
@@ -80,7 +80,7 @@ func (b *Banner) Decode() error {
 }
 
 // 制作一个不祥旗帜
-func (b *Banner) MakeOminousBanner() error {
+func (b *BannerItem) MakeOminousBanner() error {
 	// 初始化
 	api := b.ItemPackage.Interface.(*GameInterface.GameInterface)
 	// 占用容器资源
@@ -181,7 +181,7 @@ func (b *Banner) MakeOminousBanner() error {
 }
 
 // 根据 b.BannerData 制作普通旗帜
-func (b *Banner) MakeNormalBanner() error {
+func (b *BannerItem) MakeNormalBanner() error {
 	// 初始化
 	api := b.ItemPackage.Interface.(*GameInterface.GameInterface)
 	// 获取旗帜
@@ -222,7 +222,7 @@ func (b *Banner) MakeNormalBanner() error {
 	defer api.CloseContainer()
 	containerOpeningData := api.Resources.Container.GetContainerOpeningData()
 	// 修改旗帜
-	for _, value := range b.BannerData.Patterns {
+	for _, value := range b.BannerItemData.Patterns {
 		// 初始化
 		var bannerMoveResp []protocol.ItemStackResponse
 		var dyeMoveResp []protocol.ItemStackResponse
@@ -560,7 +560,7 @@ func (b *Banner) MakeNormalBanner() error {
 }
 
 // ...
-func (b *Banner) WriteData() error {
+func (b *BannerItem) WriteData() error {
 	// 初始化
 	var err error
 	api := b.ItemPackage.Interface.(*GameInterface.GameInterface)
@@ -585,7 +585,7 @@ func (b *Banner) WriteData() error {
 		return nil
 	}
 	// 制作单个旗帜
-	switch b.BannerData.Type {
+	switch b.BannerItemData.Type {
 	case BannerTypeNormal:
 		err = b.MakeNormalBanner()
 	case BannerTypeOminous:

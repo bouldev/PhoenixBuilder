@@ -87,7 +87,7 @@ func (c *Container) PlaceContainer() error {
 			return fmt.Errorf("PlaceContainer: %v", err)
 		}
 		// 获取一个潜影盒到快捷栏 5
-		err = api.PlaceShulkerBox(c.BlockEntity.AdditionalData.Position, 5, facing)
+		err = api.PlaceBlockWithFacing(c.BlockEntity.AdditionalData.Position, 5, facing)
 		if err != nil {
 			return fmt.Errorf("PlaceContainer: %v", err)
 		}

@@ -220,3 +220,20 @@ type StructureBlock struct {
 	// 存放已解码的结构方块数据
 	StructureBlockData StructureBlockData
 }
+
+// ------------------------- banner -------------------------
+
+// 描述单个旗帜方块中已解码的部分
+type BannerBlockData struct {
+	Base     int32           // Base(TAG_Int) = 0
+	Patterns []BannerPattern // Patterns(TAG_List) = []BannerPattern{}
+	Type     int32           // Type(TAG_List) = 0
+}
+
+// 描述一个旗帜方块
+type BannerBlock struct {
+	// 该方块实体的详细数据
+	BlockEntity *BlockEntity
+	// 存放已解码的旗帜方块数据
+	BannerBlockData BannerBlockData
+}

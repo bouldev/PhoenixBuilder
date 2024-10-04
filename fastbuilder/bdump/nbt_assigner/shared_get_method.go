@@ -13,6 +13,8 @@ func GetPlaceBlockMethod(block *BlockEntity) GeneralBlockNBT {
 		return &Frame{BlockEntity: block}
 	case "StructureBlock":
 		return &StructureBlock{BlockEntity: block}
+	case "Banner":
+		return &BannerBlock{BlockEntity: block}
 	default:
 		return &DefaultBlock{BlockEntity: block}
 		// 其他尚且未被支持的方块实体
@@ -25,7 +27,7 @@ func GetGenerateItemMethod(item *ItemPackage) GeneralItemNBT {
 	case "Book":
 		return &Book{ItemPackage: item}
 	case "Banner":
-		return &Banner{ItemPackage: item}
+		return &BannerItem{ItemPackage: item}
 	case "Shield":
 		return &Shield{ItemPackage: item}
 	default:

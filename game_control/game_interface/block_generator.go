@@ -97,11 +97,11 @@ func (g *GameInterface) GenerateNewAnvil(pos [3]int32, blockStates string) (
 	// 返回值
 }
 
-// 在 pos 处以点击方块的形式放置朝向为 facing 的潜影盒。
-// hotBarSlot 指代该潜影盒在快捷栏的位置。
-// 我们将会使用该快捷栏的物品，
-// 然后点击对应的方块以达到放置指定朝向的潜影盒的目的
-func (g *GameInterface) PlaceShulkerBox(
+// 在 pos 处以点击方块的形式放置朝向为 facing 的方块，
+// hotBarSlot 指代要放置的方块在快捷栏的位置。
+//
+// 方块可以是潜影盒，也可以是旗帜
+func (g *GameInterface) PlaceBlockWithFacing(
 	pos [3]int32,
 	hotBarSlot uint8,
 	facing uint8,
@@ -118,11 +118,11 @@ func (g *GameInterface) PlaceShulkerBox(
 			},
 		)
 		if resp.Error != nil {
-			return fmt.Errorf("PlaceShulkerBox: %v", resp.Error)
+			return fmt.Errorf("PlaceBlockWithFacing: %v", resp.Error)
 		}
 		got, err := g.ParseTargetQueryingInfo(*resp.Respond)
 		if err != nil {
-			return fmt.Errorf("PlaceShulkerBox: %v", err)
+			return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 		}
 		datas := got[0].Dimension
 		// 取得客户端所在的维度
@@ -192,18 +192,19 @@ func (g *GameInterface) PlaceShulkerBox(
 			},
 		)
 		if err != nil {
-			return fmt.Errorf("PlaceShulkerBox: %v", err)
+			return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 		}
 		defer g.RevertStructure(backupShulkerBoxUniqueId, pos)
 	}
-	// 可能潜影盒并非生成在原本给定的坐标处，此时需要进行特殊处理
+	// 可能目标方块并非生成在原本给定的坐标处，
+	// 此时需要进行特殊处理
 	err := g.SetBlockAsync(pos, "air", "[]")
 	if err != nil {
-		return fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 	}
 	err = g.SendSettingsCommand(teleportCommand, true)
 	if err != nil {
-		return fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 	}
 	uniqueId, err := g.BackupStructure(
 		MCStructure{
@@ -216,18 +217,18 @@ func (g *GameInterface) PlaceShulkerBox(
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 	}
 	err = g.SetBlock(backupBlockPos, PlaceBlockBase, "[]")
 	if err != nil {
-		return fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 	}
-	// 清除潜影盒处的方块、修正机器人的朝向、备份相关的方块，
+	// 清除目标方块处的方块、修正机器人的朝向、备份相关的方块，
 	// 然后再在备份的方块处生成 PlaceBlockBase 所指代的方块。
-	// 生成的 PlaceBlockBase 方块将被用于作为放置潜影盒的依附方块。
+	// 生成的 PlaceBlockBase 方块将被用于作为放置目标方块的依附方块
 	err = g.ChangeSelectedHotbarSlot(hotBarSlot)
 	if err != nil {
-		return fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 	}
 	err = g.PlaceBlock(
 		UseItemOnBlocks{
@@ -239,12 +240,13 @@ func (g *GameInterface) PlaceShulkerBox(
 		int32(facing),
 	)
 	if err != nil {
-		return fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 	}
-	// 更换手持物品栏为 hotBarSlot 并点击 PlaceBlockBase 方块以放置潜影盒。
+	// 更换手持物品栏为 hotBarSlot，
+	// 然后点击 PlaceBlockBase 方块以放置目标方块
 	err = g.RevertStructure(uniqueId, backupBlockPos)
 	if err != nil {
-		return fmt.Errorf("PlaceShulkerBox: %v", err)
+		return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 	}
 	// 将 PlaceBlockBase 处的方块恢复为原本方块
 	if pos != originPos {
@@ -262,14 +264,15 @@ func (g *GameInterface) PlaceShulkerBox(
 		)
 		err = g.SendSettingsCommand(request, true)
 		if err != nil {
-			return fmt.Errorf("PlaceShulkerBox: %v", err)
+			return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 		}
 		err = g.AwaitChangesGeneral()
 		if err != nil {
-			return fmt.Errorf("PlaceShulkerBox: %v", err)
+			return fmt.Errorf("PlaceBlockWithFacing: %v", err)
 		}
 	}
-	// 可能潜影盒并非生成在原本给定的坐标处，此时需要进行特殊处理
+	// 可能目标方块并非生成在原本给定的坐标处，
+	// 此时需要进行特殊处理
 	return nil
 	// 返回值
 }

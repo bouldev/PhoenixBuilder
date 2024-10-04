@@ -82,6 +82,9 @@ var SupportBlocksPool map[string]string = map[string]string{
 	// 物品展示框
 	"structure_block": "StructureBlock",
 	// 结构方块
+	"standing_banner": "Banner",
+	"wall_banner":     "Banner",
+	// 旗帜
 }
 
 // 此表描述了现阶段已经支持了的特殊物品，如烟花等物品。
@@ -156,7 +159,7 @@ var ItemNameToBlockNamePool map[string]string = map[string]string{
 	// 物品展示框
 	"structure_block": "structure_block",
 	// 结构方块
-	"banner": "banner",
+	"banner": "wall_banner",
 	// 旗帜
 }
 
