@@ -26,6 +26,8 @@ func GetGenerateItemMethod(item *ItemPackage) GeneralItemNBT {
 		return &Book{ItemPackage: item}
 	case "Banner":
 		return &Banner{ItemPackage: item}
+	case "Shield":
+		return &Shield{ItemPackage: item}
 	default:
 		return &DefaultItem{ItemPackage: item}
 		// 其他尚且未被支持的 NBT 物品

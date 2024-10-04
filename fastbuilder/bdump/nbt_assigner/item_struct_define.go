@@ -20,7 +20,7 @@ type GeneralItemNBT interface {
 	// 生成物品并尽可能注入 NBT
 	WriteData() error
 	// 应当只被外部实现调用，
-	// 用于判断当前物品是否可以仅使用命令生成
+	// 用于判断当前物品是否应该通过复杂的步骤制作
 	SpecialCheck() (bool, error)
 }
 
@@ -180,10 +180,26 @@ type BannerData struct {
 	Type     int32           // Type(TAG_Int) = 0
 }
 
-// Banner 结构体用于描述必要的旗帜的数据
+// Banner 结构体用于描述旗帜中必要的数据
 type Banner struct {
 	// 该 NBT 物品的详细数据
 	ItemPackage *ItemPackage
 	// 存放已解码的旗帜数据
 	BannerData BannerData
+}
+
+// ------------------------- shield -------------------------
+
+// 描述单个盾牌中已解码的部分
+type ShieldData struct {
+	Base     int32           // Base(TAG_Int32) = 0
+	Patterns []BannerPattern // Patterns(TAG_List) = []BannerPattern{}
+}
+
+// Shield 结构体用于描述盾牌中必要的数据
+type Shield struct {
+	// 该 NBT 物品的详细数据
+	ItemPackage *ItemPackage
+	// 存放已解码的盾牌数据
+	ShieldData *ShieldData
 }

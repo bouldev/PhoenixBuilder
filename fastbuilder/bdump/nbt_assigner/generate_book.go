@@ -2,11 +2,12 @@ package NBTAssigner
 
 import (
 	"fmt"
+	"phoenixbuilder/fastbuilder/types"
 	GameInterface "phoenixbuilder/game_control/game_interface"
 	"phoenixbuilder/minecraft/protocol/packet"
 )
 
-// 检查当前物品是否可以仅使用命令生成
+// 检查当前物品是否应该通过复杂的步骤制作
 func (b *Book) SpecialCheck() (bool, error) {
 	err := b.Decode()
 	if err != nil {
@@ -79,6 +80,33 @@ func (b *Book) Decode() error {
 func (b *Book) WriteData() error {
 	api := b.ItemPackage.Interface.(*GameInterface.GameInterface)
 	// 初始化
+	if b.ItemPackage.AdditionalData.FastMode {
+		bookName := "writable_book"
+		if b.ItemPackage.Item.Basic.Name == "written_book" {
+			bookName = "book"
+		}
+		// 确定最终生成的书籍的类型
+		err := api.ReplaceItemInInventory(
+			GameInterface.TargetMySelf,
+			GameInterface.ItemGenerateLocation{
+				Path: "slot.hotbar",
+				Slot: b.ItemPackage.AdditionalData.HotBarSlot,
+			},
+			types.ChestSlot{
+				Name:   bookName,
+				Count:  b.ItemPackage.Item.Basic.Count,
+				Damage: b.ItemPackage.Item.Basic.MetaData,
+			},
+			"", false,
+		)
+		if err != nil {
+			return fmt.Errorf("MakeOminousBanner: %v", err)
+		}
+		// 生成对应的书籍
+		return nil
+		// 返回值
+	}
+	// 如果当前是快速模式
 	newPackage := *b.ItemPackage
 	newPackage.Item.Basic.Name = "writable_book"
 	newRequest := DefaultItem{ItemPackage: &newPackage}

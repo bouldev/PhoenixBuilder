@@ -92,6 +92,8 @@ var SupportItemsPool map[string]string = map[string]string{
 	// 成书
 	"banner": "Banner",
 	// 旗帜
+	"shield": "Shield",
+	// 盾牌
 }
 
 // 此表描述了现阶段已支持的方块实体中，
@@ -252,6 +254,12 @@ var SupportContainerPool map[string]ContainerConstantData = map[string]Container
 	// 各种颜色或未被染色的潜影盒
 }
 
+// 此表描述了尚未支持的旗帜图案
+var BannerPatternUnsupported map[string]bool = map[string]bool{
+	"flw": true, // 涡流; flow_banner_pattern
+	"gus": true, // 旋风; guster_banner_pattern
+}
+
 // 此表描述了旗帜中 Pattern 字段到 旗帜图案 的映射
 var BannerPatternToItemName map[string]string = map[string]string{
 	"cre": "creeper_banner_pattern",          // 苦力怕盾徽
@@ -262,8 +270,6 @@ var BannerPatternToItemName map[string]string = map[string]string{
 	"cbo": "bordure_indented_banner_pattern", // 波纹边
 	"pig": "piglin_banner_pattern",           // 猪鼻
 	"glb": "globe_banner_pattern",            // 地球
-	"flw": "flow_banner_pattern",             // 涡流
-	"gus": "guster_banner_pattern",           // 旋风
 }
 
 // 此表描述了染料 RGB 颜色值到 染料物品名 的映射

@@ -16,7 +16,7 @@ const (
 	BannerTypeOminous              // 不祥旗帜
 )
 
-// 检查当前物品是否可以仅使用命令生成
+// 检查当前物品是否应该通过复杂的步骤制作
 func (b *Banner) SpecialCheck() (bool, error) {
 	// 解码
 	err := b.Decode()
@@ -229,6 +229,10 @@ func (b *Banner) MakeNormalBanner() error {
 		var patternMoveResp []protocol.ItemStackResponse
 		var newerBanner protocol.ItemInstance
 		var patternItem protocol.ItemInstance
+		// 确定当前旗帜图案是否支持
+		if BannerPatternUnsupported[value.Pattern] {
+			continue
+		}
 		// 确定染料和旗帜图案对应的物品名
 		dyeName, found := BannerColorToDyeName[uint8(value.Color)]
 		if !found {
@@ -351,7 +355,8 @@ func (b *Banner) MakeNormalBanner() error {
 				return fmt.Errorf("MakeNormalBanner: The request was rejected by the remote server when try to move banner pattern to the loom block; patternMoveResp[0] = %#v", patternMoveResp[0])
 			}
 		}
-		// 设置旗帜的新 NBT 数据
+		// 深拷贝旗帜数据，
+		// 以用于稍后的 NBT 数据更新
 		err = ResourcesControl.DeepCopy(&bannerItem, &newerBanner, func() {
 			gob.Register(map[string]interface{}{})
 			gob.Register([]interface{}{})
@@ -359,7 +364,39 @@ func (b *Banner) MakeNormalBanner() error {
 		if err != nil {
 			return fmt.Errorf("MakeNormalBanner: %v", err)
 		}
-		newerBanner.Stack.NBTData = b.ItemPackage.Item.Basic.ItemTag
+		// 设置旗帜的新 NBT 数据
+		if newerBanner.Stack.NBTData == nil {
+			newerBanner.Stack.NBTData = make(map[string]any)
+		}
+		if newerBanner.Stack.NBTData["Patterns"] == nil {
+			newerBanner.Stack.NBTData["Patterns"] = make([]any, 0)
+		}
+		if patterns, ok := newerBanner.Stack.NBTData["Patterns"].([]any); ok {
+			newerBanner.Stack.NBTData["Patterns"] = append(
+				patterns,
+				map[string]any{
+					"Color":   value.Color,
+					"Pattern": value.Pattern,
+				},
+			)
+		}
+		// 解除可能的物品占用
+		err = api.ReplaceItemInInventory(
+			GameInterface.TargetMySelf,
+			GameInterface.ItemGenerateLocation{
+				Path: "slot.hotbar",
+				Slot: 5,
+			},
+			types.ChestSlot{
+				Name:   "minecraft:air",
+				Count:  1,
+				Damage: 0,
+			},
+			"", true,
+		)
+		if err != nil {
+			return fmt.Errorf("MakeNormalBanner: %v", err)
+		}
 		// 注册物品堆栈请求至资源管理中心
 		requestID := api.Resources.ItemStackOperation.GetNewRequestID()
 		err = api.Resources.ItemStackOperation.WriteRequest(
@@ -527,6 +564,26 @@ func (b *Banner) WriteData() error {
 	// 初始化
 	var err error
 	api := b.ItemPackage.Interface.(*GameInterface.GameInterface)
+	// 如果当前是快速模式
+	if b.ItemPackage.AdditionalData.FastMode {
+		err = api.ReplaceItemInInventory(
+			GameInterface.TargetMySelf,
+			GameInterface.ItemGenerateLocation{
+				Path: "slot.hotbar",
+				Slot: b.ItemPackage.AdditionalData.HotBarSlot,
+			},
+			types.ChestSlot{
+				Name:   b.ItemPackage.Item.Basic.Name,
+				Count:  b.ItemPackage.Item.Basic.Count,
+				Damage: b.ItemPackage.Item.Basic.MetaData,
+			},
+			"", false,
+		)
+		if err != nil {
+			return fmt.Errorf("MakeOminousBanner: %v", err)
+		}
+		return nil
+	}
 	// 制作单个旗帜
 	switch b.BannerData.Type {
 	case BannerTypeNormal:
