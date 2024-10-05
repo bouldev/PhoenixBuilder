@@ -203,7 +203,7 @@ func (g *GameInterface) CopyItem(
 			},
 		)
 		if err != nil {
-			return fmt.Errorf("OpenBook: %v", err)
+			return fmt.Errorf("CopyItem: %v", err)
 		}
 		defer g.RevertStructure(uniqueId, blockPos)
 		// 备份当前方块
