@@ -116,12 +116,7 @@ func (c *Container) WriteData() error {
 		}
 	}
 	// 针对 FastMode 模式的专门化处理
-	err := api.AwaitChangesGeneral()
-	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
-	}
-	// 等待更改
-	err = c.PlaceContainer()
+	err := c.PlaceContainer()
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}
@@ -180,7 +175,7 @@ func (c *Container) WriteData() error {
 	if err != nil {
 		return fmt.Errorf("GetSubBlock: %v", err)
 	}
-	// 仅包含附魔属性、 物品组件和自定义物品显示名称的物品
+	// 仅包含附魔属性、物品组件和自定义物品显示名称的物品
 	for _, value := range defaultSituation {
 		var itemComponents *ItemComponents
 		if value.Enhancement != nil {

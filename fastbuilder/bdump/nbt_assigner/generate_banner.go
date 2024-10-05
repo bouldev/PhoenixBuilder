@@ -594,6 +594,16 @@ func (b *BannerItem) WriteData() error {
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}
+	// 如果当前旗帜是不祥旗帜，
+	// 且具有自定义名称
+	if b.BannerItemData.Type == BannerTypeOminous {
+		if b.ItemPackage.Item.Enhancement != nil && len(b.ItemPackage.Item.Enhancement.DisplayName) > 0 {
+			err = b.ItemPackage.AddDisplayName()
+			if err != nil {
+				return fmt.Errorf("WriteData: %v", err)
+			}
+		}
+	}
 	// 堆叠旗帜的处理
 	if b.ItemPackage.Item.Basic.Count > 1 {
 		err = api.CopyItem(

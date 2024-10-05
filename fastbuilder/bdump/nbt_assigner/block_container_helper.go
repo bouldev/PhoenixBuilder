@@ -8,9 +8,9 @@ import (
 	"strings"
 )
 
-// 获取一个潜影盒到快捷栏 5 。
-// 此函数仅应当在放置潜影盒时被使用
-func (c *Container) getShulkerBox() error {
+// 获取当前容器方块到快捷栏 5 ，
+// containerName 指代该容器的名称
+func (c *Container) getContainerItem(containerName string) error {
 	var err error
 	api := c.BlockEntity.Interface.(*GameInterface.GameInterface)
 	// 初始化
@@ -19,26 +19,39 @@ func (c *Container) getShulkerBox() error {
 		c.BlockEntity.Block.States,
 	)
 	if err != nil {
-		return fmt.Errorf("getShulkerBox: %v", err)
+		return fmt.Errorf("getContainerItem: %v", err)
 	}
-	// 取得潜影盒的方块数据值(附加值)
-	err = api.ReplaceItemInInventory(
-		GameInterface.TargetMySelf,
-		GameInterface.ItemGenerateLocation{
-			Path: "slot.hotbar",
-			Slot: 5,
+	// 取得当前容器方块在新版下的名称
+	request := DefaultItem{
+		ItemPackage: &ItemPackage{
+			Interface: api,
+			Item: GeneralItem{
+				Basic: ItemBasicData{
+					Name:     c.BlockEntity.Block.Name,
+					Count:    1,
+					MetaData: 0,
+				},
+				Enhancement: &ItemEnhancementData{
+					DisplayName: containerName,
+				},
+				Custom: nil,
+			},
+			AdditionalData: ItemAdditionalData{
+				Decoded:    false,
+				HotBarSlot: 5,
+				Position:   c.BlockEntity.AdditionalData.Position,
+				Settings:   c.BlockEntity.AdditionalData.Settings,
+				FastMode:   c.BlockEntity.AdditionalData.FastMode,
+				Others:     c.BlockEntity.AdditionalData.Others,
+			},
 		},
-		types.ChestSlot{
-			Name:  c.BlockEntity.Block.Name,
-			Count: 1,
-		},
-		"",
-		true,
-	)
+	}
+	err = request.WriteData()
 	if err != nil {
-		return fmt.Errorf("GetShulkerBox: %v", err)
+		return fmt.Errorf("getContainerItem: %v", err)
 	}
-	// 将潜影盒替换至快捷栏 5
+	// 从快捷栏 5 获得当前容器对应的物品形式，
+	// 但不包括容器内的物品
 	return nil
 	// 返回值
 }
@@ -57,19 +70,28 @@ func (c *Container) getFacingOfShulkerBox() (uint8, error) {
 	return 1, nil
 }
 
+// 从 c.BlockEntity.Block.NBT 获取容器的名字
+func (c *Container) getNameOfContainer() (containerName string) {
+	if c.BlockEntity.Block.NBT == nil {
+		return
+	}
+	if customName, ok := c.BlockEntity.Block.NBT["CustomName"].(string); ok {
+		return customName
+	}
+	return
+}
+
 // 放置 c.BlockEntity 所代表的容器。
 // 此函数侧重于对潜影盒的专门化处理，
 // 以保证放置出的潜影盒能拥有正确的朝向
 func (c *Container) PlaceContainer() error {
 	api := c.BlockEntity.Interface.(*GameInterface.GameInterface)
+	containerFacing := uint8(2)
+	isShulkerBox := strings.Contains(c.BlockEntity.Block.Name, "shulker_box")
+	containerName := c.getNameOfContainer()
 	// 初始化
-	if strings.Contains(c.BlockEntity.Block.Name, "shulker_box") {
-		facing, err := c.getFacingOfShulkerBox()
-		if err != nil {
-			return fmt.Errorf("PlaceContainer: %v", err)
-		}
-		// 获取潜影盒的朝向
-		err = api.SendSettingsCommand(
+	if isShulkerBox || len(containerName) > 0 {
+		err := api.SendSettingsCommand(
 			fmt.Sprintf(
 				"tp %d %d %d",
 				c.BlockEntity.AdditionalData.Position[0],
@@ -81,28 +103,53 @@ func (c *Container) PlaceContainer() error {
 		if err != nil {
 			return fmt.Errorf("PlaceContainer: %v", err)
 		}
-		// 将机器人传送到潜影盒处
-		err = c.getShulkerBox()
+		// 将机器人传送到当前容器所在位置
+		err = api.ChangeSelectedHotbarSlot(5)
 		if err != nil {
 			return fmt.Errorf("PlaceContainer: %v", err)
 		}
-		// 获取一个潜影盒到快捷栏 5
-		err = api.PlaceBlockWithFacing(c.BlockEntity.AdditionalData.Position, 5, facing)
+		// 切换物品栏
+		err = c.getContainerItem(containerName)
 		if err != nil {
 			return fmt.Errorf("PlaceContainer: %v", err)
 		}
-		// 生成潜影盒
-	} else {
-		err := api.SetBlock(
-			c.BlockEntity.AdditionalData.Position,
-			c.BlockEntity.Block.Name,
-			c.BlockEntity.AdditionalData.BlockStates,
-		)
+		// 获得容器对应的物品形式，
+		// 但不包括容器中的物品
+		if isShulkerBox {
+			containerFacing, err = c.getFacingOfShulkerBox()
+			if err != nil {
+				return fmt.Errorf("PlaceContainer: %v", err)
+			}
+		}
+		// 如果当前容器是一个潜影盒，
+		// 则尝试获得该潜影盒的放置朝向
+		err = api.PlaceBlockWithFacing(c.BlockEntity.AdditionalData.Position, 5, containerFacing)
 		if err != nil {
 			return fmt.Errorf("PlaceContainer: %v", err)
 		}
+		// 生成容器
+		err = api.AwaitChangesGeneral()
+		if err != nil {
+			return fmt.Errorf("PlaceContainer: %v", err)
+		}
+		// 等待更改
+		if isShulkerBox {
+			return nil
+		}
+		// 对于潜影盒，可以直接返回值。
+		// 对于其他容器，需要修正它们的朝向
 	}
-	// 放置容器
+	// 放置潜影盒或带有自定义名称的容器
+	err := api.SetBlock(
+		c.BlockEntity.AdditionalData.Position,
+		c.BlockEntity.Block.Name,
+		c.BlockEntity.AdditionalData.BlockStates,
+	)
+	if err != nil {
+		return fmt.Errorf("PlaceContainer: %v", err)
+	}
+	// 放置不带自定义名称的容器，
+	// 或修正带自定义名称的容器的朝向
 	return nil
 	// 返回值
 }

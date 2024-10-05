@@ -77,32 +77,12 @@ func (s *Shield) Decode() error {
 	return nil
 }
 
-// ...
-func (s *Shield) WriteData() error {
+// 制作一个盾牌到 s.ItemPackage.AdditionalData.HotBarSlot 处
+func (s *Shield) MakeItem() error {
 	// 初始化
 	var itemTag map[string]any
 	var shieldBase uint16
 	api := s.ItemPackage.Interface.(*GameInterface.GameInterface)
-	// 如果当前是快速模式
-	if s.ItemPackage.AdditionalData.FastMode {
-		err := api.ReplaceItemInInventory(
-			GameInterface.TargetMySelf,
-			GameInterface.ItemGenerateLocation{
-				Path: "slot.hotbar",
-				Slot: s.ItemPackage.AdditionalData.HotBarSlot,
-			},
-			types.ChestSlot{
-				Name:   s.ItemPackage.Item.Basic.Name,
-				Count:  s.ItemPackage.Item.Basic.Count,
-				Damage: s.ItemPackage.Item.Basic.MetaData,
-			},
-			"", false,
-		)
-		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
-		}
-		return nil
-	}
 	// 深拷贝盾牌 NBT 数据
 	err := ResourcesControl.DeepCopy(
 		&s.ItemPackage.Item.Basic.ItemTag,
@@ -113,7 +93,7 @@ func (s *Shield) WriteData() error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	// 构造用于获取旗帜的子请求
 	if s.ShieldData != nil {
@@ -150,12 +130,12 @@ func (s *Shield) WriteData() error {
 	// 获取旗帜到快捷栏 5
 	needSpecialTreatment, err := newRequest.SpecialCheck()
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	if needSpecialTreatment {
 		err = newRequest.WriteData()
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 	} else {
 		err = api.ReplaceItemInInventory(
@@ -172,7 +152,7 @@ func (s *Shield) WriteData() error {
 			"", true,
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 	}
 	// 获取盾牌到快捷栏 4
@@ -190,40 +170,30 @@ func (s *Shield) WriteData() error {
 		"", true,
 	)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	// 切换物品栏
 	err = api.ChangeSelectedHotbarSlot(5)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
-	}
-	// 放置工作台
-	err = api.SetBlock(s.ItemPackage.AdditionalData.Position, "minecraft:crafting_table", "[]")
-	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	// 占用容器资源
 	holder := api.Resources.Container.Occupy()
 	defer api.Resources.Container.Release(holder)
-	// 打开工作台
-	success, err := api.OpenContainer(
-		s.ItemPackage.AdditionalData.Position,
-		"minecraft:crafting_table",
-		map[string]any{},
-		5,
-	)
+	// 打开背包
+	success, err := api.OpenInventory()
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	if !success {
-		return fmt.Errorf("WriteData: Failed to open the crafting block when write NBT data to a shield item")
+		return fmt.Errorf("MakeItem: Failed to open inventory when write NBT data to a shield item")
 	}
 	defer api.CloseContainer()
 	containerOpeningData := api.Resources.Container.GetContainerOpeningData()
-	// 移动旗帜到工作台
+	// 移动旗帜到背包合成栏
 	bannerItem, err := api.Resources.Inventory.GetItemStackInfo(0, 5)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	bannerMoveResp, err := api.MoveItem(
 		GameInterface.ItemLocation{
@@ -234,22 +204,22 @@ func (s *Shield) WriteData() error {
 		GameInterface.ItemLocation{
 			WindowID:    containerOpeningData.WindowID,
 			ContainerID: GameInterface.ContainerIDCraftingInput,
-			Slot:        0x20,
+			Slot:        0x1c,
 		},
 		1,
 		GameInterface.AirItem,
 		bannerItem,
 	)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	if bannerMoveResp[0].Status != protocol.ItemStackResponseStatusOK {
-		return fmt.Errorf("WriteData: The request was rejected by the remote server when try to move banner item to the crafting block; bannerMoveResp[0] = %#v", bannerMoveResp[0])
+		return fmt.Errorf("MakeItem: The request was rejected by the remote server when try to move banner item to inventory; bannerMoveResp[0] = %#v", bannerMoveResp[0])
 	}
-	// 移动盾牌到工作台
+	// 移动盾牌到背包合成栏
 	shieldItem, err := api.Resources.Inventory.GetItemStackInfo(0, 4)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	shieldMoveResp, err := api.MoveItem(
 		GameInterface.ItemLocation{
@@ -260,17 +230,17 @@ func (s *Shield) WriteData() error {
 		GameInterface.ItemLocation{
 			WindowID:    containerOpeningData.WindowID,
 			ContainerID: GameInterface.ContainerIDCraftingInput,
-			Slot:        0x21,
+			Slot:        0x1d,
 		},
 		1,
 		GameInterface.AirItem,
 		shieldItem,
 	)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	if shieldMoveResp[0].Status != protocol.ItemStackResponseStatusOK {
-		return fmt.Errorf("WriteData: The request was rejected by the remote server when try to move shield item to the crafting block; shieldMoveResp[0] = %#v", shieldMoveResp[0])
+		return fmt.Errorf("MakeItem: The request was rejected by the remote server when try to move shield item to inventory; shieldMoveResp[0] = %#v", shieldMoveResp[0])
 	}
 	// 解除可能的物品占用
 	err = api.ReplaceItemInInventory(
@@ -297,8 +267,8 @@ func (s *Shield) WriteData() error {
 			ResourcesControl.ContainerID(GameInterface.ContainerIDCraftingInput): {
 				WindowID: uint32(containerOpeningData.WindowID),
 				ChangeResult: map[uint8]protocol.ItemInstance{
-					0x20: GameInterface.AirItem,
-					0x21: GameInterface.AirItem,
+					0x1c: GameInterface.AirItem,
+					0x1d: GameInterface.AirItem,
 				},
 			},
 			ResourcesControl.ContainerID(GameInterface.ContainerIDInventory): {
@@ -320,7 +290,7 @@ func (s *Shield) WriteData() error {
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	// 构造 takeStackRequestAction
 	takeStackRequestAction := protocol.TakeStackRequestAction{}
@@ -347,7 +317,7 @@ func (s *Shield) WriteData() error {
 							Count: 1,
 							Source: protocol.StackRequestSlotInfo{
 								ContainerID:    GameInterface.ContainerIDCraftingInput,
-								Slot:           0x20,
+								Slot:           0x1c,
 								StackNetworkID: bannerMoveResp[0].ContainerInfo[1].SlotInfo[0].StackNetworkID,
 							},
 						},
@@ -357,7 +327,7 @@ func (s *Shield) WriteData() error {
 							Count: 1,
 							Source: protocol.StackRequestSlotInfo{
 								ContainerID:    GameInterface.ContainerIDCraftingInput,
-								Slot:           0x21,
+								Slot:           0x1d,
 								StackNetworkID: shieldMoveResp[0].ContainerInfo[1].SlotInfo[0].StackNetworkID,
 							},
 						},
@@ -370,15 +340,15 @@ func (s *Shield) WriteData() error {
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	// 获取物品堆栈请求结果
 	resp, err := api.Resources.ItemStackOperation.LoadResponseAndDelete(requestID)
 	if err != nil {
-		return fmt.Errorf("WriteData: %v", err)
+		return fmt.Errorf("MakeItem: %v", err)
 	}
 	if resp.Status != protocol.ItemStackResponseStatusOK {
-		return fmt.Errorf("WriteData: The request was rejected by the remote server when get new shield from the crafting block; resp = %#v", resp)
+		return fmt.Errorf("MakeItem: The request was rejected by the remote server when get new shield from the crafting block; resp = %#v", resp)
 	}
 	// 将新盾牌修正到正确的位置
 	if s.ItemPackage.AdditionalData.HotBarSlot != 5 {
@@ -397,12 +367,12 @@ func (s *Shield) WriteData() error {
 			"", true,
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		// 获取新盾牌的物品信息
 		shieldItem, err := api.Resources.Inventory.GetItemStackInfo(0, 5)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		// 修正位置
 		shieldMoveResp, err = api.MoveItem(
@@ -421,10 +391,60 @@ func (s *Shield) WriteData() error {
 			shieldItem,
 		)
 		if err != nil {
-			return fmt.Errorf("WriteData: %v", err)
+			return fmt.Errorf("MakeItem: %v", err)
 		}
 		if shieldMoveResp[0].Status != protocol.ItemStackResponseStatusOK {
-			return fmt.Errorf("WriteData: The request was rejected by the remote server when try to correct the item place; shieldMoveResp[0] = %#v", shieldMoveResp[0])
+			return fmt.Errorf("MakeItem: The request was rejected by the remote server when try to correct the item place; shieldMoveResp[0] = %#v", shieldMoveResp[0])
+		}
+	}
+	// 返回值
+	return nil
+}
+
+func (s *Shield) WriteData() error {
+	// 初始化
+	api := s.ItemPackage.Interface.(*GameInterface.GameInterface)
+	// 如果当前是快速模式
+	if s.ItemPackage.AdditionalData.FastMode {
+		err := api.ReplaceItemInInventory(
+			GameInterface.TargetMySelf,
+			GameInterface.ItemGenerateLocation{
+				Path: "slot.hotbar",
+				Slot: s.ItemPackage.AdditionalData.HotBarSlot,
+			},
+			types.ChestSlot{
+				Name:   s.ItemPackage.Item.Basic.Name,
+				Count:  s.ItemPackage.Item.Basic.Count,
+				Damage: s.ItemPackage.Item.Basic.MetaData,
+			},
+			"", false,
+		)
+		if err != nil {
+			return fmt.Errorf("WriteData: %v", err)
+		}
+		return nil
+	}
+	// 制作盾牌
+	err := s.MakeItem()
+	if err != nil {
+		return fmt.Errorf("WriteData: %v", err)
+	}
+	// 如果当前盾牌具有特殊属性，
+	// 如自定义名称或附魔效果
+	if s.ItemPackage.Item.Enhancement != nil {
+		// 如果当前盾牌具有自定义名称
+		if len(s.ItemPackage.Item.Enhancement.DisplayName) > 0 {
+			err = s.ItemPackage.AddDisplayName()
+			if err != nil {
+				return fmt.Errorf("WriteData: %v", err)
+			}
+		}
+		// 如果当前盾牌具有附魔效果
+		if s.ItemPackage.Item.Enhancement.Enchantments != nil && len(*s.ItemPackage.Item.Enhancement.Enchantments) > 0 {
+			err = s.ItemPackage.AddEnchantments()
+			if err != nil {
+				return fmt.Errorf("WriteData: %v", err)
+			}
 		}
 	}
 	// 返回值
