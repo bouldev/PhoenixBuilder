@@ -100,9 +100,6 @@ func (g *GameInterface) RevertStructure(uniqueID uuid.UUID, pos BlockPos) error 
 	if resp.Error != nil && resp.ErrorType != ResourcesControl.ErrCommandRequestTimeOut {
 		return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
 	}
-	if resp.Error == nil && resp.Respond.SuccessCount <= 0 {
-		return fmt.Errorf(`RevertStructure: Failed to revert structure named "%v"; pos = %#v`, uniqueID.String(), pos)
-	}
 	// send command and check sucess states
 	if resp.Error != nil && resp.ErrorType == ResourcesControl.ErrCommandRequestTimeOut {
 		err := g.SendSettingsCommand(request, true)
