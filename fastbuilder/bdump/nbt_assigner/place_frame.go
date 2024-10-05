@@ -66,8 +66,21 @@ func (f *Frame) WriteData() error {
 		}
 		return nil
 	}
+	// 传送机器人到物品展示框处
+	err := api.SendSettingsCommand(
+		fmt.Sprintf(
+			"tp %d %d %d",
+			f.BlockEntity.AdditionalData.Position[0],
+			f.BlockEntity.AdditionalData.Position[1],
+			f.BlockEntity.AdditionalData.Position[2],
+		),
+		true,
+	)
+	if err != nil {
+		return fmt.Errorf("WriteData: %v", err)
+	}
 	// 放置物品展示框(正常情况下)
-	err := api.SetBlock(f.BlockEntity.AdditionalData.Position, "minecraft:air", "[]")
+	err = api.SetBlock(f.BlockEntity.AdditionalData.Position, "minecraft:air", "[]")
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}

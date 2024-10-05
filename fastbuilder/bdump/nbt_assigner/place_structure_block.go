@@ -252,8 +252,21 @@ func (s *StructureBlock) WriteData() error {
 			return fmt.Errorf("WriteData: %v", err)
 		}
 	} else {
+		// 传送机器人到结构方块处
+		err := api.SendSettingsCommand(
+			fmt.Sprintf(
+				"tp %d %d %d",
+				s.BlockEntity.AdditionalData.Position[0],
+				s.BlockEntity.AdditionalData.Position[1],
+				s.BlockEntity.AdditionalData.Position[2],
+			),
+			true,
+		)
+		if err != nil {
+			return fmt.Errorf("WriteData: %v", err)
+		}
 		// 正常放置方块
-		err := s.BlockEntity.Interface.SetBlock(s.BlockEntity.AdditionalData.Position, s.BlockEntity.Block.Name, s.BlockEntity.AdditionalData.BlockStates)
+		err = s.BlockEntity.Interface.SetBlock(s.BlockEntity.AdditionalData.Position, s.BlockEntity.Block.Name, s.BlockEntity.AdditionalData.BlockStates)
 		if err != nil {
 			return fmt.Errorf("WriteData: %v", err)
 		}
