@@ -31,7 +31,7 @@ func (b *BannerItem) SpecialCheck() (bool, error) {
 	return true, nil
 }
 
-// 从 b.ItemPackage.Item.Basic.ItemTag 提取成书数据，
+// 从 b.ItemPackage.Item.Basic.ItemTag 提取旗帜数据，
 // 然后保存在 b.BannerData 中
 func (b *BannerItem) Decode() error {
 	// 初始化

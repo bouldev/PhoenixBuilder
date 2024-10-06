@@ -23,7 +23,7 @@ func IsNBTBlockSupported(blockName string) string {
 
 // 从 SupportItemsPool 检查这个 NBT 物品是否已被支持。
 // 如果尚未被支持，则返回空字符串，否则返回这种物品的类型。
-// 以告示牌为例，所有的告示牌都可以写作为 Sign
+// 以物品展示框为例，物品展示框和荧光物品展示框都可以写作为 Frame
 func IsNBTItemSupported(itemName string) string {
 	value, ok := SupportItemsPool[itemName]
 	if ok {

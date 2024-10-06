@@ -6,6 +6,7 @@ import (
 	GameInterface "phoenixbuilder/game_control/game_interface"
 	ResourcesControl "phoenixbuilder/game_control/resources_control"
 	"phoenixbuilder/minecraft/protocol/packet"
+	"strings"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -30,11 +31,7 @@ func (s *Sign) Decode() error {
 	nbt := s.BlockEntity.Block.NBT
 	_, s.IsNotLegacySignBlock = nbt["IsWaxed"]
 	// 初始化
-	id, err := generics.To[string](nbt["id"], `nbt["id"]`, PlaceSignPath)
-	if err != nil {
-		return fmt.Errorf("Decode: %v", err)
-	}
-	if id == "HangingSign" {
+	if strings.Contains(s.BlockEntity.Block.Name, "hanging") {
 		s.IsHangingSignBlock = true
 	}
 	// 确定告示牌类型
