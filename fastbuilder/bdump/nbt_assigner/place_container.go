@@ -116,7 +116,13 @@ func (c *Container) WriteData() error {
 		}
 	}
 	// 针对 FastMode 模式的专门化处理
-	err := c.PlaceContainer()
+	err := api.AwaitChangesGeneral()
+	if err != nil {
+		return fmt.Errorf("WriteData: %v", err)
+	}
+	// 等待更改，
+	// 以防止 陷阱箱 和 箱子 的处理出现问题
+	err = c.PlaceContainer()
 	if err != nil {
 		return fmt.Errorf("WriteData: %v", err)
 	}
