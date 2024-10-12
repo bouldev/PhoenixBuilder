@@ -8,7 +8,14 @@ const (
 	ContainerSmithingTableMaterial
 	ContainerSmithingTableResultPreview
 	ContainerArmor
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233, Happy2018new
+	//
+	// container_items, and now we can sure
+	// that it is at least used by agent robot
 	ContainerLevelEntity
+
 	ContainerBeaconPayment
 	ContainerBrewingStandInput
 	ContainerBrewingStandResult
@@ -18,16 +25,16 @@ const (
 	ContainerCraftingOutputPreview
 	ContainerRecipeConstruction
 	ContainerRecipeNature
-	ContainerRecipeItems
-	ContainerRecipeSearch
-	ContainerRecipeSearchBar
 
 	// PhoenixBuilder specific changes.
 	// Author: Liliya233
 	//
-	// Netease: Unknown extra container type between 14 and 22
-	_
+	// Netease
+	ContainerRecipeCustom
 
+	ContainerRecipeItems
+	ContainerRecipeSearch
+	ContainerRecipeSearchBar
 	ContainerRecipeEquipment
 	ContainerRecipeBook
 	ContainerEnchantingInput
