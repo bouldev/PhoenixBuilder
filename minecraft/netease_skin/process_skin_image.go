@@ -58,7 +58,7 @@ func GetSkinFromAuthResponse(authResponse fbauth.AuthResponse, skin *Skin) error
 	// 初始化
 	var skinImageData []byte
 	// 从远程服务器下载皮肤文件
-	res, err := DownloadFile(authResponse.SkinInfo.SkinDownloadURL)
+	res, err := DownloadFile(authResponse.BotSkin.SkinDownloadURL)
 	if err != nil {
 		return fmt.Errorf("GetSkinFromAuthResponse: %v", err)
 	}
@@ -67,9 +67,9 @@ func GetSkinFromAuthResponse(authResponse fbauth.AuthResponse, skin *Skin) error
 		// 如果这是一个普通的皮肤，
 		// 那么 res 就是该皮肤的 PNG 二进制形式，
 		// 并且该皮肤使用的骨架格式为默认格式
-		skin.SkinItemID = authResponse.SkinInfo.ItemID
+		skin.SkinItemID = authResponse.BotSkin.ItemID
 		skin.FullSkinData, skin.SkinGeometry = res, DefaultSkinGeometry
-		skin.SkinIsSlim = authResponse.SkinInfo.SkinIsSlim
+		skin.SkinIsSlim = authResponse.BotSkin.SkinIsSlim
 		skinImageData = res
 		// 设置皮肤默认资源路径
 		if skin.SkinIsSlim {

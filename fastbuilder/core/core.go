@@ -260,19 +260,19 @@ func InitializeMinecraftConnection(
 		conn.WritePacket(&packet.NeteaseJson{
 			Data: []byte(
 				fmt.Sprintf(
-					`{"eventName":"LOGIN_UID","resid":"","uid":"%s"}`,
-					dialer.Authenticator.(*fbauth.AccessWrapper).Client.Uid,
+					`{"eventName":"LOGIN_UID","resid":"","uid":"%d"}`,
+					conn.IdentityData().Uid,
 				),
 			),
 		})
 	}
 	{
 		modUUIDs := make([]any, 0)
-		outfitInfo := make(map[string]int64, 0)
-		for modUUID, outfitType := range authResponse.OutfitInfo {
+		botComponent := make(map[string]int64, 0)
+		for modUUID, outfitType := range authResponse.BotComponent {
 			modUUIDs = append(modUUIDs, modUUID)
 			if outfitType != nil {
-				outfitInfo[modUUID] = int64(*outfitType)
+				botComponent[modUUID] = int64(*outfitType)
 			}
 		}
 		conn.WritePacket(&packet.PyRpc{
@@ -281,7 +281,7 @@ func InitializeMinecraftConnection(
 				conn.ClientData().SkinID,
 				conn.ClientData().SkinItemID,
 				true,
-				outfitInfo,
+				botComponent,
 			}),
 			OperationType: packet.PyRpcOperationTypeSend,
 		})

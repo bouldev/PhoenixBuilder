@@ -33,10 +33,8 @@ func MakeDefaultClientOptions() *ClientOptions {
 }
 
 type ClientInfo struct {
-	FBUCUsername string
-	GrowthLevel  int
-	RespondTo    string
-	Uid          string
+	GrowthLevel int
+	RespondTo   string
 }
 
 type Client struct {
@@ -130,25 +128,22 @@ type AuthResponse struct {
 		这也包括 Message 本身。
 
 		如果失败，除了本字段和 Message 以外，
-		其余所有字段都为默认的零值，或空字符串，
+		其余所有字段都为默认的零值，
 		同时 Message 会展示对应的失败原因
 	*/
 	SuccessStates bool   `json:"success"`
-	ServerMessage string `json:"server_msg,omitempty"` // 来自验证服务器的消息 (可能不存在；为可选功能)
+	ServerMessage string `json:"server_msg,omitempty"` // 来自验证服务器的消息
 	Message
 
-	BotName  string `json:"username"`     // 机器人的 游戏名称
-	BotUID   string `json:"uid"`          // 机器人的 UID
-	BotLevel int    `json:"growth_level"` // 机器人的等级
-
-	SkinInfo   SkinInfo        `json:"skin_info,omitempty"`   // 玩家的皮肤信息 (可能不存在；需要验证服务器支持)
-	OutfitInfo map[string]*int `json:"outfit_info,omitempty"` // 玩家当前加载的组件及其附加值
+	BotLevel     int             `json:"growth_level"`          // 机器人的等级
+	BotSkin      SkinInfo        `json:"skin_info,omitempty"`   // 机器人的皮肤信息
+	BotComponent map[string]*int `json:"outfit_info,omitempty"` // 机器人当前已加载的组件及其附加值
 
 	FBToken    string `json:"token"`      // ...
 	MasterName string `json:"respond_to"` // 机器人主人的游戏名称
 
-	RentalServerIP string `json:"ip_address"` // 目标租赁服的 IP 地址
-	ChainInfo      string `json:"chainInfo"`  // ...
+	RentalServerIP string `json:"ip_address"` // 欲登录的租赁服的 IP 地址
+	ChainInfo      string `json:"chainInfo"`  // 欲登录的租赁服的链请求
 }
 
 // 描述 AuthResponse 所附带的额外信息
@@ -221,8 +216,6 @@ func (client *Client) Auth(
 		pterm.Println(pterm.LightGreen(authResponse.ServerMessage))
 	}
 	// server message
-	client.FBUCUsername = authResponse.BotName
-	client.Uid = authResponse.BotUID
 	client.GrowthLevel = authResponse.BotLevel
 	if len(authResponse.MasterName) > 0 && client.RespondTo == "" {
 		client.RespondTo = authResponse.MasterName

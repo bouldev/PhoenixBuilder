@@ -5,14 +5,14 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/rand"
+	cryptoRand "crypto/rand"
 	"crypto/x509"
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
-	rand2 "math/rand"
+	mathRand "math/rand"
 	"net"
 	"os"
 	fbauth "phoenixbuilder/fastbuilder/mv4"
@@ -182,7 +182,7 @@ func (d Dialer) DialTimeout(network string, timeout time.Duration) (*Conn, fbaut
 func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, authResponse fbauth.AuthResponse, err error) {
 	var skin *NetEaseSkin.Skin
 
-	key, _ := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+	key, _ := ecdsa.GenerateKey(elliptic.P384(), cryptoRand.Reader)
 	armoured_key, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
 
 	authResponse, err = d.Authenticator.GetAccess(ctx, armoured_key)
@@ -190,7 +190,7 @@ func (d Dialer) DialContext(ctx context.Context, network string) (conn *Conn, au
 		return nil, fbauth.AuthResponse{}, err
 	}
 
-	if url := authResponse.SkinInfo.SkinDownloadURL; len(url) > 0 {
+	if url := authResponse.BotSkin.SkinDownloadURL; len(url) > 0 {
 		skin = &NetEaseSkin.Skin{}
 		err = NetEaseSkin.GetSkinFromAuthResponse(authResponse, skin)
 		if err != nil {
@@ -360,6 +360,9 @@ var skinResourcePatch []byte
 var skinGeometry []byte
 */
 
+// PhoenixBuilder specific changes.
+// Author: Happy2018new
+//
 // defaultClientData edits the ClientData passed to have defaults set to all fields that were left unchanged.
 func defaultClientData(
 	// PhoenixBuilder specific changes.
@@ -368,102 +371,39 @@ func defaultClientData(
 	authResponse fbauth.AuthResponse, skin *NetEaseSkin.Skin,
 	// address, username string, d *login.ClientData,
 ) {
-	rand2.Seed(time.Now().Unix())
+	mathRand.Seed(time.Now().Unix())
 
 	d.ServerAddress = authResponse.RentalServerIP
-	d.ThirdPartyName = authResponse.BotName
-	if d.DeviceOS == 0 {
-		d.DeviceOS = protocol.DeviceAndroid
-	}
-	if d.GameVersion == "" {
-		d.GameVersion = protocol.CurrentVersion
-	}
+	d.DeviceOS = protocol.DeviceAndroid
+	d.GameVersion = protocol.CurrentVersion
+	d.GrowthLevel = int(authResponse.BotLevel) // Netease
+	d.ClientRandomID = mathRand.Int63()
+	d.DeviceID = uuid.New().String()
+	d.LanguageCode = "zh_CN" // Netease
+	d.AnimatedImageData = make([]login.SkinAnimation, 0)
+	d.PersonaPieces = make([]login.PersonaPiece, 0)
+	d.PieceTintColours = make([]login.PersonaPieceTintColour, 0)
+	d.SelfSignedID = uuid.New().String()
 
-	// PhoenixBuilder specific changes.
-	// Author: Liliya233, Happy2018new
-	if d.GrowthLevel != authResponse.BotLevel {
-		d.GrowthLevel = authResponse.BotLevel
-	}
-
-	if d.ClientRandomID == 0 {
-		d.ClientRandomID = rand2.Int63()
-	}
-	if d.DeviceID == "" {
-		d.DeviceID = uuid.New().String()
-	}
-	if d.LanguageCode == "" {
-		// PhoenixBuilder specific changes.
-		// Author: Liliya233
-		d.LanguageCode = "zh_CN"
-		// d.LanguageCode = "en_GB"
-	}
-	if d.AnimatedImageData == nil {
-		d.AnimatedImageData = make([]login.SkinAnimation, 0)
-	}
-	if d.PersonaPieces == nil {
-		d.PersonaPieces = make([]login.PersonaPiece, 0)
-	}
-	if d.PieceTintColours == nil {
-		d.PieceTintColours = make([]login.PersonaPieceTintColour, 0)
-	}
-	if d.SelfSignedID == "" {
-		d.SelfSignedID = uuid.New().String()
-	}
-	if d.SkinData == "" {
-		// PhoenixBuilder specific changes.
-		// Author: Happy2018new
-		{
-			if skin != nil {
-				d.SkinID = skin.SkinUUID
-				d.SkinData = base64.StdEncoding.EncodeToString(skin.SkinPixels)
-				d.SkinImageHeight, d.SkinImageWidth = skin.SkinHight, skin.SkinWidth
-				d.SkinGeometry = base64.StdEncoding.EncodeToString(skin.SkinGeometry)
-				d.SkinGeometryVersion = base64.StdEncoding.EncodeToString([]byte("0.0.0"))
-				d.SkinResourcePatch = base64.StdEncoding.EncodeToString(skin.SkinResourcePatch)
-				d.PremiumSkin = true
-			} else {
-				d.SkinData = base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0, 0, 0, 255}, 32*64))
-				d.SkinImageHeight = 32
-				d.SkinImageWidth = 64
-			}
+	if skin != nil {
+		if len(skin.SkinUUID) == 0 {
+			skin.SkinUUID = uuid.NewString()
 		}
-		/*
-			d.SkinData = base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0, 0, 0, 255}, 32*64))
-			d.SkinImageHeight = 32
-			d.SkinImageWidth = 64
-		*/
-	}
-	// PhoenixBuilder specific changes.
-	// Author: Happy2018new
-	{
-		if d.SkinID == "" {
-			d.SkinID = uuid.New().String()
-			if skin != nil {
-				skin.SkinUUID = d.SkinID
-			}
-		}
-		/*
-			if d.SkinID == "" {
-				d.SkinID = uuid.New().String()
-			}
-		*/
-	}
-	// PhoenixBuilder specific changes.
-	// Author: Liliya233, Happy2018new
-	if d.SkinItemID == "" && skin != nil {
+		d.SkinID = skin.SkinUUID
 		d.SkinItemID = skin.SkinItemID
-	}
-	if d.SkinResourcePatch == "" {
-		// PhoenixBuilder specific changes.
-		// Author: Happy2018new
-		d.SkinResourcePatch = base64.StdEncoding.EncodeToString(NetEaseSkin.DefaultWideSkinResourcePatch)
-		// d.SkinResourcePatch = base64.StdEncoding.EncodeToString(skinResourcePatch)
-	}
-	if d.SkinGeometry == "" {
-		// PhoenixBuilder specific changes.
-		// Author: Happy2018new
+		d.SkinData = base64.StdEncoding.EncodeToString(skin.SkinPixels)
+		d.SkinImageHeight, d.SkinImageWidth = skin.SkinHight, skin.SkinWidth
+		d.SkinGeometry = base64.StdEncoding.EncodeToString(skin.SkinGeometry)
+		d.SkinGeometryVersion = base64.StdEncoding.EncodeToString([]byte("0.0.0"))
+		d.SkinResourcePatch = base64.StdEncoding.EncodeToString(skin.SkinResourcePatch)
+		d.PremiumSkin = true
+	} else {
+		d.SkinID = uuid.New().String()
+		d.SkinData = base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{0, 0, 0, 255}, 32*64))
 		d.SkinGeometry = base64.StdEncoding.EncodeToString(NetEaseSkin.DefaultSkinGeometry)
-		// d.SkinGeometry = base64.StdEncoding.EncodeToString(skinGeometry)
+		d.SkinResourcePatch = base64.StdEncoding.EncodeToString(NetEaseSkin.DefaultWideSkinResourcePatch)
+		d.SkinImageHeight = 32
+		d.SkinImageWidth = 64
 	}
 }
 
