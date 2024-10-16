@@ -10,5 +10,5 @@ type BannerPatterns struct {
 
 func (b *BannerPatterns) Marshal(r protocol.IO) {
 	r.String(&b.Pattern)
-	r.Varint32(&b.Color)
+	protocol.NBTInt(&b.Color, r.Varuint32)
 }
