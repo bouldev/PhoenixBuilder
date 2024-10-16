@@ -134,6 +134,12 @@ func (s *Sign) WriteData() error {
 			return fmt.Errorf("WriteData: %v", err)
 		}
 		// 传送机器人到告示牌所在的位置
+		err = api.AwaitChangesGeneral()
+		if err != nil {
+			return fmt.Errorf("WriteData: %v", err)
+		}
+		// 等待其他方块已完成方块更新，
+		// 以确保将会放置的告示牌不会因为方块更新而掉落
 		err = api.SetBlock(s.BlockEntity.AdditionalData.Position, "air", `[]`)
 		if err != nil {
 			return fmt.Errorf("WriteData: %v", err)
