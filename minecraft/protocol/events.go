@@ -11,7 +11,7 @@ const (
 	EventTypePlayerDied
 	EventTypeBossKilled
 	EventTypeAgentCommand
-	EventTypeAgentCreated // Unused for whatever reason?
+	EventTypeAgentCreated
 	EventTypePatternRemoved
 	EventTypeSlashCommandExecuted
 	EventTypeFishBucketed
@@ -57,6 +57,12 @@ func lookupEvent(eventType int32, x *Event) bool {
 		*x = &BossKilledEvent{}
 	case EventTypeAgentCommand:
 		*x = &AgentCommandEvent{}
+
+	// PhoenixBuilder specific changes.
+	// Author: Liliya233
+	case EventTypeAgentCreated:
+		*x = &AgentCreatedEvent{}
+
 	case EventTypePatternRemoved:
 		*x = &PatternRemovedEvent{}
 	case EventTypeSlashCommandExecuted:
@@ -114,6 +120,12 @@ func lookupEventType(x Event, eventType *int32) bool {
 		*eventType = EventTypeBossKilled
 	case *AgentCommandEvent:
 		*eventType = EventTypeAgentCommand
+
+	// PhoenixBuilder specific changes.
+	// Author: Happy2018new
+	case *AgentCreatedEvent:
+		*eventType = EventTypeAgentCreated
+
 	case *PatternRemovedEvent:
 		*eventType = EventTypePatternRemoved
 	case *SlashCommandExecutedEvent:
@@ -315,6 +327,18 @@ func (a *AgentCommandEvent) Marshal(r IO) {
 	r.String(&a.DataKey)
 	r.String(&a.Output)
 }
+
+// PhoenixBuilder specific struct.
+// Author: Liliya233
+//
+// AgentCreatedEvent does not have any data.
+type AgentCreatedEvent struct{}
+
+// PhoenixBuilder specific func.
+// Author: Liliya233
+//
+// Marshal ...
+func (a *AgentCreatedEvent) Marshal(r IO) {}
 
 // PatternRemovedEvent is the event data sent when a pattern is removed. This is now deprecated.
 type PatternRemovedEvent struct {
