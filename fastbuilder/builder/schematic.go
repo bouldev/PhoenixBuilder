@@ -64,19 +64,20 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 	FixedSchematicModule.Blocks = expandAndFillWithAir(SchematicModule.Blocks, Size, FixedSize)
 	FixedSchematicModule.Data = expandAndFillWithAir(SchematicModule.Data, Size, FixedSize)
 	chunks := detachChunks(FixedSize[0], FixedSize[1], FixedSize[2], config.Position.X, config.Position.Y, config.Position.Z, FixedSchematicModule.Blocks, FixedSchematicModule.Data)
+	sequence := getChunkSequence(len(chunks), FixedSize[0])
 	BlockIndex := 0
 	for id := 0; id < len(chunks); id++ {
 		BlockIndex = 0
 		for y := 0; y < FixedSize[1]; y++ {
 			for z := 0; z < 16; z++ {
 				for x := 0; x < 16; x++ {
-					p := chunks[id].Position
+					p := chunks[sequence[id]].Position
 					p.X += x
 					p.Y += y
 					p.Z += z
 					var b types.Block
-					b.Name = &BlockStr[chunks[id].Blocks[BlockIndex]]
-					b.Data = uint16(chunks[id].Data[BlockIndex])
+					b.Name = &BlockStr[chunks[sequence[id]].Blocks[BlockIndex]]
+					b.Data = uint16(chunks[sequence[id]].Data[BlockIndex])
 					if *b.Name != "air" {
 						blc <- &types.Module{Point: p, Block: &b}
 					}
@@ -151,4 +152,36 @@ func detachChunks(width, height, length, X, Y, Z int, schBlocks, schData []byte)
 		}
 	}
 	return chunks
+}
+
+/*
+获取正确导入顺序 numChunks: 区块总数 schWidth: 建筑宽度尺寸
+假设一个建筑的区块排列是
+0  1  2  3  4
+5  6  7  8  9
+那么要按照"之"字形导入,则区块顺序应该是
+0  1  2  3  4  9  8  7  6  5
+以下代码实现了重新排列顺序
+*/
+func getChunkSequence(numChunks, schWidth int) []int {
+	wChunks := schWidth / 16
+	result := make([]int, numChunks)
+	rows := numChunks / wChunks
+	index := 0
+	for i := 0; i < rows; i++ {
+		start := i * wChunks
+		end := start + wChunks
+		if i%2 == 0 {
+			for j := start; j < end; j++ {
+				result[index] = j
+				index++
+			}
+		} else {
+			for j := end - 1; j >= start; j-- {
+				result[index] = j
+				index++
+			}
+		}
+	}
+	return result
 }
