@@ -11,9 +11,17 @@ import (
 	"github.com/Tnze/go-mc/nbt"
 )
 
+type SplitResult struct {
+	Chunks     []ChunkModule
+	Horizontal int
+	Vertical   int
+}
+
 type ChunkModule struct {
 	Blocks       []byte
 	Data         []byte
+	SizeX        int
+	SizeZ        int
 	Position     types.Position
 	Position_End types.Position
 }
@@ -51,33 +59,22 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 		return fmt.Errorf("Invalid structure.")
 	}
 	Size := [3]int{SchematicModule.Width, SchematicModule.Height, SchematicModule.Length}
-	var FixedSchematicModule struct {
-		Blocks []byte
-		Data   []byte
-		Width  int
-		Height int
-		Length int
-	}
-	var FixedSize [3]int
-	FixedSize = roundUpToNearestMultipleOf16(Size)
-	FixedSize[1] = Size[1]
-	FixedSchematicModule.Blocks = expandAndFillWithAir(SchematicModule.Blocks, Size, FixedSize)
-	FixedSchematicModule.Data = expandAndFillWithAir(SchematicModule.Data, Size, FixedSize)
-	chunks := detachChunks(FixedSize[0], FixedSize[1], FixedSize[2], config.Position.X, config.Position.Y, config.Position.Z, FixedSchematicModule.Blocks, FixedSchematicModule.Data)
-	sequence := getChunkSequence(len(chunks), FixedSize[0])
+	Offset := [3]int{SchematicModule.WEOffsetX, SchematicModule.WEOffsetY, SchematicModule.WEOffsetZ}
+	split := SplitChunks(Size[0], Size[1], Size[2], config.Position.X, config.Position.Y, config.Position.Z, SchematicModule.Blocks, SchematicModule.Data)
+	sequence := getChunkSequence(len(split.Chunks), split.Horizontal, split.Vertical)
 	BlockIndex := 0
-	for id := 0; id < len(chunks); id++ {
+	for id := 0; id < len(split.Chunks); id++ {
 		BlockIndex = 0
-		for y := 0; y < FixedSize[1]; y++ {
-			for z := 0; z < 16; z++ {
-				for x := 0; x < 16; x++ {
-					p := chunks[sequence[id]].Position
-					p.X += x
-					p.Y += y
-					p.Z += z
+		for y := 0; y < Size[1]; y++ {
+			for z := 0; z < split.Chunks[sequence[id]].SizeZ; z++ {
+				for x := 0; x < split.Chunks[sequence[id]].SizeX; x++ {
+					p := split.Chunks[sequence[id]].Position
+					p.X += x + Offset[0]
+					p.Y += y + Offset[1]
+					p.Z += z + Offset[2]
 					var b types.Block
-					b.Name = &BlockStr[chunks[sequence[id]].Blocks[BlockIndex]]
-					b.Data = uint16(chunks[sequence[id]].Data[BlockIndex])
+					b.Name = &BlockStr[split.Chunks[sequence[id]].Blocks[BlockIndex]]
+					b.Data = uint16(split.Chunks[sequence[id]].Data[BlockIndex])
 					if *b.Name != "air" {
 						blc <- &types.Module{Point: p, Block: &b}
 					}
@@ -89,44 +86,23 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 	return nil
 }
 
-func roundUpToNearestMultipleOf16(arr [3]int) [3]int {
-	var result [3]int
-	for index, num := range arr {
-		remainder := num % 16
-		if remainder == 0 {
-			result[index] = num
-		} else {
-			result[index] = num + 16 - remainder
-		}
-	}
-	return result
-}
-
-func expandAndFillWithAir(blocks []byte, original [3]int, new [3]int) []byte {
-	newBlocks := make([]byte, new[0]*new[1]*new[2])
-	for y := 0; y < new[1]; y++ {
-		for z := 0; z < new[2]; z++ {
-			for x := 0; x < new[0]; x++ {
-				if x < original[0] && y < original[1] && z < original[2] {
-					newBlocks[y*new[0]*new[2]+z*new[0]+x] = blocks[y*original[0]*original[2]+z*original[0]+x]
-				} else {
-					newBlocks[y*new[0]*new[2]+z*new[0]+x] = 0
-				}
-			}
-		}
-	}
-	return newBlocks
-}
-
-func detachChunks(width, height, length, X, Y, Z int, schBlocks, schData []byte) []ChunkModule {
+func SplitChunks(width, height, length, X, Y, Z int, schBlocks, schData []byte) SplitResult {
 	var chunks []ChunkModule
+	getMin := func(a, b int) int {
+		if a < b {
+			return a
+		}
+		return b
+	}
 	for z := 0; z < length; z += 16 {
+		endZ := getMin(z+16, length)
 		for x := 0; x < width; x += 16 {
+			endX := getMin(x+16, width)
 			chunk := ChunkModule{
-				Blocks:       make([]byte, 0, 256*height),
-				Data:         make([]byte, 0, 256*height),
+				SizeX:        endX - x,
+				SizeZ:        endZ - z,
 				Position:     types.Position{X: x, Z: z},
-				Position_End: types.Position{X: x + 15, Y: height, Z: z + 15},
+				Position_End: types.Position{X: endX - 1, Y: height, Z: endZ - 1},
 			}
 			PrevBlockIndex := 0
 			for y2 := chunk.Position.Y; y2 <= chunk.Position_End.Y; y2++ {
@@ -151,11 +127,23 @@ func detachChunks(width, height, length, X, Y, Z int, schBlocks, schData []byte)
 			chunks = append(chunks, chunk)
 		}
 	}
-	return chunks
+	horizontalCount := width / 16
+	if width%16 != 0 {
+		horizontalCount++
+	}
+	verticalCount := length / 16
+	if length%16 != 0 {
+		verticalCount++
+	}
+	return SplitResult{
+		Chunks:     chunks,
+		Horizontal: horizontalCount,
+		Vertical:   verticalCount,
+	}
 }
 
 /*
-获取正确导入顺序 numChunks: 区块总数 schWidth: 建筑宽度尺寸
+获取正确导入顺序 totalElements: 分割块总数 horizontalElements: 水平分割块数 verticalElements: 垂直分割块数
 假设一个建筑的区块排列是
 0  1  2  3  4
 5  6  7  8  9
@@ -163,14 +151,12 @@ func detachChunks(width, height, length, X, Y, Z int, schBlocks, schData []byte)
 0  1  2  3  4  9  8  7  6  5
 以下代码实现了重新排列顺序
 */
-func getChunkSequence(numChunks, schWidth int) []int {
-	wChunks := schWidth / 16
-	result := make([]int, numChunks)
-	rows := numChunks / wChunks
+func getChunkSequence(totalElements, horizontalElements, verticalElements int) []int {
+	result := make([]int, totalElements)
 	index := 0
-	for i := 0; i < rows; i++ {
-		start := i * wChunks
-		end := start + wChunks
+	for i := 0; i < verticalElements; i++ {
+		start := i * horizontalElements
+		end := start + horizontalElements
 		if i%2 == 0 {
 			for j := start; j < end; j++ {
 				result[index] = j
