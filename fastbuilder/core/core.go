@@ -267,7 +267,7 @@ func InitializeMinecraftConnection(
 		conn, authResponse, err = dialer.DialContext(ctx, "raknet")
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 	// create connection
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
@@ -537,7 +537,10 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 		}
 		// if the user request us do not pass this challenge
 		client := env.FBAuthClient.(*fbauth.Client)
-		c.Content = client.TransferData(c.Content)
+		c.Content, err = client.TransferData(c.Content)
+		if err != nil {
+			panic(err)
+		}
 		c.Type = py_rpc.StartTypeResponse
 		conn.WritePacket(&packet.PyRpc{
 			Value:         py_rpc.Marshal(c),
@@ -557,7 +560,10 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 			c.SecondArg.Arg,
 			env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
 		})
-		ret := client.TransferCheckNum(string(arg))
+		ret, err := client.TransferCheckNum(string(arg))
+		if err != nil {
+			panic(err)
+		}
 		// create request to the auth server and get response
 		ret_p := []any{}
 		json.Unmarshal([]byte(ret), &ret_p)
