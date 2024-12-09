@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -88,18 +89,18 @@ func assertAndParse[T any](resp *http.Response) T {
 	return ret
 }
 
-func CreateClient(options *ClientOptions) *Client {
+func CreateClient(options *ClientOptions) (*Client, error) {
 	if options.AuthServer != "https://user.fastbuilder.pro" && options.AuthServer != "https://liliya233.uk" {
-		panic("Failed to contact with API")
+		return nil, errors.New("Failed to contact with API")
 	}
 	secret_res, err := http.Get(fmt.Sprintf("%s/api/new", options.AuthServer))
 	if err != nil {
-		panic("Failed to contact with API")
+		return nil, errors.New("Failed to contact with API")
 	}
 	_secret_body, _ := io.ReadAll(secret_res.Body)
 	secret_body := string(_secret_body)
 	if secret_res.StatusCode == 503 {
-		panic("API server is down")
+		return nil, errors.New("API server is down")
 	} else if secret_res.StatusCode != 200 {
 		parseAndPanic(secret_body)
 	}
@@ -112,7 +113,7 @@ func CreateClient(options *ClientOptions) *Client {
 			RespondTo: options.RespondUserOverride,
 		},
 	}
-	return authclient
+	return authclient, nil
 }
 
 // 客户端向验证服务器发送的请求体，

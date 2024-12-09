@@ -47,7 +47,7 @@ func create_environment() *environment.PBEnvironment {
 }
 
 // Shouldn't be called when running a debug client
-func ConfigRealEnvironment(token string, server_code string, server_password string, username string, password string) *environment.PBEnvironment {
+func ConfigRealEnvironment(token string, server_code string, server_password string, username string, password string) (*environment.PBEnvironment, error) {
 	env := create_environment()
 	env.LoginInfo = environment.LoginInfo{
 		Token:          token,
@@ -56,8 +56,12 @@ func ConfigRealEnvironment(token string, server_code string, server_password str
 		Username:       username,
 		Password:       password,
 	}
-	env.FBAuthClient = fbauth.CreateClient(env.ClientOptions)
-	return env
+	authClient, err := fbauth.CreateClient(env.ClientOptions)
+	if err != nil {
+		return nil, err
+	}
+	env.FBAuthClient = authClient
+	return env, nil
 }
 
 func ConfigDebugEnvironment() *environment.PBEnvironment {

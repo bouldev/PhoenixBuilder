@@ -111,7 +111,10 @@ func runInteractiveClient(token, username, password string) {
 		fmt.Println(err)
 		return
 	}
-	env := ConfigRealEnvironment(token, code, serverPasscode, username, password)
+	env, err := ConfigRealEnvironment(token, code, serverPasscode, username, password)
+	if err != nil {
+		panic(err)
+	}
 	EstablishConnectionAndInitEnv(env)
 	go EnterReadlineThread(env, nil)
 	defer DestroyEnvironment(env)

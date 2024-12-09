@@ -352,7 +352,11 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	if env.FBAuthClient == nil {
 		env.ClientOptions.AuthServer = args.AuthServer
 		env.ClientOptions.RespondUserOverride = args.CustomGameName
-		env.FBAuthClient = fbauth.CreateClient(env.ClientOptions)
+		authClient, err := fbauth.CreateClient(env.ClientOptions)
+		if err != nil {
+			panic(err)
+		}
+		env.FBAuthClient = authClient
 	}
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
 
