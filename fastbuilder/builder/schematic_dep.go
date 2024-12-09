@@ -1,4 +1,24 @@
+//go:build dep___do_not_add_this_tag_
 // +build dep___do_not_add_this_tag_
+
+/*
+ * This file is part of PhoenixBuilder.
+
+ * PhoenixBuilder is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ * Copyright (C) 2021-2025 Bouldev
+ */
 
 package builder
 
@@ -34,16 +54,16 @@ extern unsigned char builder_schematic_process_schematic_file(uint32_t channelID
 */
 import "C"
 
-var lastChannelID uint=0
-var channelMap map[uint]chan *types.Module=map[uint]chan *types.Module{}
+var lastChannelID uint = 0
+var channelMap map[uint]chan *types.Module = map[uint]chan *types.Module{}
 
 //export builder_schematic_channel_input
 func builder_schematic_channel_input(channelID uint32, x int64, y int64, z int64, id uint8, data uint8) {
 	var b types.Block
 	b.Name = &BlockStr[int(id)]
 	b.Data = uint16(data)
-	blc:=channelMap[uint(channelID)]
-	blc <- &types.Module{Point: types.Position{int(x),int(y),int(z)}, Block: &b}
+	blc := channelMap[uint(channelID)]
+	blc <- &types.Module{Point: types.Position{int(x), int(y), int(z)}, Block: &b}
 }
 
 func Schematic(config *types.MainConfig, blc chan *types.Module) error {
@@ -54,14 +74,14 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 		pterm.Println(pterm.Yellow(I18n.T(I18n.Notice_ZLIB_CVE)))
 	}
 
-	channelMap[lastChannelID]=blc
-	gotChannelID:=lastChannelID
+	channelMap[lastChannelID] = blc
+	gotChannelID := lastChannelID
 	lastChannelID++
-	retval:=C.builder_schematic_process_schematic_file(C.uint32_t(gotChannelID), C.CString(config.Path), C.int64_t(config.Position.X), C.int64_t(config.Position.Y), C.int64_t(config.Position.Z))
+	retval := C.builder_schematic_process_schematic_file(C.uint32_t(gotChannelID), C.CString(config.Path), C.int64_t(config.Position.X), C.int64_t(config.Position.Y), C.int64_t(config.Position.Z))
 	delete(channelMap, gotChannelID)
-	fmt.Printf("RET %d\n",retval)
+	fmt.Printf("RET %d\n", retval)
 	return nil
-	file, err:=bridge_path.ReadFile(config.Path)
+	file, err := bridge_path.ReadFile(config.Path)
 	if err != nil {
 		return I18n.ProcessSystemFileError(err)
 	}
@@ -71,7 +91,7 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 		return err
 	}
 	defer gzip.Close()
-	
+
 	buffer, err := ioutil.ReadAll(gzip)
 
 	var SchematicModule struct {
@@ -86,11 +106,11 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 	}
 
 	if err := nbt.Unmarshal(buffer, &SchematicModule); err != nil {
-		// Won't return the error `err` since it contains a large content that can 
+		// Won't return the error `err` since it contains a large content that can
 		// crash the server after being sent.
 		return fmt.Errorf(I18n.T(I18n.Sch_FailedToResolve))
 	}
-	if(len(SchematicModule.Blocks)==0) {
+	if len(SchematicModule.Blocks) == 0 {
 		return fmt.Errorf("Invalid structure.")
 	}
 	Size := [3]int{SchematicModule.Width, SchematicModule.Height, SchematicModule.Length}
@@ -108,7 +128,7 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 				var b types.Block
 				b.Name = &BlockStr[SchematicModule.Blocks[BlockIndex]]
 				b.Data = uint16(SchematicModule.Data[BlockIndex])
-				if BlockIndex - 188 <= 5 && BlockIndex - 188 >= 0 {
+				if BlockIndex-188 <= 5 && BlockIndex-188 >= 0 {
 					b.Name = &FenceName
 					b.Data = uint16(BlockIndex - 188)
 				}

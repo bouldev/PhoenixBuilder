@@ -1,5 +1,24 @@
 package builder
 
+/*
+ * This file is part of PhoenixBuilder.
+
+ * PhoenixBuilder is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ * Copyright (C) 2021-2025 Bouldev
+ */
+
 import (
 	"compress/gzip"
 	"fmt"
@@ -23,7 +42,7 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 	}
 	defer gzip.Close()
 	buffer, err := ioutil.ReadAll(gzip)
-	
+
 	var SchematicModule struct {
 		Blocks    []byte `nbt:"Blocks"`
 		Data      []byte `nbt:"Data"`
@@ -34,7 +53,7 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 		WEOffsetY int    `nbt:"WEOffsetY"`
 		WEOffsetZ int    `nbt:"WEOffsetZ"`
 	}
-	
+
 	if err := nbt.Unmarshal(buffer, &SchematicModule); err != nil {
 		// Won't return the error `err` since it contains a large content that can
 		// crash the server after being sent.
@@ -47,7 +66,7 @@ func Schematic(config *types.MainConfig, blc chan *types.Module) error {
 	Offset := [3]int{SchematicModule.WEOffsetX, SchematicModule.WEOffsetY, SchematicModule.WEOffsetZ}
 	X, Y, Z := 0, 1, 2
 	BlockIndex := 0
-	
+
 	for y := 0; y < Size[Y]; y++ {
 		for z := 0; z < Size[Z]; z++ {
 			for x := 0; x < Size[X]; x++ {

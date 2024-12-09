@@ -1,13 +1,32 @@
 package command
 
+/*
+ * This file is part of PhoenixBuilder.
+
+ * PhoenixBuilder is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ * Copyright (C) 2021-2025 Bouldev
+ */
+
 import (
-	"io"
 	"encoding/binary"
+	"io"
 	"phoenixbuilder/fastbuilder/types"
 )
 
 type PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID struct {
-	BlockRuntimeID uint32
+	BlockRuntimeID   uint32
 	CommandBlockData *types.CommandBlockData
 }
 
@@ -20,108 +39,108 @@ func (_ *PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID) Name() string 
 }
 
 func (cmd *PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID) Marshal(writer io.Writer) error {
-	uint32_buf:=make([]byte, 4)
+	uint32_buf := make([]byte, 4)
 	binary.BigEndian.PutUint32(uint32_buf, cmd.BlockRuntimeID)
-	_, err:=writer.Write(uint32_buf)
-	if err!=nil {
+	_, err := writer.Write(uint32_buf)
+	if err != nil {
 		return err
 	}
 	binary.BigEndian.PutUint32(uint32_buf, cmd.CommandBlockData.Mode)
-	_, err=writer.Write(uint32_buf)
-	if err!=nil {
+	_, err = writer.Write(uint32_buf)
+	if err != nil {
 		return err
 	}
-	_, err=writer.Write(append([]byte(cmd.CommandBlockData.Command), 0))
-	if err!=nil {
+	_, err = writer.Write(append([]byte(cmd.CommandBlockData.Command), 0))
+	if err != nil {
 		return err
 	}
-	_, err=writer.Write(append([]byte(cmd.CommandBlockData.CustomName), 0))
-	if err!=nil {
+	_, err = writer.Write(append([]byte(cmd.CommandBlockData.CustomName), 0))
+	if err != nil {
 		return err
 	}
-	_, err=writer.Write(append([]byte(cmd.CommandBlockData.LastOutput), 0))
-	if err!=nil {
+	_, err = writer.Write(append([]byte(cmd.CommandBlockData.LastOutput), 0))
+	if err != nil {
 		return err
 	}
 	binary.BigEndian.PutUint32(uint32_buf, uint32(cmd.CommandBlockData.TickDelay))
-	_, err=writer.Write(uint32_buf)
-	if err!=nil {
+	_, err = writer.Write(uint32_buf)
+	if err != nil {
 		return err
 	}
 	binary.BigEndian.PutUint32(uint32_buf, 0) // cleanup the buffer
 	if cmd.CommandBlockData.ExecuteOnFirstTick {
-		uint32_buf[0]=1
+		uint32_buf[0] = 1
 	}
 	if cmd.CommandBlockData.TrackOutput {
-		uint32_buf[1]=1
+		uint32_buf[1] = 1
 	}
 	if cmd.CommandBlockData.Conditional {
-		uint32_buf[2]=1
+		uint32_buf[2] = 1
 	}
 	if cmd.CommandBlockData.NeedsRedstone {
-		uint32_buf[3]=1
+		uint32_buf[3] = 1
 	}
 	// ELSE statements are not required as the buffer was initiated w/ 0
-	_, err=writer.Write(uint32_buf)
+	_, err = writer.Write(uint32_buf)
 	return err
 }
 
 func (cmd *PlaceRuntimeBlockWithCommandBlockDataAndUint32RuntimeID) Unmarshal(reader io.Reader) error {
-	cmd.CommandBlockData=&types.CommandBlockData{}
-	buf:=make([]byte, 4)
-	_, err:=io.ReadAtLeast(reader, buf, 4)
+	cmd.CommandBlockData = &types.CommandBlockData{}
+	buf := make([]byte, 4)
+	_, err := io.ReadAtLeast(reader, buf, 4)
 	if err != nil {
 		return err
 	}
-	cmd.BlockRuntimeID=binary.BigEndian.Uint32(buf)
-	_, err=io.ReadAtLeast(reader, buf, 4)
-	if err!=nil {
+	cmd.BlockRuntimeID = binary.BigEndian.Uint32(buf)
+	_, err = io.ReadAtLeast(reader, buf, 4)
+	if err != nil {
 		return err
 	}
-	cmd.CommandBlockData.Mode=binary.BigEndian.Uint32(buf)
-	str, err:=readString(reader)
-	if err!=nil {
+	cmd.CommandBlockData.Mode = binary.BigEndian.Uint32(buf)
+	str, err := readString(reader)
+	if err != nil {
 		return err
 	}
-	cmd.CommandBlockData.Command=str
-	str, err=readString(reader)
-	if err!=nil {
+	cmd.CommandBlockData.Command = str
+	str, err = readString(reader)
+	if err != nil {
 		return err
 	}
-	cmd.CommandBlockData.CustomName=str
-	str, err=readString(reader)
-	if err!=nil {
+	cmd.CommandBlockData.CustomName = str
+	str, err = readString(reader)
+	if err != nil {
 		return err
 	}
-	cmd.CommandBlockData.LastOutput=str
-	_, err=io.ReadAtLeast(reader, buf, 4)
-	if err!=nil {
+	cmd.CommandBlockData.LastOutput = str
+	_, err = io.ReadAtLeast(reader, buf, 4)
+	if err != nil {
 		return err
 	}
-	cmd.CommandBlockData.TickDelay=int32(binary.BigEndian.Uint32(buf))
-	_, err=io.ReadAtLeast(reader, buf, 4)
-	if err!=nil {
+	cmd.CommandBlockData.TickDelay = int32(binary.BigEndian.Uint32(buf))
+	_, err = io.ReadAtLeast(reader, buf, 4)
+	if err != nil {
 		return err
 	}
-	if buf[0]==0 {
-		cmd.CommandBlockData.ExecuteOnFirstTick=false
-	}else{
-		cmd.CommandBlockData.ExecuteOnFirstTick=true
+	if buf[0] == 0 {
+		cmd.CommandBlockData.ExecuteOnFirstTick = false
+	} else {
+		cmd.CommandBlockData.ExecuteOnFirstTick = true
 	}
-	if buf[1]==0 {
-		cmd.CommandBlockData.TrackOutput=false
-	}else{
-		cmd.CommandBlockData.TrackOutput=true
+	if buf[1] == 0 {
+		cmd.CommandBlockData.TrackOutput = false
+	} else {
+		cmd.CommandBlockData.TrackOutput = true
 	}
-	if buf[2]==0 {
-		cmd.CommandBlockData.Conditional=false
-	}else{
-		cmd.CommandBlockData.Conditional=true
+	if buf[2] == 0 {
+		cmd.CommandBlockData.Conditional = false
+	} else {
+		cmd.CommandBlockData.Conditional = true
 	}
-	if buf[3]==0 {
-		cmd.CommandBlockData.NeedsRedstone=false
-	}else{
-		cmd.CommandBlockData.NeedsRedstone=true
+	if buf[3] == 0 {
+		cmd.CommandBlockData.NeedsRedstone = false
+	} else {
+		cmd.CommandBlockData.NeedsRedstone = true
 	}
 	return nil
 }

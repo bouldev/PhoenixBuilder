@@ -4,6 +4,25 @@
 package readline
 
 /*
+ * This file is part of PhoenixBuilder.
+
+ * PhoenixBuilder is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ * Copyright (C) 2021-2025 Bouldev
+ */
+
+/*
 #cgo !native CFLAGS: -I${SRCDIR}/../../depends/readline-master/include
 #cgo !native LDFLAGS: -L${SRCDIR}/../../depends/stub -L${SRCDIR}/../../depends/readline-master/prebuilt -L${SRCDIR}/../../depends/ncurses-6.3-20220319/prebuilt
 #cgo native,darwin,arm64 LDFLAGS: -L/opt/homebrew/opt/readline/lib -lreadline
@@ -28,8 +47,8 @@ extern void do_sigint_interrupt();
 import "C"
 
 import (
-	"phoenixbuilder/fastbuilder/function"
 	"phoenixbuilder/fastbuilder/environment"
+	"phoenixbuilder/fastbuilder/function"
 	"unsafe"
 )
 

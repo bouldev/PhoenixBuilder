@@ -1,52 +1,70 @@
 package builder
 
+/*
+ * This file is part of PhoenixBuilder.
+
+ * PhoenixBuilder is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ * Copyright (C) 2021-2025 Bouldev
+ */
+
 import (
-	"phoenixbuilder/fastbuilder/types"
 	"math"
+	"phoenixbuilder/fastbuilder/types"
 )
 
-func Circle(config *types.MainConfig, blc chan *types.Module)error {
+func Circle(config *types.MainConfig, blc chan *types.Module) error {
 	Radius := config.Radius
 	Facing := config.Facing
 	point := config.Position
-	radius_squared:=math.Pow(float64(Radius), 2)
+	radius_squared := math.Pow(float64(Radius), 2)
 	var push_to_channel func(int, int)
 	switch Facing {
 	case "x":
-		push_to_channel=func (x int, y int) {
-			blc<-&types.Module {
-				Point: types.Position {point.X, point.Y + y, point.Z + x},
+		push_to_channel = func(x int, y int) {
+			blc <- &types.Module{
+				Point: types.Position{point.X, point.Y + y, point.Z + x},
 			}
 		}
 	case "y":
-		push_to_channel=func (x int, y int) {
-			blc<-&types.Module {
-				Point: types.Position {point.X+x, point.Y, point.Z + y},
+		push_to_channel = func(x int, y int) {
+			blc <- &types.Module{
+				Point: types.Position{point.X + x, point.Y, point.Z + y},
 			}
 		}
 	case "z":
-		push_to_channel=func (x int, y int) {
-			blc<-&types.Module {
-				Point: types.Position {point.X+x, point.Y+y, point.Z},
+		push_to_channel = func(x int, y int) {
+			blc <- &types.Module{
+				Point: types.Position{point.X + x, point.Y + y, point.Z},
 			}
 		}
 	}
-	for i:=0;i<=Radius;i++ {
-		first_quadrant_val:=int(math.Sqrt(radius_squared-math.Pow(float64(i), 2)))
+	for i := 0; i <= Radius; i++ {
+		first_quadrant_val := int(math.Sqrt(radius_squared - math.Pow(float64(i), 2)))
 		push_to_channel(i, first_quadrant_val)
-		if(first_quadrant_val!=0) {
+		if first_quadrant_val != 0 {
 			push_to_channel(i, -first_quadrant_val)
 		}
-		if(i!=0) {
-			push_to_channel(-i,first_quadrant_val)
+		if i != 0 {
+			push_to_channel(-i, first_quadrant_val)
 		}
-		if(first_quadrant_val!=0&&i!=0) {
-			push_to_channel(-i,-first_quadrant_val)
+		if first_quadrant_val != 0 && i != 0 {
+			push_to_channel(-i, -first_quadrant_val)
 		}
 	}
 	return nil
 }
-
 
 func Ellipse(config *types.MainConfig, blc chan *types.Module) error {
 	Length := config.Length
