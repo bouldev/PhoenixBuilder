@@ -28,6 +28,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/pterm/pterm"
 
@@ -90,7 +91,7 @@ func assertAndParse[T any](resp *http.Response) (T, error) {
 }
 
 func CreateClient(options *ClientOptions) (*Client, error) {
-	if options.AuthServer != "https://user.fastbuilder.pro" && options.AuthServer != "https://liliya233.uk" {
+	if options.AuthServer != "https://user.fastbuilder.pro" && !strings.Contains(options.AuthServer, "liliya233") {
 		return nil, errors.New("Failed to contact with API")
 	}
 	secret_res, err := http.Get(fmt.Sprintf("%s/api/new", options.AuthServer))
