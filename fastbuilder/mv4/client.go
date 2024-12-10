@@ -25,12 +25,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pterm/pterm"
 	"io"
 	"net/http"
 	"regexp"
-	"strings"
-
-	"github.com/pterm/pterm"
 
 	I18n "phoenixbuilder/fastbuilder/i18n"
 )
@@ -91,7 +89,7 @@ func assertAndParse[T any](resp *http.Response) (T, error) {
 }
 
 func CreateClient(options *ClientOptions) (*Client, error) {
-	if options.AuthServer != "https://user.fastbuilder.pro" && !strings.Contains(options.AuthServer, "liliya233") {
+	if options.AuthServer != "https://user.fastbuilder.pro" && options.AuthServer != "https://liliya233.uk" && options.AuthServer != "https://direct.liliya233.uk" {
 		return nil, errors.New("Failed to contact with API")
 	}
 	secret_res, err := http.Get(fmt.Sprintf("%s/api/new", options.AuthServer))
