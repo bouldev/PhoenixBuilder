@@ -1,15 +1,34 @@
 package fbauth
 
+/*
+ * This file is part of PhoenixBuilder.
+
+ * PhoenixBuilder is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ * Copyright (C) 2021-2025 Bouldev
+ */
+
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/pterm/pterm"
 	"io"
 	"net/http"
 	"regexp"
-
-	"github.com/pterm/pterm"
 
 	I18n "phoenixbuilder/fastbuilder/i18n"
 )
@@ -43,46 +62,46 @@ type Client struct {
 	*ClientOptions
 }
 
-func parseAndPanic(message string) {
+func parsedError(message string) error {
 	error_regex := regexp.MustCompile("^(\\d{3} [a-zA-Z ]+)\n\n(.*?)($|\n)")
 	err_matches := error_regex.FindAllStringSubmatch(message, 1)
 	if len(err_matches) == 0 {
-		panic(fmt.Errorf("Unknown error"))
+		return fmt.Errorf("Unknown error")
 	}
-	panic(fmt.Errorf("%s: %s", err_matches[0][1], err_matches[0][2]))
+	return fmt.Errorf("%s: %s", err_matches[0][1], err_matches[0][2])
 }
 
-func assertAndParse[T any](resp *http.Response) T {
+func assertAndParse[T any](resp *http.Response) (T, error) {
+	var ret T
 	if resp.StatusCode == 503 {
-		panic("API server is down")
+		return ret, errors.New("API server is down")
 	}
 	_body, _ := io.ReadAll(resp.Body)
 	body := string(_body)
 	if resp.StatusCode != 200 {
-		parseAndPanic(body)
+		return ret, parsedError(body)
 	}
-	var ret T
 	err := json.Unmarshal([]byte(body), &ret)
 	if err != nil {
-		panic(fmt.Sprintf("Error parsing API response: %v", err))
+		return ret, errors.New(fmt.Sprintf("Error parsing API response: %v", err))
 	}
-	return ret
+	return ret, nil
 }
 
-func CreateClient(options *ClientOptions) *Client {
-	if options.AuthServer != "https://user.fastbuilder.pro" && options.AuthServer != "https://liliya233.uk" {
-		panic("Failed to contact with API")
+func CreateClient(options *ClientOptions) (*Client, error) {
+	if options.AuthServer != "https://user.fastbuilder.pro" && options.AuthServer != "https://liliya233.uk" && options.AuthServer != "https://direct.liliya233.uk" {
+		return nil, errors.New("Failed to contact with API")
 	}
 	secret_res, err := http.Get(fmt.Sprintf("%s/api/new", options.AuthServer))
 	if err != nil {
-		panic("Failed to contact with API")
+		return nil, errors.New("Failed to contact with API")
 	}
 	_secret_body, _ := io.ReadAll(secret_res.Body)
 	secret_body := string(_secret_body)
 	if secret_res.StatusCode == 503 {
-		panic("API server is down")
+		return nil, errors.New("API server is down")
 	} else if secret_res.StatusCode != 200 {
-		parseAndPanic(secret_body)
+		return nil, parsedError(secret_body)
 	}
 	authclient := &Client{
 		client: http.Client{Transport: secretLoadingTransport{
@@ -93,7 +112,7 @@ func CreateClient(options *ClientOptions) *Client {
 			RespondTo: options.RespondUserOverride,
 		},
 	}
-	return authclient
+	return authclient, nil
 }
 
 // 客户端向验证服务器发送的请求体，
@@ -198,9 +217,12 @@ func (client *Client) Auth(
 		bytes.NewBuffer(authRequest),
 	)
 	if err != nil {
-		panic(fmt.Sprintf("Auth: %v", err))
+		return authResponse, errors.New(fmt.Sprintf("Auth: %v", err))
 	}
-	authResponse = assertAndParse[AuthResponse](httpResponse)
+	authResponse, err = assertAndParse[AuthResponse](httpResponse)
+	if err != nil {
+		return authResponse, err
+	}
 	// get response
 	if !authResponse.SuccessStates {
 		failedReason := authResponse.Message
@@ -225,43 +247,49 @@ func (client *Client) Auth(
 	// return
 }
 
-func (client *Client) TransferData(content string) string {
+func (client *Client) TransferData(content string) (string, error) {
 	r, err := client.client.Get(fmt.Sprintf("%s/api/phoenix/transfer_start_type?content=%s", client.AuthServer, content))
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	resp := assertAndParse[map[string]any](r)
+	resp, err := assertAndParse[map[string]any](r)
+	if err != nil {
+		return "", err
+	}
 	succ, _ := resp["success"].(bool)
 	if !succ {
 		err_m, _ := resp["message"].(string)
-		panic(fmt.Errorf("Failed to transfer start type: %s", err_m))
+		return "", fmt.Errorf("Failed to transfer start type: %s", err_m)
 	}
 	data, _ := resp["data"].(string)
-	return data
+	return data, nil
 }
 
 type FNumRequest struct {
 	Data string `json:"data"`
 }
 
-func (client *Client) TransferCheckNum(data string) string {
+func (client *Client) TransferCheckNum(data string) (string, error) {
 	rspreq := &FNumRequest{
 		Data: data,
 	}
 	msg, err := json.Marshal(rspreq)
 	if err != nil {
-		panic("Failed to encode json")
+		return "", errors.New("Failed to encode json")
 	}
 	r, err := client.client.Post(fmt.Sprintf("%s/api/phoenix/transfer_check_num", client.AuthServer), "application/json", bytes.NewBuffer(msg))
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	resp := assertAndParse[map[string]any](r)
+	resp, err := assertAndParse[map[string]any](r)
+	if err != nil {
+		return "", err
+	}
 	succ, _ := resp["success"].(bool)
 	if !succ {
 		err_m, _ := resp["message"].(string)
-		panic(fmt.Errorf("Failed to transfer check num: %s", err_m))
+		return "", fmt.Errorf("Failed to transfer check num: %s", err_m)
 	}
 	val, _ := resp["value"].(string)
-	return val
+	return val, nil
 }

@@ -1,5 +1,24 @@
 package core
 
+/*
+ * This file is part of PhoenixBuilder.
+
+ * PhoenixBuilder is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ * Copyright (C) 2021-2025 Bouldev
+ */
+
 import (
 	"bufio"
 	"context"
@@ -248,7 +267,7 @@ func InitializeMinecraftConnection(
 		conn, authResponse, err = dialer.DialContext(ctx, "raknet")
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 	// create connection
 	runtimeid := fmt.Sprintf("%d", conn.GameData().EntityUniqueID)
@@ -333,7 +352,11 @@ func EstablishConnectionAndInitEnv(env *environment.PBEnvironment) {
 	if env.FBAuthClient == nil {
 		env.ClientOptions.AuthServer = args.AuthServer
 		env.ClientOptions.RespondUserOverride = args.CustomGameName
-		env.FBAuthClient = fbauth.CreateClient(env.ClientOptions)
+		authClient, err := fbauth.CreateClient(env.ClientOptions)
+		if err != nil {
+			panic(err)
+		}
+		env.FBAuthClient = authClient
 	}
 	pterm.Println(pterm.Yellow(fmt.Sprintf("%s: %s", I18n.T(I18n.ServerCodeTrans), env.LoginInfo.ServerCode)))
 
@@ -514,7 +537,10 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 		}
 		// if the user request us do not pass this challenge
 		client := env.FBAuthClient.(*fbauth.Client)
-		c.Content = client.TransferData(c.Content)
+		c.Content, err = client.TransferData(c.Content)
+		if err != nil {
+			panic(err)
+		}
 		c.Type = py_rpc.StartTypeResponse
 		conn.WritePacket(&packet.PyRpc{
 			Value:         py_rpc.Marshal(c),
@@ -534,7 +560,10 @@ func onPyRpc(p *packet.PyRpc, env *environment.PBEnvironment) {
 			c.SecondArg.Arg,
 			env.Connection.(*minecraft.Conn).GameData().EntityUniqueID,
 		})
-		ret := client.TransferCheckNum(string(arg))
+		ret, err := client.TransferCheckNum(string(arg))
+		if err != nil {
+			panic(err)
+		}
 		// create request to the auth server and get response
 		ret_p := []any{}
 		json.Unmarshal([]byte(ret), &ret_p)
